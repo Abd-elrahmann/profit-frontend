@@ -16,6 +16,7 @@ import {
   MdExitToApp as ExitToApp,
 } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
+import logo from "/assets/images/logo.webp";
 const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,6 +83,8 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
             ) : null}
 
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap:1 }}>
+            <img src={logo} alt="logo" style={{ width: "30px", height: "30px" }} />
+
               <Typography
                 variant="h6"
                 component="div"

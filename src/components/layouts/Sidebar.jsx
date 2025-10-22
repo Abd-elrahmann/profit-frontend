@@ -103,7 +103,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                 justifyContent: 'center',
                 color: 'text.primary',
                 transition: 'transform 0.03s ease',
-                transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)'
+                transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
+                '& > *': {
+                  fontSize: '1.3rem !important'
+                }
               }}>
                 <item.icon />
               </ListItemIcon>

@@ -6,7 +6,8 @@ import {
   MdTrendingUp as TrendingUp,
   MdAssessment as Assessment,
   MdSettings as Settings,
-  MdSecurity as Security
+  MdSecurity as Security,
+  MdBadge as Badge
 } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -41,7 +42,7 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'الموظفين',
-    icon: People,
+    icon: Badge,
     module: 'users',
     requiresPermissions: true
   },
