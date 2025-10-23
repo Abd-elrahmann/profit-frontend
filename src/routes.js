@@ -7,7 +7,8 @@ import {
   MdAssessment as Assessment,
   MdSettings as Settings,
   MdSecurity as Security,
-  MdBadge as Badge
+  MdBadge as Badge,
+  MdDescription as Contract
 } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -15,6 +16,7 @@ const Login = React.lazy(() => import('./pages/auth/Login'));
 const Employees = React.lazy(() => import('./pages/Employees/Employees'));
 const Roles = React.lazy(() => import('./pages/Roles/Roles'));
 const Clients = React.lazy(() => import('./pages/Clients/Clients'));
+const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTemplates'));
 const routes = [
   // Public routes
   {
@@ -64,6 +66,16 @@ const routes = [
     label: 'العملاء',
     icon: People,
     module: 'clients',
+    requiresPermissions: true
+  },
+  {
+    path: '/contract-templates',
+    element: ContractTemplates,
+    protected: true,
+    showInSidebar: true,
+    label: 'القوالب القانونية',
+    icon: Contract,
+    module: 'contract-templates',
     requiresPermissions: true
   },
 ];
