@@ -30,12 +30,16 @@ const clientValidationSchema = Yup.object().shape({
   // Client Information
   name: Yup.string().required('اسم العميل مطلوب'),
   phone: Yup.string().required('رقم الجوال مطلوب'),
+  email: Yup.string().email('البريد الإلكتروني غير صالح'),
   nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
+  birthDate: Yup.date().required('تاريخ الميلاد مطلوب'),
   city: Yup.string().required('المدينة مطلوبة'),
   district: Yup.string().required('الحي مطلوب'),
+  address: Yup.string().required('العنوان مطلوب'),
   employer: Yup.string().required('جهة العمل مطلوبة'),
   salary: Yup.number().required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
   obligations: Yup.number().required('الالتزامات مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
+  creationReason: Yup.string().required('سبب الإنشاء مطلوب'),
   notes: Yup.string(),
 
   // Kafeel Information (conditionally required)
@@ -81,19 +85,23 @@ const AddClient = ({ open, onClose }) => {
     // Client Information
     name: '',
     phone: '',
+    email: '',
     nationalId: '',
+    birthDate: '',
     city: '',
     district: '',
+    address: '',
     employer: '',
     salary: '',
     obligations: '',
+    creationReason: '',
     notes: '',
 
     // Kafeel Information
     hasKafeel: false,
     kafeelName: '',
     kafeelNationalId: '',
-    kafeelBirthDate: '',
+    kafeelBirthDate: '',  
     kafeelCity: '',
     kafeelDistrict: '',
     kafeelEmployer: '',
@@ -279,8 +287,8 @@ const AddClient = ({ open, onClose }) => {
         validationSchema={clientValidationSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => (
-          <Form>
+        {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm }) => (
+          <Form onSubmit={(e) => e.preventDefault()}>
             <DialogContent sx={{ pb: 1, minHeight: 400 }}>
               {/* Step 1: Client Information */}
               {activeStep === 0 && (
@@ -311,6 +319,35 @@ const AddClient = ({ open, onClose }) => {
                         error={touched.nationalId && Boolean(errors.nationalId)}
                         helperText={touched.nationalId && errors.nationalId}
                       />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="email"
+                        label=" البريد الإلكتروني (اختياري)" 
+                        type="email"
+                        value={values.email}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.email && Boolean(errors.email)}
+                        helperText={touched.email && errors.email}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="birthDate"
+                        label="تاريخ الميلاد"
+                        type="date"
+                        value={values.birthDate}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.birthDate && Boolean(errors.birthDate)}
+                        helperText={touched.birthDate && errors.birthDate}
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />  
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
@@ -346,6 +383,18 @@ const AddClient = ({ open, onClose }) => {
                         onBlur={handleBlur}
                         error={touched.district && Boolean(errors.district)}
                         helperText={touched.district && errors.district}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        name="address"
+                        label="العنوان التفصيلي"
+                        value={values.address}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.address && Boolean(errors.address)}
+                        helperText={touched.address && errors.address}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -389,9 +438,22 @@ const AddClient = ({ open, onClose }) => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
+                        name="creationReason"
+                        label="سبب الإنشاء"
+                        value={values.creationReason}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.creationReason && Boolean(errors.creationReason)}
+                        helperText={touched.creationReason && errors.creationReason}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
                         name="notes"
                         label="ملاحظات"
-                        rows={3}
+                        multiline
+                        rows={2}
                         value={values.notes}
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -464,7 +526,7 @@ const AddClient = ({ open, onClose }) => {
                       <TextField
                         fullWidth
                         name="kafeelEmail"
-                        label="البريد الإلكتروني"
+                        label="البريد الإلكتروني (اختياري)"
                         type="email"
                         value={values.kafeelEmail}
                         onChange={handleChange}
@@ -625,8 +687,9 @@ const AddClient = ({ open, onClose }) => {
                     variant="contained"
                     disabled={
                       (activeStep === 1 && values.hasKafeel && Object.keys(errors).some(key => key.startsWith('kafeel'))) ||
-                      (activeStep === 0 && (!values.name || !values.phone || !values.nationalId || !values.city || 
-                        !values.district || !values.employer || !values.salary || !values.obligations))
+                      (activeStep === 0 && (!values.name || !values.phone || !values.nationalId || !values.birthDate || 
+                        !values.city || !values.district || !values.address || !values.employer || !values.salary || 
+                        !values.obligations || !values.creationReason))
                     }
                     sx={{
                       bgcolor: "#0d40a5",
@@ -637,7 +700,7 @@ const AddClient = ({ open, onClose }) => {
                   </Button>
                 ) : (
                   <Button
-                    type="submit"
+                    onClick={submitForm}
                     variant="contained"
                     disabled={isSubmitting}
                     sx={{

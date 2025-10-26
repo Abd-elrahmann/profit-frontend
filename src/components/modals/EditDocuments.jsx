@@ -19,8 +19,8 @@ import { useDropzone } from 'react-dropzone';
 import Api from '../../config/Api';
 import { saveAs } from 'file-saver';
 import { useQueryClient } from '@tanstack/react-query';
-
-const EditDocuments = ({ open, onClose, clientId, documents, showSnackbar }) => {
+import { notifySuccess, notifyError } from '../../utilities/toastify';
+const EditDocuments = ({ open, onClose, clientId, documents, hasKafeel = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [deleteFields, setDeleteFields] = useState([]);
@@ -64,7 +64,7 @@ const EditDocuments = ({ open, onClose, clientId, documents, showSnackbar }) => 
       saveAs(blob, fileName);
     } catch (error) {
       console.error('Error downloading file:', error);
-      showSnackbar('حدث خطأ أثناء تحميل الملف', 'error');
+      notifyError('حدث خطأ أثناء تحميل الملف');
     }
   };
 
@@ -74,7 +74,7 @@ const EditDocuments = ({ open, onClose, clientId, documents, showSnackbar }) => 
       printWindow?.print();
     } catch (error) {
       console.error('Error printing file:', error);
-      showSnackbar('حدث خطأ أثناء محاولة الطباعة', 'error');
+      notifyError('حدث خطأ أثناء محاولة الطباعة');
     }
   };
 
@@ -202,14 +202,18 @@ const EditDocuments = ({ open, onClose, clientId, documents, showSnackbar }) => 
         },
       });
 
-      showSnackbar('تم تحديث المستندات بنجاح', 'success');
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      notifySuccess('تم تحديث المستندات بنجاح');
       onClose();
+      await queryClient.invalidateQueries({ queryKey: ['clients'] });
+      await queryClient.invalidateQueries({ queryKey: ['client-details', clientId] });
+      
+      await queryClient.refetchQueries({ queryKey: ['client-details', clientId] });
+      
       setUploadedFiles({});
       setDeleteFields([]);
     } catch (error) {
       console.error('Error updating documents:', error);
-      showSnackbar(error.response?.data?.message || 'حدث خطأ أثناء تحديث المستندات', 'error');
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحديث المستندات');
     } finally {
       setIsSubmitting(false);
     }
@@ -293,35 +297,38 @@ const EditDocuments = ({ open, onClose, clientId, documents, showSnackbar }) => 
           </Grid>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
-
-        {/* Kafeel Documents Section */}
-        <Box>
-          <Typography variant="h6" color="primary" mb={2} mt={2}>
-          مرفقات الكفيل
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <DocumentDropzone
-                fieldName="kafeelIdImage"
-                label="صورة هوية الكفيل"
-                acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
-                existingFile={documents?.kafeelIdImage}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <DocumentDropzone
-                fieldName="kafeelWorkCard"
-                label="بطاقة عمل الكفيل"
-                acceptedTypes={{ 
-                  'application/pdf': ['.pdf'],
-                  'image/*': ['.png', '.jpg', '.jpeg'] 
-                }}
-                existingFile={documents?.kafeelWorkCard}
-              />
-            </Grid>
-          </Grid>
-        </Box>
+        {/* Kafeel Documents Section - Only show if client has kafeel */}
+        {hasKafeel && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Box>
+              <Typography variant="h6" color="primary" mb={2} mt={2}>
+                مرفقات الكفيل
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <DocumentDropzone
+                    fieldName="kafeelIdImage"
+                    label="صورة هوية الكفيل"
+                    acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
+                    existingFile={documents?.kafeelIdImage}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <DocumentDropzone
+                    fieldName="kafeelWorkCard"
+                    label="بطاقة عمل الكفيل"
+                    acceptedTypes={{ 
+                      'application/pdf': ['.pdf'],
+                      'image/*': ['.png', '.jpg', '.jpeg'] 
+                    }}
+                    existingFile={documents?.kafeelWorkCard}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          </>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2,gap: 2 }}>

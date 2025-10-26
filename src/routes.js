@@ -8,15 +8,17 @@ import {
   MdSettings as Settings,
   MdSecurity as Security,
   MdBadge as Badge,
-  MdDescription as Contract
+  MdDescription as Contract,
 } from 'react-icons/md';
+import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Employees = React.lazy(() => import('./pages/Employees/Employees'));
 const Roles = React.lazy(() => import('./pages/Roles/Roles'));
 const Clients = React.lazy(() => import('./pages/Clients/Clients'));
-const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTemplates'));
+const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTemplates'));  
+const Investors = React.lazy(() => import('./pages/Investors/Investors'));
 const routes = [
   // Public routes
   {
@@ -76,6 +78,16 @@ const routes = [
     label: 'القوالب القانونية',
     icon: Contract,
     module: 'contract-templates',
+    requiresPermissions: true
+  },
+  {
+    path: '/investors',
+    element: Investors,
+    protected: true,
+    showInSidebar: true,
+    label: 'المستثمرين',
+    icon: TrendingUp,
+    module: 'investors',
     requiresPermissions: true
   },
 ];

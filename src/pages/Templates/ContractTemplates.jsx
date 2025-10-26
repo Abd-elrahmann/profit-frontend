@@ -13,18 +13,19 @@ import {
   Card,
   CardContent,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import RestoreIcon from "@mui/icons-material/Restore";
 import ReactQuillWrapper from "../../components/ReactQuillWrapper";
-
-// Import the contract components
+import { notifySuccess, notifyError } from "../../utilities/toastify";
 import MudarabahContract from "../../components/Contracts/MudarabahContract";
 import PromissoryNote from "../../components/Contracts/PromissoryNote";
 import DebtAcknowledgment from "../../components/Contracts/DebtAcknowledgment";
 import ReceiptVoucher from "../../components/Contracts/ReceiptVoucher";
 import PaymentVoucher from "../../components/Contracts/PaymentVoucher";
-
+import Api, { handleApiError } from "../../config/Api";
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
   const [templates, setTemplates] = useState({
@@ -34,6 +35,17 @@ export default function ContractTemplates() {
     receiptVoucher: "",
     paymentVoucher: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Map tab values to API template names
+  const templateNameMap = React.useMemo(() => ({
+    "mudarabah": "MUDARABAH",
+    "promissory-note": "PROMISSORY_NOTE", 
+    "debt-acknowledgment": "DEBT_ACKNOWLEDGMENT",
+    "receipt-voucher": "RECEIPT_VOUCHER",
+    "payment-voucher": "PAYMENT_VOUCHER"
+  }), []);
 
   // Variables for each contract type
   const contractVariables = {
@@ -106,21 +118,129 @@ export default function ContractTemplates() {
     ],
   };
 
+  // Get default template content
+  const getDefaultTemplate = React.useCallback((templateName) => {
+    switch (templateName) {
+      case "MUDARABAH":
+        return MudarabahContract();
+      case "PROMISSORY_NOTE":
+        return PromissoryNote();
+      case "DEBT_ACKNOWLEDGMENT":
+        return DebtAcknowledgment();
+      case "RECEIPT_VOUCHER":
+        return ReceiptVoucher();
+      case "PAYMENT_VOUCHER":
+        return PaymentVoucher();
+      default:
+        return "";
+    }
+  }, []);
+
+  // Fetch template by name from API
+  const fetchTemplateFromAPI = React.useCallback(async (templateName) => {
+    try {
+      const response = await Api.get(`/api/templates/${templateName}`);
+      // If API returns content, use it, otherwise use default frontend template
+      if (response.data.content && response.data.content.trim() !== "") {
+        return response.data.content;
+      } else {
+        console.log(`Template ${templateName} found in API but empty, using frontend default`);
+        return getDefaultTemplate(templateName);
+      }
+    } catch {
+      console.log(`Template ${templateName} not found in API, using frontend default`);
+      return getDefaultTemplate(templateName);
+    }
+  }, [getDefaultTemplate]);
+
   // Copy variable to clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-      // You can add a toast notification here
-      console.log('تم نسخ المتغير:', text);
+      notifySuccess('تم نسخ المتغير:', text);
     });
   };
+
+  // Load all templates from API
+  const loadTemplates = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const templatePromises = Object.keys(templateNameMap).map(async (key) => {
+        const templateName = templateNameMap[key];
+        const content = await fetchTemplateFromAPI(templateName);
+        return { key, content };
+      });
+
+      const results = await Promise.all(templatePromises);
+      const newTemplates = {};
+      
+      results.forEach(({ key, content }) => {
+        // Map tab keys to template state keys
+        const stateKey = key === "promissory-note" ? "promissoryNote" :
+                        key === "debt-acknowledgment" ? "debtAcknowledgment" :
+                        key === "receipt-voucher" ? "receiptVoucher" :
+                        key === "payment-voucher" ? "paymentVoucher" :
+                        key;
+        newTemplates[stateKey] = content;
+      });
+
+      setTemplates(newTemplates);
+    } catch (error) {
+      notifyError("خطأ في تحميل القوالب");
+      handleApiError(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [templateNameMap, fetchTemplateFromAPI]);
 
   // Render variables list component
   const VariablesList = ({ variables }) => (
     <Card sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
       <CardContent>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#2d3748' }}>
           المتغيرات المتاحة
         </Typography>
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<RestoreIcon sx={{marginLeft:'10px'}} />}
+              sx={{ 
+                px: 3, 
+                py: 1.2, 
+                mt: 2, 
+                fontWeight: "bold",
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: '#f5f5f5'
+                }
+              }}
+              onClick={handleResetToDefault}
+            >
+              إعادة تعيين افتراضي
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{marginLeft:'10px'}} />}
+              disabled={saving}
+              sx={{ 
+                px: 4, 
+                py: 1.2, 
+                mt: 2, 
+                fontWeight: "bold",
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: '#1565c0'
+                }
+              }}
+              onClick={handleSave}
+            >
+              {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+            </Button>
+          </Box>
+        </Box>
         <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
           انقر على أي متغير لنسخه واستخدامه في القالب
         </Typography>
@@ -163,21 +283,40 @@ export default function ContractTemplates() {
     </Card>
   );
 
-  // Initialize templates with component content
+  // Initialize templates by loading from API
   useEffect(() => {
-    setTemplates({
-      mudarabah: MudarabahContract(),
-      promissoryNote: PromissoryNote(),
-      debtAcknowledgment: DebtAcknowledgment(),
-      receiptVoucher: ReceiptVoucher(),
-      paymentVoucher: PaymentVoucher(),
-    });
-  }, []);
+    loadTemplates();
+  }, [loadTemplates]);
 
-  const handleSave = () => {
-    console.log("Saved templates:", templates);
-    // TODO: send POST request to backend API to save templates
-    alert("تم حفظ القوالب بنجاح");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Save current active template
+      const currentTemplateKey = activeTab;
+      const templateName = templateNameMap[currentTemplateKey];
+      
+      // Get the content for the current template
+      const stateKey = currentTemplateKey === "promissory-note" ? "promissoryNote" :
+                      currentTemplateKey === "debt-acknowledgment" ? "debtAcknowledgment" :
+                      currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
+                      currentTemplateKey === "payment-voucher" ? "paymentVoucher" :
+                      currentTemplateKey;
+      
+      const templateContent = templates[stateKey];
+
+      await Api.post("/api/templates", {
+        name: templateName,
+        description: `Template for ${templateName} agreements`,
+        content: templateContent,
+      });
+      
+      notifySuccess("تم حفظ القالب بنجاح");
+    } catch (error) {
+      notifyError("خطأ في حفظ القالب");
+      handleApiError(error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleTemplateChange = (templateKey, value) => {
@@ -185,6 +324,26 @@ export default function ContractTemplates() {
       ...prev,
       [templateKey]: value
     }));
+  };
+
+  const handleResetToDefault = () => {
+    const currentTemplateKey = activeTab;
+    const templateName = templateNameMap[currentTemplateKey];
+    const defaultContent = getDefaultTemplate(templateName);
+    
+    // Get the content for the current template
+    const stateKey = currentTemplateKey === "promissory-note" ? "promissoryNote" :
+                    currentTemplateKey === "debt-acknowledgment" ? "debtAcknowledgment" :
+                    currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
+                    currentTemplateKey === "payment-voucher" ? "paymentVoucher" :
+                    currentTemplateKey;
+    
+    setTemplates(prev => ({
+      ...prev,
+      [stateKey]: defaultContent
+    }));
+    
+    notifySuccess("تم إعادة تعيين القالب إلى النسخة الافتراضية");
   };
 
   return (
@@ -222,88 +381,77 @@ export default function ContractTemplates() {
 
             {/* Content */}
             <Box sx={{ mt: 3 }}>
-              {activeTab === "mudarabah" && (
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                  <CircularProgress size={40} />
+                  <Typography sx={{ ml: 2 }}>جاري تحميل القوالب...</Typography>
+                </Box>
+              ) : (
                 <>
-                  <VariablesList variables={contractVariables.mudarabah} />
-                  <ReactQuillWrapper
-                    theme="snow"
-                    value={templates.mudarabah}
-                    onChange={(value) => handleTemplateChange("mudarabah", value)}
-                    placeholder="أدخل نص قالب عقد المضاربة هنا..."
-                    style={{ height: "600px", marginBottom: "40px" }}
-                  />
-                </>
+              {activeTab === "mudarabah" && (
+                    <>
+                      <VariablesList variables={contractVariables.mudarabah} />
+                      <ReactQuillWrapper
+                  theme="snow"
+                  value={templates.mudarabah}
+                        onChange={(value) => handleTemplateChange("mudarabah", value)}
+                  placeholder="أدخل نص قالب عقد المضاربة هنا..."
+                        style={{ height: "600px", marginBottom: "40px" }}
+                />
+                    </>
               )}
               {activeTab === "promissory-note" && (
-                <>
-                  <VariablesList variables={contractVariables["promissory-note"]} />
-                  <ReactQuillWrapper
-                    theme="snow"
-                    value={templates.promissoryNote}
-                    onChange={(value) => handleTemplateChange("promissoryNote", value)}
-                    placeholder="أدخل نص قالب سند لأمر هنا..."
-                    style={{ height: "600px", marginBottom: "40px" }}
-                  />
-                </>
+                    <>
+                      <VariablesList variables={contractVariables["promissory-note"]} />
+                      <ReactQuillWrapper
+                  theme="snow"
+                  value={templates.promissoryNote}
+                        onChange={(value) => handleTemplateChange("promissoryNote", value)}
+                  placeholder="أدخل نص قالب سند لأمر هنا..."
+                        style={{ height: "600px", marginBottom: "40px" }}
+                />
+                    </>
               )}
               {activeTab === "debt-acknowledgment" && (
-                <>
-                  <VariablesList variables={contractVariables["debt-acknowledgment"]} />
-                  <ReactQuillWrapper
-                    theme="snow"
-                    value={templates.debtAcknowledgment}
-                    onChange={(value) => handleTemplateChange("debtAcknowledgment", value)}
-                    style={{ height: "600px", marginBottom: "40px" }}
-                  />
-                </>
+                    <>
+                      <VariablesList variables={contractVariables["debt-acknowledgment"]} />
+                      <ReactQuillWrapper
+                  theme="snow"
+                  value={templates.debtAcknowledgment}
+                        onChange={(value) => handleTemplateChange("debtAcknowledgment", value)}
+                        style={{ height: "600px", marginBottom: "40px" }}
+                      />
+                    </>
               )}
               {activeTab === "receipt-voucher" && (
-                <>
-                  <VariablesList variables={contractVariables["receipt-voucher"]} />
-                  <ReactQuillWrapper
-                    theme="snow"
-                    value={templates.receiptVoucher}
-                    onChange={(value) => handleTemplateChange("receiptVoucher", value)}
-                    placeholder="أدخل نص قالب سند القبض هنا..."
-                    style={{ height: "600px", marginBottom: "40px" }}
-                  />
-                </>
+                    <>
+                      <VariablesList variables={contractVariables["receipt-voucher"]} />
+                      <ReactQuillWrapper
+                  theme="snow"
+                  value={templates.receiptVoucher}
+                        onChange={(value) => handleTemplateChange("receiptVoucher", value)}
+                  placeholder="أدخل نص قالب سند القبض هنا..."
+                        style={{ height: "600px", marginBottom: "40px" }}
+                />
+                    </>
               )}
               {activeTab === "payment-voucher" && (
-                <>
-                  <VariablesList variables={contractVariables["payment-voucher"]} />
-                  <ReactQuillWrapper
-                    theme="snow"
-                    value={templates.paymentVoucher}
-                    onChange={(value) => handleTemplateChange("paymentVoucher", value)}
-                    placeholder="أدخل نص قالب سند الصرف هنا..."
-                    style={{ height: "600px", marginBottom: "40px" }}
-                  />
+                    <>
+                      <VariablesList variables={contractVariables["payment-voucher"]} />
+                      <ReactQuillWrapper
+                  theme="snow"
+                  value={templates.paymentVoucher}
+                        onChange={(value) => handleTemplateChange("paymentVoucher", value)}
+                  placeholder="أدخل نص قالب سند الصرف هنا..."
+                        style={{ height: "600px", marginBottom: "40px" }}
+                />
+                    </>
+                  )}
                 </>
               )}
             </Box>
 
-            {/* Save Button */}
-            <Box sx={{ display: "flex", justifyContent: "end", mt: 3 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<SaveIcon sx={{marginLeft:'10px'}} />}
-                sx={{ 
-                  px: 4, 
-                  py: 1.2, 
-                  mt: 2, 
-                  fontWeight: "bold",
-                  borderRadius: '10px',
-                  '&:hover': {
-                    backgroundColor: '#1565c0'
-                  }
-                }}
-                onClick={handleSave}
-              >
-                حفظ التغييرات
-              </Button>
-            </Box>
+          
           </Paper>
         </Box>
       </Box>

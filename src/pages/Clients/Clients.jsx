@@ -27,7 +27,7 @@ import {
   ChevronRight,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from 'lodash';
 import AddClient from "../../components/modals/AddClient";
 import DeleteModal from "../../components/modals/DeleteModal";
@@ -78,6 +78,8 @@ export default function Clients() {
   const [editMode, setEditMode] = useState(false);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editFormData, setEditFormData] = useState({});
+  const queryClient = useQueryClient();
 
   const { data: clientsData, isLoading: isClientsLoading, refetch } = useQuery({
     queryKey: ["clients", currentPage, search, selectedStatus],
@@ -94,7 +96,7 @@ export default function Clients() {
 
   const debouncedSearch = debounce((value) => {
     setSearch(value);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, 500);
 
   const handleSearchChange = (event) => {
@@ -112,6 +114,27 @@ export default function Clients() {
   const handleClientSelect = (client) => {
     setSelectedClient(client);
     setEditMode(false);
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      await Api.patch(`/api/clients/${selectedClient.id}/client-data`, editFormData);
+      queryClient.invalidateQueries({ queryKey: ['client-details', selectedClient.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      notifySuccess('تم تحديث بيانات العميل بنجاح');
+      
+      setEditMode(false);
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحديث البيانات');
+      handleApiError(error);
+    }
   };
 
   const handleAddClient = () => {
@@ -160,12 +183,26 @@ export default function Clients() {
     }
   };
 
-  // Set first client as selected when data loads
   useEffect(() => {
     if (clientsData?.clients?.length > 0 && !selectedClient) {
       setSelectedClient(clientsData.clients[0].client);
     }
   }, [clientsData, selectedClient]);
+
+  useEffect(() => {
+    if (clientDetails?.client) {
+      setEditFormData({
+        name: clientDetails.client.name || '',
+        phone: clientDetails.client.phone || '',
+        city: clientDetails.client.city || '',
+        district: clientDetails.client.district || '',
+        address: clientDetails.client.address || '',
+        employer: clientDetails.client.employer || '',
+        creationReason: clientDetails.client.creationReason || '',
+        notes: clientDetails.client.notes || '',
+      });
+    }
+  }, [clientDetails]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -450,6 +487,7 @@ export default function Clients() {
                       startIcon={<Save sx={{marginLeft: '10px'}} />}
                       sx={{ bgcolor: "#0d40a5", "&:hover": { bgcolor: "#0b3589" } }}
                       disabled={!editMode}
+                      onClick={handleSaveChanges}
                     >
                       حفظ التغييرات
                     </Button>
@@ -482,7 +520,8 @@ export default function Clients() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>الاسم الكامل</Typography>
                       <TextField 
-                        value={clientDetails.client.name} 
+                        value={editMode ? editFormData.name : clientDetails.client.name} 
+                        onChange={(e) => handleInputChange('name', e.target.value)}
                         fullWidth
                         disabled={!editMode}
                         sx={{
@@ -497,9 +536,24 @@ export default function Clients() {
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
+                      <TextField 
+                        value={editMode ? editFormData.email : clientDetails.client.email || 'لا يوجد بريد إلكتروني'} 
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>رقم الهوية الوطنية</Typography>
                       <TextField 
-                        value={clientDetails.client.nationalId} 
+                        value={clientDetails.client.nationalId } 
                         fullWidth
                         disabled
                         sx={{
@@ -513,7 +567,25 @@ export default function Clients() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>رقم الجوال</Typography>
                       <TextField
-                        value={clientDetails.client.phone}
+                        value={editMode ? editFormData.phone : clientDetails.client.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                            '&:hover fieldset': {
+                              borderColor: '#0d40a5',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الميلاد</Typography>
+                      <TextField
+                        value={clientDetails.client.birthDate ? new Date(clientDetails.client.birthDate).toLocaleDateString('en-US') : ''}
                         fullWidth
                         disabled={!editMode}
                         sx={{
@@ -530,7 +602,8 @@ export default function Clients() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>المدينة</Typography>
                       <TextField
-                        value={clientDetails.client.city}
+                        value={editMode ? editFormData.city : clientDetails.client.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
                         fullWidth
                         disabled={!editMode}
                         sx={{
@@ -547,7 +620,26 @@ export default function Clients() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>الحي</Typography>
                       <TextField
-                        value={clientDetails.client.district}
+                        value={editMode ? editFormData.district : clientDetails.client.district}
+                        onChange={(e) => handleInputChange('district', e.target.value)}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                            '&:hover fieldset': {
+                              borderColor: '#0d40a5',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>العنوان التفصيلي</Typography>
+                      <TextField
+                        value={editMode ? editFormData.address : (clientDetails.client.address || '')}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
                         fullWidth
                         disabled={!editMode}
                         sx={{
@@ -564,7 +656,26 @@ export default function Clients() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>جهة العمل</Typography>
                       <TextField
-                        value={clientDetails.client.employer}
+                        value={editMode ? editFormData.employer : clientDetails.client.employer}
+                        onChange={(e) => handleInputChange('employer', e.target.value)}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                            '&:hover fieldset': {
+                              borderColor: '#0d40a5',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>سبب الإنشاء</Typography>
+                      <TextField
+                        value={editMode ? editFormData.creationReason : (clientDetails.client.creationReason || '')}
+                        onChange={(e) => handleInputChange('creationReason', e.target.value)}
                         fullWidth
                         disabled={!editMode}
                         sx={{
@@ -579,6 +690,29 @@ export default function Clients() {
                       />
                     </Grid>
                   </Grid>
+                </Paper>
+                
+                {/* Notes Section */}
+                <Paper sx={{ p: 3, mt: 3 }}>
+                  <Typography variant="h6" mb={3}>ملاحظات</Typography>
+                  <TextField
+                    value={editMode ? editFormData.notes : (clientDetails.client.notes || '')}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={3}
+                    disabled={!editMode}
+                    placeholder="لا توجد ملاحظات"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: editMode ? '#fff' : '#f9fafb',
+                        borderRadius: '6px',
+                        '&:hover fieldset': {
+                          borderColor: '#0d40a5',
+                        },
+                      },
+                    }}
+                  />
                 </Paper>
               </Box>
             )}
@@ -623,95 +757,101 @@ export default function Clients() {
             )}
 
             {/* الكفيل */}
-            {tab === 2 && clientDetails.kafeel && (
+            {tab === 2 && (
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" mb={3}>معلومات الكفيل</Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>اسم الكفيل</Typography>
-                    <TextField 
-                      value={clientDetails.kafeel.name} 
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
+                {clientDetails.kafeel ? (
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>اسم الكفيل</Typography>
+                      <TextField 
+                        value={clientDetails.kafeel.name} 
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>رقم هوية الكفيل</Typography>
+                      <TextField 
+                        value={clientDetails.kafeel.nationalId} 
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>رقم الجوال</Typography>
+                      <TextField
+                        value={clientDetails.kafeel.phone}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
+                      <TextField
+                        value={clientDetails.kafeel.email}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>جهة العمل</Typography>
+                      <TextField
+                        value={clientDetails.kafeel.employer}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>الراتب</Typography>
+                      <TextField
+                        value={clientDetails.kafeel.salary?.toLocaleString()}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>رقم هوية الكفيل</Typography>
-                    <TextField 
-                      value={clientDetails.kafeel.nationalId} 
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>رقم الجوال</Typography>
-                    <TextField
-                      value={clientDetails.kafeel.phone}
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
-                    <TextField
-                      value={clientDetails.kafeel.email}
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>جهة العمل</Typography>
-                    <TextField
-                      value={clientDetails.kafeel.employer}
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>الراتب</Typography>
-                    <TextField
-                      value={clientDetails.kafeel.salary?.toLocaleString()}
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                </Grid>
+                ) : (
+                  <Typography variant="body1" color="text.secondary" align="center">
+                    لا يوجد كفيل لهذا العميل
+                  </Typography>
+                )}
               </Paper>
             )}
 
@@ -798,6 +938,7 @@ export default function Clients() {
         onClose={() => setIsDocumentsModalOpen(false)}
         clientId={selectedClient?.id}
         documents={clientDetails?.documents?.[0]}
+        hasKafeel={!!clientDetails?.kafeel}
       />
 
     </Box>
