@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,9 +11,12 @@ import {
   Typography,
   CircularProgress,
   Divider,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import Api, { handleApiError } from "../../config/Api";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
+import ContractGenerator from "../ContractGenerator";
 
 const AddInvestor = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -27,6 +30,10 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [generateContract, setGenerateContract] = useState(true);
+  const [savedInvestorData, setSavedInvestorData] = useState(null);
+  const [mudarabahTemplate, setMudarabahTemplate] = useState('');
+  const contractGeneratorRef = useRef(null);
 
   const handleChange = (field) => (event) => {
     setFormData(prev => ({
@@ -70,26 +77,127 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Fetch Mudarabah template when modal opens
+  React.useEffect(() => {
+    if (open && generateContract) {
+      fetchMudarabahTemplate();
+    }
+  }, [open, generateContract]);
+
+  const fetchMudarabahTemplate = async () => {
+    try {
+      const response = await Api.get('/api/templates/mudarabah');
+      setMudarabahTemplate(response.data.content || '');
+    } catch (error) {
+      console.warn('Could not fetch Mudarabah template:', error);
+      // Use default template if API fails
+      setMudarabahTemplate(`
+        <div dir="rtl" style="font-family: 'Noto Sans Arabic', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; line-height: 1.8;">
+          <h1 style="text-align: center; color: #1976d2; margin-bottom: 40px; font-size: 28px; border-bottom: 2px solid #1976d2; padding-bottom: 10px;">
+            عقد المضاربة الشرعية
+          </h1>
+          
+          <div style="margin-bottom: 30px; background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #1976d2; margin-bottom: 15px;">بيانات المستثمر (المضارب):</h3>
+            <p><strong>الاسم:</strong> {{اسم_العميل}}</p>
+            <p><strong>رقم الهوية:</strong> {{رقم_هوية_العميل}}</p>
+            <p><strong>العنوان:</strong> {{عنوان_العميل}}</p>
+            <p><strong>الهاتف:</strong> {{هاتف_العميل}}</p>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <p style="font-size: 16px; text-align: justify;">
+              أقر أنا <strong style="color: #1976d2;">{{اسم_العميل}}</strong>، حامل الهوية الوطنية رقم 
+              <strong style="color: #1976d2;">{{رقم_هوية_العميل}}</strong>، بأنني قد استلمت من شركة الاستثمار الإسلامية 
+              مبلغاً وقدره <strong style="color: #d32f2f;">{{رأس_المال}} ريال سعودي</strong> 
+              (<strong>{{رأس_المال_كتابة}} ريال سعودي فقط لا غير</strong>) كرأس مال للمضاربة الشرعية.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 30px; background-color: #e3f2fd; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #1976d2; margin-bottom: 15px;">شروط المضاربة:</h3>
+            <ul style="list-style-type: arabic-indic;">
+              <li>نسبة أرباح المنشأة: <strong style="color: #d32f2f;">{{نسبة_أرباح_المنشأة}}%</strong></li>
+              <li>نسبة أرباح المستثمر: <strong style="color: #d32f2f;">{{نسبة_أرباح_المستثمر}}%</strong></li>
+              <li>يتم توزيع الأرباح حسب النسب المتفق عليها</li>
+              <li>الخسائر على رأس المال فقط</li>
+            </ul>
+          </div>
+
+          <p style="font-size: 16px; text-align: justify; margin-bottom: 20px;">
+            وأتعهد بالعمل على استثمار هذا المبلغ وفقاً لأحكام الشريعة الإسلامية، والالتزام بالضوابط الشرعية 
+            في جميع المعاملات، وعدم الدخول في أي استثمارات محرمة شرعاً.
+          </p>
+
+          <p style="font-size: 14px; color: #666; text-align: center; margin: 40px 0;">
+            حُرر هذا العقد في تاريخ <strong>{{التاريخ_الميلادي}}</strong> الموافق <strong>{{التاريخ_الهجري}}</strong>
+          </p>
+
+          <div style="display: flex; justify-content: space-between; margin-top: 60px;">
+            <div style="text-align: center; border: 1px solid #ddd; padding: 20px; border-radius: 8px; width: 45%;">
+              <p style="margin-bottom: 40px; font-weight: bold;">توقيع المستثمر (المضارب)</p>
+              <p style="border-top: 1px solid #333; padding-top: 10px; font-weight: bold;">{{اسم_العميل}}</p>
+            </div>
+            <div style="text-align: center; border: 1px solid #ddd; padding: 20px; border-radius: 8px; width: 45%;">
+              <p style="margin-bottom: 40px; font-weight: bold;">توقيع رب المال</p>
+              <p style="border-top: 1px solid #333; padding-top: 10px; font-weight: bold;">شركة الاستثمار الإسلامية</p>
+            </div>
+          </div>
+        </div>
+      `);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      await Api.post("/api/partners", {
+      const response = await Api.post("/api/partners", {
         ...formData,
         orgProfitPercent: parseInt(formData.orgProfitPercent),
         capitalAmount: parseInt(formData.capitalAmount),
       });
       
+      const newInvestorData = {
+        ...response.data.partner,
+        partnerProfitPercent: response.data.partnerProfitPercent || (100 - parseInt(formData.orgProfitPercent))
+      };
+      
       notifySuccess('تم إضافة المستثمر بنجاح');
-      onSuccess();
-      handleClose();
+      
+      // If contract generation is enabled, show contract preview
+      if (generateContract && mudarabahTemplate) {
+        console.log('Setting investor data for contract generation:', newInvestorData);
+        console.log('Template content length:', mudarabahTemplate.length);
+        
+        setSavedInvestorData(newInvestorData);
+        // Trigger contract generation after a short delay to ensure component is mounted
+        setTimeout(() => {
+          if (contractGeneratorRef.current) {
+            console.log('Triggering contract generation...');
+            contractGeneratorRef.current.generateContract();
+          } else {
+            console.error('Contract generator ref not available');
+          }
+        }, 500);
+      } else {
+        // Close modal and refresh data
+        onSuccess();
+        handleClose();
+      }
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء إضافة المستثمر');
       handleApiError(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContractGenerated = () => {
+    // Contract has been generated and saved
+    onSuccess();
+    handleClose();
   };
 
   const handleClose = () => {
@@ -103,6 +211,8 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       capitalAmount: "",
     });
     setErrors({});
+    setSavedInvestorData(null);
+    setMudarabahTemplate('');
     onClose();
   };
 
@@ -240,6 +350,22 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
               />
             </Grid>
           </Grid>
+
+          <Typography variant="subtitle1" fontWeight="bold" mt={4} mb={2}>
+            خيارات إضافية
+          </Typography>
+          
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={generateContract}
+                onChange={(e) => setGenerateContract(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="توليد عقد المضاربة تلقائياً بعد الحفظ"
+            sx={{ mb: 2 }}
+          />
         </Box>
       </DialogContent>
 
@@ -275,6 +401,17 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
           {loading ? <CircularProgress size={24} color="inherit" /> : 'إضافة'}
         </Button>
       </DialogActions>
+
+      {/* Contract Generator Component */}
+      {savedInvestorData && mudarabahTemplate && (
+        <ContractGenerator
+          ref={contractGeneratorRef}
+          investorData={savedInvestorData}
+          templateContent={mudarabahTemplate}
+          onContractGenerated={handleContractGenerated}
+          contractType="MUDARABAH"
+        />
+      )}
     </Dialog>
   );
 };

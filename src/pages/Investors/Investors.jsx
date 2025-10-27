@@ -34,6 +34,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from 'lodash';
 import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
+import FileUploadDropzone from "../../components/FileUploadDropzone";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
@@ -141,14 +142,18 @@ export default function Investors() {
   const handleDeleteInvestor = async (investorId) => {
     try {
       await Api.delete(`/api/partners/${investorId}`);
-      notifySuccess('تم حذف المستثمر بنجاح');
-      refetch();
+      
       if (selectedInvestor?.id === investorId) {
         setSelectedInvestor(null);
       }
+      
       setIsDeleteModalOpen(false);
       setInvestorToDelete(null);
-    } catch (error) {
+      
+      await refetch();
+      
+      notifySuccess('تم حذف المستثمر بنجاح');
+    } catch (error) { 
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف المستثمر');
       handleApiError(error);
     }
@@ -162,6 +167,15 @@ export default function Investors() {
   useEffect(() => {
     if (investorsData?.partners?.length > 0 && !selectedInvestor) {
       setSelectedInvestor(investorsData.partners[0]);
+    }
+    else if (selectedInvestor && investorsData?.partners?.length > 0) {
+      const stillExists = investorsData.partners.some(investor => investor.id === selectedInvestor.id);
+      if (!stillExists) {
+        setSelectedInvestor(investorsData.partners[0]);
+      }
+    }
+    else if (selectedInvestor && (!investorsData?.partners || investorsData.partners.length === 0)) {
+      setSelectedInvestor(null);
     }
   }, [investorsData, selectedInvestor]);
 
@@ -732,45 +746,63 @@ export default function Investors() {
             {/* المستندات */}
             {tab === 2 && (
               <Box>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6">المستندات المرفوعة</Typography>
-                </Box>
-                {investorDetails.mudarabahFileUrl ? (
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <CheckCircle color="success" fontSize="small" />
-                          <Box>
-                            <Typography fontWeight="500">عقد المضاربة</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {investorDetails.mudarabahFileUrl.split('/').pop()}
-                            </Typography>
+                {/* Existing Documents */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>المستندات المرفوعة</Typography>
+                  {investorDetails.mudarabahFileUrl ? (
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <CheckCircle color="success" fontSize="small" />
+                            <Box>
+                              <Typography fontWeight="500">عقد المضاربة</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {investorDetails.mudarabahFileUrl.split('/').pop()}
+                              </Typography>
+                            </Box>
                           </Box>
-                        </Box>
-                        <Box>
-                          <IconButton onClick={() => window.open(investorDetails.mudarabahFileUrl, '_blank')}>
-                            <Print />
-                          </IconButton>
-                          <IconButton 
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = investorDetails.mudarabahFileUrl;
-                              link.download = investorDetails.mudarabahFileUrl.split('/').pop();
-                              link.click();
-                            }}
-                          >
-                            <Download />
-                          </IconButton>
-                        </Box>
-                      </Paper>
+                          <Box>
+                            <IconButton onClick={() => window.open(investorDetails.mudarabahFileUrl, '_blank')}>
+                              <Print />
+                            </IconButton>
+                            <IconButton 
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = investorDetails.mudarabahFileUrl;
+                                link.download = investorDetails.mudarabahFileUrl.split('/').pop();
+                                link.click();
+                              }}
+                            >
+                              <Download />
+                            </IconButton>
+                          </Box>
+                        </Paper>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                ) : (
-                  <Paper sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography color="text.secondary">لا توجد مستندات مرفوعة</Typography>
-                  </Paper>
-                )}
+                  ) : (
+                    <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
+                      <Typography color="text.secondary">لا توجد مستندات مرفوعة</Typography>
+                    </Paper>
+                  )}
+                </Box>
+
+                {/* File Upload Dropzone */}
+                <Divider sx={{ my: 3 }} />
+                <FileUploadDropzone
+                  investorId={selectedInvestor.id}
+                  onUploadSuccess={(files) => {
+                    // Refresh investor details to show new files
+                    queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+                    notifySuccess(`تم رفع ${files.length} ملف بنجاح`);
+                  }}
+                  onUploadError={(error) => {
+                    console.error('Upload error:', error);
+                  }}
+                  title="رفع مستندات إضافية"
+                  description="يمكنك رفع عقود أو مستندات إضافية للمستثمر"
+                  multiple={true}
+                />
               </Box>
             )}
           </Box>
@@ -796,8 +828,18 @@ export default function Investors() {
 
       <DeleteModal
         open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onDelete={() => handleDeleteInvestor(investorToDelete?.id)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setInvestorToDelete(null);
+        }}
+        onConfirm={() => {
+          if (investorToDelete?.id) {
+            console.log('Delete button clicked, investor ID:', investorToDelete.id);
+            handleDeleteInvestor(investorToDelete.id);
+          } else {
+            console.error('No investor ID found for deletion');
+          }
+        }}
         title="حذف المستثمر"
         message={`هل أنت متأكد من حذف المستثمر ${investorToDelete?.name}؟`}
         ButtonText="حذف"
