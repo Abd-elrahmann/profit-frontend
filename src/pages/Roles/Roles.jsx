@@ -224,7 +224,7 @@ export default function Roles() {
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onDelete={() => handleDelete(selectedRoleId)}
+        onConfirm={() => handleDelete(selectedRoleId)}
         title="حذف الدور"
         message="هل أنت متأكد من حذف هذا الدور؟"
         ButtonText="حذف"

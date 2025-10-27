@@ -381,27 +381,12 @@ export default function Investors() {
           {investorsData && investorsData.totalPages > 1 && (
             <Box sx={{ 
               display: 'flex', 
-              justifyContent: 'space-between', 
+              justifyContent: 'center', 
               alignItems: 'center',
               p: 2, 
+              gap: 2,
               borderTop: '1px solid #eee',
-              bgcolor: '#fafafa'
             }}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ChevronRight />}
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(null, currentPage - 1)}
-                sx={{
-                  minWidth: '80px',
-                  '&:disabled': {
-                    opacity: 0.5
-                  }
-                }}
-              >
-                السابق
-              </Button>
 
               <Pagination
                 count={investorsData.totalPages}
@@ -417,22 +402,6 @@ export default function Investors() {
                   }
                 }}
               />
-
-              <Button
-                variant="outlined"
-                size="small"
-                endIcon={<ChevronLeft />}
-                disabled={currentPage === investorsData.totalPages}
-                onClick={() => handlePageChange(null, currentPage + 1)}
-                sx={{
-                  minWidth: '80px',
-                  '&:disabled': {
-                    opacity: 0.5
-                  }
-                }}
-              >
-                التالي
-              </Button>
             </Box>
           )}
         </Box>

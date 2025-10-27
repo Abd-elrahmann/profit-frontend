@@ -25,23 +25,30 @@ const ContractPreview = ({
     <Dialog 
       open={open} 
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="sm"
+      fullScreen={true}
       fullWidth
       dir="rtl"
       PaperProps={{
         sx: {
           borderRadius: 2,
-          maxHeight: '90vh'
+          maxHeight: '100vh'
         }
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        pb: 1,
-        borderBottom: '1px solid #e0e0e0'
-      }}>
+      <DialogTitle 
+        className="no-print"
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          pb: 1,
+          borderBottom: '1px solid #e0e0e0',
+          '@media print': {
+            display: 'none !important'
+          }
+        }}
+      >
         <Typography variant="h6" fontWeight="bold">
           {contractTitle}
         </Typography>
@@ -50,7 +57,13 @@ const ContractPreview = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0 }}>
+      <DialogContent sx={{ 
+        p: 0,
+        '@media print': {
+          p: 0,
+          m: 0
+        }
+      }}>
         <Paper 
           id="contract-preview"
           sx={{ 
@@ -59,7 +72,14 @@ const ContractPreview = ({
             minHeight: '500px',
             bgcolor: 'white',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e0e0e0'
+            border: '1px solid #e0e0e0',
+            '@media print': {
+              m: 0,
+              p: 2,
+              boxShadow: 'none',
+              border: 'none',
+              minHeight: 'auto'
+            }
           }}
         >
           {contractHtml ? (
@@ -105,14 +125,20 @@ const ContractPreview = ({
         </Paper>
       </DialogContent>
 
-      <Divider />
+      <Divider className="no-print" />
       
-      <DialogActions sx={{ 
-        p: 3, 
-        gap: 2,
-        flexDirection: 'row-reverse',
-        bgcolor: '#fafafa'
-      }}>
+      <DialogActions 
+        className="no-print"
+        sx={{ 
+          p: 3, 
+          gap: 2,
+          flexDirection: 'row-reverse',
+          bgcolor: '#fafafa',
+          '@media print': {
+            display: 'none !important'
+          }
+        }}
+      >
         <Button 
           onClick={onClose}
           disabled={loading}
@@ -132,7 +158,7 @@ const ContractPreview = ({
         
         <Button
           variant="outlined"
-          startIcon={<Print />}
+          startIcon={<Print sx={{marginLeft: '10px'}} />}
           onClick={() => window.print()}
           disabled={loading || !contractHtml}
           sx={{ 
@@ -150,7 +176,7 @@ const ContractPreview = ({
         
         <Button
           variant="contained"
-          startIcon={<Download />}
+          startIcon={<Download sx={{marginLeft: '10px'}} />}
           onClick={onGeneratePDF}
           disabled={loading || !contractHtml}
           sx={{

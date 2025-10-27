@@ -18,27 +18,27 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .required('الاسم مطلوب')
-    .min(3, 'الاسم يجب أن يكون 3 أحرف على الأقل'),
-  email: Yup.string()
-    .email('البريد الإلكتروني غير صالح')
-    .when('mode', {
-      is: 'add',
-      then: Yup.string().required('البريد الإلكتروني مطلوب')
-    }),
-  password: Yup.string()
-    .when('mode', {
-      is: 'add', 
-      then: Yup.string()
-        .required('كلمة المرور مطلوبة')
-        .min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
-    }),
-  phone: Yup.string()
-    .required('رقم الهاتف مطلوب')
-    .matches(/^[0-9]+$/, 'رقم الهاتف يجب أن يحتوي على أرقام فقط')
-});
+// Create dynamic validation schema based on mode
+const createValidationSchema = (mode) => {
+  return Yup.object().shape({
+    name: Yup.string()
+      .required('الاسم مطلوب')
+      .min(3, 'الاسم يجب أن يكون 3 أحرف على الأقل'),
+    email: mode === 'add' 
+      ? Yup.string()
+          .email('البريد الإلكتروني غير صالح')
+          .required('البريد الإلكتروني مطلوب')
+      : Yup.string().email('البريد الإلكتروني غير صالح'),
+    password: mode === 'add'
+      ? Yup.string()
+          .required('كلمة المرور مطلوبة')
+          .min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+      : Yup.string(),
+    phone: Yup.string()
+      .required('رقم الهاتف مطلوب')
+      .matches(/^[0-9]+$/, 'رقم الهاتف يجب أن يحتوي على أرقام فقط')
+  });
+};
 
 const passwordChangeSchema = Yup.object().shape({
   oldPassword: Yup.string().required('كلمة المرور الحالية مطلوبة'),
@@ -62,8 +62,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
     name: '',
     email: '',
     password: '',
-    phone: '',
-    mode: mode
+    phone: ''
   });
 
   useEffect(() => {
@@ -72,8 +71,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
         name: editData.name || '',
         email: editData.email || '',
         phone: editData.phone || '',
-        password: '',
-        mode: 'edit'
+        password: ''
       });
     } else if (mode === 'add') {
       // Reset to default values when switching to add mode
@@ -81,8 +79,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
         name: '',
         email: '',
         password: '',
-        phone: '',
-        mode: 'add'
+        phone: ''
       });
     }
     
@@ -159,7 +156,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
 
       <Formik
         initialValues={initialValues}
-        validationSchema={validationSchema}
+        validationSchema={createValidationSchema(mode)}
         onSubmit={handleSubmit}
         enableReinitialize
       >

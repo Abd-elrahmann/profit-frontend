@@ -253,7 +253,7 @@ export default function Employees() {
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onDelete={() => handleDelete(selectedUserId)}
+        onConfirm={() => handleDelete(selectedUserId)}
         title="حذف الموظف"
         message="هل أنت متأكد من حذف هذا الموظف؟"
         ButtonText="حذف"

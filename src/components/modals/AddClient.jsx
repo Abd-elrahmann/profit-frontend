@@ -26,53 +26,49 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-const clientValidationSchema = Yup.object().shape({
-  // Client Information
-  name: Yup.string().required('اسم العميل مطلوب'),
-  phone: Yup.string().required('رقم الجوال مطلوب'),
-  email: Yup.string().email('البريد الإلكتروني غير صالح'),
-  nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
-  birthDate: Yup.date().required('تاريخ الميلاد مطلوب'),
-  city: Yup.string().required('المدينة مطلوبة'),
-  district: Yup.string().required('الحي مطلوب'),
-  address: Yup.string().required('العنوان مطلوب'),
-  employer: Yup.string().required('جهة العمل مطلوبة'),
-  salary: Yup.number().required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
-  obligations: Yup.number().required('الالتزامات مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
-  creationReason: Yup.string().required('سبب الإنشاء مطلوب'),
-  notes: Yup.string(),
+// Create dynamic validation schema based on hasKafeel value
+const createClientValidationSchema = (hasKafeel) => {
+  return Yup.object().shape({
+    // Client Information
+    name: Yup.string().required('اسم العميل مطلوب'),
+    phone: Yup.string().required('رقم الجوال مطلوب'),
+    email: Yup.string().email('البريد الإلكتروني غير صالح'),
+    nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
+    birthDate: Yup.date().required('تاريخ الميلاد مطلوب'),
+    city: Yup.string().required('المدينة مطلوبة'),
+    district: Yup.string().required('الحي مطلوب'),
+    address: Yup.string().required('العنوان مطلوب'),
+    employer: Yup.string().required('جهة العمل مطلوبة'),
+    salary: Yup.number().required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
+    obligations: Yup.number().required('الالتزامات مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
+    creationReason: Yup.string().required('سبب الإنشاء مطلوب'),
+    notes: Yup.string(),
 
-  // Kafeel Information (conditionally required)
-  hasKafeel: Yup.boolean(),
-  kafeelName: Yup.string().when('hasKafeel', {
-    is: true,
-    then: Yup.string().required('اسم الكفيل مطلوب'),
-  }),
-  kafeelNationalId: Yup.string().when('hasKafeel', {
-    is: true,
-    then: Yup.string().required('رقم هوية الكفيل مطلوب'),
-  }),
-  kafeelPhone: Yup.string().when('hasKafeel', {
-    is: true,
-    then: Yup.string().required('رقم جوال الكفيل مطلوب'),
-  }),
-  kafeelEmail: Yup.string().when('hasKafeel', {
-    is: true,
-    then: Yup.string().email('البريد الإلكتروني غير صالح'),
-  }),
-  kafeelEmployer: Yup.string().when('hasKafeel', {
-    is: true,
-    then: Yup.string().required('جهة عمل الكفيل مطلوبة'),
-  }),
-  kafeelSalary: Yup.number().when('hasKafeel', {
-    is: true,
-    then: Yup.number().required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
-  }),
-  kafeelObligations: Yup.number().when('hasKafeel', {
-    is: true,
-    then: Yup.number().required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
-  }),
-});
+    // Kafeel Information (conditionally required)
+    hasKafeel: Yup.boolean(),
+    kafeelName: hasKafeel 
+      ? Yup.string().required('اسم الكفيل مطلوب')
+      : Yup.string(),
+    kafeelNationalId: hasKafeel 
+      ? Yup.string().required('رقم هوية الكفيل مطلوب')
+      : Yup.string(),
+    kafeelPhone: hasKafeel 
+      ? Yup.string().required('رقم جوال الكفيل مطلوب')
+      : Yup.string(),
+    kafeelEmail: hasKafeel 
+      ? Yup.string().email('البريد الإلكتروني غير صالح')
+      : Yup.string().email('البريد الإلكتروني غير صالح'),
+    kafeelEmployer: hasKafeel 
+      ? Yup.string().required('جهة عمل الكفيل مطلوبة')
+      : Yup.string(),
+    kafeelSalary: hasKafeel 
+      ? Yup.number().required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر')
+      : Yup.number(),
+    kafeelObligations: hasKafeel 
+      ? Yup.number().required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر')
+      : Yup.number(),
+  });
+};
 
 const AddClient = ({ open, onClose }) => {
   const [activeStep, setActiveStep] = useState(0);
@@ -224,7 +220,6 @@ const AddClient = ({ open, onClose }) => {
         }
       });
 
-      // Add files
       Object.keys(uploadedFiles).forEach(key => {
         formData.append(key, uploadedFiles[key]);
       });
@@ -284,8 +279,9 @@ const AddClient = ({ open, onClose }) => {
 
       <Formik
         initialValues={initialValues}
-        validationSchema={clientValidationSchema}
+        validationSchema={createClientValidationSchema(initialValues.hasKafeel)}
         onSubmit={handleSubmit}
+        enableReinitialize
       >
         {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm }) => (
           <Form onSubmit={(e) => e.preventDefault()}>
@@ -513,6 +509,22 @@ const AddClient = ({ open, onClose }) => {
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
+                        name="kafeelBirthDate"
+                        label="تاريخ الميلاد"
+                        type="date"
+                        value={values.kafeelBirthDate}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.kafeelBirthDate && Boolean(errors.kafeelBirthDate)}
+                        helperText={touched.kafeelBirthDate && errors.kafeelBirthDate}
+                        InputLabelProps={{
+                          shrink: true
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
                         name="kafeelPhone"
                         label="رقم جوال الكفيل"
                         value={values.kafeelPhone}
@@ -533,6 +545,30 @@ const AddClient = ({ open, onClose }) => {
                         onBlur={handleBlur}
                         error={touched.kafeelEmail && Boolean(errors.kafeelEmail)}
                         helperText={touched.kafeelEmail && errors.kafeelEmail}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="kafeelCity"
+                        label="المدينة"
+                        value={values.kafeelCity}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.kafeelCity && Boolean(errors.kafeelCity)}
+                        helperText={touched.kafeelCity && errors.kafeelCity}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="kafeelDistrict"
+                        label="الحي"
+                        value={values.kafeelDistrict}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.kafeelDistrict && Boolean(errors.kafeelDistrict)}
+                        helperText={touched.kafeelDistrict && errors.kafeelDistrict}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>

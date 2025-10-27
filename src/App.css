@@ -11,3 +11,26 @@ body {
     font-family: 'Cairo', 'Tajawal', sans-serif;
     direction: rtl;
 }
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Ensure contract content fills the page properly */
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Hide any scrollbars during print */
+    * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    
+    *::-webkit-scrollbar {
+        display: none !important;
+    }
+}
