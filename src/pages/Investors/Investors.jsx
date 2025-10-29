@@ -36,6 +36,7 @@ import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
 import FileUploadDropzone from "../../components/FileUploadDropzone";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
+import { saveAs } from 'file-saver';
 
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
@@ -123,7 +124,14 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
-      await Api.patch(`/api/partners/${selectedInvestor.id}`, editFormData);
+      // Parse numeric fields to numbers before sending
+      const dataToSend = {
+        ...editFormData,
+        capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
+        orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined
+      };
+      
+      await Api.patch(`/api/partners/${selectedInvestor.id}`, dataToSend);
       queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
       queryClient.invalidateQueries({ queryKey: ['investors'] });
       notifySuccess('تم تحديث بيانات المستثمر بنجاح');
@@ -162,6 +170,45 @@ export default function Investors() {
   const openDeleteModal = (investor) => {
     setInvestorToDelete(investor);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleDownloadFile = async (fileUrl) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      
+      // Create new filename: mudarabah + investor name + original extension
+      const originalName = investorDetails.mudarabahFileUrl.split('/').pop();
+      const extension = originalName.split('.').pop();
+      const newFileName = `mudarabah_${investorDetails.name}.${extension}`;
+      
+      saveAs(blob, newFileName);
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحميل الملف');
+      handleApiError(error);
+    }
+  };
+
+  const handlePrintFile = async (fileUrl) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const printWindow = window.open(blobUrl, '_blank');
+      
+      // Wait for the window to load before printing
+      printWindow?.addEventListener('load', () => {
+        printWindow.print();
+        // Clean up the blob URL after printing
+        printWindow.addEventListener('afterprint', () => {
+          URL.revokeObjectURL(blobUrl);
+        });
+      }, { once: true });
+      
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء محاولة الطباعة');
+      handleApiError(error);
+    }
   };
 
   useEffect(() => {
@@ -219,13 +266,6 @@ export default function Investors() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Download sx={{marginLeft: '10px'}} />}
-            sx={{ fontWeight: "bold" }}
-          >
-            تصدير
-          </Button>
           <Button
             variant="contained"
             startIcon={<Add sx={{marginLeft: '10px'}} />}
@@ -316,8 +356,8 @@ export default function Investors() {
               <CircularProgress />
             </Box>
           ) : investorsData?.partners?.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 4, flexDirection: 'column' }}>
-              <Typography variant="h6" color="text.secondary" mb={1}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2, flexDirection: 'column' }}>
+              <Typography variant="h6" color="black" mb={1}>
                 لا توجد مستثمرين
               </Typography>
               <Typography variant="body2" color="black">
@@ -732,16 +772,11 @@ export default function Investors() {
                             </Box>
                           </Box>
                           <Box>
-                            <IconButton onClick={() => window.open(investorDetails.mudarabahFileUrl, '_blank')}>
+                            <IconButton onClick={() => handlePrintFile(investorDetails.mudarabahFileUrl)}>
                               <Print />
                             </IconButton>
                             <IconButton 
-                              onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = investorDetails.mudarabahFileUrl;
-                                link.download = investorDetails.mudarabahFileUrl.split('/').pop();
-                                link.click();
-                              }}
+                              onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
                             >
                               <Download />
                             </IconButton>

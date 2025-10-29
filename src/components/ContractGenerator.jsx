@@ -161,20 +161,23 @@ const ContractGenerator = React.forwardRef(({
 
       // PDF generation options
       const options = {
-        margin: [10, 10, 10, 10],
-        filename: `contract_${investorData.name}_${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        margin: [5, 5, 5, 5],
+        filename: `mudarabah_contract_${Date.now()}.pdf`,
+        image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-          scale: 2,
+          scale: 3,
           useCORS: true,
           letterRendering: true,
-          allowTaint: true
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff'
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: true
+          compress: false,
+          hotfixes: ['px_scaling']
         }
       };
 
@@ -207,7 +210,7 @@ const ContractGenerator = React.forwardRef(({
   const uploadPDFToServer = async (pdfBlob) => {
     try {
       const formData = new FormData();
-      formData.append('file', pdfBlob, `contract_${investorData.name}_${Date.now()}.pdf`);
+      formData.append('file', pdfBlob, `mudarabah_contract_${Date.now()}.pdf`);
       formData.append('investorId', investorData.id);
       formData.append('contractType', contractType);
 

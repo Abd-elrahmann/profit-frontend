@@ -5,7 +5,10 @@ const MudarabahContract = () => {
   return `
     <div class="contract-container" dir="rtl">
       <header class="contract-header">
-        <h1 class="contract-title">عقد مضاربة</h1>
+        <div class="header-logo-section">
+          <img src="/assets/images/logo.webp" alt="شعار الشركة" class="contract-logo" />
+          <h1 class="contract-title">عقد مضاربة</h1>
+        </div>
         <div class="contract-dates">
           <p>حرر هذا العقد في مدينة <span class="placeholder">{{مدينة_العقد}}</span></p>
           <p>بتاريخ <span class="placeholder">{{التاريخ_الهجري}}</span>هـ الموافق <span class="placeholder">{{التاريخ_الميلادي}}</span>م</p>
@@ -297,11 +300,30 @@ const MudarabahContract = () => {
           margin-bottom: 2rem;
         }
 
+        .header-logo-section {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .contract-logo {
+          max-width: 120px;
+          max-height: 120px;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
         .contract-title {
           font-size: 2rem;
           font-weight: 800;
           color: #1f2937;
-          margin-bottom: 1rem;
+          margin: 0;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .contract-dates {
@@ -599,6 +621,22 @@ const MudarabahContract = () => {
           .placeholder {
             background: transparent;
             border: 1px dashed #000;
+          }
+
+          .contract-logo {
+            max-width: 100px;
+            max-height: 100px;
+            box-shadow: none;
+            border: 1px solid #ddd;
+          }
+
+          .header-logo-section {
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+          }
+
+          .contract-title {
+            text-shadow: none;
           }
         }
       </style>

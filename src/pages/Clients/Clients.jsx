@@ -178,11 +178,16 @@ export default function Clients() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDownloadFile = async (fileUrl, fileName) => {
+  const handleDownloadFile = async (fileUrl, fileName, documentType, clientName) => {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-      saveAs(blob, fileName);
+      
+      // Create descriptive filename: documentType_clientName_originalExtension
+      const extension = fileName.split('.').pop();
+      const newFileName = `${documentType}_${clientName}.${extension}`;
+      
+      saveAs(blob, newFileName);
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحميل الملف');
       handleApiError(error);
@@ -191,8 +196,20 @@ export default function Clients() {
 
   const handlePrintFile = async (fileUrl) => {
     try {
-      const printWindow = window.open(fileUrl, '_blank');
-      printWindow?.print();
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const printWindow = window.open(blobUrl, '_blank');
+      
+      // Wait for the window to load before printing
+      printWindow?.addEventListener('load', () => {
+        printWindow.print();
+        // Clean up the blob URL after printing
+        printWindow.addEventListener('afterprint', () => {
+          URL.revokeObjectURL(blobUrl);
+        });
+      }, { once: true });
+      
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء محاولة الطباعة');
       handleApiError(error);
@@ -269,6 +286,7 @@ export default function Clients() {
           sx={{
             bgcolor: "#0d40a5",
             "&:hover": { bgcolor: "#0b3589" },
+            fontWeight: "bold",
             borderRadius: 2,
             px: 2.5,
             py: 1,
@@ -965,55 +983,108 @@ export default function Clients() {
             {/* المرفقات */}
             {tab === 3 && (
               <Box>
+                {/* Client Documents Section */}
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6">المستندات المرفوعة</Typography>
-                </Box>
-                {clientDetails.documents && clientDetails.documents.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {Object.entries(clientDetails.documents[0]).map(([key, value]) => {
-                      // Define document types and their display names
-                      const documentTypes = {
-                        'clientIdImage': 'صورة هوية العميل',
-                        'clientWorkCard': 'بطاقة عمل العميل',
-                        'salaryReport': 'تقرير الراتب',
-                        'simaReport': 'تقرير SIMA',
-                        'kafeelIdImage': 'صورة هوية الكفيل',
-                        'kafeelWorkCard': 'بطاقة عمل الكفيل'
-                      };
-                      
-                      // Show document if it has a value and is in our document types list
-                      if (value && documentTypes[key]) {
-                        const fileName = value.split('/').pop();
+                  <Typography variant="h5" sx={{ mb: 2, color: "primary.main" }}>
+                    مستندات العميل
+                  </Typography>
+                  {clientDetails.documents && clientDetails.documents.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {Object.entries(clientDetails.documents[0]).map(([key, value]) => {
+                        // Define client document types
+                        const clientDocumentTypes = {
+                          'clientIdImage': 'صورة هوية العميل',
+                          'clientWorkCard': 'بطاقة عمل العميل',
+                          'salaryReport': 'تقرير الراتب',
+                          'simaReport': 'تقرير SIMA'
+                        };
                         
-                        return (
-                          <Grid item xs={12} key={key}>
-                            <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <CheckCircle color="success" fontSize="small" />
-                                <Box>
-                                  <Typography fontWeight="500">{documentTypes[key]}</Typography>
-                                  <Typography variant="body2" color="text.secondary">{fileName}</Typography>
+                        // Show client document if it has a value and is in client document types list
+                        if (value && clientDocumentTypes[key]) {
+                          const fileName = value.split('/').pop();
+                          
+                          return (
+                            <Grid item xs={12} key={key}>
+                              <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <CheckCircle color="success" fontSize="small" />
+                                  <Box>
+                                    <Typography fontWeight="500">{clientDocumentTypes[key]}</Typography>
+                                    <Typography variant="body2" color="text.secondary">{fileName}</Typography>
+                                  </Box>
                                 </Box>
-                              </Box>
-                              <Box>
-                                <IconButton onClick={() => handlePrintFile(value)}>
-                                  <Print />
-                                </IconButton>
-                                <IconButton onClick={() => handleDownloadFile(value, fileName)}>
-                                  <Download />
-                                </IconButton>
-                              </Box>
-                            </Paper>
-                          </Grid>
-                        );
-                      }
-                      return null;
-                    })}
-                  </Grid>
-                ) : (
-                  <Paper sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography color="text.secondary">لا توجد مستندات مرفوعة</Typography>
-                  </Paper>
+                                <Box>
+                                  <IconButton onClick={() => handlePrintFile(value)}>
+                                    <Print />
+                                  </IconButton>
+                                  <IconButton onClick={() => handleDownloadFile(value, fileName, clientDocumentTypes[key], clientDetails.client.name)}>
+                                    <Download />
+                                  </IconButton>
+                                </Box>
+                              </Paper>
+                            </Grid>
+                          );
+                        }
+                        return null;
+                      })}
+                    </Grid>
+                  ) : (
+                    <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
+                      <Typography color="text.secondary">لا توجد مستندات للعميل</Typography>
+                    </Paper>
+                  )}
+                </Box>
+
+                {/* Kafeel Documents Section - Only show if kafeel exists */}
+                {clientDetails.kafeel && (
+                  <Box sx={{ mt: 5, mb: 3 }}>
+                    <Typography variant="h5" sx={{ mt: 5, mb: 2, color: "primary.main" }}>
+                      مستندات الكفيل
+                    </Typography>
+                    {clientDetails.documents && clientDetails.documents.length > 0 ? (
+                      <Grid container spacing={2}>
+                        {Object.entries(clientDetails.documents[0]).map(([key, value]) => {
+                          // Define kafeel document types
+                          const kafeelDocumentTypes = {
+                            'kafeelIdImage': 'صورة هوية الكفيل',
+                            'kafeelWorkCard': 'بطاقة عمل الكفيل'
+                          };
+                          
+                          // Show kafeel document if it has a value and is in kafeel document types list
+                          if (value && kafeelDocumentTypes[key]) {
+                            const fileName = value.split('/').pop();
+                            
+                            return (
+                              <Grid item xs={12} key={key}>
+                                <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <CheckCircle color="success" fontSize="small" />
+                                    <Box>
+                                      <Typography fontWeight="500">{kafeelDocumentTypes[key]}</Typography>
+                                      <Typography variant="body2" color="text.secondary">{fileName}</Typography>
+                                    </Box>
+                                  </Box>
+                                  <Box>
+                                    <IconButton onClick={() => handlePrintFile(value)}>
+                                      <Print />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleDownloadFile(value, fileName, kafeelDocumentTypes[key], clientDetails.client.name)}>
+                                      <Download />
+                                    </IconButton>
+                                  </Box>
+                                </Paper>
+                              </Grid>
+                            );
+                          }
+                          return null;
+                        })}
+                      </Grid>
+                    ) : (
+                      <Paper sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography color="text.secondary">لا توجد مستندات للكفيل</Typography>
+                      </Paper>
+                    )}
+                  </Box>
                 )}
               </Box>
             )}
@@ -1037,7 +1108,7 @@ export default function Clients() {
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onDelete={() => handleDeleteClient(clientToDelete?.id)}
+        onConfirm={() => handleDeleteClient(clientToDelete?.id)}
         title="حذف العميل"
         message={`هل أنت متأكد من حذف العميل ${clientToDelete?.name}؟`}
         ButtonText="حذف"

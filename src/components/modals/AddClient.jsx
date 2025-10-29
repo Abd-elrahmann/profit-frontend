@@ -213,11 +213,9 @@ const AddClient = ({ open, onClose }) => {
     try {
       const formData = new FormData();
 
-      // Add client data
+      // Add client data including hasKafeel field
       Object.keys(values).forEach(key => {
-        if (key !== 'hasKafeel') {
-          formData.append(key, values[key]);
-        }
+        formData.append(key, values[key]);
       });
 
       Object.keys(uploadedFiles).forEach(key => {

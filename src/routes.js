@@ -10,7 +10,8 @@ import {
   MdBadge as Badge,
   MdDescription as Contract,
 } from 'react-icons/md';
-import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
+import { TrendingUp as TrendingUpIcon, AccountBalance as AccountBalanceIcon } from '@mui/icons-material';
+import { MdAttachMoney as LoanIcon } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -19,8 +20,8 @@ const Roles = React.lazy(() => import('./pages/Roles/Roles'));
 const Clients = React.lazy(() => import('./pages/Clients/Clients'));
 const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTemplates'));  
 const Investors = React.lazy(() => import('./pages/Investors/Investors'));
+const Loans = React.lazy(() => import('./pages/Loans/Loans'));
 const routes = [
-  // Public routes
   {
     path: '/login',
     element: Login,
@@ -28,7 +29,6 @@ const routes = [
     showInSidebar: false
   },
  
-  // Protected routes
   {
     path: '/dashboard',
     element: Dashboard,
@@ -37,7 +37,7 @@ const routes = [
     label: 'لوحة التحكم',
     icon: DashboardIcon,
     module: 'dashboard',
-    requiresPermissions: false // Dashboard doesn't need CRUD permissions
+    requiresPermissions: true
   },
 
   {
@@ -90,6 +90,16 @@ const routes = [
     module: 'investors',
     requiresPermissions: true
   },
+  {
+    path: '/loans',
+    element: Loans,
+    protected: true,
+    showInSidebar: true,
+    label: 'السلف',
+    icon: LoanIcon,
+    module: 'loans',
+    requiresPermissions: true
+  }
 ];
 
 export const getSidebarMenuItems = () => {
