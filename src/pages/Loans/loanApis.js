@@ -14,6 +14,20 @@ export const getClients = async (page = 1, search = '') => {
   }
 };
 
+// Get partners with pagination and search
+export const getPartners = async (page = 1, search = '') => {
+  try {
+    const url = search
+      ? `/api/partners/all/${page}?search=${encodeURIComponent(search)}`
+      : `/api/partners/all/${page}`;
+    const response = await Api.get(url);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // Create new loan
 export const createLoan = async (loanData) => {
   try {
@@ -62,7 +76,7 @@ export const getLoans = async (page = 1, search = '') => {
 };
 
 // Get loan by ID
-export const getLoan = async (loanId) => {
+export const getLoanById = async (loanId) => {
   try {
     const response = await Api.get(`/api/loans/${loanId}`);
     return response.data;

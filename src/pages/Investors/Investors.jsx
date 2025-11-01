@@ -790,23 +790,6 @@ export default function Investors() {
                     </Paper>
                   )}
                 </Box>
-
-                {/* File Upload Dropzone */}
-                <Divider sx={{ my: 3 }} />
-                <FileUploadDropzone
-                  investorId={selectedInvestor.id}
-                  onUploadSuccess={(files) => {
-                    // Refresh investor details to show new files
-                    queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-                    notifySuccess(`تم رفع ${files.length} ملف بنجاح`);
-                  }}
-                  onUploadError={(error) => {
-                    console.error('Upload error:', error);
-                  }}
-                  title="رفع مستندات إضافية"
-                  description="يمكنك رفع عقود أو مستندات إضافية للمستثمر"
-                  multiple={true}
-                />
               </Box>
             )}
           </Box>

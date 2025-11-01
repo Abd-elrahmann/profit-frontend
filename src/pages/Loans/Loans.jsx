@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -21,20 +21,164 @@ import {
   MenuItem,
   Alert,
   Chip,
+  TableContainer,
+  Checkbox,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
+import dayjs from "dayjs";
 import { debounce } from "lodash";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getClients, createLoan, getLoan, updateLoan } from "./loanApis";
+import {
+  getClients,
+  createLoan,
+  getLoanById,
+  updateLoan,
+  getPartners,
+} from "./loanApis";
+import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import LoansTable from "../../components/modals/LoansTable";
 import AddClient from "../../components/modals/AddClient";
+import {
+  StyledTableCell,
+  StyledTableRow,
+} from "../../components/layouts/tableLayout";
+import LoanContractGenerator from "../../components/LoanContractGenerator";
+import LoanContractsPreview from "../../components/LoanContractsPreview";
+import Api from "../../config/Api";
+
+const InstallmentsModal = ({ open, onClose, installments, loanData }) => {
+  if (!loanData) return null;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth dir="rtl">
+      <DialogContent>
+        <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+          <Grid container spacing={3} justifyContent="center">
+            <Grid item xs={12} md={4} textAlign="center">
+              <Typography variant="body2" color="text.secondary">
+                مبلغ السلفة
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="warning.main">
+                {loanData.amount?.toLocaleString()} ر.س
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4} textAlign="center">
+              <Typography variant="body2" color="text.secondary">
+                إجمالي الفائدة
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="error.main">
+                {loanData.interestAmount?.toLocaleString()} ر.س
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4} textAlign="center">
+              <Typography variant="body2" color="text.secondary">
+                المبلغ الإجمالي
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="success.main">
+                {loanData.totalAmount?.toLocaleString()} ر.س
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {installments.length > 0 ? (
+          <TableContainer component={Paper}>
+            <Table stickyHeader>
+              <TableHead>
+                <StyledTableRow>
+                  <StyledTableCell>#</StyledTableCell>
+                  <StyledTableCell>تاريخ الاستحقاق</StyledTableCell>
+                  <StyledTableCell align="left">المبلغ الأصلي</StyledTableCell>
+                  <StyledTableCell align="left">الفائدة</StyledTableCell>
+                  <StyledTableCell align="left">القسط</StyledTableCell>
+                  <StyledTableCell align="left">الرصيد المتبقي</StyledTableCell>
+                  <StyledTableCell align="center">الحالة</StyledTableCell>
+                  <StyledTableCell align="center">المبلغ المدفوع</StyledTableCell>
+                </StyledTableRow>
+              </TableHead>
+              <TableBody>
+                {installments.map((installment) => (
+                  <StyledTableRow key={installment.installmentNumber}>
+                    <StyledTableCell>{installment.installmentNumber}</StyledTableCell>
+                    <StyledTableCell>
+                      {dayjs(installment.dueDate).format("DD/MM/YYYY")}
+                    </StyledTableCell>
+                    <StyledTableCell align="left">
+                      {installment.principal?.toFixed(2)} ر.س
+                    </StyledTableCell>
+                    <StyledTableCell align="left">
+                      {installment.interest?.toFixed(2)} ر.س
+                    </StyledTableCell>
+                    <StyledTableCell align="left" sx={{ fontWeight: "bold" }}>
+                      {installment.installment?.toFixed(2)} ر.س
+                    </StyledTableCell>
+                    <StyledTableCell align="left">
+                      {installment.remainingBalance?.toFixed(2)} ر.س
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      <Chip
+                        label={
+                          installment.status === "PENDING"
+                            ? "قيد الانتظار"
+                            : installment.status === "PAID"
+                            ? "مدفوع"
+                            : installment.status === "OVERDUE"
+                            ? "متأخر"
+                            : installment.status
+                        }
+                        color={
+                          installment.status === "PENDING"
+                            ? "warning"
+                            : installment.status === "PAID"
+                            ? "success"
+                            : installment.status === "OVERDUE"
+                            ? "error"
+                            : "default"
+                        }
+                        size="small"
+                      />
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {installment.paidAmount > 0
+                        ? `${installment.paidAmount.toFixed(2)} ر.س`
+                        : "0.00 ر.س"}
+                    </StyledTableCell>
+                  </StyledTableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Alert severity="info">لا توجد أقساط لعرضها</Alert>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>إغلاق</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const Loans = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [selectedPartner, setSelectedPartner] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [banksSearchQuery, setBanksSearchQuery] = useState("");
+  const [partnersSearchQuery, setPartnersSearchQuery] = useState("");
   const [clientsPage, setClientsPage] = useState(1);
+  const [banksPage, setBanksPage] = useState(1);
+  const [partnersPage, setPartnersPage] = useState(1);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [installmentsModalOpen, setInstallmentsModalOpen] = useState(false);
 
   const [loanForm, setLoanForm] = useState({
     amount: "",
@@ -47,14 +191,66 @@ const Loans = () => {
 
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [installments, setInstallments] = useState([]);
-  const [isEditMode, setIsEditMode] = useState(false); // New state for edit mode
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
   const queryClient = useQueryClient();
+  const [generateContracts, setGenerateContracts] = useState(true);
+  const [savedLoanData, setSavedLoanData] = useState(null);
+  const [debtAckTemplate, setDebtAckTemplate] = useState("");
+  const [promissoryNoteTemplate, setPromissoryNoteTemplate] = useState("");
+  const [contractsGenerated, setContractsGenerated] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewContracts, setPreviewContracts] = useState({
+    debtAck: "",
+    promissoryNote: "",
+  });
+  const [isCreatingLoan, setIsCreatingLoan] = useState(false);
+
+  const debtAckGeneratorRef = useRef(null);
+  const promissoryNoteGeneratorRef = useRef(null);
 
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
     enabled: activeTab === 1,
   });
+
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", banksPage, banksSearchQuery],
+    queryFn: () => getBanks(banksPage, banksSearchQuery),
+    enabled: activeTab === 1,
+  });
+
+  const { data: partnersData, isLoading: isPartnersLoading } = useQuery({
+    queryKey: ["partners", partnersPage, partnersSearchQuery],
+    queryFn: () => getPartners(partnersPage, partnersSearchQuery),
+    enabled: activeTab === 1,
+  });
+
+  useEffect(() => {
+    if (activeTab === 1) {
+      fetchContractTemplates();
+      calculateInstallments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const fetchContractTemplates = async () => {
+    try {
+      console.log("Fetching contract templates...");
+      const [debtResponse, promissoryResponse] = await Promise.all([
+        Api.get("/api/templates/DEBT_ACKNOWLEDGMENT"),
+        Api.get("/api/templates/PROMISSORY_NOTE"),
+      ]);
+
+      setDebtAckTemplate(debtResponse.data.content || "");
+      setPromissoryNoteTemplate(promissoryResponse.data.content || "");
+
+      console.log("Templates fetched successfully");
+    } catch (error) {
+      console.warn("Could not fetch contract templates:", error);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 1) {
@@ -73,12 +269,38 @@ const Loans = () => {
     setClientsPage(1);
   }, 500);
 
+  const debouncedBanksSearch = debounce((value) => {
+    setBanksSearchQuery(value);
+    setBanksPage(1);
+  }, 500);
+
+  const debouncedPartnersSearch = debounce((value) => {
+    setPartnersSearchQuery(value);
+    setPartnersPage(1);
+  }, 500);
+
   const handleSearchChange = (event, value) => {
     debouncedSearch(value);
   };
 
+  const handleBanksSearchChange = (event, value) => {
+    debouncedBanksSearch(value);
+  };
+
+  const handlePartnersSearchChange = (event, value) => {
+    debouncedPartnersSearch(value);
+  };
+
   const handleClientSelect = (event, newValue) => {
     setSelectedClient(newValue);
+  };
+
+  const handleBankSelect = (event, newValue) => {
+    setSelectedBank(newValue);
+  };
+
+  const handlePartnerSelect = (event, newValue) => {
+    setSelectedPartner(newValue);
   };
 
   const formatAmount = (amount) => {
@@ -86,34 +308,125 @@ const Loans = () => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  const handleOpenPreview = async () => {
+    try {
+      if (!selectedClient || !loanForm.amount) {
+        notifyError("يرجى ملء بيانات العميل والسلفة أولاً");
+        return;
+      }
+
+      const previewLoanData = {
+        id: `preview-${Date.now()}`,
+        amount: parseFloat(loanForm.amount.replace(/,/g, "")),
+        durationMonths: parseInt(loanForm.durationMonths),
+        startDate: loanForm.startDate,
+        client: selectedClient.client,
+      };
+
+      const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
+        false,
+        previewLoanData
+      );
+      const promissoryNoteHtml =
+        await promissoryNoteGeneratorRef.current.generateContract(
+          false,
+          previewLoanData
+        );
+
+      setPreviewContracts({
+        debtAck: debtAckHtml,
+        promissoryNote: promissoryNoteHtml,
+      });
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error("Error generating preview:", error);
+      notifyError("حدث خطأ أثناء توليد معاينة العقود");
+    }
+  };
+
+  const handleSaveContracts = async (contractType) => {
+    try {
+      if (!savedLoanData) {
+        notifyError("لم يتم إنشاء القرض بعد. يرجى إنشاء القرض أولاً");
+        return;
+      }
+  
+      console.log("Saving contracts for loan:", savedLoanData.id);
+      
+      if (contractType === "both" || contractType === "debt-acknowledgment") {
+        console.log("Generating debt acknowledgment...");
+        await debtAckGeneratorRef.current?.generatePDF();
+      }
+      
+      if (contractType === "both" || contractType === "promissory-note") {
+        console.log("Generating promissory note...");
+        await promissoryNoteGeneratorRef.current?.generatePDF();
+      }
+  
+      notifySuccess("تم حفظ العقود بنجاح");
+      setPreviewOpen(false);
+      
+      // إلغاء إعادة تعيين النموذج بعد حفظ العقود
+      // if (!previewOpen) {
+      //   resetLoanForm();
+      //   queryClient.invalidateQueries(["loans"]);
+      //   setActiveTab(0);
+      // }
+      
+    } catch (error) {
+      console.error("Error saving contracts:", error);
+      notifyError("حدث خطأ أثناء حفظ العقود");
+    }
+  };
+
   const calculateInstallments = () => {
     const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
     const interestRate = parseFloat(loanForm.interestRate) || 0;
     const durationMonths = parseInt(loanForm.durationMonths) || 0;
+    const loanType = loanForm.type;
 
     if (amount > 0 && durationMonths > 0) {
-      const monthlyInterestRate = interestRate / 100 / 12;
-      const monthlyPayment =
-        (amount *
-          monthlyInterestRate *
-          Math.pow(1 + monthlyInterestRate, durationMonths)) /
-        (Math.pow(1 + monthlyInterestRate, durationMonths) - 1);
+      const profit = amount * (interestRate / 100);
+      const total = amount + profit;
+
+      const repaymentCount =
+        loanType === "DAILY"
+          ? durationMonths * 30
+          : loanType === "WEEKLY"
+          ? durationMonths * 4
+          : durationMonths;
+
+      const installmentAmount = total / repaymentCount;
+      const principalPerInstallment = amount / repaymentCount;
+      const interestPerInstallment = profit / repaymentCount;
 
       const calculatedInstallments = [];
-      let remainingBalance = amount;
+      let remainingBalance = total;
 
-      for (let i = 1; i <= durationMonths; i++) {
-        const interest = remainingBalance * monthlyInterestRate;
-        const principal = monthlyPayment - interest;
-        remainingBalance -= principal;
+      for (let i = 1; i <= repaymentCount; i++) {
+        const dueDate = new Date(loanForm.startDate);
+        if (loanType === "DAILY") {
+          dueDate.setDate(dueDate.getDate() + i);
+        } else if (loanType === "WEEKLY") {
+          dueDate.setDate(dueDate.getDate() + i * 7);
+        } else {
+          dueDate.setMonth(dueDate.getMonth() + i);
+          if (loanForm.repaymentDay) {
+            dueDate.setDate(parseInt(loanForm.repaymentDay));
+          }
+        }
+
+        remainingBalance -= installmentAmount;
 
         calculatedInstallments.push({
           installmentNumber: i,
-          dueDate: calculateDueDate(i),
-          principal: principal,
-          interest: interest,
-          installment: monthlyPayment,
+          dueDate: dueDate,
+          principal: principalPerInstallment,
+          interest: interestPerInstallment,
+          installment: installmentAmount,
           remainingBalance: Math.max(0, remainingBalance),
+          status: "PENDING",
+          paidAmount: 0,
         });
       }
 
@@ -121,12 +434,6 @@ const Loans = () => {
     } else {
       setInstallments([]);
     }
-  };
-
-  const calculateDueDate = (installmentNumber) => {
-    const startDate = new Date(loanForm.startDate);
-    startDate.setMonth(startDate.getMonth() + installmentNumber);
-    return startDate.toISOString().split("T")[0];
   };
 
   const getSimulationSummary = () => {
@@ -147,14 +454,15 @@ const Loans = () => {
     };
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const handleCreateLoan = async (status = "PENDING") => {
+  const handleCreateLoan = async () => {
     if (!selectedClient) {
       notifyError("يرجى اختيار عميل");
       return;
     }
-
+  
     try {
+      setIsCreatingLoan(true);
+  
       const loanData = {
         clientId: selectedClient.client.id,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
@@ -163,17 +471,75 @@ const Loans = () => {
         type: loanForm.type,
         startDate: loanForm.startDate,
         repaymentDay: parseInt(loanForm.repaymentDay),
+        bankAccountId: selectedBank?.id || null,
+        partnerId: selectedPartner?.id || null,
       };
-
-      await createLoan(loanData);
+  
+      console.log("Creating loan with data:", loanData);
+  
+      const response = await createLoan(loanData);
+const newLoan = response?.data?.loan || response?.loan;
+  
+      console.log("Loan created successfully:", newLoan);
       notifySuccess("تم إنشاء السلفة بنجاح");
-
-      resetForm();
+  
+      // تمكين زر معاينة العقود بعد إنشاء القرض
+      setSavedLoanData({
+        ...newLoan,
+        client: selectedClient.client,
+      });
+  
+      // إلغاء إعادة تعيين النموذج - الحقول تبقى كما هي
+      // resetLoanForm();
+      
       queryClient.invalidateQueries(["loans"]);
-      setActiveTab(0);
+      
     } catch (error) {
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء إنشاء السلفة");
+      console.error("Error creating loan:", error);
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء إنشاء السلفة"
+      );
+    } finally {
+      setIsCreatingLoan(false);
     }
+  };
+
+  const handleContractGenerated = (pdfBlob, contractType) => {
+    console.log(`Contract generated: ${contractType}`);
+    const newCount = contractsGenerated + 1;
+    setContractsGenerated(newCount);
+  
+    if (newCount >= 2 && !previewOpen) {
+      console.log("Both contracts generated");
+      // إلغاء إعادة تعيين النموذج التلقائي
+      // setTimeout(() => {
+      //   resetLoanForm();
+      //   queryClient.invalidateQueries(["loans"]);
+      //   setActiveTab(0);
+      //   setContractsGenerated(0);
+      //   setSavedLoanData(null);
+      // }, 1000);
+    }
+  };
+  const resetLoanForm = () => {
+    setSelectedClient(null);
+    setSelectedLoan(null);
+    setSelectedBank(null);
+    setSelectedPartner(null);
+    setLoanForm({
+      amount: "",
+      interestRate: "",
+      durationMonths: "",
+      type: "",
+      startDate: new Date().toISOString().split("T")[0],
+      repaymentDay: "10",
+    });
+    setInstallments([]);
+    setIsEditMode(false);
+    setIsViewMode(false);
+    setContractsGenerated(0);
+    setSavedLoanData(null);
+    setIsCreatingLoan(false);
   };
 
   const handleUpdateLoan = async () => {
@@ -190,27 +556,70 @@ const Loans = () => {
         type: loanForm.type,
         startDate: loanForm.startDate,
         repaymentDay: parseInt(loanForm.repaymentDay),
+        bankAccountId: selectedBank?.id || null,
+        partnerId: selectedPartner?.id || null,
       };
 
       await updateLoan(selectedLoan.id, loanData);
       notifySuccess("تم تعديل السلفة بنجاح");
 
-      resetForm();
+      resetLoanForm();
       queryClient.invalidateQueries(["loans"]);
       setActiveTab(0);
     } catch (error) {
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء تعديل السلفة");
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء تعديل السلفة"
+      );
     }
   };
 
   const handleViewLoanDetails = async (loanId) => {
     try {
-      const loan = await getLoan(loanId);
+      const loan = await getLoanById(loanId);
       setSelectedLoan(loan);
+      setIsViewMode(true);
+      setIsEditMode(false);
 
       if (loan.client) {
         setSelectedClient({ client: loan.client });
       }
+
+      if (loan.bankAccount) {
+        setSelectedBank(loan.bankAccount);
+      }
+
+      if (loan.partner) {
+        setSelectedPartner(loan.partner);
+      }
+
+      const repaymentCount =
+        loan.type === "DAILY"
+          ? loan.durationMonths * 30
+          : loan.type === "WEEKLY"
+          ? loan.durationMonths * 4
+          : loan.durationMonths;
+
+      const principalPerInstallment = loan.amount / repaymentCount;
+      const interestPerInstallment = loan.interestAmount / repaymentCount;
+
+      let remainingBalance = loan.totalAmount;
+      const formattedRepayments = loan.repayments.map((repayment, index) => {
+        const currentInstallment = {
+          installmentNumber: index + 1,
+          dueDate: repayment.dueDate,
+          principal: principalPerInstallment,
+          interest: interestPerInstallment,
+          installment: repayment.amount,
+          remainingBalance: Math.max(0, remainingBalance),
+          status: repayment.status,
+          paidAmount: repayment.paidAmount || 0,
+        };
+
+        remainingBalance -= repayment.amount;
+        return currentInstallment;
+      });
+
+      setInstallments(formattedRepayments);
 
       setLoanForm({
         amount: loan.amount.toString(),
@@ -221,7 +630,6 @@ const Loans = () => {
         repaymentDay: loan.repaymentDay?.toString() || "10",
       });
 
-      setIsEditMode(true);
       setActiveTab(1);
     } catch (error) {
       notifyError(
@@ -230,19 +638,52 @@ const Loans = () => {
     }
   };
 
-  const resetForm = () => {
-    setSelectedClient(null);
-    setSelectedLoan(null);
-    setLoanForm({
-      amount: "",
-      interestRate: "",
-      durationMonths: "",
-      type: "",
-      startDate: new Date().toISOString().split("T")[0],
-      repaymentDay: "",
-    });
-    setInstallments([]);
-    setIsEditMode(false);
+  const handleViewInstallments = async (loan) => {
+    try {
+      setSelectedLoan(loan);
+      // استدعاء API لاسترجاع بيانات القرض مع الأقساط
+      const response = await getLoanById(loan.id);
+      
+      // تحويل بيانات الأقساط إلى التنسيق المتوقع من المودال
+      const formattedInstallments = response.repayments?.map((repayment, index) => {
+        const principalPerInstallment = response.amount / response.durationMonths;
+        const interestPerInstallment = response.interestAmount / response.durationMonths;
+        const totalPerInstallment = response.totalAmount / response.durationMonths;
+        
+        let remainingBalance = response.totalAmount;
+        for (let i = 0; i <= index; i++) {
+          remainingBalance -= totalPerInstallment;
+        }
+        
+        return {
+          installmentNumber: index + 1,
+          dueDate: repayment.dueDate,
+          principal: principalPerInstallment,
+          interest: interestPerInstallment,
+          installment: repayment.amount,
+          remainingBalance: Math.max(0, remainingBalance),
+          status: repayment.status,
+          paidAmount: repayment.paidAmount || 0
+        };
+      }) || [];
+      
+      setInstallments(formattedInstallments);
+      setInstallmentsModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching installments:", error);
+      notifyError("حدث خطأ أثناء تحميل الأقساط");
+      setInstallments([]);
+      setInstallmentsModalOpen(true);
+    }
+  };
+
+  const handleEditLoan = () => {
+    if (selectedLoan.status !== "PENDING") {
+      notifyError("يمكن تعديل القروض في حالة 'قيد المراجعة' فقط");
+      return;
+    }
+    setIsEditMode(true);
+    setIsViewMode(false);
   };
 
   const handleInputChange = (field, value) => {
@@ -258,23 +699,43 @@ const Loans = () => {
     }));
   };
 
-  const handleSaveLoan = (status = "PENDING") => {
+  const handleSaveLoan = () => {
     if (isEditMode) {
       handleUpdateLoan();
     } else {
-      handleCreateLoan(status);
+      handleCreateLoan();
     }
   };
 
   const simulationSummary = getSimulationSummary();
 
+  const isFormValid = () => {
+    return selectedClient && 
+           loanForm.amount && 
+           loanForm.interestRate && 
+           loanForm.durationMonths && 
+           loanForm.repaymentDay && 
+           loanForm.type;
+  };
+
+  const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
+
   return (
-    <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        bgcolor: "#f6f6f8",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Box
         sx={{
           display: "flex",
           flexDirection: "row-reverse",
+          flex: 1,
           height: "calc(100vh - 80px)",
+          width: "100%",
         }}
       >
         {activeTab === 1 && (
@@ -359,12 +820,20 @@ const Loans = () => {
                   >
                     <Typography color="text.secondary">حالة السلفة</Typography>
                     <Chip
-                      label={isEditMode ? "تحت التعديل" : "نشط"}
+                      label={
+                        isViewMode ? "عرض" : 
+                        isEditMode ? "تحت التعديل" : 
+                        "جديد"
+                      }
                       sx={{
-                        backgroundColor: isEditMode
-                          ? "rgba(214, 158, 46, 0.2)"
-                          : "rgba(56, 161, 105, 0.2)",
-                        color: isEditMode ? "#D69E2E" : "#38A169",
+                        backgroundColor: 
+                          isViewMode ? "rgba(100, 100, 100, 0.2)" :
+                          isEditMode ? "rgba(214, 158, 46, 0.2)" : 
+                          "rgba(56, 161, 105, 0.2)",
+                        color: 
+                          isViewMode ? "#666" :
+                          isEditMode ? "#D69E2E" : 
+                          "#38A169",
                         fontWeight: "bold",
                       }}
                     />
@@ -380,44 +849,48 @@ const Loans = () => {
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
-                {!isEditMode && (
+                {/* زر إنشاء/تعديل السلفة */}
+                {!isViewMode && (
                   <Button
-                    variant="outlined"
-                    onClick={() => handleSaveLoan("PENDING")}
-                    disabled={!selectedClient || !loanForm.amount}
+                    variant="contained"
+                    onClick={handleSaveLoan}
+                    disabled={!isFormValid()}
                     sx={{
-                      borderColor: "#d1d5db",
-                      color: "#333",
+                      bgcolor: "#0d40a5",
                       height: "48px",
                       fontSize: "16px",
                       fontWeight: "bold",
-                      "&:hover": { bgcolor: "#f9fafb" },
+                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.9)" },
                     }}
                   >
-                    حفظ كمسودة
+                    {isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
                   </Button>
                 )}
 
-                <Button
-                  variant="contained"
-                  onClick={() => handleSaveLoan("ACTIVE")}
-                  disabled={!selectedClient || !loanForm.amount}
-                  sx={{
-                    bgcolor: "#0d40a5",
-                    height: "48px",
-                    fontSize: "16px",
-                    fontWeight: "bold",
-                    "&:hover": { bgcolor: "rgba(13, 64, 165, 0.9)" },
-                  }}
-                >
-                  {isEditMode ? "تعديل السلفة" : "إنشاء السلفة"}
-                </Button>
+                {/* زر التعديل (يظهر فقط في وضع العرض) */}
+                {isViewMode && canEditLoan && (
+                  <Button
+                    variant="contained"
+                    onClick={handleEditLoan}
+                    sx={{
+                      bgcolor: "primary.main",
+                      height: "48px",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      "&:hover": { bgcolor: "primary.dark" },
+                    }}
+                  >
+                    تعديل القرض
+                  </Button>
+                )}
 
+                {/* زر معاينة العقود */}
                 <Button
                   variant="outlined"
-                  onClick={resetForm}
+                  onClick={handleOpenPreview}
+                  disabled={!savedLoanData} // يعمل فقط بعد إنشاء القرض
                   sx={{
-                    borderColor: "rgba(13, 64, 165, 0.5)",
+                    borderColor: "#0d40a5",
                     color: "#0d40a5",
                     height: "48px",
                     fontSize: "16px",
@@ -425,8 +898,47 @@ const Loans = () => {
                     "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
                   }}
                 >
-                  {isEditMode ? "إلغاء التعديل" : "إضافة سلفة آخرة"}
+                  معاينة العقود
                 </Button>
+
+                {/* زر إضافة سلفة أخرى (يظهر فقط في وضع العرض) */}
+                {isViewMode && (
+                  <Button
+                    variant="outlined"
+                    onClick={resetLoanForm}
+                    sx={{
+                      borderColor: "rgba(13, 64, 165, 0.5)",
+                      color: "#0d40a5",
+                      height: "48px",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                    }}
+                  >
+                    إضافة سلفة آخرة
+                  </Button>
+                )}
+
+                {/* زر إلغاء (يظهر في وضع التعديل) */}
+                {isEditMode && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setIsViewMode(true);
+                    }}
+                    sx={{
+                      borderColor: "rgba(255, 0, 0, 0.5)",
+                      color: "error.main",
+                      height: "48px",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      "&:hover": { bgcolor: "rgba(255, 0, 0, 0.1)" },
+                    }}
+                  >
+                    إلغاء التعديل
+                  </Button>
+                )}
               </Stack>
             </Box>
           </Box>
@@ -438,17 +950,17 @@ const Loans = () => {
             p: 4,
             bgcolor: "#fff",
             overflowY: "auto",
-            width: activeTab === 0 ? "100%" : "calc(100% - 350px)",
+            width: "100%",
           }}
         >
-          <Box sx={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <Box sx={{ width: "100%" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
               <Tabs
                 value={activeTab}
                 onChange={(e, newValue) => {
                   setActiveTab(newValue);
                   if (newValue === 0) {
-                    resetForm();
+                    resetLoanForm();
                   }
                 }}
               >
@@ -462,7 +974,11 @@ const Loans = () => {
                   }}
                 />
                 <Tab
-                  label={isEditMode ? "تعديل السلفة" : "إنشاء سلفة جديدة"}
+                  label={
+                    isViewMode ? "عرض تفاصيل السلفة" : 
+                    isEditMode ? "تعديل السلفة" : 
+                    "إنشاء سلفة جديدة"
+                  }
                   sx={{
                     fontWeight: "bold",
                     borderBottom:
@@ -474,8 +990,13 @@ const Loans = () => {
             </Box>
 
             {activeTab === 0 ? (
-              <Box sx={{ width: "100%", flexGrow: 1 }}>
-                <LoansTable onViewDetails={handleViewLoanDetails} />
+              <Box
+                sx={{ width: "100%", display: "flex", flexDirection: "column" }}
+              >
+                <LoansTable 
+                  onViewDetails={handleViewLoanDetails} 
+                  onViewInstallments={handleViewInstallments}
+                />
               </Box>
             ) : (
               <Box>
@@ -507,7 +1028,7 @@ const Loans = () => {
                         onChange={handleClientSelect}
                         onInputChange={handleSearchChange}
                         loading={isClientsLoading}
-                        disabled={isEditMode}
+                        disabled={isViewMode || isEditMode}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -531,7 +1052,7 @@ const Loans = () => {
                               "& .MuiOutlinedInput-root": {
                                 height: "56px",
                                 width: "350px",
-                                backgroundColor: isEditMode
+                                backgroundColor: (isViewMode || isEditMode)
                                   ? "#f5f5f5"
                                   : "#f9fafb",
                                 "&:hover fieldset": {
@@ -549,7 +1070,7 @@ const Loans = () => {
                       md={4}
                       sx={{ display: "flex", alignItems: "end" }}
                     >
-                      {!isEditMode && (
+                      {!isViewMode && !isEditMode && (
                         <Button
                           variant="text"
                           sx={{
@@ -582,7 +1103,9 @@ const Loans = () => {
                     mb={3}
                     textAlign="center"
                   >
-                    {isEditMode ? "تعديل تفاصيل السلفة" : "حدد تفاصيل السلفة"}
+                    {isViewMode ? "تفاصيل السلفة" : 
+                   isEditMode ? "تعديل تفاصيل السلفة" : 
+                   "حدد تفاصيل السلفة"}
                   </Typography>
 
                   <Grid container spacing={3} justifyContent="center">
@@ -598,23 +1121,15 @@ const Loans = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
-                        InputProps={{
-                          endAdornment: (
-                            <Typography
-                              sx={{
-                                color: "text.secondary",
-                                marginLeft: "5px",
-                              }}
-                            >
-                              ر.س
-                            </Typography>
-                          ),
+                        disabled={isViewMode && !isEditMode}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "+") e.preventDefault();
                         }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -632,11 +1147,15 @@ const Loans = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
+                        disabled={isViewMode && !isEditMode}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "+") e.preventDefault();
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -651,11 +1170,15 @@ const Loans = () => {
                         onChange={(e) =>
                           handleInputChange("durationMonths", e.target.value)
                         }
+                        disabled={isViewMode && !isEditMode}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "+") e.preventDefault();
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -670,11 +1193,15 @@ const Loans = () => {
                         onChange={(e) =>
                           handleInputChange("durationMonths", e.target.value)
                         }
+                        disabled={isViewMode && !isEditMode}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "+") e.preventDefault();
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -690,11 +1217,12 @@ const Loans = () => {
                         onChange={(e) =>
                           handleInputChange("type", e.target.value)
                         }
+                        disabled={isViewMode && !isEditMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       >
@@ -714,107 +1242,107 @@ const Loans = () => {
                           handleInputChange("repaymentDay", e.target.value)
                         }
                         inputProps={{ min: 1, max: 31 }}
+                        disabled={isViewMode && !isEditMode}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "+") e.preventDefault();
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
+                      />
+                    </Grid>
+
+                    {/* Bank Account Selection */}
+                    <Grid item xs={12} md={6}>
+                      <Autocomplete
+                        options={banksData?.data || []}
+                        getOptionLabel={(option) =>
+                          `${option.name} - ${option.accountNumber}`
+                        }
+                        value={selectedBank}
+                        onChange={handleBankSelect}
+                        onInputChange={handleBanksSearchChange}
+                        loading={isBanksLoading}
+                        disabled={isViewMode && !isEditMode}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="اختر الحساب البنكي"
+                            placeholder="ابحث باسم الحساب أو رقم الحساب"
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {isBanksLoading ? (
+                                    <CircularProgress
+                                      color="inherit"
+                                      size={20}
+                                    />
+                                  ) : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                height: "56px",
+                                width: "250px",
+                                backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                              },
+                            }}
+                          />
+                        )}
+                      />
+                    </Grid>
+
+                    {/* Partner Selection */}
+                    <Grid item xs={12} md={6}>
+                      <Autocomplete
+                        options={partnersData?.partners || []}
+                        getOptionLabel={(option) => option.name}
+                        value={selectedPartner}
+                        onChange={handlePartnerSelect}
+                        onInputChange={handlePartnersSearchChange}
+                        loading={isPartnersLoading}
+                        disabled={isViewMode && !isEditMode}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="اختر المستثمر"
+                            placeholder="ابحث باسم المستثمر"
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {isPartnersLoading ? (
+                                    <CircularProgress
+                                      color="inherit"
+                                      size={20}
+                                    />
+                                  ) : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                height: "56px",
+                                width: "250px",
+                                backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                              },
+                            }}
+                          />
+                        )}
                       />
                     </Grid>
                   </Grid>
                 </Paper>
 
-                <Paper
-                  sx={{ p: 4, borderRadius: 2 }}
-                >
-                  <Typography
-                    variant="h6"
-                    fontWeight="bold"
-                    color="#333"
-                    mb={3}
-                    textAlign="center"
-                  >
-                    جدول الأقساط الذي تم إنشاؤه
-                  </Typography>
-                  {installments.length > 0 ? (
-                    <Box sx={{ overflow: "auto" }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ borderBottom: "1px solid #e5e7eb" }}>
-                            <TableCell
-                              sx={{ fontWeight: "bold", color: "#333" }}
-                            >
-                              #
-                            </TableCell>
-                            <TableCell
-                              sx={{ fontWeight: "bold", color: "#333" }}
-                            >
-                              تاريخ الاستحقاق
-                            </TableCell>
-                            <TableCell
-                              align="left"
-                              sx={{ fontWeight: "bold", color: "#333" }}
-                            >
-                              المبلغ الأصلي
-                            </TableCell>
-                            <TableCell
-                              align="left"
-                              sx={{ fontWeight: "bold", color: "#333" }}
-                            >
-                              الفائدة
-                            </TableCell>
-                            <TableCell
-                              align="left"
-                              sx={{ fontWeight: "bold", color: "#333" }}
-                            >
-                              القسط
-                            </TableCell>
-                            <TableCell
-                              align="left"
-                              sx={{ fontWeight: "bold", color: "#333" }}
-                            >
-                              الرصيد المتبقي
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {installments.slice(0, 5).map((installment) => (
-                            <TableRow
-                              key={installment.installmentNumber}
-                              sx={{ borderBottom: "1px solid #f3f4f6" }}
-                            >
-                              <TableCell>
-                                {installment.installmentNumber}
-                              </TableCell>
-                              <TableCell>{installment.dueDate}</TableCell>
-                              <TableCell align="left">
-                                {installment.principal.toFixed(2)} ر.س
-                              </TableCell>
-                              <TableCell align="left">
-                                {installment.interest.toFixed(2)} ر.س
-                              </TableCell>
-                              <TableCell
-                                align="left"
-                                sx={{ fontWeight: "bold", color: "#333" }}
-                              >
-                                {installment.installment.toFixed(2)} ر.س
-                              </TableCell>
-                              <TableCell align="left">
-                                {installment.remainingBalance.toFixed(2)} ر.س
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </Box>
-                  ) : (
-                    <Alert severity="info">
-                      أدخل بيانات السلفة لعرض جدول الأقساط
-                    </Alert>
-                  )}
-                </Paper>
+                {/* إخفاء جدول الأقساط من التبويب 1 حسب الطلب */}
               </Box>
             )}
           </Box>
@@ -829,6 +1357,50 @@ const Loans = () => {
           queryClient.invalidateQueries(["clients"]);
         }}
       />
+
+      {/* مودال عرض الأقساط */}
+      <InstallmentsModal
+        open={installmentsModalOpen}
+        onClose={() => setInstallmentsModalOpen(false)}
+        installments={installments}
+        loanData={selectedLoan}
+      />
+
+      {/* مولدات العقود */}
+      {generateContracts && savedLoanData && selectedClient && (
+        <>
+          <LoanContractGenerator
+            ref={debtAckGeneratorRef}
+            loanData={savedLoanData}
+            clientData={selectedClient?.client}
+            templateContent={debtAckTemplate}
+            onContractGenerated={handleContractGenerated}
+            contractType="DEBT_ACKNOWLEDGMENT"
+            autoGenerate={false}
+          />
+
+          <LoanContractGenerator
+            ref={promissoryNoteGeneratorRef}
+            loanData={savedLoanData}
+            clientData={selectedClient?.client}
+            templateContent={promissoryNoteTemplate}
+            onContractGenerated={handleContractGenerated}
+            contractType="PROMISSORY_NOTE"
+            autoGenerate={false}
+          />
+
+          <LoanContractsPreview
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            debtAckHtml={previewContracts.debtAck}
+            promissoryNoteHtml={previewContracts.promissoryNote}
+            onSaveContracts={handleSaveContracts}
+            loading={isCreatingLoan}
+            clientName={selectedClient?.client?.name}
+            loanAmount={parseFloat(loanForm.amount.replace(/,/g, "")) || 0}
+          />
+        </>
+      )}
     </Box>
   );
 };

@@ -21,6 +21,7 @@ const Clients = React.lazy(() => import('./pages/Clients/Clients'));
 const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTemplates'));  
 const Investors = React.lazy(() => import('./pages/Investors/Investors'));
 const Loans = React.lazy(() => import('./pages/Loans/Loans'));
+const Banks = React.lazy(() => import('./pages/Banks/Banks'));
 const routes = [
   {
     path: '/login',
@@ -98,6 +99,16 @@ const routes = [
     label: 'السلف',
     icon: LoanIcon,
     module: 'loans',
+    requiresPermissions: true
+  },
+  {
+    path: '/banks',
+    element: Banks,
+    protected: true,
+    showInSidebar: true,
+    label: 'البنوك',
+    icon: AccountBalance,
+    module: 'banks',
     requiresPermissions: true
   }
 ];

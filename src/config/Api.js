@@ -1,5 +1,6 @@
 import axios from 'axios'
 import {toast} from 'react-toastify'
+import i18next from 'i18next'
 const Api = axios.create({
   baseURL: "http://localhost:3000",
   headers: {
@@ -10,6 +11,7 @@ const Api = axios.create({
 
 Api.interceptors.request.use(
   (config) => {
+    config.headers["Accept-Language"] = i18next.language
     config.headers["page"] = window.location.pathname.split('/').pop();
     const token = localStorage.getItem("token")
     if (token) {

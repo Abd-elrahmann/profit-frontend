@@ -1,0 +1,12 @@
+{
+    "Banks": {
+        "title": "Banks",
+        "name": "Name",
+        "accountNumber": "Account Number",
+        "IBAN": "IBAN",
+        "limit": "Limit",
+        "status": "Status",
+        "active": "Active",
+        "expired": "Expired"
+    }
+}

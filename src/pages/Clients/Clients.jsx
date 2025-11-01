@@ -996,7 +996,9 @@ export default function Clients() {
                           'clientIdImage': 'صورة هوية العميل',
                           'clientWorkCard': 'بطاقة عمل العميل',
                           'salaryReport': 'تقرير الراتب',
-                          'simaReport': 'تقرير SIMA'
+                          'simaReport': 'تقرير SIMA',
+                          'DEBT_ACKNOWLEDGMENT': 'إقرار الدين',
+                          'PROMISSORY_NOTE': 'سند الأمر'
                         };
                         
                         // Show client document if it has a value and is in client document types list
@@ -1047,7 +1049,7 @@ export default function Clients() {
                           // Define kafeel document types
                           const kafeelDocumentTypes = {
                             'kafeelIdImage': 'صورة هوية الكفيل',
-                            'kafeelWorkCard': 'بطاقة عمل الكفيل'
+                            'kafeelWorkCard': 'بطاقة عمل الكفيل',
                           };
                           
                           // Show kafeel document if it has a value and is in kafeel document types list
