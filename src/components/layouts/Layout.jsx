@@ -61,8 +61,11 @@ const Layout = ({ children }) => {
   // Check if current page is an auth page
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-  // For auth pages, render children without layout
-  if (isAuthPage) {
+  // Check if current page is a payment receipt page
+  const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt/');
+
+  // For auth pages and payment receipt pages, render children without layout
+  if (isAuthPage || isPaymentReceiptPage) {
     return <>{children}</>;
   }
 

@@ -25,6 +25,7 @@ import PromissoryNote from "../../components/Contracts/PromissoryNote";
 import DebtAcknowledgment from "../../components/Contracts/DebtAcknowledgment";
 import ReceiptVoucher from "../../components/Contracts/ReceiptVoucher";
 import PaymentVoucher from "../../components/Contracts/PaymentVoucher";
+import InstallmentPaymentReceipt from "../../components/Contracts/InstallmentPaymentReceipt";
 import Api, { handleApiError } from "../../config/Api";
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
@@ -34,6 +35,7 @@ export default function ContractTemplates() {
     debtAcknowledgment: "",
     receiptVoucher: "",
     paymentVoucher: "",
+    paymentProof: "",
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,7 +46,8 @@ export default function ContractTemplates() {
     "promissory-note": "PROMISSORY_NOTE", 
     "debt-acknowledgment": "DEBT_ACKNOWLEDGMENT",
     "receipt-voucher": "RECEIPT_VOUCHER",
-    "payment-voucher": "PAYMENT_VOUCHER"
+    "payment-voucher": "PAYMENT_VOUCHER",
+    "payment-proof": "PAYMENT_PROOF",
   }), []);
 
   // Variables for each contract type
@@ -116,6 +119,18 @@ export default function ContractTemplates() {
       { name: "{{اسم_المسلم}}", description: "اسم الشخص المسلم للمبلغ" },
       { name: "{{ملاحظات}}", description: "ملاحظات إضافية" },
     ],
+    "payment-proof": [
+      { name: "{{رقم_الايصال}}", description: "رقم الإيصال المرجعي" },
+      { name: "{{اسم_العميل}}", description: "اسم العميل" },
+      { name: "{{رقم_هوية_العميل}}", description: "رقم هوية العميل" },
+      { name: "{{رقم_القرض}}", description: "رقم القرض" },
+      { name: "{{رقم_القسط}}", description: "رقم القسط" },
+      { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
+      { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
+      { name: "{{المبلغ_رقما}}", description: "المبلغ المدفوع بالأرقام" },
+      { name: "{{المبلغ_كتابة}}", description: "المبلغ المدفوع مكتوباً بالحروف" },
+      { name: "{{اسم_الموظف}}", description: "اسم الموظف المختص" }
+    ]
   };
 
   // Get default template content
@@ -131,6 +146,8 @@ export default function ContractTemplates() {
         return ReceiptVoucher();
       case "PAYMENT_VOUCHER":
         return PaymentVoucher();
+      case "PAYMENT_PROOF":
+        return InstallmentPaymentReceipt();
       default:
         return "";
     }
@@ -179,6 +196,7 @@ export default function ContractTemplates() {
                         key === "debt-acknowledgment" ? "debtAcknowledgment" :
                         key === "receipt-voucher" ? "receiptVoucher" :
                         key === "payment-voucher" ? "paymentVoucher" :
+                        key === "payment-proof" ? "paymentProof" :
                         key;
         newTemplates[stateKey] = content;
       });
@@ -300,6 +318,7 @@ export default function ContractTemplates() {
                       currentTemplateKey === "debt-acknowledgment" ? "debtAcknowledgment" :
                       currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
                       currentTemplateKey === "payment-voucher" ? "paymentVoucher" :
+                      currentTemplateKey === "payment-proof" ? "paymentProof" :
                       currentTemplateKey;
       
       const templateContent = templates[stateKey];
@@ -336,6 +355,7 @@ export default function ContractTemplates() {
                     currentTemplateKey === "debt-acknowledgment" ? "debtAcknowledgment" :
                     currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
                     currentTemplateKey === "payment-voucher" ? "paymentVoucher" :
+                    currentTemplateKey === "payment-proof" ? "paymentProof" :
                     currentTemplateKey;
     
     setTemplates(prev => ({
@@ -377,6 +397,7 @@ export default function ContractTemplates() {
               <Tab label="إقرار دين وتعهد بالسداد" value="debt-acknowledgment" />
               <Tab label="سند القبض" value="receipt-voucher" />
               <Tab label="سند الصرف" value="payment-voucher" />
+              <Tab label="إيصال سداد قسط" value="payment-proof" />
             </Tabs>
 
             {/* Content */}
@@ -445,6 +466,18 @@ export default function ContractTemplates() {
                   placeholder="أدخل نص قالب سند الصرف هنا..."
                         style={{ height: "600px", marginBottom: "40px" }}
                 />
+                    </>
+                  )}
+                  {activeTab === "payment-proof" && (
+                    <>
+                      <VariablesList variables={contractVariables["payment-proof"]} />
+                      <ReactQuillWrapper
+                        theme="snow"
+                        value={templates.paymentProof}
+                        onChange={(value) => handleTemplateChange("paymentProof", value)}
+                        placeholder="أدخل نص قالب إيصال سداد قسط هنا..."
+                        style={{ height: "600px", marginBottom: "40px" }}
+                      />
                     </>
                   )}
                 </>

@@ -5,11 +5,6 @@ import {
   Grid,
   TextField,
   Button,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
   Paper,
   Stack,
   Tooltip,
@@ -21,17 +16,9 @@ import {
   MenuItem,
   Alert,
   Chip,
-  TableContainer,
-  Checkbox,
-  FormControlLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
+
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
-import dayjs from "dayjs";
 import { debounce } from "lodash";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,128 +32,13 @@ import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import LoansTable from "../../components/modals/LoansTable";
 import AddClient from "../../components/modals/AddClient";
-import {
-  StyledTableCell,
-  StyledTableRow,
-} from "../../components/layouts/tableLayout";
 import LoanContractGenerator from "../../components/LoanContractGenerator";
 import LoanContractsPreview from "../../components/LoanContractsPreview";
 import Api from "../../config/Api";
-
-const InstallmentsModal = ({ open, onClose, installments, loanData }) => {
-  if (!loanData) return null;
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth dir="rtl">
-      <DialogContent>
-        <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-          <Grid container spacing={3} justifyContent="center">
-            <Grid item xs={12} md={4} textAlign="center">
-              <Typography variant="body2" color="text.secondary">
-                مبلغ السلفة
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="warning.main">
-                {loanData.amount?.toLocaleString()} ر.س
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4} textAlign="center">
-              <Typography variant="body2" color="text.secondary">
-                إجمالي الفائدة
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="error.main">
-                {loanData.interestAmount?.toLocaleString()} ر.س
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4} textAlign="center">
-              <Typography variant="body2" color="text.secondary">
-                المبلغ الإجمالي
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="success.main">
-                {loanData.totalAmount?.toLocaleString()} ر.س
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-
-        {installments.length > 0 ? (
-          <TableContainer component={Paper}>
-            <Table stickyHeader>
-              <TableHead>
-                <StyledTableRow>
-                  <StyledTableCell>#</StyledTableCell>
-                  <StyledTableCell>تاريخ الاستحقاق</StyledTableCell>
-                  <StyledTableCell align="left">المبلغ الأصلي</StyledTableCell>
-                  <StyledTableCell align="left">الفائدة</StyledTableCell>
-                  <StyledTableCell align="left">القسط</StyledTableCell>
-                  <StyledTableCell align="left">الرصيد المتبقي</StyledTableCell>
-                  <StyledTableCell align="center">الحالة</StyledTableCell>
-                  <StyledTableCell align="center">المبلغ المدفوع</StyledTableCell>
-                </StyledTableRow>
-              </TableHead>
-              <TableBody>
-                {installments.map((installment) => (
-                  <StyledTableRow key={installment.installmentNumber}>
-                    <StyledTableCell>{installment.installmentNumber}</StyledTableCell>
-                    <StyledTableCell>
-                      {dayjs(installment.dueDate).format("DD/MM/YYYY")}
-                    </StyledTableCell>
-                    <StyledTableCell align="left">
-                      {installment.principal?.toFixed(2)} ر.س
-                    </StyledTableCell>
-                    <StyledTableCell align="left">
-                      {installment.interest?.toFixed(2)} ر.س
-                    </StyledTableCell>
-                    <StyledTableCell align="left" sx={{ fontWeight: "bold" }}>
-                      {installment.installment?.toFixed(2)} ر.س
-                    </StyledTableCell>
-                    <StyledTableCell align="left">
-                      {installment.remainingBalance?.toFixed(2)} ر.س
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      <Chip
-                        label={
-                          installment.status === "PENDING"
-                            ? "قيد الانتظار"
-                            : installment.status === "PAID"
-                            ? "مدفوع"
-                            : installment.status === "OVERDUE"
-                            ? "متأخر"
-                            : installment.status
-                        }
-                        color={
-                          installment.status === "PENDING"
-                            ? "warning"
-                            : installment.status === "PAID"
-                            ? "success"
-                            : installment.status === "OVERDUE"
-                            ? "error"
-                            : "default"
-                        }
-                        size="small"
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {installment.paidAmount > 0
-                        ? `${installment.paidAmount.toFixed(2)} ر.س`
-                        : "0.00 ر.س"}
-                    </StyledTableCell>
-                  </StyledTableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ) : (
-          <Alert severity="info">لا توجد أقساط لعرضها</Alert>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>إغلاق</Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
+import { useNavigate } from "react-router-dom";
 
 const Loans = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedBank, setSelectedBank] = useState(null);
@@ -178,7 +50,6 @@ const Loans = () => {
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [installmentsModalOpen, setInstallmentsModalOpen] = useState(false);
 
   const [loanForm, setLoanForm] = useState({
     amount: "",
@@ -194,6 +65,7 @@ const Loans = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
   const queryClient = useQueryClient();
+  // eslint-disable-next-line no-unused-vars
   const [generateContracts, setGenerateContracts] = useState(true);
   const [savedLoanData, setSavedLoanData] = useState(null);
   const [debtAckTemplate, setDebtAckTemplate] = useState("");
@@ -347,7 +219,7 @@ const Loans = () => {
   const handleSaveContracts = async (contractType) => {
     try {
       if (!savedLoanData) {
-        notifyError("لم يتم إنشاء القرض بعد. يرجى إنشاء القرض أولاً");
+        notifyError("لم يتم إنشاء السلفة بعد. يرجى إنشاء السلفة أولاً");
         return;
       }
   
@@ -364,14 +236,6 @@ const Loans = () => {
       }
   
       notifySuccess("تم حفظ العقود بنجاح");
-      setPreviewOpen(false);
-      
-      // إلغاء إعادة تعيين النموذج بعد حفظ العقود
-      // if (!previewOpen) {
-      //   resetLoanForm();
-      //   queryClient.invalidateQueries(["loans"]);
-      //   setActiveTab(0);
-      // }
       
     } catch (error) {
       console.error("Error saving contracts:", error);
@@ -478,19 +342,15 @@ const Loans = () => {
       console.log("Creating loan with data:", loanData);
   
       const response = await createLoan(loanData);
-const newLoan = response?.data?.loan || response?.loan;
+      const newLoan = response?.data?.loan || response?.loan;
   
       console.log("Loan created successfully:", newLoan);
       notifySuccess("تم إنشاء السلفة بنجاح");
   
-      // تمكين زر معاينة العقود بعد إنشاء القرض
       setSavedLoanData({
         ...newLoan,
         client: selectedClient.client,
       });
-  
-      // إلغاء إعادة تعيين النموذج - الحقول تبقى كما هي
-      // resetLoanForm();
       
       queryClient.invalidateQueries(["loans"]);
       
@@ -508,19 +368,8 @@ const newLoan = response?.data?.loan || response?.loan;
     console.log(`Contract generated: ${contractType}`);
     const newCount = contractsGenerated + 1;
     setContractsGenerated(newCount);
-  
-    if (newCount >= 2 && !previewOpen) {
-      console.log("Both contracts generated");
-      // إلغاء إعادة تعيين النموذج التلقائي
-      // setTimeout(() => {
-      //   resetLoanForm();
-      //   queryClient.invalidateQueries(["loans"]);
-      //   setActiveTab(0);
-      //   setContractsGenerated(0);
-      //   setSavedLoanData(null);
-      // }, 1000);
-    }
   };
+
   const resetLoanForm = () => {
     setSelectedClient(null);
     setSelectedLoan(null);
@@ -638,43 +487,9 @@ const newLoan = response?.data?.loan || response?.loan;
     }
   };
 
-  const handleViewInstallments = async (loan) => {
-    try {
-      setSelectedLoan(loan);
-      // استدعاء API لاسترجاع بيانات القرض مع الأقساط
-      const response = await getLoanById(loan.id);
-      
-      // تحويل بيانات الأقساط إلى التنسيق المتوقع من المودال
-      const formattedInstallments = response.repayments?.map((repayment, index) => {
-        const principalPerInstallment = response.amount / response.durationMonths;
-        const interestPerInstallment = response.interestAmount / response.durationMonths;
-        const totalPerInstallment = response.totalAmount / response.durationMonths;
-        
-        let remainingBalance = response.totalAmount;
-        for (let i = 0; i <= index; i++) {
-          remainingBalance -= totalPerInstallment;
-        }
-        
-        return {
-          installmentNumber: index + 1,
-          dueDate: repayment.dueDate,
-          principal: principalPerInstallment,
-          interest: interestPerInstallment,
-          installment: repayment.amount,
-          remainingBalance: Math.max(0, remainingBalance),
-          status: repayment.status,
-          paidAmount: repayment.paidAmount || 0
-        };
-      }) || [];
-      
-      setInstallments(formattedInstallments);
-      setInstallmentsModalOpen(true);
-    } catch (error) {
-      console.error("Error fetching installments:", error);
-      notifyError("حدث خطأ أثناء تحميل الأقساط");
-      setInstallments([]);
-      setInstallmentsModalOpen(true);
-    }
+  // تحديث الدالة لفتح صفحة الأقساط
+  const handleViewInstallments = (loan) => {
+    navigate(`/installments/${loan.id}`);
   };
 
   const handleEditLoan = () => {
@@ -849,7 +664,6 @@ const newLoan = response?.data?.loan || response?.loan;
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
-                {/* زر إنشاء/تعديل السلفة */}
                 {!isViewMode && (
                   <Button
                     variant="contained"
@@ -867,7 +681,6 @@ const newLoan = response?.data?.loan || response?.loan;
                   </Button>
                 )}
 
-                {/* زر التعديل (يظهر فقط في وضع العرض) */}
                 {isViewMode && canEditLoan && (
                   <Button
                     variant="contained"
@@ -880,15 +693,14 @@ const newLoan = response?.data?.loan || response?.loan;
                       "&:hover": { bgcolor: "primary.dark" },
                     }}
                   >
-                    تعديل القرض
+                    تعديل السلفة
                   </Button>
                 )}
 
-                {/* زر معاينة العقود */}
                 <Button
                   variant="outlined"
                   onClick={handleOpenPreview}
-                  disabled={!savedLoanData} // يعمل فقط بعد إنشاء القرض
+                  disabled={!savedLoanData}
                   sx={{
                     borderColor: "#0d40a5",
                     color: "#0d40a5",
@@ -901,7 +713,6 @@ const newLoan = response?.data?.loan || response?.loan;
                   معاينة العقود
                 </Button>
 
-                {/* زر إضافة سلفة أخرى (يظهر فقط في وضع العرض) */}
                 {isViewMode && (
                   <Button
                     variant="outlined"
@@ -919,7 +730,6 @@ const newLoan = response?.data?.loan || response?.loan;
                   </Button>
                 )}
 
-                {/* زر إلغاء (يظهر في وضع التعديل) */}
                 {isEditMode && (
                   <Button
                     variant="outlined"
@@ -1256,7 +1066,6 @@ const newLoan = response?.data?.loan || response?.loan;
                       />
                     </Grid>
 
-                    {/* Bank Account Selection */}
                     <Grid item xs={12} md={6}>
                       <Autocomplete
                         options={banksData?.data || []}
@@ -1299,7 +1108,6 @@ const newLoan = response?.data?.loan || response?.loan;
                       />
                     </Grid>
 
-                    {/* Partner Selection */}
                     <Grid item xs={12} md={6}>
                       <Autocomplete
                         options={partnersData?.partners || []}
@@ -1341,8 +1149,6 @@ const newLoan = response?.data?.loan || response?.loan;
                     </Grid>
                   </Grid>
                 </Paper>
-
-                {/* إخفاء جدول الأقساط من التبويب 1 حسب الطلب */}
               </Box>
             )}
           </Box>
@@ -1358,15 +1164,6 @@ const newLoan = response?.data?.loan || response?.loan;
         }}
       />
 
-      {/* مودال عرض الأقساط */}
-      <InstallmentsModal
-        open={installmentsModalOpen}
-        onClose={() => setInstallmentsModalOpen(false)}
-        installments={installments}
-        loanData={selectedLoan}
-      />
-
-      {/* مولدات العقود */}
       {generateContracts && savedLoanData && selectedClient && (
         <>
           <LoanContractGenerator

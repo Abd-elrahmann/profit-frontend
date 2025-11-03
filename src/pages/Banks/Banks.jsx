@@ -166,6 +166,12 @@ const Banks = () => {
                   sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
                 >
                   اسم الحساب
+                </StyledTableCell>  
+                <StyledTableCell
+                  align="center"
+                  sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+                >
+                  اسم المالك
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"
@@ -216,18 +222,11 @@ const Banks = () => {
                 banksData?.data?.map((bank) => (
                   <StyledTableRow key={bank.id} hover>
                     <StyledTableCell align="center">{bank.id}</StyledTableCell>
-                    <StyledTableCell align="center">
-                      {bank.name}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {bank.accountNumber}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {bank.IBAN}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {bank.limit}
-                    </StyledTableCell>
+                    <StyledTableCell align="center">{bank.name}</StyledTableCell>
+                    <StyledTableCell align="center">{bank.owner}</StyledTableCell>
+                    <StyledTableCell align="center">{bank.accountNumber}</StyledTableCell>
+                    <StyledTableCell align="center">{bank.IBAN}</StyledTableCell>
+                    <StyledTableCell align="center">{bank.limit}</StyledTableCell>
                     <StyledTableCell align="center">
                       <Chip
                         label={

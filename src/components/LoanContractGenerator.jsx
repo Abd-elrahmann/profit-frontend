@@ -15,32 +15,45 @@ const numberToArabicWords = (num) => {
 
   let result = '';
   
+  // الآلاف
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
+
     if (thousandsPart === 1) {
-      result += 'ألف ';
+      result += 'ألف';
     } else if (thousandsPart === 2) {
-      result += 'ألفان ';
+      result += 'ألفان';
     } else if (thousandsPart < 11) {
-      result += ones[thousandsPart] + ' آلاف ';
+      result += ones[thousandsPart] + ' آلاف';
     } else {
-      result += numberToArabicWords(thousandsPart) + ' ألف ';
+      result += numberToArabicWords(thousandsPart) + ' ألف';
     }
+
     num %= 1000;
+
+    // ✅ إضافة حرف و إذا هناك باقي (مئات/عشرات/آحاد)
+    if (num > 0) {
+      result += ' و ';
+    } else {
+      result += ' ';
+    }
   }
 
+  // المئات
   if (num >= 100) {
     const hundredsPart = Math.floor(num / 100);
-    result += hundreds[hundredsPart] + ' ';
+    result += hundreds[hundredsPart];
     num %= 100;
+    if (num > 0) result += ' و ';
   }
 
+  // العشرات والآحاد
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
     result += tens[tensPart];
     if (onesPart > 0) {
-      result += ' و' + ones[onesPart];
+      result += ' و ' + ones[onesPart];
     }
   } else if (num >= 10) {
     result += teens[num - 10];
@@ -97,7 +110,9 @@ const LoanContractGenerator = React.forwardRef(({
   const uploadPDFToServer = useCallback(async (pdfBlob) => {
     try {
       const formData = new FormData();
-      const filename = `${contractType.toLowerCase()}_${loanData.id}_${Date.now()}.pdf`;
+      const filename = contractType === 'DEBT_ACKNOWLEDGMENT' 
+        ? `إقرار الدين_${loanData.id}_${Date.now()}.pdf`
+        : `سند الأمر_${loanData.id}_${Date.now()}.pdf`;
       formData.append('file', pdfBlob, filename);
       
       const endpoint = contractType === 'DEBT_ACKNOWLEDGMENT' 
@@ -120,8 +135,10 @@ const LoanContractGenerator = React.forwardRef(({
     }
   }, [contractType, clientData?.id, loanData?.id]);
 
-  const generatePDF = useCallback(async (htmlContent) => {
-    if (!htmlContent) {
+  const generatePDF = useCallback(async (htmlContent = contractHtml) => {
+    const contentToUse = htmlContent || contractHtml;
+    
+    if (!contentToUse) {
       console.error('No contract HTML to generate PDF');
       notifyError('لا يوجد محتوى عقد لتحويله إلى PDF');
       return;
@@ -130,45 +147,58 @@ const LoanContractGenerator = React.forwardRef(({
     try {
       setIsGenerating(true);
       
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-      tempDiv.style.width = '210mm';
-      tempDiv.style.minHeight = '297mm';
-      tempDiv.style.position = 'fixed';
-      tempDiv.style.top = '0';
-      tempDiv.style.left = '0';
-      tempDiv.style.zIndex = '9999';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.padding = '20px';
-      document.body.appendChild(tempDiv);
+      // إنشاء عنصر ثابت في الصفحة
+      const previewContainer = document.createElement('div');
+      previewContainer.id = `contract-preview-${Date.now()}`;
+      previewContainer.style.width = '210mm';
+      previewContainer.style.minHeight = '297mm';
+      previewContainer.innerHTML = `
+        <div style="
+          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+          padding: 20mm;
+          background: white;
+          direction: rtl;
+        ">
+          ${contentToUse}
+        </div>
+      `;
+      document.body.appendChild(previewContainer);
 
-      const options = {
-        margin: [10, 10, 10, 10],
-        filename: `${contractType.toLowerCase()}_${clientData.id}_${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: true,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait'
-        }
-      };
+     const options = {
+      margin: 0,
+      filename: `${contractType.toLowerCase()}_${clientData.id}_${Date.now()}.pdf`,
+      image: { type: 'jpeg', quality: 1.0 },
+      html2canvas: { 
+        scale: 3,
+        useCORS: true,
+        letterRendering: true,
+        allowTaint: true,
+        logging: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait',
+        compress: false,
+        hotfixes: ['px_scaling']
+      }
+    };
 
       console.log('Generating PDF for:', contractType);
       
-      const pdfBlob = await html2pdf()
-        .from(tempDiv)
-        .set(options)
-        .outputPdf('blob');
+      // انتظر قليلاً للتأكد من تحميل الخطوط والصور
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Generate PDF from the preview container
+    const container = document.getElementById(previewContainer.id);
+    const pdfBlob = await html2pdf()
+      .from(container)
+      .set(options)
+      .outputPdf('blob');
 
-      document.body.removeChild(tempDiv);
+    // تنظيف عنصر المعاينة
+    document.body.removeChild(previewContainer);
 
       await uploadPDFToServer(pdfBlob);
       
@@ -178,15 +208,16 @@ const LoanContractGenerator = React.forwardRef(({
         onContractGenerated(pdfBlob, contractType);
       }
 
-      setIsGenerating(false);
       return pdfBlob;
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      setIsGenerating(false);
-      notifyError('حدث خطأ أثناء إنشاء ملف PDF');
-      handleApiError(error);
-      throw error;
-    }
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    notifyError('حدث خطأ أثناء إنشاء ملف PDF');
+    handleApiError(error);
+    throw error;
+  } finally {
+    setIsGenerating(false);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractType, clientData?.id, uploadPDFToServer, onContractGenerated]);
 
   const generateContract = useCallback(async (generatePdf = autoGenerate, customLoanData = null) => {
@@ -194,7 +225,7 @@ const LoanContractGenerator = React.forwardRef(({
     
     if (!loanDataToUse || !clientData || !templateContent) {
       console.error('Missing data:', { loanDataToUse, clientData, templateContent });
-      notifyError('بيانات القرض أو العميل أو قالب العقد غير متوفر');
+      notifyError('بيانات السلفة أو العميل أو قالب العقد غير متوفر');
       return;
     }
   
@@ -237,12 +268,17 @@ const LoanContractGenerator = React.forwardRef(({
       .replace(/{{مدينة_الوفاء}}/g, 'الرياض - المملكة العربية السعودية')
       .replace(/{{سبب_انشاء_السند}}/g, 'سلفة مالية')
       
+      .replace(/{{رقم_هوية_الدائن}}/g, '1234567890')
+      .replace(/{{رقم_هوية_المدين}}/g, clientData.nationalId || '')
+      .replace(/{{رقم_هوية_الكفيل}}/g, clientData.nationalId || '')
       .replace(/{{هوية_الدائن}}/g, '1234567890')
       .replace(/{{هوية_المدين}}/g, clientData.nationalId || '')
       .replace(/{{اسم_الكفيل}}/g, clientData.name || '')
       .replace(/{{هوية_الكفيل}}/g, clientData.nationalId || '');
 
     console.log('Filled Template generated successfully');
+    console.log('Filled Template Content:', filledTemplate);
+    console.log('Contract HTML length:', filledTemplate.length);
     
     setContractHtml(filledTemplate);
     

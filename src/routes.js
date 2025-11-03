@@ -12,6 +12,7 @@ import {
 } from 'react-icons/md';
 import { TrendingUp as TrendingUpIcon, AccountBalance as AccountBalanceIcon } from '@mui/icons-material';
 import { MdAttachMoney as LoanIcon } from 'react-icons/md';
+import { MdAttachMoney as InstallmentsIcon } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -22,6 +23,7 @@ const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTem
 const Investors = React.lazy(() => import('./pages/Investors/Investors'));
 const Loans = React.lazy(() => import('./pages/Loans/Loans'));
 const Banks = React.lazy(() => import('./pages/Banks/Banks'));
+const Installments = React.lazy(() => import('./pages/Installments/Installments'));
 const routes = [
   {
     path: '/login',
@@ -110,6 +112,14 @@ const routes = [
     icon: AccountBalance,
     module: 'banks',
     requiresPermissions: true
+  },
+  {
+    path: '/installments',
+    element: Installments,
+    protected: true,
+    showInSidebar: true,
+    label: 'القسط',
+    icon: InstallmentsIcon,
   }
 ];
 

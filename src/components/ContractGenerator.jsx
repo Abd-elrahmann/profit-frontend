@@ -15,26 +15,39 @@ const numberToArabicWords = (num) => {
 
   let result = '';
   
+  // الآلاف
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
+
     if (thousandsPart === 1) {
-      result += 'ألف ';
+      result += 'ألف';
     } else if (thousandsPart === 2) {
-      result += 'ألفان ';
+      result += 'ألفان';
     } else if (thousandsPart < 11) {
-      result += ones[thousandsPart] + ' آلاف ';
+      result += ones[thousandsPart] + ' آلاف';
     } else {
-      result += numberToArabicWords(thousandsPart) + ' ألف ';
+      result += numberToArabicWords(thousandsPart) + ' ألف';
     }
+
     num %= 1000;
+
+    // ✅ إضافة حرف (و) لو فيه بقية بعد الألف
+    if (num > 0) {
+      result += ' و ';
+    } else {
+      result += ' ';
+    }
   }
 
+  // المئات
   if (num >= 100) {
     const hundredsPart = Math.floor(num / 100);
-    result += hundreds[hundredsPart] + ' ';
+    result += hundreds[hundredsPart];
     num %= 100;
+    if (num > 0) result += ' و ';
   }
 
+  // العشرات والآحاد
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
@@ -51,6 +64,7 @@ const numberToArabicWords = (num) => {
   return result.trim();
 };
 
+
 const getCurrentDates = () => {
   const now = new Date();
   const gregorianDate = now.toLocaleDateString('ar-SA');
@@ -62,7 +76,7 @@ const getCurrentDates = () => {
 };
 
 const ContractGenerator = React.forwardRef(({ 
-  investorData, 
+  investorData,   
   templateContent, 
   onContractGenerated,
   contractType = 'MUDARABAH'

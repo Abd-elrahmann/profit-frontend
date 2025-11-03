@@ -1,105 +1,333 @@
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  IconButton,
   Box,
   Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import PrintIcon from "@mui/icons-material/Print";
-import DownloadIcon from "@mui/icons-material/Download";
+  IconButton,
+  Paper,
+  Divider,
+  Tabs,
+  Tab,
+} from '@mui/material';
+import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 
-const LoanContractPreview = ({
-  open,
-  onClose,
-  contractHtml,
-  onGeneratePDF,
-  loading,
-  title = "معاينة العقد"
+const LoanContractsPreview = ({ 
+  open, 
+  onClose, 
+  debtAckHtml, 
+  promissoryNoteHtml, 
+  onSaveContracts, 
+  loading = false,
+  clientName = "",
+  loanAmount = 0
 }) => {
+  const [activeTab, setActiveTab] = React.useState(0);
 
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
-      <html dir="rtl">
-        <head>
-          <title>${title}</title>
-          <style>
-            body {
-              font-family: "Cairo","Noto Sans Arabic",sans-serif !important;
-              padding: 20px;
-              direction: rtl;
-            }
-          </style>
-        </head>
-        <body>${contractHtml}</body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
+  const handlePrint = () => {
+    const contractElement = document.getElementById(`contract-tab-${activeTab}`);
+    if (contractElement) {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${activeTab === 0 ? ' إقرار الدين' : 'سند الأمر'}</title>
+            <style>
+              body { 
+                font-family: "Noto Sans Arabic", "Cairo", sans-serif;
+                margin: 0;
+                padding: 20px;
+                direction: rtl;
+              }
+              .contract-content { 
+                max-width: 900px; 
+                margin: 0 auto; 
+                border: 1px solid #ddd;
+                padding: 30px;
+                border-radius: 12px;
+                background: #fff;
+              }
+              @media print {
+                body { padding: 0; }
+                .contract-content { 
+                  border: none; 
+                  box-shadow: none;
+                  padding: 15px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="contract-content">
+              ${contractElement.innerHTML}
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    }
+  };
+
+  const contracts = [
+    { 
+      name: 'إقرار الدين', 
+      html: debtAckHtml,
+      id: 'debt-acknowledgment'
+    },
+    { 
+      name: 'سند الأمر', 
+      html: promissoryNoteHtml,
+      id: 'promissory-note'
+    }
+  ];
+
   return (
-    <Dialog
-      open={open}
+    <Dialog 
+      open={open} 
       onClose={onClose}
       maxWidth="lg"
       fullWidth
+      fullScreen={true}
       dir="rtl"
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          maxHeight: '100vh'
+        }
+      }}
     >
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Typography fontWeight="bold">{title}</Typography>
-        <IconButton onClick={onClose}>
+      <DialogTitle 
+        className="no-print"
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          pb: 1,
+          borderBottom: '1px solid #e0e0e0',
+          '@media print': {
+            display: 'none !important'
+          }
+        }}
+      >
+        <Box>
+          <Typography variant="h6" fontWeight="bold">
+            معاينة عقود السلفة
+          </Typography>
+          {clientName && (
+            <Typography variant="body2" color="text.secondary">
+              العميل: {clientName} - المبلغ: {loanAmount.toLocaleString()} ر.س
+            </Typography>
+          )}
+        </Box>
+        <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent
-        sx={{
-          height: "80vh",
-          overflow: "auto",
-          bgcolor: "#fff",
-          border: "1px solid #ddd",
+      {/* Tabs */}
+      <Box 
+        className="no-print"
+        sx={{ 
+          borderBottom: 1, 
+          borderColor: 'divider',
+          '@media print': {
+            display: 'none !important'
+          }
         }}
       >
-        <Box
-          id="contract-preview"
-          sx={{
-            p: 3,
-            "& *": { fontFamily: `"Cairo","Noto Sans Arabic",sans-serif` },
-          }}
-          dangerouslySetInnerHTML={{ __html: contractHtml }}
-        />
+        <Tabs value={activeTab} onChange={handleTabChange} centered>
+          <Tab 
+            label="إقرار الدين" 
+            sx={{
+              fontWeight: activeTab === 0 ? 'bold' : 'normal',
+              color: activeTab === 0 ? '#0d40a5' : 'text.secondary'
+            }}
+          />
+          <Tab 
+            label="سند الأمر" 
+            sx={{
+              fontWeight: activeTab === 1 ? 'bold' : 'normal',
+              color: activeTab === 1 ? '#0d40a5' : 'text.secondary'
+            }}
+          />
+        </Tabs>
+      </Box>
+
+      <DialogContent sx={{ 
+        p: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        '@media print': {
+          p: 0,
+          m: 0
+        }
+      }}>
+        {contracts.map((contract, index) => (
+          <Box
+            key={contract.id}
+            id={`contract-tab-${index}`}
+            sx={{
+              display: activeTab === index ? 'block' : 'none',
+              '@media print': {
+                display: 'block !important',
+                pageBreakAfter: index === 0 ? 'always' : 'auto'
+              }
+            }}
+          >
+            <Paper 
+              sx={{ 
+                m: 3, 
+                p: 4, 
+                minHeight: '500px',
+                bgcolor: 'white',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                border: '1px solid #e0e0e0',
+                '@media print': {
+                  m: 0,
+                  p: 2,
+                  boxShadow: 'none',
+                  border: 'none',
+                  minHeight: 'auto',
+                  pageBreakInside: 'avoid'
+                }
+              }}
+            >
+              {contract.html ? (
+                <Box
+                  dangerouslySetInnerHTML={{ __html: contract.html }}
+                  sx={{
+                    '& *': {
+                      fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                      lineHeight: 1.8
+                    },
+                    '& h1, & h2, & h3': {
+                      textAlign: 'center',
+                      color: '#1976d2',
+                      marginBottom: '20px'
+                    },
+                    '& p': {
+                      marginBottom: '15px',
+                      textAlign: 'justify'
+                    },
+                    '& strong': {
+                      color: '#1976d2',
+                      fontWeight: 'bold'
+                    }
+                  }}
+                />
+              ) : (
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  height: '400px',
+                  flexDirection: 'column',
+                  color: 'text.secondary'
+                }}>
+                  <Typography variant="h6" mb={2}>
+                    لا يوجد محتوى للعرض
+                  </Typography>
+                  <Typography variant="body2">
+                    يرجى التأكد من وجود قالب العقد وبيانات العميل
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Box>
+        ))}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2 }}>
+      <Divider className="no-print" />
+      
+      <DialogActions 
+        className="no-print"
+        sx={{ 
+          p: 3, 
+          gap: 2,
+          flexDirection: 'row-reverse',
+          bgcolor: '#fafafa',
+          '@media print': {
+            display: 'none !important'
+          }
+        }}
+      >
+        <Button 
+          onClick={onClose}
+          disabled={loading}
+          variant="outlined"
+          sx={{ 
+            minWidth: '100px',
+            borderColor: 'grey.300',
+            color: 'text.secondary',
+            '&:hover': {
+              borderColor: 'grey.400',
+              bgcolor: 'grey.50'
+            }
+          }}
+        >
+          إغلاق
+        </Button>
+        
         <Button
           variant="outlined"
-          startIcon={<PrintIcon />}
+          startIcon={<Print sx={{marginLeft: '10px'}} />}
           onClick={handlePrint}
+          disabled={loading || !contracts[activeTab]?.html}
+          sx={{ 
+            minWidth: '120px',
+            borderColor: '#1976d2',
+            color: '#1976d2',
+            '&:hover': {
+              borderColor: '#1565c0',
+              bgcolor: '#e3f2fd'
+            }
+          }}
         >
           طباعة
+        </Button>
+        
+        <Button
+          variant="contained"
+          startIcon={<Download sx={{marginLeft: '10px'}} />}
+          onClick={() => onSaveContracts(contracts[activeTab].id)}
+          disabled={loading || !contracts[activeTab]?.html}
+          sx={{
+            bgcolor: "#0d40a5",
+            "&:hover": { bgcolor: "#0b3589" },
+            minWidth: '140px'
+          }}
+        >
+          {loading ? 'جاري الحفظ...' : 'حفظ العقد'}
         </Button>
 
         <Button
           variant="contained"
-          disabled={loading}
-          startIcon={<DownloadIcon />}
-          onClick={onGeneratePDF}
+          startIcon={<Download sx={{marginLeft: '10px'}} />}
+          onClick={() => onSaveContracts('both')}
+          disabled={loading || !debtAckHtml || !promissoryNoteHtml}
+          sx={{
+            bgcolor: "#2e7d32",
+            "&:hover": { bgcolor: "#1b5e20" },
+            minWidth: '180px'
+          }}
         >
-          {loading ? "جاري التصدير..." : "تصدير PDF"}
-        </Button>
-
-        <Button variant="text" onClick={onClose}>
-          إغلاق
+          {loading ? 'جاري الحفظ...' : 'حفظ كلا العقدين'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default LoanContractPreview;
+export default LoanContractsPreview;

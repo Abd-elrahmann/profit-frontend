@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -7,7 +7,36 @@ import { Toaster } from 'react-hot-toast'
 import routes from './routes';
 import Layout from './components/layouts/Layout';
 import theme from './theme/theme';
+import Installments from './pages/Installments/Installments';
+import PaymentReceipt from './components/modals/PaymentReceipt';
 
+// مكون لمنع التنقل من صفحة إيصال الدفع
+const RestrictedNavigationRoute = ({ children }) => {
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    };
+
+    const handleKeyDown = (event) => {
+      // منع اختصارات التنقل مثل Alt + ArrowLeft/ArrowRight
+      if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  return children;
+};
 
 const AppLayout = () => {
   return (
@@ -52,6 +81,9 @@ const AppLayout = () => {
             </ProtectedRoute>
           } 
         />
+
+<Route path="/installments/:loanId" element={<Installments />} />
+<Route path="/payment-receipt/:loanId/:repaymentId/:clientName" element={<RestrictedNavigationRoute><PaymentReceipt /></RestrictedNavigationRoute>} />
       </Routes>
     </Layout>
   );

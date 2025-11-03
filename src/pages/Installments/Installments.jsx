@@ -1,0 +1,868 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableHead,
+  TableBody,
+  TableContainer,
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  Grid,
+  Divider,
+  Chip,
+  Stack,
+  IconButton,
+  Menu,
+  MenuItem,
+  Alert,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Checkbox,
+} from "@mui/material";
+import {
+  MoreVert as MoreVertIcon,
+  PlayArrow as StartCollectionIcon,
+  Check as ApproveIcon,
+  Close as RejectIcon,
+  Schedule as PostponeIcon,
+  Description as DocumentIcon,
+  Print as PrintIcon,
+  Share as ShareIcon,
+} from "@mui/icons-material";
+import { Download } from "@mui/icons-material";
+
+import { useParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { 
+  getLoanById, 
+  approveRepayment, 
+  rejectRepayment, 
+  postponeRepayment,
+} from "./InstallmentsApi";
+import { notifySuccess, notifyError } from "../../utilities/toastify";
+import CollectionModal from "../../components/modals/CollectionModal";
+import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
+import dayjs from "dayjs";
+import PaymentProofGenerator from "../../components/PaymentProofGenerator";
+import PaymentProofPreview from "../../components/PaymentProofPreview";
+import Api from "../../config/Api";
+
+const Installments = () => {
+    const { loanId } = useParams();
+    const queryClient = useQueryClient();
+    const [selectedInstallment, setSelectedInstallment] = useState(null);
+    const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [selectedActionInstallment, setSelectedActionInstallment] = useState(null);
+    const [activeStep, setActiveStep] = useState(0);
+    const [paymentLink, setPaymentLink] = useState("");
+    const [postponeModalOpen, setPostponeModalOpen] = useState(false);
+    const [newDueDate, setNewDueDate] = useState("");
+    const [postponeReason, setPostponeReason] = useState("");
+    
+  
+    const [activeCollectionInstallmentId, setActiveCollectionInstallmentId] = useState(null);
+  
+    const [paymentProofModalOpen, setPaymentProofModalOpen] = useState(false);
+    const [selectedProofInstallment, setSelectedProofInstallment] = useState(null);
+    const [paymentProofTemplate, setPaymentProofTemplate] = useState('');
+    const [paymentProofHtml, setPaymentProofHtml] = useState('');
+    const [isGeneratingProof, setIsGeneratingProof] = useState(false);
+
+    const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+    const [selectedDocumentsInstallment, setSelectedDocumentsInstallment] = useState(null);
+  
+    const paymentProofGeneratorRef = useRef(null);
+
+    useEffect(() => {
+      if (loanId) {
+        fetchPaymentProofTemplate();
+      }
+    }, [loanId]);
+
+    const fetchPaymentProofTemplate = async () => {
+      try {
+        const response = await Api.get('/api/templates/PAYMENT_PROOF');
+        setPaymentProofTemplate(response.data.content || '');
+      } catch (error) {
+        console.warn('Could not fetch payment proof template:', error);
+      }
+    };
+
+    const { data: loanData, isLoading, error } = useQuery({
+      queryKey: ["loan", loanId],
+      queryFn: () => getLoanById(loanId),
+      enabled: !!loanId,
+    });
+  
+    const { data: repaymentsData } = useQuery({
+      queryKey: ["repayments", loanId],
+      queryFn: () => getLoanById(loanId),
+      enabled: !!loanId && (!loanData?.repayments || loanData.repayments.length === 0),
+    });
+  
+    const steps = [
+      "إنشاء الرابط",
+      "بإنتظار الإيصال", 
+      "مراجعة الإيصال"
+    ];
+  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const installments = Array.isArray(loanData?.repayments) ? loanData.repayments : 
+                     Array.isArray(repaymentsData) ? repaymentsData : [];
+    
+    const sortedInstallments = [...installments].sort((a, b) => {
+      return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
+    });
+
+    useEffect(() => {
+      if (activeCollectionInstallmentId) {
+        const currentInstallment = installments.find(inst => inst.id === activeCollectionInstallmentId);
+        if (currentInstallment) {
+          if (currentInstallment.attachments) {
+            setActiveStep(2);
+            setSelectedInstallment(currentInstallment);
+          } 
+          else if (currentInstallment.status === "PENDING_REVIEW" || paymentLink) {
+            setActiveStep(1);
+          }
+        }
+      }
+    }, [installments, activeCollectionInstallmentId, paymentLink]);
+  
+    const handleStartCollection = (installment) => {
+      setSelectedInstallment(installment);
+      setActiveCollectionInstallmentId(installment.id);
+      setCollectionModalOpen(true);
+      setAnchorEl(null);
+      setActiveStep(0);
+    };
+  
+    const handleCollectionSuccess = (link) => {
+      setPaymentLink(link);
+      setActiveStep(1);
+      notifySuccess("تم إنشاء رابط الدفع بنجاح");
+    };
+  
+    const handleNotificationSent = () => {
+      setActiveStep(1);
+      notifySuccess("تم إرسال رابط الدفع إلى العميل");
+    };
+  
+    const handleApprove = async (installment) => {
+      try {
+        setSelectedProofInstallment(installment);
+        
+        const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+        
+        const proofHtml = await paymentProofGeneratorRef.current.generateContract(
+          false, 
+          { 
+            installmentData: installment, 
+            loanData, 
+            clientData: loanData?.client,
+            employeeName: defaultEmployeeName
+          }
+        );
+        
+        setPaymentProofHtml(proofHtml);
+        setPaymentProofModalOpen(true);
+        
+      } catch (error) {
+        console.log('Error generating payment proof:', error);
+        notifyError('حدث خطأ أثناء توليد إيصال السداد');
+      }
+      setAnchorEl(null);
+    };
+
+    const handleSavePaymentProof = async () => {
+      try {
+        setIsGeneratingProof(true);
+        
+        const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+        
+        const finalProofHtml = await paymentProofGeneratorRef.current.generateContract(
+          false, 
+          { 
+            installmentData: selectedProofInstallment, 
+            loanData, 
+            clientData: loanData?.client,
+            employeeName: defaultEmployeeName
+          }
+        );
+        
+        await paymentProofGeneratorRef.current.generatePDF(finalProofHtml);
+        
+        notifySuccess("تم حفظ إيصال السداد بنجاح");
+        
+        await approveRepayment(selectedProofInstallment.id, selectedProofInstallment.amount, "تمت الموافقة على السداد");
+        
+        setPaymentProofModalOpen(false);
+        setSelectedProofInstallment(null);
+        setActiveStep(0);
+        setSelectedInstallment(null);
+        setActiveCollectionInstallmentId(null);
+        setPaymentLink("");
+        
+  
+        queryClient.invalidateQueries(["loan", loanId]);
+        queryClient.invalidateQueries(["repayments", loanId]);
+        queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
+        
+      } catch (error) {
+        console.log('Error saving payment proof:', error);
+        notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال");
+      } finally {
+        setIsGeneratingProof(false);
+      }
+    };
+  
+    const handleReject = async (installment) => {
+      try {
+        await rejectRepayment(installment.id, "تم رفض الإيصال");
+        notifySuccess("تم رفض السداد");
+        queryClient.invalidateQueries(["loan", loanId]);
+        queryClient.invalidateQueries(["repayments", loanId]);
+        setActiveStep(1);
+        setPaymentLink("");
+      } catch (error) {
+        console.log('Reject error:', error);
+        notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض السداد");
+      }
+      setAnchorEl(null);
+    };
+
+  const handlePostpone = async () => {
+    if (!selectedActionInstallment || !newDueDate) {
+      notifyError("يرجى إدخال تاريخ الاستحقاق الجديد");
+      return;
+    }
+
+    try {
+      await postponeRepayment(selectedActionInstallment.id, newDueDate, postponeReason);
+      notifySuccess("تم تأجيل القسط بنجاح");
+      queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["repayments", loanId]);
+      setPostponeModalOpen(false);
+      setNewDueDate("");
+      setPostponeReason("");
+    } catch (error) {
+      console.log('Postpone error:', error);
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء تأجيل القسط");
+    }
+    setAnchorEl(null);
+  };
+
+  const handleMenuOpen = (event, installment) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedActionInstallment(installment);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedActionInstallment(null);
+  };
+
+  const checkIfOverdue = (installment) => {
+    if (installment.status === "PAID") return false;
+    const dueDate = new Date(installment.dueDate);
+    const today = new Date();
+    return dueDate < today;
+  };
+
+  const getStatusColor = (status, installment) => {
+    if (checkIfOverdue(installment)) {
+      return "error";
+    }
+    
+    const effectiveStatus = (status === "PENDING" && installment.attachments && installment.attachments.length > 0) 
+      ? "PENDING_REVIEW" 
+      : status;
+    
+    switch (effectiveStatus) {
+      case "PENDING":
+        return "warning";
+      case "PENDING_REVIEW":
+        return "warning";
+      case "PAID":
+        return "success";
+      case "OVERDUE":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const getStatusText = (status, installment) => {
+    if (checkIfOverdue(installment)) {
+      return "متأخر";
+    }
+    
+    const effectiveStatus = (status === "PENDING" && installment.attachments && installment.attachments.length > 0) 
+      ? "PENDING_REVIEW" 
+      : status;
+    
+    switch (effectiveStatus) {
+      case "PENDING":
+        return "قيد الانتظار";
+      case "PENDING_REVIEW":
+        return "قيد المراجعة";
+      case "PAID":
+        return "مدفوع";
+      case "OVERDUE":
+        return "متأخر";
+      default:
+        return status;
+    }
+  };
+
+  const extractFileName = (url) => {
+    if (!url) return 'ملف غير معروف';
+
+    if (Array.isArray(url)) {
+      if (url.length === 0) return 'ملف غير معروف';
+      url = url[0];
+    }
+    
+    const parts = url.split('/');
+    return parts[parts.length - 1] || 'ملف غير معروف';
+  };
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ m: 2 }}>
+        حدث خطأ في تحميل بيانات الأقساط
+      </Alert>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        bgcolor: "#f6f6f8",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          flex: 1,
+          height: "calc(100vh - 80px)",
+          width: "100%",
+        }}
+      >
+        <Box
+          sx={{
+            flex: 1,
+            p: 4,
+            bgcolor: "#fff",
+            overflowY: "auto",
+          }}
+        >
+          <Typography variant="h5" fontWeight="bold" mb={3}>
+            إدارة أقساط السلفة - {loanData?.client?.name}
+          </Typography>
+
+          <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+            <Grid container spacing={3} justifyContent="center">
+              <Grid item xs={12} md={4} textAlign="center">
+                <Typography variant="body2" color="text.secondary">
+                  مبلغ السلفة
+                </Typography>
+                <Typography variant="h6" fontWeight="bold" color="warning.main">
+                  {loanData?.amount?.toLocaleString()} ر.س
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4} textAlign="center">
+                <Typography variant="body2" color="text.secondary">
+                  إجمالي الفائدة
+                </Typography>
+                <Typography variant="h6" fontWeight="bold" color="error.main">
+                  {loanData?.interestAmount?.toLocaleString()} ر.س
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4} textAlign="center">
+                <Typography variant="body2" color="text.secondary">
+                  المبلغ الإجمالي
+                </Typography>
+                <Typography variant="h6" fontWeight="bold" color="success.main">
+                  {loanData?.totalAmount?.toLocaleString()} ر.س
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
+            <TableContainer>
+              <Table stickyHeader>
+                <TableHead>
+                  <StyledTableRow>
+                    <StyledTableCell align="center">الاقساط المدفوعة</StyledTableCell>
+                    <StyledTableCell align="center">#</StyledTableCell>
+                    <StyledTableCell align="center">تاريخ الاستحقاق</StyledTableCell>
+                    <StyledTableCell align="center">القسط</StyledTableCell>
+                    <StyledTableCell align="center">الرصيد المتبقي</StyledTableCell>
+                    <StyledTableCell align="center">الحالة</StyledTableCell>
+                    <StyledTableCell align="center">المبلغ المدفوع</StyledTableCell>
+                    <StyledTableCell align="center">الإجراءات</StyledTableCell>
+                  </StyledTableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedInstallments.map((installment) => (
+                    <StyledTableRow key={installment.id} hover>
+                      <StyledTableCell align="center">
+                        {installment.status === "PAID" && (
+                          <Checkbox checked size="small" />
+                        )}
+                      </StyledTableCell>
+                      <StyledTableCell align="center">{installment.id}</StyledTableCell>
+                      <StyledTableCell align="center">
+                        {dayjs(installment.dueDate).format("DD/MM/YYYY")}
+                      </StyledTableCell>
+                      <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                        {installment.amount?.toFixed(2)} ر.س
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        {installment.remaining?.toFixed(2) || "0.00"} ر.س
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        <Chip
+                          label={getStatusText(installment.status, installment)}
+                          color={getStatusColor(installment.status, installment)}
+                          size="small"
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        {installment.paidAmount > 0
+                          ? `${installment.paidAmount.toFixed(2)} ر.س`
+                          : "0.00 ر.س"}
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        <Stack direction="row" spacing={1} justifyContent="center">
+                          {(installment.status === "PENDING" || checkIfOverdue(installment)) && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<StartCollectionIcon />}
+                              onClick={() => handleStartCollection(installment)}
+                              sx={{
+                                bgcolor: "green",
+                                color: "white",
+                                fontWeight: "bold",
+                                "&:hover": { bgcolor: "darkgreen" }
+                              }}
+                            >
+                              بدء التحصيل
+                            </Button>
+                          )}
+                          
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, installment)}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        </Stack>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
+
+        <Box
+          sx={{
+            width: "300px",
+            borderRight: "1px solid #ddd",
+            bgcolor: "#fafafa",
+            height: "100%",
+            overflowY: "auto",
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="bold" mb={3}>
+              خطوات التحصيل
+            </Typography>
+
+            <Stepper orientation="vertical" activeStep={activeStep} sx={{ mb: 3 }}>
+              {steps.map((label, index) => (
+                <Step key={index}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+
+            <Divider sx={{ my: 3 }} />
+
+            {activeCollectionInstallmentId && (
+              <Box>
+                <Typography variant="body2" color="text.secondary" mb={1}>
+                  القسط المحدد: #{activeCollectionInstallmentId}
+                </Typography>
+                
+                {selectedInstallment && (
+                  <Typography variant="body2" color="text.secondary" mb={2}>
+                    المبلغ: {selectedInstallment.amount?.toFixed(2)} ر.س
+                  </Typography>
+                )}
+                
+                {activeStep >= 1 && paymentLink && (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    تم إنشاء رابط الدفع بنجاح
+                  </Alert>
+                )}
+                
+                {activeStep >= 1 && !paymentLink && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    في انتظار رفع الإيصال من العميل
+                  </Alert>
+                )}
+                
+                {activeStep >= 2 && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    جاري مراجعة الإيصال المرفوع
+                  </Alert>
+                )}
+
+                {selectedInstallment?.attachments && selectedInstallment.attachments.length > 0 && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      المستندات المرفوعة:
+                    </Typography>
+                    {selectedInstallment.attachments.map((attachment, index) => (
+                      <Box 
+                        key={index}
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: 'grey.200' },
+                          p: 1,
+                          borderRadius: 1,
+                          mb: 1
+                        }}
+                        onClick={() => {
+                          window.open(attachment, '_blank');
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ flex: 1 }}>
+                          {extractFileName(attachment)}
+                        </Typography>
+                        <IconButton 
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const link = document.createElement('a');
+                            link.href = attachment;
+                            link.download = extractFileName(attachment);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }}
+                        >
+                          <Download />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {!activeCollectionInstallmentId && (
+              <Alert severity="info">
+                اختر قسطاً لبدء عملية التحصيل
+              </Alert>
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+      <CollectionModal
+        open={collectionModalOpen}
+        onClose={() => {
+          setCollectionModalOpen(false);
+          setSelectedInstallment(null);
+        }}
+        installment={selectedInstallment}
+        clientName={loanData?.client?.name}
+        onCollectionSuccess={handleCollectionSuccess}
+        onNotificationSent={handleNotificationSent}
+      />
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        {selectedActionInstallment?.status !== "PAID" && (
+          <MenuItem onClick={() => handleApprove(selectedActionInstallment)}>
+            <ApproveIcon sx={{ mr: 1 }} />
+            موافقة
+          </MenuItem>
+        )}
+      
+        <MenuItem onClick={() => handleReject(selectedActionInstallment)}>
+          <RejectIcon sx={{ mr: 1 }} />
+          رفض
+        </MenuItem>
+
+        {selectedActionInstallment?.status !== "PAID" && (
+          <MenuItem onClick={() => setPostponeModalOpen(true)}>
+            <PostponeIcon sx={{ mr: 1 }} />
+            تأجيل
+          </MenuItem>
+        )}
+        {selectedActionInstallment?.status === "PAID" && (
+        <MenuItem onClick={() => {
+          setSelectedDocumentsInstallment(selectedActionInstallment);
+          setDocumentsModalOpen(true);
+        }}>
+          <DocumentIcon sx={{ mr: 1 }} />
+          عرض المستندات
+        </MenuItem>
+        )}
+      </Menu>
+
+      <Dialog open={postponeModalOpen} onClose={() => setPostponeModalOpen(false)}>
+        <DialogTitle>تأجيل القسط</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            type="date"
+            label="التاريخ الجديد للاستحقاق"
+            value={newDueDate}
+            onChange={(e) => setNewDueDate(e.target.value)}
+            sx={{ mt: 2 }}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="سبب التأجيل"
+            value={postponeReason}
+            onChange={(e) => setPostponeReason(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPostponeModalOpen(false)}>إلغاء</Button>
+          <Button onClick={handlePostpone} variant="contained">
+            تأجيل
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <PaymentProofGenerator
+        ref={paymentProofGeneratorRef}
+        installmentData={selectedProofInstallment}
+        loanData={loanData}
+        clientData={loanData?.client}
+        templateContent={paymentProofTemplate}
+        employeeName="الموظف المختص"
+        autoGenerate={false}
+      />
+
+      <PaymentProofPreview
+        open={paymentProofModalOpen}
+        onClose={() => {
+          setPaymentProofModalOpen(false);
+          setSelectedProofInstallment(null);
+        }}
+        paymentProofHtml={paymentProofHtml}
+        onSaveProof={handleSavePaymentProof}
+        loading={isGeneratingProof}
+        clientName={loanData?.client?.name}
+        installmentAmount={selectedProofInstallment?.amount || 0}
+        installmentNumber={selectedProofInstallment?.id || ''}
+      />
+
+      <Dialog open={documentsModalOpen} onClose={() => setDocumentsModalOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ textAlign: 'center' }}> قسط #{selectedDocumentsInstallment?.id}</DialogTitle>
+        <DialogContent>
+          {selectedDocumentsInstallment?.attachments && selectedDocumentsInstallment.attachments.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                المستندات المرفوعة:
+              </Typography>
+              {selectedDocumentsInstallment.attachments.map((attachment, index) => (
+                <Box 
+                  key={index}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: 'grey.200' },
+                    p: 1,
+                    borderRadius: 1,
+                    mb: 1
+                  }}
+                  onClick={() => {
+                    window.open(attachment, '_blank');
+                  }}
+                >
+                  <Typography variant="body2" sx={{ flex: 1 }}>
+                    {extractFileName(attachment)}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <IconButton 
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.print();
+                      }}
+                      title="طباعة"
+                    >
+                      <PrintIcon />
+                    </IconButton>
+                    <IconButton 
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (navigator.share) {
+                          navigator.share({
+                            title: extractFileName(attachment),
+                            url: attachment
+                          });
+                        } else {
+                          navigator.clipboard.writeText(attachment);
+                          notifySuccess("تم نسخ الرابط إلى الحافظة");
+                        }
+                      }}
+                      title="مشاركة"
+                    >
+                      <ShareIcon />
+                    </IconButton>
+                    <IconButton 
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const link = document.createElement('a');
+                        link.href = attachment;
+                        link.download = extractFileName(attachment);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      title="تحميل"
+                    >
+                      <Download />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {selectedDocumentsInstallment?.PaymentProof && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                إيصال الدفع:
+              </Typography>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'grey.200' },
+                  p: 1,
+                  borderRadius: 1
+                }}
+                onClick={() => {
+                  window.open(selectedDocumentsInstallment.PaymentProof, '_blank');
+                }}
+              >
+                <Typography variant="body2" sx={{ flex: 1 }}>
+                  {extractFileName(selectedDocumentsInstallment.PaymentProof)}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <IconButton 
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.print();
+                    }}
+                    title="طباعة"
+                  >
+                    <PrintIcon />
+                  </IconButton>
+                  <IconButton 
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (navigator.share) {
+                        navigator.share({
+                          title: extractFileName(selectedDocumentsInstallment.PaymentProof),
+                          url: selectedDocumentsInstallment.PaymentProof
+                        });
+                      } else {
+                        navigator.clipboard.writeText(selectedDocumentsInstallment.PaymentProof);
+                        notifySuccess("تم نسخ الرابط إلى الحافظة");
+                      }
+                    }}
+                    title="مشاركة"
+                  >
+                    <ShareIcon />
+                  </IconButton>
+                  <IconButton 
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const link = document.createElement('a');
+                      link.href = selectedDocumentsInstallment.PaymentProof;
+                      link.download = extractFileName(selectedDocumentsInstallment.PaymentProof);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    title="تحميل"
+                  >
+                    <Download />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {(!selectedDocumentsInstallment?.attachments || selectedDocumentsInstallment.attachments.length === 0) && 
+           !selectedDocumentsInstallment?.PaymentProof && (
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+              لا توجد مستندات مرفوعة لهذا القسط
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDocumentsModalOpen(false)}>إغلاق</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default Installments;

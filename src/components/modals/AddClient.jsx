@@ -213,7 +213,6 @@ const AddClient = ({ open, onClose }) => {
     try {
       const formData = new FormData();
 
-      // Add client data including hasKafeel field
       Object.keys(values).forEach(key => {
         formData.append(key, values[key]);
       });

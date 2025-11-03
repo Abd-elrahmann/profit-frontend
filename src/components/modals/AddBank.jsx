@@ -19,6 +19,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
     accountNumber: "",
     IBAN: "",
     limit: "",
+    owner: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -30,6 +31,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
         accountNumber: bank.accountNumber || "",
         IBAN: bank.IBAN || "",
         limit: parseInt(bank.limit) || "",
+        owner: bank.owner || "",
       });
     } else {
       setFormData({
@@ -37,6 +39,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
         accountNumber: "",
         IBAN: "",
         limit: "",
+        owner: "",
       });
     }
     setErrors({});
@@ -118,6 +121,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
       accountNumber: "",
       IBAN: "",
       limit: "",
+      owner: "",
     });
     setErrors({});
     onClose();
@@ -140,6 +144,18 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
             fullWidth
             error={!!errors.name}
             helperText={errors.name}
+            required
+            sx={{ mb: 2, mt: 2 }}
+          />
+
+          <TextField
+            label="اسم المالك"
+            type="text"
+            value={formData.owner}
+            onChange={handleChange("owner")}
+            fullWidth
+            error={!!errors.owner}
+            helperText={errors.owner}
             required
             sx={{ mb: 2, mt: 2 }}
           />
@@ -204,6 +220,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
               if (e.key === "-" || e.key === "+") e.preventDefault();
             }}
           />
+
         </Box>
       </DialogContent>
 
