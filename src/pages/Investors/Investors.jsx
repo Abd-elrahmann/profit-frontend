@@ -28,6 +28,7 @@ import {
   Delete,
   ChevronLeft,
   ChevronRight,
+  Share,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -124,7 +125,6 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
-      // Parse numeric fields to numbers before sending
       const dataToSend = {
         ...editFormData,
         capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
@@ -177,7 +177,6 @@ export default function Investors() {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
       
-      // Create new filename: mudarabah + investor name + original extension
       const originalName = investorDetails.mudarabahFileUrl.split('/').pop();
       const extension = originalName.split('.').pop();
       const newFileName = `mudarabah_${investorDetails.name}.${extension}`;
@@ -196,10 +195,8 @@ export default function Investors() {
       const blobUrl = URL.createObjectURL(blob);
       const printWindow = window.open(blobUrl, '_blank');
       
-      // Wait for the window to load before printing
       printWindow?.addEventListener('load', () => {
         printWindow.print();
-        // Clean up the blob URL after printing
         printWindow.addEventListener('afterprint', () => {
           URL.revokeObjectURL(blobUrl);
         });
@@ -210,6 +207,41 @@ export default function Investors() {
       handleApiError(error);
     }
   };
+
+  const handleShareFile = async (fileUrl) => {
+    try {
+      // Fetch file from server
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+  
+      // Build filename with investor name
+      const originalName = fileUrl.split('/').pop();
+      const ext = originalName.split('.').pop();
+      const fileName = `mudarabah_${investorDetails.name}.${ext}`;
+  
+      const file = new File([blob], fileName, { type: blob.type });
+  
+      // ✅ If browser supports file sharing
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: fileName,
+          text: `مشاركة عقد المضاربة للعميل: ${investorDetails.name}`,
+          files: [file],
+        });
+        return;
+      }
+  
+      // ❌ If file sharing is not supported (desktop fallback)
+      await navigator.clipboard.writeText(fileUrl);
+      notifySuccess("جهازك لا يدعم مشاركة الملفات — تم نسخ رابط الملف ✅");
+  
+    } catch (error) {
+      console.error("Share error:", error);
+      notifyError("تعذرت مشاركة الملف");
+    }
+  };
+  
+  
 
   useEffect(() => {
     if (investorsData?.partners?.length > 0 && !selectedInvestor) {
@@ -766,9 +798,6 @@ export default function Investors() {
                             <CheckCircle color="success" fontSize="small" />
                             <Box>
                               <Typography fontWeight="500">عقد المضاربة</Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {investorDetails.mudarabahFileUrl.split('/').pop()}
-                              </Typography>
                             </Box>
                           </Box>
                           <Box>
@@ -777,8 +806,15 @@ export default function Investors() {
                             </IconButton>
                             <IconButton 
                               onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
+                              title="تحميل"
                             >
                               <Download />
+                            </IconButton>
+                            <IconButton 
+                              onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
+                              title="مشاركة"
+                            >
+                              <Share />
                             </IconButton>
                           </Box>
                         </Paper>

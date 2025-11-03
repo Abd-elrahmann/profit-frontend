@@ -20,7 +20,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
 
-  // Get menu items from centralized routes configuration
   const menuItems = getSidebarMenuItems();
 
   const handleLogout = () => {
@@ -64,7 +63,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           transform: isOpen ? 'translateX(0)' : 'translateX(50px)'
         }}
       >
-        <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
+              <List sx={{ flexGrow: 1, px: 1, py: 2, overflowY: 'auto', scrollbarWidth: 'thin' }}>
           {menuItems.map((item, index) => (
             <ListItem
               key={item.path}

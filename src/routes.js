@@ -13,6 +13,7 @@ import {
 import { TrendingUp as TrendingUpIcon, AccountBalance as AccountBalanceIcon } from '@mui/icons-material';
 import { MdAttachMoney as LoanIcon } from 'react-icons/md';
 import { MdAttachMoney as InstallmentsIcon } from 'react-icons/md';
+import { MdMessage as Message } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -24,6 +25,7 @@ const Investors = React.lazy(() => import('./pages/Investors/Investors'));
 const Loans = React.lazy(() => import('./pages/Loans/Loans'));
 const Banks = React.lazy(() => import('./pages/Banks/Banks'));
 const Installments = React.lazy(() => import('./pages/Installments/Installments'));
+const MessagesTemplates = React.lazy(() => import('./pages/Templates/MessagesTemplates'));
 const routes = [
   {
     path: '/login',
@@ -78,9 +80,19 @@ const routes = [
     element: ContractTemplates,
     protected: true,
     showInSidebar: true,
-    label: 'القوالب القانونية',
+    label: 'القوالب العقدية',
     icon: Contract,
     module: 'contract-templates',
+    requiresPermissions: true
+  },
+  {
+    path: '/messages-templates',
+    element: MessagesTemplates,
+    protected: true,
+    showInSidebar: true,
+    label: ' قوالب الرسائل',
+    icon: Message,
+    module: 'messages-templates',
     requiresPermissions: true
   },
   {
