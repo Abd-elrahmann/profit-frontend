@@ -316,13 +316,6 @@ const PaymentProofGenerator = React.forwardRef(({
           جاري إنشاء PDF...
         </div>
       )}
-      {contractHtml ? (
-        <div dangerouslySetInnerHTML={{ __html: contractHtml }} />
-      ) : (
-        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-          إيصال السداد غير محمل. استخدم زر "توليد الإيصال" لمعاينة الإيصال.
-        </div>
-      )}
     </div>
   );
 });

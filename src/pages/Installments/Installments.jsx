@@ -639,6 +639,46 @@ const Installments = () => {
                       </Box>
                     )}
 
+                    {/* Display payment proof */}
+                    {selectedInstallment?.PaymentProof && (
+                      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                        <Typography variant="body2" fontWeight="bold" gutterBottom>
+                          إيصال الدفع:
+                        </Typography>
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1,
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: 'grey.200' },
+                            p: 1,
+                            borderRadius: 1
+                          }}
+                          onClick={() => {
+                            window.open(selectedInstallment.PaymentProof, '_blank');
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ flex: 1 }}>
+                            {extractFileName(selectedInstallment.PaymentProof)}
+                          </Typography>
+                          <IconButton 
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const link = document.createElement('a');
+                              link.href = selectedInstallment.PaymentProof;
+                              link.download = extractFileName(selectedInstallment.PaymentProof);
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                          >
+                            <Download />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
                 ) : (
                   <Alert severity="info" sx={{ mt: 2 }}>
