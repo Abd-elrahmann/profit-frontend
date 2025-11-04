@@ -222,7 +222,7 @@ const Journals = () => {
             }}
           >
             <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
-              <Typography variant="h6" fontWeight="bold" mb={3}>
+              <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
                 معلومات القيد
               </Typography>
               <Stack spacing={2}>
@@ -248,7 +248,7 @@ const Journals = () => {
             </Box>
 
             <Box sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight="bold" mb={3}>
+              <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
@@ -391,7 +391,7 @@ const Journals = () => {
                   <CircularProgress size={20} />
                 ) : journalData ? (
                   <Paper sx={{ p: 4, borderRadius: 2 }}>
-                    <Typography variant="h6" fontWeight="bold" mb={3} textAlign={'center'}>
+                    <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={'center'}>
                       تفاصيل القيد
                     </Typography>
 
@@ -510,7 +510,7 @@ const Journals = () => {
 
                     <Divider sx={{ my: 3 }} />
 
-                    <Typography variant="h6" fontWeight="bold" mb={2} textAlign={'center'}>
+                    <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={'center'}>
                       بنود القيد
                     </Typography>
 

@@ -78,7 +78,6 @@ const AddClient = ({ open, onClose }) => {
   const steps = ['المعلومات الأساسية', 'معلومات الكفيل', 'المستندات'];
 
   const initialValues = {
-    // Client Information
     name: '',
     phone: '',
     email: '',
@@ -93,7 +92,6 @@ const AddClient = ({ open, onClose }) => {
     creationReason: '',
     notes: '',
 
-    // Kafeel Information
     hasKafeel: false,
     kafeelName: '',
     kafeelNationalId: '',
@@ -214,8 +212,21 @@ const AddClient = ({ open, onClose }) => {
       const formData = new FormData();
 
       Object.keys(values).forEach(key => {
-        formData.append(key, values[key]);
+        if (key === 'hasKafeel') {
+          formData.append(key, values[key]);
+        } else if (!key.startsWith('kafeel')) {
+          formData.append(key, values[key]);
+        }
       });
+
+      if (values.hasKafeel) {
+        Object.keys(values).forEach(key => {
+          if (key.startsWith('kafeel') && key !== 'hasKafeel') {
+            const kafeelField = key.replace('kafeel', '');
+            formData.append(`kafeel[${kafeelField.charAt(0).toLowerCase() + kafeelField.slice(1)}]`, values[key]);
+          }
+        });
+      }
 
       Object.keys(uploadedFiles).forEach(key => {
         formData.append(key, uploadedFiles[key]);
@@ -276,7 +287,7 @@ const AddClient = ({ open, onClose }) => {
 
       <Formik
         initialValues={initialValues}
-        validationSchema={createClientValidationSchema(initialValues.hasKafeel)}
+        validationSchema={createClientValidationSchema}
         onSubmit={handleSubmit}
         enableReinitialize
       >
