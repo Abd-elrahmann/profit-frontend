@@ -13,20 +13,48 @@ import {
   Typography,
   CircularProgress,
   InputBase,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from "@mui/material";
-import { Visibility, Delete, PlayArrow, Schedule } from "@mui/icons-material";
+import {
+  Visibility,
+  Delete,
+  PlayArrow,
+  Schedule,
+  Pause,
+  MoreVert,
+} from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getLoans, deleteLoan, activateLoan } from "../../pages/Loans/loanApis";
+import {
+  getLoans,
+  deleteLoan,
+  activateLoan,
+  deactivateLoan,
+} from "../../pages/Loans/loanApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
+
 const LoansTable = ({ onViewDetails, onViewInstallments }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [loanToDelete, setLoanToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
+
+  const handleMenuOpen = (event, loan) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedLoanForMenu(loan);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedLoanForMenu(null);
+  };
 
   const { data: loansData, isLoading } = useQuery({
     queryKey: ["loans", page, searchQuery],
@@ -64,6 +92,26 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
         error.response?.data?.message || "حدث خطأ أثناء تفعيل السلفة"
       );
     }
+  };
+
+  const handleDeactivateLoan = async (loanId) => {
+    try {
+      await deactivateLoan(loanId);
+      notifySuccess("تم إلغاء تفعيل السلفة بنجاح");
+      queryClient.invalidateQueries(["loans"]);
+    } catch (error) {
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء إلغاء تفعيل السلفة"
+      );
+    }
+  };
+
+  const handleViewInstallmentsClick = (loan) => {
+    if (loan.status === "PENDING") {
+      notifyError("يجب تفعيل السلفة أولاً لعرض الأقساط");
+      return;
+    }
+    onViewInstallments(loan);
   };
 
   const getStatusColor = (status) => {
@@ -187,7 +235,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
             <TableBody>
               {isLoading ? (
                 <StyledTableRow>
-                  <StyledTableCell colSpan={10} align="center">
+                  <StyledTableCell colSpan={12} align="center">
                     <CircularProgress size={20} />
                   </StyledTableCell>
                 </StyledTableRow>
@@ -269,54 +317,12 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
                       align="center"
                       sx={{ whiteSpace: "nowrap" }}
                     >
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
+                      <IconButton
+                        size="small"
+                        onClick={(event) => handleMenuOpen(event, loan)}
                       >
-                        <IconButton
-                          title="عرض السلفة"
-                          size="small"
-                          color="primary"
-                          onClick={() => onViewDetails(loan.id)}
-                        >
-                          <Visibility fontSize="small" />
-                        </IconButton>
-
-                        <IconButton
-                          title="عرض الأقساط"
-                          size="small"
-                          color="info"
-                          onClick={() => onViewInstallments(loan)}
-                        >
-                          <Schedule fontSize="small" />
-                        </IconButton>
-
-                        {loan.status === "PENDING" && (
-                          <IconButton
-                            title="تفعيل السلفة"
-                            size="small"
-                            color="success"
-                            onClick={() => handleActivateLoan(loan.id)}
-                          >
-                            <PlayArrow fontSize="small" />
-                          </IconButton>
-                        )}
-
-                        {loan.status !== "ACTIVE" && (
-                          <IconButton
-                            title="حذف السلفة"
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              setLoanToDelete(loan);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        )}
-                      </Stack>
+                        <MoreVert fontSize="small" />
+                      </IconButton>
                     </StyledTableCell>
                   </StyledTableRow>
                 ))
@@ -353,6 +359,90 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
         message={`هل أنت متأكد من حذف سلفة العميل ${loanToDelete?.client?.name}؟`}
         ButtonText="حذف"
       />
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        {/* View Loan Details */}
+        <MenuItem
+          onClick={() => {
+            onViewDetails(selectedLoanForMenu?.id);
+            handleMenuClose();
+          }}
+          sx={{ color: "#1976D2" }} // Blue
+        >
+          <ListItemIcon>
+            <Visibility fontSize="small" sx={{ color: "#1976D2" }} />
+          </ListItemIcon>
+          عرض السلفة
+        </MenuItem>
+
+        {/* View Installments */}
+        <MenuItem
+          onClick={() => {
+            handleViewInstallmentsClick(selectedLoanForMenu);
+            handleMenuClose();
+          }}
+          sx={{ color: "#2E7D32" }} // Green
+        >
+          <ListItemIcon>
+            <Schedule fontSize="small" sx={{ color: "#2E7D32" }} />
+          </ListItemIcon>
+          عرض الأقساط
+        </MenuItem>
+
+        {/* Activate Loan (PENDING) */}
+        {selectedLoanForMenu?.status === "PENDING" && (
+          <MenuItem
+            onClick={() => {
+              handleActivateLoan(selectedLoanForMenu?.id);
+              handleMenuClose();
+            }}
+            sx={{ color: "#FB8C00" }} // Orange
+          >
+            <ListItemIcon>
+              <PlayArrow fontSize="small" sx={{ color: "#FB8C00" }} />
+            </ListItemIcon>
+            تفعيل السلفة
+          </MenuItem>
+        )}
+
+        {/* Deactivate Loan (ACTIVE) */}
+        {selectedLoanForMenu?.status === "ACTIVE" && (
+          <MenuItem
+            onClick={() => {
+              handleDeactivateLoan(selectedLoanForMenu?.id);
+              handleMenuClose();
+            }}
+            sx={{ color: "#8E24AA" }} // Purple
+          >
+            <ListItemIcon>
+              <Pause fontSize="small" sx={{ color: "#8E24AA" }} />
+            </ListItemIcon>
+            إلغاء تفعيل السلفة
+          </MenuItem>
+        )}
+
+        {/* Delete Loan */}
+        {selectedLoanForMenu?.status !== "ACTIVE" && (
+          <MenuItem
+            onClick={() => {
+              setLoanToDelete(selectedLoanForMenu);
+              setIsDeleteModalOpen(true);
+              handleMenuClose();
+            }}
+            sx={{ color: "#D32F2F" }} // Red
+          >
+            <ListItemIcon>
+              <Delete fontSize="small" sx={{ color: "#D32F2F" }} />
+            </ListItemIcon>
+            حذف السلفة
+          </MenuItem>
+        )}
+      </Menu>
     </Box>
   );
 };

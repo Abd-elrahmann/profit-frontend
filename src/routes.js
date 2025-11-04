@@ -14,6 +14,7 @@ import { TrendingUp as TrendingUpIcon, AccountBalance as AccountBalanceIcon } fr
 import { MdAttachMoney as LoanIcon } from 'react-icons/md';
 import { MdAttachMoney as InstallmentsIcon } from 'react-icons/md';
 import { MdMessage as Message } from 'react-icons/md';
+import { MdDescription as JournalIcon } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -26,6 +27,7 @@ const Loans = React.lazy(() => import('./pages/Loans/Loans'));
 const Banks = React.lazy(() => import('./pages/Banks/Banks'));
 const Installments = React.lazy(() => import('./pages/Installments/Installments'));
 const MessagesTemplates = React.lazy(() => import('./pages/Templates/MessagesTemplates'));
+const Journals = React.lazy(() => import('./pages/Journals/Journals'));
 const routes = [
   {
     path: '/login',
@@ -132,6 +134,14 @@ const routes = [
     showInSidebar: true,
     label: 'القسط',
     icon: InstallmentsIcon,
+  },
+  {
+    path: '/journal-entries',
+    element: Journals,
+    protected: true,
+    showInSidebar: true,
+    label: 'القيود اليومية',
+    icon: JournalIcon,
   }
 ];
 

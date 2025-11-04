@@ -61,6 +61,17 @@ export const activateLoan = async (loanId) => {
   }
 };
 
+// Deactivate loan
+export const deactivateLoan = async (loanId) => {
+  try {
+    const response = await Api.patch(`/api/loans/${loanId}/deactivate`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // Get all loans with pagination
 export const getLoans = async (page = 1, search = '') => {
   try {

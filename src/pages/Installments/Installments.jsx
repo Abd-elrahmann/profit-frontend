@@ -456,7 +456,7 @@ const Installments = () => {
                 <TableHead>
                   <StyledTableRow>
                     <StyledTableCell align="center">الاقساط المدفوعة</StyledTableCell>
-                    <StyledTableCell align="center">#</StyledTableCell>
+                    <StyledTableCell align="center">رقم القسط</StyledTableCell>
                     <StyledTableCell align="center">تاريخ الاستحقاق</StyledTableCell>
                     <StyledTableCell align="center">القسط</StyledTableCell>
                     <StyledTableCell align="center">الرصيد المتبقي</StyledTableCell>
@@ -489,7 +489,7 @@ const Installments = () => {
                           <Checkbox checked size="small" />
                         )}
                       </StyledTableCell>
-                      <StyledTableCell align="center">{installment.id}</StyledTableCell>
+                      <StyledTableCell align="center">{installment.count}</StyledTableCell>
                       <StyledTableCell align="center">
                         {dayjs(installment.dueDate).format("DD/MM/YYYY")}
                       </StyledTableCell>
@@ -560,7 +560,7 @@ const Installments = () => {
             {activeInstallmentId ? (
               <Box>
                 <Typography variant="body2" color="text.secondary" mb={1}>
-                  القسط المحدد: #{activeInstallmentId}
+                  القسط المحدد: #{selectedInstallment?.count}
                 </Typography>
                 
                 {selectedInstallment && (

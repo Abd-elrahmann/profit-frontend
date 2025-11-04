@@ -534,6 +534,7 @@ const Loans = () => {
   };
 
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
+  const isReadOnlyMode = isViewMode && selectedLoan && selectedLoan.status !== "PENDING";
 
   return (
     <Box
@@ -712,24 +713,7 @@ const Loans = () => {
                 >
                   معاينة العقود
                 </Button>
-
-                {isViewMode && (
-                  <Button
-                    variant="outlined"
-                    onClick={resetLoanForm}
-                    sx={{
-                      borderColor: "rgba(13, 64, 165, 0.5)",
-                      color: "#0d40a5",
-                      height: "48px",
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
-                    }}
-                  >
-                    إضافة سلفة آخرة
-                  </Button>
-                )}
-
+                
                 {isEditMode && (
                   <Button
                     variant="outlined"
@@ -931,7 +915,7 @@ const Loans = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         onKeyDown={(e) => {
                           if (e.key === "-" || e.key === "+") e.preventDefault();
                         }}
@@ -957,7 +941,7 @@ const Loans = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         onKeyDown={(e) => {
                           if (e.key === "-" || e.key === "+") e.preventDefault();
                         }}
@@ -980,7 +964,7 @@ const Loans = () => {
                         onChange={(e) =>
                           handleInputChange("durationMonths", e.target.value)
                         }
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         onKeyDown={(e) => {
                           if (e.key === "-" || e.key === "+") e.preventDefault();
                         }}
@@ -1003,7 +987,7 @@ const Loans = () => {
                         onChange={(e) =>
                           handleInputChange("durationMonths", e.target.value)
                         }
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         onKeyDown={(e) => {
                           if (e.key === "-" || e.key === "+") e.preventDefault();
                         }}
@@ -1027,7 +1011,7 @@ const Loans = () => {
                         onChange={(e) =>
                           handleInputChange("type", e.target.value)
                         }
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
@@ -1052,7 +1036,7 @@ const Loans = () => {
                           handleInputChange("repaymentDay", e.target.value)
                         }
                         inputProps={{ min: 1, max: 31 }}
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         onKeyDown={(e) => {
                           if (e.key === "-" || e.key === "+") e.preventDefault();
                         }}
@@ -1076,7 +1060,7 @@ const Loans = () => {
                         onChange={handleBankSelect}
                         onInputChange={handleBanksSearchChange}
                         loading={isBanksLoading}
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -1116,7 +1100,7 @@ const Loans = () => {
                         onChange={handlePartnerSelect}
                         onInputChange={handlePartnersSearchChange}
                         loading={isPartnersLoading}
-                        disabled={isViewMode && !isEditMode}
+                        disabled={isReadOnlyMode}
                         renderInput={(params) => (
                           <TextField
                             {...params}
