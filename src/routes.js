@@ -84,7 +84,7 @@ const routes = [
     showInSidebar: true,
     label: 'القوالب العقدية',
     icon: Contract,
-    module: 'contract-templates',
+    module: 'templates',
     requiresPermissions: true
   },
   {
@@ -94,7 +94,7 @@ const routes = [
     showInSidebar: true,
     label: ' قوالب الرسائل',
     icon: Message,
-    module: 'messages-templates',
+    module: 'templates',
     requiresPermissions: true
   },
   {
@@ -104,7 +104,7 @@ const routes = [
     showInSidebar: true,
     label: 'المستثمرين',
     icon: TrendingUp,
-    module: 'investors',
+    module: 'partners',
     requiresPermissions: true
   },
   {
@@ -133,6 +133,8 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'القسط',
+    moedule: 'repayments',
+    requiresPermissions: true,
     icon: InstallmentsIcon,
   },
   {
@@ -141,6 +143,8 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'القيود اليومية',
+    module: 'journals',
+    requiresPermissions: true,
     icon: JournalIcon,
   }
 ];
