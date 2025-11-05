@@ -1,7 +1,7 @@
-// components/contracts/InstallmentPaymentReceipt.jsx
+// components/contracts/InstallmentSettlementReceipt.jsx
 import React from "react";
 
-const InstallmentPaymentReceipt = () => {
+const InstallmentSettlementReceipt = () => {
 return `
 <style>
   .contract-wrapper {
@@ -32,9 +32,9 @@ return `
     gap: 10px;
     align-items: center;
   }
-   .icon {
+  .icon {
     font-size: 28px;
-    color: #d4af37;
+    color: #d4af37; /* نفس لون علامة الصح */
   }
   .title {
     font-size: 22px;
@@ -113,13 +113,6 @@ return `
     color: #222;
   }
 
-  .info-box {
-    background: #f9fafb;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-
   .text-box {
     background: #f3f4f6;
     padding: 15px;
@@ -170,9 +163,9 @@ return `
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
-        <p class="title">إيصال سداد قسط</p>
+        <p class="title">سند تسوية قسط</p>
       </div>
-      <p class="sub-text">رقم الإيصال: {{رقم_الايصال}}</p>
+      <p class="sub-text">رقم السند: {{رقم_السند}}</p>
     </div>
 
     <div class="grid-wrapper">
@@ -182,12 +175,12 @@ return `
         <div class="row"><p>اسم العميل:</p> <span>{{اسم_العميل}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_العميل}}</span></div>
         <div class="row"><p>رقم القسط:</p> <span>{{رقم_القسط}}</span></div>
-        <div class="row"><p>تاريخ السداد:</p> <span>{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</span></div>
+        <div class="row"><p>تاريخ التسوية:</p> <span>{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</span></div>
       </div>
 
       <div class="content-box">
         <div class="amount-box">
-          <h3>المبلغ المدفوع</h3>
+          <h3>المبلغ المسدد بالكامل</h3>
           <h1>{{المبلغ_رقما}}</h1>
           <p>{{المبلغ_كتابة}}</p>
         </div>
@@ -195,12 +188,12 @@ return `
 
     </div>
 
-    <div class="section-title">تفاصيل السداد</div>
+    <div class="section-title">تفاصيل التسوية</div>
     <div class="text-box">
       <p>
-        نشهد نحن شركة التمويل بأنه قد تم استلام مبلغ وقدره {{المبلغ_رقما}} ريال سعودي 
-        من العميل المذكور أعلاه كدفعة سداد للقسط رقم {{رقم_القسط}} .
-        وقد تم استلام المبلغ نقداً/تحويلاً بنكياً وتعهد العميل بصحة المعلومات المذكورة أعلاه.
+        نقر نحن شركة التمويل بأنه تم استلام مبلغ وقدره {{المبلغ_رقما}} ريال سعودي 
+        من العميل المذكور أعلاه مقابل سداد القسط رقم {{رقم_القسط}} بالكامل.
+        وبناءً عليه تم تسوية القسط وإقفاله في نظام الشركة ولا يترتب عليه أي مسؤوليات مالية أخرى.
       </p>
     </div>
 
@@ -222,4 +215,4 @@ return `
 `;
 };
 
-export default InstallmentPaymentReceipt;
+export default InstallmentSettlementReceipt;

@@ -26,6 +26,7 @@ import DebtAcknowledgment from "../../components/Contracts/DebtAcknowledgment";
 import ReceiptVoucher from "../../components/Contracts/ReceiptVoucher";
 import PaymentVoucher from "../../components/Contracts/PaymentVoucher";
 import InstallmentPaymentReceipt from "../../components/Contracts/InstallmentPaymentReceipt";
+import InstallmentSettlementReceipt from "../../components/Contracts/InstallmentSettlementReceipt";
 import Api, { handleApiError } from "../../config/Api";
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
@@ -36,6 +37,7 @@ export default function ContractTemplates() {
     receiptVoucher: "",
     paymentVoucher: "",
     paymentProof: "",
+    settlement: "",
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,6 +50,7 @@ export default function ContractTemplates() {
     "receipt-voucher": "RECEIPT_VOUCHER",
     "payment-voucher": "PAYMENT_VOUCHER",
     "payment-proof": "PAYMENT_PROOF",
+    "settlement": "SETTLEMENT",
   }), []);
 
   // Variables for each contract type
@@ -130,6 +133,17 @@ export default function ContractTemplates() {
       { name: "{{المبلغ_رقما}}", description: "المبلغ المدفوع بالأرقام" },
       { name: "{{المبلغ_كتابة}}", description: "المبلغ المدفوع مكتوباً بالحروف" },
       { name: "{{اسم_الموظف}}", description: "اسم الموظف المختص" }
+    ],
+    "settlement": [
+    { name: "{{اسم_العميل}}", description: "اسم العميل" },
+    { name: "{{رقم_هوية_العميل}}", description: "رقم هوية العميل" },
+    { name: "{{رقم_القسط}}", description: "رقم القسط" },
+    { name: "{{رقم_السند}}", description: "رقم السند" },
+    { name: "{{المبلغ_رقما}}", description: "المبلغ رقماً" },
+    { name: "{{المبلغ_كتابة}}", description: "المبلغ كتابة" },
+    { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
+    { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
+    { name: "{{اسم_الموظف}}", description: "اسم الموظف المختص" }
     ]
   };
 
@@ -148,6 +162,8 @@ export default function ContractTemplates() {
         return PaymentVoucher();
       case "PAYMENT_PROOF":
         return InstallmentPaymentReceipt();
+      case "SETTLEMENT":
+        return InstallmentSettlementReceipt();
       default:
         return "";
     }
@@ -197,6 +213,7 @@ export default function ContractTemplates() {
                         key === "receipt-voucher" ? "receiptVoucher" :
                         key === "payment-voucher" ? "paymentVoucher" :
                         key === "payment-proof" ? "paymentProof" :
+                        key === "settlement" ? "settlement" :
                         key;
         newTemplates[stateKey] = content;
       });
@@ -319,6 +336,7 @@ export default function ContractTemplates() {
                       currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
                       currentTemplateKey === "payment-voucher" ? "paymentVoucher" :
                       currentTemplateKey === "payment-proof" ? "paymentProof" :
+                      currentTemplateKey === "settlement" ? "settlement" :
                       currentTemplateKey;
       
       const templateContent = templates[stateKey];
@@ -356,6 +374,7 @@ export default function ContractTemplates() {
                     currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
                     currentTemplateKey === "payment-voucher" ? "paymentVoucher" :
                     currentTemplateKey === "payment-proof" ? "paymentProof" :
+                    currentTemplateKey === "settlement" ? "settlement" :
                     currentTemplateKey;
     
     setTemplates(prev => ({
@@ -398,6 +417,7 @@ export default function ContractTemplates() {
               <Tab label="سند القبض" value="receipt-voucher" />
               <Tab label="سند الصرف" value="payment-voucher" />
               <Tab label="إيصال سداد قسط" value="payment-proof" />
+              <Tab label="إيصال تسوية قسط" value="settlement" />
             </Tabs>
 
             {/* Content */}
@@ -476,6 +496,18 @@ export default function ContractTemplates() {
                         value={templates.paymentProof}
                         onChange={(value) => handleTemplateChange("paymentProof", value)}
                         placeholder="أدخل نص قالب إيصال سداد قسط هنا..."
+                        style={{ height: "600px", marginBottom: "40px" }}
+                      />
+                    </>
+                  )}
+                  {activeTab === "settlement" && (
+                    <>
+                      <VariablesList variables={contractVariables["settlement"]} />
+                      <ReactQuillWrapper
+                        theme="snow"
+                        value={templates.settlement}
+                        onChange={(value) => handleTemplateChange("settlement", value)}
+                        placeholder="أدخل نص قالب إيصال تسوية قسط هنا..."
                         style={{ height: "600px", marginBottom: "40px" }}
                       />
                     </>

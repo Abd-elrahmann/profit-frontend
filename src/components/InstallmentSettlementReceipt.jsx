@@ -1,4 +1,3 @@
-// components/contracts/PaymentProofGenerator.jsx
 import React, { useState, useCallback, useEffect } from 'react';
 import html2pdf from 'html2pdf.js';
 import Api, { handleApiError } from '../config/Api';
@@ -88,7 +87,7 @@ const getCurrentDates = () => {
   };
 };
 
-const PaymentProofGenerator = React.forwardRef(({ 
+const InstallmentSettlementReceipt = React.forwardRef(({ 
   installmentData, 
   loanData,
   clientData,
@@ -104,12 +103,12 @@ const PaymentProofGenerator = React.forwardRef(({
   const uploadPDFToServer = useCallback(async (pdfBlob) => {
     try {
       const formData = new FormData();
-      const filename = `إيصال_سداد_قسط_${installmentData.id}_${Date.now()}.pdf`;
+      const filename = `سند_تسوية_قسط_${installmentData.id}_${Date.now()}.pdf`;
       formData.append('file', pdfBlob, filename);
       
-      const endpoint = `/api/repayments/PaymentProof/${installmentData.id}`;
+      const endpoint = `/api/loans/${loanData.id}/upload-Settlement`;
 
-      console.log('Uploading payment proof to endpoint:', endpoint);
+      console.log('Uploading settlement receipt to endpoint:', endpoint);
       
       const response = await Api.post(endpoint, formData, {
         headers: {
@@ -120,18 +119,18 @@ const PaymentProofGenerator = React.forwardRef(({
       console.log('Upload response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error uploading payment proof PDF:', error);
+      console.error('Error uploading settlement receipt PDF:', error);
       throw error;
     }
-  }, [installmentData?.id]);
+  }, [installmentData?.id, loanData?.id]);
 
   // Generate PDF from HTML
   const generatePDF = useCallback(async (htmlContent = contractHtml) => {
     const contentToUse = htmlContent || contractHtml;
     
     if (!contentToUse) {
-      console.error('No payment proof HTML to generate PDF');
-      notifyError('لا يوجد محتوى إيصال لتحويله إلى PDF');
+      console.error('No settlement receipt HTML to generate PDF');
+      notifyError('لا يوجد محتوى سند التسوية لتحويله إلى PDF');
       return;
     }
 
@@ -140,7 +139,7 @@ const PaymentProofGenerator = React.forwardRef(({
       
       // إنشاء عنصر ثابت في الصفحة
       const previewContainer = document.createElement('div');
-      previewContainer.id = `payment-proof-preview-${Date.now()}`;
+      previewContainer.id = `settlement-receipt-preview-${Date.now()}`;
       previewContainer.style.width = '210mm';
       previewContainer.style.minHeight = '297mm';
       previewContainer.innerHTML = `
@@ -157,7 +156,7 @@ const PaymentProofGenerator = React.forwardRef(({
 
       const options = {
         margin: 0,
-        filename: `payment_proof_${installmentData.id}_${Date.now()}.pdf`,
+        filename: `settlement_receipt_${installmentData.id}_${Date.now()}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
           scale: 3,
@@ -176,7 +175,7 @@ const PaymentProofGenerator = React.forwardRef(({
         }
       };
 
-      console.log('Generating payment proof PDF...');
+      console.log('Generating settlement receipt PDF...');
       
       // انتظر قليلاً للتأكد من تحميل الخطوط والصور
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -193,15 +192,15 @@ const PaymentProofGenerator = React.forwardRef(({
 
       await uploadPDFToServer(pdfBlob);
       
-      console.log('Payment proof PDF generated and uploaded successfully');
+      console.log('Settlement receipt PDF generated and uploaded successfully');
       
       if (onContractGenerated) {
-        onContractGenerated(pdfBlob, 'PAYMENT_PROOF');
+        onContractGenerated(pdfBlob, 'SETTLEMENT_RECEIPT');
       }
 
       return pdfBlob;
     } catch (error) {
-      console.error('Error generating payment proof PDF:', error);
+      console.error('Error generating settlement receipt PDF:', error);
       notifyError('حدث خطأ أثناء إنشاء ملف PDF');
       handleApiError(error);
       throw error;
@@ -210,37 +209,32 @@ const PaymentProofGenerator = React.forwardRef(({
     }
   }, [contractHtml, installmentData?.id, uploadPDFToServer, onContractGenerated]);
 
-  // Generate filled payment proof from template
+  // Generate filled settlement receipt from template
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
     const dataToUse = customData || { installmentData, loanData, clientData, employeeName };
     
     if (!dataToUse.installmentData || !dataToUse.clientData || !templateContent) {
       console.error('Missing data:', dataToUse);
-      notifyError('بيانات القسط أو العميل أو قالب الإيصال غير متوفر');
+      notifyError('بيانات القسط أو العميل أو قالب السند غير متوفر');
       return;
     }
 
     try {
-      console.log('Generating payment proof:', dataToUse);
+      console.log('Generating settlement receipt:', dataToUse);
       
       const { gregorianDate, hijriDate } = getCurrentDates();
-      const finalDate = `${hijriDate}\n${gregorianDate}`;
-
-      const amount = dataToUse.installmentData.amount || 0;
+      
+      const amount = dataToUse.loanData?.totalAmount || 0;
       const amountInWords = numberToArabicWords(amount);
       
-      console.log('Installment Amount:', amount, 'Amount in words:', amountInWords);
+      console.log('Total Loan Amount:', amount, 'Amount in words:', amountInWords);
       
       let filledTemplate = templateContent
         // Client data
         .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
         .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
-        .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
-        .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
-        
-        // Loan data
         .replace(/{{رقم_القسط}}/g, dataToUse.installmentData.count || 'N/A')
-        .replace(/{{رقم_الايصال}}/g, `PAY-${dataToUse.installmentData.id}-${Date.now()}`)
+        .replace(/{{رقم_السند}}/g, `SETTLEMENT-${dataToUse.installmentData.id}-${Date.now()}`)
         
         // Amount data
         .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'} ريال سعودي`)
@@ -249,24 +243,23 @@ const PaymentProofGenerator = React.forwardRef(({
         // Dates
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)
         .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
-        .replace(/{{تاريخ_السداد}}/g, finalDate)
         
         // Employee data
         .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
 
-      console.log('Payment proof template generated successfully');
+      console.log('Settlement receipt template generated successfully');
       
       setContractHtml(filledTemplate);
       
       // إذا كان التوليد تلقائي، انتقل مباشرة لإنشاء PDF
       if (generatePdf) {
-        console.log('Auto-generating payment proof PDF...');
+        console.log('Auto-generating settlement receipt PDF...');
         
         setTimeout(async () => {
           try {
             await generatePDF(filledTemplate);
           } catch (error) {
-            console.error('Error in auto-generating payment proof PDF:', error);
+            console.error('Error in auto-generating settlement receipt PDF:', error);
           }
         }, 500);
         
@@ -275,7 +268,7 @@ const PaymentProofGenerator = React.forwardRef(({
       
       return filledTemplate;
     } catch (error) {
-      console.error('Error generating payment proof:', error);
+      console.error('Error generating settlement receipt:', error);
       throw error;
     }
   }, [installmentData, loanData, clientData, employeeName, templateContent, autoGenerate, generatePDF]);
@@ -283,7 +276,7 @@ const PaymentProofGenerator = React.forwardRef(({
   // التوليد التلقائي عند تغيير البيانات
   useEffect(() => {
     if (autoGenerate && installmentData && clientData && templateContent) {
-      console.log('Auto-generating payment proof...');
+      console.log('Auto-generating settlement receipt...');
       generateContract(true);
     }
   }, [autoGenerate, installmentData, clientData, templateContent, generateContract]);
@@ -319,4 +312,4 @@ const PaymentProofGenerator = React.forwardRef(({
   );
 });
 
-export default PaymentProofGenerator;
+export default InstallmentSettlementReceipt;

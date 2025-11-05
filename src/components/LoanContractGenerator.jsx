@@ -180,8 +180,8 @@ const LoanContractGenerator = React.forwardRef(
 
           const endpoint =
             contractType === "DEBT_ACKNOWLEDGMENT"
-              ? `/api/loans/${clientData.id}/upload-debt-acknowledgment`
-              : `/api/loans/${clientData.id}/upload-promissory-note`;
+              ? `/api/loans/${loanData.id}/upload-debt-acknowledgment`
+              : `/api/loans/${loanData.id}/upload-promissory-note`;
 
           console.log("Uploading to endpoint:", endpoint);
 
@@ -198,7 +198,7 @@ const LoanContractGenerator = React.forwardRef(
           throw error;
         }
       },
-      [contractType, clientData?.id, loanData?.id]
+      [contractType, loanData?.id]
     );
 
     const generatePDF = useCallback(
@@ -289,19 +289,18 @@ const LoanContractGenerator = React.forwardRef(
         } finally {
           setIsGenerating(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
       },
-      [contractType, clientData?.id, uploadPDFToServer, onContractGenerated]
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [contractType, loanData?.id, uploadPDFToServer, onContractGenerated]
     );
 
     const generateContract = useCallback(
       async (generatePdf = autoGenerate, customLoanData = null) => {
         const loanDataToUse = customLoanData || loanData;
 
-        if (!loanDataToUse || !clientData || !templateContent) {
+        if (!loanDataToUse || !templateContent) {
           console.error("Missing data:", {
             loanDataToUse,
-            clientData,
             templateContent,
           });
           notifyError("بيانات السلفة أو العميل أو قالب العقد غير متوفر");
@@ -311,7 +310,6 @@ const LoanContractGenerator = React.forwardRef(
         try {
           console.log("Generating contract:", contractType);
           console.log("Loan Data to use:", loanDataToUse);
-          console.log("Client Data:", clientData);
 
           const { gregorianDate, hijriDate } = getCurrentDates();
           const finalDate = `${hijriDate}\n${gregorianDate}`;
@@ -324,9 +322,7 @@ const LoanContractGenerator = React.forwardRef(
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, clientData.name || "")
             .replace(/{{رقم_هوية_العميل}}/g, clientData.nationalId || "")
-            .replace(/{{عنوان_العميل}}/g, clientData.address || "")
-            .replace(/{{هاتف_العميل}}/g, clientData.phone || "")
-            .replace(/{{بريد_العميل}}/g, clientData.email || "")
+            .replace(/{{عنوان_العميل}}/g, clientData.city + " - " + clientData.district || "")
 
             .replace(
               /{{المبلغ_رقما}}/g,

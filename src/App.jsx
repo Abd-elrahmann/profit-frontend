@@ -96,7 +96,7 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-  return !token ? children : <Navigate to="/" />;
+  return !token ? children : <Navigate to="/login" />;
 };
 
 

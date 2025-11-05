@@ -4,13 +4,11 @@ import {
   MdPeople as People,
   MdAccountBalance as AccountBalance,
   MdTrendingUp as TrendingUp,
-  MdAssessment as Assessment,
-  MdSettings as Settings,
   MdSecurity as Security,
   MdBadge as Badge,
   MdDescription as Contract,
 } from 'react-icons/md';
-import { TrendingUp as TrendingUpIcon, AccountBalance as AccountBalanceIcon } from '@mui/icons-material';
+import { History as HistoryIcon } from '@mui/icons-material';
 import { MdAttachMoney as LoanIcon } from 'react-icons/md';
 import { MdAttachMoney as InstallmentsIcon } from 'react-icons/md';
 import { MdMessage as Message } from 'react-icons/md';
@@ -28,6 +26,8 @@ const Banks = React.lazy(() => import('./pages/Banks/Banks'));
 const Installments = React.lazy(() => import('./pages/Installments/Installments'));
 const MessagesTemplates = React.lazy(() => import('./pages/Templates/MessagesTemplates'));
 const Journals = React.lazy(() => import('./pages/Journals/Journals'));
+const Logs = React.lazy(() => import('./pages/Logs/Logs'));
+
 const routes = [
   {
     path: '/login',
@@ -47,6 +47,19 @@ const routes = [
     requiresPermissions: true
   },
 
+  // صفحات فردية بدون أب
+  {
+    path: '/logs',
+    element: Logs,
+    protected: true,
+    showInSidebar: true,
+    label: 'السجلات',
+    module: 'logs',
+    requiresPermissions: true,
+    icon: HistoryIcon,
+  },
+
+  // الموظفين والأدوار مجموعة واحدة
   {
     path: '/employees',
     element: Employees,
@@ -55,7 +68,8 @@ const routes = [
     label: 'الموظفين',
     icon: Badge,
     module: 'users',
-    requiresPermissions: true
+    requiresPermissions: true,
+    parent: 'إدارة المستخدمين'
   },
   {
     path: '/roles',
@@ -65,8 +79,11 @@ const routes = [
     label: 'الأدوار',
     icon: Security,
     module: 'roles',
-    requiresPermissions: true
+    requiresPermissions: true,
+    parent: 'إدارة المستخدمين'
   },
+
+  // العملاء والمستثمرين مجموعة واحدة
   {
     path: '/clients',
     element: Clients,
@@ -75,27 +92,8 @@ const routes = [
     label: 'العملاء',
     icon: People,
     module: 'clients',
-    requiresPermissions: true
-  },
-  {
-    path: '/contract-templates',
-    element: ContractTemplates,
-    protected: true,
-    showInSidebar: true,
-    label: 'القوالب العقدية',
-    icon: Contract,
-    module: 'templates',
-    requiresPermissions: true
-  },
-  {
-    path: '/messages-templates',
-    element: MessagesTemplates,
-    protected: true,
-    showInSidebar: true,
-    label: ' قوالب الرسائل',
-    icon: Message,
-    module: 'templates',
-    requiresPermissions: true
+    requiresPermissions: true,
+    parent: 'إدارة العملاء'
   },
   {
     path: '/investors',
@@ -105,8 +103,35 @@ const routes = [
     label: 'المستثمرين',
     icon: TrendingUp,
     module: 'partners',
-    requiresPermissions: true
+    requiresPermissions: true,
+    parent: 'إدارة العملاء'
   },
+
+  // القوالب مجموعة واحدة
+  {
+    path: '/contract-templates',
+    element: ContractTemplates,
+    protected: true,
+    showInSidebar: true,
+    label: 'القوالب العقدية',
+    icon: Contract,
+    module: 'templates',
+    requiresPermissions: true,
+    parent: 'القوالب'
+  },
+  {
+    path: '/messages-templates',
+    element: MessagesTemplates,
+    protected: true,
+    showInSidebar: true,
+    label: 'قوالب الرسائل',
+    icon: Message,
+    module: 'templates',
+    requiresPermissions: true,
+    parent: 'القوالب'
+  },
+
+  // المالية مجموعة واحدة
   {
     path: '/loans',
     element: Loans,
@@ -115,7 +140,8 @@ const routes = [
     label: 'السلف',
     icon: LoanIcon,
     module: 'loans',
-    requiresPermissions: true
+    requiresPermissions: true,
+    parent: 'إدارة المالية'
   },
   {
     path: '/banks',
@@ -125,7 +151,8 @@ const routes = [
     label: 'البنوك',
     icon: AccountBalance,
     module: 'banks',
-    requiresPermissions: true
+    requiresPermissions: true,
+    parent: 'إدارة المالية'
   },
   {
     path: '/installments',
@@ -133,9 +160,10 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'القسط',
-    moedule: 'repayments',
+    module: 'repayments',
     requiresPermissions: true,
     icon: InstallmentsIcon,
+    parent: 'إدارة المالية'
   },
   {
     path: '/journal-entries',
@@ -146,11 +174,45 @@ const routes = [
     module: 'journals',
     requiresPermissions: true,
     icon: JournalIcon,
+    parent: 'إدارة المالية'
   }
 ];
 
 export const getSidebarMenuItems = () => {
-  return routes.filter(route => route.showInSidebar && route.protected);
+  const routesWithParent = routes.filter(route => route.showInSidebar && route.protected);
+  
+  // تجميع العناصر حسب الأب
+  const groupedItems = {};
+  const singleItems = [];
+  
+  routesWithParent.forEach(route => {
+    if (route.parent) {
+      if (!groupedItems[route.parent]) {
+        groupedItems[route.parent] = {
+          label: route.parent,
+          children: []
+        };
+      }
+      groupedItems[route.parent].children.push(route);
+    } else {
+      singleItems.push(route);
+    }
+  });
+  
+  // تحويل الكائن إلى مصفوفة وإضافة العناصر الفردية
+  const result = [];
+  
+  // إضافة المجموعات
+  Object.values(groupedItems).forEach(group => {
+    result.push(group);
+  });
+  
+  // إضافة العناصر الفردية
+  singleItems.forEach(item => {
+    result.push(item);
+  });
+  
+  return result;
 };
 
 export const getAvailableModules = () => {

@@ -65,6 +65,10 @@ const JournalTable = ({ onViewDetails }) => {
         return "شريك";
       case "PERIOD_CLOSING":
         return "إقفال فترة";
+      case "PARTNER_TRANSACTION_WITHDRAWAL":
+        return "سحب مالي لشريك";
+      case "PARTNER_TRANSACTION_DEPOSIT":
+        return "إيداع مالي لشريك";
       case "OTHER":
         return "أخرى";
       default:

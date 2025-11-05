@@ -100,15 +100,15 @@ const Layout = ({ children }) => {
             transition: 'margin-right 0.2s ease-out, width 0.2s ease-out', 
             marginRight: { 
               xs: 0, 
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? '280px' : '0' 
+              md: (isLoggedIn && isInitialized && isSidebarOpen) ? '240px' : '0' 
             },
             width: {
               xs: '100%',
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100% - 280px)' : '100%'
+              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100% - 240px)' : '100%'
             },
             maxWidth: {
               xs: '100vw',
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100vw - 280px)' : '100vw'
+              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100vw - 240px)' : '100vw'
             },
             backgroundColor: isLoggedIn ? '#f8f9fa' : 'transparent',
             minHeight: 'calc(100vh - 64px)',

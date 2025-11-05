@@ -16,6 +16,20 @@ import {
   Card,
   CardContent,
   Divider,
+  Table,
+  TableBody,
+  TableContainer,
+  TableHead,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Stack,
+  FormControl,
+  Select,
+  InputLabel,
+  TablePagination,
 } from "@mui/material";
 import {
   Add,
@@ -26,8 +40,6 @@ import {
   CheckCircle,
   Print,
   Delete,
-  ChevronLeft,
-  ChevronRight,
   Share,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
@@ -35,10 +47,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from 'lodash';
 import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
-import FileUploadDropzone from "../../components/FileUploadDropzone";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { saveAs } from 'file-saver';
-
+import dayjs from "dayjs";
+import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
   
@@ -68,6 +80,22 @@ const getInvestorDetails = async (investorId) => {
   return response.data;
 };
 
+// New API functions for transactions
+const getPartnerTransactions = async (partnerId, page = 1) => {
+  const response = await Api.get(`/api/partners/transaction/${partnerId}/${page}`);
+  return response.data;
+};
+
+const createPartnerTransaction = async (partnerId, transactionData) => {
+  const response = await Api.post(`/api/partners/transaction/${partnerId}`, transactionData);
+  return response.data;
+};
+
+const deletePartnerTransaction = async (transactionId) => {
+  const response = await Api.delete(`/api/partners/transaction/${transactionId}`);
+  return response.data;
+};
+
 export default function Investors() {
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
@@ -79,6 +107,17 @@ export default function Investors() {
   const [editMode, setEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [editFormData, setEditFormData] = useState({});
+  
+  // New states for transactions
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [transactionForm, setTransactionForm] = useState({
+    type: "DEPOSIT",
+    amount: ""
+  });
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
+  
   const queryClient = useQueryClient();
 
   const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
@@ -90,6 +129,14 @@ export default function Investors() {
   const { data: investorDetails } = useQuery({
     queryKey: ["investor-details", selectedInvestor?.id],
     queryFn: () => selectedInvestor ? getInvestorDetails(selectedInvestor.id) : null,
+    enabled: !!selectedInvestor,
+    retry: 1,
+  });
+
+  // New query for transactions
+  const { data: transactionsData, isLoading: isTransactionsLoading } = useQuery({
+    queryKey: ["partner-transactions", selectedInvestor?.id, transactionsPage],
+    queryFn: () => selectedInvestor ? getPartnerTransactions(selectedInvestor.id, transactionsPage) : null,
     enabled: !!selectedInvestor,
     retry: 1,
   });
@@ -107,6 +154,10 @@ export default function Investors() {
     setCurrentPage(newPage);
   };
 
+  const handleTransactionsPageChange = (event, newPage) => {
+    setTransactionsPage(newPage);
+  };
+
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
   };
@@ -114,10 +165,18 @@ export default function Investors() {
   const handleInvestorSelect = (investor) => {
     setSelectedInvestor(investor);
     setEditMode(false);
+    setTransactionsPage(1); // Reset transactions page when selecting new investor
   };
 
   const handleInputChange = (field, value) => {
     setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleTransactionInputChange = (field, value) => {
+    setTransactionForm(prev => ({
       ...prev,
       [field]: value
     }));
@@ -170,6 +229,64 @@ export default function Investors() {
   const openDeleteModal = (investor) => {
     setInvestorToDelete(investor);
     setIsDeleteModalOpen(true);
+  };
+
+  // New transaction handlers
+  const handleAddTransaction = () => {
+    setTransactionForm({
+      type: "DEPOSIT",
+      amount: ""
+    });
+    setIsTransactionModalOpen(true);
+  };
+
+  const handleSaveTransaction = async () => {
+    try {
+      if (!transactionForm.amount || parseFloat(transactionForm.amount) <= 0) {
+        notifyError("يرجى إدخال مبلغ صحيح");
+        return;
+      }
+
+      await createPartnerTransaction(selectedInvestor.id, {
+        type: transactionForm.type,
+        amount: parseFloat(transactionForm.amount)
+      });
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['partner-transactions', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      
+      notifySuccess("تم إضافة العملية المالية بنجاح");
+      setIsTransactionModalOpen(false);
+      setTransactionForm({
+        type: "DEPOSIT",
+        amount: ""
+      });
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء إضافة العملية المالية');
+      handleApiError(error);
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId) => {
+    try {
+      await deletePartnerTransaction(transactionId);
+      
+      queryClient.invalidateQueries({ queryKey: ['partner-transactions', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      
+      notifySuccess("تم حذف العملية المالية بنجاح");
+      setIsDeleteTransactionModalOpen(false);
+      setTransactionToDelete(null);
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف العملية المالية');
+      handleApiError(error);
+    }
+  };
+
+  const openDeleteTransactionModal = (transaction) => {
+    setTransactionToDelete(transaction);
+    setIsDeleteTransactionModalOpen(true);
   };
 
   const handleDownloadFile = async (fileUrl) => {
@@ -241,8 +358,6 @@ export default function Investors() {
     }
   };
   
-  
-
   useEffect(() => {
     if (investorsData?.partners?.length > 0 && !selectedInvestor) {
       setSelectedInvestor(investorsData.partners[0]);
@@ -277,6 +392,28 @@ export default function Investors() {
 
   const getStatusText = (isActive) => {
     return isActive ? 'نشط' : 'غير نشط';
+  };
+
+  const getTransactionTypeText = (type) => {
+    switch (type) {
+      case "DEPOSIT":
+        return "إيداع";
+      case "WITHDRAWAL":
+        return "سحب";
+      default:
+        return type;
+    }
+  };
+
+  const getTransactionTypeColor = (type) => {
+    switch (type) {
+      case "DEPOSIT":
+        return "success";
+      case "WITHDRAWAL":
+        return "error";
+      default:
+        return "default";
+    }
   };
 
   return (
@@ -567,6 +704,7 @@ export default function Investors() {
             >
               <Tab label="التفاصيل الشخصية" />
               <Tab label="المعلومات المالية" />
+              <Tab label="العمليات المالية" />
               <Tab label="المستندات" />
             </Tabs>
 
@@ -784,8 +922,113 @@ export default function Investors() {
               </Paper>
             )}
 
-            {/* المستندات */}
+            {/* العمليات المالية */}
             {tab === 2 && (
+              <Box>
+                {/* Add Transaction Button */}
+                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add sx={{ marginLeft: '10px' }} />}
+                    onClick={handleAddTransaction}
+                    sx={{
+                      bgcolor: "#0d40a5",
+                      "&:hover": { bgcolor: "#0b3589" },
+                      fontWeight: "bold",
+                    }}
+                  >
+                    إضافة عملية مالية
+                  </Button>
+                </Box>
+
+                {/* Transactions Table */}
+                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                  <TableContainer>
+                    <Table stickyHeader>
+                      <TableHead sx={{ bgcolor: "#F3F4F6" }}>
+                        <StyledTableRow>
+                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>رقم المرجع</StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>نوع العملية</StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>المبلغ</StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>التاريخ</StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
+                        </StyledTableRow>
+                      </TableHead>
+                      <TableBody>
+                        {isTransactionsLoading ? (
+                          <StyledTableRow>
+                            <StyledTableCell colSpan={5} align="center">
+                              <CircularProgress size={20} />
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        ) : transactionsData?.transactions?.length === 0 ? (
+                          <StyledTableRow>
+                            <StyledTableCell colSpan={5} align="center">
+                              <Typography>لا توجد عمليات مالية</Typography>
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        ) : (
+                          transactionsData?.transactions?.map((transaction) => (
+                            <StyledTableRow key={transaction.id} hover>
+                              <StyledTableCell align="center">{transaction.reference}</StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Chip
+                                  label={getTransactionTypeText(transaction.type)}
+                                  color={getTransactionTypeColor(transaction.type)}
+                                  size="small"
+                                />
+                              </StyledTableCell>
+                              <StyledTableCell align="center" sx={{ 
+                                color: transaction.type === "DEPOSIT" ? "success.main" : "error.main",
+                                fontWeight: "bold"
+                              }}>
+                                {transaction.amount?.toLocaleString()} ريال
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {dayjs(transaction.date).format("DD/MM/YYYY HH:mm a")}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <IconButton
+                                  color="error"
+                                  size="small"
+                                  onClick={() => openDeleteTransactionModal(transaction)}
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  {/* Pagination for Transactions */}
+                  {transactionsData && transactionsData.totalPages > 1 && (
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      p: 2, 
+                      borderTop: '1px solid #eee',
+                    }}>
+                      <Pagination
+                        count={transactionsData.totalPages}
+                        page={transactionsPage}
+                        onChange={handleTransactionsPageChange}
+                        color="primary"
+                        size="small"
+                        siblingCount={1}
+                        boundaryCount={1}
+                      />
+                    </Box>
+                  )}
+                </Paper>
+              </Box>
+            )}
+
+            {/* المستندات */}
+            {tab === 3 && (
               <Box>
                 {/* Existing Documents */}
                 <Box sx={{ mb: 4 }}>
@@ -865,6 +1108,78 @@ export default function Investors() {
         }}
         title="حذف المستثمر"
         message={`هل أنت متأكد من حذف المستثمر ${investorToDelete?.name}؟`}
+        ButtonText="حذف"
+      />
+
+      {/* Add Transaction Modal */}
+      <Dialog 
+        open={isTransactionModalOpen} 
+        onClose={() => setIsTransactionModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" fontWeight="bold">
+            إضافة عملية مالية
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <FormControl fullWidth size="small">
+              <TextField
+                select
+                label="نوع العملية"
+                value={transactionForm.type}
+                onChange={(e) => handleTransactionInputChange('type', e.target.value)}
+              >
+                <MenuItem value="DEPOSIT">إيداع</MenuItem>
+                <MenuItem value="WITHDRAWAL">سحب</MenuItem>
+              </TextField>
+            </FormControl>
+            
+            <TextField
+              label="المبلغ"
+              type="number"
+              value={transactionForm.amount}
+              onChange={(e) => handleTransactionInputChange('amount', e.target.value)}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
+          <Button 
+            onClick={() => setIsTransactionModalOpen(false)}
+            color="inherit"
+          >
+            إلغاء
+          </Button>
+          <Button 
+            onClick={handleSaveTransaction}
+            variant="contained"
+            sx={{
+              bgcolor: "#0d40a5",
+              "&:hover": { bgcolor: "#0b3589" },
+            }}
+          >
+            حفظ
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Transaction Modal */}
+      <DeleteModal
+        open={isDeleteTransactionModalOpen}
+        onClose={() => {
+          setIsDeleteTransactionModalOpen(false);
+          setTransactionToDelete(null);
+        }}
+        onConfirm={() => {
+          if (transactionToDelete?.id) {
+            handleDeleteTransaction(transactionToDelete.id);
+          }
+        }}
+        title="حذف العملية المالية"
+        message={`هل أنت متأكد من حذف العملية المالية برقم المرجع ${transactionToDelete?.reference}؟`}
         ButtonText="حذف"
       />
     </Box>

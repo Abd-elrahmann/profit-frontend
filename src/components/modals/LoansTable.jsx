@@ -59,6 +59,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
   const { data: loansData, isLoading } = useQuery({
     queryKey: ["loans", page, searchQuery],
     queryFn: () => getLoans(page, searchQuery),
+    retry: 1,
   });
 
   const handleSearchChange = (event) => {

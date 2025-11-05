@@ -87,9 +87,12 @@ export const rejectRepayment = async (installmentId) => {
 };
 
 // Postpone repayment
-export const postponeRepayment = async (installmentId) => {
+export const postponeRepayment = async (installmentId, newDueDate, reason) => {
   try {
-    const response = await Api.patch(`/api/repayments/postpone/${installmentId}`);
+    const response = await Api.patch(`/api/repayments/postpone/${installmentId}`, {
+      newDueDate,
+      reason
+    });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -97,3 +100,15 @@ export const postponeRepayment = async (installmentId) => {
   }
 };
 
+// Mark as partial paid
+export const markAsPartialPaid = async (installmentId, paidAmount) => {
+  try {
+    const response = await Api.patch(`/api/repayments/partial-paid/${installmentId}`, {
+      paidAmount
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

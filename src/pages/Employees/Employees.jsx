@@ -20,7 +20,8 @@ import {
   Edit,
   Delete,
   Person,
-  AdminPanelSettingsOutlined as AdminPanelSettings
+  AdminPanelSettingsOutlined as AdminPanelSettings,
+  History as HistoryIcon
 } from "@mui/icons-material";
 
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
@@ -30,8 +31,10 @@ import dayjs from "dayjs";
 import AddEmployee from "../../components/modals/AddEmployee";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AssignRole from "../../components/modals/AssignRole";
+import LogsTable from "../../components/modals/LogsTable";
 import { debounce } from 'lodash';
 import { notifyError, notifySuccess } from "../../utilities/toastify";
+
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
   return response.data.users;
@@ -48,6 +51,8 @@ export default function Employees() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAssignRoleModalOpen, setIsAssignRoleModalOpen] = useState(false);
   const [userForRoleAssignment, setUserForRoleAssignment] = useState(null);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
+  const [selectedUserForLogs, setSelectedUserForLogs] = useState(null);
 
   const { data: usersData, isLoading, refetch } = useQuery({ 
     queryKey: ["users", page + 1, searchQuery], 
@@ -101,6 +106,11 @@ export default function Employees() {
     setIsAssignRoleModalOpen(true);
   };
 
+  const handleViewLogs = (user) => {
+    setSelectedUserForLogs(user);
+    setIsLogsModalOpen(true);
+  };
+
   const openDeleteModal = (userId) => {
     setSelectedUserId(userId);
     setIsDeleteModalOpen(true);
@@ -108,7 +118,6 @@ export default function Employees() {
 
   return (
     <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
       {/* Main Content */}
       <Box sx={{ p: 5 }}>
         {/* Search and Add Button */}
@@ -213,10 +222,10 @@ export default function Employees() {
                     {dayjs(user.createdAt).format("DD/MM/YYYY")}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                    <IconButton color="primary" onClick={() => handleEdit(user)}>
+                    <IconButton color="primary" onClick={() => handleEdit(user)} title="تعديل">
                       <Edit />
                     </IconButton>
-                    <IconButton color="error" onClick={() => openDeleteModal(user.id)}>
+                    <IconButton color="error" onClick={() => openDeleteModal(user.id)} title="حذف">
                       <Delete />
                     </IconButton>
                     <IconButton 
@@ -225,6 +234,13 @@ export default function Employees() {
                       title="تعيين دور"
                     >
                       <AdminPanelSettings />
+                    </IconButton>
+                    <IconButton 
+                      color="black" 
+                      onClick={() => handleViewLogs(user)}
+                      title="عرض سجل الأنشطة"
+                    >
+                      <HistoryIcon />
                     </IconButton>
                   </StyledTableCell>
                 </StyledTableRow>
@@ -262,6 +278,12 @@ export default function Employees() {
         open={isAssignRoleModalOpen}
         onClose={() => setIsAssignRoleModalOpen(false)}
         user={userForRoleAssignment}
+      />
+      <LogsTable
+        open={isLogsModalOpen}
+        onClose={() => setIsLogsModalOpen(false)}
+        userId={selectedUserForLogs?.id}
+        userName={selectedUserForLogs?.name}
       />
     </Box>
   );

@@ -236,7 +236,17 @@ const Loans = () => {
       }
   
       notifySuccess("تم حفظ العقود بنجاح");
-      
+      setSavedLoanData(null);
+      setContractsGenerated(0);
+      setPreviewContracts({
+        debtAck: "",
+        promissoryNote: "",
+      });
+      setPreviewOpen(false);
+      setInstallments([]);
+      setIsEditMode(false);
+      setIsViewMode(false);
+      setActiveTab(0);
     } catch (error) {
       console.error("Error saving contracts:", error);
       notifyError("حدث خطأ أثناء حفظ العقود");

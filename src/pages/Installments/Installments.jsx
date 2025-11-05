@@ -35,6 +35,7 @@ import {
   Description as DocumentIcon,
   Print as PrintIcon,
   Share as ShareIcon,
+  Payment as PartialPaymentIcon,
 } from "@mui/icons-material";
 import { Download } from "@mui/icons-material";
 
@@ -45,12 +46,15 @@ import {
   approveRepayment, 
   rejectRepayment, 
   postponeRepayment,
+  markAsPartialPaid,
 } from "./InstallmentsApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import dayjs from "dayjs";
 import PaymentProofGenerator from "../../components/PaymentProofGenerator";
 import PaymentProofPreview from "../../components/PaymentProofPreview";
+import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
+import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
 import Api from "../../config/Api";
 
 const Installments = () => {
@@ -65,6 +69,9 @@ const Installments = () => {
     const [newDueDate, setNewDueDate] = useState("");
     const [postponeReason, setPostponeReason] = useState("");
     
+    const [partialPaymentModalOpen, setPartialPaymentModalOpen] = useState(false);
+    const [paidAmount, setPaidAmount] = useState("");
+    
     const [activeInstallmentId, setActiveInstallmentId] = useState(null);
 
     const [paymentProofModalOpen, setPaymentProofModalOpen] = useState(false);
@@ -72,6 +79,12 @@ const Installments = () => {
     const [paymentProofTemplate, setPaymentProofTemplate] = useState('');
     const [paymentProofHtml, setPaymentProofHtml] = useState('');
     const [isGeneratingProof, setIsGeneratingProof] = useState(false);
+    const [settlementModalOpen, setSettlementModalOpen] = useState(false);
+    const [settlementHtml, setSettlementHtml] = useState('');
+    const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
+    const [settlementTemplate, setSettlementTemplate] = useState('');
+
+    const settlementReceiptRef = useRef(null);
 
     const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
     const [selectedDocumentsInstallment, setSelectedDocumentsInstallment] = useState(null);
@@ -81,6 +94,7 @@ const Installments = () => {
     useEffect(() => {
       if (loanId) {
         fetchPaymentProofTemplate();
+        fetchSettlementTemplate();
       }
     }, [loanId]);
 
@@ -90,6 +104,15 @@ const Installments = () => {
         setPaymentProofTemplate(response.data.content || '');
       } catch (error) {
         console.warn('Could not fetch payment proof template:', error);
+      }
+    };
+
+    const fetchSettlementTemplate = async () => {
+      try {
+        const response = await Api.get('/api/templates/SETTLEMENT');
+        setSettlementTemplate(response.data.content || '');
+      } catch (error) {
+        console.warn('Could not fetch settlement template:', error);
       }
     };
 
@@ -230,6 +253,37 @@ const Installments = () => {
       setAnchorEl(null);
     };
 
+    const handlePartialPayment = async () => {
+      if (!selectedActionInstallment || !paidAmount) {
+        notifyError("يرجى إدخال المبلغ المدفوع");
+        return;
+      }
+
+      const paidAmountNum = parseFloat(paidAmount);
+      if (isNaN(paidAmountNum) || paidAmountNum <= 0) {
+        notifyError("يرجى إدخال مبلغ صحيح");
+        return;
+      }
+
+      if (paidAmountNum > selectedActionInstallment.amount) {
+        notifyError("المبلغ المدفوع لا يمكن أن يكون أكبر من قيمة القسط");
+        return;
+      }
+
+      try {
+        await markAsPartialPaid(selectedActionInstallment.id, paidAmountNum);
+        notifySuccess("تم تسجيل الدفع الجزئي بنجاح");
+        queryClient.invalidateQueries(["loan", loanId]);
+        queryClient.invalidateQueries(["repayments", loanId]);
+        setPartialPaymentModalOpen(false);
+        setPaidAmount("");
+      } catch (error) {
+        console.log('Partial payment error:', error);
+        notifyError(error.response?.data?.message || "حدث خطأ أثناء تسجيل الدفع الجزئي");
+      }
+      setAnchorEl(null);
+    };
+
   const handlePostpone = async () => {
     if (!selectedActionInstallment || !newDueDate) {
       notifyError("يرجى إدخال تاريخ الاستحقاق الجديد");
@@ -269,6 +323,88 @@ const Installments = () => {
     return dueDate < today;
   };
 
+  // Check if all installments are paid
+  const allInstallmentsPaid = () => {
+    return sortedInstallments.every(installment => installment.status === "PAID");
+  };
+
+  // Check if settlement is already completed
+  const isSettlementCompleted = () => {
+    return loanData?.SETTLEMENT !== null && loanData?.SETTLEMENT !== undefined;
+  };
+
+  // Check if actions should be disabled
+  const shouldDisableActions = () => {
+    return isSettlementCompleted();
+  };
+
+  const handleSettlement = async () => {
+    try {
+      setIsGeneratingSettlement(true);
+      
+      const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
+      
+      const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+      
+      const settlementHtml = await settlementReceiptRef.current.generateContract(
+        false, 
+        { 
+          installmentData: lastInstallment, 
+          loanData, 
+          clientData: loanData?.client,
+          employeeName: defaultEmployeeName
+        }
+      );
+      
+      setSettlementHtml(settlementHtml);
+      setSettlementModalOpen(true);
+      
+      setIsGeneratingSettlement(false);
+      
+    } catch (error) {
+      console.log('Error generating settlement receipt:', error);
+      notifyError('حدث خطأ أثناء توليد سند التسوية');
+      setIsGeneratingSettlement(false);
+    }
+  };
+
+  const handleSaveSettlement = async () => {
+    try {
+      setIsGeneratingSettlement(true);
+      
+      const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
+      const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+      
+      const finalSettlementHtml = await settlementReceiptRef.current.generateContract(
+        false, 
+        { 
+          installmentData: lastInstallment, 
+          loanData, 
+          clientData: loanData?.client,
+          employeeName: defaultEmployeeName
+        }
+      );
+      
+      await settlementReceiptRef.current.generatePDF(finalSettlementHtml);
+      
+      notifySuccess("تم حفظ سند التسوية بنجاح");
+      
+      setSettlementModalOpen(false);
+      
+      setTimeout(() => {
+        notifySuccess("تم تسوية القسط النهائي وإغلاقه بنجاح");
+      }, 500);
+      
+      queryClient.invalidateQueries(["loan", loanId]);
+      
+    } catch (error) {
+      console.log('Error saving settlement receipt:', error);
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ السند");
+    } finally {
+      setIsGeneratingSettlement(false);
+    }
+  };
+
   const getStatusColor = (status, installment) => {
     if (checkIfOverdue(installment)) {
       return "error";
@@ -283,8 +419,12 @@ const Installments = () => {
         return "warning";
       case "PENDING_REVIEW":
         return "warning";
+      case "COMPLETED":
+        return "info";
       case "PAID":
         return "success";
+      case "PARTIAL_PAID":
+        return "info";
       case "OVERDUE":
         return "error";
       default:
@@ -306,8 +446,12 @@ const Installments = () => {
         return "قيد الانتظار";
       case "PENDING_REVIEW":
         return "قيد المراجعة";
+      case "COMPLETED":
+        return "مكتمل";
       case "PAID":
         return "مدفوع";
+      case "PARTIAL_PAID":
+        return "مدفوع جزئياً";
       case "OVERDUE":
         return "متأخر";
       default:
@@ -450,6 +594,33 @@ const Installments = () => {
             </Grid>
           </Paper>
 
+          {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
+          {allInstallmentsPaid() && !isSettlementCompleted() && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <Button
+                variant="contained"
+                onClick={handleSettlement}
+                sx={{
+                  bgcolor: "#16a34a",
+                  "&:hover": { bgcolor: "#15803d" },
+                  fontWeight: "bold",
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1.5
+                }}
+              >
+                تسوية القسط النهائي
+              </Button>
+            </Box>
+          )}
+
+          {/* Show message if settlement is already completed */}
+          {isSettlementCompleted() && (
+            <Alert severity="success" sx={{ mb: 3 }}>
+              تم تسوية القسط النهائي بنجاح
+            </Alert>
+          )}
+
           <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
             <TableContainer>
               <Table stickyHeader>
@@ -459,9 +630,9 @@ const Installments = () => {
                     <StyledTableCell align="center">رقم القسط</StyledTableCell>
                     <StyledTableCell align="center">تاريخ الاستحقاق</StyledTableCell>
                     <StyledTableCell align="center">القسط</StyledTableCell>
+                    <StyledTableCell align="center">المبلغ المدفوع</StyledTableCell>
                     <StyledTableCell align="center">الرصيد المتبقي</StyledTableCell>
                     <StyledTableCell align="center">الحالة</StyledTableCell>
-                    <StyledTableCell align="center">المبلغ المدفوع</StyledTableCell>
                     <StyledTableCell align="center"> تاريخ الدفع</StyledTableCell>
                     <StyledTableCell align="center">الإجراءات</StyledTableCell>
                   </StyledTableRow>
@@ -496,7 +667,12 @@ const Installments = () => {
                       <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                         {installment.amount?.toFixed(2)} ر.س
                       </StyledTableCell>
-                      <StyledTableCell align="center">
+                      <StyledTableCell align="center" style={{color: installment.paidAmount > 0 ? "green" : "red",fontWeight:"bold"}}>
+                        {installment.paidAmount > 0
+                          ? `${installment.paidAmount.toFixed(2)} ر.س`
+                          : "0.00 ر.س"}
+                      </StyledTableCell>
+                      <StyledTableCell align="center" style={{color: installment.remaining === 0 ? "black" : "red",fontWeight:"bold"}}>
                         {installment.remaining?.toFixed(2) || "0.00"} ر.س
                       </StyledTableCell>
                       <StyledTableCell align="center">
@@ -507,11 +683,6 @@ const Installments = () => {
                         />
                       </StyledTableCell>
                       <StyledTableCell align="center">
-                        {installment.paidAmount > 0
-                          ? `${installment.paidAmount.toFixed(2)} ر.س`
-                          : "0.00 ر.س"}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
                         {installment.paymentDate ? dayjs(installment.paymentDate).format("DD/MM/YYYY") : "لم يأتي بعد"}
                       </StyledTableCell>
                       <StyledTableCell align="center">
@@ -519,6 +690,11 @@ const Installments = () => {
                           <IconButton
                             size="small"
                             onClick={(e) => handleMenuOpen(e, installment)}
+                            disabled={shouldDisableActions()}
+                            sx={{
+                              opacity: shouldDisableActions() ? 0.5 : 1,
+                              cursor: shouldDisableActions() ? 'not-allowed' : 'pointer'
+                            }}
                           >
                             <MoreVertIcon />
                           </IconButton>
@@ -534,7 +710,7 @@ const Installments = () => {
 
         <Box
           sx={{
-            width: "300px",
+            width: "270px",
             borderRight: "1px solid #ddd",
             bgcolor: "#fafafa",
             height: "100%",
@@ -700,21 +876,30 @@ const Installments = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {selectedActionInstallment?.status !== "PAID" && (
+        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && (
           <MenuItem onClick={() => handleApprove(selectedActionInstallment)} sx={{ color: 'green' }}>
-            <ApproveIcon sx={{ mr: 1, color: 'green' }} />
+            <ApproveIcon sx={{ mr: 1, color: 'green',marginLeft: '10px' }} />
             موافقة
           </MenuItem>
         )}
       
-        <MenuItem onClick={() => handleReject(selectedActionInstallment)} sx={{ color: 'red' }}>
-          <RejectIcon sx={{ mr: 1, color: 'red' }} />
-          رفض
-        </MenuItem>
+        {!shouldDisableActions() && (
+          <MenuItem onClick={() => handleReject(selectedActionInstallment)} sx={{ color: 'red' }}>
+            <RejectIcon sx={{ mr: 1, color: 'red',marginLeft: '10px' }} />
+            رفض
+          </MenuItem>
+        )}
 
-        {selectedActionInstallment?.status !== "PAID" && (
+        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && (
+          <MenuItem onClick={() => setPartialPaymentModalOpen(true)} sx={{ color: 'blue' }}>
+            <PartialPaymentIcon sx={{ mr: 1, color: 'blue',marginLeft: '10px' }} />
+            إضافة دفع جزئي
+          </MenuItem>
+        )}
+
+        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && (
           <MenuItem onClick={() => setPostponeModalOpen(true)} sx={{ color: 'orange' }}>
-            <PostponeIcon sx={{ mr: 1, color: 'orange' }} />
+            <PostponeIcon sx={{ mr: 1, color: 'orange',marginLeft: '10px' }} />
             تأجيل
           </MenuItem>
         )}
@@ -723,11 +908,43 @@ const Installments = () => {
           setSelectedDocumentsInstallment(selectedActionInstallment);
           setDocumentsModalOpen(true);
         }}>
-          <DocumentIcon sx={{ mr: 1 }} />
+          <DocumentIcon sx={{ mr: 1,marginLeft: '10px' }} />
           عرض المستندات
         </MenuItem>
         )}
       </Menu>
+
+      {/* Partial Payment Modal */}
+      <Dialog maxWidth="md" open={partialPaymentModalOpen} onClose={() => setPartialPaymentModalOpen(false)}>
+        <DialogTitle>إضافة دفع جزئي</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            القسط: #{selectedActionInstallment?.count} - المبلغ: {selectedActionInstallment?.amount?.toFixed(2)} ر.س
+          </Typography>
+          <TextField
+            fullWidth
+            type="number"
+            label="المبلغ المدفوع"
+            value={paidAmount}
+            onChange={(e) => setPaidAmount(e.target.value)}
+            sx={{ mt: 2 }}
+            InputProps={{
+              inputProps: { 
+                min: 0,
+                max: selectedActionInstallment?.remaining,
+                step: 0.01
+              }
+            }}
+            helperText={`الحد الأقصى: ${selectedActionInstallment?.remaining?.toFixed(2)} ر.س`}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, gap: 2, flexDirection: 'row-reverse' }}>
+          <Button onClick={() => setPartialPaymentModalOpen(false)} variant="outlined">إلغاء</Button>
+          <Button onClick={handlePartialPayment} variant="contained" color="primary">
+            تأكيد الدفع الجزئي
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog  maxWidth="md" open={postponeModalOpen} onClose={() => setPostponeModalOpen(false)}>
         <DialogTitle>تأجيل القسط</DialogTitle>
@@ -781,6 +998,29 @@ const Installments = () => {
         clientName={loanData?.client?.name}
         installmentAmount={selectedProofInstallment?.amount || 0}
         installmentNumber={selectedProofInstallment?.id || ''}
+      />
+
+      <InstallmentSettlementReceipt
+        ref={settlementReceiptRef}
+        installmentData={sortedInstallments[sortedInstallments.length - 1]}
+        loanData={loanData}
+        clientData={loanData?.client}
+        templateContent={settlementTemplate}
+        employeeName="الموظف المختص"
+        autoGenerate={false}
+      />
+
+      <InstallmentSettlementPreview
+        open={settlementModalOpen}
+        onClose={() => {
+          setSettlementModalOpen(false);
+        }}
+        settlementHtml={settlementHtml}
+        onSaveSettlement={handleSaveSettlement}
+        loading={isGeneratingSettlement}
+        clientName={loanData?.client?.name}
+        installmentAmount={loanData?.totalAmount || 0}
+        installmentNumber={sortedInstallments[sortedInstallments.length - 1]?.count || ''}
       />
 
       <Dialog open={documentsModalOpen} onClose={() => setDocumentsModalOpen(false)} maxWidth="md" fullWidth>
@@ -891,7 +1131,7 @@ const Installments = () => {
                       window.print();
                     }}
                     title="طباعة"
-                  >
+                    >
                     <PrintIcon />
                   </IconButton>
                   <IconButton 

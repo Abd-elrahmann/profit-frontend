@@ -158,6 +158,10 @@ const Journals = () => {
         return "شريك";
       case "PERIOD_CLOSING":
         return "إقفال فترة";
+      case "PARTNER_TRANSACTION_WITHDRAWAL":
+        return "سحب مالي لشريك";
+      case "PARTNER_TRANSACTION_DEPOSIT":
+        return "إيداع مالي لشريك";
       case "OTHER":
         return "أخرى";
       default:
@@ -388,7 +392,9 @@ const Journals = () => {
                     يرجى اختيار قيد لعرض تفاصيله
                   </Alert>
                 ) : isJournalLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                   <CircularProgress size={20} />
+                  </Box>
                 ) : journalData ? (
                   <Paper sx={{ p: 4, borderRadius: 2 }}>
                     <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={'center'}>
