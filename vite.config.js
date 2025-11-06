@@ -11,10 +11,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    base: '/',
     minify: 'esbuild',
     chunkSizeWarningLimit: 1000,
   },
+  base: "./",
   optimizeDeps: {
     include: ['react', 'react-dom'],
   },
