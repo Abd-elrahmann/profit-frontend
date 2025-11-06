@@ -1,53 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'node:path'
-import autoprefixer from 'autoprefixer'
 
-
-export default defineConfig(({ mode }) => {
-  // Load .env
-
-  return {
-    base: './',
-    build: {
-      outDir: 'build',
-      rollupOptions: {
-        maxParallelFileOps: 100,
-      },
-    },
-    css: {
-      postcss: {
-        plugins: [
-          autoprefixer({}), // add options if needed
-        ],
-      },
-    },
-
-    esbuild: {
-      loader: 'jsx',
-      include: /src\/.*\.jsx?$/,
-      exclude: [],
-    },
-    optimizeDeps: {
-      force: true,
-      esbuildOptions: {
-        loader: {
-          '.js': 'jsx',
-        },
-      },
-    },
-    plugins: [react()],
-    resolve: {
-      alias: [
-        {
-          find: 'src/',
-          replacement: `${path.resolve(__dirname, 'src')}/`,
-        },
-      ],
-      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.scss'],
-    },
-    server: {
-      port: 3002
-    },
-  }
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3001,
+    open: true,
+    host: true,
+  },
+  base: "./",
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1000,
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+  },
+  css: {
+    devSourcemap: true,
+  },
 })
