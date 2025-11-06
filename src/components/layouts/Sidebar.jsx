@@ -15,12 +15,10 @@ import {
   MdExpandLess as ExpandLessIcon
 } from 'react-icons/md';
 import { getSidebarMenuItems } from '../../routes';
-
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const [openGroup, setOpenGroup] = useState(null);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target) && isOpen) {
@@ -34,7 +32,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const menuItems = getSidebarMenuItems();
 
-  // فصل العناصر الفردية عن المجموعات
   const singleItems = menuItems.filter(item => !item.children);
   const groupItems = menuItems.filter(item => item.children);
 

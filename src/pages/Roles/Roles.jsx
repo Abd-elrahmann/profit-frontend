@@ -27,7 +27,7 @@ import dayjs from "dayjs";
 import AddRole from "../../components/modals/AddRole";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { debounce } from 'lodash';
-
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 // eslint-disable-next-line no-unused-vars
 const getRoles = async (page = 1, name = '') => {
   const response = await Api.get(`/api/roles?name=${name}`);
@@ -43,7 +43,7 @@ export default function Roles() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const { permissions } = usePermissions();
   const { data: rolesData, isLoading, refetch } = useQuery({ 
     queryKey: ["roles", page + 1, searchQuery], 
     queryFn: () => getRoles(page + 1, searchQuery),
@@ -138,7 +138,7 @@ export default function Roles() {
               ),
             }}
           />
-          <Button
+           {permissions.includes("Add") && (          <Button
             variant="contained"
             startIcon={<Add />}
             onClick={handleAdd}
@@ -150,6 +150,7 @@ export default function Roles() {
           >
             إضافة دور جديد
           </Button>
+          )}
         </Box>
 
         {/* Table */}
@@ -191,12 +192,16 @@ export default function Roles() {
                     {dayjs(role.createdAt).format("DD/MM/YYYY")}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                    {permissions.includes("Update") && (
                     <IconButton color="primary" onClick={() => handleEdit(role)}>
                       <Edit />
                     </IconButton>
+                    )}
+                    {permissions.includes("Delete") && (
                     <IconButton color="error" onClick={() => openDeleteModal(role.id)}>
                       <Delete />
                     </IconButton>
+                    )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}

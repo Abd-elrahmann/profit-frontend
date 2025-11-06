@@ -12,8 +12,6 @@ import {
 } from "@mui/material";
 import {
   MdAccountBalance as AccountBalance,
-  MdEmail as EmailIcon,
-  MdLock as LockIcon,
   MdVisibility as VisibilityIcon,
   MdVisibilityOff as VisibilityOffIcon,
 } from "react-icons/md";
@@ -24,6 +22,7 @@ import * as Yup from "yup";
 import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+
 const validationSchema = Yup.object().shape({
   email: Yup.string()
     .trim()
@@ -37,22 +36,29 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleTogglePassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleTogglePassword = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (values) => {
     setIsLoading(true);
     try {
       const cleanedValues = {
         ...values,
-        email: values.email.trim()
+        email: values.email.trim(),
       };
+
       const response = await Api.post("/api/auth/login", cleanedValues);
-      const { accessToken, user } = response.data;
+      const { accessToken, user, role } = response.data;
+
+      // تخزين البيانات في localStorage
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
+      if (role?.permissions) {
+        localStorage.setItem("permissions", JSON.stringify(role.permissions));
+      }
+
       notifySuccess("تم تسجيل الدخول بنجاح");
+
+      // توجيه المستخدم للوحة التحكم
       navigate("/dashboard", { replace: true });
     } catch (error) {
       notifyError("خطأ في تسجيل الدخول");
@@ -90,9 +96,9 @@ const Login = () => {
           <Box sx={{ textAlign: "center", mb: 4 }}>
             <AccountBalance
               style={{
-                fontSize: 30,
+                fontSize: 40,
                 color: "#1976d2",
-                marginBottom: 8,
+                marginBottom: 10,
               }}
             />
             <Typography
@@ -125,21 +131,23 @@ const Login = () => {
             }) => (
               <Form onSubmit={handleSubmit}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  {/* حقل الإيميل */}
+                  {/* البريد الإلكتروني */}
                   <TextField
                     fullWidth
                     label="البريد الإلكتروني"
                     name="email"
-                    value={values.email.trim()}
+                    value={values.email}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     error={touched.email && Boolean(errors.email)}
                     helperText={touched.email && errors.email}
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                     autoComplete="username"
                     disabled={isLoading}
                   />
-                  {/* حقل كلمة المرور */}
+
+                  {/* كلمة المرور */}
                   <TextField
                     fullWidth
                     label="كلمة المرور"
@@ -153,16 +161,17 @@ const Login = () => {
                     variant="outlined"
                     autoComplete="current-password"
                     disabled={isLoading}
+                    InputLabelProps={{ shrink: true }}
                     InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                        <IconButton onClick={handleTogglePassword}>
-                          {showPassword ? (
-                            <VisibilityOffIcon size={15} />
-                          ) : (
-                            <VisibilityIcon size={15} />
-                          )}
-                        </IconButton>
+                      endAdornment: (
+                        <InputAdornment position="end" sx={{ shrink: true }}>
+                          <IconButton onClick={handleTogglePassword}>
+                            {showPassword ? (
+                              <VisibilityOffIcon size={20} />
+                            ) : (
+                              <VisibilityIcon size={20} />
+                            )}
+                          </IconButton>
                         </InputAdornment>
                       ),
                     }}

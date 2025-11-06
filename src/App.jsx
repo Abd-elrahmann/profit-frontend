@@ -9,7 +9,7 @@ import Layout from './components/layouts/Layout';
 import theme from './theme/theme';
 import Installments from './pages/Installments/Installments';
 import PaymentReceipt from './components/modals/PaymentReceipt';
-
+import { PermissionsProvider } from './components/Contexts/PermissionsContext';
 // مكون لمنع التنقل من صفحة إيصال الدفع
 const RestrictedNavigationRoute = ({ children }) => {
   useEffect(() => {
@@ -106,7 +106,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <AppLayout />
+        <PermissionsProvider>
+          <AppLayout />
+        </PermissionsProvider>
         <Toaster
         position="top-center"
         gutter={8}
