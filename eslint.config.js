@@ -24,13 +24,6 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
-      "import/no-unresolved": "error",
-      "import/no-named-as-default": "off",
-      "import/no-named-as-default-member": "off",
-      "import/no-mutable-exports": "error",
-      "import/no-absolute-path": "error",
-      "import/extensions": ["error", "ignorePackages"],
-      "import/no-unresolved": "off"
     },
   },
 ])
