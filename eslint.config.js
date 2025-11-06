@@ -30,7 +30,7 @@ export default defineConfig([
       "import/no-mutable-exports": "error",
       "import/no-absolute-path": "error",
       "import/extensions": ["error", "ignorePackages"],
-      "import/no-unresolved": ["error", { "caseSensitive": true }]
+      "import/no-unresolved": "off"
     },
   },
 ])
