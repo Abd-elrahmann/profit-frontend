@@ -36,7 +36,7 @@ import LoanContractGenerator from "../../components/LoanContractGenerator";
 import LoanContractsPreview from "../../components/LoanContractsPreview";
 import Api from "../../config/Api";
 import { useNavigate } from "react-router-dom";
-
+import { Helmet } from "react-helmet-async";
 const Loans = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
@@ -555,6 +555,10 @@ const Loans = () => {
         flexDirection: "column",
       }}
     >
+      <Helmet>
+        <title>السلف</title>
+        <meta name="description" content="السلف" />
+      </Helmet>
       <Box
         sx={{
           display: "flex",

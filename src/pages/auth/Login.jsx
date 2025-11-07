@@ -22,7 +22,6 @@ import * as Yup from "yup";
 import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-
 const validationSchema = Yup.object().shape({
   email: Yup.string()
     .trim()

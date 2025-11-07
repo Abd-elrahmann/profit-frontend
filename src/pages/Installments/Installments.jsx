@@ -56,7 +56,7 @@ import PaymentProofPreview from "../../components/PaymentProofPreview";
 import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
 import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
 import Api from "../../config/Api";
-
+import { Helmet } from "react-helmet-async";
 const Installments = () => {
     const { loanId } = useParams();
     const queryClient = useQueryClient();
@@ -544,6 +544,10 @@ const Installments = () => {
         flexDirection: "column",
       }}
     >
+      <Helmet>
+        <title> أقساط السلفة</title>
+        <meta name="description" content="أقساط السلفة" />
+      </Helmet>
       <Box
         sx={{
           display: "flex",
@@ -562,7 +566,7 @@ const Installments = () => {
           }}
         >
           <Typography variant="h5" fontWeight="bold" mb={3}>
-            إدارة أقساط السلفة - {loanData?.client?.name}
+            أقساط السلفة - {loanData?.client?.name}
           </Typography>
 
           <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>

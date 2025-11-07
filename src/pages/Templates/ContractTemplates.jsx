@@ -28,6 +28,7 @@ import PaymentVoucher from "../../components/Contracts/PaymentVoucher";
 import InstallmentPaymentReceipt from "../../components/Contracts/InstallmentPaymentReceipt";
 import InstallmentSettlementReceipt from "../../components/Contracts/InstallmentSettlementReceipt";
 import Api, { handleApiError } from "../../config/Api";
+import { Helmet } from "react-helmet-async";
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
   const [templates, setTemplates] = useState({
@@ -387,6 +388,10 @@ export default function ContractTemplates() {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
+      <Helmet>
+        <title>القوالب المالية</title>
+        <meta name="description" content="القوالب المالية" />
+      </Helmet>
       {/* Main Content */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {/* Main Body */}

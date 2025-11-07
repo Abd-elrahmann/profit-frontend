@@ -51,6 +51,7 @@ import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { saveAs } from 'file-saver';
 import dayjs from "dayjs";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
+import { Helmet } from "react-helmet-async";
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
   
@@ -418,6 +419,10 @@ export default function Investors() {
 
   return (
     <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+      <Helmet>
+        <title>المستثمرين</title>
+        <meta name="description" content="المستثمرين" />
+      </Helmet>
       {/* Header */}
       <Box
         sx={{

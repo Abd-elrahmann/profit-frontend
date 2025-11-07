@@ -11,18 +11,22 @@ import {
   FormControlLabel,
   Typography,
   CircularProgress,
-  Alert
+  Alert,
+  Chip
 } from '@mui/material';
-import { Close as CloseIcon, Add as AddIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useQueryClient } from '@tanstack/react-query';
-const AssignRole = ({ open, onClose, user }) => {
+
+const AssignRole = ({ open, onClose, user, refetchUsers }) => {
   const [roles, setRoles] = useState([]);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRemovingRole, setIsRemovingRole] = useState(false);
   const queryClient = useQueryClient();
+
   useEffect(() => {
     if (open) {
       fetchRoles();
@@ -49,12 +53,42 @@ const AssignRole = ({ open, onClose, user }) => {
   };
 
   const handleRoleChange = (roleId) => {
-    setSelectedRoleId(roleId);
+    // Only allow changing role if no current role exists
+    if (!user?.role) {
+      setSelectedRoleId(roleId);
+    }
+  };
+
+  const handleRemoveCurrentRole = async () => {
+    if (!user?.role) return;
+
+    setIsRemovingRole(true);
+    try {
+      await Api.patch(`/api/users/${user.id}/role`, {
+        roleId: null
+      });
+      
+      notifySuccess('تم إزالة الدور من الموظف بنجاح');
+      setSelectedRoleId(null);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      onClose();
+    } catch (error) {
+      console.error('Error removing role:', error);
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء إزالة الدور');
+    } finally {
+      setIsRemovingRole(false);
+    }
   };
 
   const handleSubmit = async () => {
     if (!selectedRoleId) {
       notifyError('يرجى اختيار دور للموظف');
+      return;
+    }
+
+    // Prevent assigning new role if user already has a role
+    if (user?.role) {
+      notifyError('لا يمكن تعيين دور جديد للموظف لأنه يمتلك دوراً بالفعل. يرجى إزالة الدور الحالي أولاً.');
       return;
     }
 
@@ -67,7 +101,7 @@ const AssignRole = ({ open, onClose, user }) => {
       notifySuccess('تم تعيين الدور للموظف بنجاح');
       onClose();
       setSelectedRoleId(null);
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      refetchUsers();
     } catch (error) {
       console.error('Error assigning role:', error);
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تعيين الدور');
@@ -80,6 +114,8 @@ const AssignRole = ({ open, onClose, user }) => {
     setSelectedRoleId(null);
     onClose();
   };
+
+  const hasCurrentRole = user?.role;
 
   return (
     <Dialog 
@@ -101,7 +137,7 @@ const AssignRole = ({ open, onClose, user }) => {
         pb: 1
       }}>
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          تعيين دور للموظف
+          {hasCurrentRole ? 'إدارة دور الموظف' : 'تعيين دور للموظف'}
         </Typography>
         <IconButton onClick={handleClose} size="small">
           <CloseIcon />
@@ -111,19 +147,64 @@ const AssignRole = ({ open, onClose, user }) => {
       <DialogContent sx={{ pb: 1 }}>
         {user && (
           <Box sx={{ mb: 3 }}>
-            <Alert severity="info" sx={{ borderRadius: 2 }}>
+            <Alert 
+              severity={hasCurrentRole ? "warning" : "info"} 
+              sx={{ borderRadius: 2 }}
+            >
               <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                 الموظف: {user.name}
               </Typography>
               <Typography variant="body2" sx={{ color: 'gray', mt: 0.5 }}>
-                {user.role ? `الدور الحالي: ${user.role.name}` : 'لا يوجد دور معين حالياً'}
+                {hasCurrentRole ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                    <span>الدور الحالي:</span>
+                    <Chip
+                      label={user.role.name}
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(59,130,246,0.1)',
+                        color: '#3B82F6',
+                        fontWeight: 'bold',
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  'لا يوجد دور معين حالياً'
+                )}
               </Typography>
             </Alert>
           </Box>
         )}
 
+        {/* Remove Current Role Button */}
+        {hasCurrentRole && (
+          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleRemoveCurrentRole}
+              disabled={isRemovingRole}
+              sx={{
+                borderColor: '#EF4444',
+                color: '#EF4444',
+                '&:hover': {
+                  bgcolor: 'rgba(239, 68, 68, 0.04)',
+                  borderColor: '#DC2626'
+                }
+              }}
+            >
+              {isRemovingRole ? (
+                <CircularProgress size={20} color="error" />
+              ) : (
+                'إزالة الدور الحالي'
+              )}
+            </Button>
+          </Box>
+        )}
+
         <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
-          اختر دور للموظف:
+          {hasCurrentRole ? 'الأدوار المتاحة (غير مفعلة)' : 'اختر دور للموظف:'}
         </Typography>
 
         {isLoading ? (
@@ -136,63 +217,110 @@ const AssignRole = ({ open, onClose, user }) => {
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {roles.map((role) => (
-              <Box
-                key={role.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  border: '1px solid',
-                  borderColor: selectedRoleId === role.id ? '#1E40AF' : '#E5E7EB',
-                  borderRadius: 2,
-                  bgcolor: selectedRoleId === role.id ? 'rgba(30, 64, 175, 0.05)' : 'transparent',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: selectedRoleId === role.id ? 'rgba(30, 64, 175, 0.08)' : '#F9FAFB',
-                  },
-                  transition: 'all 0.2s ease-in-out'
-                }}
-                onClick={() => handleRoleChange(role.id)}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <FormControlLabel
-                    control={
-                      <Radio
-                        checked={selectedRoleId === role.id}
-                        onChange={() => handleRoleChange(role.id)}
-                        value={role.id}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                          {role.name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'gray', mt: 0.5 }}>
-                          {role.description}
-                        </Typography>
-                        {role.permissions && (
-                          <Typography variant="caption" sx={{ color: '#6B7280', display: 'block', mt: 0.5 }}>
-                            {role.permissions.length} صلاحية
+            {roles.map((role) => {
+              const isCurrentRole = user?.role?.id === role.id;
+              const isDisabled = hasCurrentRole && !isCurrentRole;
+              
+              return (
+                <Box
+                  key={role.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: isCurrentRole ? '#10B981' : 
+                                selectedRoleId === role.id ? '#1E40AF' : '#E5E7EB',
+                    borderRadius: 2,
+                    bgcolor: isCurrentRole ? 'rgba(16,185,129,0.05)' : 
+                             selectedRoleId === role.id ? 'rgba(30, 64, 175, 0.05)' : 'transparent',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    opacity: isDisabled ? 0.6 : 1,
+                    '&:hover': {
+                      bgcolor: isDisabled ? 'transparent' : 
+                              isCurrentRole ? 'rgba(16,185,129,0.08)' :
+                              selectedRoleId === role.id ? 'rgba(30, 64, 175, 0.08)' : '#F9FAFB',
+                    },
+                    transition: 'all 0.2s ease-in-out',
+                    position: 'relative'
+                  }}
+                  onClick={() => !isDisabled && handleRoleChange(role.id)}
+                >
+                  {isCurrentRole && (
+                    <Chip
+                      label="الدور الحالي"
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        bgcolor: '#10B981',
+                        color: 'white',
+                        fontSize: '0.7rem',
+                        height: 20
+                      }}
+                    />
+                  )}
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <FormControlLabel
+                      control={
+                        <Radio
+                          checked={isCurrentRole || selectedRoleId === role.id}
+                          onChange={() => !isDisabled && handleRoleChange(role.id)}
+                          value={role.id}
+                          color={isCurrentRole ? "success" : "primary"}
+                          disabled={isDisabled}
+                        />
+                      }
+                      label={
+                        <Box sx={{ opacity: isDisabled ? 0.7 : 1 }}>
+                          <Typography 
+                            variant="body1" 
+                            sx={{ 
+                              fontWeight: 'bold',
+                              color: isCurrentRole ? '#10B981' : 'inherit'
+                            }}
+                          >
+                            {role.name}
+                            {isCurrentRole && ' ✓'}
                           </Typography>
-                        )}
-                      </Box>
-                    }
-                  />
+                          <Typography variant="body2" sx={{ color: 'gray', mt: 0.5 }}>
+                            {role.description}
+                          </Typography>
+                          {role.permissions && (
+                            <Typography variant="caption" sx={{ color: '#6B7280', display: 'block', mt: 0.5 }}>
+                              {role.permissions.length} صلاحية
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                      sx={{ width: '100%', mr: 0 }}
+                    />
+                  </Box>
+                  
+                  {!isDisabled && (
+                    <AddIcon 
+                      sx={{ 
+                        color: isCurrentRole ? '#10B981' : 
+                              selectedRoleId === role.id ? '#1E40AF' : '#9CA3AF',
+                        transition: 'color 0.2s ease-in-out'
+                      }} 
+                    />
+                  )}
                 </Box>
-                
-                <AddIcon 
-                  sx={{ 
-                    color: selectedRoleId === role.id ? '#1E40AF' : '#9CA3AF',
-                    transition: 'color 0.2s ease-in-out'
-                  }} 
-                />
-              </Box>
-            ))}
+              );
+            })}
           </Box>
+        )}
+
+        {hasCurrentRole && (
+          <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
+            <Typography variant="body2">
+              لا يمكن تعيين دور جديد للموظف لأنه يمتلك دوراً بالفعل. يرجى إزالة الدور الحالي أولاً لتمكين تعيين دور جديد.
+            </Typography>
+          </Alert>
         )}
       </DialogContent>
 
@@ -209,30 +337,33 @@ const AssignRole = ({ open, onClose, user }) => {
           onClick={handleClose}
           variant="outlined"
           color="inherit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isRemovingRole}
         >
-          إلغاء
+          إغلاق
         </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={isSubmitting || !selectedRoleId}
-          sx={{
-            bgcolor: "#1E40AF",
-            "&:hover": { bgcolor: "#1E3A8A" },
-            minWidth: 120,
-            '&:disabled': {
-              bgcolor: '#E5E7EB',
-              color: '#9CA3AF'
-            }
-          }}
-        >
-          {isSubmitting ? (
-            <CircularProgress size={24} color="inherit" />
-          ) : (
-            'تعيين الدور'
-          )}
-        </Button>
+        
+        {!hasCurrentRole && (
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={isSubmitting || !selectedRoleId}
+            sx={{
+              bgcolor: "#1E40AF",
+              "&:hover": { bgcolor: "#1E3A8A" },
+              minWidth: 120,
+              '&:disabled': {
+                bgcolor: '#E5E7EB',
+                color: '#9CA3AF'
+              }
+            }}
+          >
+            {isSubmitting ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'تعيين الدور'
+            )}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

@@ -35,6 +35,7 @@ import DeleteModal from "../../components/modals/DeleteModal";
 import EditDocuments from "../../components/modals/EditDocuments";
 import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
+import { Helmet } from "react-helmet-async";
 const getClients = async (page = 1, searchQuery = "", status = "") => {
   let queryParams = new URLSearchParams();
 
@@ -314,6 +315,10 @@ export default function Clients() {
 
   return (
     <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+      <Helmet>
+        <title>العملاء</title>
+        <meta name="description" content="العملاء" />
+      </Helmet>
       <Box
         sx={{
           display: "flex",

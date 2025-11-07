@@ -28,6 +28,7 @@ import AddRole from "../../components/modals/AddRole";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { debounce } from 'lodash';
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { Helmet } from "react-helmet-async";
 // eslint-disable-next-line no-unused-vars
 const getRoles = async (page = 1, name = '') => {
   const response = await Api.get(`/api/roles?name=${name}`);
@@ -107,6 +108,10 @@ export default function Roles() {
 
   return (
     <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <Helmet>
+        <title>الأدوار</title>
+        <meta name="description" content="الأدوار" />
+      </Helmet>
       {/* Main Content */}
       <Box sx={{ p: 5 }}>
         {/* Search and Add Button */}

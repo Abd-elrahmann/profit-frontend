@@ -19,7 +19,7 @@ import RestoreIcon from "@mui/icons-material/Restore";
 import ReactQuillWrapper from "../../components/ReactQuillWrapper";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api, { handleApiError } from "../../config/Api";
-
+import { Helmet } from "react-helmet-async";
 const DefaultRepaymentDue = () => `
   <p>عزيزي/عزيزتي {{اسم_العميل}}،</p>
   <p>نود تذكيركم بأن قسطكم البالغ {{مبلغ_القسط}} ريال سيكون مستحق الدفع في {{تاريخ_الاستحقاق}}.</p>
@@ -354,6 +354,10 @@ export default function MessagesTemplates() {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
+      <Helmet>
+        <title>القوالب الرسائلية</title>
+        <meta name="description" content="القوالب الرسائلية" />
+      </Helmet>
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Box sx={{ p: 4, overflowY: "auto", flex: 1 }}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>

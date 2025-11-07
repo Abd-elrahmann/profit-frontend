@@ -2,8 +2,8 @@ import axios from 'axios'
 import {toast} from 'react-toastify'
 import i18next from 'i18next'
 const Api = axios.create({
-  // baseURL: "http://localhost:3000",
-  baseURL: "http://72.61.101.53:3012",
+  baseURL: "http://localhost:3000",
+  // baseURL: "http://72.61.101.53:3012",
   headers: {
     'Content-Type': 'application/json',
   },

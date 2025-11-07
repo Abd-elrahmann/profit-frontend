@@ -15,10 +15,12 @@ import {
   MdExpandLess as ExpandLessIcon
 } from 'react-icons/md';
 import { getSidebarMenuItems } from '../../routes';
+
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const [openGroup, setOpenGroup] = useState(null);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target) && isOpen) {
@@ -54,6 +56,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         to={item.path}
         onClick={onClose}
         sx={{
+          flexDirection: 'row-reverse', // النص يمين، الأيقونة شمال
+          justifyContent: 'space-between',
           borderRadius: 2,
           mb: 1,
           mt: index === 0 ? 2 : 0,
@@ -80,9 +84,21 @@ const Sidebar = ({ isOpen, onClose }) => {
           }
         }}
       >
+        <ListItemText
+          primary={item.label}
+          sx={{
+            '& .MuiListItemText-primary': {
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              color: 'text.primary',
+              textAlign: 'right'
+            }
+          }}
+        />
         {item.icon && (
           <ListItemIcon sx={{ 
-            width: 70, 
+            minWidth: 0,
+            marginLeft: '10px',
             justifyContent: 'center',
             color: 'text.primary',
             transition: 'transform 0.03s ease',
@@ -94,16 +110,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             <item.icon />
           </ListItemIcon>
         )}
-        <ListItemText
-          primary={item.label}
-          sx={{
-            '& .MuiListItemText-primary': {
-              fontSize: '0.95rem',
-              fontWeight: 500,
-              color: 'text.primary'
-            }
-          }}
-        />
       </ListItem>
     );
   };
@@ -117,6 +123,8 @@ const Sidebar = ({ isOpen, onClose }) => {
           button
           onClick={() => toggleGroup(item.label)}
           sx={{
+            flexDirection: 'row-reverse', // النص يمين، الأيقونة شمال
+            justifyContent: 'space-between',
             borderRadius: 2,
             mb: 1,
             mt: index === 0 && singleItems.length === 0 ? 2 : 0,
@@ -132,8 +140,20 @@ const Sidebar = ({ isOpen, onClose }) => {
             }
           }}
         >
+          <ListItemText
+            primary={item.label}
+            sx={{
+              '& .MuiListItemText-primary': {
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                color: 'text.primary',
+                textAlign: 'right'
+              }
+            }}
+          />
           <ListItemIcon sx={{ 
-            width: 70, 
+            minWidth: 0,
+            marginLeft: '10px',
             justifyContent: 'center',
             color: 'text.primary',
             transition: 'transform 0.03s ease',
@@ -141,16 +161,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           }}>
             {isGroupOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </ListItemIcon>
-          <ListItemText
-            primary={item.label}
-            sx={{
-              '& .MuiListItemText-primary': {
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                color: 'text.primary'
-              }
-            }}
-          />
         </ListItem>
         
         <Collapse in={isGroupOpen && isOpen} timeout="auto">
@@ -162,6 +172,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                 to={child.path}
                 onClick={onClose}
                 sx={{
+                  flexDirection: 'row-reverse',
+                  justifyContent: 'space-between',
                   borderRadius: 2,
                   mb: 1,
                   textDecoration: 'none',
@@ -187,9 +199,21 @@ const Sidebar = ({ isOpen, onClose }) => {
                   }
                 }}
               >
+                <ListItemText
+                  primary={child.label}
+                  sx={{
+                    '& .MuiListItemText-primary': {
+                      fontSize: '0.95rem',
+                      fontWeight: 400,
+                      color: 'text.primary',
+                      textAlign: 'right'
+                    }
+                  }}
+                />
                 {child.icon && (
                   <ListItemIcon sx={{ 
-                    width: 70, 
+                    minWidth: 0,
+                    marginLeft: '10px',
                     justifyContent: 'center',
                     color: 'text.primary',
                     transition: 'transform 0.03s ease',
@@ -201,16 +225,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <child.icon />
                   </ListItemIcon>
                 )}
-                <ListItemText
-                  primary={child.label}
-                  sx={{
-                    '& .MuiListItemText-primary': {
-                      fontSize: '0.95rem',
-                      fontWeight: 400,
-                      color: 'text.primary'
-                    }
-                  }}
-                />
               </ListItem>
             ))}
           </List>
@@ -259,10 +273,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           py: 2, 
           overflowY: 'auto', 
         }}>
-          {/* عرض الصفحات الفردية أولاً */}
           {singleItems.map((item, index) => renderSingleMenuItem(item, index))}
-          
-          {/* ثم عرض المجموعات */}
           {groupItems.map((item, index) => renderGroupMenuItem(item, index))}
         </List>
           

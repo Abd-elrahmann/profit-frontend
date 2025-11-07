@@ -34,6 +34,7 @@ import { notifySuccess, notifyError } from "../../utilities/toastify";
 import JournalTable from "../../components/modals/JournalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
+import { Helmet } from "react-helmet-async";
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -205,6 +206,10 @@ const Journals = () => {
         flexDirection: "column",
       }}
     >
+      <Helmet>
+        <title>القيود المحاسبية</title>
+        <meta name="description" content="القيود المحاسبية" />
+      </Helmet>
       <Box
         sx={{
           display: "flex",

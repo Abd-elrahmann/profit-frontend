@@ -34,7 +34,7 @@ import AssignRole from "../../components/modals/AssignRole";
 import LogsTable from "../../components/modals/LogsTable";
 import { debounce } from 'lodash';
 import { notifyError, notifySuccess } from "../../utilities/toastify";
-
+import { Helmet } from "react-helmet-async";
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
   return response.data.users;
@@ -55,7 +55,7 @@ export default function Employees() {
   const [selectedUserForLogs, setSelectedUserForLogs] = useState(null);
 
   const { data: usersData, isLoading, refetch } = useQuery({ 
-    queryKey: ["users", page + 1, searchQuery], 
+    queryKey: ["employees", page + 1, searchQuery], 
     queryFn: () => getUsers(page + 1, searchQuery),
     retry:1,
   });
@@ -118,6 +118,10 @@ export default function Employees() {
 
   return (
     <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <Helmet>
+        <title>الموظفين</title>
+        <meta name="description" content="الموظفين" />
+      </Helmet>
       {/* Main Content */}
       <Box sx={{ p: 5 }}>
         {/* Search and Add Button */}
@@ -278,6 +282,7 @@ export default function Employees() {
         open={isAssignRoleModalOpen}
         onClose={() => setIsAssignRoleModalOpen(false)}
         user={userForRoleAssignment}
+        refetchUsers={refetch}
       />
       <LogsTable
         open={isLogsModalOpen}

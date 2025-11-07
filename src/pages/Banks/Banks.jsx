@@ -22,6 +22,7 @@ import { getBanks, deleteBank } from "./bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AddBank from "../../components/modals/AddBank";
+import { Helmet } from "react-helmet-async";
 import {
   StyledTableCell,
   StyledTableRow,
@@ -93,6 +94,10 @@ const Banks = () => {
 
   return (
     <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh", p: 4 }}>
+      <Helmet>
+        <title>الحسابات البنكية</title>
+        <meta name="description" content="الحسابات البنكية" />
+      </Helmet>
       {/* Header */}
       <Box
         sx={{

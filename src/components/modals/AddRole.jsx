@@ -271,7 +271,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                           key={permission.module}
                           sx={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr repeat(4, auto)',
+                            gridTemplateColumns: 'auto 1fr repeat(4, auto)',
                             gap: 1,
                             alignItems: 'center',
                             p: 1,
@@ -279,6 +279,9 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                             bgcolor: index % 2 === 0 ? 'transparent' : '#f9f9f9'
                           }}
                         >
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666',fontSize: '0.875rem' }}>
+                            {index + 1}-
+                          </Typography>
                           <Typography variant="body2" sx={{ fontWeight: '500' }}>
                             {moduleConfig?.label || permission.module}
                           </Typography>
