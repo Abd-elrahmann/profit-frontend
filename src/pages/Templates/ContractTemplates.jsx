@@ -29,6 +29,7 @@ import InstallmentPaymentReceipt from "../../components/Contracts/InstallmentPay
 import InstallmentSettlementReceipt from "../../components/Contracts/InstallmentSettlementReceipt";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
   const [templates, setTemplates] = useState({
@@ -42,7 +43,7 @@ export default function ContractTemplates() {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
+  const { permissions } = usePermissions();
   // Map tab values to API template names
   const templateNameMap = React.useMemo(() => ({
     "mudarabah": "MUDARABAH",
@@ -238,6 +239,7 @@ export default function ContractTemplates() {
         </Typography>
           {/* Action Buttons */}
           <Box sx={{ display: 'flex', gap: 2 }}>
+            {permissions.includes("contractTemplates_Update") && (
             <Button
               variant="outlined"
               color="secondary"
@@ -256,6 +258,8 @@ export default function ContractTemplates() {
             >
               إعادة تعيين افتراضي
             </Button>
+            )}
+            {permissions.includes("contractTemplates_Add") && (
             <Button
               variant="contained"
               color="primary"
@@ -275,6 +279,7 @@ export default function ContractTemplates() {
             >
               {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
             </Button>
+            )}
           </Box>
         </Box>
         <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>

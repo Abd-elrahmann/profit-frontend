@@ -36,11 +36,11 @@ const validationSchema = Yup.object().shape({
       canAdd: Yup.boolean(),
       canUpdate: Yup.boolean(),
       canDelete: Yup.boolean(),
+      canPost: Yup.boolean(),
     })
   )
 });
 
-// Get available modules dynamically from routes
 const availableModules = getAvailableModules();
 const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null }) => {
   const queryClient = useQueryClient();
@@ -53,7 +53,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
       canView: false,
       canAdd: false,
       canUpdate: false,
-      canDelete: false
+      canDelete: false,
+      canPost: false
     }))
   });
 
@@ -66,7 +67,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
           canView: existingPermission?.canView || false,
           canAdd: existingPermission?.canAdd || false,
           canUpdate: existingPermission?.canUpdate || false,
-          canDelete: existingPermission?.canDelete || false
+          canDelete: existingPermission?.canDelete || false,
+          canPost: existingPermission?.canPost || false
         };
       });
 
@@ -76,7 +78,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
         permissions: formattedPermissions
       });
     } else {
-      // Reset to initial values for add mode
       setInitialValues({
         name: '',
         description: '',
@@ -85,7 +86,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
           canView: false,
           canAdd: false,
           canUpdate: false,
-          canDelete: false
+          canDelete: false,
+          canPost: false
         }))
       });
     }
@@ -110,6 +112,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
         notifySuccess('تم تعديل الدور بنجاح');
         queryClient.invalidateQueries({ queryKey: ['roles'] });
         queryClient.invalidateQueries({ queryKey: ['employees'] });
+      
       }
       
       resetForm();
@@ -233,7 +236,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                   {/* Header with Select All checkboxes */}
                   <Box sx={{ 
                     display: 'grid', 
-                    gridTemplateColumns: '1fr repeat(4, auto)',
+                    gridTemplateColumns: '1fr repeat(5, auto)',
                     gap: 1,
                     alignItems: 'center',
                     mb: 2,
@@ -244,7 +247,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                       الصلاحيات
                     </Typography>
-                    {['عرض', 'إضافة', 'تعديل', 'حذف'].map((action, index) => (
+                    {['عرض', 'إضافة', 'تعديل', 'حذف', 'اعتماد'].map((action, index) => (
                       <Box key={action} sx={{ textAlign: 'center' }}>
                         <Typography variant="subtitle2" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
                           {action}
@@ -254,7 +257,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                           onChange={(e) => handleSelectAll(
                             values, 
                             setFieldValue, 
-                            ['canView', 'canAdd', 'canUpdate', 'canDelete'][index], 
+                            ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'][index], 
                             e.target.checked
                           )}
                         />
@@ -271,7 +274,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                           key={permission.module}
                           sx={{
                             display: 'grid',
-                            gridTemplateColumns: 'auto 1fr repeat(4, auto)',
+                            gridTemplateColumns: 'auto 1fr repeat(5, auto)',
                             gap: 1,
                             alignItems: 'center',
                             p: 1,
@@ -286,7 +289,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
                             {moduleConfig?.label || permission.module}
                           </Typography>
                           
-                          {['canView', 'canAdd', 'canUpdate', 'canDelete'].map((field) => (
+                          {['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'].map((field) => (
                             <Box key={field} sx={{ display: 'flex', justifyContent: 'center' }}>
                               <FormControlLabel
                                 control={

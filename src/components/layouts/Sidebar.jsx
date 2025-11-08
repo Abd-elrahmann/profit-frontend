@@ -15,11 +15,14 @@ import {
   MdExpandLess as ExpandLessIcon
 } from 'react-icons/md';
 import { getSidebarMenuItems } from '../../routes';
+import { usePermissions } from '../Contexts/PermissionsContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const [openGroup, setOpenGroup] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const { permissions, loading } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -34,8 +37,17 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const menuItems = getSidebarMenuItems();
 
-  const singleItems = menuItems.filter(item => !item.children);
-  const groupItems = menuItems.filter(item => item.children);
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!item.requiresPermissions) return true;
+    if (item.children) {
+      const filteredChildren = item.children.filter(child => permissions.includes(`${child.module}_View`));
+      return filteredChildren.length > 0;
+    }
+    return permissions.includes(`${item.module}_View`);
+  });
+
+  const singleItems = filteredMenuItems.filter(item => !item.children);
+  const groupItems = filteredMenuItems.filter(item => item.children);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -56,7 +68,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         to={item.path}
         onClick={onClose}
         sx={{
-          flexDirection: 'row-reverse', // النص يمين، الأيقونة شمال
+          flexDirection: 'row-reverse',
           justifyContent: 'space-between',
           borderRadius: 2,
           mb: 1,
@@ -117,13 +129,19 @@ const Sidebar = ({ isOpen, onClose }) => {
   const renderGroupMenuItem = (item, index) => {
     const isGroupOpen = openGroup === item.label;
     
+    const filteredChildren = item.children.filter(child => 
+      !child.requiresPermissions || permissions.includes(`${child.module}_View`)
+    );
+
+    if (filteredChildren.length === 0) return null;
+
     return (
       <Box key={item.label}>
         <ListItem
           button
           onClick={() => toggleGroup(item.label)}
           sx={{
-            flexDirection: 'row-reverse', // النص يمين، الأيقونة شمال
+            flexDirection: 'row-reverse',
             justifyContent: 'space-between',
             borderRadius: 2,
             mb: 1,
@@ -165,7 +183,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         
         <Collapse in={isGroupOpen && isOpen} timeout="auto">
           <List component="div" disablePadding sx={{ pl: 2 }}>
-            {item.children.map((child, childIndex) => (
+            {filteredChildren.map((child, childIndex) => (
               <ListItem
                 key={child.path}
                 component={NavLink}

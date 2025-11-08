@@ -20,6 +20,7 @@ import ReactQuillWrapper from "../../components/ReactQuillWrapper";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const DefaultRepaymentDue = () => `
   <p>عزيزي/عزيزتي {{اسم_العميل}}،</p>
   <p>نود تذكيركم بأن قسطكم البالغ {{مبلغ_القسط}} ريال سيكون مستحق الدفع في {{تاريخ_الاستحقاق}}.</p>
@@ -71,7 +72,7 @@ export default function MessagesTemplates() {
     "payment-approved": [],
     "payment-rejected": [],
   });
-
+  const { permissions } = usePermissions();
   const templateNameMap = React.useMemo(() => ({
     "repayment-due": "REPAYMENT_DUE",
     "repayment-late": "REPAYMENT_LATE", 
@@ -196,6 +197,7 @@ export default function MessagesTemplates() {
             المتغيرات المتاحة
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
+            {permissions.includes("messagesTemplates_Update") && (
             <Button
               variant="outlined"
               color="secondary"
@@ -210,10 +212,12 @@ export default function MessagesTemplates() {
                   backgroundColor: '#f5f5f5'
                 }
               }}
-              onClick={handleResetToDefault}
-            >
-              إعادة تعيين افتراضي
-            </Button>
+                onClick={handleResetToDefault}
+              >
+                إعادة تعيين افتراضي
+              </Button>
+            )}
+            {permissions.includes("messagesTemplates_Add") && (
             <Button
               variant="contained"
               color="primary"
@@ -233,6 +237,7 @@ export default function MessagesTemplates() {
             >
               {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
             </Button>
+            )}
           </Box>
         </Box>
         <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>

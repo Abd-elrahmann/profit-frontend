@@ -35,6 +35,7 @@ import JournalTable from "../../components/modals/JournalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -47,7 +48,7 @@ const Journals = () => {
     type: "",
   });
   const queryClient = useQueryClient();
-
+  const { permissions } = usePermissions(); 
   const { data: journalData, isLoading: isJournalLoading } = useQuery({
     queryKey: ["journal", selectedJournal],
     queryFn: () => getJournalById(selectedJournal),
@@ -261,7 +262,7 @@ const Journals = () => {
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
-                {journalData.status === "DRAFT" && !isEditMode && (
+                {journalData.status === "DRAFT" && !isEditMode && permissions.includes("journalEntries_Update") && (
                   <>
                     <Button
                       variant="contained"
@@ -274,6 +275,7 @@ const Journals = () => {
                     >
                       تعديل القيد
                     </Button>
+                    {permissions.includes("journalEntries_Post") && (
                     <Button
                       variant="contained"
                       startIcon={<CheckIcon sx={{marginLeft:'10px'}}/>}
@@ -285,6 +287,8 @@ const Journals = () => {
                     >
                       اعتماد القيد
                     </Button>
+                    )}
+                    {permissions.includes("journalEntries_Delete") && (
                     <Button
                       variant="outlined"
                       startIcon={<DeleteIcon sx={{marginLeft:'10px'}}/>}
@@ -300,10 +304,11 @@ const Journals = () => {
                     >
                       حذف القيد
                     </Button>
+                    )}
                   </>
                 )}
 
-                {journalData.status === "DRAFT" && isEditMode && (
+                {journalData.status === "DRAFT" && isEditMode && permissions.includes("journalEntries_Update") && (
                   <>
                     <Button
                       variant="contained"
@@ -316,6 +321,7 @@ const Journals = () => {
                     >
                       حفظ التعديلات
                     </Button>
+                    {permissions.includes("journalEntries_Update") && (
                     <Button
                       variant="outlined"
                       onClick={handleCancelEdit}
@@ -326,10 +332,11 @@ const Journals = () => {
                     >
                       إلغاء التعديل
                     </Button>
+                    )}
                   </>
                 )}
 
-                {journalData.status === "POSTED" && (
+                {journalData.status === "POSTED" && permissions.includes("journalEntries_Post") && (
                   <Button
                     variant="outlined"
                     startIcon={<CancelIcon sx={{marginLeft:'10px'}}/>}

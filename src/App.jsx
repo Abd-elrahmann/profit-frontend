@@ -9,7 +9,7 @@ import Layout from './components/layouts/Layout';
 import theme from './theme/theme';
 import Installments from './pages/Installments/Installments';
 import PaymentReceipt from './components/modals/PaymentReceipt';
-import { PermissionsProvider } from './components/Contexts/PermissionsContext';
+import { PermissionProvider } from './components/Contexts/PermissionsContext';
 // مكون لمنع التنقل من صفحة إيصال الدفع
 const RestrictedNavigationRoute = ({ children }) => {
   useEffect(() => {
@@ -96,7 +96,7 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-  return !token ? children : <Navigate to="/login" />;
+  return !token ? children : <Navigate to="/dashboard" />;
 };
 
 
@@ -106,9 +106,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <PermissionsProvider>
-          <AppLayout />
-        </PermissionsProvider>
+          <PermissionProvider>
+            <AppLayout />
+          </PermissionProvider>
         <Toaster
         position="top-center"
         gutter={8}

@@ -22,6 +22,7 @@ import * as Yup from "yup";
 import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import {usePermissions} from "../../components/Contexts/PermissionsContext";
 const validationSchema = Yup.object().shape({
   email: Yup.string()
     .trim()
@@ -34,7 +35,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const {fetchPermissions} = usePermissions();
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (values) => {
@@ -45,19 +46,31 @@ const Login = () => {
         email: values.email.trim(),
       };
 
+      // 1️⃣ تسجيل الدخول
       const response = await Api.post("/api/auth/login", cleanedValues);
-      const { accessToken, user, role } = response.data;
+      const { accessToken, user } = response.data;
 
-      // تخزين البيانات في localStorage
+      // 2️⃣ تخزين البيانات الأساسية فقط
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
-      if (role?.permissions) {
-        localStorage.setItem("permissions", JSON.stringify(role.permissions));
+
+      // 3️⃣ استدعاء دالة جلب الصلاحيات من الكونتيكست
+      try {
+        if (fetchPermissions && typeof fetchPermissions === 'function') {
+          await fetchPermissions();
+        } else {
+          console.warn('fetchPermissions function not available, reloading page');
+          window.location.reload();
+        }
+      } catch (permissionsError) {
+        console.error('Error fetching permissions:', permissionsError);
+        // لا نوقف عملية تسجيل الدخول إذا فشل جلب الصلاحيات
+        notifyError('تم تسجيل الدخول ولكن حدث خطأ في جلب الصلاحيات');
       }
 
       notifySuccess("تم تسجيل الدخول بنجاح");
 
-      // توجيه المستخدم للوحة التحكم
+      // 4️⃣ التوجيه للوحة التحكم
       navigate("/dashboard", { replace: true });
     } catch (error) {
       notifyError("خطأ في تسجيل الدخول");
@@ -66,7 +79,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <Box
       sx={{

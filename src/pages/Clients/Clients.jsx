@@ -36,6 +36,7 @@ import EditDocuments from "../../components/modals/EditDocuments";
 import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const getClients = async (page = 1, searchQuery = "", status = "") => {
   let queryParams = new URLSearchParams();
 
@@ -79,7 +80,7 @@ export default function Clients() {
   const [clientFormData, setClientFormData] = useState({});
   const [kafeelFormData, setKafeelFormData] = useState({});
   const queryClient = useQueryClient();
-
+  const { permissions } = usePermissions();
   const {
     data: clientsData,
     isLoading: isClientsLoading,
@@ -332,7 +333,8 @@ export default function Clients() {
         <Typography variant="h5" fontWeight="bold">
           العملاء
         </Typography>
-        <Button
+        {permissions.includes("clients_Add") && (
+          <Button
           variant="contained"
           startIcon={<Add sx={{ marginLeft: "10px" }} />}
           onClick={handleAddClient}
@@ -347,6 +349,7 @@ export default function Clients() {
         >
           إضافة عميل جديد
         </Button>
+        )}
       </Box>
 
       <Box sx={{ display: "flex", height: "calc(100vh - 80px)" }}>
@@ -492,6 +495,7 @@ export default function Clients() {
                       color={getStatusColor(client.status)}
                       variant="outlined"
                     />
+                    {permissions.includes("clients_Delete") && (
                     <IconButton
                       size="small"
                       color="error"
@@ -502,6 +506,7 @@ export default function Clients() {
                     >
                       <Delete fontSize="small" />
                     </IconButton>
+                    )}
                   </Box>
                 </Box>
               );
@@ -595,6 +600,7 @@ export default function Clients() {
                 <Box sx={{ display: "flex", gap: 2 }}>
                   {tab === 3 ? (
                     <>
+                      {permissions.includes("clients_Update") && (
                       <Button
                         variant="outlined"
                         startIcon={<Edit sx={{ marginLeft: "10px" }} />}
@@ -602,6 +608,8 @@ export default function Clients() {
                       >
                         تعديل
                       </Button>
+                      )}
+                      {permissions.includes("clients_Save") && (
                       <Button
                         variant="contained"
                         startIcon={<Save sx={{ marginLeft: "10px" }} />}
@@ -613,9 +621,11 @@ export default function Clients() {
                       >
                         حفظ التغييرات
                       </Button>
+                      )}
                     </>
                   ) : (
                     <>
+                      {permissions.includes("clients_Update") && (
                       <Button
                         variant="outlined"
                         startIcon={<Edit sx={{ marginLeft: "10px" }} />}
@@ -623,6 +633,7 @@ export default function Clients() {
                       >
                         {editMode ? "إلغاء التعديل" : "تعديل"}
                       </Button>
+                      )}
                       <Button
                         variant="contained"
                         startIcon={<Save sx={{ marginLeft: "10px" }} />}

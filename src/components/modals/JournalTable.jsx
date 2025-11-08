@@ -19,11 +19,11 @@ import { useQuery } from "@tanstack/react-query";
 import { getJournals } from "../../pages/Journals/journalsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
-
+import { usePermissions } from "../Contexts/PermissionsContext";
 const JournalTable = ({ onViewDetails }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const { permissions } = usePermissions(); 
   const { data: journalsData, isLoading } = useQuery({
     queryKey: ["journals", page, searchQuery],
     queryFn: () => getJournals(page, searchQuery),
@@ -207,6 +207,7 @@ const JournalTable = ({ onViewDetails }) => {
                     </StyledTableCell>
                     <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                       <Stack direction="row" spacing={1} justifyContent="center">
+                        {permissions.includes("journalEntries_Update") && (
                         <IconButton
                           title="عرض التفاصيل"
                           size="small"
@@ -215,6 +216,7 @@ const JournalTable = ({ onViewDetails }) => {
                         >
                           <Visibility fontSize="small" />
                         </IconButton>
+                        )}
                       </Stack>
                     </StyledTableCell>
                   </StyledTableRow>

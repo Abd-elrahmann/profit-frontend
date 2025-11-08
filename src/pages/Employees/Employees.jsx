@@ -35,6 +35,7 @@ import LogsTable from "../../components/modals/LogsTable";
 import { debounce } from 'lodash';
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
   return response.data.users;
@@ -53,7 +54,7 @@ export default function Employees() {
   const [userForRoleAssignment, setUserForRoleAssignment] = useState(null);
   const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
   const [selectedUserForLogs, setSelectedUserForLogs] = useState(null);
-
+  const { permissions } = usePermissions();
   const { data: usersData, isLoading, refetch } = useQuery({ 
     queryKey: ["employees", page + 1, searchQuery], 
     queryFn: () => getUsers(page + 1, searchQuery),
@@ -153,7 +154,8 @@ export default function Employees() {
               ),
             }}
           />
-          <Button
+          {permissions.includes("users_Add") && (
+            <Button
             variant="contained"
             startIcon={<Add />}
             onClick={handleAdd}
@@ -163,8 +165,9 @@ export default function Employees() {
               fontWeight: "bold",
             }}
           >
-            إضافة مدير جديد
-          </Button>
+              إضافة مدير جديد
+            </Button>
+          )}
         </Box>
 
         {/* Table */}
@@ -226,12 +229,17 @@ export default function Employees() {
                     {dayjs(user.createdAt).format("DD/MM/YYYY")}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                    {permissions.includes("users_Update") && (
                     <IconButton color="primary" onClick={() => handleEdit(user)} title="تعديل">
                       <Edit />
                     </IconButton>
+                    )}
+                    {permissions.includes("users_Delete") && (
                     <IconButton color="error" onClick={() => openDeleteModal(user.id)} title="حذف">
                       <Delete />
                     </IconButton>
+                    )}
+                    {permissions.includes("users_Add") && (
                     <IconButton 
                       color="info" 
                       onClick={() => handleAssignRole(user)}
@@ -239,6 +247,7 @@ export default function Employees() {
                     >
                       <AdminPanelSettings />
                     </IconButton>
+                    )}
                     <IconButton 
                       color="black" 
                       onClick={() => handleViewLogs(user)}

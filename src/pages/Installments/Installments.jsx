@@ -57,6 +57,7 @@ import InstallmentSettlementPreview from "../../components/InstallmentSettlement
 import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
 import Api from "../../config/Api";
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Installments = () => {
     const { loanId } = useParams();
     const queryClient = useQueryClient();
@@ -83,7 +84,7 @@ const Installments = () => {
     const [settlementHtml, setSettlementHtml] = useState('');
     const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
     const [settlementTemplate, setSettlementTemplate] = useState('');
-
+    const { permissions } = usePermissions(); 
     const settlementReceiptRef = useRef(null);
 
     const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
@@ -601,6 +602,7 @@ const Installments = () => {
           {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
           {allInstallmentsPaid() && !isSettlementCompleted() && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              {permissions.includes("repayments_Post") && (
               <Button
                 variant="contained"
                 onClick={handleSettlement}
@@ -615,6 +617,7 @@ const Installments = () => {
               >
                 تسوية القسط النهائي
               </Button>
+              )}
             </Box>
           )}
 
@@ -880,28 +883,28 @@ const Installments = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && (
+        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && permissions.includes("repayments_Post") && (
           <MenuItem onClick={() => handleApprove(selectedActionInstallment)} sx={{ color: 'green' }}>
             <ApproveIcon sx={{ mr: 1, color: 'green',marginLeft: '10px' }} />
             موافقة
           </MenuItem>
         )}
       
-        {!shouldDisableActions() && (
+        {!shouldDisableActions() && permissions.includes("repayments_Post") && (
           <MenuItem onClick={() => handleReject(selectedActionInstallment)} sx={{ color: 'red' }}>
             <RejectIcon sx={{ mr: 1, color: 'red',marginLeft: '10px' }} />
             رفض
           </MenuItem>
         )}
 
-        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && (
+        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && permissions.includes("repayments_Add") && (
           <MenuItem onClick={() => setPartialPaymentModalOpen(true)} sx={{ color: 'blue' }}>
             <PartialPaymentIcon sx={{ mr: 1, color: 'blue',marginLeft: '10px' }} />
             إضافة دفع جزئي
           </MenuItem>
         )}
 
-        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && (
+        {selectedActionInstallment?.status !== "PAID" && !shouldDisableActions() && permissions.includes("repayments_Add") && (
           <MenuItem onClick={() => setPostponeModalOpen(true)} sx={{ color: 'orange' }}>
             <PostponeIcon sx={{ mr: 1, color: 'orange',marginLeft: '10px' }} />
             تأجيل

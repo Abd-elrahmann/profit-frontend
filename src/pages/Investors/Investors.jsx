@@ -52,6 +52,7 @@ import { saveAs } from 'file-saver';
 import dayjs from "dayjs";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
   
@@ -118,7 +119,7 @@ export default function Investors() {
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
-  
+  const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
   const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
@@ -440,6 +441,7 @@ export default function Investors() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
+          {permissions.includes("partners_Add") && (
           <Button
             variant="contained"
             startIcon={<Add sx={{marginLeft: '10px'}} />}
@@ -455,6 +457,7 @@ export default function Investors() {
           >
             إضافة مستثمر جديد
           </Button>
+          )}
         </Box>
       </Box>
 
@@ -575,6 +578,7 @@ export default function Investors() {
                     رأس المال: {investor.capitalAmount?.toLocaleString()} ريال
                   </Typography>
                   <Box display="flex" justifyContent="flex-end" mt={1}>
+                    {permissions.includes("partners_Delete") && (
                     <IconButton 
                       size="small" 
                       color="error"
@@ -585,6 +589,7 @@ export default function Investors() {
                     >
                       <Delete fontSize="small" />
                     </IconButton>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -640,6 +645,7 @@ export default function Investors() {
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", gap: 2 }}>
+                {permissions.includes("partners_Update") && (
                 <Button 
                   variant="outlined" 
                   startIcon={<Edit sx={{marginLeft: '10px'}} />}
@@ -647,6 +653,8 @@ export default function Investors() {
                 >
                   {editMode ? 'إلغاء التعديل' : 'تعديل'}
                 </Button>
+                )}
+                {permissions.includes("partners_Add") && (
                 <Button
                   variant="contained"
                   startIcon={<Save sx={{marginLeft: '10px'}} />}
@@ -656,6 +664,7 @@ export default function Investors() {
                 >
                   حفظ التغييرات
                 </Button>
+                )}
               </Box>
             </Box>
 
@@ -932,6 +941,7 @@ export default function Investors() {
               <Box>
                 {/* Add Transaction Button */}
                 <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                  {permissions.includes("partners_Add") && (
                   <Button
                     variant="contained"
                     startIcon={<Add sx={{ marginLeft: '10px' }} />}
@@ -944,6 +954,7 @@ export default function Investors() {
                   >
                     إضافة عملية مالية
                   </Button>
+                  )}
                 </Box>
 
                 {/* Transactions Table */}
@@ -993,6 +1004,7 @@ export default function Investors() {
                                 {dayjs(transaction.date).format("DD/MM/YYYY HH:mm a")}
                               </StyledTableCell>
                               <StyledTableCell align="center">
+                                {permissions.includes("partners_Delete") && (
                                 <IconButton
                                   color="error"
                                   size="small"
@@ -1000,6 +1012,7 @@ export default function Investors() {
                                 >
                                   <Delete fontSize="small" />
                                 </IconButton>
+                                )}
                               </StyledTableCell>
                             </StyledTableRow>
                           ))
@@ -1158,6 +1171,7 @@ export default function Investors() {
           >
             إلغاء
           </Button>
+          {permissions.includes("partners_Add") && (
           <Button 
             onClick={handleSaveTransaction}
             variant="contained"
@@ -1168,6 +1182,7 @@ export default function Investors() {
           >
             حفظ
           </Button>
+          )}
         </DialogActions>
       </Dialog>
 

@@ -28,6 +28,7 @@ import {
   StyledTableRow,
 } from "../../components/layouts/tableLayout";
 import { useTranslation } from "react-i18next";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Banks = () => {
   const { i18n } = useTranslation();
   const [page, setPage] = useState(1);
@@ -37,7 +38,7 @@ const Banks = () => {
   const [isAddBankOpen, setIsAddBankOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
-
+  const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
   const { data: banksData, isLoading } = useQuery({
@@ -110,7 +111,8 @@ const Banks = () => {
         <Typography variant="h5" fontWeight="bold" color="#333">
           الحسابات البنكية
         </Typography>
-        <Button
+        {permissions.includes("banks_Add") && (
+          <Button
           variant="contained"
           startIcon={<Add />}
           onClick={handleAddBank}
@@ -122,9 +124,10 @@ const Banks = () => {
             py: 1,
             fontWeight: "bold",
           }}
-        >
-          إضافة حساب بنكي
-        </Button>
+          >
+            إضافة حساب بنكي
+          </Button>
+        )}
       </Box>
 
       {/* Search Bar */}
@@ -266,6 +269,7 @@ const Banks = () => {
                         justifyContent="center"
                         alignItems="center"
                       >
+                        {permissions.includes("banks_Update") && (
                         <IconButton
                           size="small"
                           color="primary"
@@ -273,6 +277,8 @@ const Banks = () => {
                         >
                           <Edit fontSize="small" />
                         </IconButton>
+                        )}
+                        {permissions.includes("banks_Delete") && (
                         <IconButton
                           size="small"
                           color="error"
@@ -283,6 +289,7 @@ const Banks = () => {
                         >
                           <Delete fontSize="small" />
                         </IconButton>
+                        )}
                       </Stack>
                     </StyledTableCell>
                   </StyledTableRow>

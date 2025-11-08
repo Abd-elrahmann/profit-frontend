@@ -37,6 +37,7 @@ import LoanContractsPreview from "../../components/LoanContractsPreview";
 import Api from "../../config/Api";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Loans = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
@@ -77,7 +78,7 @@ const Loans = () => {
     promissoryNote: "",
   });
   const [isCreatingLoan, setIsCreatingLoan] = useState(false);
-
+  const { permissions } = usePermissions(); 
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
 
@@ -781,6 +782,7 @@ const Loans = () => {
                     color: activeTab === 0 ? "#0d40a5" : "text.secondary",
                   }}
                 />
+                {permissions.includes("loans_Add") && (
                 <Tab
                   label={
                     isViewMode ? "عرض تفاصيل السلفة" : 
@@ -794,6 +796,7 @@ const Loans = () => {
                     color: activeTab === 1 ? "#0d40a5" : "text.secondary",
                   }}
                 />
+                )}
               </Tabs>
             </Box>
 
@@ -808,6 +811,7 @@ const Loans = () => {
               </Box>
             ) : (
               <Box>
+                {permissions.includes("loans_Add") && (
                 <Paper
                   sx={{
                     p: 4,
@@ -894,7 +898,8 @@ const Loans = () => {
                     </Grid>
                   </Grid>
                 </Paper>
-
+                )}
+                {permissions.includes("loans_Add") && (
                 <Paper
                   sx={{
                     p: 4,
@@ -1147,6 +1152,7 @@ const Loans = () => {
                     </Grid>
                   </Grid>
                 </Paper>
+                )}
               </Box>
             )}
           </Box>

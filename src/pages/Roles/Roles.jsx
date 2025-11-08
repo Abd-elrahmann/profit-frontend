@@ -143,7 +143,8 @@ export default function Roles() {
               ),
             }}
           />
-           {permissions.includes("Add") && (          <Button
+           {permissions.includes("roles_Add") && (          
+            <Button
             variant="contained"
             startIcon={<Add />}
             onClick={handleAdd}
@@ -197,12 +198,12 @@ export default function Roles() {
                     {dayjs(role.createdAt).format("DD/MM/YYYY")}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                    {permissions.includes("Update") && (
+                    {permissions.includes("roles_Update") && (
                     <IconButton color="primary" onClick={() => handleEdit(role)}>
                       <Edit />
                     </IconButton>
                     )}
-                    {permissions.includes("Delete") && (
+                    {permissions.includes("roles_Delete") && (
                     <IconButton color="error" onClick={() => openDeleteModal(role.id)}>
                       <Delete />
                     </IconButton>

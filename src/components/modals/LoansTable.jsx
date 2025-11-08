@@ -36,7 +36,7 @@ import { notifySuccess, notifyError } from "../../utilities/toastify";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
-
+import { usePermissions } from "../Contexts/PermissionsContext";
 const LoansTable = ({ onViewDetails, onViewInstallments }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,7 +45,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
-
+  const { permissions } = usePermissions(); 
   const handleMenuOpen = (event, loan) => {
     setAnchorEl(event.currentTarget);
     setSelectedLoanForMenu(loan);
@@ -389,6 +389,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
           }}
           sx={{ color: "#2E7D32" }} // Green
         >
+
           <ListItemIcon>
             <Schedule fontSize="small" sx={{ color: "#2E7D32" }} />
           </ListItemIcon>
@@ -396,7 +397,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
         </MenuItem>
 
         {/* Activate Loan (PENDING) */}
-        {selectedLoanForMenu?.status === "PENDING" && (
+        {selectedLoanForMenu?.status === "PENDING" && permissions.includes("loans_Post") && (
           <MenuItem
             onClick={() => {
               handleActivateLoan(selectedLoanForMenu?.id);
@@ -404,6 +405,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
             }}
             sx={{ color: "#FB8C00" }} // Orange
           >
+            
             <ListItemIcon>
               <PlayArrow fontSize="small" sx={{ color: "#FB8C00" }} />
             </ListItemIcon>
@@ -412,7 +414,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
         )}
 
         {/* Deactivate Loan (ACTIVE) */}
-        {selectedLoanForMenu?.status === "ACTIVE" && (
+        {selectedLoanForMenu?.status === "ACTIVE" && permissions.includes("loans_Post") && (
           <MenuItem
             onClick={() => {
               handleDeactivateLoan(selectedLoanForMenu?.id);
@@ -428,7 +430,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
         )}
 
         {/* Delete Loan */}
-        {selectedLoanForMenu?.status !== "ACTIVE" && (
+        {selectedLoanForMenu?.status !== "ACTIVE" && permissions.includes("loans_Delete") && (
           <MenuItem
             onClick={() => {
               setLoanToDelete(selectedLoanForMenu);
