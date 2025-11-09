@@ -177,7 +177,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             transition: 'transform 0.03s ease',
             transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
           }}>
-            {isGroupOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            {isGroupOpen ? <ExpandLessIcon size={20} /> : <ExpandMoreIcon size={20} />}
           </ListItemIcon>
         </ListItem>
         

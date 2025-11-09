@@ -13,6 +13,11 @@ import {
   InputAdornment,
   CircularProgress,
   Pagination,
+  Table,
+  TableBody,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import {
   Add,
@@ -26,6 +31,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Share,
+  PictureAsPdf,
+  TableChart,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +44,9 @@ import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
+import { exportStatementToPDF, exportStatementToExcel } from "../../utilities/statementExporter";
+
 const getClients = async (page = 1, searchQuery = "", status = "") => {
   let queryParams = new URLSearchParams();
 
@@ -66,6 +76,11 @@ const getClientDetails = async (clientId) => {
   return response.data;
 };
 
+const getClientStatement = async (clientId) => {
+  const response = await Api.get(`/api/clients/${clientId}/statement`);
+  return response.data;
+};
+
 export default function Clients() {
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
@@ -81,6 +96,7 @@ export default function Clients() {
   const [kafeelFormData, setKafeelFormData] = useState({});
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+
   const {
     data: clientsData,
     isLoading: isClientsLoading,
@@ -96,6 +112,14 @@ export default function Clients() {
     queryFn: () =>
       selectedClient ? getClientDetails(selectedClient.id) : null,
     enabled: !!selectedClient,
+    retry: 1,
+  });
+
+  const { data: clientStatement } = useQuery({
+    queryKey: ["client-statement", selectedClient?.id],
+    queryFn: () =>
+      selectedClient ? getClientStatement(selectedClient.id) : null,
+    enabled: !!selectedClient && tab === 4,
     retry: 1,
   });
 
@@ -137,6 +161,7 @@ export default function Clients() {
           : value,
     }));
   };
+
   const handleSaveChanges = async () => {
     try {
       if (tab === 0) {
@@ -261,6 +286,30 @@ export default function Clients() {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!clientStatement) return;
+    
+    try {
+      await exportStatementToPDF(clientStatement, clientDetails.client.name);
+      notifySuccess("تم تصدير كشف الحساب بصيغة PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error("PDF Export Error:", error);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!clientStatement) return;
+    
+    try {
+      await exportStatementToExcel(clientStatement, clientDetails.client.name);
+      notifySuccess("تم تصدير كشف الحساب بصيغة Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error("Excel Export Error:", error);
+    }
+  };
+
   useEffect(() => {
     if (clientsData?.clients?.length > 0 && !selectedClient) {
       setSelectedClient(clientsData.clients[0].client);
@@ -312,6 +361,26 @@ export default function Clients() {
       default:
         return "default";
     }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
+
+
+  const getTransactionType = (type) => {
+    const types = {
+      'LOAN_DISBURSEMENT': 'صرف سلفة',
+      'REPAYMENT': 'سداد',
+      'ADJUSTMENT': 'تعديل',
+      'INTEREST': 'فائدة'
+    };
+    return types[type] || type;
   };
 
   return (
@@ -596,7 +665,7 @@ export default function Clients() {
                   رقم الهوية: {clientDetails.client.nationalId}
                 </Typography>
               </Box>
-              {tab !== 1 && (
+              {tab !== 1 && tab !== 4 && (
                 <Box sx={{ display: "flex", gap: 2 }}>
                   {tab === 3 ? (
                     <>
@@ -663,6 +732,7 @@ export default function Clients() {
               <Tab label="المعلومات المالية" />
               <Tab label="الكفيل" />
               <Tab label="المرفقات" />
+              <Tab label="كشف حساب" />
             </Tabs>
 
             {/* الملف الشخصي */}
@@ -1464,6 +1534,150 @@ export default function Clients() {
                     )}
                   </Box>
                 )}
+              </Box>
+            )}
+
+            {tab === 4 && (
+              <Box>
+                {/* Export Buttons */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
+                    onClick={handleExportPDF}
+                    disabled={!clientStatement}
+                    sx={{
+                      borderColor: '#d32f2f',
+                      color: '#d32f2f',
+                      '&:hover': {
+                        borderColor: '#b71c1c',
+                        backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                      }
+                    }}
+                  >
+                    تصدير PDF
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<TableChart sx={{marginLeft: '10px'}} />}
+                    onClick={handleExportExcel}
+                    disabled={!clientStatement}
+                    sx={{
+                      borderColor: '#2e7d32',
+                      color: '#2e7d32',
+                      '&:hover': {
+                        borderColor: '#1b5e20',
+                        backgroundColor: 'rgba(46, 125, 50, 0.04)'
+                      }
+                    }}
+                  >
+                    تصدير Excel
+                  </Button>
+                </Box>
+
+                {/* Statement Summary */}
+                {clientStatement && (
+                  <Paper sx={{ p: 3, mb: 3, bgcolor: '#f8f9fa' }}>
+                    <Grid container spacing={6} justifyContent="center" alignItems="center">
+                      <Grid item xs={12} md={3} alignItems="center">
+                        <Typography variant="body2" color="text.secondary">
+                          الرصيد الافتتاحي
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color="primary">
+                          {clientStatement.openingBalance}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3} alignItems="center">
+                        <Typography variant="body2" color="text.secondary">
+                          الرصيد الختامي
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color="primary">
+                          {clientStatement.closingBalance}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="body2" color="text.secondary">
+                          إجمالي المدين
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color="error">
+                          {clientStatement.client.debit}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="body2" color="text.secondary">
+                          إجمالي الدائن
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color="success.main">
+                          {clientStatement.client.credit}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                )}
+
+                {/* Transactions Table */}
+                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                  <TableContainer sx={{ maxHeight: 600 }}>
+                    <Table stickyHeader aria-label="كشف حساب العميل">
+                      <TableHead>
+                        <TableRow>
+                          <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: 120 }}>
+                            التاريخ
+                          </StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: 120 }}>
+                            نوع المعاملة
+                          </StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: 200 }}>
+                            الوصف
+                          </StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: 120 }}>
+                            مدين
+                          </StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: 120 }}>
+                            دائن
+                          </StyledTableCell>
+                          <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: 120 }}>
+                            الرصيد
+                          </StyledTableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {clientStatement && clientStatement.transactions && clientStatement.transactions.length > 0 ? (
+                          clientStatement.transactions.map((transaction, index) => (
+                            <StyledTableRow key={index} hover>
+                              <StyledTableCell align="center">
+                                {formatDate(transaction.date)}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {getTransactionType(transaction.type)}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {transaction.description}
+                              </StyledTableCell>
+                              <StyledTableCell align="center" sx={{ color: transaction.debit > 0 ? 'error.main' : 'text.primary' }}>
+                                {transaction.debit > 0 ? transaction.debit : 0}
+                              </StyledTableCell>
+                              <StyledTableCell align="center" sx={{ color: transaction.credit > 0 ? 'success.main' : 'text.primary' }}>
+                                {transaction.credit > 0 ? transaction.credit : 0}
+                              </StyledTableCell>
+                              <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                {transaction.balance}
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))
+                        ) : (
+                          <StyledTableRow>
+                            <StyledTableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                              <Typography variant="body1" color="text.secondary">
+                                لا توجد معاملات
+                              </Typography>
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
               </Box>
             )}
           </Box>

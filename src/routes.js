@@ -27,7 +27,8 @@ const Installments = React.lazy(() => import('./pages/Installments/Installments'
 const MessagesTemplates = React.lazy(() => import('./pages/Templates/MessagesTemplates'));
 const Journals = React.lazy(() => import('./pages/Journals/Journals'));
 const Logs = React.lazy(() => import('./pages/Logs/Logs'));
-
+const Treasury = React.lazy(() => import('./pages/treasury/treasury'));
+const GeneralLedger = React.lazy(() => import('./pages/generalLedger/GeneralLedger'));
 const routes = [
   {
     path: '/login',
@@ -175,6 +176,28 @@ const routes = [
     requiresPermissions: true,
     icon: JournalIcon,
     parent: 'إدارة المالية'
+  },
+  {
+    path: '/general-ledger',
+    element: GeneralLedger,
+    protected: true,
+    showInSidebar: true,
+    label: 'دفتر الأستاذ العام',
+    module: 'general-ledger',
+    requiresPermissions: true,
+    icon: JournalIcon,
+    parent: 'إدارة المالية'
+  },
+  {
+    path: '/treasury',
+    element: Treasury,
+    protected: true,
+    showInSidebar: true,
+    label: 'الصندوق',
+    module: 'treasury',
+    requiresPermissions: true,
+    icon: AccountBalance,
+    parent: 'إدارة الصندوق'
   }
 ];
 

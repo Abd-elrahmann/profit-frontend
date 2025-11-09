@@ -13,7 +13,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     minify: 'esbuild',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -9,20 +9,22 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   MdAccountBalance as AccountBalance,
   MdVisibility as VisibilityIcon,
   MdVisibilityOff as VisibilityOffIcon,
 } from "react-icons/md";
-
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import {usePermissions} from "../../components/Contexts/PermissionsContext";
+
 const validationSchema = Yup.object().shape({
   email: Yup.string()
     .trim()
@@ -35,8 +37,19 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [savedEmail, setSavedEmail] = useState("");
   const {fetchPermissions} = usePermissions();
   const handleTogglePassword = () => setShowPassword(!showPassword);
+
+  // Load saved email on mount
+  useEffect(() => {
+    const savedEmailFromStorage = localStorage.getItem('rememberedEmail');
+    if (savedEmailFromStorage) {
+      setSavedEmail(savedEmailFromStorage);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (values) => {
     setIsLoading(true);
@@ -53,6 +66,13 @@ const Login = () => {
       // 2️⃣ تخزين البيانات الأساسية فقط
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
+
+      // Handle Remember Me
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", cleanedValues.email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
 
       // 3️⃣ استدعاء دالة جلب الصلاحيات من الكونتيكست
       try {
@@ -79,6 +99,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
   return (
     <Box
       sx={{
@@ -126,11 +147,12 @@ const Login = () => {
 
           <Formik
             initialValues={{
-              email: "",
+              email: savedEmail,
               password: "",
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
+            enableReinitialize
           >
             {({
               values,
@@ -187,6 +209,56 @@ const Login = () => {
                       ),
                     }}
                   />
+
+                  {/* Remember Me and Forgot Password Row */}
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      direction: 'rtl'
+                    }}
+                  >
+                    {/* Remember Me Checkbox */}
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          disabled={isLoading}
+                          sx={{
+                            '&.Mui-checked': {
+                              color: 'primary.main',
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Typography sx={{ fontSize: '0.95rem', color: 'text.secondary' }}>
+                          تذكرني
+                        </Typography>
+                      }
+                      sx={{
+                        mr: 0,
+                        '& .MuiFormControlLabel-label': {
+                          mr: 1,
+                        },
+                      }}
+                    />
+
+                    {/* Forgot Password Link */}
+                    <Link 
+                      to="/forgot-password" 
+                      style={{ 
+                        textDecoration: 'none',
+                        fontSize: '0.95rem',
+                        color: '#1976d2',
+                        fontWeight: 500
+                      }}
+                    >
+                      نسيت كلمة المرور؟
+                    </Link>
+                  </Box>
 
                   <Button
                     type="submit"

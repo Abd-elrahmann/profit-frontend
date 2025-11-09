@@ -9,8 +9,9 @@ import Layout from './components/layouts/Layout';
 import theme from './theme/theme';
 import Installments from './pages/Installments/Installments';
 import PaymentReceipt from './components/modals/PaymentReceipt';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import { PermissionProvider } from './components/Contexts/PermissionsContext';
-// مكون لمنع التنقل من صفحة إيصال الدفع
 const RestrictedNavigationRoute = ({ children }) => {
   useEffect(() => {
     const handleBeforeUnload = (event) => {
@@ -56,6 +57,24 @@ const AppLayout = () => {
               }
             />
           ))}
+        
+        {/* Auth routes - Forgot Password & Reset Password */}
+        <Route 
+          path="/forgot-password" 
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/reset-password" 
+          element={
+            <PublicRoute>
+              <ResetPassword />
+            </PublicRoute>
+          } 
+        />
         
         {/* Protected routes */}
         {routes

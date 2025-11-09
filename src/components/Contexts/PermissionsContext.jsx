@@ -9,6 +9,14 @@ export const PermissionProvider = ({ children }) => {
 
   const fetchPermissions = async () => {
     try {
+      // Check if user is logged in before fetching
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No token found, skipping permissions fetch');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
 
       const modulesRes = await Api.get("/api/auth/modules");
@@ -49,7 +57,13 @@ export const PermissionProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchPermissions();
+    // Only fetch permissions if user is logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchPermissions();
+    } else {
+      setLoading(false); // Stop loading if no token
+    }
   }, []);
 
   return (

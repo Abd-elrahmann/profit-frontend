@@ -1,2 +1,0 @@
-import{A as m,h as g}from"./index-2TEkS4Tk.js";const w=async(a=1,i={})=>{try{const{search:r,screen:n,action:s,from:t,to:o,userName:p,...f}=i,e=new URLSearchParams;e.append("page",a),r&&e.append("search",r),n&&e.append("screen",n),s&&e.append("action",s),t&&e.append("from",t),o&&e.append("to",o),p&&e.append("userName",p),Object.entries(f).forEach(([h,c])=>{c&&e.append(h,c)});const d=`/api/logs/${a}?${e.toString()}`;return(await m.get(d)).data}catch(r){throw g(r),r}};export{w as g};
-//# sourceMappingURL=LogsApi-DfUh1fh-.js.map

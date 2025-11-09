@@ -1,0 +1,2 @@
+import{A as m,o as g}from"./index-Byloyp0V.js";const w=async(a=1,i={})=>{try{const{search:r,screen:n,action:o,from:s,to:t,userName:p,...f}=i,e=new URLSearchParams;e.append("page",a),r&&e.append("search",r),n&&e.append("screen",n),o&&e.append("action",o),s&&e.append("from",s),t&&e.append("to",t),p&&e.append("userName",p),Object.entries(f).forEach(([h,c])=>{c&&e.append(h,c)});const d=`/api/logs/${a}?${e.toString()}`;return(await m.get(d)).data}catch(r){throw g(r),r}};export{w as g};
+//# sourceMappingURL=logsApi-MFzB1Yn4.js.map

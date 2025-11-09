@@ -1,2 +1,0 @@
-import{A as e,h as n}from"./index-2TEkS4Tk.js";const c=async(r=1,a="")=>{try{const t=a?`/api/bank/all/${r}?search=${encodeURIComponent(a)}`:`/api/bank/all/${r}`;return(await e.get(t)).data}catch(t){throw n(t),t}},p=async r=>{try{return(await e.post("/api/bank",r)).data}catch(a){throw n(a),a}},i=async(r,a)=>{try{return(await e.patch(`/api/bank/${r}`,a)).data}catch(t){throw n(t),t}},h=async r=>{try{return(await e.delete(`/api/bank/${r}`)).data}catch(a){throw n(a),a}};export{p as c,h as d,c as g,i as u};
-//# sourceMappingURL=bankApis-C8Ta4s8G.js.map

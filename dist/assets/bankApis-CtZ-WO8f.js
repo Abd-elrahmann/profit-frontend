@@ -1,0 +1,2 @@
+import{A as e,o as n}from"./index-Byloyp0V.js";const c=async(r=1,a="")=>{try{const t=a?`/api/bank/all/${r}?search=${encodeURIComponent(a)}`:`/api/bank/all/${r}`;return(await e.get(t)).data}catch(t){throw n(t),t}},p=async r=>{try{return(await e.post("/api/bank",r)).data}catch(a){throw n(a),a}},i=async(r,a)=>{try{return(await e.patch(`/api/bank/${r}`,a)).data}catch(t){throw n(t),t}},d=async r=>{try{return(await e.delete(`/api/bank/${r}`)).data}catch(a){throw n(a),a}};export{p as c,d,c as g,i as u};
+//# sourceMappingURL=bankApis-CtZ-WO8f.js.map

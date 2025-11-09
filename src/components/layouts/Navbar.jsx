@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Toolbar,
   Typography,
@@ -21,6 +21,57 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [userData, setUserData] = useState(null);
+
+  // Validate user data on mount and when location changes
+  useEffect(() => {
+    const validateUserData = () => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      // If there's a token but no user data, clear everything
+      if (token && !userStr) {
+        console.warn('Token exists but no user data found. Clearing auth data...');
+        localStorage.removeItem('token');
+        localStorage.removeItem('profile');
+        if (location.pathname !== '/login') {
+          navigate('/login', { replace: true });
+        }
+        return;
+      }
+      
+      // If there's user data, try to parse it
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          // Validate that user object has required properties
+          if (!user || !user.name) {
+            console.warn('Invalid user data format. Clearing auth data...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('profile');
+            if (location.pathname !== '/login') {
+              navigate('/login', { replace: true });
+            }
+            return;
+          }
+          setUserData(user);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('profile');
+          if (location.pathname !== '/login') {
+            navigate('/login', { replace: true });
+          }
+        }
+      } else {
+        setUserData(null);
+      }
+    };
+    
+    validateUserData();
+  }, [location, navigate]);
 
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -34,6 +85,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("profile");
+    setUserData(null);
     handleUserMenuClose();
     navigate("/login", { replace: true });
   };
@@ -59,7 +111,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
       <Toolbar sx={{ justifyContent: "space-between", direction: "rtl" }}>
         <div>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              {localStorage.getItem('user') ? (
+              {userData ? (
               <IconButton
                 edge="start"
                 color="inherit"
@@ -103,7 +155,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
         </div>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {localStorage.getItem('user') ? (
+          {userData ? (
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Box sx={{ textAlign: "right", mr: 2, display: "block" }}>
                 <Typography
@@ -122,12 +174,12 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                     color: "primary.main",
                   }}
                 >
-                  {JSON.parse(localStorage.getItem('user')).name}
+                  {userData.name || 'مستخدم'}
                 </Typography>
               </Box>
               <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
                 <Avatar
-                  src={JSON.parse(localStorage.getItem('user'))?.profileImage || undefined}
+                  src={userData?.profileImage || undefined}
                   sx={{
                     bgcolor: "primary.main",
                     width: 40,
@@ -135,7 +187,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                     fontSize: "1.2rem",
                   }}
                 >
-                  {!JSON.parse(localStorage.getItem('user'))?.profileImage && JSON.parse(localStorage.getItem('user'))?.fullName?.charAt(0)}
+                  {!userData?.profileImage && userData?.fullName?.charAt(0)}
                 </Avatar>
               </IconButton>
 
