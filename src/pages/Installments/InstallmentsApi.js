@@ -112,3 +112,15 @@ export const markAsPartialPaid = async (installmentId, paidAmount) => {
     throw error;
   }
 };
+
+export const earlyPayment = async (loanId, discount = 0) => {
+  try {
+    const response = await Api.patch(`/api/repayments/early-pay/${loanId}`, {
+      discount: parseFloat(discount) || 0
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

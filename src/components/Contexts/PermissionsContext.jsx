@@ -56,6 +56,11 @@ export const PermissionProvider = ({ children }) => {
     }
   };
 
+  // Function to refresh permissions manually
+  const refreshPermissions = async () => {
+    await fetchPermissions();
+  };
+
   useEffect(() => {
     // Only fetch permissions if user is logged in
     const token = localStorage.getItem('token');
@@ -67,7 +72,7 @@ export const PermissionProvider = ({ children }) => {
   }, []);
 
   return (
-    <PermissionContext.Provider value={{ permissions, loading, fetchPermissions }}>
+    <PermissionContext.Provider value={{ permissions, loading, fetchPermissions, refreshPermissions }}>
       {children}
     </PermissionContext.Provider>
   );

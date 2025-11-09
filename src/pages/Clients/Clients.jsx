@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  
 } from "@mui/material";
 import {
   Add,
@@ -76,8 +77,23 @@ const getClientDetails = async (clientId) => {
   return response.data;
 };
 
-const getClientStatement = async (clientId) => {
-  const response = await Api.get(`/api/clients/${clientId}/statement`);
+const getClientStatement = async (clientId, page = 1, fromDate = "", toDate = "") => {
+  let queryParams = new URLSearchParams();
+  
+  if (fromDate.trim()) {
+    queryParams.append("from", fromDate.trim());
+  }
+  
+  if (toDate.trim()) {
+    queryParams.append("to", toDate.trim());
+  }
+  
+  queryParams.append("limit", "20");
+  
+  const queryString = queryParams.toString();
+  const url = `/api/clients/${clientId}/statement/${page}${queryString ? `?${queryString}` : ""}`;
+  
+  const response = await Api.get(url);
   return response.data;
 };
 
@@ -92,6 +108,9 @@ export default function Clients() {
   const [editMode, setEditMode] = useState(false);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [statementPage, setStatementPage] = useState(1);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [clientFormData, setClientFormData] = useState({});
   const [kafeelFormData, setKafeelFormData] = useState({});
   const queryClient = useQueryClient();
@@ -116,9 +135,9 @@ export default function Clients() {
   });
 
   const { data: clientStatement } = useQuery({
-    queryKey: ["client-statement", selectedClient?.id],
+    queryKey: ["client-statement", selectedClient?.id, statementPage, fromDate, toDate],
     queryFn: () =>
-      selectedClient ? getClientStatement(selectedClient.id) : null,
+      selectedClient ? getClientStatement(selectedClient.id, statementPage, fromDate, toDate) : null,
     enabled: !!selectedClient && tab === 4,
     retry: 1,
   });
@@ -136,6 +155,19 @@ export default function Clients() {
     setCurrentPage(newPage);
   };
 
+  const handleStatementPageChange = (event, newPage) => {
+    setStatementPage(newPage);
+  };
+
+  const handleDateFilterChange = (field, value) => {
+    if (field === 'from') {
+      setFromDate(value);
+    } else if (field === 'to') {
+      setToDate(value);
+    }
+    setStatementPage(1); // Reset to first page when filtering
+  };
+
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
   };
@@ -143,6 +175,9 @@ export default function Clients() {
   const handleClientSelect = (client) => {
     setSelectedClient(client);
     setEditMode(false);
+    setStatementPage(1); // Reset statement pagination when selecting new client
+    setFromDate(""); // Reset date filters
+    setToDate("");
   };
 
   const handleClientInputChange = (field, value) => {
@@ -352,9 +387,9 @@ export default function Clients() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "ملتزم":
+      case "نشط":
         return "success";
-      case "متأخر":
+      case "منتهي":
         return "warning";
       case "متعثر":
         return "error";
@@ -450,23 +485,23 @@ export default function Clients() {
             />
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
               <Chip
-                label="ملتزم"
-                color={selectedStatus === "ملتزم" ? "primary" : "default"}
+                label="نشط"
+                color={selectedStatus === "نشط" ? "primary" : "default"}
                 variant="outlined"
                 onClick={() => {
                   setSelectedStatus((prev) =>
-                    prev === "ملتزم" ? "" : "ملتزم"
+                    prev === "نشط" ? "" : "نشط"
                   );
                   setCurrentPage(1);
                 }}
               />
               <Chip
-                label="متأخر"
-                color={selectedStatus === "متأخر" ? "primary" : "default"}
+                label="منتهي"
+                color={selectedStatus === "منتهي" ? "primary" : "default"}
                 variant="outlined"
                 onClick={() => {
                   setSelectedStatus((prev) =>
-                    prev === "متأخر" ? "" : "متأخر"
+                    prev === "منتهي" ? "" : "منتهي"
                   );
                   setCurrentPage(1);
                 }}
@@ -1539,40 +1574,66 @@ export default function Clients() {
 
             {tab === 4 && (
               <Box>
-                {/* Export Buttons */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
-                    onClick={handleExportPDF}
-                    disabled={!clientStatement}
-                    sx={{
-                      borderColor: '#d32f2f',
-                      color: '#d32f2f',
-                      '&:hover': {
-                        borderColor: '#b71c1c',
-                        backgroundColor: 'rgba(211, 47, 47, 0.04)'
-                      }
-                    }}
-                  >
-                    تصدير PDF
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<TableChart sx={{marginLeft: '10px'}} />}
-                    onClick={handleExportExcel}
-                    disabled={!clientStatement}
-                    sx={{
-                      borderColor: '#2e7d32',
-                      color: '#2e7d32',
-                      '&:hover': {
-                        borderColor: '#1b5e20',
-                        backgroundColor: 'rgba(46, 125, 50, 0.04)'
-                      }
-                    }}
-                  >
-                    تصدير Excel
-                  </Button>
+                {/* Date Filters and Export Buttons */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <TextField
+                      label="من تاريخ"
+                      type="date"
+                      value={fromDate}
+                      onChange={(e) => handleDateFilterChange('from', e.target.value)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      size="small"
+                      sx={{ width: 150 }}
+                    />
+                    <TextField
+                      label="إلى تاريخ"
+                      type="date"
+                      value={toDate}
+                      onChange={(e) => handleDateFilterChange('to', e.target.value)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      size="small"
+                      sx={{ width: 150 }}
+                    />
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
+                      onClick={handleExportPDF}
+                      disabled={!clientStatement}
+                      sx={{
+                        borderColor: '#d32f2f',
+                        color: '#d32f2f',
+                        '&:hover': {
+                          borderColor: '#b71c1c',
+                          backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                        }
+                      }}
+                    >
+                      تصدير PDF
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<TableChart sx={{marginLeft: '10px'}} />}
+                      onClick={handleExportExcel}
+                      disabled={!clientStatement}
+                      sx={{
+                        borderColor: '#2e7d32',
+                        color: '#2e7d32',
+                        '&:hover': {
+                          borderColor: '#1b5e20',
+                          backgroundColor: 'rgba(46, 125, 50, 0.04)'
+                        }
+                      }}
+                    >
+                      تصدير Excel
+                    </Button>
+                  </Box>
                 </Box>
 
                 {/* Statement Summary */}
@@ -1655,13 +1716,13 @@ export default function Clients() {
                                 {transaction.description}
                               </StyledTableCell>
                               <StyledTableCell align="center" sx={{ color: transaction.debit > 0 ? 'error.main' : 'text.primary' }}>
-                                {transaction.debit > 0 ? transaction.debit : 0}
+                                {transaction.debit > 0 ? transaction.debit.toLocaleString() : '-'}
                               </StyledTableCell>
                               <StyledTableCell align="center" sx={{ color: transaction.credit > 0 ? 'success.main' : 'text.primary' }}>
-                                {transaction.credit > 0 ? transaction.credit : 0}
+                                {transaction.credit > 0 ? transaction.credit.toLocaleString() : '-'}
                               </StyledTableCell>
                               <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                {transaction.balance}
+                                {transaction.balance.toLocaleString()}
                               </StyledTableCell>
                             </StyledTableRow>
                           ))
@@ -1677,6 +1738,77 @@ export default function Clients() {
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  
+                  {/* Table Footer with Pagination */}
+                  {clientStatement && clientStatement.totalPages > 1 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        p: 2,
+                        borderTop: '1px solid #e0e0e0',
+                        bgcolor: "#fafafa",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        عرض {((statementPage - 1) * 10) + 1} - {Math.min(statementPage * 10, clientStatement.totalTransactions)} من {clientStatement.totalTransactions} معاملة
+                      </Typography>
+                      
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<ChevronRight />}
+                          disabled={statementPage === 1}
+                          onClick={() => handleStatementPageChange(null, statementPage - 1)}
+                          sx={{
+                            minWidth: "70px",
+                            fontSize: "0.75rem",
+                            "&:disabled": {
+                              opacity: 0.5,
+                            },
+                          }}
+                        >
+                          السابق
+                        </Button>
+
+                        <Pagination
+                          count={clientStatement.totalPages}
+                          page={statementPage}
+                          onChange={handleStatementPageChange}
+                          color="primary"
+                          size="small"
+                          siblingCount={0}
+                          boundaryCount={1}
+                          sx={{
+                            "& .MuiPaginationItem-root": {
+                              fontSize: "0.75rem",
+                              minWidth: "28px",
+                              height: "28px",
+                            },
+                          }}
+                        />
+
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          endIcon={<ChevronLeft />}
+                          disabled={statementPage === clientStatement.totalPages}
+                          onClick={() => handleStatementPageChange(null, statementPage + 1)}
+                          sx={{
+                            minWidth: "70px",
+                            fontSize: "0.75rem",
+                            "&:disabled": {
+                              opacity: 0.5,
+                            },
+                          }}
+                        >
+                          التالي
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
                 </Paper>
               </Box>
             )}

@@ -44,7 +44,7 @@ export default function Roles() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { permissions } = usePermissions();
+  const { permissions, refreshPermissions } = usePermissions();
   const { data: rolesData, isLoading, refetch } = useQuery({ 
     queryKey: ["roles", page + 1, searchQuery], 
     queryFn: () => getRoles(page + 1, searchQuery),
@@ -88,6 +88,9 @@ export default function Roles() {
       refetch();
       setIsDeleteModalOpen(false);
       setSelectedRoleId(null);
+      
+      // Refresh permissions to update sidebar immediately after deletion
+      await refreshPermissions();
     } catch (error) {
       console.error("Error deleting role:", error);
     }

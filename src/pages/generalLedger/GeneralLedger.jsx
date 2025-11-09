@@ -17,6 +17,7 @@ import {
   Card,
   CardContent,
   Alert,
+  Pagination,
 } from '@mui/material';
 import {
   PictureAsPdf,
@@ -25,6 +26,7 @@ import {
   Download,
   Print,
   Share,
+  RestartAlt,
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -35,18 +37,18 @@ import GeneralLedgerSearch from '../../components/modals/GeneralLedgerSearch';
 import { exportGeneralLedgerToPDF, exportGeneralLedgerToExcel } from '../../utilities/GeneralLedgerExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 
-// API function to get account details with journals
-const getAccountLedger = async (accountId, fromDate = null, toDate = null) => {
+const getAccountLedger = async (accountId, fromDate = null, toDate = null, page = 1, limit = 10) => {
   const params = new URLSearchParams();
   if (fromDate) {
-    params.append('fromDate', fromDate);
+    params.append('from', fromDate);
   }
   if (toDate) {
-    params.append('toDate', toDate);
+    params.append('to', toDate);
   }
+  params.append('limit', limit.toString());
   
   const queryString = params.toString();
-  const response = await Api.get(`/api/accounts/${accountId}${queryString ? `?${queryString}` : ''}`);
+  const response = await Api.get(`/api/accounts/${accountId}/${page}${queryString ? `?${queryString}` : ''}`);
   return response.data;
 };
 
@@ -54,13 +56,15 @@ export default function GeneralLedger() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useState(null);
   const [exportLoading, setExportLoading] = useState({ pdf: false, excel: false });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageLimit] = useState(10);
 
   // Query for account ledger data
   const { data: ledgerData, isLoading: isLoadingLedger, error } = useQuery({
-    queryKey: ['account-ledger', searchParams?.account?.id, searchParams?.fromDate, searchParams?.toDate],
+    queryKey: ['account-ledger', searchParams?.account?.id, searchParams?.fromDate, searchParams?.toDate, currentPage, pageLimit],
     queryFn: () => 
       searchParams ? 
-      getAccountLedger(searchParams.account.id, searchParams.fromDate, searchParams.toDate) : 
+      getAccountLedger(searchParams.account.id, searchParams.fromDate, searchParams.toDate, currentPage, pageLimit) : 
       null,
     enabled: !!searchParams,
     retry: 1,
@@ -68,6 +72,16 @@ export default function GeneralLedger() {
 
   const handleSearch = (params) => {
     setSearchParams(params);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleReset = () => {
+    setSearchParams(null);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
   };
 
   const handleExportPDF = async () => {
@@ -100,9 +114,14 @@ export default function GeneralLedger() {
     }
   };
 
-  // Calculate summary statistics
-  const totalDebit = ledgerData?.journals?.reduce((sum, journal) => sum + (journal.debit || 0), 0) || 0;
-  const totalCredit = ledgerData?.journals?.reduce((sum, journal) => sum + (journal.credit || 0), 0) || 0;
+  const totalDebit = ledgerData?.journals?.reduce((sum, journal) => {
+    return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
+  }, 0) || 0;
+  
+  const totalCredit = ledgerData?.journals?.reduce((sum, journal) => {
+    return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
+  }, 0) || 0;
+  
   const closingBalance = ledgerData?.account?.balance || 0;
 
   return (
@@ -114,13 +133,12 @@ export default function GeneralLedger() {
 
       {/* Toolbar */}
       <Box sx={{ p: 3, pb: 0 }}>
-        <Paper sx={{ p: 2, borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             {/* Export Buttons */}
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
-                startIcon={<PictureAsPdf />}
+                startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
                 onClick={handleExportPDF}
                 disabled={exportLoading.pdf || !ledgerData}
                 sx={{
@@ -140,7 +158,7 @@ export default function GeneralLedger() {
               </Button>
               <Button
                 variant="outlined"
-                startIcon={<TableChart />}
+                startIcon={<TableChart sx={{marginLeft: '10px'}} />}
                 onClick={handleExportExcel}
                 disabled={exportLoading.excel || !ledgerData}
                 sx={{
@@ -160,19 +178,39 @@ export default function GeneralLedger() {
               </Button>
             </Box>
 
-            {/* Search Button */}
-            <Button
-              variant="contained"
-              startIcon={<Search sx={{marginLeft: '10px'}} />}
-              onClick={() => setSearchModalOpen(true)}
-              sx={{
-                bgcolor: 'primary.main',
-                '&:hover': { bgcolor: 'primary.dark' },
-                minWidth: 120
-              }}
-            >
-              بحث
-            </Button>
+            {/* Search and Reset Buttons */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              {searchParams && (
+                <Button
+                  variant="outlined"
+                  startIcon={<RestartAlt sx={{marginLeft: '10px'}} />}
+                  onClick={handleReset}
+                  sx={{
+                    borderColor: 'warning.main',
+                    color: 'warning.main',
+                    '&:hover': {
+                      borderColor: 'warning.dark',
+                      backgroundColor: 'rgba(237, 108, 2, 0.04)'
+                    },
+                    minWidth: 120
+                  }}
+                >
+                  إعادة تعيين
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                startIcon={<Search sx={{marginLeft: '10px'}} />}
+                onClick={() => setSearchModalOpen(true)}
+                sx={{
+                  bgcolor: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  minWidth: 120
+                }}
+              >
+                بحث
+              </Button>
+            </Box>
           </Box>
 
           {/* Selected Account Info */}
@@ -202,7 +240,6 @@ export default function GeneralLedger() {
               </Grid>
             </Box>
           )}
-        </Paper>
       </Box>
 
       {/* Main Content */}
@@ -267,7 +304,7 @@ export default function GeneralLedger() {
           // Data State
           <Box>
             {/* Summary Cards */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid container spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 3 }}>
               <Grid item xs={12} md={3}>
                 <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                   <CardContent sx={{ textAlign: 'center' }}>
@@ -296,10 +333,10 @@ export default function GeneralLedger() {
                 <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" fontWeight="bold" color="warning.main">
-                      {ledgerData.journals?.length || 0}
+                      {ledgerData.totalJournals || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      عدد القيود
+                      إجمالي القيود
                     </Typography>
                   </CardContent>
                 </Card>
@@ -349,70 +386,72 @@ export default function GeneralLedger() {
                     </StyledTableRow>
                   </TableHead>
                   <TableBody>
-                    {ledgerData.journals?.map((journal) => (
-                      <StyledTableRow key={journal.id} hover>
-                        <StyledTableCell align="center">
-                          <Typography variant="body2">
-                            {dayjs(journal.date).format('DD/MM/YYYY')}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {dayjs(journal.date).format('HH:mm')}
-                          </Typography>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <Typography variant="body2" fontWeight="500" color="primary">
-                            {journal.reference}
-                          </Typography>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <Typography variant="body2" sx={{ mb: 0.5 }}>
-                            {journal.description}
-                          </Typography>
-                          {journal.postedBy && (
+                    {ledgerData.journals?.map((journal) => 
+                      journal.lines.map((line) => (
+                        <StyledTableRow key={`${journal.id}-${line.id}`} hover>
+                          <StyledTableCell align="center">
+                            <Typography variant="body2">
+                              {dayjs(journal.date).format('DD/MM/YYYY')}
+                            </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              بواسطة: {journal.postedBy}
+                              {dayjs(journal.date).format('HH:mm')}
                             </Typography>
-                          )}
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          {journal.debit > 0 ? (
-                            <Typography variant="body2" fontWeight="bold" color="success.main">
-                              {journal.debit.toLocaleString('en-US')}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <Typography variant="body2" fontWeight="500" color="primary">
+                              {journal.reference}
                             </Typography>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              0
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <Typography variant="body2" sx={{ mb: 0.5 }}>
+                              {line.description}
                             </Typography>
-                          )}
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          {journal.credit > 0 ? (
-                            <Typography variant="body2" fontWeight="bold" color="error.main">
-                              {journal.credit.toLocaleString('en-US')}
+                            {journal.postedBy && (
+                              <Typography variant="caption" color="text.secondary">
+                                بواسطة: {journal.postedBy}
+                              </Typography>
+                            )}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            {line.debit > 0 ? (
+                              <Typography variant="body2" fontWeight="bold" color="success.main">
+                                {line.debit.toLocaleString('en-US')}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                0
+                              </Typography>
+                            )}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            {line.credit > 0 ? (
+                              <Typography variant="body2" fontWeight="bold" color="error.main">
+                                {line.credit.toLocaleString('en-US')}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                0
+                              </Typography>
+                            )}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <Typography variant="body2" fontWeight="bold"
+                              color={line.balance >= 0 ? 'primary.main' : 'error.main'}>
+                              {line.balance.toLocaleString('en-US')}
                             </Typography>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              0
-                            </Typography>
-                          )}
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <Typography variant="body2" fontWeight="bold"
-                            color={journal.balance >= 0 ? 'primary.main' : 'error.main'}>
-                            {journal.balance.toLocaleString('en-US')}
-                          </Typography>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <Chip 
-                            label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
-                            size="small"
-                            color={journal.status === 'POSTED' ? 'success' : 'default'}
-                            variant="outlined"
-                            sx={{ fontWeight: '500' }}
-                          />
-                        </StyledTableCell>
-                      </StyledTableRow>
-                    ))}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <Chip 
+                              label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
+                              size="small"
+                              color={journal.status === 'POSTED' ? 'success' : 'default'}
+                              variant="outlined"
+                              sx={{ fontWeight: '500' }}
+                            />
+                          </StyledTableCell>
+                        </StyledTableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -425,6 +464,21 @@ export default function GeneralLedger() {
                   <Typography variant="body2" color="text.secondary">
                     لم يتم تسجيل أي قيود للحساب في الفترة المحددة
                   </Typography>
+                </Box>
+              )}
+
+              {/* Pagination */}
+              {ledgerData.totalPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <Pagination
+                    count={ledgerData.totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                    showFirstButton
+                    showLastButton
+                  />
                 </Box>
               )}
             </Paper>

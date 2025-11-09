@@ -21,6 +21,7 @@ import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { getAvailableModules } from '../../routes';
 import { useQueryClient } from '@tanstack/react-query';
+import { usePermissions } from '../Contexts/PermissionsContext';
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -44,6 +45,7 @@ const validationSchema = Yup.object().shape({
 const availableModules = getAvailableModules();
 const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null }) => {
   const queryClient = useQueryClient();
+  const { refreshPermissions } = usePermissions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialValues, setInitialValues] = useState({
     name: '',
@@ -114,6 +116,9 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null })
         queryClient.invalidateQueries({ queryKey: ['employees'] });
       
       }
+      
+      // Refresh permissions to update sidebar immediately
+      await refreshPermissions();
       
       resetForm();
       refetchRoles();

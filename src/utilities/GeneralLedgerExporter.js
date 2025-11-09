@@ -48,35 +48,50 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         doc.text(`الفترة: من ${fromDate} إلى ${toDate}`, 105, 37, { align: 'center' });
       }
       
+      // Calculate totals from journal lines
+      const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
+        return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
+      }, 0) || 0;
+      
+      const totalCredit = ledgerData.journals?.reduce((sum, journal) => {
+        return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
+      }, 0) || 0;
+      
+      const closingBalance = ledgerData.account?.balance || 0;
+      
       // Summary section
       doc.setFontSize(10);
       let yPosition = 50;
       
-      doc.text(`الرصيد الافتتاحي: ${ledgerData.openingBalance?.toLocaleString('en-US') || 0} ريال`, 14, yPosition);
+      doc.text(`إجمالي المدين: ${totalDebit.toLocaleString('en-US')} ريال`, 14, yPosition);
       yPosition += 7;
-      doc.text(`إجمالي المدين: ${ledgerData.totalDebit?.toLocaleString('en-US') || 0} ريال`, 14, yPosition);
+      doc.text(`إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} ريال`, 14, yPosition);
       yPosition += 7;
-      doc.text(`إجمالي الدائن: ${ledgerData.totalCredit?.toLocaleString('en-US') || 0} ريال`, 14, yPosition);
+      doc.text(`الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} ريال`, 14, yPosition);
       yPosition += 7;
-      doc.text(`الرصيد الختامي: ${ledgerData.closingBalance?.toLocaleString('en-US') || 0} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`عدد القيود: ${ledgerData.journals?.length || 0}`, 14, yPosition);
+      doc.text(`عدد القيود: ${ledgerData.totalJournals || 0}`, 14, yPosition);
       
       yPosition += 15;
       
-      // Prepare table data (RTL order)
-      const tableData = ledgerData.journals?.map(journal => [
-        journal.balance.toLocaleString('en-US') + ' ريال',
-        journal.credit > 0 ? journal.credit.toLocaleString('en-US') + ' ريال' : '0',
-        journal.debit > 0 ? journal.debit.toLocaleString('en-US') + ' ريال' : '0',
-        journal.description || '-',
-        journal.reference || '-',
-        dayjs(journal.date).format('DD/MM/YYYY HH:mm')
-      ]) || [];
+      // Prepare table data (RTL order) - flatten journal lines
+      const tableData = [];
+      ledgerData.journals?.forEach(journal => {
+        journal.lines.forEach(line => {
+          tableData.push([
+            getJournalStatusArabic(journal.status),
+            line.balance.toLocaleString('en-US') + ' ريال',
+            line.credit > 0 ? line.credit.toLocaleString('en-US') + ' ريال' : '0',
+            line.debit > 0 ? line.debit.toLocaleString('en-US') + ' ريال' : '0',
+            line.description || journal.description || '-',
+            journal.reference || '-',
+            dayjs(journal.date).format('DD/MM/YYYY HH:mm')
+          ]);
+        });
+      });
       
       // Table headers (RTL order)
       const headers = [
-        ['الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
+        ['الحالة', 'الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
       ];
       
       // Create table with RTL support
@@ -107,12 +122,13 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
           halign: 'center'
         },
         columnStyles: {
-          0: { cellWidth: 25 }, // الرصيد
-          1: { cellWidth: 20 }, // دائن
-          2: { cellWidth: 20 }, // مدين
-          3: { cellWidth: 50 }, // الوصف
-          4: { cellWidth: 25 }, // المرجع
-          5: { cellWidth: 25 }  // التاريخ
+          0: { cellWidth: 15 }, // الحالة
+          1: { cellWidth: 25 }, // الرصيد
+          2: { cellWidth: 20 }, // دائن
+          3: { cellWidth: 20 }, // مدين
+          4: { cellWidth: 40 }, // الوصف
+          5: { cellWidth: 20 }, // المرجع
+          6: { cellWidth: 25 }  // التاريخ
         },
         margin: { top: yPosition, right: 10, left: 10 },
         tableWidth: 'wrap',
@@ -155,6 +171,17 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
     // Create workbook
     const workbook = XLSX.utils.book_new();
     
+    // Calculate totals from journal lines
+    const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
+      return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
+    }, 0) || 0;
+    
+    const totalCredit = ledgerData.journals?.reduce((sum, journal) => {
+      return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
+    }, 0) || 0;
+    
+    const closingBalance = ledgerData.account?.balance || 0;
+
     // Summary data
     const summaryData = [
       ['دفتر الأستاذ العام'],
@@ -162,11 +189,10 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
       [`كود الحساب: ${account.code}`],
       [`نوع الحساب: ${getAccountTypeArabic(account.type)}`],
       [''],
-      ['الرصيد الافتتاحي', ledgerData.openingBalance || 0],
-      ['إجمالي المدين', ledgerData.totalDebit || 0],
-      ['إجمالي الدائن', ledgerData.totalCredit || 0],
-      ['الرصيد الختامي', ledgerData.closingBalance || 0],
-      ['عدد القيود', ledgerData.journals?.length || 0],
+      ['إجمالي المدين', totalDebit],
+      ['إجمالي الدائن', totalCredit],
+      ['الرصيد الختامي', closingBalance],
+      ['عدد القيود', ledgerData.totalJournals || 0],
       ['']
     ];
     
@@ -177,17 +203,22 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
       summaryData.splice(4, 0, [`الفترة: من ${fromDate} إلى ${toDate}`]);
     }
     
-    // Journals data
-    const journalsData = ledgerData.journals?.map(journal => ({
-      'التاريخ': dayjs(journal.date).format('DD/MM/YYYY HH:mm'),
-      'المرجع': journal.reference || '-',
-      'الوصف': journal.description || '-',
-      'مدين': journal.debit > 0 ? journal.debit : 0,
-      'دائن': journal.credit > 0 ? journal.credit : 0,
-      'الرصيد': journal.balance,
-      'الحالة': getJournalStatusArabic(journal.status),
-      'المرحل بواسطة': journal.postedBy || 'غير محدد'
-    })) || [];
+    // Journals data - flatten journal lines
+    const journalsData = [];
+    ledgerData.journals?.forEach(journal => {
+      journal.lines.forEach(line => {
+        journalsData.push({
+          'التاريخ': dayjs(journal.date).format('DD/MM/YYYY HH:mm'),
+          'المرجع': journal.reference || '-',
+          'الوصف': line.description || journal.description || '-',
+          'مدين': line.debit > 0 ? line.debit : 0,
+          'دائن': line.credit > 0 ? line.credit : 0,
+          'الرصيد': line.balance,
+          'الحالة': getJournalStatusArabic(journal.status),
+          'المرحل بواسطة': journal.postedBy || 'غير محدد'
+        });
+      });
+    });
     
     // Create summary sheet
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);

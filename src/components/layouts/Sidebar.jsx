@@ -21,6 +21,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const [openGroup, setOpenGroup] = useState(null);
+  const [filteredMenuItems, setFilteredMenuItems] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const { permissions, loading } = usePermissions();
 
@@ -35,16 +36,21 @@ const Sidebar = ({ isOpen, onClose }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  const menuItems = getSidebarMenuItems();
-
-  const filteredMenuItems = menuItems.filter(item => {
-    if (!item.requiresPermissions) return true;
-    if (item.children) {
-      const filteredChildren = item.children.filter(child => permissions.includes(`${child.module}_View`));
-      return filteredChildren.length > 0;
-    }
-    return permissions.includes(`${item.module}_View`);
-  });
+  // Update filtered menu items when permissions change
+  useEffect(() => {
+    const menuItems = getSidebarMenuItems();
+    
+    const filtered = menuItems.filter(item => {
+      if (!item.requiresPermissions) return true;
+      if (item.children) {
+        const filteredChildren = item.children.filter(child => permissions.includes(`${child.module}_View`));
+        return filteredChildren.length > 0;
+      }
+      return permissions.includes(`${item.module}_View`);
+    });
+    
+    setFilteredMenuItems(filtered);
+  }, [permissions]);
 
   const singleItems = filteredMenuItems.filter(item => !item.children);
   const groupItems = filteredMenuItems.filter(item => item.children);
@@ -129,6 +135,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const renderGroupMenuItem = (item, index) => {
     const isGroupOpen = openGroup === item.label;
     
+    // Filter children based on permissions - this will be recalculated when permissions change
     const filteredChildren = item.children.filter(child => 
       !child.requiresPermissions || permissions.includes(`${child.module}_View`)
     );
