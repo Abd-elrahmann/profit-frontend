@@ -39,6 +39,7 @@ import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from "lodash";
 import AddClient from "../../components/modals/AddClient";
+import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import DeleteModal from "../../components/modals/DeleteModal";
 import EditDocuments from "../../components/modals/EditDocuments";
 import { saveAs } from "file-saver";
@@ -113,6 +114,8 @@ export default function Clients() {
   const [toDate, setToDate] = useState("");
   const [clientFormData, setClientFormData] = useState({});
   const [kafeelFormData, setKafeelFormData] = useState({});
+  const [selectedKafeelId, setSelectedKafeelId] = useState(null);
+  const [isAddKafeelModalOpen, setIsAddKafeelModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
 
@@ -126,7 +129,7 @@ export default function Clients() {
     retry: 1,
   });
 
-  const { data: clientDetails } = useQuery({
+  const { data: clientDetails, refetch: refetchClientDetails } = useQuery({
     queryKey: ["client-details", selectedClient?.id],
     queryFn: () =>
       selectedClient ? getClientDetails(selectedClient.id) : null,
@@ -175,6 +178,7 @@ export default function Clients() {
   const handleClientSelect = (client) => {
     setSelectedClient(client);
     setEditMode(false);
+    setSelectedKafeelId(null);
     setStatementPage(1); // Reset statement pagination when selecting new client
     setFromDate(""); // Reset date filters
     setToDate("");
@@ -197,7 +201,7 @@ export default function Clients() {
     }));
   };
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = async (kafeelIdOverride = null) => {
     try {
       if (tab === 0) {
         await Api.patch(
@@ -206,19 +210,41 @@ export default function Clients() {
         );
         notifySuccess("تم تحديث بيانات العميل بنجاح");
       } else if (tab === 2) {
-        await Api.patch(
-          `/api/clients/${selectedClient.id}/kafeel-data`,
-          kafeelFormData
-        );
-        notifySuccess("تم تحديث بيانات الكفيل بنجاح");
+        const kafeelIdToUse = kafeelIdOverride !== null ? kafeelIdOverride : selectedKafeelId;
+        if (kafeelIdToUse) {
+          // Update specific kafeel
+          const kafeelIdToUpdate = Number(kafeelIdToUse);
+
+          await Api.patch(
+            `/api/clients/kafeel/${kafeelIdToUpdate}`,
+            kafeelFormData
+          );
+          notifySuccess("تم تحديث بيانات الكفيل بنجاح");
+        } else if (clientDetails.kafeel) {
+          // Update single kafeel (old format)
+          await Api.patch(
+            `/api/clients/${selectedClient.id}/kafeel-data`,
+            kafeelFormData
+          );
+          notifySuccess("تم تحديث بيانات الكفيل بنجاح");
+        }
       }
 
+      // Reset form data after successful save
+      setKafeelFormData({});
+      setEditMode(false);
+      setSelectedKafeelId(null);
+
+      // Invalidate and refetch client details to get updated data
       queryClient.invalidateQueries({
         queryKey: ["client-details", selectedClient.id],
       });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-
-      setEditMode(false);
+      
+      // Refetch client details immediately
+      if (selectedClient?.id) {
+        await refetchClientDetails();
+      }
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تحديث البيانات"
@@ -700,7 +726,7 @@ export default function Clients() {
                   رقم الهوية: {clientDetails.client.nationalId}
                 </Typography>
               </Box>
-              {tab !== 1 && tab !== 4 && (
+              {tab !== 1 && tab !== 2 && tab !== 4 && (
                 <Box sx={{ display: "flex", gap: 2 }}>
                   {tab === 3 ? (
                     <>
@@ -1123,10 +1149,291 @@ export default function Clients() {
 
             {tab === 2 && (
               <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" mb={3}>
-                  معلومات الكفيل
-                </Typography>
-                {clientDetails.kafeel ? (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6">
+                    معلومات الكفيل
+                  </Typography>
+                  {selectedClient && (
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => setIsAddKafeelModalOpen(true)}
+                      sx={{
+                        bgcolor: "#0d40a5",
+                        fontWeight: "bold",
+                        "&:hover": { bgcolor: "#0b3589" },
+                      }}
+                    >
+                      إضافة كفيل آخر
+                    </Button>
+                  )}
+                </Box>
+                {clientDetails.kafeels && clientDetails.kafeels.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {clientDetails.kafeels.map((kafeel, index) => {
+                      const isEditingThisKafeel = editMode && selectedKafeelId !== null && Number(selectedKafeelId) === Number(kafeel.id);
+                      const currentKafeelData = isEditingThisKafeel ? kafeelFormData : kafeel;
+                      
+                      return (
+                        <Box key={kafeel.id || index}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6" color="primary">
+                              الكفيل {index + 1} - {isEditingThisKafeel ? (currentKafeelData.name || kafeel.name) : kafeel.name}
+                            </Typography>
+                            {permissions.includes("clients_Update") && (
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                {!isEditingThisKafeel ? (
+                                  <Button
+                                    variant="outlined"
+                                    startIcon={<Edit sx={{ marginLeft: "10px" }} />}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      const kafeelIdToEdit = Number(kafeel.id);
+                                      if (!kafeelIdToEdit || isNaN(kafeelIdToEdit)) {
+                                        console.error('Kafeel ID is missing or invalid!', kafeel);
+                                        return;
+                                      }
+                                      setSelectedKafeelId(kafeelIdToEdit);
+                                      setEditMode(true);
+                                      setKafeelFormData({
+                                        name: kafeel.name || "",
+                                        nationalId: kafeel.nationalId || "",
+                                        birthDate: kafeel.birthDate
+                                          ? new Date(kafeel.birthDate).toISOString().split("T")[0]
+                                          : "",
+                                        city: kafeel.city || "",
+                                        district: kafeel.district || "",
+                                        employer: kafeel.employer || "",
+                                        salary: kafeel.salary || "",
+                                        obligations: kafeel.obligations || "",
+                                        phone: kafeel.phone || "",
+                                        email: kafeel.email || "",
+                                      });
+                                    }}
+                                  >
+                                    تعديل
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Button
+                                      variant="outlined"
+                                      onClick={() => {
+                                        setEditMode(false);
+                                        setSelectedKafeelId(null);
+                                        setKafeelFormData({});
+                                      }}
+                                    >
+                                      إلغاء
+                                    </Button>
+                                    <Button
+                                      variant="contained"
+                                      startIcon={<Save sx={{ marginLeft: "10px" }} />}
+                                      onClick={() => {
+                                        handleSaveChanges(kafeel.id);
+                                      }}
+                                      sx={{
+                                        bgcolor: "#0d40a5",
+                                        "&:hover": { bgcolor: "#0b3589" },
+                                      }}
+                                    >
+                                      حفظ
+                                    </Button>
+                                  </>
+                                )}
+                              </Box>
+                            )}
+                          </Box>
+                          <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                اسم الكفيل
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.name : kafeel.name || ''}
+                                onChange={(e) => handleKafeelInputChange("name", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                رقم هوية الكفيل
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.nationalId : kafeel.nationalId || ''}
+                                onChange={(e) => handleKafeelInputChange("nationalId", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                تاريخ الميلاد
+                              </Typography>
+                              <TextField
+                                value={
+                                  isEditingThisKafeel
+                                    ? currentKafeelData.birthDate || ''
+                                    : kafeel.birthDate
+                                    ? new Date(kafeel.birthDate).toISOString().split("T")[0]
+                                    : ''
+                                }
+                                onChange={(e) => handleKafeelInputChange("birthDate", e.target.value)}
+                                fullWidth
+                                type="date"
+                                disabled={!isEditingThisKafeel}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                المدينة
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.city : kafeel.city || ''}
+                                onChange={(e) => handleKafeelInputChange("city", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                الحي
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.district : kafeel.district || ''}
+                                onChange={(e) => handleKafeelInputChange("district", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                رقم الجوال
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.phone : kafeel.phone || ''}
+                                onChange={(e) => handleKafeelInputChange("phone", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                البريد الإلكتروني
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.email : kafeel.email || ''}
+                                onChange={(e) => handleKafeelInputChange("email", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                جهة العمل
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.employer : kafeel.employer || ''}
+                                onChange={(e) => handleKafeelInputChange("employer", e.target.value)}
+                                fullWidth
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                الراتب
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.salary : kafeel.salary || ''}
+                                onChange={(e) => handleKafeelInputChange("salary", e.target.value)}
+                                fullWidth
+                                type="number"
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2" mb={1} fontWeight={500}>
+                                الالتزامات
+                              </Typography>
+                              <TextField
+                                value={isEditingThisKafeel ? currentKafeelData.obligations : kafeel.obligations || ''}
+                                onChange={(e) => handleKafeelInputChange("obligations", e.target.value)}
+                                fullWidth
+                                type="number"
+                                disabled={!isEditingThisKafeel}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: isEditingThisKafeel ? "#fff" : "#f9fafb",
+                                    borderRadius: "6px",
+                                  },
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          {index < clientDetails.kafeels.length - 1 && (
+                            <Box sx={{ borderBottom: '1px solid #e0e0e0', my: 3 }} />
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                ) : clientDetails.kafeel ? (
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>
@@ -1476,16 +1783,103 @@ export default function Clients() {
                   )}
                 </Box>
 
-                {clientDetails.kafeel && (
-                  <Box sx={{ mt: 5, mb: 3 }}>
-                    <Typography
-                      variant="h5"
-                      sx={{ mt: 5, mb: 2, color: "primary.main" }}
-                    >
-                      مستندات الكفيل
-                    </Typography>
-                    {clientDetails.documents &&
-                    clientDetails.documents.length > 0 ? (
+                {/* Display documents for each kafeel */}
+                {clientDetails.kafeels && clientDetails.kafeels.length > 0 ? (
+                    clientDetails.kafeels.map((kafeel, kafeelIndex) => {
+                      const kafeelDocuments = [
+                        { key: 'kafeelIdImage', value: kafeel.kafeelIdImage, label: 'صورة هوية الكفيل' },
+                        { key: 'kafeelWorkCard', value: kafeel.kafeelWorkCard, label: 'بطاقة عمل الكفيل' },
+                      ].filter(doc => doc.value);
+
+                      return (
+                        <Box key={kafeel.id || kafeelIndex} sx={{ mt: 5, mb: 3 }}>
+                          <Typography
+                            variant="h5"
+                            sx={{ mt: 5, mb: 2, color: "primary.main" }}
+                          >
+                            مستندات الكفيل {kafeelIndex + 1} - {kafeel.name}
+                          </Typography>
+                          {kafeelDocuments.length > 0 ? (
+                            <Grid container spacing={2}>
+                              {kafeelDocuments.map((doc) => (
+                                <Grid item xs={12} key={doc.key}>
+                                  <Paper
+                                    sx={{
+                                      p: 2,
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={1}
+                                    >
+                                      <CheckCircle
+                                        color="success"
+                                        fontSize="small"
+                                      />
+                                      <Box>
+                                        <Typography fontWeight="500">
+                                          {doc.label}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                    <Box>
+                                      <IconButton
+                                        onClick={() => handlePrintFile(doc.value)}
+                                      >
+                                        <Print />
+                                      </IconButton>
+                                      <IconButton
+                                        onClick={() =>
+                                          handleDownloadFile(
+                                            doc.value,
+                                            "",
+                                            doc.label,
+                                            clientDetails.client.name
+                                          )
+                                        }
+                                      >
+                                        <Download />
+                                      </IconButton>
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleShareFile(
+                                            doc.value,
+                                            doc.label,
+                                            clientDetails.client.name
+                                          );
+                                        }}
+                                        title="مشاركة"
+                                      >
+                                        <Share />
+                                      </IconButton>
+                                    </Box>
+                                  </Paper>
+                                </Grid>
+                              ))}
+                            </Grid>
+                          ) : (
+                            <Paper sx={{ p: 3, textAlign: "center" }}>
+                              <Typography color="text.secondary">
+                                لا توجد مستندات للكفيل {kafeelIndex + 1}
+                              </Typography>
+                            </Paper>
+                          )}
+                        </Box>
+                      );
+                    })
+                  ) : clientDetails.kafeel && clientDetails.documents && clientDetails.documents.length > 0 ? (
+                    <Box sx={{ mt: 5, mb: 3 }}>
+                      <Typography
+                        variant="h5"
+                        sx={{ mt: 5, mb: 2, color: "primary.main" }}
+                      >
+                        مستندات الكفيل
+                      </Typography>
                       <Grid container spacing={2}>
                         {Object.entries(clientDetails.documents[0]).map(
                           ([key, value]) => {
@@ -1560,15 +1954,8 @@ export default function Clients() {
                           }
                         )}
                       </Grid>
-                    ) : (
-                      <Paper sx={{ p: 3, textAlign: "center" }}>
-                        <Typography color="text.secondary">
-                          لا توجد مستندات للكفيل
-                        </Typography>
-                      </Paper>
-                    )}
-                  </Box>
-                )}
+                    </Box>
+                  ) : null}
               </Box>
             )}
 
@@ -1837,6 +2224,12 @@ export default function Clients() {
       <AddClient
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+      />
+
+      <AddAdditionalKafeel
+        open={isAddKafeelModalOpen}
+        onClose={() => setIsAddKafeelModalOpen(false)}
+        clientId={selectedClient?.id}
       />
 
       <DeleteModal

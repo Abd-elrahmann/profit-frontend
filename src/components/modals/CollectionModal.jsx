@@ -95,7 +95,7 @@ const CollectionModal = ({
               {clientName} (قسط #{installment?.id})
             </Typography>
             <Typography variant="body2" color="text.secondary" mt={1}>
-              المبلغ: {installment?.amount?.toFixed(2)} ر.س
+              المبلغ: {installment?.amount?.toFixed(2)}
             </Typography>
           </Paper>
         </Box>

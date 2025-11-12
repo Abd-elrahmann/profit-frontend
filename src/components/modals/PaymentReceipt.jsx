@@ -127,7 +127,7 @@ const PaymentReceipt = () => {
               <Box display="flex" justifyContent="space-between">
                 <Typography color="gray">المبلغ المستحق:</Typography>
                 <Typography fontWeight="bold" fontSize="1.1rem">
-                  {repaymentData?.amount?.toFixed(2)} ر.س
+                  {repaymentData?.amount?.toFixed(2)}
                 </Typography>
               </Box>
 
@@ -253,7 +253,7 @@ const PaymentReceipt = () => {
             <Box display="flex" justifyContent="space-between">
               <Typography color="gray">المبلغ المستحق:</Typography>
               <Typography fontWeight="bold" fontSize="1.1rem">
-                {repaymentData?.amount?.toFixed(2)} ر.س
+                {repaymentData?.amount?.toFixed(2)}
               </Typography>
             </Box>
 

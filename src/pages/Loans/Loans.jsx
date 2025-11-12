@@ -42,6 +42,7 @@ const Loans = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedKafeel, setSelectedKafeel] = useState(null);
   const [selectedBank, setSelectedBank] = useState(null);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,7 +56,7 @@ const Loans = () => {
   const [loanForm, setLoanForm] = useState({
     amount: "",
     interestRate: "",
-    durationMonths: "",
+    paymentAmount: "",
     type: "",
     startDate: new Date().toISOString().split("T")[0],
     repaymentDay: "",
@@ -78,6 +79,7 @@ const Loans = () => {
     promissoryNote: "",
   });
   const [isCreatingLoan, setIsCreatingLoan] = useState(false);
+  const [isAdditionalLoan, setIsAdditionalLoan] = useState(false);
   const { permissions } = usePermissions(); 
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
@@ -116,8 +118,38 @@ const Loans = () => {
         Api.get("/api/templates/PROMISSORY_NOTE"),
       ]);
 
-      setDebtAckTemplate(debtResponse.data.content || "");
-      setPromissoryNoteTemplate(promissoryResponse.data.content || "");
+      let debtContent = debtResponse.data.content || "";
+      let promissoryContent = promissoryResponse.data.content || "";
+      
+      const debtStyles = debtResponse.data.styles || "";
+      const promissoryStyles = promissoryResponse.data.styles || "";
+
+      // Merge styles with content if styles exist and content doesn't have them
+      if (debtStyles && debtStyles.trim() !== "" && !/<style[^>]*>/i.test(debtContent)) {
+        debtContent = `<style>\n${debtStyles}\n</style>\n\n${debtContent}`;
+      }
+      
+      if (promissoryStyles && promissoryStyles.trim() !== "" && !/<style[^>]*>/i.test(promissoryContent)) {
+        promissoryContent = `<style>\n${promissoryStyles}\n</style>\n\n${promissoryContent}`;
+      }
+
+      console.log("Templates fetched:", {
+        debtAck: {
+          contentLength: debtContent.length,
+          stylesLength: debtStyles.length,
+          hasStyles: /<style[^>]*>/i.test(debtContent),
+          contentPreview: debtContent.substring(0, 200)
+        },
+        promissoryNote: {
+          contentLength: promissoryContent.length,
+          stylesLength: promissoryStyles.length,
+          hasStyles: /<style[^>]*>/i.test(promissoryContent),
+          contentPreview: promissoryContent.substring(0, 200)
+        }
+      });
+
+      setDebtAckTemplate(debtContent);
+      setPromissoryNoteTemplate(promissoryContent);
 
       console.log("Templates fetched successfully");
     } catch (error) {
@@ -133,7 +165,7 @@ const Loans = () => {
   }, [
     loanForm.amount,
     loanForm.interestRate,
-    loanForm.durationMonths,
+    loanForm.paymentAmount,
     activeTab,
   ]);
 
@@ -166,6 +198,12 @@ const Loans = () => {
 
   const handleClientSelect = (event, newValue) => {
     setSelectedClient(newValue);
+    // Reset kafeel when client changes
+    setSelectedKafeel(null);
+  };
+
+  const handleKafeelSelect = (event, newValue) => {
+    setSelectedKafeel(newValue);
   };
 
   const handleBankSelect = (event, newValue) => {
@@ -191,19 +229,21 @@ const Loans = () => {
       const previewLoanData = {
         id: `preview-${Date.now()}`,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        durationMonths: parseInt(loanForm.durationMonths),
+        paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         startDate: loanForm.startDate,
         client: selectedClient.client,
       };
 
       const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
         false,
-        previewLoanData
+        previewLoanData,
+        selectedKafeel
       );
       const promissoryNoteHtml =
         await promissoryNoteGeneratorRef.current.generateContract(
           false,
-          previewLoanData
+          previewLoanData,
+          selectedKafeel
         );
 
       setPreviewContracts({
@@ -257,28 +297,24 @@ const Loans = () => {
   const calculateInstallments = () => {
     const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
     const interestRate = parseFloat(loanForm.interestRate) || 0;
-    const durationMonths = parseInt(loanForm.durationMonths) || 0;
+    const paymentAmount = parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const loanType = loanForm.type;
 
-    if (amount > 0 && durationMonths > 0) {
+    if (amount > 0 && paymentAmount > 0) {
       const profit = amount * (interestRate / 100);
       const total = amount + profit;
-
-      const repaymentCount =
-        loanType === "DAILY"
-          ? durationMonths * 30
-          : loanType === "WEEKLY"
-          ? durationMonths * 4
-          : durationMonths;
-
-      const installmentAmount = total / repaymentCount;
-      const principalPerInstallment = amount / repaymentCount;
-      const interestPerInstallment = profit / repaymentCount;
+      
+      // Backend logic: Calculate full installments and remainder
+      const fullMonths = Math.floor(total / paymentAmount);
+      const lastPayment = total - (paymentAmount * fullMonths);
+      let months = fullMonths;
+      if (lastPayment > 0) months += 1;
 
       const calculatedInstallments = [];
-      let remainingBalance = total;
+      let remainingPrincipal = amount;
+      let remainingInterest = profit;
 
-      for (let i = 1; i <= repaymentCount; i++) {
+      for (let i = 1; i <= months; i++) {
         const dueDate = new Date(loanForm.startDate);
         if (loanType === "DAILY") {
           dueDate.setDate(dueDate.getDate() + i);
@@ -291,15 +327,37 @@ const Loans = () => {
           }
         }
 
-        remainingBalance -= installmentAmount;
+        let currentAmount = paymentAmount;
+        // Last installment takes the remainder
+        if (i === months && lastPayment > 0) {
+          currentAmount = lastPayment;
+        }
+
+        // Calculate principal and interest for this installment proportionally
+        let principalAmount;
+        let interestAmount;
+
+        if (i === months && lastPayment > 0) {
+          // Last payment: remaining principal + interest
+          principalAmount = remainingPrincipal;
+          interestAmount = remainingInterest;
+        } else {
+          // Distribute payment proportionally
+          const interestRatio = remainingInterest / (remainingPrincipal + remainingInterest);
+          interestAmount = parseFloat((currentAmount * interestRatio).toFixed(2));
+          principalAmount = parseFloat((currentAmount - interestAmount).toFixed(2));
+        }
+
+        remainingPrincipal = parseFloat((remainingPrincipal - principalAmount).toFixed(2));
+        remainingInterest = parseFloat((remainingInterest - interestAmount).toFixed(2));
 
         calculatedInstallments.push({
           installmentNumber: i,
           dueDate: dueDate,
-          principal: principalPerInstallment,
-          interest: interestPerInstallment,
-          installment: installmentAmount,
-          remainingBalance: Math.max(0, remainingBalance),
+          principal: principalAmount,
+          interest: interestAmount,
+          installment: currentAmount,
+          remainingBalance: parseFloat((total - (i * paymentAmount) + (lastPayment > 0 && i === months ? paymentAmount - lastPayment : 0)).toFixed(2)),
           status: "PENDING",
           paidAmount: 0,
         });
@@ -320,12 +378,27 @@ const Loans = () => {
     );
     const totalAmount =
       (parseFloat(loanForm.amount.replace(/,/g, "")) || 0) + totalInterest;
-    const monthlyInstallment = installments[0]?.installment || 0;
+    const paymentAmount = parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
+    
+    // حساب عدد الأشهر الفعلي بناءً على نوع السلفة (كما في الباك اند)
+    const installmentsCount = installments.length;
+    let numberOfMonths = installmentsCount;
+    const loanType = loanForm.type;
+    
+    if (loanType === "DAILY") {
+      numberOfMonths = Math.ceil(installmentsCount / 30); // تحويل الأيام إلى أشهر
+    } else if (loanType === "WEEKLY") {
+      numberOfMonths = Math.ceil(installmentsCount / 4); // تحويل الأسابيع إلى أشهر
+    }
+    // إذا كان شهري، يبقى كما هو
 
     return {
-      monthlyInstallment,
+      paymentAmount, // مبلغ القسط المحدد من المستخدم
       totalInterest,
       totalAmount,
+      numberOfMonths,
+      installmentsCount,
+      loanType,
     };
   };
 
@@ -342,12 +415,13 @@ const Loans = () => {
         clientId: selectedClient.client.id,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
         interestRate: parseFloat(loanForm.interestRate),
-        durationMonths: parseInt(loanForm.durationMonths),
+        paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
         startDate: loanForm.startDate,
         repaymentDay: parseInt(loanForm.repaymentDay),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
+        kafeelId: selectedKafeel?.id || null,
       };
   
       console.log("Creating loan with data:", loanData);
@@ -361,6 +435,7 @@ const Loans = () => {
       setSavedLoanData({
         ...newLoan,
         client: selectedClient.client,
+        kafeel: selectedKafeel || null,
       });
       
       queryClient.invalidateQueries(["loans"]);
@@ -383,13 +458,14 @@ const Loans = () => {
 
   const resetLoanForm = () => {
     setSelectedClient(null);
+    setSelectedKafeel(null);
     setSelectedLoan(null);
     setSelectedBank(null);
     setSelectedPartner(null);
     setLoanForm({
       amount: "",
       interestRate: "",
-      durationMonths: "",
+      paymentAmount: "",
       type: "",
       startDate: new Date().toISOString().split("T")[0],
       repaymentDay: "10",
@@ -400,6 +476,7 @@ const Loans = () => {
     setContractsGenerated(0);
     setSavedLoanData(null);
     setIsCreatingLoan(false);
+    setIsAdditionalLoan(false);
   };
 
   const handleUpdateLoan = async () => {
@@ -412,12 +489,13 @@ const Loans = () => {
       const loanData = {
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
         interestRate: parseFloat(loanForm.interestRate),
-        durationMonths: parseInt(loanForm.durationMonths),
+        paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
         startDate: loanForm.startDate,
         repaymentDay: parseInt(loanForm.repaymentDay),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
+        kafeelId: selectedKafeel?.id || null,
       };
 
       await updateLoan(selectedLoan.id, loanData);
@@ -441,7 +519,22 @@ const Loans = () => {
       setIsEditMode(false);
 
       if (loan.client) {
-        setSelectedClient({ client: loan.client });
+        // محاولة تحميل بيانات العميل مع kafeels
+        try {
+          const clientsResponse = await getClients(1, loan.client.nationalId || loan.client.name);
+          const fullClientData = clientsResponse?.clients?.find(
+            (c) => c.client.id === loan.client.id
+          );
+          
+          if (fullClientData) {
+            setSelectedClient(fullClientData);
+          } else {
+            setSelectedClient({ client: loan.client, kafeels: [] });
+          }
+        } catch (error) {
+          console.error("Error loading client data:", error);
+          setSelectedClient({ client: loan.client, kafeels: [] });
+        }
       }
 
       if (loan.bankAccount) {
@@ -452,12 +545,13 @@ const Loans = () => {
         setSelectedPartner(loan.partner);
       }
 
-      const repaymentCount =
-        loan.type === "DAILY"
-          ? loan.durationMonths * 30
-          : loan.type === "WEEKLY"
-          ? loan.durationMonths * 4
-          : loan.durationMonths;
+      if (loan.kafeel) {
+        setSelectedKafeel(loan.kafeel);
+      } else {
+        setSelectedKafeel(null);
+      }
+
+      const repaymentCount = loan.repayments.length;
 
       const principalPerInstallment = loan.amount / repaymentCount;
       const interestPerInstallment = loan.interestAmount / repaymentCount;
@@ -484,7 +578,7 @@ const Loans = () => {
       setLoanForm({
         amount: loan.amount.toString(),
         interestRate: loan.interestRate.toString(),
-        durationMonths: loan.durationMonths.toString(),
+        paymentAmount: loan.paymentAmount?.toString() || "",
         type: loan.type,
         startDate: loan.startDate.split("T")[0],
         repaymentDay: loan.repaymentDay?.toString() || "10",
@@ -503,6 +597,36 @@ const Loans = () => {
     navigate(`/installments/${loan.id}`);
   };
 
+  // دالة للتعامل مع السلفة الإضافية
+  const handleCreateAdditionalLoan = async (client) => {
+    // إعادة تعيين النموذج
+    resetLoanForm();
+    
+    // تحميل بيانات العميل مع kafeels إذا لزم الأمر
+    try {
+      // البحث عن العميل في البيانات المحملة للحصول على kafeels
+      const clientsResponse = await getClients(1, client.nationalId || client.name);
+      const fullClientData = clientsResponse?.clients?.find(
+        (c) => c.client.id === client.id
+      );
+      
+      if (fullClientData) {
+        setSelectedClient(fullClientData);
+      } else {
+        // إذا لم يتم العثور عليه، استخدم البيانات المتاحة
+        setSelectedClient({ client, kafeels: [] });
+      }
+    } catch (error) {
+      console.error("Error loading client data:", error);
+      setSelectedClient({ client, kafeels: [] });
+    }
+    
+    setIsAdditionalLoan(true);
+    
+    // الانتقال لتاب إنشاء السلفة
+    setActiveTab(1);
+  };
+
   const handleEditLoan = () => {
     if (selectedLoan.status !== "PENDING") {
       notifyError("يمكن تعديل القروض في حالة 'قيد المراجعة' فقط");
@@ -513,7 +637,7 @@ const Loans = () => {
   };
 
   const handleInputChange = (field, value) => {
-    if (field === "amount") {
+    if (field === "amount" || field === "paymentAmount") {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
@@ -539,13 +663,13 @@ const Loans = () => {
     return selectedClient && 
            loanForm.amount && 
            loanForm.interestRate && 
-           loanForm.durationMonths && 
+           loanForm.paymentAmount && 
            loanForm.repaymentDay && 
            loanForm.type;
   };
 
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
-  const isReadOnlyMode = isViewMode && selectedLoan && selectedLoan.status !== "PENDING";
+  const isReadOnlyMode = isViewMode; // في وضع العرض، جميع الحقول تكون غير قابلة للتعديل
 
   return (
     <Box
@@ -595,16 +719,43 @@ const Loans = () => {
                       alignItems: "center",
                     }}
                   >
-                    <Typography color="text.secondary">القسط الشهري</Typography>
+                    <Typography color="text.secondary">
+                      {simulationSummary.loanType === "DAILY" ? "القسط اليومي" : 
+                       simulationSummary.loanType === "WEEKLY" ? "القسط الأسبوعي" : 
+                       "القسط الشهري"}
+                    </Typography>
                     <Typography
                       color="#0d40a5"
                       fontWeight="bold"
                       fontSize="20px"
                     >
                       {formatAmount(
-                        simulationSummary.monthlyInstallment.toFixed(2)
+                        simulationSummary.paymentAmount.toFixed(2)
                       )}{" "}
-                      ر.س
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography color="text.secondary">
+                      {simulationSummary.loanType === "DAILY" ? "عدد الأيام" : 
+                       simulationSummary.loanType === "WEEKLY" ? "عدد الأسابيع" : 
+                       "عدد الأشهر"}
+                    </Typography>
+                    <Typography
+                      color="#0d40a5"
+                      fontWeight="bold"
+                      fontSize="18px"
+                    >
+                      {simulationSummary.installmentsCount}{" "}
+                      {simulationSummary.loanType === "DAILY" ? "يوم" : 
+                       simulationSummary.loanType === "WEEKLY" ? "أسبوع" : 
+                       "شهر"}
                     </Typography>
                   </Box>
 
@@ -620,7 +771,6 @@ const Loans = () => {
                     </Typography>
                     <Typography color="#333" fontSize="16px">
                       {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
-                      ر.س
                     </Typography>
                   </Box>
 
@@ -636,7 +786,6 @@ const Loans = () => {
                     </Typography>
                     <Typography color="#333" fontSize="16px">
                       {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
-                      ر.س
                     </Typography>
                   </Box>
 
@@ -787,6 +936,7 @@ const Loans = () => {
                   label={
                     isViewMode ? "عرض تفاصيل السلفة" : 
                     isEditMode ? "تعديل السلفة" : 
+                    isAdditionalLoan ? "إنشاء سلفة إضافية" :
                     "إنشاء سلفة جديدة"
                   }
                   sx={{
@@ -807,6 +957,7 @@ const Loans = () => {
                 <LoansTable 
                   onViewDetails={handleViewLoanDetails} 
                   onViewInstallments={handleViewInstallments}
+                  onCreateAdditionalLoan={handleCreateAdditionalLoan}
                 />
               </Box>
             ) : (
@@ -827,7 +978,7 @@ const Loans = () => {
                     mb={3}
                     textAlign="center"
                   >
-                    معلومات العميل
+                    {isAdditionalLoan ? "العميل المحدد للسلفة الإضافية" : "معلومات العميل"}
                   </Typography>
                   <Grid container spacing={3} justifyContent="center">
                     <Grid item xs={12} md={8}>
@@ -840,7 +991,7 @@ const Loans = () => {
                         onChange={handleClientSelect}
                         onInputChange={handleSearchChange}
                         loading={isClientsLoading}
-                        disabled={isViewMode || isEditMode}
+                        disabled={isViewMode || isEditMode || isAdditionalLoan}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -864,7 +1015,7 @@ const Loans = () => {
                               "& .MuiOutlinedInput-root": {
                                 height: "56px",
                                 width: "350px",
-                                backgroundColor: (isViewMode || isEditMode)
+                                backgroundColor: (isViewMode || isEditMode || isAdditionalLoan)
                                   ? "#f5f5f5"
                                   : "#f9fafb",
                                 "&:hover fieldset": {
@@ -882,7 +1033,7 @@ const Loans = () => {
                       md={4}
                       sx={{ display: "flex", alignItems: "end" }}
                     >
-                      {!isViewMode && !isEditMode && (
+                      {!isViewMode && !isEditMode && !isAdditionalLoan && (
                         <Button
                           variant="text"
                           sx={{
@@ -896,6 +1047,38 @@ const Loans = () => {
                         </Button>
                       )}
                     </Grid>
+                    {selectedClient?.kafeels && selectedClient.kafeels.length > 0 && (
+                      <Grid item xs={12} md={8}>
+                        <Autocomplete
+                          options={selectedClient.kafeels || []}
+                          getOptionLabel={(option) =>
+                            `${option.name} - ${option.nationalId}`
+                          }
+                          value={selectedKafeel}
+                          onChange={handleKafeelSelect}
+                          disabled={isViewMode}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="اختر الكفيل"
+                              placeholder="ابحث بالاسم أو رقم الهوية"
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  height: "56px",
+                                  width: "350px",
+                                  backgroundColor: isViewMode
+                                    ? "#f5f5f5"
+                                    : "#f9fafb",
+                                  "&:hover fieldset": {
+                                    borderColor: "#0d40a5",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+                        />
+                      </Grid>
+                    )}
                   </Grid>
                 </Paper>
                 )}
@@ -942,7 +1125,7 @@ const Loans = () => {
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                            backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -968,7 +1151,7 @@ const Loans = () => {
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                            backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -977,12 +1160,15 @@ const Loans = () => {
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        type="number"
-                        label="مدة السلفة (بالأشهر)"
-                        value={loanForm.durationMonths}
+                        type="text"
+                        label="مبلغ القسط الشهري"
+                        value={formatAmount(loanForm.paymentAmount)}
                         onChange={(e) =>
-                          handleInputChange("durationMonths", e.target.value)
+                          handleInputChange("paymentAmount", e.target.value)
                         }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
                         disabled={isReadOnlyMode}
                         onKeyDown={(e) => {
                           if (e.key === "-" || e.key === "+") e.preventDefault();
@@ -991,30 +1177,7 @@ const Loans = () => {
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="عدد الأقساط"
-                        value={loanForm.durationMonths}
-                        onChange={(e) =>
-                          handleInputChange("durationMonths", e.target.value)
-                        }
-                        disabled={isReadOnlyMode}
-                        onKeyDown={(e) => {
-                          if (e.key === "-" || e.key === "+") e.preventDefault();
-                        }}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            height: "56px",
-                            width: "250px",
-                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                            backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -1035,7 +1198,7 @@ const Loans = () => {
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                            backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       >
@@ -1063,7 +1226,7 @@ const Loans = () => {
                           "& .MuiOutlinedInput-root": {
                             height: "56px",
                             width: "250px",
-                            backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                            backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                           },
                         }}
                       />
@@ -1103,7 +1266,7 @@ const Loans = () => {
                               "& .MuiOutlinedInput-root": {
                                 height: "56px",
                                 width: "250px",
-                                backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                               },
                             }}
                           />
@@ -1143,7 +1306,7 @@ const Loans = () => {
                               "& .MuiOutlinedInput-root": {
                                 height: "56px",
                                 width: "250px",
-                                backgroundColor: (isViewMode && !isEditMode) ? "#f5f5f5" : "#f9fafb",
+                                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                               },
                             }}
                           />
@@ -1152,6 +1315,91 @@ const Loans = () => {
                     </Grid>
                   </Grid>
                 </Paper>
+                )}
+
+                {/* Kafeel Information Section - Only show in view mode when kafeel exists */}
+                {isViewMode && selectedKafeel && (
+                  <Paper
+                    sx={{
+                      p: 4,
+                      mb: 3,
+                      borderRadius: 2,
+                      border: "1px solid #e5e7eb",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      color="#333"
+                      mb={3}
+                      textAlign="center"
+                    >
+                      معلومات الكفيل
+                    </Typography>
+
+                    <Grid container spacing={3} justifyContent="center">
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="اسم الكفيل"
+                          value={selectedKafeel.name || ""}
+                          disabled
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="رقم الهوية"
+                          value={selectedKafeel.nationalId || ""}
+                          disabled
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="تاريخ الميلاد"
+                          value={
+                            selectedKafeel.birthDate
+                              ? new Date(selectedKafeel.birthDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : ""
+                          }
+                          disabled
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
                 )}
               </Box>
             )}
@@ -1174,6 +1422,7 @@ const Loans = () => {
             ref={debtAckGeneratorRef}
             loanData={savedLoanData}
             clientData={selectedClient?.client}
+            kafeelData={selectedKafeel}
             templateContent={debtAckTemplate}
             onContractGenerated={handleContractGenerated}
             contractType="DEBT_ACKNOWLEDGMENT"
@@ -1184,6 +1433,7 @@ const Loans = () => {
             ref={promissoryNoteGeneratorRef}
             loanData={savedLoanData}
             clientData={selectedClient?.client}
+            kafeelData={selectedKafeel}
             templateContent={promissoryNoteTemplate}
             onContractGenerated={handleContractGenerated}
             contractType="PROMISSORY_NOTE"

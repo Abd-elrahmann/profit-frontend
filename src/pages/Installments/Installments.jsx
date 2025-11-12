@@ -390,7 +390,7 @@ const Installments = () => {
 
   const allInstallmentsPaid = () => {
     return sortedInstallments.every(
-      (installment) => installment.status === "PAID"
+      (installment) => installment.status === "PAID" || installment.status === "EARLY_PAID"
     );
   };
 
@@ -402,7 +402,7 @@ const Installments = () => {
   const hasEarlyPayment = () => {
     return sortedInstallments.some(
       (installment) =>
-        installment.status === "PENDING" && installment.earlyPaid === true
+        installment.status === "PENDING" && installment.status === "EARLY_PAID"
     );
   };
   // Check if actions should be disabled
@@ -692,7 +692,7 @@ const Installments = () => {
                   مبلغ السلفة
                 </Typography>
                 <Typography variant="h6" fontWeight="bold" color="warning.main">
-                  {loanData?.amount?.toLocaleString()} ر.س
+                  {loanData?.amount?.toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={4} textAlign="center">
@@ -700,7 +700,7 @@ const Installments = () => {
                   إجمالي الفائدة
                 </Typography>
                 <Typography variant="h6" fontWeight="bold" color="error.main">
-                  {loanData?.interestAmount?.toLocaleString()} ر.س
+                  {loanData?.interestAmount?.toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={4} textAlign="center">
@@ -708,7 +708,7 @@ const Installments = () => {
                   المبلغ الإجمالي
                 </Typography>
                 <Typography variant="h6" fontWeight="bold" color="success.main">
-                  {loanData?.totalAmount?.toLocaleString()} ر.س
+                  {loanData?.totalAmount?.toLocaleString()}
                 </Typography>
               </Grid>
             </Grid>
@@ -816,7 +816,7 @@ const Installments = () => {
                         align="center"
                         sx={{ fontWeight: "bold" }}
                       >
-                        {installment.amount?.toFixed(2)} ر.س
+                        {installment.amount?.toFixed(2)}
                       </StyledTableCell>
                       <StyledTableCell
                         align="center"
@@ -826,8 +826,8 @@ const Installments = () => {
                         }}
                       >
                         {installment.paidAmount > 0
-                          ? `${installment.paidAmount.toFixed(2)} ر.س`
-                          : "0.00 ر.س"}
+                          ? `${installment.paidAmount.toFixed(2)}`
+                          : "0.00"}
                       </StyledTableCell>
                       <StyledTableCell
                         align="center"
@@ -836,7 +836,7 @@ const Installments = () => {
                           fontWeight: "bold",
                         }}
                       >
-                        {installment.remaining?.toFixed(2) || "0.00"} ر.س
+                        {installment.remaining?.toFixed(2) || "0.00"}
                       </StyledTableCell>
                       <StyledTableCell align="center">
                         <Chip
@@ -921,7 +921,7 @@ const Installments = () => {
 
                 {selectedInstallment && (
                   <Typography variant="body2" color="text.secondary" mb={2}>
-                    المبلغ: {selectedInstallment.amount?.toFixed(2)} ر.س
+                    المبلغ: {selectedInstallment.amount?.toFixed(2)}
                   </Typography>
                 )}
 
@@ -1149,7 +1149,7 @@ const Installments = () => {
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>
             القسط: #{selectedActionInstallment?.count} - المبلغ:{" "}
-            {selectedActionInstallment?.amount?.toFixed(2)} ر.س
+            {selectedActionInstallment?.amount?.toFixed(2)}
           </Typography>
           <TextField
             fullWidth
@@ -1167,7 +1167,7 @@ const Installments = () => {
             }}
             helperText={`الحد الأقصى: ${selectedActionInstallment?.remaining?.toFixed(
               2
-            )} ر.س`}
+            )}`}
           />
         </DialogContent>
         <DialogActions
@@ -1273,7 +1273,7 @@ const Installments = () => {
                     {dayjs(installment.dueDate).format("DD/MM/YYYY")}
                   </Typography>
                   <Typography variant="body2" fontWeight="bold">
-                    {installment.amount?.toFixed(2)} ر.س
+                    {installment.amount?.toFixed(2)}
                   </Typography>
                 </Box>
               ))}
@@ -1291,7 +1291,6 @@ const Installments = () => {
                   .filter((inst) => inst.status === "PENDING")
                   .reduce((sum, inst) => sum + (inst.amount || 0), 0)
                   .toLocaleString()}{" "}
-                ر.س
               </Typography>
             </Box>
           </Box>
@@ -1327,8 +1326,7 @@ const Installments = () => {
                     .filter((inst) => inst.status === "PENDING")
                     .reduce((sum, inst) => sum + (inst.amount || 0), 0) -
                   parseFloat(discountAmount || 0)
-                ).toLocaleString()}{" "}
-                ر.س
+                ).toLocaleString()}{" "}  
               </Typography>
             </Box>
           )}

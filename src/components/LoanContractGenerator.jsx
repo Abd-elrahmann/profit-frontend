@@ -158,6 +158,7 @@ const LoanContractGenerator = React.forwardRef(
     {
       loanData,
       clientData,
+      kafeelData,
       templateContent,
       onContractGenerated,
       contractType = "DEBT_ACKNOWLEDGMENT",
@@ -214,19 +215,61 @@ const LoanContractGenerator = React.forwardRef(
         try {
           setIsGenerating(true);
 
-          // إنشاء عنصر ثابت في الصفحة
+          // إنشاء عنصر ثابت في الصفحة بنفس التنسيقات المستخدمة في البريفيو بالضبط
+          // البريفيو يستخدم Paper مع padding: 4 (16px) و margin: 3 (24px)
           const previewContainer = document.createElement("div");
           previewContainer.id = `contract-preview-${Date.now()}`;
+          previewContainer.style.position = "absolute";
+          previewContainer.style.left = "-9999px";
+          previewContainer.style.top = "0";
           previewContainer.style.width = "210mm";
           previewContainer.style.minHeight = "297mm";
+          previewContainer.style.backgroundColor = "#ffffff";
+          previewContainer.style.boxSizing = "border-box";
+          
+          // Extract styles from content if they exist
+          const styleMatch = contentToUse.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+          const extractedStyles = styleMatch ? styleMatch[1] : "";
+          const contentWithoutStyles = contentToUse.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+
+          // نسخ نفس التنسيقات من البريفيو: Paper padding: 4 = 16px
+          // إضافة نفس CSS styles المستخدمة في البريفيو + styles من القالب
           previewContainer.innerHTML = `
         <div style="
-          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
-          padding: 20mm;
+          font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
+          padding: 16px;
           background: white;
           direction: rtl;
+          width: 100%;
+          box-sizing: border-box;
+          line-height: 1.8;
         ">
-          ${contentToUse}
+          <style>
+            ${extractedStyles}
+            * {
+              font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif !important;
+              line-height: 1.8 !important;
+            }
+            h1, h2, h3 {
+              text-align: center !important;
+              color: #1976d2 !important;
+              margin-bottom: 20px !important;
+            }
+            p {
+              margin-bottom: 15px !important;
+              text-align: justify !important;
+            }
+            strong {
+              color: #1976d2 !important;
+              font-weight: bold !important;
+            }
+          </style>
+          <div style="
+            font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
+            line-height: 1.8;
+          ">
+            ${contentWithoutStyles}
+          </div>
         </div>
       `;
           document.body.appendChild(previewContainer);
@@ -295,8 +338,9 @@ const LoanContractGenerator = React.forwardRef(
     );
 
     const generateContract = useCallback(
-      async (generatePdf = autoGenerate, customLoanData = null) => {
+      async (generatePdf = autoGenerate, customLoanData = null, customKafeelData = null) => {
         const loanDataToUse = customLoanData || loanData;
+        const kafeelDataToUse = customKafeelData || kafeelData;
 
         if (!loanDataToUse || !templateContent) {
           console.error("Missing data:", {
@@ -310,6 +354,7 @@ const LoanContractGenerator = React.forwardRef(
         try {
           console.log("Generating contract:", contractType);
           console.log("Loan Data to use:", loanDataToUse);
+          console.log("Kafeel Data to use:", kafeelDataToUse);
 
           const { gregorianDate, hijriDate } = getCurrentDates();
           const finalDate = `${hijriDate}\n${gregorianDate}`;
@@ -350,11 +395,18 @@ const LoanContractGenerator = React.forwardRef(
 
             .replace(/{{رقم_هوية_الدائن}}/g, "1234567890")
             .replace(/{{رقم_هوية_المدين}}/g, clientData.nationalId || "")
-            .replace(/{{رقم_هوية_الكفيل}}/g, clientData.nationalId || "")
+            .replace(/{{رقم_هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "")
             .replace(/{{هوية_الدائن}}/g, "1234567890")
             .replace(/{{هوية_المدين}}/g, clientData.nationalId || "")
-            .replace(/{{اسم_الكفيل}}/g, clientData.name || "")
-            .replace(/{{هوية_الكفيل}}/g, clientData.nationalId || "");
+            .replace(/{{اسم_الكفيل}}/g, kafeelDataToUse?.name || "")
+            .replace(/{{هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "")
+            .replace(/{{تاريخ_ميلاد_الكفيل}}/g, kafeelDataToUse?.birthDate 
+              ? new Date(kafeelDataToUse.birthDate).toLocaleDateString('ar-SA', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })
+              : "");
 
           console.log("Filled Template generated successfully");
           console.log("Filled Template Content:", filledTemplate);
@@ -385,6 +437,7 @@ const LoanContractGenerator = React.forwardRef(
       [
         loanData,
         clientData,
+        kafeelData,
         templateContent,
         contractType,
         autoGenerate,
@@ -400,6 +453,7 @@ const LoanContractGenerator = React.forwardRef(
       autoGenerate,
       loanData,
       clientData,
+      kafeelData,
       templateContent,
       contractType,
       generateContract,

@@ -174,9 +174,12 @@ const LogsToolbar = ({
             slotProps={{
               textField: {
                 size: 'small',
+                InputLabelProps: {
+                  shrink: true,
+                },
                 sx: { 
                   width: '250px',
-                        }
+                }
               }
             }}
             format="DD/MM/YYYY"
@@ -189,6 +192,9 @@ const LogsToolbar = ({
             slotProps={{
               textField: {
                 size: 'small',
+                InputLabelProps: {
+                  shrink: true,
+                },
                 sx: {
                   width: '250px',
                 }

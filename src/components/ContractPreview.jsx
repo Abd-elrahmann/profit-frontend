@@ -17,7 +17,7 @@ const ContractPreview = ({
   open, 
   onClose, 
   contractHtml, 
-  onGeneratePDF, 
+  onGeneratePDF,
   loading = false,
   contractTitle = "معاينة العقد"
 }) => {

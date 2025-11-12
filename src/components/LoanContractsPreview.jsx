@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,7 +13,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
+import { Close as CloseIcon, Download } from '@mui/icons-material';
 
 const LoanContractsPreview = ({ 
   open, 
@@ -26,69 +26,91 @@ const LoanContractsPreview = ({
   loanAmount = 0
 }) => {
   const [activeTab, setActiveTab] = React.useState(0);
+  const styleRef = useRef(null);
+
+  // Extract and inject styles from HTML content
+  useEffect(() => {
+    if (!open) {
+      // Cleanup when dialog closes
+      if (styleRef.current && styleRef.current.parentNode) {
+        styleRef.current.parentNode.removeChild(styleRef.current);
+        styleRef.current = null;
+      }
+      return;
+    }
+
+    const currentHtml = activeTab === 0 ? debtAckHtml : promissoryNoteHtml;
+    if (!currentHtml) return;
+
+    // Extract styles from HTML
+    const styleMatch = currentHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+    
+    if (styleMatch && styleMatch[1]) {
+      const styles = styleMatch[1];
+      
+      // Remove existing style element if any
+      const existingStyle = document.getElementById('contract-preview-styles');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+      
+      // Create new style element
+      const styleElement = document.createElement('style');
+      styleElement.id = 'contract-preview-styles';
+      styleElement.textContent = styles;
+      document.head.appendChild(styleElement);
+      
+      styleRef.current = styleElement;
+      
+      console.log("Styles injected:", {
+        stylesLength: styles.length,
+        stylesPreview: styles.substring(0, 100)
+      });
+    }
+
+    // Cleanup on unmount or when dialog closes
+    return () => {
+      if (styleRef.current && styleRef.current.parentNode) {
+        styleRef.current.parentNode.removeChild(styleRef.current);
+        styleRef.current = null;
+      }
+    };
+  }, [open, activeTab, debtAckHtml, promissoryNoteHtml]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const handlePrint = () => {
-    const contractElement = document.getElementById(`contract-tab-${activeTab}`);
-    if (contractElement) {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>${activeTab === 0 ? ' إقرار الدين' : 'سند الأمر'}</title>
-            <style>
-              body { 
-                font-family: "Noto Sans Arabic", "Cairo", sans-serif;
-                margin: 0;
-                padding: 20px;
-                direction: rtl;
-              }
-              .contract-content { 
-                max-width: 900px; 
-                margin: 0 auto; 
-                border: 1px solid #ddd;
-                padding: 30px;
-                border-radius: 12px;
-                background: #fff;
-              }
-              @media print {
-                body { padding: 0; }
-                .contract-content { 
-                  border: none; 
-                  box-shadow: none;
-                  padding: 15px;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="contract-content">
-              ${contractElement.innerHTML}
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    }
+  // Extract styles and prepare HTML for display
+  const prepareContractHtml = (html, contractName) => {
+    if (!html) return "";
+    
+    // Check if HTML has styles
+    const hasStyles = /<style[^>]*>/i.test(html);
+    
+    // Remove style tags from HTML (styles will be injected separately via useEffect)
+    const htmlWithoutStyles = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+    
+    console.log(`Preparing ${contractName} HTML:`, {
+      originalLength: html.length,
+      hasStyles,
+      finalLength: htmlWithoutStyles.length,
+      htmlPreview: htmlWithoutStyles.substring(0, 200)
+    });
+    
+    // Return HTML without style tags (styles are injected via useEffect)
+    return htmlWithoutStyles;
   };
 
   const contracts = [
     { 
       name: 'إقرار الدين', 
-      html: debtAckHtml,
+      html: prepareContractHtml(debtAckHtml, 'debtAck'),
       id: 'debt-acknowledgment'
     },
     { 
       name: 'سند الأمر', 
-      html: promissoryNoteHtml,
+      html: prepareContractHtml(promissoryNoteHtml, 'promissoryNote'),
       id: 'promissory-note'
     }
   ];
@@ -127,7 +149,7 @@ const LoanContractsPreview = ({
           </Typography>
           {clientName && (
             <Typography variant="body2" color="text.secondary">
-              العميل: {clientName} - المبلغ: {loanAmount.toLocaleString()} ر.س
+              العميل: {clientName} - المبلغ: {loanAmount.toLocaleString()}
             </Typography>
           )}
         </Box>
@@ -206,6 +228,7 @@ const LoanContractsPreview = ({
             >
               {contract.html ? (
                 <Box
+                  id={`contract-preview-content-${contract.id}`}
                   dangerouslySetInnerHTML={{ __html: contract.html }}
                   sx={{
                     '& *': {
@@ -278,38 +301,6 @@ const LoanContractsPreview = ({
           }}
         >
           إغلاق
-        </Button>
-        
-        <Button
-          variant="outlined"
-          startIcon={<Print sx={{marginLeft: '10px'}} />}
-          onClick={handlePrint}
-          disabled={loading || !contracts[activeTab]?.html}
-          sx={{ 
-            minWidth: '120px',
-            borderColor: '#1976d2',
-            color: '#1976d2',
-            '&:hover': {
-              borderColor: '#1565c0',
-              bgcolor: '#e3f2fd'
-            }
-          }}
-        >
-          طباعة
-        </Button>
-        
-        <Button
-          variant="contained"
-          startIcon={<Download sx={{marginLeft: '10px'}} />}
-          onClick={() => onSaveContracts(contracts[activeTab].id)}
-          disabled={loading || !contracts[activeTab]?.html}
-          sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "#0b3589" },
-            minWidth: '140px'
-          }}
-        >
-          {loading ? 'جاري الحفظ...' : 'حفظ العقد'}
         </Button>
 
         <Button

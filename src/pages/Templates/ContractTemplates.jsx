@@ -14,7 +14,12 @@ import {
   CardContent,
   Divider,
   CircularProgress,
+  TextField,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SaveIcon from "@mui/icons-material/Save";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import RestoreIcon from "@mui/icons-material/Restore";
@@ -41,9 +46,57 @@ export default function ContractTemplates() {
     paymentProof: "",
     settlement: "",
   });
+  const [templateStyles, setTemplateStyles] = useState({
+    mudarabah: "",
+    promissoryNote: "",
+    debtAcknowledgment: "",
+    receiptVoucher: "",
+    paymentVoucher: "",
+    paymentProof: "",
+    settlement: "",
+  });
+  const [templateVariables, setTemplateVariables] = useState({
+    mudarabah: [],
+    promissoryNote: [],
+    debtAcknowledgment: [],
+    receiptVoucher: [],
+    paymentVoucher: [],
+    paymentProof: [],
+    settlement: [],
+  });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { permissions } = usePermissions();
+
+  // Extract CSS from HTML template
+  const extractStyles = (htmlContent) => {
+    if (!htmlContent) return "";
+    const styleMatch = htmlContent.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+    return styleMatch ? styleMatch[1].trim() : "";
+  };
+
+  // Extract variables from template content
+  const extractVariables = (content) => {
+    if (!content) return [];
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const variables = new Set();
+    let match;
+    
+    while ((match = variableRegex.exec(content)) !== null) {
+      variables.add(match[1].trim());
+    }
+    
+    return Array.from(variables).map(name => ({
+      name: `{{${name}}}`,
+      description: `متغير ${name}`
+    }));
+  };
+
+  // Remove style tags from HTML content
+  const removeStylesFromContent = (htmlContent) => {
+    if (!htmlContent) return "";
+    return htmlContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+  };
   // Map tab values to API template names
   const templateNameMap = React.useMemo(() => ({
     "mudarabah": "MUDARABAH",
@@ -55,100 +108,7 @@ export default function ContractTemplates() {
     "settlement": "SETTLEMENT",
   }), []);
 
-  // Variables for each contract type
-  const contractVariables = {
-    mudarabah: [
-      { name: "{{تاريخ_العقد_هجري}}", description: "تاريخ العقد بالتقويم الهجري" },
-      { name: "{{تاريخ_العقد_ميلادي}}", description: "تاريخ العقد بالتقويم الميلادي" },
-      { name: "{{مدينة_العقد}}", description: "المدينة التي تم إبرام العقد فيها" },
-      { name: "{{اسم_رب_المال}}", description: "اسم رب المال (الطرف الأول)" },
-      { name: "{{هوية_رب_المال}}", description: "رقم هوية رب المال" },
-      { name: "{{عنوان_رب_المال}}", description: "عنوان رب المال" },
-      { name: "{{اسم_المضارب_1}}", description: "اسم المضارب الأول" },
-      { name: "{{هوية_المضارب_1}}", description: "رقم هوية المضارب الأول" },
-      { name: "{{عنوان_المضارب_1}}", description: "عنوان المضارب الأول" },
-      { name: "{{اسم_المضارب_2}}", description: "اسم المضارب الثاني" },
-      { name: "{{هوية_المضارب_2}}", description: "رقم هوية المضارب الثاني" },
-      { name: "{{عنوان_المضارب_2}}", description: "عنوان المضارب الثاني" },
-      { name: "{{رأس_المال}}", description: "مبلغ رأس المال بالأرقام" },
-      { name: "{{رأس_المال_كتابة}}", description: "مبلغ رأس المال مكتوباً بالحروف" },
-    ],
-    "promissory-note": [
-      { name: "{{رقم_السند}}", description: "رقم السند المرجعي" },
-      { name: "{{تاريخ_الانشاء}}", description: "تاريخ إنشاء السند" },
-      { name: "{{تاريخ_الاستحقاق}}", description: "تاريخ استحقاق السند" },
-      { name: "{{مدينة_الاصدار}}", description: "مدينة إصدار السند" },
-      { name: "{{مدينة_الوفاء}}", description: "مدينة الوفاء بالسند" },
-      { name: "{{سبب_انشاء_السند}}", description: "سبب إنشاء السند" },
-      { name: "{{قيمة_السند_رقما}}", description: "قيمة السند بالأرقام" },
-      { name: "{{قيمة_السند_كتابة}}", description: "قيمة السند مكتوبة بالحروف" },
-      { name: "{{اسم_الدائن}}", description: "اسم الدائن" },
-      { name: "{{هوية_الدائن}}", description: "رقم هوية الدائن" },
-      { name: "{{اسم_المدين}}", description: "اسم المدين" },
-      { name: "{{هوية_المدين}}", description: "رقم هوية المدين" },
-      { name: "{{اسم_الكفيل}}", description: "اسم الكفيل" },
-      { name: "{{هوية_الكفيل}}", description: "رقم هوية الكفيل" },
-    ],
-    "debt-acknowledgment": [
-      { name: "{{رقم_الإقرار}}", description: "رقم الإقرار المرجعي" },
-      { name: "{{اسم_العميل}}", description: "اسم العميل (المدين)" },
-      { name: "{{رقم_هوية_العميل}}", description: "رقم هوية العميل" },
-      { name: "{{عنوان_العميل}}", description: "عنوان العميل" },
-      { name: "{{اسم_الدائن}}", description: "اسم الدائن" },
-      { name: "{{المبلغ_رقما}}", description: "المبلغ بالأرقام" },
-      { name: "{{المبلغ_كتابة}}", description: "المبلغ مكتوباً بالحروف" },
-      { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
-      { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
-    ],
-    "receipt-voucher": [
-      { name: "{{رقم_السند}}", description: "رقم سند القبض" },
-      { name: "{{اسم_المستلم}}", description: "اسم الشخص المستلم للمبلغ" },
-      { name: "{{هوية_المستلم}}", description: "رقم هوية المستلم" },
-      { name: "{{المبلغ_رقما}}", description: "المبلغ المستلم بالأرقام" },
-      { name: "{{المبلغ_كتابة}}", description: "المبلغ المستلم مكتوباً بالحروف" },
-      { name: "{{سبب_الاستلام}}", description: "سبب استلام المبلغ" },
-      { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
-      { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
-      { name: "{{اسم_المسلم}}", description: "اسم الشخص المسلم للمبلغ" },
-    ],
-    "payment-voucher": [
-      { name: "{{رقم_السند}}", description: "رقم سند الصرف" },
-      { name: "{{اسم_المستلم}}", description: "اسم الشخص المستلم للمبلغ" },
-      { name: "{{هوية_المستلم}}", description: "رقم هوية المستلم" },
-      { name: "{{المبلغ_رقما}}", description: "المبلغ المصروف بالأرقام" },
-      { name: "{{المبلغ_كتابة}}", description: "المبلغ المصروف مكتوباً بالحروف" },
-      { name: "{{سبب_الصرف}}", description: "سبب صرف المبلغ" },
-      { name: "{{طريقة_الصرف}}", description: "طريقة الصرف (نقداً، شيك، تحويل)" },
-      { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
-      { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
-      { name: "{{اسم_المسلم}}", description: "اسم الشخص المسلم للمبلغ" },
-      { name: "{{ملاحظات}}", description: "ملاحظات إضافية" },
-    ],
-    "payment-proof": [
-      { name: "{{رقم_الايصال}}", description: "رقم الإيصال المرجعي" },
-      { name: "{{اسم_العميل}}", description: "اسم العميل" },
-      { name: "{{رقم_هوية_العميل}}", description: "رقم هوية العميل" },
-      { name: "{{رقم_القرض}}", description: "رقم القرض" },
-      { name: "{{رقم_القسط}}", description: "رقم القسط" },
-      { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
-      { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
-      { name: "{{المبلغ_رقما}}", description: "المبلغ المدفوع بالأرقام" },
-      { name: "{{المبلغ_كتابة}}", description: "المبلغ المدفوع مكتوباً بالحروف" },
-      { name: "{{اسم_الموظف}}", description: "اسم الموظف المختص" }
-    ],
-    "settlement": [
-    { name: "{{اسم_العميل}}", description: "اسم العميل" },
-    { name: "{{رقم_هوية_العميل}}", description: "رقم هوية العميل" },
-    { name: "{{رقم_القسط}}", description: "رقم القسط" },
-    { name: "{{رقم_السند}}", description: "رقم السند" },
-    { name: "{{المبلغ_رقما}}", description: "المبلغ رقماً" },
-    { name: "{{المبلغ_كتابة}}", description: "المبلغ كتابة" },
-    { name: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري" },
-    { name: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي" },
-    { name: "{{اسم_الموظف}}", description: "اسم الموظف المختص" }
-    ]
-  };
-
+ 
   // Get default template content
   const getDefaultTemplate = React.useCallback((templateName) => {
     switch (templateName) {
@@ -177,14 +137,41 @@ export default function ContractTemplates() {
       const response = await Api.get(`/api/templates/${templateName}`);
       // If API returns content, use it, otherwise use default frontend template
       if (response.data.content && response.data.content.trim() !== "") {
-        return response.data.content;
+        // Extract styles from content if styles field is empty in API
+        const apiStyles = response.data.styles || "";
+        const extractedStylesFromContent = extractStyles(response.data.content);
+        const finalStyles = (apiStyles && apiStyles.trim() !== "") 
+          ? apiStyles 
+          : extractedStylesFromContent;
+        
+        console.log(`Fetched template ${templateName} from API:`, {
+          hasApiStyles: !!(apiStyles && apiStyles.trim() !== ""),
+          hasContentStyles: !!(extractedStylesFromContent && extractedStylesFromContent.trim() !== ""),
+          finalStylesLength: finalStyles?.length || 0
+        });
+        
+        return {
+          content: response.data.content,
+          styles: finalStyles,
+          variables: response.data.variables || []
+        };
       } else {
         console.log(`Template ${templateName} found in API but empty, using frontend default`);
-        return getDefaultTemplate(templateName);
+        const defaultContent = getDefaultTemplate(templateName);
+        return {
+          content: defaultContent,
+          styles: extractStyles(defaultContent),
+          variables: extractVariables(defaultContent)
+        };
       }
     } catch {
       console.log(`Template ${templateName} not found in API, using frontend default`);
-      return getDefaultTemplate(templateName);
+      const defaultContent = getDefaultTemplate(templateName);
+      return {
+        content: defaultContent,
+        styles: extractStyles(defaultContent),
+        variables: extractVariables(defaultContent)
+      };
     }
   }, [getDefaultTemplate]);
 
@@ -201,14 +188,16 @@ export default function ContractTemplates() {
     try {
       const templatePromises = Object.keys(templateNameMap).map(async (key) => {
         const templateName = templateNameMap[key];
-        const content = await fetchTemplateFromAPI(templateName);
-        return { key, content };
+        const templateData = await fetchTemplateFromAPI(templateName);
+        return { key, ...templateData };
       });
 
       const results = await Promise.all(templatePromises);
       const newTemplates = {};
+      const newStyles = {};
+      const newVariables = {};
       
-      results.forEach(({ key, content }) => {
+      results.forEach(({ key, content, styles, variables }) => {
         // Map tab keys to template state keys
         const stateKey = key === "promissory-note" ? "promissoryNote" :
                         key === "debt-acknowledgment" ? "debtAcknowledgment" :
@@ -217,112 +206,263 @@ export default function ContractTemplates() {
                         key === "payment-proof" ? "paymentProof" :
                         key === "settlement" ? "settlement" :
                         key;
-        newTemplates[stateKey] = content;
+        
+        // Extract styles BEFORE removing them from content
+        // First try to use styles from API, then try to extract from content, then use empty string
+        let finalStyles = "";
+        if (styles && styles.trim() !== "") {
+          finalStyles = styles;
+        } else {
+          // Try to extract from content (in case styles are still in content)
+          const extractedFromContent = extractStyles(content);
+          if (extractedFromContent && extractedFromContent.trim() !== "") {
+            finalStyles = extractedFromContent;
+          } else {
+            // If no styles found, try to get from default template
+            const templateName = templateNameMap[key];
+            const defaultContent = getDefaultTemplate(templateName);
+            const defaultStyles = extractStyles(defaultContent);
+            finalStyles = defaultStyles || "";
+          }
+        }
+        
+        const contentWithoutStyles = removeStylesFromContent(content);
+        
+        console.log(`Loading template ${key}:`, {
+          stylesFromAPI: styles,
+          extractedFromContent: extractStyles(content),
+          finalStyles: finalStyles,
+          finalStylesLength: finalStyles?.length || 0
+        });
+        
+        newTemplates[stateKey] = contentWithoutStyles;
+        newStyles[stateKey] = finalStyles;
+        newVariables[stateKey] = variables && variables.length > 0 ? variables : extractVariables(content);
       });
 
       setTemplates(newTemplates);
+      setTemplateStyles(newStyles);
+      setTemplateVariables(newVariables);
     } catch (error) {
       notifyError("خطأ في تحميل القوالب");
       handleApiError(error);
     } finally {
       setLoading(false);
     }
-  }, [templateNameMap, fetchTemplateFromAPI]);
+  }, [templateNameMap, fetchTemplateFromAPI, getDefaultTemplate]);
 
   // Render variables list component
-  const VariablesList = ({ variables }) => (
-    <Card sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
-      <CardContent>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#2d3748' }}>
-          المتغيرات المتاحة
-        </Typography>
-          {/* Action Buttons */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {permissions.includes("contractTemplates_Update") && (
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<RestoreIcon sx={{marginLeft:'10px'}} />}
-              sx={{ 
-                px: 3, 
-                py: 1.2, 
-                mt: 2, 
-                fontWeight: "bold",
-                borderRadius: '10px',
-                '&:hover': {
-                  backgroundColor: '#f5f5f5'
-                }
-              }}
-              onClick={handleResetToDefault}
-            >
-              إعادة تعيين افتراضي
-            </Button>
+  const VariablesList = ({ variables, onVariablesChange }) => {
+    const [newVarName, setNewVarName] = useState("");
+    const [newVarDesc, setNewVarDesc] = useState("");
+    
+    const handleAddVariable = () => {
+      if (newVarName.trim() && newVarDesc.trim()) {
+        // Convert spaces to underscores and remove {{ }} if present
+        let varNameText = newVarName.trim();
+        
+        // Remove {{ }} if user entered them
+        if (varNameText.startsWith("{{") && varNameText.endsWith("}}")) {
+          varNameText = varNameText.slice(2, -2).trim();
+        }
+        
+        // Replace spaces with underscores
+        varNameText = varNameText.replace(/\s+/g, '_');
+        
+        // Format as {{variable_name}}
+        const varName = `{{${varNameText}}}`;
+        
+        const updatedVars = [...variables, { name: varName, description: newVarDesc.trim() }];
+        onVariablesChange(updatedVars);
+        setNewVarName("");
+        setNewVarDesc("");
+        notifySuccess("تم إضافة المتغير بنجاح");
+      }
+    };
+    
+    const handleDeleteVariable = (index) => {
+      const updatedVars = variables.filter((_, i) => i !== index);
+      onVariablesChange(updatedVars);
+      notifySuccess("تم حذف المتغير بنجاح");
+    };
+    
+    return (
+      <Card sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
+        <CardContent>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#2d3748' }}>
+              المتغيرات المتاحة
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
+            انقر على أي متغير لنسخه واستخدامه في القالب
+          </Typography>
+          
+          {/* Add new variable */}
+          {permissions.includes("templates_Update") && (
+            <Box sx={{ mb: 2, p: 2, bgcolor: '#f8f9fc', borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                إضافة متغير جديد
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="اسم المتغير"
+                    placeholder="رقم هاتف العميل أو رقم_هاتف_العميل"
+                    value={newVarName}
+                    onChange={(e) => setNewVarName(e.target.value)}
+                    helperText="سيتم تحويل المسافات إلى underscores تلقائياً"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                       width: '300px',
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={5}>
+                  <TextField
+                    size="small"
+                    label="الوصف"
+                    placeholder="اسم العميل"
+                    value={newVarDesc}
+                    onChange={(e) => setNewVarDesc(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                       width: '300px',
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={handleAddVariable}
+                    disabled={!newVarName.trim() || !newVarDesc.trim()}
+                    sx={{
+                      width: '100px',
+                    }}
+                  >
+                    إضافة
+                  </Button>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+          
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={1}>
+            {variables.map((variable, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Chip
+                  label={variable.name}
+                  onClick={() => copyToClipboard(variable.name)}
+                  onDelete={permissions.includes("templates_Update") ? () => handleDeleteVariable(index) : undefined}
+                  icon={<ContentCopyIcon sx={{ fontSize: '16px !important' }} />}
+                  sx={{
+                    width: '100%',
+                    justifyContent: 'flex-start',
+                    mb: 1,
+                    px: 1,
+                    py: 2,
+                    height: 'auto',
+                    minHeight: '40px',
+                    backgroundColor: '#f8f9fc',
+                    border: '1px solid #e5e7eb',
+                    '&:hover': {
+                      backgroundColor: '#e0e7ff',
+                      borderColor: '#3b82f6',
+                    },
+                    '& .MuiChip-label': {
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      whiteSpace: 'normal',
+                      textAlign: 'right',
+                      direction: 'rtl',
+                    }
+                  }}
+                  title={variable.description}
+                />
+              </Grid>
+            ))}
+            {variables.length === 0 && (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                  لا توجد متغيرات. أضف متغيرات جديدة أو سيتم استخراجها تلقائياً من القالب.
+                </Typography>
+              </Grid>
             )}
-            {permissions.includes("contractTemplates_Add") && (
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{marginLeft:'10px'}} />}
-              disabled={saving}
-              sx={{ 
-                px: 4, 
-                py: 1.2, 
-                mt: 2, 
-                fontWeight: "bold",
-                borderRadius: '10px',
-                '&:hover': {
-                  backgroundColor: '#1565c0'
-                }
-              }}
-              onClick={handleSave}
-            >
-              {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-            </Button>
+          </Grid>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Helper function to render template editor
+  const renderTemplateEditor = (tabKey, stateKey, placeholder) => {
+    const currentVariables = templateVariables[stateKey] || [];
+    const currentStyles = templateStyles[stateKey] || "";
+    
+    return (
+      <>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h5" fontWeight="bold">محرر القالب</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {permissions.includes("templates_Update") && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<RestoreIcon sx={{marginLeft: '10px'}} />}
+                onClick={handleResetToDefault}
+              >
+                إعادة تعيين
+              </Button>
+            )}
+            {permissions.includes("templates_Add") && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{marginLeft: '10px'}} />}
+                disabled={saving}
+                onClick={handleSave}
+              >
+                {saving ? 'جاري الحفظ...' : 'حفظ'}
+              </Button>
             )}
           </Box>
         </Box>
-        <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
-          انقر على أي متغير لنسخه واستخدامه في القالب
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <Grid container spacing={1}>
-          {variables.map((variable, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Chip
-                label={variable.name}
-                onClick={() => copyToClipboard(variable.name)}
-                icon={<ContentCopyIcon sx={{ fontSize: '16px !important' }} />}
-                sx={{
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                  mb: 1,
-                  px: 1,
-                  py: 2,
-                  height: 'auto',
-                  minHeight: '40px',
-                  backgroundColor: '#f8f9fc',
-                  border: '1px solid #e5e7eb',
-                  '&:hover': {
-                    backgroundColor: '#e0e7ff',
-                    borderColor: '#3b82f6',
-                  },
-                  '& .MuiChip-label': {
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    whiteSpace: 'normal',
-                    textAlign: 'right',
-                    direction: 'rtl',
-                  }
-                }}
-                title={variable.description}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </CardContent>
-    </Card>
-  );
+        <VariablesList 
+          variables={currentVariables} 
+          onVariablesChange={(vars) => setTemplateVariables(prev => ({ ...prev, [stateKey]: vars }))}
+        />
+        <Accordion sx={{ mb: 2 }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography fontWeight="bold">تعديل CSS</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <TextField
+              fullWidth
+              multiline
+              rows={10}
+              value={currentStyles}
+              onChange={(e) => handleStylesChange(stateKey, e.target.value)}
+              placeholder="أدخل CSS هنا..."
+              sx={{ fontFamily: 'monospace' }}
+            />
+          </AccordionDetails>
+        </Accordion>
+        <ReactQuillWrapper
+          theme="snow"
+          value={templates[stateKey]}
+          onChange={(value) => handleTemplateChange(stateKey, value)}
+          placeholder={placeholder}
+          style={{ height: "600px", marginBottom: "40px" }}
+        />
+      </>
+    );
+  };
 
   // Initialize templates by loading from API
   useEffect(() => {
@@ -345,12 +485,39 @@ export default function ContractTemplates() {
                       currentTemplateKey === "settlement" ? "settlement" :
                       currentTemplateKey;
       
-      const templateContent = templates[stateKey];
+      const templateContent = templates[stateKey] || "";
+      const templateStyle = templateStyles[stateKey] || "";
+      const templateVars = templateVariables[stateKey] || [];
+
+      // Merge styles with content inside <style> tags for contract generation
+      let finalContent = templateContent;
+      
+      // Always merge styles if they exist
+      if (templateStyle && templateStyle.trim() !== "") {
+        // Remove any existing style tags from content first
+        finalContent = finalContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+        
+        // Add styles at the beginning of content
+        finalContent = `<style>\n${templateStyle}\n</style>\n\n${finalContent}`;
+      }
+
+      console.log("Saving template:", {
+        name: templateName,
+        contentLength: templateContent?.length || 0,
+        stylesLength: templateStyle?.length || 0,
+        finalContentLength: finalContent?.length || 0,
+        hasStylesInContent: /<style[^>]*>/i.test(finalContent),
+        stylesPreview: templateStyle?.substring(0, 100) || "",
+        finalContentPreview: finalContent?.substring(0, 200) || "",
+        variablesCount: templateVars?.length || 0
+      });
 
       await Api.post("/api/templates", {
         name: templateName,
         description: `Template for ${templateName} agreements`,
-        content: templateContent,
+        content: finalContent,
+        styles: templateStyle || "",
+        variables: templateVars || [],
       });
       
       notifySuccess("تم حفظ القالب بنجاح");
@@ -364,6 +531,20 @@ export default function ContractTemplates() {
 
   const handleTemplateChange = (templateKey, value) => {
     setTemplates(prev => ({
+      ...prev,
+      [templateKey]: value
+    }));
+    
+    // Auto-extract variables when content changes
+    const extractedVars = extractVariables(value);
+    setTemplateVariables(prev => ({
+      ...prev,
+      [templateKey]: extractedVars
+    }));
+  };
+
+  const handleStylesChange = (templateKey, value) => {
+    setTemplateStyles(prev => ({
       ...prev,
       [templateKey]: value
     }));
@@ -383,9 +564,23 @@ export default function ContractTemplates() {
                     currentTemplateKey === "settlement" ? "settlement" :
                     currentTemplateKey;
     
+    const contentWithoutStyles = removeStylesFromContent(defaultContent);
+    const extractedStyles = extractStyles(defaultContent);
+    const extractedVars = extractVariables(defaultContent);
+    
     setTemplates(prev => ({
       ...prev,
-      [stateKey]: defaultContent
+      [stateKey]: contentWithoutStyles
+    }));
+    
+    setTemplateStyles(prev => ({
+      ...prev,
+      [stateKey]: extractedStyles
+    }));
+    
+    setTemplateVariables(prev => ({
+      ...prev,
+      [stateKey]: extractedVars
     }));
     
     notifySuccess("تم إعادة تعيين القالب إلى النسخة الافتراضية");
@@ -439,89 +634,13 @@ export default function ContractTemplates() {
                 </Box>
               ) : (
                 <>
-              {activeTab === "mudarabah" && (
-                    <>
-                      <VariablesList variables={contractVariables.mudarabah} />
-                      <ReactQuillWrapper
-                  theme="snow"
-                  value={templates.mudarabah}
-                        onChange={(value) => handleTemplateChange("mudarabah", value)}
-                  placeholder="أدخل نص قالب عقد المضاربة هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                />
-                    </>
-              )}
-              {activeTab === "promissory-note" && (
-                    <>
-                      <VariablesList variables={contractVariables["promissory-note"]} />
-                      <ReactQuillWrapper
-                  theme="snow"
-                  value={templates.promissoryNote}
-                        onChange={(value) => handleTemplateChange("promissoryNote", value)}
-                  placeholder="أدخل نص قالب سند لأمر هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                />
-                    </>
-              )}
-              {activeTab === "debt-acknowledgment" && (
-                    <>
-                      <VariablesList variables={contractVariables["debt-acknowledgment"]} />
-                      <ReactQuillWrapper
-                  theme="snow"
-                  value={templates.debtAcknowledgment}
-                        onChange={(value) => handleTemplateChange("debtAcknowledgment", value)}
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
-                    </>
-              )}
-              {activeTab === "receipt-voucher" && (
-                    <>
-                      <VariablesList variables={contractVariables["receipt-voucher"]} />
-                      <ReactQuillWrapper
-                  theme="snow"
-                  value={templates.receiptVoucher}
-                        onChange={(value) => handleTemplateChange("receiptVoucher", value)}
-                  placeholder="أدخل نص قالب سند القبض هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                />
-                    </>
-              )}
-              {activeTab === "payment-voucher" && (
-                    <>
-                      <VariablesList variables={contractVariables["payment-voucher"]} />
-                      <ReactQuillWrapper
-                  theme="snow"
-                  value={templates.paymentVoucher}
-                        onChange={(value) => handleTemplateChange("paymentVoucher", value)}
-                  placeholder="أدخل نص قالب سند الصرف هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                />
-                    </>
-                  )}
-                  {activeTab === "payment-proof" && (
-                    <>
-                      <VariablesList variables={contractVariables["payment-proof"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.paymentProof}
-                        onChange={(value) => handleTemplateChange("paymentProof", value)}
-                        placeholder="أدخل نص قالب إيصال سداد قسط هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
-                    </>
-                  )}
-                  {activeTab === "settlement" && (
-                    <>
-                      <VariablesList variables={contractVariables["settlement"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.settlement}
-                        onChange={(value) => handleTemplateChange("settlement", value)}
-                        placeholder="أدخل نص قالب إيصال تسوية قسط هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
-                    </>
-                  )}
+              {activeTab === "mudarabah" && renderTemplateEditor("mudarabah", "mudarabah", "أدخل نص قالب عقد المضاربة هنا...")}
+              {activeTab === "promissory-note" && renderTemplateEditor("promissory-note", "promissoryNote", "أدخل نص قالب سند لأمر هنا...")}
+              {activeTab === "debt-acknowledgment" && renderTemplateEditor("debt-acknowledgment", "debtAcknowledgment", "أدخل نص قالب إقرار دين وتعهد بالسداد هنا...")}
+              {activeTab === "receipt-voucher" && renderTemplateEditor("receipt-voucher", "receiptVoucher", "أدخل نص قالب سند القبض هنا...")}
+              {activeTab === "payment-voucher" && renderTemplateEditor("payment-voucher", "paymentVoucher", "أدخل نص قالب سند الصرف هنا...")}
+              {activeTab === "payment-proof" && renderTemplateEditor("payment-proof", "paymentProof", "أدخل نص قالب إيصال سداد قسط هنا...")}
+              {activeTab === "settlement" && renderTemplateEditor("settlement", "settlement", "أدخل نص قالب إيصال تسوية قسط هنا...")}
                 </>
               )}
             </Box>

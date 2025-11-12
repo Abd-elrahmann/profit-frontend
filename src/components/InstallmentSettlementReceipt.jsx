@@ -137,19 +137,54 @@ const InstallmentSettlementReceipt = React.forwardRef(({
     try {
       setIsGenerating(true);
       
-      // إنشاء عنصر ثابت في الصفحة
+      // إنشاء عنصر ثابت في الصفحة بنفس التنسيقات المستخدمة في البريفيو بالضبط
+      // البريفيو يستخدم Paper مع padding: 4 (16px) و margin: 3 (24px)
       const previewContainer = document.createElement('div');
       previewContainer.id = `settlement-receipt-preview-${Date.now()}`;
+      previewContainer.style.position = "absolute";
+      previewContainer.style.left = "-9999px";
+      previewContainer.style.top = "0";
       previewContainer.style.width = '210mm';
       previewContainer.style.minHeight = '297mm';
+      previewContainer.style.backgroundColor = "#ffffff";
+      previewContainer.style.boxSizing = "border-box";
+      
+      // نسخ نفس التنسيقات من البريفيو: Paper padding: 4 = 16px
       previewContainer.innerHTML = `
         <div style="
-          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
-          padding: 20mm;
+          font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
+          padding: 16px;
           background: white;
           direction: rtl;
+          width: 100%;
+          box-sizing: border-box;
+          line-height: 1.8;
         ">
-          ${contentToUse}
+          <style>
+            * {
+              font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif !important;
+              line-height: 1.8 !important;
+            }
+            h1, h2, h3 {
+              text-align: center !important;
+              color: #1976d2 !important;
+              margin-bottom: 20px !important;
+            }
+            p {
+              margin-bottom: 15px !important;
+              text-align: justify !important;
+            }
+            strong {
+              color: #1976d2 !important;
+              font-weight: bold !important;
+            }
+          </style>
+          <div style="
+            font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
+            line-height: 1.8;
+          ">
+            ${contentToUse}
+          </div>
         </div>
       `;
       document.body.appendChild(previewContainer);
@@ -224,10 +259,34 @@ const InstallmentSettlementReceipt = React.forwardRef(({
       
       const { gregorianDate, hijriDate } = getCurrentDates();
       
-      const amount = dataToUse.loanData?.totalAmount || 0;
-      const amountInWords = numberToArabicWords(amount);
+      // حساب المبلغ: إذا كان هناك خصم، استخدم newAmount، وإلا استخدم totalAmount
+      const hasDiscount = dataToUse.loanData?.earlyPaymentDiscount && dataToUse.loanData.earlyPaymentDiscount > 0;
+      const originalAmount = dataToUse.loanData?.totalAmount || 0;
+      const discount = hasDiscount ? (dataToUse.loanData.earlyPaymentDiscount || 0) : 0;
+      const finalAmount = hasDiscount && dataToUse.loanData?.newAmount 
+        ? dataToUse.loanData.newAmount 
+        : originalAmount;
       
-      console.log('Total Loan Amount:', amount, 'Amount in words:', amountInWords);
+      const amountInWords = numberToArabicWords(finalAmount);
+      
+      console.log('Loan Amount Details:', {
+        originalAmount,
+        discount,
+        finalAmount,
+        hasDiscount
+      });
+      
+      // إعداد نص معلومات الخصم
+      let discountInfoHtml = '';
+      let discountTextHtml = '';
+      
+      if (hasDiscount) {
+        discountInfoHtml = `
+          <div class="row"><p>المبلغ الأصلي:</p> <span>${originalAmount.toLocaleString('en-US')} ريال سعودي</span></div>
+          <div class="row"><p>الخصم:</p> <span style="color: #d32f2f;">- ${discount.toLocaleString('en-US')} ريال سعودي</span></div>
+        `;
+        discountTextHtml = ` وقد تم تطبيق خصم السداد المبكر بقيمة ${discount.toLocaleString('en-US')} ريال سعودي على المبلغ الأصلي البالغ ${originalAmount.toLocaleString('en-US')} ريال سعودي.`;
+      }
       
       let filledTemplate = templateContent
         // Client data
@@ -236,9 +295,13 @@ const InstallmentSettlementReceipt = React.forwardRef(({
         .replace(/{{رقم_القسط}}/g, dataToUse.installmentData.count || 'N/A')
         .replace(/{{رقم_السند}}/g, `SETTLEMENT-${dataToUse.installmentData.id}-${Date.now()}`)
         
-        // Amount data
-        .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'} ريال سعودي`)
+        // Amount data - استخدام المبلغ النهائي بعد الخصم
+        .replace(/{{المبلغ_رقما}}/g, `${finalAmount?.toLocaleString('en-US') || '0'} ريال سعودي`)
         .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال سعودي`)
+        
+        // Discount info
+        .replace(/{{معلومات_الخصم}}/g, discountInfoHtml)
+        .replace(/{{نص_الخصم}}/g, discountTextHtml)
         
         // Dates
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)

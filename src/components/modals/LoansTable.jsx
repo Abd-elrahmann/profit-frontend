@@ -24,6 +24,7 @@ import {
   Schedule,
   Pause,
   MoreVert,
+  Add,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -37,7 +38,7 @@ import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
-const LoansTable = ({ onViewDetails, onViewInstallments }) => {
+const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [loanToDelete, setLoanToDelete] = useState(null);
@@ -200,6 +201,9 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
                   العميل
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  الكفيل
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {" "}
                   المستثمر
                 </StyledTableCell>
@@ -210,10 +214,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
                   مبلغ السلفة
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  معدل الفائدة
+                  مبلغ القسط
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  المدة
+                  معدل الفائدة
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   النوع
@@ -236,13 +240,13 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
             <TableBody>
               {isLoading ? (
                 <StyledTableRow>
-                  <StyledTableCell colSpan={12} align="center">
+                  <StyledTableCell colSpan={13} align="center">
                     <CircularProgress size={20} />
                   </StyledTableCell>
                 </StyledTableRow>
               ) : loansData?.data?.length === 0 ? (
                 <StyledTableRow>
-                  <StyledTableCell colSpan={12} align="center">
+                  <StyledTableCell colSpan={13} align="center">
                     <Typography>لا توجد سلف</Typography>
                   </StyledTableCell>
                 </StyledTableRow>
@@ -260,6 +264,12 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
                       align="center"
                       sx={{ whiteSpace: "nowrap" }}
                     >
+                      {loan.kafeel?.name || "-"}
+                    </StyledTableCell>
+                    <StyledTableCell
+                      align="center"
+                      sx={{ whiteSpace: "nowrap" }}
+                    >
                       {loan.partner?.name}
                     </StyledTableCell>
                     <StyledTableCell
@@ -272,19 +282,19 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
                       align="center"
                       sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
                     >
-                      {loan.amount?.toLocaleString()} ر.س
+                      {loan.amount?.toLocaleString()}
+                    </StyledTableCell>
+                    <StyledTableCell
+                      align="center"
+                      sx={{ whiteSpace: "nowrap" }}
+                    >
+                      {loan.paymentAmount?.toLocaleString()}
                     </StyledTableCell>
                     <StyledTableCell
                       align="center"
                       sx={{ whiteSpace: "nowrap" }}
                     >
                       {loan.interestRate}%
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.durationMonths} شهر
                     </StyledTableCell>
                     <StyledTableCell
                       align="center"
@@ -395,6 +405,22 @@ const LoansTable = ({ onViewDetails, onViewInstallments }) => {
           </ListItemIcon>
           عرض الأقساط
         </MenuItem>
+
+        {/* Create Additional Loan */}
+        {permissions.includes("loans_Add") && (
+          <MenuItem
+            onClick={() => {
+              onCreateAdditionalLoan(selectedLoanForMenu?.client);
+              handleMenuClose();
+            }}
+            sx={{ color: "black" }} 
+          >
+            <ListItemIcon>
+              <Add fontSize="small" sx={{ color: "black" }} />
+            </ListItemIcon>
+            سلفة إضافية
+          </MenuItem>
+        )}
 
         {/* Activate Loan (PENDING) */}
         {selectedLoanForMenu?.status === "PENDING" && permissions.includes("loans_Post") && (

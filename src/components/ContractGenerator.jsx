@@ -168,14 +168,61 @@ const ContractGenerator = React.forwardRef(({
 
     setLoading(true);
     try {
-      const element = document.getElementById('contract-preview');
-      if (!element) {
-        throw new Error('عنصر معاينة العقد غير موجود');
-      }
+      // إنشاء عنصر ثابت في الصفحة بنفس التنسيقات المستخدمة في البريفيو بالضبط
+      // البريفيو يستخدم Paper مع padding: 4 (16px) و margin: 3 (24px)
+      const previewContainer = document.createElement('div');
+      previewContainer.id = `contract-preview-${Date.now()}`;
+      previewContainer.style.position = "absolute";
+      previewContainer.style.left = "-9999px";
+      previewContainer.style.top = "0";
+      previewContainer.style.width = '210mm';
+      previewContainer.style.minHeight = '297mm';
+      previewContainer.style.backgroundColor = "#ffffff";
+      previewContainer.style.boxSizing = "border-box";
+      
+      // نسخ نفس التنسيقات من البريفيو: Paper padding: 4 = 16px
+      previewContainer.innerHTML = `
+        <div style="
+          font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
+          padding: 16px;
+          background: white;
+          direction: rtl;
+          width: 100%;
+          box-sizing: border-box;
+          line-height: 1.8;
+        ">
+          <style>
+            * {
+              font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif !important;
+              line-height: 1.8 !important;
+            }
+            h1, h2, h3 {
+              text-align: center !important;
+              color: #1976d2 !important;
+              margin-bottom: 20px !important;
+            }
+            p {
+              margin-bottom: 15px !important;
+              text-align: justify !important;
+            }
+            strong {
+              color: #1976d2 !important;
+              font-weight: bold !important;
+            }
+          </style>
+          <div style="
+            font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
+            line-height: 1.8;
+          ">
+            ${contractHtml}
+          </div>
+        </div>
+      `;
+      document.body.appendChild(previewContainer);
 
       // PDF generation options
       const options = {
-        margin: [5, 5, 5, 5],
+        margin: 0,
         filename: `mudarabah_contract_${Date.now()}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
@@ -195,11 +242,20 @@ const ContractGenerator = React.forwardRef(({
         }
       };
 
-      // Generate PDF blob
+      console.log('Generating contract PDF...');
+      
+      // انتظر قليلاً للتأكد من تحميل الخطوط والصور
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Generate PDF from the preview container
+      const container = document.getElementById(previewContainer.id);
       const pdfBlob = await html2pdf()
-        .from(element)
+        .from(container)
         .set(options)
         .outputPdf('blob');
+
+      // تنظيف عنصر المعاينة
+      document.body.removeChild(previewContainer);
 
       // Upload PDF to server
       await uploadPDFToServer(pdfBlob);
