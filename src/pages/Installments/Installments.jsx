@@ -59,7 +59,7 @@ import PaymentProofGenerator from "../../components/PaymentProofGenerator";
 import PaymentProofPreview from "../../components/PaymentProofPreview";
 import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
 import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
-import Api from "../../config/Api";
+import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Installments = () => {
@@ -207,8 +207,8 @@ const Installments = () => {
       setPaymentProofHtml(proofHtml);
       setPaymentProofModalOpen(true);
     } catch (error) {
-      console.log("Error generating payment proof:", error);
       notifyError("حدث خطأ أثناء توليد إيصال السداد");
+      handleApiError(error);
     }
     setAnchorEl(null);
   };
@@ -252,7 +252,6 @@ const Installments = () => {
       queryClient.invalidateQueries(["repayments", loanId]);
       queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
     } catch (error) {
-      console.log("Error saving payment proof:", error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال");
     } finally {
       setIsGeneratingProof(false);
@@ -267,7 +266,6 @@ const Installments = () => {
       queryClient.invalidateQueries(["repayments", loanId]);
       setActiveStep(0);
     } catch (error) {
-      console.log("Reject error:", error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض السداد");
     }
     setAnchorEl(null);
@@ -298,7 +296,6 @@ const Installments = () => {
       setPartialPaymentModalOpen(false);
       setPaidAmount("");
     } catch (error) {
-      console.log("Partial payment error:", error);
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تسجيل الدفع الجزئي"
       );
@@ -325,7 +322,6 @@ const Installments = () => {
       setNewDueDate("");
       setPostponeReason("");
     } catch (error) {
-      console.log("Postpone error:", error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تأجيل الدفعة");
     }
     setAnchorEl(null);
@@ -340,7 +336,6 @@ const Installments = () => {
         return;
       }
 
-      // التحقق من وجود أقساط pending قبل التنفيذ
       const pendingInstallments = sortedInstallments.filter(
         (inst) => inst.status === "PENDING"
       );
@@ -355,15 +350,12 @@ const Installments = () => {
 
       notifySuccess("تم السداد المبكر للأقساط المعلقة بنجاح");
 
-      // إغلاق المودال
       setEarlyPaymentModalOpen(false);
       setDiscountAmount("0");
 
-      // تحديث البيانات
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["repayments", loanId]);
     } catch (error) {
-      console.log("Early payment error:", error);
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء السداد المبكر"
       );
@@ -431,7 +423,7 @@ const Installments = () => {
 
       setIsGeneratingSettlement(false);
     } catch (error) {
-      console.log("Error generating settlement receipt:", error);
+      handleApiError(error);
       notifyError("حدث خطأ أثناء توليد سند التسوية");
       setIsGeneratingSettlement(false);
     }
@@ -464,7 +456,7 @@ const Installments = () => {
 
       queryClient.invalidateQueries(["loan", loanId]);
     } catch (error) {
-      console.log("Error saving settlement receipt:", error);
+      handleApiError(error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ السند");
     } finally {
       setIsGeneratingSettlement(false);

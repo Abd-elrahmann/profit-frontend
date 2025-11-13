@@ -184,7 +184,6 @@ const LoanContractGenerator = React.forwardRef(
               ? `/api/loans/${loanData.id}/upload-debt-acknowledgment`
               : `/api/loans/${loanData.id}/upload-promissory-note`;
 
-          console.log("Uploading to endpoint:", endpoint);
 
           const response = await Api.post(endpoint, formData, {
             headers: {
@@ -192,7 +191,6 @@ const LoanContractGenerator = React.forwardRef(
             },
           });
 
-          console.log("Upload response:", response.data);
           return response.data;
         } catch (error) {
           console.error("Error uploading PDF:", error);
@@ -207,15 +205,12 @@ const LoanContractGenerator = React.forwardRef(
         const contentToUse = htmlContent || contractHtml;
 
         if (!contentToUse) {
-          console.error("No contract HTML to generate PDF");
           notifyError("لا يوجد محتوى عقد لتحويله إلى PDF");
           return;
         }
 
         try {
           setIsGenerating(true);
-
-          // إنشاء عنصر ثابت في الصفحة
 
           const previewContainer = document.createElement("div");
           previewContainer.id = `contract-preview-${Date.now()}`;
@@ -258,27 +253,17 @@ const LoanContractGenerator = React.forwardRef(
             },
           };
 
-          console.log("Generating PDF for:", contractType);
-
-          // انتظر قليلاً للتأكد من تحميل الخطوط والصور
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          // Generate PDF from the preview container
           const container = document.getElementById(previewContainer.id);
           const pdfBlob = await html2pdf()
             .from(container)
             .set(options)
             .outputPdf("blob");
 
-          // تنظيف عنصر المعاينة
           document.body.removeChild(previewContainer);
 
           await uploadPDFToServer(pdfBlob);
-
-          console.log(
-            "PDF generated and uploaded successfully for:",
-            contractType
-          );
 
           if (onContractGenerated) {
             onContractGenerated(pdfBlob, contractType);
@@ -286,7 +271,6 @@ const LoanContractGenerator = React.forwardRef(
 
           return pdfBlob;
         } catch (error) {
-          console.error("Error generating PDF:", error);
           notifyError("حدث خطأ أثناء إنشاء ملف PDF");
           handleApiError(error);
           throw error;
@@ -313,16 +297,11 @@ const LoanContractGenerator = React.forwardRef(
         }
 
         try {
-          console.log("Generating contract:", contractType);
-          console.log("Loan Data to use:", loanDataToUse);
-
           const { gregorianDate, hijriDate } = getCurrentDates();
           const finalDate = `${hijriDate}\n${gregorianDate}`;
 
           const amount = loanDataToUse.amount || 0;
           const amountInWords = numberToArabicWords(amount);
-
-          console.log("Amount:", amount, "Amount in words:", amountInWords);
 
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, clientData.name || "")
@@ -358,21 +337,15 @@ const LoanContractGenerator = React.forwardRef(
 
             .replace(/{{رقم_هوية_الدائن}}/g, "1234567890")
             .replace(/{{رقم_هوية_المدين}}/g, clientData.nationalId || "")
-            .replace(/{{رقم_هوية_الكفيل}}/g, clientData.nationalId || "")
+            .replace(/{{رقم_هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "لا يوجد كفيل")
             .replace(/{{هوية_الدائن}}/g, "1234567890")
             .replace(/{{هوية_المدين}}/g, clientData.nationalId || "")
-            .replace(/{{اسم_الكفيل}}/g, kafeelDataToUse.name || "")
-            .replace(/{{هوية_الكفيل}}/g, kafeelDataToUse.nationalId || "");
-
-          console.log("Filled Template generated successfully");
-          console.log("Filled Template Content:", filledTemplate);
-          console.log("Contract HTML length:", filledTemplate.length);
+            .replace(/{{اسم_الكفيل}}/g, kafeelDataToUse?.name || "لا يوجد كفيل")
+            .replace(/{{هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "لا يوجد كفيل");
 
           setContractHtml(filledTemplate);
 
           if (generatePdf) {
-            console.log("Auto-generating PDF for:", contractType);
-
             setTimeout(async () => {
               try {
                 await generatePDF(filledTemplate);
@@ -390,6 +363,7 @@ const LoanContractGenerator = React.forwardRef(
           throw error;
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [
         loanData,
         clientData,
@@ -401,9 +375,8 @@ const LoanContractGenerator = React.forwardRef(
       ]
     );
     useEffect(() => {
-      if (autoGenerate && loanData && clientData && templateContent && kafeelData) {
-        console.log("Auto-generating contract:", contractType);
-        generateContract(true, loanData, kafeelData);
+      if (autoGenerate && loanData && clientData && templateContent) {
+        generateContract(true, loanData, kafeelData || null);
       }
     }, [
       autoGenerate,

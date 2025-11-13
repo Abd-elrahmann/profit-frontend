@@ -162,7 +162,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
 
           const endpoint = `/api/loans/${loanData.id}/upload-Settlement`;
 
-          console.log("Uploading settlement receipt to endpoint:", endpoint);
 
           const response = await Api.post(endpoint, formData, {
             headers: {
@@ -170,7 +169,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
             },
           });
 
-          console.log("Upload response:", response.data);
           return response.data;
         } catch (error) {
           console.error("Error uploading settlement receipt PDF:", error);
@@ -238,26 +236,17 @@ const InstallmentSettlementReceipt = React.forwardRef(
             },
           };
 
-          console.log("Generating settlement receipt PDF...");
-
-          // انتظر قليلاً للتأكد من تحميل الخطوط والصور
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          // Generate PDF from the preview container
           const container = document.getElementById(previewContainer.id);
           const pdfBlob = await html2pdf()
             .from(container)
             .set(options)
             .outputPdf("blob");
 
-          // تنظيف عنصر المعاينة
           document.body.removeChild(previewContainer);
 
           await uploadPDFToServer(pdfBlob);
-
-          console.log(
-            "Settlement receipt PDF generated and uploaded successfully"
-          );
 
           if (onContractGenerated) {
             onContractGenerated(pdfBlob, "SETTLEMENT_RECEIPT");
@@ -296,28 +285,18 @@ const InstallmentSettlementReceipt = React.forwardRef(
           !dataToUse.clientData ||
           !templateContent
         ) {
-          console.error("Missing data:", dataToUse);
           notifyError("بيانات الدفعة أو العميل أو قالب السند غير متوفر");
           return;
         }
 
         try {
-          console.log("Generating settlement receipt:", dataToUse);
 
           const { gregorianDate, hijriDate } = getCurrentDates();
 
           const amount = dataToUse.loanData?.totalAmount || 0;
           const amountInWords = numberToArabicWords(amount);
 
-          console.log(
-            "Total Loan Amount:",
-            amount,
-            "Amount in words:",
-            amountInWords
-          );
-
           let filledTemplate = templateContent
-            // Client data
             .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || "")
             .replace(
               /{{رقم_هوية_العميل}}/g,
@@ -329,30 +308,23 @@ const InstallmentSettlementReceipt = React.forwardRef(
               `SETTLEMENT-${dataToUse.installmentData.id}-${Date.now()}`
             )
 
-            // Amount data
             .replace(
               /{{المبلغ_رقما}}/g,
               `${amount?.toLocaleString("en-US") || "0"} ريال سعودي`
             )
             .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال سعودي`)
 
-            // Dates
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
 
-            // Employee data
             .replace(
               /{{اسم_الموظف}}/g,
               dataToUse.employeeName || "ربيش سالم ناصر الهمامي"
             );
 
-          console.log("Settlement receipt template generated successfully");
-
           setContractHtml(filledTemplate);
 
-          // إذا كان التوليد تلقائي، انتقل مباشرة لإنشاء PDF
           if (generatePdf) {
-            console.log("Auto-generating settlement receipt PDF...");
 
             setTimeout(async () => {
               try {
@@ -385,10 +357,8 @@ const InstallmentSettlementReceipt = React.forwardRef(
       ]
     );
 
-    // التوليد التلقائي عند تغيير البيانات
     useEffect(() => {
       if (autoGenerate && installmentData && clientData && templateContent) {
-        console.log("Auto-generating settlement receipt...");
         generateContract(true);
       }
     }, [

@@ -93,25 +93,17 @@ const ContractGenerator = React.forwardRef(({
     }
 
     try {
-      console.log('Investor Data:', investorData);
-      console.log('Template Content:', templateContent);
 
       const { gregorianDate, hijriDate } = getCurrentDates();
       const capitalInWords = numberToArabicWords(investorData.capitalAmount);
 
-      console.log('Capital in words:', capitalInWords);
-      console.log('Dates:', { gregorianDate, hijriDate });
-
-      // Replace placeholders in template
       let filledTemplate = templateContent
-        // Basic investor data
         .replace(/{{اسم_العميل}}/g, investorData.name || '')
         .replace(/{{رقم_هوية_العميل}}/g, investorData.nationalId || '')
         .replace(/{{عنوان_العميل}}/g, investorData.address || '')
         .replace(/{{هاتف_العميل}}/g, investorData.phone || '')
         .replace(/{{بريد_العميل}}/g, investorData.email || '')
 
-        // Financial data
         .replace(/{{رأس_المال}}/g, investorData.capitalAmount?.toLocaleString('ar-SA') || '0')
         .replace(/{{رأس_المال_كتابة}}/g, capitalInWords)
         .replace(/{{المبلغ_رقما}}/g, investorData.capitalAmount?.toLocaleString('ar-SA') || '0')
@@ -119,13 +111,11 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{نسبة_أرباح_المنشأة}}/g, String(investorData.orgProfitPercent || '0'))
         .replace(/{{نسبة_أرباح_المستثمر}}/g, String(investorData.partnerProfitPercent || '0'))
 
-        // Dates
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)
         .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
         .replace(/{{تاريخ_العقد_هجري}}/g, hijriDate)
         .replace(/{{تاريخ_العقد_ميلادي}}/g, gregorianDate)
 
-        // Mudarabah specific fields
         .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
         .replace(/{{هوية_رب_المال}}/g, investorData.nationalId || '')
         .replace(/{{عنوان_رب_المال}}/g, investorData.address || '')
@@ -137,7 +127,6 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{عنوان_المضارب_2}}/g, 'المملكة العربية السعودية - شرورة')
         .replace(/{{مدينة_العقد}}/g, 'الرياض')
 
-        // Default values for other contract types
         .replace(/{{اسم_الدائن}}/g, investorData.name || '')
         .replace(/{{اسم_المدين}}/g, investorData.name || '')
         .replace(/{{رقم_السند}}/g, `${Date.now()}`)
@@ -148,8 +137,6 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{سبب_انشاء_السند}}/g, 'استثمار في المضاربة')
         .replace(/{{قيمة_السند_رقما}}/g, investorData.capitalAmount?.toLocaleString() || '0')
         .replace(/{{قيمة_السند_كتابة}}/g, capitalInWords);
-
-      console.log('Filled Template:', filledTemplate);
 
       setContractHtml(filledTemplate);
       setShowPreview(true);

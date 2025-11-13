@@ -12,11 +12,15 @@ import {
   CardContent,
   Divider,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import RestoreIcon from "@mui/icons-material/Restore";
-import ReactQuillWrapper from "../../components/ReactQuillWrapper";
+import CodeMirrorWrapper from "../../components/CodeMirrorWrapper";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import MudarabahContract from "../../components/Contracts/MudarabahContract";
 import PromissoryNote from "../../components/Contracts/PromissoryNote";
@@ -28,6 +32,13 @@ import InstallmentSettlementReceipt from "../../components/Contracts/Installment
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import LoanContractsPreview from "../../components/LoanContractsPreview";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CodeIcon from "@mui/icons-material/Code";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
@@ -42,6 +53,10 @@ export default function ContractTemplates() {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState("");
+  const [editingContent, setEditingContent] = useState("");
+  const [viewMode, setViewMode] = useState("preview"); // "preview" or "edit"
   const { permissions } = usePermissions();
 
   // Map tab values to API template names
@@ -148,7 +163,6 @@ export default function ContractTemplates() {
     ]
   };
 
-  // Get default template content
   const getDefaultTemplate = React.useCallback((templateName) => {
     switch (templateName) {
       case "MUDARABAH":
@@ -170,31 +184,25 @@ export default function ContractTemplates() {
     }
   }, []);
 
-  // Fetch template by name from API
   const fetchTemplateFromAPI = React.useCallback(async (templateName) => {
     try {
       const response = await Api.get(`/api/templates/${templateName}`);
-      // If API returns content, use it, otherwise use default frontend template
       if (response.data.content && response.data.content.trim() !== "") {
         return response.data.content;
       } else {
-        console.log(`Template ${templateName} found in API but empty, using frontend default`);
         return getDefaultTemplate(templateName);
       }
     } catch {
-      console.log(`Template ${templateName} not found in API, using frontend default`);
       return getDefaultTemplate(templateName);
     }
   }, [getDefaultTemplate]);
 
-  // Copy variable to clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
       notifySuccess('تم نسخ المتغير:', text);
     });
   };
 
-  // Load all templates from API
   const loadTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -206,7 +214,6 @@ export default function ContractTemplates() {
       const results = await Promise.all(templatePromises);
       const newTemplates = {};
       results.forEach(({ key, content }) => {
-        // Map tab keys to template state keys
         const stateKey = key === "promissory-note" ? "promissoryNote" :
                         key === "debt-acknowledgment" ? "debtAcknowledgment" :
                         key === "receipt-voucher" ? "receiptVoucher" :
@@ -225,7 +232,6 @@ export default function ContractTemplates() {
     }
   }, [templateNameMap, fetchTemplateFromAPI]);
 
-  // Render variables list component
   const VariablesList = ({ variables }) => (
     <Card sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
       <CardContent>
@@ -233,23 +239,28 @@ export default function ContractTemplates() {
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#2d3748' }}>
             المتغيرات المتاحة
           </Typography>
-          {/* Action Buttons */}
           <Box sx={{ display: 'flex', gap: 2 }}>
-            {permissions.includes("templates_Update") && (
+          {permissions.includes("templates_Update") && (
               <Button
                 variant="outlined"
-                color="error"
-                startIcon={<RestoreIcon sx={{marginLeft:'10px'}} />}
+                color="secondary"
+                startIcon={<EditIcon sx={{marginLeft:'10px'}} />}
                 sx={{ 
                   px: 3, 
                   py: 1.2, 
                   mt: 2, 
                   fontWeight: "bold",
                   borderRadius: '10px',
+                  borderColor: '#6b7280',
+                  color: '#6b7280',
+                  '&:hover': {
+                    borderColor: '#4b5563',
+                    backgroundColor: '#f3f4f6'
+                  }
                 }}
-                onClick={handleResetToDefault}
+                onClick={handleEditTemplate}
               >
-                إعادة تعيين افتراضي
+                تعديل القالب
               </Button>
             )}
             {permissions.includes("templates_Add") && (
@@ -317,7 +328,6 @@ export default function ContractTemplates() {
     </Card>
   );
 
-  // Initialize templates by loading from API
   useEffect(() => {
     loadTemplates();
   }, [loadTemplates]);
@@ -325,10 +335,8 @@ export default function ContractTemplates() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Save current active template
-      const currentTemplateKey = activeTab;
+        const currentTemplateKey = activeTab;
       const templateName = templateNameMap[currentTemplateKey];
-      // Get the content for the current template
       const stateKey = currentTemplateKey === "promissory-note" ? "promissoryNote" :
                       currentTemplateKey === "debt-acknowledgment" ? "debtAcknowledgment" :
                       currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
@@ -358,11 +366,10 @@ export default function ContractTemplates() {
     }));
   };
 
-  const handleResetToDefault = () => {
+
+
+  const handleEditTemplate = () => {
     const currentTemplateKey = activeTab;
-    const templateName = templateNameMap[currentTemplateKey];
-    const defaultContent = getDefaultTemplate(templateName);
-    // Get the content for the current template
     const stateKey = currentTemplateKey === "promissory-note" ? "promissoryNote" :
                     currentTemplateKey === "debt-acknowledgment" ? "debtAcknowledgment" :
                     currentTemplateKey === "receipt-voucher" ? "receiptVoucher" :
@@ -370,12 +377,40 @@ export default function ContractTemplates() {
                     currentTemplateKey === "payment-proof" ? "paymentProof" :
                     currentTemplateKey === "settlement" ? "settlement" :
                     currentTemplateKey;
+    
+    setEditingTemplate(currentTemplateKey);
+    setEditingContent(templates[stateKey]);
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setEditingTemplate("");
+    setEditingContent("");
+  };
+
+  const handleSaveEdit = () => {
+    const stateKey = editingTemplate === "promissory-note" ? "promissoryNote" :
+                    editingTemplate === "debt-acknowledgment" ? "debtAcknowledgment" :
+                    editingTemplate === "receipt-voucher" ? "receiptVoucher" :
+                    editingTemplate === "payment-voucher" ? "paymentVoucher" :
+                    editingTemplate === "payment-proof" ? "paymentProof" :
+                    editingTemplate === "settlement" ? "settlement" :
+                    editingTemplate;
+
     setTemplates(prev => ({
       ...prev,
-      [stateKey]: defaultContent
+      [stateKey]: editingContent
     }));
-    notifySuccess("تم إعادة تعيين القالب إلى النسخة الافتراضية");
+
+    notifySuccess("تم تحديث القالب بنجاح");
+    handleCloseEditModal();
   };
+
+  const isLoanContract = () => {
+    return activeTab === "debt-acknowledgment" || activeTab === "promissory-note";
+  };
+
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -383,12 +418,9 @@ export default function ContractTemplates() {
         <title>القوالب المالية</title>
         <meta name="description" content="القوالب المالية" />
       </Helmet>
-      {/* Main Content */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Main Body */}
         <Box sx={{ p: 4, overflowY: "auto", flex: 1 }}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
-            {/* Tabs */}
             <Tabs
               value={activeTab}
               onChange={(e, val) => setActiveTab(val)}
@@ -415,7 +447,6 @@ export default function ContractTemplates() {
               <Tab label="إيصال سداد دفعة" value="payment-proof" />
               <Tab label="إيصال تسوية دفعة" value="settlement" />
             </Tabs>
-            {/* Content */}
             <Box sx={{ mt: 3 }}>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -424,87 +455,193 @@ export default function ContractTemplates() {
                 </Box>
               ) : (
                 <>
+                  <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                    <ToggleButtonGroup
+                      value={viewMode}
+                      exclusive
+                      onChange={(e, newMode) => {
+                        if (newMode !== null) {
+                          setViewMode(newMode);
+                        }
+                      }}
+                      aria-label="وضع العرض"
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          px: 3,
+                          py: 1,
+                          fontWeight: 'bold'
+                        }
+                      }}
+                    >
+                    </ToggleButtonGroup>
+                  </Box>
+
                   {activeTab === "mudarabah" && (
                     <>
                       <VariablesList variables={contractVariables.mudarabah} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.mudarabah}
-                        onChange={(value) => handleTemplateChange("mudarabah", value)}
-                        placeholder="أدخل نص قالب عقد المضاربة هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.mudarabah }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.mudarabah}
+                          onChange={(value) => handleTemplateChange("mudarabah", value)}
+                          placeholder="أدخل نص قالب عقد المضاربة هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                   {activeTab === "promissory-note" && (
                     <>
                       <VariablesList variables={contractVariables["promissory-note"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.promissoryNote}
-                        onChange={(value) => handleTemplateChange("promissoryNote", value)}
-                        placeholder="أدخل نص قالب سند لأمر هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.promissoryNote }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.promissoryNote}
+                          onChange={(value) => handleTemplateChange("promissoryNote", value)}
+                          placeholder="أدخل نص قالب سند لأمر هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                   {activeTab === "debt-acknowledgment" && (
                     <>
                       <VariablesList variables={contractVariables["debt-acknowledgment"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.debtAcknowledgment}
-                        onChange={(value) => handleTemplateChange("debtAcknowledgment", value)}
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.debtAcknowledgment }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.debtAcknowledgment}
+                          onChange={(value) => handleTemplateChange("debtAcknowledgment", value)}
+                          placeholder="أدخل نص قالب إقرار الدين هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                   {activeTab === "receipt-voucher" && (
                     <>
                       <VariablesList variables={contractVariables["receipt-voucher"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.receiptVoucher}
-                        onChange={(value) => handleTemplateChange("receiptVoucher", value)}
-                        placeholder="أدخل نص قالب سند القبض هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.receiptVoucher }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.receiptVoucher}
+                          onChange={(value) => handleTemplateChange("receiptVoucher", value)}
+                          placeholder="أدخل نص قالب سند القبض هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                   {activeTab === "payment-voucher" && (
                     <>
                       <VariablesList variables={contractVariables["payment-voucher"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.paymentVoucher}
-                        onChange={(value) => handleTemplateChange("paymentVoucher", value)}
-                        placeholder="أدخل نص قالب سند الصرف هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.paymentVoucher }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.paymentVoucher}
+                          onChange={(value) => handleTemplateChange("paymentVoucher", value)}
+                          placeholder="أدخل نص قالب سند الصرف هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                   {activeTab === "payment-proof" && (
                     <>
                       <VariablesList variables={contractVariables["payment-proof"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.paymentProof}
-                        onChange={(value) => handleTemplateChange("paymentProof", value)}
-                        placeholder="أدخل نص قالب إيصال سداد دفعة هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.paymentProof }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.paymentProof}
+                          onChange={(value) => handleTemplateChange("paymentProof", value)}
+                          placeholder="أدخل نص قالب إيصال سداد دفعة هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                   {activeTab === "settlement" && (
                     <>
                       <VariablesList variables={contractVariables["settlement"]} />
-                      <ReactQuillWrapper
-                        theme="snow"
-                        value={templates.settlement}
-                        onChange={(value) => handleTemplateChange("settlement", value)}
-                        placeholder="أدخل نص قالب إيصال تسوية دفعة هنا..."
-                        style={{ height: "600px", marginBottom: "40px" }}
-                      />
+                      {viewMode === "preview" ? (
+                        <Paper sx={{ p: 3, mb: 4, minHeight: "600px", bgcolor: 'white' }}>
+                          <Box
+                            dangerouslySetInnerHTML={{ __html: templates.settlement }}
+                            sx={{
+                              '& *': {
+                                fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                              }
+                            }}
+                          />
+                        </Paper>
+                      ) : (
+                        <CodeMirrorWrapper
+                          value={templates.settlement}
+                          onChange={(value) => handleTemplateChange("settlement", value)}
+                          placeholder="أدخل نص قالب إيصال تسوية دفعة هنا..."
+                          height="600px"
+                        />
+                      )}
                     </>
                   )}
                 </>
@@ -513,6 +650,175 @@ export default function ContractTemplates() {
           </Paper>
         </Box>
       </Box>
+      {isLoanContract() && (
+        <Dialog
+          open={editModalOpen}
+          onClose={handleCloseEditModal}
+          maxWidth="xl"
+          fullWidth
+          sx={{
+            '& .MuiDialog-paper': {
+              height: '90vh'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            bgcolor: 'primary.main',
+            color: 'white'
+          }}>
+            <Typography variant="h6">
+              {editingTemplate === "debt-acknowledgment" ? "تعديل إقرار الدين" : "تعديل سند الأمر"}
+            </Typography>
+            <IconButton onClick={handleCloseEditModal} sx={{ color: 'white' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent sx={{ p: 0, display: 'flex' }}>
+            {/* الجزء الأيسر: المحرر */}
+            <Box sx={{ flex: 1, p: 2, borderRight: '1px solid #e0e0e0' }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                محرر القالب (HTML/CSS)
+              </Typography>
+              <CodeMirrorWrapper
+                value={editingContent}
+                onChange={setEditingContent}
+                placeholder="قم بتعديل محتوى القالب هنا..."
+                height="500px"
+              />
+            </Box>
+
+            {/* الجزء الأيمن: المعاينة */}
+            <Box sx={{ flex: 1, p: 2 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                معاينة القالب
+              </Typography>
+              <Paper 
+                sx={{ 
+                  p: 3, 
+                  height: "500px", 
+                  overflow: 'auto',
+                  bgcolor: 'white',
+                  border: '1px solid #e0e0e0'
+                }}
+              >
+                <Box
+                  dangerouslySetInnerHTML={{ __html: editingContent }}
+                  sx={{
+                    '& *': {
+                      fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                      lineHeight: 1.8
+                    },
+                    '& h1, & h2, & h3': {
+                      textAlign: 'center',
+                      color: '#1976d2',
+                      marginBottom: '20px'
+                    },
+                    '& p': {
+                      marginBottom: '15px',
+                      textAlign: 'justify'
+                    },
+                    '& strong': {
+                      color: '#1976d2',
+                      fontWeight: 'bold'
+                    }
+                  }}
+                />
+              </Paper>
+            </Box>
+          </DialogContent>
+
+          <DialogActions sx={{ p: 2, gap: 1 }}>
+            <Button onClick={handleCloseEditModal} variant="outlined">
+              إلغاء
+            </Button>
+            <Button 
+              onClick={handleSaveEdit} 
+              variant="contained" 
+              color="primary"
+            >
+              حفظ التغييرات
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* مودال التعديل للعقود الأخرى */}
+      {!isLoanContract() && editModalOpen && (
+        <Dialog
+          open={editModalOpen}
+          onClose={handleCloseEditModal}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center' 
+          }}>
+            <Typography variant="h6">
+              تعديل القالب
+            </Typography>
+            <IconButton onClick={handleCloseEditModal}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', gap: 2, height: '500px' }}>
+              {/* الجزء الأيسر: المحرر */}
+              <Box sx={{ flex: 1, p: 2, borderRight: '1px solid #e0e0e0' }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  محرر القالب (HTML/CSS)
+                </Typography>
+                <CodeMirrorWrapper
+                  value={editingContent}
+                  onChange={setEditingContent}
+                  placeholder="قم بتعديل محتوى القالب هنا..."
+                  height="450px"
+                />
+              </Box>
+
+              {/* الجزء الأيمن: المعاينة */}
+              <Box sx={{ flex: 1, p: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  معاينة القالب
+                </Typography>
+                <Paper 
+                  sx={{ 
+                    p: 3, 
+                    height: "450px", 
+                    overflow: 'auto',
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0'
+                  }}
+                >
+                  <Box
+                    dangerouslySetInnerHTML={{ __html: editingContent }}
+                    sx={{
+                      '& *': {
+                        fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                      }
+                    }}
+                  />
+                </Paper>
+              </Box>
+            </Box>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={handleCloseEditModal} variant="outlined">
+              إلغاء
+            </Button>
+            <Button onClick={handleSaveEdit} variant="contained" color="primary">
+              حفظ
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 }

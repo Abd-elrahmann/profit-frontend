@@ -219,7 +219,6 @@ const AddClient = ({ open, onClose }) => {
         }
       });
 
-      // Add kafeels data - backend expects kafeel[0][name], kafeel[1][name], etc.
       if (values.hasKafeel && values.kafeels && values.kafeels.length > 0) {
         values.kafeels.forEach((kafeel, index) => {
           Object.keys(kafeel).forEach(key => {
@@ -230,15 +229,12 @@ const AddClient = ({ open, onClose }) => {
         });
       }
 
-      // Add client documents
       Object.keys(uploadedFiles).forEach(key => {
         if (!key.startsWith('kafeels[') && !key.startsWith('kafeel[')) {
           formData.append(key, uploadedFiles[key]);
         }
       });
 
-      // Add kafeel documents - backend expects multiple files with same field name
-      // Multer will collect them into arrays: kafeelIdImage[], kafeelWorkCard[]
       if (values.hasKafeel && values.kafeels && values.kafeels.length > 0) {
         values.kafeels.forEach((kafeel, index) => {
           const kafeelIdImageKey = `kafeels[${index}][kafeelIdImage]`;
@@ -338,7 +334,6 @@ const AddClient = ({ open, onClose }) => {
           return (
             <Form onSubmit={(e) => e.preventDefault()}>
               <DialogContent sx={{ pb: 1, minHeight: 400 }}>
-                {/* Step 1: Client Information */}
                 {activeStep === 0 && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>المعلومات الشخصية للعميل</Typography>
@@ -524,12 +519,10 @@ const AddClient = ({ open, onClose }) => {
                             const checked = e.target.checked;
                             setFieldValue('hasKafeel', checked);
                             if (checked) {
-                              // Initialize kafeels array if empty
                               if (!values.kafeels || values.kafeels.length === 0) {
                                 setFieldValue('kafeels', [getInitialKafeelValues()]);
                               }
                             } else {
-                              // Clear kafeels array
                               setFieldValue('kafeels', []);
                             }
                           }}
@@ -540,7 +533,6 @@ const AddClient = ({ open, onClose }) => {
                   </Box>
                 )}
 
-                {/* Step 2: Kafeel Information */}
                 {activeStep === 1 && values.hasKafeel && values.kafeels && values.kafeels.length > 0 && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {values.kafeels.map((kafeel, index) => (

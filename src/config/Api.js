@@ -23,20 +23,16 @@ Api.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// Response interceptor to handle authentication errors
 Api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
     
-    // If unauthorized or token expired
     if (status === 401) {
-      // Clear all auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('profile');
       
-      // Redirect to login if not already there
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

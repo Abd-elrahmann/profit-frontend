@@ -55,12 +55,6 @@ const CollectionModal = ({
   };
 
   const handleSendNotification = () => {
-    console.log("Sending notification:", {
-      to: clientName,
-      message: message || defaultMessage,
-      channel: activeTab,
-      link: paymentLink
-    });
     
     if (onNotificationSent) {
       onNotificationSent();

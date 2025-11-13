@@ -133,23 +133,27 @@ export default function Treasury() {
   const hasHighCredit = totalCredit > highCreditThreshold;
 
   const monthlySummaryData = bankData?.journalsByMonth ? 
-    Object.entries(bankData.journalsByMonth).map(([month, data]) => ({
-      name: getMonthName(month),
-      monthKey: month,
-      الوارد: data.totalDebit,
-      المقرض: data.totalCredit,
-      الرصيد: data.totalBalance,
-      عدد_المعاملات: data.entries?.length || 0,
-    })) : [];
+    Object.entries(bankData.journalsByMonth)
+      .map(([month, data]) => ({
+        name: getMonthName(month),
+        monthKey: month,
+        الوارد: data.totalDebit,
+        المقرض: data.totalCredit,
+        الرصيد: data.totalBalance,
+        عدد_المعاملات: data.entries?.length || 0,
+      }))
+      .sort((a, b) => a.monthKey.localeCompare(b.monthKey)) : [];
 
   const monthlyBalanceData = bankData?.journalsByMonth ? 
-    Object.entries(bankData.journalsByMonth).map(([month, data]) => ({
-      name: getMonthName(month),
-      monthKey: month,
-      الرصيد: data.totalBalance,
-      الوارد: data.totalDebit,
-      المقرض: data.totalCredit,
-    })) : [];
+    Object.entries(bankData.journalsByMonth)
+      .map(([month, data]) => ({
+        name: getMonthName(month),
+        monthKey: month,
+        الرصيد: data.totalBalance,
+        الوارد: data.totalDebit,
+        المقرض: data.totalCredit,
+      }))
+      .sort((a, b) => a.monthKey.localeCompare(b.monthKey)) : [];
 
   const transactionTypeData = [
     { name: 'الوارد', value: totalDebit, color: '#00C49F' },
@@ -429,7 +433,7 @@ export default function Treasury() {
                         width: 'calc(100vw - 240px)',
                       }}>
                         <Typography variant="h6" fontWeight="bold" mb={3}>
-                          تطور الرصيد over Time
+                          تطور رصيد الصندوق 
                         </Typography>
                         <ResponsiveContainer width="100%" height={400}>
                           <LineChart data={monthlyBalanceData.length > 0 ? monthlyBalanceData : []}>

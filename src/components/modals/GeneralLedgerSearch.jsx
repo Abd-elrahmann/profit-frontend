@@ -211,9 +211,20 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                   {...params} 
                   fullWidth 
                   variant="outlined" 
+                  InputLabelProps={{ shrink: true }}
                 />
               )}
-            />
+              slotProps={{
+                textField: {
+                  size: 'medium',
+                  InputLabelProps: {
+                    shrink: true,
+                  },
+                  sx: { 
+                    width: '100%',
+                  }
+                }
+              }}            />
 
             <DatePicker
               label="إلى تاريخ"
@@ -228,7 +239,17 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                   variant="outlined" 
                 />
               )}
-            />
+              slotProps={{
+                textField: {
+                  size: 'medium',
+                  InputLabelProps: {
+                    shrink: true,
+                  },
+                  sx: { 
+                    width: '100%',
+                  }
+                }
+              }}            />
 
             {/* Action Buttons */}
             <Stack direction="row" gap={2}>

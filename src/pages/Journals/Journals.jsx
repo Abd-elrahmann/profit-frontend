@@ -11,13 +11,10 @@ import {
   Stack,
   Divider,
   Alert,
-  Chip,
   Table,
-  TableBody,
-  TableCell,
+  TableBody,  
   TableContainer,
   TableHead,
-  TableRow,
   MenuItem,
   CircularProgress,
 } from "@mui/material";
@@ -29,11 +26,20 @@ import {
   Save as SaveIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getJournalById, updateJournal, deleteJournal, postJournal, unpostJournal } from "./journalsApi";
+import {
+  getJournalById,
+  updateJournal,
+  deleteJournal,
+  postJournal,
+  unpostJournal,
+} from "./journalsApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import JournalTable from "../../components/modals/JournalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
-import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
+import {
+  StyledTableCell,
+  StyledTableRow,
+} from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Journals = () => {
@@ -48,7 +54,7 @@ const Journals = () => {
     type: "",
   });
   const queryClient = useQueryClient();
-  const { permissions } = usePermissions(); 
+  const { permissions } = usePermissions();
   const { data: journalData, isLoading: isJournalLoading } = useQuery({
     queryKey: ["journal", selectedJournal],
     queryFn: () => getJournalById(selectedJournal),
@@ -57,7 +63,7 @@ const Journals = () => {
       if (data) {
         setEditForm({
           description: data.description || "",
-          date: data.date ? data.date.split('T')[0] : "",
+          date: data.date ? data.date.split("T")[0] : "",
           type: data.type || "",
         });
       }
@@ -80,7 +86,7 @@ const Journals = () => {
     if (journalData) {
       setEditForm({
         description: journalData.description || "",
-        date: journalData.date ? journalData.date.split('T')[0] : "",
+        date: journalData.date ? journalData.date.split("T")[0] : "",
         type: journalData.type || "",
       });
     }
@@ -93,7 +99,7 @@ const Journals = () => {
         date: editForm.date,
         type: editForm.type,
       };
-      
+
       await updateJournal(selectedJournal, updateData);
       notifySuccess("تم تعديل القيد بنجاح");
       setIsEditMode(false);
@@ -105,9 +111,9 @@ const Journals = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setEditForm(prev => ({
+    setEditForm((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -132,7 +138,9 @@ const Journals = () => {
       queryClient.invalidateQueries(["journal", selectedJournal]);
       queryClient.invalidateQueries(["journals"]);
     } catch (error) {
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء اعتماد القيد");
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء اعتماد القيد"
+      );
     }
   };
 
@@ -143,11 +151,11 @@ const Journals = () => {
       queryClient.invalidateQueries(["journal", selectedJournal]);
       queryClient.invalidateQueries(["journals"]);
     } catch (error) {
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء إلغاء الاعتماد");
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء إلغاء الاعتماد"
+      );
     }
   };
-
- 
 
   // Journal Source Type Arabic translations
   const getJournalSourceTypeText = (sourceType) => {
@@ -171,8 +179,6 @@ const Journals = () => {
     }
   };
 
-
-
   const getStatusText = (status) => {
     switch (status) {
       case "DRAFT":
@@ -185,18 +191,6 @@ const Journals = () => {
         return status;
     }
   };
-
-
-  const calculateTotals = () => {
-    if (!journalData?.lines) return { totalDebit: 0, totalCredit: 0 };
-    
-    const totalDebit = journalData.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
-    const totalCredit = journalData.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
-    
-    return { totalDebit, totalCredit };
-  };
-
-  const { totalDebit, totalCredit } = calculateTotals();
 
   return (
     <Box
@@ -231,7 +225,9 @@ const Journals = () => {
               flexShrink: 0,
             }}
           >
-            <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
+            <Box
+              sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}
+            >
               <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
                 معلومات القيد
               </Typography>
@@ -239,19 +235,19 @@ const Journals = () => {
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography color="error">إجمالي المدين:</Typography>
                   <Typography fontWeight="bold" color="error">
-                    {totalDebit.toLocaleString()} 
+                    {journalData.totals.totalDebit.toLocaleString()}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography color="success">إجمالي الدائن:</Typography>
                   <Typography fontWeight="bold" color="success">
-                    {totalCredit.toLocaleString()} 
+                    {journalData.totals.totalCredit.toLocaleString()}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography color="black">الاجمالي:</Typography>
                   <Typography fontWeight="bold" color="black">
-                    {(totalDebit - totalCredit).toLocaleString()} 
+                    {(journalData.totals.totalDebit - journalData.totals.totalCredit).toLocaleString()}
                   </Typography>
                 </Box>
               </Stack>
@@ -262,94 +258,99 @@ const Journals = () => {
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
-                {journalData.status === "DRAFT" && !isEditMode && permissions.includes("journalEntries_Update") && (
-                  <>
-                    <Button
-                      variant="contained"
-                      startIcon={<EditIcon sx={{marginLeft:'10px'}}/>}
-                      onClick={handleEditClick}
-                      sx={{
-                        bgcolor: "primary.main",
-                        "&:hover": { bgcolor: "primary.dark" },
-                      }}
-                    >
-                      تعديل القيد
-                    </Button>
-                    {permissions.includes("journalEntries_Post") && (
-                    <Button
-                      variant="contained"
-                      startIcon={<CheckIcon sx={{marginLeft:'10px'}}/>}
-                      onClick={handlePostJournal}
-                      sx={{
-                        bgcolor: "success.main",
-                        "&:hover": { bgcolor: "success.dark" },
-                      }}
-                    >
-                      اعتماد القيد
-                    </Button>
-                    )}
-                    {permissions.includes("journalEntries_Delete") && (
+                {journalData.status === "DRAFT" &&
+                  !isEditMode &&
+                  permissions.includes("journals_Update") && (
+                    <>
+                      <Button
+                        variant="contained"
+                        startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
+                        onClick={handleEditClick}
+                        sx={{
+                          bgcolor: "primary.main",
+                          "&:hover": { bgcolor: "primary.dark" },
+                        }}
+                      >
+                        تعديل القيد
+                      </Button>
+                      {permissions.includes("journals_Post") && (
+                        <Button
+                          variant="contained"
+                          startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
+                          onClick={handlePostJournal}
+                          sx={{
+                            bgcolor: "success.main",
+                            "&:hover": { bgcolor: "success.dark" },
+                          }}
+                        >
+                          اعتماد القيد
+                        </Button>
+                      )}
+                      {permissions.includes("journals_Delete") && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<DeleteIcon sx={{ marginLeft: "10px" }} />}
+                          onClick={() => {
+                            setJournalToDelete(selectedJournal);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          sx={{
+                            borderColor: "error.main",
+                            color: "error.main",
+                            "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                          }}
+                        >
+                          حذف القيد
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                {journalData.status === "DRAFT" &&
+                  isEditMode &&
+                  permissions.includes("journals_Update") && (
+                    <>
+                      <Button
+                        variant="contained"
+                        startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
+                        onClick={handleUpdateJournal}
+                        sx={{
+                          bgcolor: "success.main",
+                          "&:hover": { bgcolor: "success.dark" },
+                        }}
+                      >
+                        حفظ التعديلات
+                      </Button>
+                      {permissions.includes("journals_Update") && (
+                        <Button
+                          variant="outlined"
+                          onClick={handleCancelEdit}
+                          sx={{
+                            borderColor: "grey.500",
+                            color: "grey.700",
+                          }}
+                        >
+                          إلغاء التعديل
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                {journalData.status === "POSTED" &&
+                  permissions.includes("journals_Post") && (
                     <Button
                       variant="outlined"
-                      startIcon={<DeleteIcon sx={{marginLeft:'10px'}}/>}
-                      onClick={() => {
-                        setJournalToDelete(selectedJournal);
-                        setIsDeleteModalOpen(true);
-                      }}
+                      startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
+                      onClick={handleUnpostJournal}
                       sx={{
                         borderColor: "error.main",
                         color: "error.main",
                         "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
                       }}
                     >
-                      حذف القيد
+                      إلغاء الاعتماد
                     </Button>
-                    )}
-                  </>
-                )}
-
-                {journalData.status === "DRAFT" && isEditMode && permissions.includes("journalEntries_Update") && (
-                  <>
-                    <Button
-                      variant="contained"
-                      startIcon={<SaveIcon sx={{marginLeft:'10px'}}/>}
-                      onClick={handleUpdateJournal}
-                      sx={{
-                        bgcolor: "success.main",
-                        "&:hover": { bgcolor: "success.dark" },
-                      }}
-                    >
-                      حفظ التعديلات
-                    </Button>
-                    {permissions.includes("journalEntries_Update") && (
-                    <Button
-                      variant="outlined"
-                      onClick={handleCancelEdit}
-                      sx={{
-                        borderColor: "grey.500",
-                        color: "grey.700",
-                      }}
-                    >
-                      إلغاء التعديل
-                    </Button>
-                    )}
-                  </>
-                )}
-
-                {journalData.status === "POSTED" && permissions.includes("journalEntries_Post") && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<CancelIcon sx={{marginLeft:'10px'}}/>}
-                    onClick={handleUnpostJournal}
-                    sx={{
-                      borderColor: "error.main",
-                      color: "error.main",
-                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                    }}
-                  >
-                    إلغاء الاعتماد
-                  </Button>
-                )}
+                  )}
               </Stack>
             </Box>
           </Box>
@@ -380,7 +381,8 @@ const Journals = () => {
                   label="عرض جميع القيود"
                   sx={{
                     fontWeight: "bold",
-                    borderBottom: activeTab === 0 ? "3px solid #0d40a5" : "none",
+                    borderBottom:
+                      activeTab === 0 ? "3px solid #0d40a5" : "none",
                     color: activeTab === 0 ? "#0d40a5" : "text.secondary",
                   }}
                 />
@@ -388,7 +390,8 @@ const Journals = () => {
                   label={selectedJournal ? "تفاصيل القيد" : "قيد محدد"}
                   sx={{
                     fontWeight: "bold",
-                    borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
+                    borderBottom:
+                      activeTab === 1 ? "3px solid #0d40a5" : "none",
                     color: activeTab === 1 ? "#0d40a5" : "text.secondary",
                   }}
                 />
@@ -404,16 +407,34 @@ const Journals = () => {
                     يرجى اختيار قيد لعرض تفاصيله
                   </Alert>
                 ) : isJournalLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <CircularProgress size={20} />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <CircularProgress size={20} />
                   </Box>
                 ) : journalData ? (
                   <Paper sx={{ p: 4, borderRadius: 2 }}>
-                    <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={'center'}>
+                    <Typography
+                      variant="h6"
+                      color="primary"
+                      fontWeight="bold"
+                      mb={3}
+                      textAlign={"center"}
+                    >
                       تفاصيل القيد
                     </Typography>
 
-                    <Grid container spacing={3} mb={4} justifyContent={'center'}>
+                    <Grid
+                      container
+                      spacing={3}
+                      mb={4}
+                      justifyContent={"center"}
+                    >
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
@@ -433,8 +454,16 @@ const Journals = () => {
                           fullWidth
                           label="التاريخ"
                           type="date"
-                          value={isEditMode ? editForm.date : (journalData.date ? journalData.date.split('T')[0] : "")}
-                          onChange={(e) => handleInputChange("date", e.target.value)}
+                          value={
+                            isEditMode
+                              ? editForm.date
+                              : journalData.date
+                              ? journalData.date.split("T")[0]
+                              : ""
+                          }
+                          onChange={(e) =>
+                            handleInputChange("date", e.target.value)
+                          }
                           disabled={!isEditMode}
                           InputLabelProps={{ shrink: true }}
                           sx={{
@@ -449,8 +478,12 @@ const Journals = () => {
                           fullWidth
                           label="نوع القيد"
                           select
-                          value={isEditMode ? editForm.type : journalData.type || ""}
-                          onChange={(e) => handleInputChange("type", e.target.value)}
+                          value={
+                            isEditMode ? editForm.type : journalData.type || ""
+                          }
+                          onChange={(e) =>
+                            handleInputChange("type", e.target.value)
+                          }
                           disabled={!isEditMode}
                           InputLabelProps={{ shrink: true }}
                           sx={{
@@ -469,7 +502,11 @@ const Journals = () => {
                         <TextField
                           fullWidth
                           label="نوع المصدر"
-                          value={journalData.sourceType ? getJournalSourceTypeText(journalData.sourceType) : "لا يوجد"}
+                          value={
+                            journalData.sourceType
+                              ? getJournalSourceTypeText(journalData.sourceType)
+                              : "لا يوجد"
+                          }
                           disabled
                           InputLabelProps={{ shrink: true }}
                           sx={{
@@ -491,13 +528,15 @@ const Journals = () => {
                               width: "200px",
                             },
                           }}
-                          />
+                        />
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
                           label="المعتمد بواسطة"
-                          value={journalData.postedBy?.name || "لم يتم الاعتماد "}
+                          value={
+                            journalData.postedBy?.name || "لم يتم الاعتماد "
+                          }
                           disabled
                           InputLabelProps={{ shrink: true }}
                           sx={{
@@ -505,14 +544,20 @@ const Journals = () => {
                               width: "200px",
                             },
                           }}
-                          />
+                        />
                       </Grid>
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
                           label="الوصف"
-                          value={isEditMode ? editForm.description : journalData.description || ""}
-                          onChange={(e) => handleInputChange("description", e.target.value)}
+                          value={
+                            isEditMode
+                              ? editForm.description
+                              : journalData.description || ""
+                          }
+                          onChange={(e) =>
+                            handleInputChange("description", e.target.value)
+                          }
                           disabled={!isEditMode}
                           multiline
                           rows={2}
@@ -528,7 +573,13 @@ const Journals = () => {
 
                     <Divider sx={{ my: 3 }} />
 
-                    <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={'center'}>
+                    <Typography
+                      variant="h6"
+                      color="primary"
+                      fontWeight="bold"
+                      mb={3}
+                      textAlign={"center"}
+                    >
                       بنود القيد
                     </Typography>
 
@@ -536,12 +587,24 @@ const Journals = () => {
                       <Table>
                         <TableHead>
                           <StyledTableRow>
-                            <StyledTableCell align="center">الحساب</StyledTableCell>
-                            <StyledTableCell align="center">العميل</StyledTableCell>
-                            <StyledTableCell align="center">الطبيعة</StyledTableCell>
-                            <StyledTableCell align="center">مدين</StyledTableCell>
-                            <StyledTableCell align="center">دائن</StyledTableCell>
-                            <StyledTableCell align="center">الإجمالي</StyledTableCell>
+                            <StyledTableCell align="center">
+                              الحساب
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              العميل
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              الطبيعة
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              مدين
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              دائن
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              الإجمالي
+                            </StyledTableCell>
                           </StyledTableRow>
                         </TableHead>
                         <TableBody>
@@ -553,15 +616,23 @@ const Journals = () => {
                               <StyledTableCell align="center">
                                 {line.client?.name || "لا يوجد عميل"}
                               </StyledTableCell>
-                              <StyledTableCell 
+                              <StyledTableCell
                                 align="center"
                                 style={{
-                                  color: line.account?.nature === "DEBIT" ? "#d32f2f" : 
-                                         line.account?.nature === "CREDIT" ? "#2e7d32" : "#000000",
-                                  fontWeight: "bold"
+                                  color:
+                                    line.account?.nature === "DEBIT"
+                                      ? "#d32f2f"
+                                      : line.account?.nature === "CREDIT"
+                                      ? "#2e7d32"
+                                      : "#000000",
+                                  fontWeight: "bold",
                                 }}
                               >
-                                {line.account?.nature ? (line.account.nature === "DEBIT" ? "مدين" : "دائن") : "-"}
+                                {line.account?.nature
+                                  ? line.account.nature === "DEBIT"
+                                    ? "مدين"
+                                    : "دائن"
+                                  : "-"}
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 {line.debit.toLocaleString() || 0}
@@ -574,38 +645,42 @@ const Journals = () => {
                               </StyledTableCell>
                             </StyledTableRow>
                           ))}
-                          <StyledTableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                          <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
                             <StyledTableCell colSpan={3} align="center">
-                              <Typography fontWeight="bold">الإجمالي</Typography>
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
                               <Typography fontWeight="bold">
-                                {totalDebit.toLocaleString()} 
+                                الإجمالي
                               </Typography>
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <Typography fontWeight="bold">
-                                {totalCredit.toLocaleString()} 
+                                {journalData.totals.totalDebit.toLocaleString()}
                               </Typography>
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <Typography fontWeight="bold">
-                                {(totalDebit - totalCredit).toLocaleString()} 
+                                {journalData.totals.totalCredit.toLocaleString()}
+                              </Typography>
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              <Typography fontWeight="bold">
+                                {Number(
+                                  (journalData.totals.totalDebit - journalData.totals.totalCredit).toFixed(2)
+                                ).toLocaleString()}
                               </Typography>
                             </StyledTableCell>
                           </StyledTableRow>
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Paper>
-                  ) : (
-                    <Alert severity="error">حدث خطأ في تحميل بيانات القيد</Alert>
-                  )}
-                </Box>
-              )}
-            </Box>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                ) : (
+                  <Alert severity="error">حدث خطأ في تحميل بيانات القيد</Alert>
+                )}
+              </Box>
+            )}
           </Box>
         </Box>
+      </Box>
 
       <DeleteModal
         open={isDeleteModalOpen}

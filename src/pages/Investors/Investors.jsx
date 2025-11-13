@@ -1118,7 +1118,6 @@ export default function Investors() {
         }}
         onConfirm={() => {
           if (investorToDelete?.id) {
-            console.log('Delete button clicked, investor ID:', investorToDelete.id);
             handleDeleteInvestor(investorToDelete.id);
           } else {
             console.error('No investor ID found for deletion');

@@ -77,7 +77,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Fetch Mudarabah template when modal opens
   React.useEffect(() => {
     if (open && generateContract) {
       fetchMudarabahTemplate();
@@ -111,23 +110,18 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       
       notifySuccess('تم إضافة المستثمر بنجاح');
       
-      // If contract generation is enabled, show contract preview
       if (generateContract && mudarabahTemplate) {
-        console.log('Setting investor data for contract generation:', newInvestorData);
-        console.log('Template content length:', mudarabahTemplate.length);
         
         setSavedInvestorData(newInvestorData);
-        // Trigger contract generation after a short delay to ensure component is mounted
+
         setTimeout(() => {
           if (contractGeneratorRef.current) {
-            console.log('Triggering contract generation...');
             contractGeneratorRef.current.generateContract();
           } else {
             console.error('Contract generator ref not available');
           }
         }, 500);
       } else {
-        // Close modal and refresh data
         onSuccess();
         handleClose();
       }
@@ -140,7 +134,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
   };
 
   const handleContractGenerated = () => {
-    // Contract has been generated and saved
     onSuccess();
     handleClose();
   };
@@ -347,7 +340,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
         </Button>
       </DialogActions>
 
-      {/* Contract Generator Component */}
       {savedInvestorData && mudarabahTemplate && (
         <ContractGenerator
           ref={contractGeneratorRef}

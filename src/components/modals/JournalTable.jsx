@@ -207,7 +207,7 @@ const JournalTable = ({ onViewDetails }) => {
                     </StyledTableCell>
                     <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                       <Stack direction="row" spacing={1} justifyContent="center">
-                        {permissions.includes("journalEntries_Update") && (
+                        {permissions.includes("journals_Update") && (
                         <IconButton
                           title="عرض التفاصيل"
                           size="small"

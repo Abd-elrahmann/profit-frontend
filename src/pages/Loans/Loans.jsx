@@ -34,7 +34,7 @@ import LoansTable from "../../components/modals/LoansTable";
 import AddClient from "../../components/modals/AddClient";
 import LoanContractGenerator from "../../components/LoanContractGenerator";
 import LoanContractsPreview from "../../components/LoanContractsPreview";
-import Api from "../../config/Api";
+import Api, { handleApiError } from "../../config/Api";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -52,8 +52,6 @@ const Loans = () => {
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [debtAckStyles, setDebtAckStyles] = useState("");
-  const [promissoryNoteStyles, setPromissoryNoteStyles] = useState("");
   const [loanForm, setLoanForm] = useState({
     amount: "",
     interestRate: "",
@@ -89,18 +87,21 @@ const Loans = () => {
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
     enabled: activeTab === 1,
+    retry: 1,
   });
 
   const { data: banksData, isLoading: isBanksLoading } = useQuery({
     queryKey: ["banks", banksPage, banksSearchQuery],
     queryFn: () => getBanks(banksPage, banksSearchQuery),
     enabled: activeTab === 1,
+    retry: 1,
   });
 
   const { data: partnersData, isLoading: isPartnersLoading } = useQuery({
     queryKey: ["partners", partnersPage, partnersSearchQuery],
     queryFn: () => getPartners(partnersPage, partnersSearchQuery),
     enabled: activeTab === 1,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -113,36 +114,19 @@ const Loans = () => {
 
   const fetchContractTemplates = async () => {
     try {
-      console.log("Fetching contract templates...");
-  
-      // جلب القوالب فقط
       const [debtResponse, promissoryResponse] = await Promise.all([
         Api.get("/api/templates/DEBT_ACKNOWLEDGMENT"),
         Api.get("/api/templates/PROMISSORY_NOTE"),
       ]);
   
-      // حفظ المحتوى فقط بدون أي دمج أو تعديل
       const debtContent = debtResponse.data.content || "";
       const promissoryContent = promissoryResponse.data.content || "";
   
-      console.log("Templates fetched:", {
-        debtAck: {
-          contentLength: debtContent.length,
-          contentPreview: debtContent.substring(0, 200)
-        },
-        promissoryNote: {
-          contentLength: promissoryContent.length,
-          contentPreview: promissoryContent.substring(0, 200)
-        }
-      });
-  
-      // حفظ المحتوى في الـ state
       setDebtAckTemplate(debtContent);
       setPromissoryNoteTemplate(promissoryContent);
   
-      console.log("Templates fetched successfully (content only)");
     } catch (error) {
-      console.warn("Could not fetch contract templates:", error);
+      handleApiError(error);
     }
   };
   
@@ -242,7 +226,7 @@ const Loans = () => {
       });
       setPreviewOpen(true);
     } catch (error) {
-      console.error("Error generating preview:", error);
+      handleApiError(error);
       notifyError("حدث خطأ أثناء توليد معاينة العقود");
     }
   };
@@ -254,15 +238,11 @@ const Loans = () => {
         return;
       }
   
-      console.log("Saving contracts for loan:", savedLoanData.id);
-      
       if (contractType === "both" || contractType === "debt-acknowledgment") {
-        console.log("Generating debt acknowledgment...");
         await debtAckGeneratorRef.current?.generatePDF();
       }
       
       if (contractType === "both" || contractType === "promissory-note") {
-        console.log("Generating promissory note...");
         await promissoryNoteGeneratorRef.current?.generatePDF();
       }
   
@@ -279,7 +259,7 @@ const Loans = () => {
       setIsViewMode(false);
       setActiveTab(0);
     } catch (error) {
-      console.error("Error saving contracts:", error);
+      handleApiError(error);
       notifyError("حدث خطأ أثناء حفظ العقود");
     }
   };
@@ -294,7 +274,6 @@ const Loans = () => {
       const profit = amount * (interestRate / 100);
       const total = amount + profit;
       
-      // Backend logic: Calculate full installments and remainder
       const fullMonths = Math.floor(total / paymentAmount);
       const lastPayment = total - (paymentAmount * fullMonths);
       let months = fullMonths;
@@ -318,21 +297,17 @@ const Loans = () => {
         }
 
         let currentAmount = paymentAmount;
-        // Last installment takes the remainder
         if (i === months && lastPayment > 0) {
           currentAmount = lastPayment;
         }
 
-        // Calculate principal and interest for this installment proportionally
         let principalAmount;
         let interestAmount;
 
-        if (i === months && lastPayment > 0) {
-          // Last payment: remaining principal + interest
+        if (i === months && lastPayment > 0) {  
           principalAmount = remainingPrincipal;
           interestAmount = remainingInterest;
         } else {
-          // Distribute payment proportionally
           const interestRatio = remainingInterest / (remainingPrincipal + remainingInterest);
           interestAmount = parseFloat((currentAmount * interestRatio).toFixed(2));
           principalAmount = parseFloat((currentAmount - interestAmount).toFixed(2));
@@ -370,7 +345,6 @@ const Loans = () => {
       (parseFloat(loanForm.amount.replace(/,/g, "")) || 0) + totalInterest;
     const paymentAmount = parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     
-    // حساب عدد الأشهر الفعلي بناءً على نوع السلفة (كما في الباك اند)
     const installmentsCount = installments.length;
     let numberOfMonths = installmentsCount;
     const loanType = loanForm.type;
@@ -414,12 +388,10 @@ const Loans = () => {
         kafeelId: selectedKafeel?.id || null,
       };
   
-      console.log("Creating loan with data:", loanData);
   
       const response = await createLoan(loanData);
       const newLoan = response?.data?.loan || response?.loan;
   
-      console.log("Loan created successfully:", newLoan);
       notifySuccess("تم إنشاء السلفة بنجاح");
   
       setSavedLoanData({
@@ -431,7 +403,7 @@ const Loans = () => {
       queryClient.invalidateQueries(["loans"]);
       
     } catch (error) {
-      console.error("Error creating loan:", error);
+      handleApiError(error);
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء إنشاء السلفة"
       );
@@ -1072,6 +1044,103 @@ const Loans = () => {
                   </Grid>
                 </Paper>
                 )}
+
+                {/* Kafeel Information Section - Show when kafeel is selected or exists in view mode */}
+                {((!isViewMode && selectedKafeel) || (isViewMode && selectedLoan?.kafeel)) && (
+                  <Paper
+                    sx={{
+                      p: 4,
+                      mb: 3,
+                      borderRadius: 2,
+                      border: "1px solid #e5e7eb",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      color="#333"
+                      mb={3}
+                      textAlign="center"
+                    >
+                      معلومات الكفيل
+                    </Typography>
+
+                    <Grid container spacing={3} justifyContent="center">
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="اسم الكفيل"
+                          value={
+                            isViewMode 
+                              ? selectedLoan?.kafeel?.name || "" 
+                              : selectedKafeel?.name || ""
+                          }
+                          disabled
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="رقم الهوية"
+                          value={
+                            isViewMode 
+                              ? selectedLoan?.kafeel?.nationalId || "" 
+                              : selectedKafeel?.nationalId || ""
+                          }
+                          disabled
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="تاريخ الميلاد"
+                          value={
+                            (() => {
+                              const birthDate = isViewMode 
+                                ? selectedLoan?.kafeel?.birthDate 
+                                : selectedKafeel?.birthDate;
+                              return birthDate
+                                ? new Date(birthDate).toISOString().split("T")[0]
+                                : "";
+                            })()
+                          }
+                          disabled
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                )}
+
                 {permissions.includes("loans_Add") && (
                 <Paper
                   sx={{
@@ -1305,91 +1374,6 @@ const Loans = () => {
                     </Grid>
                   </Grid>
                 </Paper>
-                )}
-
-                {/* Kafeel Information Section - Only show in view mode when kafeel exists */}
-                {isViewMode && selectedKafeel && (
-                  <Paper
-                    sx={{
-                      p: 4,
-                      mb: 3,
-                      borderRadius: 2,
-                      border: "1px solid #e5e7eb",
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      fontWeight="bold"
-                      color="#333"
-                      mb={3}
-                      textAlign="center"
-                    >
-                      معلومات الكفيل
-                    </Typography>
-
-                    <Grid container spacing={3} justifyContent="center">
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          label="اسم الكفيل"
-                          value={selectedKafeel.name || ""}
-                          disabled
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              backgroundColor: "#f5f5f5",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          label="رقم الهوية"
-                          value={selectedKafeel.nationalId || ""}
-                          disabled
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              backgroundColor: "#f5f5f5",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          label="تاريخ الميلاد"
-                          value={
-                            selectedKafeel.birthDate
-                              ? new Date(selectedKafeel.birthDate)
-                                  .toISOString()
-                                  .split("T")[0]
-                              : ""
-                          }
-                          disabled
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              backgroundColor: "#f5f5f5",
-                            },
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
                 )}
               </Box>
             )}

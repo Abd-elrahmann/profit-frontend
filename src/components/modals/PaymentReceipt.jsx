@@ -79,7 +79,6 @@ const PaymentReceipt = () => {
       }, 2000);
       
     } catch (error) {
-      console.log('Upload error:', error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء رفع الإيصال");
     } finally {
       setUploading(false);
@@ -268,7 +267,6 @@ const PaymentReceipt = () => {
           </Stack>
         </Paper>
 
-        {/* Upload section */}
         <Box
           {...getRootProps()}
           sx={{

@@ -100,7 +100,6 @@ const PaymentProofGenerator = React.forwardRef(({
   const [contractHtml, setContractHtml] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Upload PDF to server function
   const uploadPDFToServer = useCallback(async (pdfBlob) => {
     try {
       const formData = new FormData();
@@ -109,7 +108,6 @@ const PaymentProofGenerator = React.forwardRef(({
 
       const endpoint = `/api/repayments/PaymentProof/${installmentData.id}`;
 
-      console.log('Uploading payment proof to endpoint:', endpoint);
 
       const response = await Api.post(endpoint, formData, {
         headers: {
@@ -117,20 +115,17 @@ const PaymentProofGenerator = React.forwardRef(({
         },
       });
 
-      console.log('Upload response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error uploading payment proof PDF:', error);
+      handleApiError(error);
       throw error;
     }
   }, [installmentData?.id]);
 
-  // Generate PDF from HTML
   const generatePDF = useCallback(async (htmlContent = contractHtml) => {
     const contentToUse = htmlContent || contractHtml;
 
     if (!contentToUse) {
-      console.error('No payment proof HTML to generate PDF');
       notifyError('لا يوجد محتوى إيصال لتحويله إلى PDF');
       return;
     }
@@ -176,24 +171,18 @@ const PaymentProofGenerator = React.forwardRef(({
         }
       };
 
-      console.log('Generating payment proof PDF...');
-
-      // انتظر قليلاً للتأكد من تحميل الخطوط والصور
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Generate PDF from the preview container
       const container = document.getElementById(previewContainer.id);
       const pdfBlob = await html2pdf()
         .from(container)
         .set(options)
         .outputPdf('blob');
 
-      // تنظيف عنصر المعاينة
       document.body.removeChild(previewContainer);
 
       await uploadPDFToServer(pdfBlob);
 
-      console.log('Payment proof PDF generated and uploaded successfully');
 
       if (onContractGenerated) {
         onContractGenerated(pdfBlob, 'PAYMENT_PROOF');
@@ -201,7 +190,7 @@ const PaymentProofGenerator = React.forwardRef(({
 
       return pdfBlob;
     } catch (error) {
-      console.error('Error generating payment proof PDF:', error);
+      handleApiError(error);
       notifyError('حدث خطأ أثناء إنشاء ملف PDF');
       handleApiError(error);
       throw error;
@@ -210,18 +199,15 @@ const PaymentProofGenerator = React.forwardRef(({
     }
   }, [contractHtml, installmentData?.id, uploadPDFToServer, onContractGenerated]);
 
-  // Generate filled payment proof from template
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
     const dataToUse = customData || { installmentData, loanData, clientData, employeeName };
 
     if (!dataToUse.installmentData || !dataToUse.clientData || !templateContent) {
-      console.error('Missing data:', dataToUse);
       notifyError('بيانات الدفعة أو العميل أو قالب الإيصال غير متوفر');
       return;
     }
 
     try {
-      console.log('Generating payment proof:', dataToUse);
 
       const { gregorianDate, hijriDate } = getCurrentDates();
       const finalDate = `${hijriDate}\n${gregorianDate}`;
@@ -229,7 +215,6 @@ const PaymentProofGenerator = React.forwardRef(({
       const amount = dataToUse.installmentData.amount || 0;
       const amountInWords = numberToArabicWords(amount);
 
-      console.log('Installment Amount:', amount, 'Amount in words:', amountInWords);
 
       let filledTemplate = templateContent
         // Client data
@@ -254,19 +239,16 @@ const PaymentProofGenerator = React.forwardRef(({
         // Employee data
         .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
 
-      console.log('Payment proof template generated successfully');
 
       setContractHtml(filledTemplate);
 
-      // إذا كان التوليد تلقائي، انتقل مباشرة لإنشاء PDF
       if (generatePdf) {
-        console.log('Auto-generating payment proof PDF...');
 
         setTimeout(async () => {
           try {
             await generatePDF(filledTemplate);
           } catch (error) {
-            console.error('Error in auto-generating payment proof PDF:', error);
+            handleApiError(error);
           }
         }, 500);
 
@@ -275,26 +257,22 @@ const PaymentProofGenerator = React.forwardRef(({
 
       return filledTemplate;
     } catch (error) {
-      console.error('Error generating payment proof:', error);
+      handleApiError(error);
       throw error;
     }
   }, [installmentData, loanData, clientData, employeeName, templateContent, autoGenerate, generatePDF]);
 
-  // التوليد التلقائي عند تغيير البيانات
   useEffect(() => {
     if (autoGenerate && installmentData && clientData && templateContent) {
-      console.log('Auto-generating payment proof...');
       generateContract(true);
     }
   }, [autoGenerate, installmentData, clientData, templateContent, generateContract]);
 
-  // Expose methods through ref
   React.useImperativeHandle(ref, () => ({
     generateContract,
     generatePDF: () => generatePDF(contractHtml)
   }));
 
-  // إذا كان التوليد تلقائي، لا تعرض المعاينة
   if (autoGenerate) {
     return null;
   }

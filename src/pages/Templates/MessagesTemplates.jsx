@@ -109,11 +109,9 @@ export default function MessagesTemplates() {
       if (response.data.content && response.data.content.trim() !== "") {
         return response.data.content;
       } else {
-        console.log(`Template ${templateName} found in API but empty, using frontend default`);
         return getDefaultTemplate(templateName);
       }
     } catch {
-      console.log(`Template ${templateName} not found in API, using frontend default`);
       return getDefaultTemplate(templateName);
     }
   }, [getDefaultTemplate]);
