@@ -1,8 +1,8 @@
-// components/contracts/PaymentProofGenerator.jsx
+
 import React, { useState, useCallback, useEffect } from 'react';
-import html2pdf from 'html2pdf.js';
 import Api, { handleApiError } from '../config/Api';
 import { notifyError } from '../utilities/toastify';
+import html2pdf from 'html2pdf.js';
 
 const numberToArabicWords = (num) => {
   if (num === 0) return "صفر";
@@ -104,13 +104,13 @@ const PaymentProofGenerator = React.forwardRef(({
   const uploadPDFToServer = useCallback(async (pdfBlob) => {
     try {
       const formData = new FormData();
-      const filename = `إيصال_سداد_قسط_${installmentData.id}_${Date.now()}.pdf`;
+      const filename = `إيصال_سداد_الدفعة_${installmentData.id}_${Date.now()}.pdf`;
       formData.append('file', pdfBlob, filename);
-      
+
       const endpoint = `/api/repayments/PaymentProof/${installmentData.id}`;
 
       console.log('Uploading payment proof to endpoint:', endpoint);
-      
+
       const response = await Api.post(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -128,7 +128,7 @@ const PaymentProofGenerator = React.forwardRef(({
   // Generate PDF from HTML
   const generatePDF = useCallback(async (htmlContent = contractHtml) => {
     const contentToUse = htmlContent || contractHtml;
-    
+
     if (!contentToUse) {
       console.error('No payment proof HTML to generate PDF');
       notifyError('لا يوجد محتوى إيصال لتحويله إلى PDF');
@@ -137,55 +137,20 @@ const PaymentProofGenerator = React.forwardRef(({
 
     try {
       setIsGenerating(true);
-      
-      // إنشاء عنصر ثابت في الصفحة بنفس التنسيقات المستخدمة في البريفيو بالضبط
-      // البريفيو يستخدم Paper مع padding: 4 (16px) و margin: 3 (24px)
+
+
       const previewContainer = document.createElement('div');
       previewContainer.id = `payment-proof-preview-${Date.now()}`;
-      previewContainer.style.position = "absolute";
-      previewContainer.style.left = "-9999px";
-      previewContainer.style.top = "0";
       previewContainer.style.width = '210mm';
       previewContainer.style.minHeight = '297mm';
-      previewContainer.style.backgroundColor = "#ffffff";
-      previewContainer.style.boxSizing = "border-box";
-      
-      // نسخ نفس التنسيقات من البريفيو: Paper padding: 4 = 16px
       previewContainer.innerHTML = `
         <div style="
-          font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
-          padding: 16px;
+          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+          padding: 20mm;
           background: white;
           direction: rtl;
-          width: 100%;
-          box-sizing: border-box;
-          line-height: 1.8;
         ">
-          <style>
-            * {
-              font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif !important;
-              line-height: 1.8 !important;
-            }
-            h1, h2, h3 {
-              text-align: center !important;
-              color: #1976d2 !important;
-              margin-bottom: 20px !important;
-            }
-            p {
-              margin-bottom: 15px !important;
-              text-align: justify !important;
-            }
-            strong {
-              color: #1976d2 !important;
-              font-weight: bold !important;
-            }
-          </style>
-          <div style="
-            font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
-            line-height: 1.8;
-          ">
-            ${contentToUse}
-          </div>
+          ${contentToUse}
         </div>
       `;
       document.body.appendChild(previewContainer);
@@ -212,10 +177,10 @@ const PaymentProofGenerator = React.forwardRef(({
       };
 
       console.log('Generating payment proof PDF...');
-      
+
       // انتظر قليلاً للتأكد من تحميل الخطوط والصور
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Generate PDF from the preview container
       const container = document.getElementById(previewContainer.id);
       const pdfBlob = await html2pdf()
@@ -227,9 +192,9 @@ const PaymentProofGenerator = React.forwardRef(({
       document.body.removeChild(previewContainer);
 
       await uploadPDFToServer(pdfBlob);
-      
+
       console.log('Payment proof PDF generated and uploaded successfully');
-      
+
       if (onContractGenerated) {
         onContractGenerated(pdfBlob, 'PAYMENT_PROOF');
       }
@@ -248,55 +213,55 @@ const PaymentProofGenerator = React.forwardRef(({
   // Generate filled payment proof from template
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
     const dataToUse = customData || { installmentData, loanData, clientData, employeeName };
-    
+
     if (!dataToUse.installmentData || !dataToUse.clientData || !templateContent) {
       console.error('Missing data:', dataToUse);
-      notifyError('بيانات القسط أو العميل أو قالب الإيصال غير متوفر');
+      notifyError('بيانات الدفعة أو العميل أو قالب الإيصال غير متوفر');
       return;
     }
 
     try {
       console.log('Generating payment proof:', dataToUse);
-      
+
       const { gregorianDate, hijriDate } = getCurrentDates();
       const finalDate = `${hijriDate}\n${gregorianDate}`;
 
       const amount = dataToUse.installmentData.amount || 0;
       const amountInWords = numberToArabicWords(amount);
-      
+
       console.log('Installment Amount:', amount, 'Amount in words:', amountInWords);
-      
+
       let filledTemplate = templateContent
         // Client data
         .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
         .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
         .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
         .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
-        
+
         // Loan data
-        .replace(/{{رقم_القسط}}/g, dataToUse.installmentData.count || 'N/A')
+        .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || 'N/A')
         .replace(/{{رقم_الايصال}}/g, `PAY-${dataToUse.installmentData.id}-${Date.now()}`)
-        
+
         // Amount data
         .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'} ريال سعودي`)
         .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال سعودي`)
-        
+
         // Dates
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)
         .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
         .replace(/{{تاريخ_السداد}}/g, finalDate)
-        
+
         // Employee data
         .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
 
       console.log('Payment proof template generated successfully');
-      
+
       setContractHtml(filledTemplate);
-      
+
       // إذا كان التوليد تلقائي، انتقل مباشرة لإنشاء PDF
       if (generatePdf) {
         console.log('Auto-generating payment proof PDF...');
-        
+
         setTimeout(async () => {
           try {
             await generatePDF(filledTemplate);
@@ -304,10 +269,10 @@ const PaymentProofGenerator = React.forwardRef(({
             console.error('Error in auto-generating payment proof PDF:', error);
           }
         }, 500);
-        
+
         return filledTemplate;
       }
-      
+
       return filledTemplate;
     } catch (error) {
       console.error('Error generating payment proof:', error);
@@ -353,5 +318,4 @@ const PaymentProofGenerator = React.forwardRef(({
     </div>
   );
 });
-
 export default PaymentProofGenerator;

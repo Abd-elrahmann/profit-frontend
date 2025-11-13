@@ -29,6 +29,9 @@ const kafeelValidationSchema = Yup.object().shape({
   nationalId: Yup.string().required('رقم هوية الكفيل مطلوب'),
   phone: Yup.string().required('رقم جوال الكفيل مطلوب'),
   email: Yup.string().email('البريد الإلكتروني غير صالح'),
+  birthDate: Yup.string().required('تاريخ الميلاد مطلوب'),
+  city: Yup.string().required('المدينة مطلوبة'),
+  district: Yup.string().required('الحي مطلوب'),
   employer: Yup.string().required('جهة عمل الكفيل مطلوبة'),
   salary: Yup.number().required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
   obligations: Yup.number().required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
@@ -160,12 +163,25 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
     try {
       const formData = new FormData();
 
-      // Add kafeel data
-      Object.keys(values).forEach(key => {
-        if (values[key] !== '') {
-          formData.append(`kafeel[${key}]`, values[key]);
-        }
-      });
+      // Add required string fields
+      formData.append('name', String(values.name || ''));
+      formData.append('nationalId', String(values.nationalId || ''));
+      formData.append('phone', String(values.phone || ''));
+      formData.append('employer', String(values.employer || ''));
+      formData.append('city', String(values.city || ''));
+      formData.append('district', String(values.district || ''));
+      
+      // Add required date field (ISO 8601 format)
+      formData.append('birthDate', String(values.birthDate || ''));
+      
+      // Add required number fields (FormData will convert to string, backend will parse)
+      formData.append('salary', String(values.salary || ''));
+      formData.append('obligations', String(values.obligations || ''));
+
+      // Add optional email field
+      if (values.email) {
+        formData.append('email', String(values.email));
+      }
 
       // Add documents
       Object.keys(uploadedFiles).forEach(key => {
@@ -431,7 +447,8 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
                     variant="contained"
                     disabled={
                       activeStep === 0 && (!values.name || !values.nationalId || !values.phone || 
-                        !values.employer || !values.salary || !values.obligations)
+                        !values.employer || !values.salary || !values.obligations ||
+                        !values.birthDate || !values.city || !values.district)
                     }
                     sx={{
                       bgcolor: "#0d40a5",

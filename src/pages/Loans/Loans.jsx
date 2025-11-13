@@ -52,7 +52,8 @@ const Loans = () => {
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-
+  const [debtAckStyles, setDebtAckStyles] = useState("");
+  const [promissoryNoteStyles, setPromissoryNoteStyles] = useState("");
   const [loanForm, setLoanForm] = useState({
     amount: "",
     interestRate: "",
@@ -113,49 +114,38 @@ const Loans = () => {
   const fetchContractTemplates = async () => {
     try {
       console.log("Fetching contract templates...");
+  
+      // جلب القوالب فقط
       const [debtResponse, promissoryResponse] = await Promise.all([
         Api.get("/api/templates/DEBT_ACKNOWLEDGMENT"),
         Api.get("/api/templates/PROMISSORY_NOTE"),
       ]);
-
-      let debtContent = debtResponse.data.content || "";
-      let promissoryContent = promissoryResponse.data.content || "";
-      
-      const debtStyles = debtResponse.data.styles || "";
-      const promissoryStyles = promissoryResponse.data.styles || "";
-
-      // Merge styles with content if styles exist and content doesn't have them
-      if (debtStyles && debtStyles.trim() !== "" && !/<style[^>]*>/i.test(debtContent)) {
-        debtContent = `<style>\n${debtStyles}\n</style>\n\n${debtContent}`;
-      }
-      
-      if (promissoryStyles && promissoryStyles.trim() !== "" && !/<style[^>]*>/i.test(promissoryContent)) {
-        promissoryContent = `<style>\n${promissoryStyles}\n</style>\n\n${promissoryContent}`;
-      }
-
+  
+      // حفظ المحتوى فقط بدون أي دمج أو تعديل
+      const debtContent = debtResponse.data.content || "";
+      const promissoryContent = promissoryResponse.data.content || "";
+  
       console.log("Templates fetched:", {
         debtAck: {
           contentLength: debtContent.length,
-          stylesLength: debtStyles.length,
-          hasStyles: /<style[^>]*>/i.test(debtContent),
           contentPreview: debtContent.substring(0, 200)
         },
         promissoryNote: {
           contentLength: promissoryContent.length,
-          stylesLength: promissoryStyles.length,
-          hasStyles: /<style[^>]*>/i.test(promissoryContent),
           contentPreview: promissoryContent.substring(0, 200)
         }
       });
-
+  
+      // حفظ المحتوى في الـ state
       setDebtAckTemplate(debtContent);
       setPromissoryNoteTemplate(promissoryContent);
-
-      console.log("Templates fetched successfully");
+  
+      console.log("Templates fetched successfully (content only)");
     } catch (error) {
       console.warn("Could not fetch contract templates:", error);
     }
   };
+  
 
   useEffect(() => {
     if (activeTab === 1) {
@@ -386,14 +376,14 @@ const Loans = () => {
     const loanType = loanForm.type;
     
     if (loanType === "DAILY") {
-      numberOfMonths = Math.ceil(installmentsCount / 30); // تحويل الأيام إلى أشهر
+      numberOfMonths = Math.ceil(installmentsCount / 30);
     } else if (loanType === "WEEKLY") {
-      numberOfMonths = Math.ceil(installmentsCount / 4); // تحويل الأسابيع إلى أشهر
+      numberOfMonths = Math.ceil(installmentsCount / 4);
     }
-    // إذا كان شهري، يبقى كما هو
+
 
     return {
-      paymentAmount, // مبلغ القسط المحدد من المستخدم
+      paymentAmount,
       totalInterest,
       totalAmount,
       numberOfMonths,
@@ -720,9 +710,9 @@ const Loans = () => {
                     }}
                   >
                     <Typography color="text.secondary">
-                      {simulationSummary.loanType === "DAILY" ? "القسط اليومي" : 
-                       simulationSummary.loanType === "WEEKLY" ? "القسط الأسبوعي" : 
-                       "القسط الشهري"}
+                      {simulationSummary.loanType === "DAILY" ? "الدفعة اليومية" : 
+                       simulationSummary.loanType === "WEEKLY" ? "الدفعة الأسبوعية" : 
+                       "الدفعة الشهرية"}
                     </Typography>
                     <Typography
                       color="#0d40a5"
@@ -1161,7 +1151,7 @@ const Loans = () => {
                       <TextField
                         fullWidth
                         type="text"
-                        label="مبلغ القسط الشهري"
+                        label="مبلغ الدفعة الشهرية"
                         value={formatAmount(loanForm.paymentAmount)}
                         onChange={(e) =>
                           handleInputChange("paymentAmount", e.target.value)
@@ -1416,40 +1406,41 @@ const Loans = () => {
         }}
       />
 
-      {generateContracts && savedLoanData && selectedClient && (
-        <>
-          <LoanContractGenerator
-            ref={debtAckGeneratorRef}
-            loanData={savedLoanData}
-            clientData={selectedClient?.client}
-            kafeelData={selectedKafeel}
-            templateContent={debtAckTemplate}
-            onContractGenerated={handleContractGenerated}
-            contractType="DEBT_ACKNOWLEDGMENT"
-            autoGenerate={false}
-          />
+{generateContracts && savedLoanData && selectedClient && (
+  <>
+  <LoanContractGenerator
+  ref={debtAckGeneratorRef}
+  loanData={savedLoanData}
+  clientData={selectedClient?.client}
+  kafeelData={selectedKafeel}
+  templateContent={debtAckTemplate}
+  onContractGenerated={handleContractGenerated}
+  contractType="DEBT_ACKNOWLEDGMENT"
+  autoGenerate={false}
+/>
 
-          <LoanContractGenerator
-            ref={promissoryNoteGeneratorRef}
-            loanData={savedLoanData}
-            clientData={selectedClient?.client}
-            kafeelData={selectedKafeel}
-            templateContent={promissoryNoteTemplate}
-            onContractGenerated={handleContractGenerated}
-            contractType="PROMISSORY_NOTE"
-            autoGenerate={false}
-          />
+<LoanContractGenerator
+  ref={promissoryNoteGeneratorRef}
+  loanData={savedLoanData}
+  clientData={selectedClient?.client}
+  kafeelData={selectedKafeel}
+  templateContent={promissoryNoteTemplate}
+  onContractGenerated={handleContractGenerated}
+  contractType="PROMISSORY_NOTE"
+  autoGenerate={false}
+/>
 
-          <LoanContractsPreview
-            open={previewOpen}
-            onClose={() => setPreviewOpen(false)}
-            debtAckHtml={previewContracts.debtAck}
-            promissoryNoteHtml={previewContracts.promissoryNote}
-            onSaveContracts={handleSaveContracts}
-            loading={isCreatingLoan}
-            clientName={selectedClient?.client?.name}
-            loanAmount={parseFloat(loanForm.amount.replace(/,/g, "")) || 0}
-          />
+<LoanContractsPreview
+  open={previewOpen}
+  onClose={() => setPreviewOpen(false)}
+  debtAckHtml={previewContracts.debtAck}
+  promissoryNoteHtml={previewContracts.promissoryNote}
+  onSaveContracts={handleSaveContracts}
+  loading={isCreatingLoan}
+  clientName={selectedClient?.client?.name}
+  loanAmount={parseFloat(loanForm.amount.replace(/,/g, "")) || 0}
+/>
+
         </>
       )}
     </Box>

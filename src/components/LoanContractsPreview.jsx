@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -26,91 +26,21 @@ const LoanContractsPreview = ({
   loanAmount = 0
 }) => {
   const [activeTab, setActiveTab] = React.useState(0);
-  const styleRef = useRef(null);
-
-  // Extract and inject styles from HTML content
-  useEffect(() => {
-    if (!open) {
-      // Cleanup when dialog closes
-      if (styleRef.current && styleRef.current.parentNode) {
-        styleRef.current.parentNode.removeChild(styleRef.current);
-        styleRef.current = null;
-      }
-      return;
-    }
-
-    const currentHtml = activeTab === 0 ? debtAckHtml : promissoryNoteHtml;
-    if (!currentHtml) return;
-
-    // Extract styles from HTML
-    const styleMatch = currentHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-    
-    if (styleMatch && styleMatch[1]) {
-      const styles = styleMatch[1];
-      
-      // Remove existing style element if any
-      const existingStyle = document.getElementById('contract-preview-styles');
-      if (existingStyle) {
-        existingStyle.remove();
-      }
-      
-      // Create new style element
-      const styleElement = document.createElement('style');
-      styleElement.id = 'contract-preview-styles';
-      styleElement.textContent = styles;
-      document.head.appendChild(styleElement);
-      
-      styleRef.current = styleElement;
-      
-      console.log("Styles injected:", {
-        stylesLength: styles.length,
-        stylesPreview: styles.substring(0, 100)
-      });
-    }
-
-    // Cleanup on unmount or when dialog closes
-    return () => {
-      if (styleRef.current && styleRef.current.parentNode) {
-        styleRef.current.parentNode.removeChild(styleRef.current);
-        styleRef.current = null;
-      }
-    };
-  }, [open, activeTab, debtAckHtml, promissoryNoteHtml]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  // Extract styles and prepare HTML for display
-  const prepareContractHtml = (html, contractName) => {
-    if (!html) return "";
-    
-    // Check if HTML has styles
-    const hasStyles = /<style[^>]*>/i.test(html);
-    
-    // Remove style tags from HTML (styles will be injected separately via useEffect)
-    const htmlWithoutStyles = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
-    
-    console.log(`Preparing ${contractName} HTML:`, {
-      originalLength: html.length,
-      hasStyles,
-      finalLength: htmlWithoutStyles.length,
-      htmlPreview: htmlWithoutStyles.substring(0, 200)
-    });
-    
-    // Return HTML without style tags (styles are injected via useEffect)
-    return htmlWithoutStyles;
-  };
 
   const contracts = [
     { 
       name: 'إقرار الدين', 
-      html: prepareContractHtml(debtAckHtml, 'debtAck'),
+      html: debtAckHtml,
       id: 'debt-acknowledgment'
     },
     { 
       name: 'سند الأمر', 
-      html: prepareContractHtml(promissoryNoteHtml, 'promissoryNote'),
+      html: promissoryNoteHtml,
       id: 'promissory-note'
     }
   ];
@@ -149,7 +79,7 @@ const LoanContractsPreview = ({
           </Typography>
           {clientName && (
             <Typography variant="body2" color="text.secondary">
-              العميل: {clientName} - المبلغ: {loanAmount.toLocaleString()}
+              العميل: {clientName} - المبلغ: {loanAmount.toLocaleString()} ر.س
             </Typography>
           )}
         </Box>
@@ -228,7 +158,7 @@ const LoanContractsPreview = ({
             >
               {contract.html ? (
                 <Box
-                  id={`contract-preview-content-${contract.id}`}
+
                   dangerouslySetInnerHTML={{ __html: contract.html }}
                   sx={{
                     '& *': {
@@ -273,7 +203,7 @@ const LoanContractsPreview = ({
       </DialogContent>
 
       <Divider className="no-print" />
-      
+
       <DialogActions 
         className="no-print"
         sx={{ 
@@ -302,7 +232,8 @@ const LoanContractsPreview = ({
         >
           إغلاق
         </Button>
-
+        
+      
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
@@ -320,5 +251,4 @@ const LoanContractsPreview = ({
     </Dialog>
   );
 };
-
 export default LoanContractsPreview;

@@ -286,7 +286,7 @@ const Installments = () => {
     }
 
     if (paidAmountNum > selectedActionInstallment.amount) {
-      notifyError("المبلغ المدفوع لا يمكن أن يكون أكبر من قيمة القسط");
+      notifyError("المبلغ المدفوع لا يمكن أن يكون أكبر من قيمة الدفعة");
       return;
     }
 
@@ -318,7 +318,7 @@ const Installments = () => {
         newDueDate,
         postponeReason
       );
-      notifySuccess("تم تأجيل القسط بنجاح");
+      notifySuccess("تم تأجيل الدفعة بنجاح");
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["repayments", loanId]);
       setPostponeModalOpen(false);
@@ -326,7 +326,7 @@ const Installments = () => {
       setPostponeReason("");
     } catch (error) {
       console.log("Postpone error:", error);
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء تأجيل القسط");
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء تأجيل الدفعة");
     }
     setAnchorEl(null);
   };
@@ -459,7 +459,7 @@ const Installments = () => {
       setSettlementModalOpen(false);
 
       setTimeout(() => {
-        notifySuccess("تم تسوية القسط النهائي وإغلاقه بنجاح");
+        notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
       }, 500);
 
       queryClient.invalidateQueries(["loan", loanId]);
@@ -584,10 +584,10 @@ const Installments = () => {
             color="primary"
             gutterBottom
           >
-            اختر قسطاً
+            اختر دفعة
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            يرجى اختيار قسط لعرض الإحصائيات والتفاصيل
+            يرجى اختيار دفعة لعرض الإحصائيات والتفاصيل
           </Typography>
 
           <Button
@@ -662,7 +662,7 @@ const Installments = () => {
         >
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
             <Typography variant="h5" fontWeight="bold" mb={3}>
-              أقساط السلفة - {loanData?.client?.name}
+              دفعات السلفة - {loanData?.client?.name}
             </Typography>
             {/* زر السداد المبكر - يظهر فقط إذا كان هناك أقساط معلقة ولم يتم تسوية القسط النهائي */}
             {!isSettlementCompleted() &&
@@ -730,7 +730,7 @@ const Installments = () => {
                     py: 1.5,
                   }}
                 >
-                  تسوية القسط النهائي
+                  تسوية الدفعة النهائي
                 </Button>
               )}
             </Box>
@@ -739,7 +739,7 @@ const Installments = () => {
           {/* Show message if settlement is already completed */}
           {isSettlementCompleted() && (
             <Alert severity="success" sx={{ mb: 3 }}>
-              تم تسوية القسط النهائي بنجاح
+              تم تسوية الدفعة النهائي بنجاح
             </Alert>
           )}
 
@@ -749,13 +749,13 @@ const Installments = () => {
                 <TableHead>
                   <StyledTableRow>
                     <StyledTableCell align="center" sx={{width: "70px"}}>
-                      الاقساط المدفوعة
+                      الدفعات المدفوعة
                     </StyledTableCell>
-                    <StyledTableCell align="center">رقم القسط</StyledTableCell>
+                    <StyledTableCell align="center">رقم الدفعة</StyledTableCell>
                     <StyledTableCell align="center">
                       تاريخ الاستحقاق
                     </StyledTableCell>
-                    <StyledTableCell align="center">القسط</StyledTableCell>
+                    <StyledTableCell align="center">الدفعة</StyledTableCell>
                     <StyledTableCell align="center">
                       المبلغ المدفوع
                     </StyledTableCell>
@@ -916,7 +916,7 @@ const Installments = () => {
             {activeInstallmentId ? (
               <Box>
                 <Typography variant="body2" color="text.secondary" mb={1}>
-                  القسط المحدد: #{selectedInstallment?.count}
+                  الدفعة المحددة: #{selectedInstallment?.count}
                 </Typography>
 
                 {selectedInstallment && (
@@ -1061,12 +1061,12 @@ const Installments = () => {
                   </Box>
                 ) : (
                   <Alert severity="info" sx={{ mt: 2 }}>
-                    هذا القسط لا يحتوي على أي ملفات
+                    هذه الدفعة لا يحتوي على أي ملفات
                   </Alert>
                 )}
               </Box>
             ) : (
-              <Alert severity="info">اختر قسطاً لعرض التفاصيل</Alert>
+              <Alert severity="info">اختر دفعة لعرض التفاصيل</Alert>
             )}
           </Box>
         </Box>
@@ -1148,7 +1148,7 @@ const Installments = () => {
         <DialogTitle>إضافة دفع جزئي</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            القسط: #{selectedActionInstallment?.count} - المبلغ:{" "}
+            الدفعة: #{selectedActionInstallment?.count} - المبلغ:{" "}
             {selectedActionInstallment?.amount?.toFixed(2)}
           </Typography>
           <TextField
@@ -1194,7 +1194,7 @@ const Installments = () => {
         open={postponeModalOpen}
         onClose={() => setPostponeModalOpen(false)}
       >
-        <DialogTitle>تأجيل القسط</DialogTitle>
+        <DialogTitle>تأجيل الدفعة</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -1239,17 +1239,17 @@ const Installments = () => {
         <DialogTitle
           sx={{ textAlign: "center" }}
         >
-          سداد مبكر للقسط
+          سداد مبكر للدفعة
         </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
           <Typography variant="body1" color="text.secondary" mb={2}>
-            أنت على وشك إجراء سداد مبكر للأقساط المعلقة فقط
+            أنت على وشك إجراء سداد مبكر للدفعات المعلقة فقط
           </Typography>
 
           {/* عرض الأقساط المعلقة فقط */}
           <Box sx={{ mb: 2, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
             <Typography variant="body2" fontWeight="bold" gutterBottom>
-              الأقساط المعلقة (
+              الدفعات المعلقة (
               {
                 sortedInstallments.filter((inst) => inst.status === "PENDING")
                   .length
@@ -1269,7 +1269,7 @@ const Installments = () => {
                   }}
                 >
                   <Typography variant="body2">
-                    قسط #{installment.count} -{" "}
+                    دفعة #{installment.count} -{" "}
                     {dayjs(installment.dueDate).format("DD/MM/YYYY")}
                   </Typography>
                   <Typography variant="body2" fontWeight="bold">
@@ -1280,7 +1280,7 @@ const Installments = () => {
             <Divider sx={{ my: 1 }} />
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography variant="body2" fontWeight="bold">
-                المبلغ الإجمالي للأقساط المعلقة:
+                المبلغ الإجمالي للدفعات المعلقة:
               </Typography>
               <Typography
                 variant="body2"
@@ -1336,8 +1336,8 @@ const Installments = () => {
               تنبيه:
             </Typography>
             <Typography variant="body2">
-              بعد السداد المبكر، سيتم تحويل الأقساط المعلقة فقط إلى حالة "مدفوع
-              مسبقاً" وإخفاء أزرار الإجراءات لها. الأقساط المدفوعة مسبقاً لن
+              بعد السداد المبكر، سيتم تحويل الدفعات المعلقة فقط إلى حالة "مدفوع
+              مسبقاً" وإخفاء أزرار الإجراءات لها. الدفعات المدفوعة مسبقاً لن
               تتأثر.
             </Typography>
           </Alert>
@@ -1432,7 +1432,7 @@ const Installments = () => {
       >
         <DialogTitle sx={{ textAlign: "center" }}>
           {" "}
-          قسط #{selectedDocumentsInstallment?.id}
+          دفعة #{selectedDocumentsInstallment?.id}
         </DialogTitle>
         <DialogContent>
           {selectedDocumentsInstallment?.attachments &&
@@ -1602,7 +1602,7 @@ const Installments = () => {
                 textAlign="center"
                 sx={{ py: 4 }}
               >
-                لا توجد مستندات مرفوعة لهذا القسط
+                لا توجد مستندات مرفوعة لهذه الدفعة
               </Typography>
             )}
         </DialogContent>

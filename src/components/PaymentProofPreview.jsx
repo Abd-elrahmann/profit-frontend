@@ -1,4 +1,4 @@
-// components/contracts/PaymentProofPreview.jsx
+
 import React from 'react';
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import { Close as CloseIcon, Download } from '@mui/icons-material';
+import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 
 const PaymentProofPreview = ({ 
   open, 
@@ -25,6 +25,54 @@ const PaymentProofPreview = ({
   installmentNumber = ""
 }) => {
 
+  const handlePrint = () => {
+    const proofElement = document.getElementById('payment-proof-content');
+    if (proofElement) {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>إيصال سداد الدفعة</title>
+            <style>
+              body { 
+                font-family: "Noto Sans Arabic", "Cairo", sans-serif;
+                margin: 0;
+                padding: 20px;
+                direction: rtl;
+              }
+              .proof-content { 
+                max-width: 900px; 
+                margin: 0 auto; 
+                border: 1px solid #ddd;
+                padding: 30px;
+                border-radius: 12px;
+                background: #fff;
+              }
+              @media print {
+                body { padding: 0; }
+                .proof-content { 
+                  border: none; 
+                  box-shadow: none;
+                  padding: 15px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="proof-content">
+              ${proofElement.innerHTML}
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    }
+  };
 
   return (
     <Dialog 
@@ -60,7 +108,7 @@ const PaymentProofPreview = ({
           </Typography>
           {clientName && (
             <Typography variant="body2" color="text.secondary">
-              العميل: {clientName} - القسط: {installmentNumber} - المبلغ: {installmentAmount.toLocaleString()}
+              العميل: {clientName} - الدفعة: {installmentNumber} - المبلغ: {installmentAmount.toLocaleString()} ر.س
             </Typography>
           )}
         </Box>
@@ -139,7 +187,7 @@ const PaymentProofPreview = ({
       </DialogContent>
 
       <Divider className="no-print" />
-      
+
       <DialogActions 
         className="no-print"
         sx={{ 
@@ -168,6 +216,24 @@ const PaymentProofPreview = ({
         >
           إغلاق
         </Button>
+
+        <Button
+          variant="outlined"
+          startIcon={<Print sx={{marginLeft: '10px'}} />}
+          onClick={handlePrint}
+          disabled={loading || !paymentProofHtml}
+          sx={{ 
+            minWidth: '120px',
+            borderColor: '#1976d2',
+            color: '#1976d2',
+            '&:hover': {
+              borderColor: '#1565c0',
+              bgcolor: '#e3f2fd'
+            }
+          }}
+        >
+          طباعة
+        </Button>
         
         <Button
           variant="contained"
@@ -180,11 +246,10 @@ const PaymentProofPreview = ({
             minWidth: '140px'
           }}
         >
-          {loading ? 'جاري الحفظ...' : 'حفظ كـ PDF'}
+          {loading ? 'جاري الحفظ...' : 'حفظ الإيصال'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
 export default PaymentProofPreview;

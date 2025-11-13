@@ -194,7 +194,7 @@ const PaymentReceipt = () => {
           fontFamily: "Tajawal"
         }}
       >
-        <Alert severity="error">حدث خطأ في تحميل بيانات القسط</Alert>
+        <Alert severity="error">حدث خطأ في تحميل بيانات الدفعة</Alert>
       </Container>
     );
   }
@@ -212,7 +212,7 @@ const PaymentReceipt = () => {
           fontFamily: "Tajawal"
         }}
       >
-        <Alert severity="warning">لم يتم العثور على بيانات القسط</Alert>
+        <Alert severity="warning">لم يتم العثور على بيانات الدفعة</Alert>
       </Container>
     );
   }
@@ -232,7 +232,7 @@ const PaymentReceipt = () => {
       <Paper elevation={4} sx={{ p: 4, borderRadius: 3, width: "100%" }}>
         <Box textAlign="center" mb={3}>
           <Typography variant="h5" fontWeight="bold">
-            دفع القسط
+            دفع الدفعة
           </Typography>
           <Typography variant="body2" color="gray">
             يرجى إرفاق إيصال التحويل البنكي لإتمام عملية الدفع.

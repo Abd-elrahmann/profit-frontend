@@ -36,7 +36,7 @@ const CollectionModal = ({
 
   const paymentLink = `http://localhost:3001/payment-receipt/${installment?.loanId}/${installment?.id}/${encodeURIComponent(clientName || '')}`;
   
-  const defaultMessage = `مرحباً ${clientName}، نود تذكيرك بأن قسطك بمبلغ ${installment?.amount?.toFixed(2) || '0.00'} ريال سعودي مستحق الدفع. يرجى استخدام الرابط التالي لإتمام عملية الدفع: ${paymentLink}`;
+  const defaultMessage = `مرحباً ${clientName}، نود تذكيرك بأن الدفعة بمبلغ ${installment?.amount?.toFixed(2) || '0.00'} ريال سعودي مستحق الدفع. يرجى استخدام الرابط التالي لإتمام عملية الدفع: ${paymentLink}`;
 
   useEffect(() => {
     if (open && installment) {
@@ -92,7 +92,7 @@ const CollectionModal = ({
               العميل
             </Typography>
             <Typography variant="h6" fontWeight="bold">
-              {clientName} (قسط #{installment?.id})
+              {clientName} (دفعة #{installment?.id})
             </Typography>
             <Typography variant="body2" color="text.secondary" mt={1}>
               المبلغ: {installment?.amount?.toFixed(2)}

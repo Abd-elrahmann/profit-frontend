@@ -14,7 +14,7 @@ const numberToArabicWords = (num) => {
   if (num < 0) return 'سالب ' + numberToArabicWords(-num);
 
   let result = '';
-  
+
   // الآلاف
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
@@ -68,10 +68,10 @@ const numberToArabicWords = (num) => {
 const getCurrentDates = () => {
   const now = new Date();
   const gregorianDate = now.toLocaleDateString('ar-SA');
-  
+
   const hijriYear = Math.floor((now.getFullYear() - 622) * 1.030684) + 1;
   const hijriDate = `${now.getDate()}/${now.getMonth() + 1}/${hijriYear}`;
-  
+
   return { gregorianDate, hijriDate };
 };
 
@@ -95,13 +95,13 @@ const ContractGenerator = React.forwardRef(({
     try {
       console.log('Investor Data:', investorData);
       console.log('Template Content:', templateContent);
-      
+
       const { gregorianDate, hijriDate } = getCurrentDates();
       const capitalInWords = numberToArabicWords(investorData.capitalAmount);
-      
+
       console.log('Capital in words:', capitalInWords);
       console.log('Dates:', { gregorianDate, hijriDate });
-      
+
       // Replace placeholders in template
       let filledTemplate = templateContent
         // Basic investor data
@@ -110,7 +110,7 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{عنوان_العميل}}/g, investorData.address || '')
         .replace(/{{هاتف_العميل}}/g, investorData.phone || '')
         .replace(/{{بريد_العميل}}/g, investorData.email || '')
-        
+
         // Financial data
         .replace(/{{رأس_المال}}/g, investorData.capitalAmount?.toLocaleString('ar-SA') || '0')
         .replace(/{{رأس_المال_كتابة}}/g, capitalInWords)
@@ -118,13 +118,13 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{المبلغ_كتابة}}/g, capitalInWords)
         .replace(/{{نسبة_أرباح_المنشأة}}/g, String(investorData.orgProfitPercent || '0'))
         .replace(/{{نسبة_أرباح_المستثمر}}/g, String(investorData.partnerProfitPercent || '0'))
-        
+
         // Dates
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)
         .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
         .replace(/{{تاريخ_العقد_هجري}}/g, hijriDate)
         .replace(/{{تاريخ_العقد_ميلادي}}/g, gregorianDate)
-        
+
         // Mudarabah specific fields
         .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
         .replace(/{{هوية_رب_المال}}/g, investorData.nationalId || '')
@@ -136,7 +136,7 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{هوية_المضارب_2}}/g, '1116369511')
         .replace(/{{عنوان_المضارب_2}}/g, 'المملكة العربية السعودية - شرورة')
         .replace(/{{مدينة_العقد}}/g, 'الرياض')
-        
+
         // Default values for other contract types
         .replace(/{{اسم_الدائن}}/g, investorData.name || '')
         .replace(/{{اسم_المدين}}/g, investorData.name || '')
@@ -150,7 +150,7 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{قيمة_السند_كتابة}}/g, capitalInWords);
 
       console.log('Filled Template:', filledTemplate);
-      
+
       setContractHtml(filledTemplate);
       setShowPreview(true);
     } catch (error) {
@@ -168,61 +168,61 @@ const ContractGenerator = React.forwardRef(({
 
     setLoading(true);
     try {
-      // إنشاء عنصر ثابت في الصفحة بنفس التنسيقات المستخدمة في البريفيو بالضبط
-      // البريفيو يستخدم Paper مع padding: 4 (16px) و margin: 3 (24px)
-      const previewContainer = document.createElement('div');
-      previewContainer.id = `contract-preview-${Date.now()}`;
-      previewContainer.style.position = "absolute";
-      previewContainer.style.left = "-9999px";
-      previewContainer.style.top = "0";
-      previewContainer.style.width = '210mm';
-      previewContainer.style.minHeight = '297mm';
-      previewContainer.style.backgroundColor = "#ffffff";
-      previewContainer.style.boxSizing = "border-box";
-      
-      // نسخ نفس التنسيقات من البريفيو: Paper padding: 4 = 16px
-      previewContainer.innerHTML = `
-        <div style="
-          font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
-          padding: 16px;
-          background: white;
-          direction: rtl;
-          width: 100%;
-          box-sizing: border-box;
-          line-height: 1.8;
-        ">
-          <style>
-            * {
-              font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif !important;
-              line-height: 1.8 !important;
-            }
-            h1, h2, h3 {
-              text-align: center !important;
-              color: #1976d2 !important;
-              margin-bottom: 20px !important;
-            }
-            p {
-              margin-bottom: 15px !important;
-              text-align: justify !important;
-            }
-            strong {
-              color: #1976d2 !important;
-              font-weight: bold !important;
-            }
-          </style>
-          <div style="
-            font-family: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', sans-serif;
-            line-height: 1.8;
-          ">
-            ${contractHtml}
-          </div>
-        </div>
-      `;
-      document.body.appendChild(previewContainer);
+      const element = document.getElementById('contract-preview');
+      if (!element) {
+        throw new Error('عنصر معاينة العقد غير موجود');
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       // PDF generation options
       const options = {
-        margin: 0,
+        margin: [5, 5, 5, 5],
         filename: `mudarabah_contract_${Date.now()}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
@@ -242,27 +242,27 @@ const ContractGenerator = React.forwardRef(({
         }
       };
 
-      console.log('Generating contract PDF...');
-      
-      // انتظر قليلاً للتأكد من تحميل الخطوط والصور
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Generate PDF blob
 
-      // Generate PDF from the preview container
-      const container = document.getElementById(previewContainer.id);
+
+
+
+
+
       const pdfBlob = await html2pdf()
-        .from(container)
+        .from(element)
         .set(options)
         .outputPdf('blob');
 
-      // تنظيف عنصر المعاينة
-      document.body.removeChild(previewContainer);
+
+
 
       // Upload PDF to server
       await uploadPDFToServer(pdfBlob);
-      
+
       notifySuccess('تم إنشاء وحفظ العقد بنجاح');
       setShowPreview(false);
-      
+
       if (onContractGenerated) {
         onContractGenerated(pdfBlob);
       }

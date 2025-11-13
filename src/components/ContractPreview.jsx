@@ -17,7 +17,7 @@ const ContractPreview = ({
   open, 
   onClose, 
   contractHtml, 
-  onGeneratePDF,
+  onGeneratePDF, 
   loading = false,
   contractTitle = "معاينة العقد"
 }) => {
@@ -126,7 +126,7 @@ const ContractPreview = ({
       </DialogContent>
 
       <Divider className="no-print" />
-      
+
       <DialogActions 
         className="no-print"
         sx={{ 
@@ -155,7 +155,7 @@ const ContractPreview = ({
         >
           إغلاق
         </Button>
-        
+
         <Button
           variant="outlined"
           startIcon={<Print sx={{marginLeft: '10px'}} />}
@@ -173,7 +173,7 @@ const ContractPreview = ({
         >
           طباعة
         </Button>
-        
+
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}

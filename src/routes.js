@@ -160,7 +160,7 @@ const routes = [
     element: Installments,
     protected: true,
     showInSidebar: true,
-    label: 'القسط',
+    label: 'الدفعات',
     module: 'repayments',
     requiresPermissions: true,
     icon: InstallmentsIcon,
