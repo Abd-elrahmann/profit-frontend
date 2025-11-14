@@ -59,6 +59,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('profile');
+    localStorage.removeItem('rememberedEmail');
     navigate('/login', { replace: true });
   };
 

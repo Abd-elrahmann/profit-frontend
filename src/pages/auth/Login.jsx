@@ -63,7 +63,6 @@ const Login = () => {
       const response = await Api.post("/api/auth/login", cleanedValues);
       const { accessToken, user } = response.data;
 
-      // 2️⃣ تخزين البيانات الأساسية فقط
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 

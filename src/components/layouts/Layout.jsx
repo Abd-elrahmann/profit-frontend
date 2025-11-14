@@ -59,7 +59,10 @@ const Layout = ({ children }) => {
   };
 
   // Check if current page is an auth page
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' 
+    || location.pathname === '/register'
+    || location.pathname === '/forgot-password'
+    || location.pathname === '/reset-password';
 
   // Check if current page is a payment receipt page
   const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt/');

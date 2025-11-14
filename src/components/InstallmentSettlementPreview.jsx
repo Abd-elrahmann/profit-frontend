@@ -21,7 +21,6 @@ const InstallmentSettlementPreview = ({
   loading = false,
   clientName = "",
   installmentAmount = 0,
-  installmentNumber = ""
 }) => {
 
   const handlePrint = () => {
@@ -107,7 +106,7 @@ const InstallmentSettlementPreview = ({
           </Typography>
           {clientName && (
             <Typography variant="body2" color="text.secondary">
-              العميل: {clientName} - الدفعة: {installmentNumber} - المبلغ: {installmentAmount.toLocaleString()} ر.س
+              العميل: {clientName} - المبلغ: {installmentAmount.toLocaleString()} ر.س
             </Typography>
           )}
         </Box>

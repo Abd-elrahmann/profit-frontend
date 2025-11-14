@@ -1,3 +1,4 @@
+// AssignRole.jsx - مودال تعيين الأدوار
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -12,14 +13,15 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  Stack,
 } from '@mui/material';
 import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useQueryClient } from '@tanstack/react-query';
 
-const AssignRole = ({ open, onClose, user, refetchUsers }) => {
+const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => {
   const [roles, setRoles] = useState([]);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +55,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
   };
 
   const handleRoleChange = (roleId) => {
-    // Only allow changing role if no current role exists
     if (!user?.role) {
       setSelectedRoleId(roleId);
     }
@@ -86,7 +87,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
       return;
     }
 
-    // Prevent assigning new role if user already has a role
     if (user?.role) {
       notifyError('لا يمكن تعيين دور جديد للموظف لأنه يمتلك دوراً بالفعل. يرجى إزالة الدور الحالي أولاً.');
       return;
@@ -121,11 +121,12 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
     <Dialog 
       open={open} 
       onClose={handleClose}
-      maxWidth="sm"
+      maxWidth={isMobile ? "xs" : "sm"}
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: 2,
+          borderRadius: isMobile ? 0 : 2,
           direction: 'rtl'
         }
       }}
@@ -134,7 +135,11 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        pb: 1
+        pb: 1,
+        position: isMobile ? 'sticky' : 'static',
+        top: 0,
+        bgcolor: 'background.paper',
+        zIndex: 1
       }}>
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
           {hasCurrentRole ? 'إدارة دور الموظف' : 'تعيين دور للموظف'}
@@ -185,6 +190,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
               startIcon={<DeleteIcon />}
               onClick={handleRemoveCurrentRole}
               disabled={isRemovingRole}
+              fullWidth={isMobile}
               sx={{
                 borderColor: '#EF4444',
                 color: '#EF4444',
@@ -216,7 +222,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
             لا توجد أدوار متاحة
           </Typography>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Stack spacing={2}>
             {roles.map((role) => {
               const isCurrentRole = user?.role?.id === role.id;
               const isDisabled = hasCurrentRole && !isCurrentRole;
@@ -280,7 +286,8 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
                             variant="body1" 
                             sx={{ 
                               fontWeight: 'bold',
-                              color: isCurrentRole ? '#10B981' : 'inherit'
+                              color: isCurrentRole ? '#10B981' : 'inherit',
+                              fontSize: isMobile ? '0.9rem' : '1rem'
                             }}
                           >
                             {role.name}
@@ -312,7 +319,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
                 </Box>
               );
             })}
-          </Box>
+          </Stack>
         )}
 
         {hasCurrentRole && (
@@ -331,13 +338,19 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
         justifyContent: 'center', 
         alignItems: 'center', 
         gap: 2,
-        flexDirection: 'row-reverse' 
+        flexDirection: 'row-reverse',
+        position: isMobile ? 'sticky' : 'static',
+        bottom: 0,
+        bgcolor: 'background.paper',
+        borderTop: isMobile ? '1px solid' : 'none',
+        borderColor: 'divider'
       }}>
         <Button 
           onClick={handleClose}
           variant="outlined"
           color="inherit"
           disabled={isSubmitting || isRemovingRole}
+          fullWidth={isMobile}
         >
           إغلاق
         </Button>
@@ -347,10 +360,11 @@ const AssignRole = ({ open, onClose, user, refetchUsers }) => {
             onClick={handleSubmit}
             variant="contained"
             disabled={isSubmitting || !selectedRoleId}
+            fullWidth={isMobile}
             sx={{
               bgcolor: "#1E40AF",
               "&:hover": { bgcolor: "#1E3A8A" },
-              minWidth: 120,
+              minWidth: isMobile ? 'auto' : 120,
               '&:disabled': {
                 bgcolor: '#E5E7EB',
                 color: '#9CA3AF'

@@ -8,10 +8,15 @@ import {
   InputLabel,
   Button,
   Chip,
+  Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import { 
   RestartAltOutlined, 
-  FilterList 
+  FilterList,
+  ExpandMore 
 } from "@mui/icons-material";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from "dayjs";
@@ -20,6 +25,7 @@ const LogsToolbar = ({
   filters,
   onFilterChange,
   onResetFilters,
+  isMobile = false,
 }) => {
   const {
     search,
@@ -81,24 +87,16 @@ const LogsToolbar = ({
     { value: "logout", label: "تسجيل خروج" },
   ];
 
-  return (
-    <Box 
-      sx={{ 
-        p: 3, 
-        bgcolor: "background.paper", 
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        mb: 3
-      }}
-    >
+  // Render for large screens
+  const renderDesktopView = () => (
+    <>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <FilterList color="primary" />
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
             فلترة السجلات
-          </Box>
+          </Typography>
         </Box>
         
         {hasActiveFilters && (
@@ -113,15 +111,15 @@ const LogsToolbar = ({
 
       {/* All filters in one row */}
       <Stack 
-        direction={{ xs: "column", md: "row" }}
+        direction="row"
         spacing={2}
-        alignItems={{ xs: "stretch", md: "center" }}
+        alignItems="center"
         justifyContent="space-between"
       >
         {/* Action and Screen Filters */}
         <Stack 
           direction="row" 
-          spacing={4}
+          spacing={2}
           alignItems="center"
           sx={{ flex: 1 }}
         >
@@ -178,7 +176,7 @@ const LogsToolbar = ({
                   shrink: true,
                 },
                 sx: { 
-                  width: '250px',
+                  width: '200px',
                 }
               }
             }}
@@ -196,7 +194,7 @@ const LogsToolbar = ({
                   shrink: true,
                 },
                 sx: {
-                  width: '250px',
+                  width: '200px',
                 }
               }
             }}
@@ -219,10 +217,149 @@ const LogsToolbar = ({
           )}
         </Box>
       </Stack>
+    </>
+  );
 
-      {/* Active Filters Summary */}
+  // Render for mobile screens
+  const renderMobileView = () => (
+    <Accordion 
+      sx={{ 
+        boxShadow: 'none',
+        border: '1px solid',
+        borderColor: 'divider',
+        '&:before': { display: 'none' }
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMore />}
+        sx={{
+          bgcolor: 'background.paper',
+          borderBottom: hasActiveFilters ? '2px solid' : 'none',
+          borderColor: 'primary.main',
+          minHeight: '60px !important',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+          <FilterList color="primary" />
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            فلترة السجلات
+          </Typography>
+          {hasActiveFilters && (
+            <Chip
+              label="مفعل"
+              color="primary"
+              size="small"
+              sx={{ ml: 'auto' }}
+            />
+          )}
+        </Box>
+      </AccordionSummary>
+      
+      <AccordionDetails sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          {/* Action Filter */}
+          <FormControl fullWidth size="small">
+            <InputLabel>نوع الإجراء</InputLabel>
+            <Select
+              value={action || ""}
+              onChange={handleActionChange}
+              label="نوع الإجراء"
+            >
+              <MenuItem value="">كل الإجراءات</MenuItem>
+              {actionOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Screen Filter */}
+          <FormControl fullWidth size="small">
+            <InputLabel>الشاشة</InputLabel>
+            <Select
+              value={screen || ""}
+              onChange={handleScreenChange}
+              label="الشاشة"
+            >
+              <MenuItem value="">كل الشاشات</MenuItem>
+              {screenOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Date Range Filters */}
+          <DatePicker
+            label="من تاريخ"
+            value={from ? dayjs(from) : null}
+            onChange={handleFromDateChange}
+            slotProps={{
+              textField: {
+                size: 'small',
+                fullWidth: true,
+              }
+            }}
+            format="DD/MM/YYYY"
+          />
+          
+          <DatePicker
+            label="إلى تاريخ"
+            value={to ? dayjs(to) : null}
+            onChange={handleToDateChange}
+            slotProps={{
+              textField: {
+                size: 'small',
+                fullWidth: true,
+              }
+            }}
+            format="DD/MM/YYYY"
+          />
+
+          {/* Reset Button */}
+          {hasActiveFilters && (
+            <Button
+              variant="outlined"
+              startIcon={<RestartAltOutlined />}
+              onClick={handleReset}
+              color="inherit"
+              size="small"
+              fullWidth
+            >
+              إعادة تعيين الفلتر
+            </Button>
+          )}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
+  );
+
+  return (
+    <Box 
+      sx={{ 
+        bgcolor: "background.paper", 
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        mb: 3,
+        overflow: 'hidden'
+      }}
+    >
+      {isMobile ? renderMobileView() : renderDesktopView()}
+
+      {/* Active Filters Summary - Show for both views */}
       {hasActiveFilters && (
-        <Box sx={{ mt: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
+        <Box sx={{ 
+          p: isMobile ? 1.5 : 2, 
+          bgcolor: 'grey.50', 
+          borderTop: '1px solid',
+          borderColor: 'divider'
+        }}>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
+            الفلاتر النشطة:
+          </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {search && (
               <Chip 

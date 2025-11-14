@@ -1,3 +1,4 @@
+// AddEmployee.jsx - مودال إضافة/تعديل الموظفين
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -10,7 +11,8 @@ import {
   IconButton,
   InputAdornment,
   CircularProgress,
-  Typography
+  Typography,
+  Stack,
 } from '@mui/material';
 import { Close as CloseIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { Formik, Form } from 'formik';
@@ -50,7 +52,7 @@ const passwordChangeSchema = Yup.object().shape({
     .oneOf([Yup.ref('newPassword')], 'كلمات المرور غير متطابقة')
 });
 
-const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = null }) => {
+const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = null, isMobile = false }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -74,7 +76,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
         password: ''
       });
     } else if (mode === 'add') {
-      // Reset to default values when switching to add mode
       setInitialValues({
         name: '',
         email: '',
@@ -83,12 +84,11 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
       });
     }
     
-    // Reset password section state when modal opens/closes or mode changes
     setShowPasswordSection(false);
     setShowOldPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
-  }, [mode, editData, open]); // Added 'open' to reset when modal opens
+  }, [mode, editData, open]);
 
   const handleSubmit = async (values, { resetForm }) => {
     setIsSubmitting(true);
@@ -133,11 +133,12 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
     <Dialog 
       open={open} 
       onClose={onClose}
-      maxWidth="xs"
+      maxWidth={isMobile ? "xs" : "sm"}
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: 2,
+          borderRadius: isMobile ? 0 : 2,
           direction: 'rtl'
         }
       }}
@@ -146,7 +147,11 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        pb: 1
+        pb: 1,
+        position: isMobile ? 'sticky' : 'static',
+        top: 0,
+        bgcolor: 'background.paper',
+        zIndex: 1
       }}>
         {mode === 'add' ? 'إضافة موظف جديد' : 'تعديل بيانات الموظف'}
         <IconButton onClick={onClose} size="small">
@@ -163,7 +168,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
         {({ values, errors, touched, handleChange, handleBlur }) => (
           <Form>
             <DialogContent sx={{ pb: 1 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Stack spacing={2}>
                 <TextField
                   fullWidth
                   name="name"
@@ -181,9 +186,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                         borderColor: '#0d40a5',
                       },
                     },
-                    '& .MuiOutlinedInput-input': {
-                      fontSize: '0.875rem',
-                    }
                   }}
                 />
 
@@ -206,9 +208,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                         borderColor: '#0d40a5',
                       },
                     },
-                    '& .MuiOutlinedInput-input': {
-                      fontSize: '0.875rem',
-                    }
                   }}
                 />
 
@@ -231,9 +230,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                           borderColor: '#0d40a5',
                         },
                       },
-                      '& .MuiOutlinedInput-input': {
-                        fontSize: '0.875rem',
-                      }
                     }}
                     InputProps={{
                       endAdornment: (
@@ -266,15 +262,12 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                         borderColor: '#0d40a5',
                       },
                     },
-                    '& .MuiOutlinedInput-input': {
-                      fontSize: '0.875rem',
-                    }
                   }}
                 />
 
                 {/* Password Change Section - Only in Edit Mode */}
                 {mode === 'edit' && (
-                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                  <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                       <Typography variant="subtitle2" fontWeight="bold">
                         تغيير كلمة المرور
@@ -300,7 +293,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                       >
                         {({ values: pwdValues, errors: pwdErrors, touched: pwdTouched, handleChange: pwdHandleChange, handleBlur: pwdHandleBlur }) => (
                           <Form>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Stack spacing={2}>
                               <TextField
                                 fullWidth
                                 name="oldPassword"
@@ -319,9 +312,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                       borderColor: '#0d40a5',
                                     },
                                   },
-                                  '& .MuiOutlinedInput-input': {
-                                    fontSize: '0.875rem',
-                                  }
                                 }}
                                 InputProps={{
                                   endAdornment: (
@@ -354,9 +344,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                       borderColor: '#0d40a5',
                                     },
                                   },
-                                  '& .MuiOutlinedInput-input': {
-                                    fontSize: '0.875rem',
-                                  }
                                 }}
                                 InputProps={{
                                   endAdornment: (
@@ -389,9 +376,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                       borderColor: '#0d40a5',
                                     },
                                   },
-                                  '& .MuiOutlinedInput-input': {
-                                    fontSize: '0.875rem',
-                                  }
                                 }}
                                 InputProps={{
                                   endAdornment: (
@@ -422,22 +406,36 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                   'تغيير كلمة المرور'
                                 )}
                               </Button>
-                            </Box>
+                            </Stack>
                           </Form>
                         )}
                       </Formik>
                     )}
                   </Box>
                 )}
-              </Box>
+              </Stack>
             </DialogContent>
 
-            <DialogActions sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2,flexDirection:'row-reverse' }}>
+            <DialogActions sx={{ 
+              px: 3, 
+              py: 2, 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: 2,
+              flexDirection:'row-reverse',
+              position: isMobile ? 'sticky' : 'static',
+              bottom: 0,
+              bgcolor: 'background.paper',
+              borderTop: isMobile ? '1px solid' : 'none',
+              borderColor: 'divider'
+            }}>
               <Button 
                 onClick={onClose}
                 variant="outlined"
                 color="inherit"
                 disabled={isSubmitting}
+                fullWidth={isMobile}
               >
                 إلغاء
               </Button>
@@ -445,10 +443,11 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting}
+                fullWidth={isMobile}
                 sx={{
                   bgcolor: "#1E40AF",
                   "&:hover": { bgcolor: "#1E3A8A" },
-                  minWidth: 120
+                  minWidth: isMobile ? 'auto' : 120
                 }}
               >
                 {isSubmitting ? (

@@ -793,10 +793,10 @@ const Installments = () => {
                       }}
                     >
                       <StyledTableCell align="center" sx={{width: "70px"}}>
-                        {installment.status === "PAID" ||
-                          (installment.status === "EARLY_PAID" && (
-                            <Checkbox checked size="small" />
-                          ))}
+                        {(installment.status === "PAID" ||
+                          installment.status === "EARLY_PAID") && (
+                          <Checkbox checked size="small" />
+                        )}
                       </StyledTableCell>
                       <StyledTableCell align="center">
                         {installment.count}
@@ -870,6 +870,78 @@ const Installments = () => {
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}
+                  {/* صف الإجمالي */}
+                  {(() => {
+                    const paidCount = sortedInstallments.filter(
+                      (inst) =>
+                        inst.status === "PAID" || inst.status === "EARLY_PAID"
+                    ).length;
+                    const totalAmount = sortedInstallments.reduce(
+                      (sum, inst) => sum + (inst.amount || 0),
+                      0
+                    );
+                    const totalPaid = sortedInstallments.reduce(
+                      (sum, inst) => sum + (inst.paidAmount || 0),
+                      0
+                    );
+                    const totalRemaining = sortedInstallments.reduce(
+                      (sum, inst) => sum + (inst.remaining || 0),
+                      0
+                    );
+
+                    return (
+                      <StyledTableRow
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          "& td": {
+                            fontWeight: "bold",
+                            fontSize: "1rem",
+                            borderTop: "2px solid #ddd",
+                          },
+                        }}
+                      >
+                        <StyledTableCell align="center" sx={{width: "70px"}}>
+                          {paidCount > 0 && (
+                            <Typography variant="body2" fontWeight="bold">
+                              {paidCount}
+                            </Typography>
+                          )}
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <Typography variant="body2" fontWeight="bold">
+                            الإجمالي
+                          </Typography>
+                        </StyledTableCell>
+                        <StyledTableCell align="center">-</StyledTableCell>
+                        <StyledTableCell align="center">
+                          <Typography variant="body2" fontWeight="bold">
+                            {totalAmount.toFixed(2)}
+                          </Typography>
+                        </StyledTableCell>
+                        <StyledTableCell
+                          align="center"
+                          sx={{
+                            color: "green",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {totalPaid.toFixed(2)}
+                        </StyledTableCell>
+                        <StyledTableCell
+                          align="center"
+                          sx={{
+                            color: "red",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {totalRemaining.toFixed(2)}
+                        </StyledTableCell>
+                        <StyledTableCell align="center">-</StyledTableCell>
+                        <StyledTableCell align="center">-</StyledTableCell>
+                        <StyledTableCell align="center">-</StyledTableCell>
+                      </StyledTableRow>
+                    );
+                  })()}
                 </TableBody>
               </Table>
             </TableContainer>

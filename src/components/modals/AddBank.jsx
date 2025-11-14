@@ -6,14 +6,14 @@ import {
   DialogActions,
   Button,
   TextField,
-  Box,
   Typography,
   CircularProgress,
+  Stack,
 } from "@mui/material";
 import { createBank, updateBank } from "../../pages/Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 
-const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
+const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile = false }) => {
   const [formData, setFormData] = useState({
     name: "",
     accountNumber: "",
@@ -86,6 +86,15 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
         newErrors.IBAN = "IBAN يجب أن يكون 24 حرف/رقم";
       }
       
+    if (!formData.owner.trim()) {
+      newErrors.owner = "اسم المالك مطلوب";
+    }
+
+    if (!formData.limit) {
+      newErrors.limit = "السلف المسموح بها مطلوبة";
+    } else if (parseInt(formData.limit) < 0) {
+      newErrors.limit = "السلف المسموح بها يجب أن تكون رقم موجب";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -128,15 +137,27 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth dir="rtl">
-      <DialogTitle sx={{ pb: 1 }}>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth={isMobile ? "xs" : "sm"} 
+      fullWidth 
+      fullScreen={isMobile}
+      dir="rtl"
+      PaperProps={{
+        sx: {
+          borderRadius: isMobile ? 0 : 2,
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1, position: isMobile ? 'sticky' : 'static', top: 0, bgcolor: 'background.paper', zIndex: 1 }}>
         <Typography variant="h6" fontWeight="bold">
           {isEditMode ? "تعديل حساب بنكي" : "إضافة حساب بنكي جديد"}
         </Typography>
       </DialogTitle>
 
       <DialogContent sx={{ py: 3 }}>
-        <Box>
+        <Stack spacing={2}>
           <TextField
             label="اسم الحساب"
             value={formData.name}
@@ -145,7 +166,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
             error={!!errors.name}
             helperText={errors.name}
             required
-            sx={{ mb: 2, mt: 2 }}
+            size={isMobile ? "small" : "medium"}
           />
 
           <TextField
@@ -157,7 +178,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
             error={!!errors.owner}
             helperText={errors.owner}
             required
-            sx={{ mb: 2, mt: 2 }}
+            size={isMobile ? "small" : "medium"}
           />
 
           <TextField
@@ -169,7 +190,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
             error={!!errors.accountNumber}
             helperText={errors.accountNumber}
             required
-            sx={{ mb: 2, mt: 2 }}
+            size={isMobile ? "small" : "medium"}
             inputProps={{
               inputMode: "text",
               maxLength: 14,
@@ -190,7 +211,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
             error={!!errors.IBAN}
             helperText={errors.IBAN}
             required
-            sx={{ mb: 2, mt: 2 }}
+            size={isMobile ? "small" : "medium"}
             inputProps={{
               inputMode: "text",
               maxLength: 24,
@@ -211,7 +232,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
             error={!!errors.limit}
             helperText={errors.limit}
             required
-            sx={{ mb: 2, mt: 2 }}
+            size={isMobile ? "small" : "medium"}
             inputProps={{
               inputMode: "numeric",
               min: 0,
@@ -220,17 +241,26 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
               if (e.key === "-" || e.key === "+") e.preventDefault();
             }}
           />
-
-        </Box>
+        </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, gap: 1, flexDirection: "row-reverse" }}>
+      <DialogActions sx={{ 
+        p: 3, 
+        gap: 1, 
+        flexDirection: "row-reverse",
+        position: isMobile ? 'sticky' : 'static',
+        bottom: 0,
+        bgcolor: 'background.paper',
+        borderTop: isMobile ? '1px solid' : 'none',
+        borderColor: 'divider'
+      }}>
         <Button
           onClick={handleClose}
           disabled={loading}
           variant="outlined"
+          fullWidth={isMobile}
           sx={{
-            minWidth: "100px",
+            minWidth: isMobile ? 'auto' : "100px",
             borderColor: "grey.300",
             color: "text.secondary",
             "&:hover": {
@@ -245,10 +275,11 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false }) => {
           variant="contained"
           onClick={handleSubmit}
           disabled={loading}
+          fullWidth={isMobile}
           sx={{
             bgcolor: "#0d40a5",
             "&:hover": { bgcolor: "#0b3589" },
-            minWidth: "100px",
+            minWidth: isMobile ? 'auto' : "100px",
           }}
         >
           {loading ? (
