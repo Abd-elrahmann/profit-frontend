@@ -51,6 +51,8 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
         return "تعديل";
       case "DELETE":
         return "حذف";
+        case "POST":
+        return "اعتماد";
       case "VIEW":
         return "عرض";
       case "login":

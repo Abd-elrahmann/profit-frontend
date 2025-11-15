@@ -16,6 +16,10 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
+  Card,
+  CardContent,
+  useMediaQuery,
+  Pagination,
 } from "@mui/material";
 import {
   Visibility,
@@ -46,7 +50,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
-  const { permissions } = usePermissions(); 
+  const { permissions } = usePermissions();
+
+  const isMobile = useMediaQuery("(max-width: 480px)");
+  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isSmallScreen = isMobile || isTablet; 
   const handleMenuOpen = (event, loan) => {
     setAnchorEl(event.currentTarget);
     setSelectedLoanForMenu(loan);
@@ -70,6 +78,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
   };
 
   const handleDeleteLoan = async (loanId) => {
@@ -159,6 +171,290 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
     }
   };
 
+  // Render mobile loan cards
+  const renderMobileLoanCards = () => (
+    <Stack spacing={2} sx={{ p: 2 }}>
+      {loansData?.data?.map((loan) => (
+        <Card key={loan.id} variant="outlined" sx={{ borderRadius: 2 }}>
+          <CardContent sx={{ p: 2 }}>
+            <Stack spacing={1.5}>
+              {/* Header */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                    {loan.code}
+                  </Typography>
+                  <Typography variant="body2" fontWeight="medium" sx={{ mt: 0.5 }}>
+                    {loan.client?.name}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                  <Chip
+                    label={getStatusText(loan.status)}
+                    color={getStatusColor(loan.status)}
+                    size="small"
+                    sx={{ fontWeight: '500' }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={(event) => handleMenuOpen(event, loan)}
+                  >
+                    <MoreVert fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
+
+              {/* Loan Details */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    مبلغ السلفة
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold">
+                    {loan.amount?.toLocaleString()}
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    مبلغ الدفعة
+                  </Typography>
+                  <Typography variant="body2">
+                    {loan.paymentAmount?.toLocaleString()}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    معدل الفائدة
+                  </Typography>
+                  <Typography variant="body2">
+                    {loan.interestRate}%
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    النوع
+                  </Typography>
+                  <Typography variant="body2">
+                    {getTypeText(loan.type)}
+                  </Typography>
+                </Box>
+
+                {loan.kafeel?.name && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      الكفيل
+                    </Typography>
+                    <Typography variant="body2">
+                      {loan.kafeel.name}
+                    </Typography>
+                  </Box>
+                )}
+
+                {loan.partner?.name && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      المستثمر
+                    </Typography>
+                    <Typography variant="body2">
+                      {loan.partner.name}
+                    </Typography>
+                  </Box>
+                )}
+
+                {loan.bankAccount?.name && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      الحساب البنكي
+                    </Typography>
+                    <Typography variant="body2">
+                      {loan.bankAccount.name}
+                    </Typography>
+                  </Box>
+                )}
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    تاريخ البدء
+                  </Typography>
+                  <Typography variant="body2">
+                    {dayjs(loan.startDate).format("DD/MM/YYYY")}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    يوم الاستحقاق
+                  </Typography>
+                  <Typography variant="body2">
+                    {loan.repaymentDay}
+                  </Typography>
+                </Box>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
+    </Stack>
+  );
+
+  // Render desktop table
+  const renderDesktopTable = () => (
+    <TableContainer sx={{ height: "100%", width: "100%" }}>
+      <Table stickyHeader sx={{ width: "100%" }}>
+        <TableHead>
+          <StyledTableRow>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              رقم السلفة
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              العميل
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              الكفيل
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              {" "}
+              المستثمر
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              الحساب البنكي
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              مبلغ السلفة
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              مبلغ الدفعة
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              معدل الفائدة
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              النوع
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              {" "}
+              يوم الاستحقاق
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              الحالة
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              تاريخ البدء
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              الإجراءات
+            </StyledTableCell>
+          </StyledTableRow>
+        </TableHead>
+        <TableBody>
+          {isLoading ? (
+            <StyledTableRow>
+              <StyledTableCell colSpan={13} align="center">
+                <CircularProgress size={20} />
+              </StyledTableCell>
+            </StyledTableRow>
+          ) : loansData?.data?.length === 0 ? (
+            <StyledTableRow>
+              <StyledTableCell colSpan={13} align="center">
+                <Typography>لا توجد سلف</Typography>
+              </StyledTableCell>
+            </StyledTableRow>
+          ) : (
+            loansData?.data?.map((loan) => (
+              <StyledTableRow key={loan.id} hover>
+                <StyledTableCell>{loan.code}</StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.client?.name}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.kafeel?.name || "-"}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.partner?.name}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.bankAccount?.name}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
+                >
+                  {loan.amount?.toLocaleString()}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.paymentAmount?.toLocaleString()}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.interestRate}%
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {getTypeText(loan.type)}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {loan.repaymentDay}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  <Chip
+                    label={getStatusText(loan.status)}
+                    color={getStatusColor(loan.status)}
+                    size="small"
+                  />
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {dayjs(loan.startDate).format("DD/MM/YYYY")}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  <IconButton
+                    size="small"
+                    onClick={(event) => handleMenuOpen(event, loan)}
+                  >
+                    <MoreVert fontSize="small" />
+                  </IconButton>
+                </StyledTableCell>
+              </StyledTableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
   return (
     <Box
       sx={{
@@ -171,7 +467,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
       {/* Search Bar */}
       <Box
         sx={{
-          p: 2,
+          p: isSmallScreen ? 1.5 : 2,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -182,180 +478,68 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
           value={searchQuery}
           onChange={handleSearchChange}
           sx={{
-            width: "280px",
+            width: isSmallScreen ? "100%" : "280px",
             borderRadius: "6px",
+            p: isSmallScreen ? 1 : 0.5,
           }}
         />
       </Box>
 
-      {/* Table */}
+      {/* Table/Cards */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden" }}>
-        <TableContainer sx={{ height: "100%", width: "100%" }}>
-          <Table stickyHeader sx={{ width: "100%" }}>
-            <TableHead>
-              <StyledTableRow>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  رقم السلفة
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  العميل
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  الكفيل
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {" "}
-                  المستثمر
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  الحساب البنكي
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  مبلغ السلفة
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  مبلغ الدفعة
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  معدل الفائدة
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  النوع
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {" "}
-                  يوم الاستحقاق
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  الحالة
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  تاريخ البدء
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  الإجراءات
-                </StyledTableCell>
-              </StyledTableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <StyledTableRow>
-                  <StyledTableCell colSpan={13} align="center">
-                    <CircularProgress size={20} />
-                  </StyledTableCell>
-                </StyledTableRow>
-              ) : loansData?.data?.length === 0 ? (
-                <StyledTableRow>
-                  <StyledTableCell colSpan={13} align="center">
-                    <Typography>لا توجد سلف</Typography>
-                  </StyledTableCell>
-                </StyledTableRow>
-              ) : (
-                loansData?.data?.map((loan) => (
-                  <StyledTableRow key={loan.id} hover>
-                    <StyledTableCell>{loan.code}</StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.client?.name}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.kafeel?.name || "-"}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.partner?.name}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.bankAccount?.name}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
-                    >
-                      {loan.amount?.toLocaleString()}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.paymentAmount?.toLocaleString()}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.interestRate}%
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {getTypeText(loan.type)}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {loan.repaymentDay}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      <Chip
-                        label={getStatusText(loan.status)}
-                        color={getStatusColor(loan.status)}
-                        size="small"
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {dayjs(loan.startDate).format("DD/MM/YYYY")}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={(event) => handleMenuOpen(event, loan)}
-                      >
-                        <MoreVert fontSize="small" />
-                      </IconButton>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+            <CircularProgress size={40} />
+          </Box>
+        ) : loansData?.data?.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 6 }}>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              لا توجد سلف
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              لم يتم العثور على أي سلف مطابقة لبحثك
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            {isSmallScreen ? renderMobileLoanCards() : renderDesktopTable()}
+          </>
+        )}
       </Paper>
+
       {/* Pagination */}
-      {loansData && (
-        <TablePagination
-          component="div"
-          count={loansData.total || 0}
-          page={page - 1}
-          onPageChange={handleChangePage}
-          rowsPerPage={10}
-          rowsPerPageOptions={[10]}
-          labelDisplayedRows={({ from, to, count }) =>
-            `عرض ${from}-${to} من ${count}`
-          }
-          labelRowsPerPage="صفوف لكل صفحة:"
-        />
+      {loansData && loansData.total > 0 && (
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          p: isSmallScreen ? 1 : 2,
+          borderTop: '1px solid #e0e0e0'
+        }}>
+          {isSmallScreen ? (
+            <Pagination
+              count={Math.ceil(loansData.total / 10)}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              size="small"
+              showFirstButton
+              showLastButton
+            />
+          ) : (
+            <TablePagination
+              component="div"
+              count={loansData.total || 0}
+              page={page - 1}
+              onPageChange={handleChangePage}
+              rowsPerPage={10}
+              rowsPerPageOptions={[10]}
+              labelDisplayedRows={({ from, to, count }) =>
+                `عرض ${from}-${to} من ${count}`
+              }
+              labelRowsPerPage="صفوف لكل صفحة:"
+            />
+          )}
+        </Box>
       )}
 
       {/* Delete Confirmation Modal */}

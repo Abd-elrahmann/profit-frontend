@@ -7,28 +7,32 @@ import {
   Autocomplete,
   Stack,
   TextField,
-  Chip,
   CircularProgress,
-  Paper,
+  useMediaQuery,
+  IconButton,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import Api from '../../config/Api';
-import { Search, Cancel, CheckCircle, RestartAlt } from '@mui/icons-material';
+import { Search, RestartAlt, Close as CloseIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 
-const style = {
+// Responsive modal styles
+const getModalStyle = (isSmallScreen) => ({
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: { xs: '450px', sm: '600px', md: '700px', lg: '600px' },
+  width: isSmallScreen ? '95vw' : { xs: '450px', sm: '500px', md: '600px' },
+  maxWidth: '600px',
+  maxHeight: isSmallScreen ? '90vh' : '80vh',
   bgcolor: 'background.paper',
-  border: '1px solid var(--primary)',
+  border: '1px solid #e0e0e0',
   boxShadow: 24,
-  p: 4,
+  p: isSmallScreen ? 2 : 4,
   borderRadius: 3,
-};
+  overflow: 'auto',
+});
 
 // API functions
 const getAccounts = async (page = 1, searchQuery = '') => {
@@ -52,6 +56,10 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+
+  const isMobile = useMediaQuery("(max-width: 480px)");
+  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isSmallScreen = isMobile || isTablet;
 
   // Fetch initial accounts
   useEffect(() => {
@@ -127,32 +135,60 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
     setSearchInput(value);
   };
 
+  const handleClose = () => {
+    formik.resetForm();
+    setSearchInput('');
+    onClose();
+  };
+
   const options = searchInput.trim().length > 2 ? searchResults : accounts;
 
   return (
     <Modal 
       open={open} 
-      onClose={onClose} 
+      onClose={handleClose}
       aria-labelledby="general-ledger-search-title"
+      sx={{
+        backdropFilter: 'blur(2px)',
+      }}
     >
-      <Box sx={style}>
-        <Typography
-          id="general-ledger-search-title"
-          variant="h6"
-          component="h2"
-          sx={{ 
-            fontSize: '1.3rem', 
-            fontWeight: '600', 
-            marginBottom: '20px',
-            color: 'primary.main',
-            textAlign: 'center'
-          }}
-        >
-          بحث في دفتر الأستاذ
-        </Typography>
+      <Box sx={getModalStyle(isSmallScreen)}>
+        {/* Header */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 3,
+          pb: 2,
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <Typography
+            id="general-ledger-search-title"
+            variant={isSmallScreen ? "h6" : "h5"}
+            component="h2"
+            sx={{ 
+              fontWeight: '600',
+              color: 'primary.main',
+            }}
+          >
+            بحث في دفتر الأستاذ
+          </Typography>
+          <IconButton 
+            onClick={handleClose}
+            size="small"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
         <form onSubmit={formik.handleSubmit}>
-          <Stack spacing={3}>
+          <Stack spacing={isSmallScreen ? 2 : 3}>
             {/* Account Selection */}
             <Autocomplete
               id="account-autocomplete"
@@ -163,12 +199,13 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
               getOptionLabel={(option) => `${option.code} - ${option.name}`}
               renderOption={(props, option) => (
                 <Box component="li" {...props} sx={{ py: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <Box>
-                      <Typography variant="body1" fontWeight="500">
-                        {option.code} - {option.name}
-                      </Typography>
-                    </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <Typography variant="body1" fontWeight="500" noWrap>
+                      {option.code} - {option.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {getAccountTypeArabic(option.type)}
+                    </Typography>
                   </Box>
                 </Box>
               )}
@@ -194,10 +231,12 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                       </>
                     ),
                   }}
-                />
+              size={isSmallScreen ? "small" : "medium"}
+            />
               )}
               loading={isLoading}
               noOptionsText="لا توجد حسابات مطابقة"
+              size={isSmallScreen ? "small" : "medium"}
             />
 
             {/* Date Range */}
@@ -210,13 +249,14 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                 <TextField 
                   {...params} 
                   fullWidth 
-                  variant="outlined" 
+                  variant="outlined"
+                  size={isSmallScreen ? "small" : "medium"}
                   InputLabelProps={{ shrink: true }}
                 />
               )}
               slotProps={{
                 textField: {
-                  size: 'medium',
+                  size: isSmallScreen ? "small" : "medium",
                   InputLabelProps: {
                     shrink: true,
                   },
@@ -224,7 +264,8 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                     width: '100%',
                   }
                 }
-              }}            />
+              }}
+            />
 
             <DatePicker
               label="إلى تاريخ"
@@ -236,12 +277,14 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                 <TextField 
                   {...params} 
                   fullWidth 
-                  variant="outlined" 
+                  variant="outlined"
+                  size={isSmallScreen ? "small" : "medium"}
+                  InputLabelProps={{ shrink: true }}
                 />
               )}
               slotProps={{
                 textField: {
-                  size: 'medium',
+                  size: isSmallScreen ? "small" : "medium",
                   InputLabelProps: {
                     shrink: true,
                   },
@@ -249,22 +292,29 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                     width: '100%',
                   }
                 }
-              }}            />
+              }}
+            />
 
             {/* Action Buttons */}
-            <Stack direction="row" gap={2}>
+            <Stack 
+              direction={isSmallScreen ? "column" : "row"} 
+              gap={2}
+              sx={{ mt: 2 }}
+            >
               <Button 
                 variant="outlined" 
                 fullWidth 
                 onClick={handleReset}
-                startIcon={<RestartAlt sx={{marginLeft: '10px'}} />}
+                startIcon={<RestartAlt />}
+                size={isSmallScreen ? "medium" : "large"}
                 sx={{
                   color: 'text.secondary',
                   borderColor: 'text.secondary',
                   '&:hover': {
                     borderColor: 'text.primary',
                     bgcolor: 'action.hover'
-                  }
+                  },
+                  order: isSmallScreen ? 2 : 1
                 }}
               >
                 إعادة تعيين
@@ -274,27 +324,68 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                 fullWidth 
                 type="submit" 
                 disabled={!formik.values.account}
-                startIcon={<Search sx={{marginLeft: '10px'}} />}
+                startIcon={<Search />}
+                size={isSmallScreen ? "medium" : "large"}
                 sx={{
                   bgcolor: 'primary.main',
                   '&:hover': { bgcolor: 'primary.dark' },
-                  minWidth: 120,
                   '&:disabled': {
                     bgcolor: 'action.disabled',
                     color: 'text.disabled'
-                  }
+                  },
+                  order: isSmallScreen ? 1 : 2
                 }}
               >
                 بحث
               </Button>
             </Stack>
+
+            {/* Selected Account Info (when account is selected) */}
+            {formik.values.account && (
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  borderRadius: 2, 
+                  bgcolor: 'primary.50',
+                  border: '1px solid',
+                  borderColor: 'primary.100',
+                  mt: 1
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight="bold" color="primary.main" gutterBottom>
+                  الحساب المحدد:
+                </Typography>
+                <Typography variant="body2" fontWeight="medium">
+                  {formik.values.account.code} - {formik.values.account.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  النوع: {getAccountTypeArabic(formik.values.account.type)}
+                </Typography>
+              </Box>
+            )}
           </Stack>
         </form>
+
+        {/* Footer Help Text */}
+        <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #f0f0f0' }}>
+          <Typography variant="caption" color="text.secondary" align="center" display="block">
+            اختر الحساب وتاريخ البداية والنهاية لعرض القيود المحاسبية
+          </Typography>
+        </Box>
       </Box>
     </Modal>
   );
 };
 
-
+const getAccountTypeArabic = (type) => {
+  const typeMap = {
+    'ASSET': 'أصول',
+    'LIABILITY': 'خصوم',
+    'EQUITY': 'حقوق ملكية',
+    'REVENUE': 'إيرادات',
+    'EXPENSE': 'مصروفات'
+  };
+  return typeMap[type] || type;
+};
 
 export default GeneralLedgerSearch;

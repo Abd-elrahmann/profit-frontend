@@ -399,7 +399,7 @@ export default function Employees() {
           }}
         >
           <TextField
-            placeholder="البحث عن موظف بالاسم أو البريد الإلكتروني"
+            placeholder="البحث عن مسؤول بالاسم أو البريد الإلكتروني"
             variant="outlined"
             onChange={handleSearchChange}
             sx={{
@@ -431,7 +431,7 @@ export default function Employees() {
                 py: isSmallScreen ? 1.5 : 1,
               }}
             >
-              إضافة مدير جديد
+              إضافة مسؤول جديد
             </Button>
           )}
         </Box>

@@ -24,6 +24,7 @@ import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import {usePermissions} from "../../components/Contexts/PermissionsContext";
+import routes from "../../routes";
 
 const validationSchema = Yup.object().shape({
   email: Yup.string()
@@ -73,13 +74,45 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // 3️⃣ استدعاء دالة جلب الصلاحيات من الكونتيكست
+      // 3️⃣ جلب الصلاحيات مباشرة من API
+      let userPermissions = [];
       try {
+        // Fetch permissions directly from API
+        const modulesRes = await Api.get("/api/auth/modules");
+        const allPermissions = [];
+
+        for (const module of modulesRes.data) {
+          const res = await Api.get(`/api/auth/permissions/${module}`);
+          res.data.forEach((perm) => {
+            const cleanName = perm.replace("can", "");
+            
+            // Handle special module names
+            let moduleKey = module;
+            switch (module) {
+              case "messages-templates":
+                moduleKey = "messagesTemplates";
+                break;
+              case "journal-entries":
+                moduleKey = "journalEntries";
+                break;
+              case "contract-templates":
+                moduleKey = "contractTemplates";
+                break;
+              case "general-ledger":
+                moduleKey = "generalLedger";
+                break;
+              default:
+                moduleKey = module;
+            }
+            
+            allPermissions.push(`${moduleKey}_${cleanName}`);
+          });
+        }
+        
+        userPermissions = allPermissions;
+        
         if (fetchPermissions && typeof fetchPermissions === 'function') {
           await fetchPermissions();
-        } else {
-          console.warn('fetchPermissions function not available, reloading page');
-          window.location.reload();
         }
       } catch (permissionsError) {
         console.error('Error fetching permissions:', permissionsError);
@@ -89,8 +122,38 @@ const Login = () => {
 
       notifySuccess("تم تسجيل الدخول بنجاح");
 
-      // 4️⃣ التوجيه للوحة التحكم
-      navigate("/dashboard", { replace: true });
+      // 4️⃣ العثور على أول صفحة مسموح بها والتوجيه إليها
+      // Helper function to convert module name to permission format
+      const convertModuleToPermission = (module) => {
+        switch (module) {
+          case "messages-templates":
+            return "messagesTemplates";
+          case "journal-entries":
+            return "journalEntries";
+          case "contract-templates":
+            return "contractTemplates";
+          case "general-ledger":
+            return "generalLedger";
+          default:
+            return module;
+        }
+      };
+
+      // Find first accessible page
+      let firstPage = '/dashboard';
+      for (const route of routes) {
+        if (route.protected && route.requiresPermissions && route.module) {
+          const moduleKey = convertModuleToPermission(route.module);
+          const hasPermission = userPermissions.includes(`${moduleKey}_View`);
+          
+          if (hasPermission) {
+            firstPage = route.path;
+            break;
+          }
+        }
+      }
+
+      navigate(firstPage, { replace: true });
     } catch (error) {
       notifyError("خطأ في تسجيل الدخول");
       handleApiError(error);

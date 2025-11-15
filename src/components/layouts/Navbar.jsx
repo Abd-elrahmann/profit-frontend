@@ -174,7 +174,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                     color: "primary.main",
                   }}
                 >
-                  {userData.name || 'مستخدم'}
+                  {userData.name.split(' ')[0] || 'مستخدم'}
                 </Typography>
               </Box>
               <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>

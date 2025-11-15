@@ -117,6 +117,14 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
 
   const hasCurrentRole = user?.role;
 
+  const getPermissionCount = (permissions) => {
+    if (!permissions) return 0;
+    return permissions.reduce((count, perm) => {
+      const hasPermissions = perm.canView || perm.canAdd || perm.canUpdate || perm.canDelete || perm.canPost;
+      return count + (hasPermissions ? 1 : 0);
+    }, 0);
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -298,7 +306,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
                           </Typography>
                           {role.permissions && (
                             <Typography variant="caption" sx={{ color: '#6B7280', display: 'block', mt: 0.5 }}>
-                              {role.permissions.length} صلاحية
+                              {getPermissionCount(role.permissions)} صلاحية
                             </Typography>
                           )}
                         </Box>

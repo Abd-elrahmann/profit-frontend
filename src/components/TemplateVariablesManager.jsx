@@ -1,4 +1,3 @@
-// components/TemplateVariablesManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
@@ -14,39 +13,44 @@ import {
   Grid,
   Chip,
   CircularProgress,
+  Alert,
+  Divider,
+  Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
-import { Add, Edit, Delete, ContentCopy } from '@mui/icons-material';
+import { Add, Edit, Delete, ContentCopy, ExpandMore, Help } from '@mui/icons-material';
 import Api from '../config/Api';
 
-const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpdate }) => {
+const TemplateVariablesManager = ({ 
+  templateName, 
+  open, 
+  onClose, 
+  onVariablesUpdate,
+  onDeleteVariable 
+}) => {
   const [variables, setVariables] = useState([]);
   const [editingVariable, setEditingVariable] = useState(null);
-  const [newVariable, setNewVariable] = useState({ key: '', description: '' });
+  const [newVariable, setNewVariable] = useState({ key: '', description: '', group: '' });
   const [loading, setLoading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const loadVariables = useCallback(async () => {
-    if (!templateName) {
-      console.warn('TemplateVariablesManager: templateName is missing');
-      return;
-    }
+    if (!templateName) return;
     
     setLoading(true);
     try {
       const formattedTemplateName = templateName.toUpperCase();
-      console.log('Loading variables for template:', formattedTemplateName);
-      
       const response = await Api.get(`/api/templates/${formattedTemplateName}/with-variables`);
-      console.log('Template variables response:', response.data);
       
       const vars = Array.isArray(response.data?.variables) 
         ? response.data.variables 
         : response.data?.data?.variables || [];
       
-      console.log('Variables array:', vars, 'Length:', vars.length);
       setVariables(vars);
     } catch (error) {
       console.error('Error loading variables:', error);
-      console.error('Error details:', error.response?.data || error.message);
       setVariables([]);
     } finally {
       setLoading(false);
@@ -57,10 +61,9 @@ const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpda
     if (open && templateName) {
       loadVariables();
     } else if (!open) {
-      // Reset state when modal closes
       setVariables([]);
       setEditingVariable(null);
-      setNewVariable({ key: '', description: '' });
+      setNewVariable({ key: '', description: '', group: '' });
     }
   }, [open, templateName, loadVariables]);
 
@@ -69,7 +72,7 @@ const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpda
 
     try {
       await Api.post(`/api/templates/${templateName}/variables`, newVariable);
-      setNewVariable({ key: '', description: '' });
+      setNewVariable({ key: '', description: '', group: '' });
       loadVariables();
       onVariablesUpdate?.();
     } catch (error) {
@@ -83,7 +86,8 @@ const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpda
     try {
       await Api.put(`/api/templates/variables/${editingVariable.id}`, {
         key: editingVariable.key,
-        description: editingVariable.description || undefined
+        description: editingVariable.description || '',
+        group: editingVariable.group || ''
       });
       setEditingVariable(null);
       loadVariables();
@@ -93,37 +97,67 @@ const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpda
     }
   };
 
-  const handleDeleteVariable = async (id) => {
-    try {
-      await Api.delete(`/api/templates/variables/${id}`);
-      loadVariables();
-      onVariablesUpdate?.();
-    } catch (error) {
-      console.error('Error deleting variable:', error);
+  const handleDeleteVariable = async (variable) => {
+    if (onDeleteVariable) {
+      onDeleteVariable(variable);
+    } else {
+      try {
+        await Api.delete(`/api/templates/variables/${variable.id}`);
+        loadVariables();
+        onVariablesUpdate?.();
+      } catch (error) {
+        console.error('Error deleting variable:', error);
+      }
     }
   };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    // يمكنك إضافة notificaiton هنا
   };
+
+  const VariableHelp = () => (
+    <Alert severity="info" sx={{ mb: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        💡 شرح المتغيرات
+      </Typography>
+      <Typography variant="body2" paragraph>
+        <strong>المتغيرات</strong> هي أماكن في القالب يتم تعبئتها تلقائيًا بالبيانات.
+      </Typography>
+      <Typography variant="body2" paragraph>
+        <strong>مثال:</strong> عند استخدام {`{{اسم_العميل}}`} في القالب، سيتم استبداله تلقائيًا باسم العميل الفعلي.
+      </Typography>
+      <Typography variant="body2">
+        <strong>طريقة الاستخدام:</strong> انسخ المتغير والصقه في المكان المناسب في القالب.
+      </Typography>
+    </Alert>
+  );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        إدارة متغيرات القالب
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">إدارة متغيرات القالب</Typography>
+          <Tooltip title="شرح المتغيرات">
+            <IconButton onClick={() => setShowHelp(!showHelp)} size="small">
+              <Help />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </DialogTitle>
       <DialogContent>
+        {showHelp && <VariableHelp />}
+
         {/* إضافة متغير جديد */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>إضافة متغير جديد</Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               label="اسم المتغير (مثال: {{اسم_العميل}})"
               value={newVariable.key}
               onChange={(e) => setNewVariable({ ...newVariable, key: e.target.value })}
               fullWidth
               size="small"
+              helperText="يجب أن يبدأ وينتهي ب {{ }}"
             />
             <TextField
               label="الوصف"
@@ -131,17 +165,28 @@ const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpda
               onChange={(e) => setNewVariable({ ...newVariable, description: e.target.value })}
               fullWidth
               size="small"
+              helperText="شرح الغرض من هذا المتغير"
+            />
+            <TextField
+              label="المجموعة (اختياري)"
+              value={newVariable.group}
+              onChange={(e) => setNewVariable({ ...newVariable, group: e.target.value })}
+              fullWidth
+              size="small"
+              helperText="مثل: بيانات الأطراف، البيانات المالية، إلخ"
             />
             <Button 
               variant="contained" 
               onClick={handleAddVariable}
               startIcon={<Add />}
-              sx={{ minWidth: '100px' }}
+              disabled={!newVariable.key.trim()}
             >
-              إضافة
+              إضافة متغير
             </Button>
           </Box>
         </Paper>
+
+        <Divider sx={{ my: 2 }} />
 
         {/* قائمة المتغيرات الحالية */}
         <Typography variant="h6" sx={{ mb: 2 }}>المتغيرات الحالية</Typography>
@@ -157,78 +202,104 @@ const TemplateVariablesManager = ({ templateName, open, onClose, onVariablesUpda
             </Typography>
           </Box>
         ) : (
-          <Grid container spacing={1}>
+          <Grid container spacing={2}>
             {variables.map((variable) => (
-            <Grid item xs={12} sm={6} key={variable.id}>
-              {editingVariable?.id === variable.id ? (
-                <Paper sx={{ p: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>تعديل المتغير</Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <TextField
-                      label="اسم المتغير"
-                      value={editingVariable.key}
-                      onChange={(e) => setEditingVariable({ ...editingVariable, key: e.target.value })}
-                      fullWidth
-                      size="small"
-                    />
-                    <TextField
-                      label="الوصف"
-                      value={editingVariable.description || ''}
-                      onChange={(e) => setEditingVariable({ ...editingVariable, description: e.target.value })}
-                      fullWidth
-                      size="small"
-                    />
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button 
-                        variant="contained" 
-                        onClick={handleUpdateVariable}
+              <Grid item xs={12} key={variable.id}>
+                {editingVariable?.id === variable.id ? (
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>تعديل المتغير</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <TextField
+                        label="اسم المتغير"
+                        value={editingVariable.key}
+                        onChange={(e) => setEditingVariable({ ...editingVariable, key: e.target.value })}
+                        fullWidth
                         size="small"
-                      >
-                        حفظ
-                      </Button>
-                      <Button 
-                        variant="outlined" 
-                        onClick={() => setEditingVariable(null)}
+                      />
+                      <TextField
+                        label="الوصف"
+                        value={editingVariable.description || ''}
+                        onChange={(e) => setEditingVariable({ ...editingVariable, description: e.target.value })}
+                        fullWidth
                         size="small"
-                      >
-                        إلغاء
-                      </Button>
+                      />
+                      <TextField
+                        label="المجموعة"
+                        value={editingVariable.group || ''}
+                        onChange={(e) => setEditingVariable({ ...editingVariable, group: e.target.value })}
+                        fullWidth
+                        size="small"
+                      />
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button 
+                          variant="contained" 
+                          onClick={handleUpdateVariable}
+                          size="small"
+                        >
+                          حفظ
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          onClick={() => setEditingVariable(null)}
+                          size="small"
+                        >
+                          إلغاء
+                        </Button>
+                      </Box>
                     </Box>
-                  </Box>
-                </Paper>
-              ) : (
-                <Paper sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Chip 
-                      label={variable.key} 
-                      onClick={() => copyToClipboard(variable.key)}
-                      icon={<ContentCopy />}
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography variant="body2" color="textSecondary">
-                      {variable.description}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton 
-                      color="primary" 
-                      onClick={() => setEditingVariable({ ...variable })}
-                      size="small"
-                    >
-                      <Edit />
-                    </IconButton>
-                    <IconButton 
-                      color="error" 
-                      onClick={() => handleDeleteVariable(variable.id)}
-                      size="small"
-                    >
-                      <Delete />
-                    </IconButton>
-                  </Box>
-                </Paper>
-              )}
-            </Grid>
-          ))}
+                  </Paper>
+                ) : (
+                  <Paper sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Tooltip title="اضغط للنسخ" arrow>
+                          <Chip 
+                            label={variable.key} 
+                            onClick={() => copyToClipboard(variable.key)}
+                            icon={<ContentCopy />}
+                            sx={{ mb: 1 }}
+                            clickable
+                          />
+                        </Tooltip>
+                        {variable.description && (
+                          <Typography variant="body2" color="textSecondary" paragraph>
+                            {variable.description}
+                          </Typography>
+                        )}
+                        {variable.group && (
+                          <Chip 
+                            label={variable.group} 
+                            size="small" 
+                            variant="outlined"
+                            sx={{ mr: 1 }}
+                          />
+                        )}
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title="تعديل">
+                          <IconButton 
+                            color="primary" 
+                            onClick={() => setEditingVariable({ ...variable })}
+                            size="small"
+                          >
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="حذف">
+                          <IconButton 
+                            color="error" 
+                            onClick={() => handleDeleteVariable(variable)}
+                            size="small"
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  </Paper>
+                )}
+              </Grid>
+            ))}
           </Grid>
         )}
       </DialogContent>
