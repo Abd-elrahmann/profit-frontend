@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { getLogs } from "../../pages/Logs/LogsApi";
+import { getLogs } from "../../pages/logs/logsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 
