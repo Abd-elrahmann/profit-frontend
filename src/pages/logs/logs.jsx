@@ -18,7 +18,7 @@ import {
   Grid
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { getLogs } from "./LogsApi";
+import { getLogs } from "./logsApi";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import dayjs from "dayjs";
 import LogsToolbar from "../../components/modals/LogsToolbar";
