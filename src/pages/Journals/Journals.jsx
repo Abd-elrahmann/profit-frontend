@@ -178,13 +178,28 @@ const Journals = () => {
     setIsEditMode(false);
     setIsAddMode(false);
     setJournalLines([]);
+    setEditingLineIndex(null);
+    setCurrentLine({
+      accountId: "",
+      debit: "",
+      credit: "",
+      description: "",
+    });
   };
 
   const handleAddNewClick = () => {
     setIsAddMode(true);
+    setIsEditMode(false);
     setActiveTab(1);
     setSelectedJournal(null);
     setJournalLines([]);
+    setEditingLineIndex(null);
+    setCurrentLine({
+      accountId: "",
+      debit: "",
+      credit: "",
+      description: "",
+    });
     setNewJournalForm({
       description: "",
       date: new Date().toISOString().split("T")[0],
@@ -220,6 +235,13 @@ const Journals = () => {
   const handleCancelAdd = () => {
     setIsAddMode(false);
     setJournalLines([]);
+    setEditingLineIndex(null);
+    setCurrentLine({
+      accountId: "",
+      debit: "",
+      credit: "",
+      description: "",
+    });
     setNewJournalForm({
       description: "",
       date: new Date().toISOString().split("T")[0],
