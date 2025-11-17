@@ -25,10 +25,21 @@ export const getJournalById = async (journalId) => {
   }
 };
 
+// Create new journal
+export const createJournal = async (journalData) => {
+  try {
+    const response = await Api.post('/api/journals', journalData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // Update journal
 export const updateJournal = async (journalId, journalData) => {
   try {
-    const response = await Api.patch(`/api/journals/${journalId}`, journalData);
+    const response = await Api.put(`/api/journals/${journalId}`, journalData);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -62,6 +73,17 @@ export const postJournal = async (journalId) => {
 export const unpostJournal = async (journalId) => {
   try {
     const response = await Api.post(`/api/journals/${journalId}/unpost`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Get chart of accounts for dropdown
+export const getChartOfAccounts = async () => {
+  try {
+    const response = await Api.get('/api/accounts/tree');
     return response.data;
   } catch (error) {
     handleApiError(error);

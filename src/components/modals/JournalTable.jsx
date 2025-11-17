@@ -12,7 +12,6 @@ import {
   Stack,
   Typography,
   CircularProgress,
-  InputBase,
   Card,
   CardContent,
   Grid,
@@ -24,9 +23,8 @@ import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 
-const JournalTable = ({ onViewDetails, isMobile = false }) => {
+const JournalTable = ({ onViewDetails, isMobile = false, searchQuery = "" }) => {
   const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
   const { permissions } = usePermissions(); 
   
   const { data: journalsData, isLoading } = useQuery({
@@ -34,10 +32,6 @@ const JournalTable = ({ onViewDetails, isMobile = false }) => {
     queryFn: () => getJournals(page, searchQuery),
   });
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-    setPage(1);
-  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
@@ -325,29 +319,6 @@ const JournalTable = ({ onViewDetails, isMobile = false }) => {
         height: "100%",
       }}
     >
-      {/* Search Bar */}
-      <Box
-        sx={{
-          p: isMobile ? 1 : 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <InputBase
-          placeholder="ابحث برقم القيد أو الوصف..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          sx={{
-            width: isMobile ? "100%" : "280px",
-            borderRadius: "6px",
-            p: 1,
-            border: "1px solid #e0e0e0",
-            bgcolor: "background.paper"
-          }}
-        />
-      </Box>
-
       {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
         {isMobile ? renderCards() : renderTable()}
