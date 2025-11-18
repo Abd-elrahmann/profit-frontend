@@ -98,9 +98,6 @@ const Login = () => {
               case "contract-templates":
                 moduleKey = "contractTemplates";
                 break;
-              case "general-ledger":
-                moduleKey = "generalLedger";
-                break;
               default:
                 moduleKey = module;
             }
@@ -132,8 +129,6 @@ const Login = () => {
             return "journalEntries";
           case "contract-templates":
             return "contractTemplates";
-          case "general-ledger":
-            return "generalLedger";
           default:
             return module;
         }

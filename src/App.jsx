@@ -14,9 +14,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { notifyError } from './utilities/toastify';
 
-// Helper function to find first accessible page based on permissions
 const getFirstAccessiblePage = (permissions) => {
-  // Convert module name to permission format
   const convertModuleToPermission = (module) => {
     switch (module) {
       case "messages-templates":
@@ -25,8 +23,6 @@ const getFirstAccessiblePage = (permissions) => {
         return "journalEntries";
       case "contract-templates":
         return "contractTemplates";
-      case "general-ledger":
-        return "generalLedger";
       default:
         return module;
     }
@@ -172,9 +168,6 @@ const ProtectedRoute = ({ children, route }) => {
         case "contract-templates":
           moduleKey = "contractTemplates";
           break;
-        case "general-ledger":
-          moduleKey = "generalLedger";
-          break;
         default:
           moduleKey = route.module;
       }
@@ -231,9 +224,6 @@ const ProtectedRoute = ({ children, route }) => {
         break;
       case "contract-templates":
         moduleKey = "contractTemplates";
-        break;
-      case "general-ledger":
-        moduleKey = "generalLedger";
         break;
       default:
         moduleKey = route.module;
