@@ -1436,7 +1436,7 @@ const Loans = () => {
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
                         <Autocomplete
                           options={partnersData?.partners || []}
-                          getOptionLabel={(option) => option.name}
+                          getOptionLabel={(option) => option.name + " - " + (option.isActive ? "نشط" : "غير نشط")}
                           value={selectedPartner}
                           onChange={handlePartnerSelect}
                           onInputChange={handlePartnersSearchChange}

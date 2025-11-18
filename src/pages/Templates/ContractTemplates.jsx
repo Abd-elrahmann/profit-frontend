@@ -423,44 +423,48 @@ export default function ContractTemplates() {
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={1}>
-                  {groupedVariables[groupName].map((variable, index) => (
-                    <Grid item xs={12} sm={6} key={index}>
-                      <Tooltip title={`اضغط للنسخ: ${variable.description}`} arrow>
-                        <Chip
-                          label={variable.key}
-                          onClick={() => onCopyVariable(variable.key)}
-                          icon={<ContentCopyIcon sx={{ fontSize: '16px !important' }} />}
-                          sx={{
-                            width: '100%',
-                            justifyContent: 'flex-start',
-                            mb: 1,
-                            px: 1,
-                            py: 2,
-                            height: 'auto',
-                            minHeight: '40px',
-                            backgroundColor: '#f8f9fc',
-                            border: '1px solid #e5e7eb',
-                            '&:hover': {
-                              backgroundColor: '#e0e7ff',
-                              borderColor: '#3b82f6',
-                            },
-                            '& .MuiChip-label': {
-                              fontSize: '0.875rem',
-                              fontWeight: '500',
-                              whiteSpace: 'normal',
-                              textAlign: 'right',
-                              direction: 'rtl',
-                            }
-                          }}
-                        />
-                      </Tooltip>
-                      {variable.description && (
-                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5, textAlign: 'right' }}>
-                          {variable.description}
-                        </Typography>
-                      )}
-                    </Grid>
-                  ))}
+                  {groupedVariables[groupName].map((variable, index) => {
+                    // Display variable name without brackets for easier editing
+                    const displayName = variable.key.replace(/\{\{|\}\}/g, '');
+                    return (
+                      <Grid item xs={12} sm={6} key={index}>
+                        <Tooltip title={`اضغط للنسخ: ${variable.description}`} arrow>
+                          <Chip
+                            label={displayName}
+                            onClick={() => onCopyVariable(variable.key)}
+                            icon={<ContentCopyIcon sx={{ fontSize: '16px !important' }} />}
+                            sx={{
+                              width: '100%',
+                              justifyContent: 'flex-start',
+                              mb: 1,
+                              px: 1,
+                              py: 2,
+                              height: 'auto',
+                              minHeight: '40px',
+                              backgroundColor: '#f8f9fc',
+                              border: '1px solid #e5e7eb',
+                              '&:hover': {
+                                backgroundColor: '#e0e7ff',
+                                borderColor: '#3b82f6',
+                              },
+                              '& .MuiChip-label': {
+                                fontSize: '0.875rem',
+                                fontWeight: '500',
+                                whiteSpace: 'normal',
+                                textAlign: 'right',
+                                direction: 'rtl',
+                              }
+                            }}
+                          />
+                        </Tooltip>
+                        {variable.description && (
+                          <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5, textAlign: 'right' }}>
+                            {variable.description}
+                          </Typography>
+                        )}
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               </AccordionDetails>
             </Accordion>
@@ -490,10 +494,70 @@ export default function ContractTemplates() {
            tab === "settlement" ? "settlement" : tab;
   };
 
-  // Copy Variable Function
+  // Process content to ensure variables have {{ }} brackets when saving
+  const ensureVariableBrackets = (content) => {
+    if (!content) return content;
+    
+    // Get all variable names from the current variables list
+    const stateKey = getStateKey(activeTab);
+    const allVariables = dynamicVariables[stateKey] || [];
+    const variableNames = allVariables.map(v => {
+      // Extract variable name without brackets
+      const match = v.key.match(/\{\{([^}]+)\}\}/);
+      return match ? match[1] : v.key.replace(/[{}]/g, '');
+    });
+
+    let processedContent = content;
+    
+    // Process each variable name
+    variableNames.forEach(varName => {
+      // Escape special regex characters
+      const escapedVarName = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Create a regex that matches the variable name when it's NOT already wrapped in {{ }}
+      // We want to match: variable name that's not preceded by {{ and not followed by }}
+      // But we need to avoid matching inside HTML tags
+      const regex = new RegExp(`(?!\\{\\{)${escapedVarName}(?!\\}\\})`, 'g');
+      
+      processedContent = processedContent.replace(regex, (match, offset) => {
+        // Get context around the match
+        const before = processedContent.substring(Math.max(0, offset - 20), offset);
+        const after = processedContent.substring(offset + match.length, offset + match.length + 20);
+        
+        // Don't wrap if it's already wrapped (check nearby context)
+        if (before.includes('{{') || after.includes('}}')) {
+          return match;
+        }
+        
+        // Don't wrap if inside HTML tag (check if we're between < and >)
+        const beforeTag = processedContent.substring(Math.max(0, offset - 100), offset);
+        const afterTag = processedContent.substring(offset + match.length, offset + match.length + 100);
+        
+        // Check if we're inside an HTML tag
+        const lastOpenTag = beforeTag.lastIndexOf('<');
+        const lastCloseTag = beforeTag.lastIndexOf('>');
+        const nextCloseTag = afterTag.indexOf('>');
+        const nextOpenTag = afterTag.indexOf('<');
+        
+        // If we're between < and > (inside a tag), don't wrap
+        if (lastOpenTag > lastCloseTag && nextCloseTag !== -1 && (nextCloseTag < nextOpenTag || nextOpenTag === -1)) {
+          return match;
+        }
+        
+        // Wrap the variable
+        return `{{${match}}}`;
+      });
+    });
+
+    return processedContent;
+  };
+
+  // Copy Variable Function - strip brackets for easier editing
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      notifySuccess('تم نسخ المتغير:', text);
+    // Remove {{ }} brackets for easier editing
+    const variableName = text.replace(/\{\{|\}\}/g, '');
+    navigator.clipboard.writeText(variableName).then(() => {
+      notifySuccess('تم نسخ المتغير:', variableName);
     });
   };
 
@@ -586,7 +650,10 @@ export default function ContractTemplates() {
       const currentTemplateKey = activeTab;
       const templateName = templateNameMap[currentTemplateKey];
       const stateKey = getStateKey(currentTemplateKey);
-      const templateContent = templates[stateKey];
+      let templateContent = templates[stateKey];
+      
+      // Ensure all variables have {{ }} brackets before saving
+      templateContent = ensureVariableBrackets(templateContent);
       
       await Api.post("/api/templates", {
         name: templateName,
@@ -599,6 +666,12 @@ export default function ContractTemplates() {
           css: templateStyles[stateKey]
         });
       }
+
+      // Update the template in state with brackets
+      setTemplates(prev => ({
+        ...prev,
+        [stateKey]: templateContent
+      }));
 
       notifySuccess("تم حفظ القالب بنجاح");
     } catch (error) {
@@ -713,6 +786,12 @@ export default function ContractTemplates() {
   };
 
   const renderTemplateEditor = (templateKey) => {
+    // Create variables without brackets for easier editing
+    const variablesWithoutBrackets = getCurrentVariables().map(v => ({
+      ...v,
+      key: v.key.replace(/\{\{|\}\}/g, '') // Remove brackets for display/editing
+    }));
+    
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
@@ -730,7 +809,7 @@ export default function ContractTemplates() {
         <RichTextEditor
           value={templates[templateKey]}
           onChange={(value) => handleTemplateChange(templateKey, value)}
-          variables={getCurrentVariables()}
+          variables={variablesWithoutBrackets}
           height="600px"
         />
       </Box>
@@ -756,24 +835,6 @@ export default function ContractTemplates() {
           <CloseIcon />
         </IconButton>
       </Box>
-
-      {/* Save Button */}
-      <Button
-        fullWidth
-        variant="contained"
-        color="success"
-        startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
-        disabled={saving}
-        sx={{ 
-          mb: 3,
-          py: 1.5,
-          fontWeight: "bold",
-          fontSize: '1.1rem'
-        }}
-        onClick={handleSave}
-      >
-        {saving ? 'جاري الحفظ...' : '💾 حفظ القالب الحالي'}
-      </Button>
 
       {/* CSS Management */}
       <Accordion>
@@ -928,14 +989,22 @@ export default function ContractTemplates() {
                       {activeTab === "settlement" && "إيصال تسوية دفعة"}
                     </Typography>
                     
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<FileCopyIcon sx={{marginLeft:'10px'}} />}
-                        onClick={() => setTemplateGalleryOpen(true)}
-                      >
-                        قوالب جاهزة
-                      </Button>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {permissions.includes('templates_Update') && (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{marginLeft:'10px'}} />}
+                          disabled={saving}
+                          sx={{ 
+                            fontWeight: "bold",
+                            fontSize: '1rem'
+                          }}
+                          onClick={handleSave}
+                        >
+                          {saving ? 'جاري الحفظ...' : ' حفظ القالب'}
+                        </Button>
+                      )}
                       <Button
                         variant={viewMode === "preview" ? "contained" : "outlined"}
                         startIcon={<PreviewIcon sx={{marginLeft:'10px'}} />}
