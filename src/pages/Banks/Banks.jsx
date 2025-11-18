@@ -21,7 +21,7 @@ import {
   Grid,
   Divider,
 } from "@mui/material";
-import { Search, Add, Edit, Delete } from "@mui/icons-material";
+import { Search, Add, Edit, Delete,PictureAsPdf as PdfIcon,TableChart as ExcelIcon} from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBanks, deleteBank } from "./bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
@@ -34,7 +34,7 @@ import {
 } from "../../components/layouts/tableLayout";
 import { useTranslation } from "react-i18next";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
-
+import { exportBanksToPDF, exportBanksToExcel } from "../../utilities/banksExporter";
 const Banks = () => {
   const { i18n } = useTranslation();
   const [page, setPage] = useState(1);
@@ -57,6 +57,36 @@ const Banks = () => {
     queryFn: () => getBanks(page, searchQuery),
     retry: 1,
   });
+
+  const handleExportPDF = async () => {
+    if (!banksData?.data || banksData.data.length === 0) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    try {
+      await exportBanksToPDF(banksData.data, searchQuery);
+      notifySuccess("تم تصدير الحسابات البنكية إلى PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error('PDF export error:', error);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!banksData?.data || banksData.data.length === 0) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    try {
+      await exportBanksToExcel(banksData.data, searchQuery);
+      notifySuccess("تم تصدير الحسابات البنكية إلى Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error('Excel export error:', error);
+    }
+  };
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -423,24 +453,71 @@ const Banks = () => {
           الحسابات البنكية
         </Typography>
         
-        {permissions.includes("banks_Add") && (
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAddBank}
-            sx={{
-              bgcolor: "#0d40a5",
-              "&:hover": { bgcolor: "#0b3589" },
-              borderRadius: 2,
-              px: 3,
-              py: 1,
-              fontWeight: "bold",
-              minWidth: isSmallScreen ? '100%' : 'auto',
-            }}
-          >
-            إضافة حساب بنكي
-          </Button>
-        )}
+        <Stack 
+          direction={isSmallScreen ? "column" : "row"} 
+          spacing={1}
+          sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
+        >
+          {/* Export Buttons */}
+          
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
+              onClick={handleExportPDF}
+              disabled={!banksData?.data || banksData.data.length === 0}
+              sx={{
+                borderColor: "#d32f2f",
+                color: "#d32f2f",
+                "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                borderRadius: 2,
+                px: 2,
+                fontWeight: "bold",
+                minWidth: isSmallScreen ? '50%' : 'auto',
+              }}
+            >
+              PDF
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+              onClick={handleExportExcel}
+              disabled={!banksData?.data || banksData.data.length === 0}
+              sx={{
+                borderColor: "#2e7d32",
+                color: "#2e7d32",
+                "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                borderRadius: 2,
+                px: 2,
+                fontWeight: "bold",
+                minWidth: isSmallScreen ? '50%' : 'auto',
+              }}
+            >
+              Excel
+            </Button>
+          </Stack>
+
+          {permissions.includes("banks_Add") && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddBank}
+              sx={{
+                bgcolor: "#0d40a5",
+                "&:hover": { bgcolor: "#0b3589" },
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                fontWeight: "bold",
+                minWidth: isSmallScreen ? '100%' : 'auto',
+              }}
+            >
+              إضافة حساب بنكي
+            </Button>
+          )}
+        </Stack>
       </Box>
 
       {/* Search Bar */}

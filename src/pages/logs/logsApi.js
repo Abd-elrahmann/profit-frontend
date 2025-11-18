@@ -28,3 +28,49 @@ export const getLogs = async (page = 1, params = {}) => {
     throw error;
   }
 };
+
+// Get all logs for export (without pagination)
+export const getAllLogsForExport = async (params = {}) => {
+  try {
+    const { search, screen, action, from, to, userName, ...otherFilters } = params;
+    
+    const queryParams = new URLSearchParams();
+    
+    if (search) queryParams.append('search', search);
+    if (screen) queryParams.append('screen', screen);
+    if (action) queryParams.append('action', action);
+    if (from) queryParams.append('from', from);
+    if (to) queryParams.append('to', to);
+    if (userName) queryParams.append('userName', userName);
+    
+    Object.entries(otherFilters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, value);
+      }
+    });
+
+    // Fetch first page to get total count
+    const firstPageUrl = `/api/logs/1?${queryParams.toString()}`;
+    const firstResponse = await Api.get(firstPageUrl);
+    
+    const allLogs = [...(firstResponse.data.data || [])];
+    const total = firstResponse.data.total || allLogs.length;
+    const limit = firstResponse.data.limit || 50; // Use limit from response or default to 50
+    const totalPages = Math.ceil(total / limit);
+    
+    // Fetch remaining pages if there are more
+    if (totalPages > 1) {
+      for (let page = 2; page <= totalPages; page++) {
+        queryParams.set('page', page);
+        const pageUrl = `/api/logs/${page}?${queryParams.toString()}`;
+        const pageResponse = await Api.get(pageUrl);
+        allLogs.push(...(pageResponse.data.data || []));
+      }
+    }
+    
+    return allLogs;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

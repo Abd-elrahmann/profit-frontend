@@ -34,6 +34,8 @@ import {
   Visibility as VisibilityIcon,
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
+  PictureAsPdf as PDFIcon,
+  TableChart as ExcelIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -54,6 +56,7 @@ import {
 } from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { exportJournalToPDF, exportJournalToExcel } from "../../utilities/journalsExporter";
 
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -466,6 +469,30 @@ const Journals = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!journalData) return;
+    
+    try {
+      await exportJournalToPDF(journalData);
+      notifySuccess("تم تصدير القيد إلى PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error('PDF export error:', error);
+    }
+  };
+  
+  const handleExportExcel = async () => {
+    if (!journalData) return;
+    
+    try {
+      await exportJournalToExcel(journalData);
+      notifySuccess("تم تصدير القيد إلى Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error('Excel export error:', error);
+    }
+  };
+
   const getJournalSourceTypeText = (sourceType) => {
     switch (sourceType) {
       case "LOAN":
@@ -822,12 +849,43 @@ const Journals = () => {
           </Box>
         </Stack>
       </Box>
-
+  
       <Box sx={{ p: 3 }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
           الإجراءات
         </Typography>
         <Stack spacing={2}>
+          {/* Export buttons - always show when viewing journal details */}
+          {!isAddMode && journalData && (
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<PDFIcon sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportPDF}
+                sx={{
+                  borderColor: "#d32f2f",
+                  color: "#d32f2f",
+                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                }}
+              >
+                تصدير PDF
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportExcel}
+                sx={{
+                  borderColor: "#2e7d32",
+                  color: "#2e7d32",
+                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                }}
+              >
+                تصدير Excel
+              </Button>
+              <Divider />
+            </>
+          )}
+  
           {isAddMode ? (
             <>
               <Button
@@ -945,19 +1003,45 @@ const Journals = () => {
       </Box>
     </Box>
   );
-
-  // Render mobile actions bar
+  
+  // Update mobile actions to include export buttons
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
       <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
         الإجراءات
       </Typography>
       <Stack spacing={1}>
+        {/* Export buttons for mobile */}
+        {!isAddMode && journalData && (
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<PDFIcon />}
+              onClick={handleExportPDF}
+              fullWidth
+              size="small"
+              color="error"
+            >
+              تصدير PDF
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+              onClick={handleExportExcel}
+              fullWidth
+              size="small"
+              color="success"
+            >
+              تصدير Excel
+            </Button>
+          </>
+        )}
+  
         {isAddMode ? (
           <>
             <Button
               variant="contained"
-              startIcon={<SaveIcon />}
+              startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
               onClick={handleCreateJournal}
               disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
               fullWidth
@@ -981,7 +1065,7 @@ const Journals = () => {
           <>
             <Button
               variant="contained"
-              startIcon={<EditIcon />}
+              startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
               onClick={handleEditClick}
               fullWidth
               size="small"
@@ -991,7 +1075,7 @@ const Journals = () => {
             {permissions.includes("journals_Post") && (
               <Button
                 variant="contained"
-                startIcon={<CheckIcon />}
+                startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
                 onClick={handlePostJournal}
                 fullWidth
                 size="small"
@@ -1003,7 +1087,7 @@ const Journals = () => {
             {permissions.includes("journals_Delete") && (
               <Button
                 variant="outlined"
-                startIcon={<DeleteIcon />}
+                startIcon={<DeleteIcon sx={{ marginLeft: "10px" }} />}
                 onClick={() => {
                   setJournalToDelete(selectedJournal);
                   setIsDeleteModalOpen(true);
@@ -1022,7 +1106,7 @@ const Journals = () => {
           <>
             <Button
               variant="contained"
-              startIcon={<SaveIcon />}
+              startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
               onClick={handleUpdateJournal}
               disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
               fullWidth
@@ -1044,7 +1128,7 @@ const Journals = () => {
           permissions.includes("journals_Post") ? (
           <Button
             variant="outlined"
-            startIcon={<CancelIcon />}
+            startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
             onClick={handleUnpostJournal}
             fullWidth
             size="small"
@@ -1056,7 +1140,6 @@ const Journals = () => {
       </Stack>
     </Paper>
   );
-
   // Render journal details for mobile
   const renderMobileJournalDetails = () => (
     <Box>

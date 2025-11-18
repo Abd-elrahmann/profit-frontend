@@ -943,6 +943,7 @@ export default function ContractTemplates() {
                       >
                         معاينة
                       </Button>
+                      {permissions.includes('templates_Update') && (
                       <Button
                         variant={viewMode === "edit" ? "contained" : "outlined"}
                         startIcon={<EditIcon sx={{marginLeft:'10px'}} />}
@@ -950,6 +951,8 @@ export default function ContractTemplates() {
                       >
                         تحرير
                       </Button>
+                      )}
+                      {permissions.includes('templates_Update') && (
                       <Button
                         variant="outlined"
                         startIcon={<SettingsIcon sx={{marginLeft:'10px'}} />}
@@ -957,6 +960,7 @@ export default function ContractTemplates() {
                       >
                         الإدارة
                       </Button>
+                      )}
                     </Box>
                   </Box>
 
@@ -1110,6 +1114,7 @@ export default function ContractTemplates() {
           <Button onClick={handleCloseEditModal} variant="outlined">
             إلغاء
           </Button>
+          {permissions.includes('templates_Update') && (
           <Button 
             onClick={handleSaveEdit} 
             variant="contained" 
@@ -1117,6 +1122,7 @@ export default function ContractTemplates() {
           >
             حفظ التغييرات
           </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -1168,8 +1174,9 @@ export default function ContractTemplates() {
           bottom: 20, 
           left: 20, 
           zIndex: 1000,
-          bgcolor: 'white',
-          boxShadow: 2
+          bgcolor: 'primary.main',
+          boxShadow: 2,
+          color: 'white'
         }}
         variant="contained"
         size="small"

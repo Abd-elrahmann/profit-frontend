@@ -2,6 +2,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import dayjs from 'dayjs';
+import logo from '/assets/images/logo.webp';
 
 // Register Arabic fonts (make sure these font files exist in your public/assets/fonts directory)
 const registerArabicFonts = (doc) => {
@@ -33,36 +35,42 @@ export const exportStatementToPDF = async (statementData, clientName) => {
 
       // Set Arabic as primary font
       doc.setFont('Amiri', 'normal');
-      doc.setFontSize(16);
       
-      // Title
-      doc.text('كشف حساب العميل', 105, 20, { align: 'center' });
-      doc.setFontSize(12);
-      doc.text(`العميل: ${clientName}`, 105, 30, { align: 'center' });
-      doc.text(`رقم الهوية: ${statementData.client.nationalId}`, 105, 37, { align: 'center' });
+      // Logo positioned on the right - small and at the very top
+      const logoWidth = 10;
+      const logoHeight = 10;
+      const logoX = doc.internal.pageSize.width - logoWidth - 5;
+      const logoY = 5;
+      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
       
-      // Summary section
-      doc.setFontSize(10);
-      let yPosition = 50;
+      // Title section - start after logo
+      doc.setFontSize(18);
+      doc.setFont('Amiri', 'bold');
+      doc.text('كشف حساب العميل', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
-      doc.text(`الرصيد الافتتاحي: ${statementData.openingBalance.toLocaleString('en-US')} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`الرصيد الختامي: ${statementData.closingBalance.toLocaleString('en-US')} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`إجمالي المدين: ${statementData.client.debit.toLocaleString('en-US')} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`إجمالي الدائن: ${statementData.client.credit.toLocaleString('en-US')} ريال`, 14, yPosition);
+      doc.setFontSize(13);
+      doc.setFont('Amiri', 'normal');
+      doc.text(`العميل: ${clientName}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text(`رقم الهوية: ${statementData.client.nationalId}`, doc.internal.pageSize.width / 2, 42, { align: 'center' });
       
-      yPosition += 15;
+      // Summary section - single row, centered
+      doc.setFontSize(11);
+      doc.setFont('Amiri', 'bold');
+      const summaryY = 55;
+      const summaryText = `الرصيد الافتتاحي: ${statementData.openingBalance.toLocaleString('en-US')} ريال  |  الرصيد الختامي: ${statementData.closingBalance.toLocaleString('en-US')} ريال  |  إجمالي المدين: ${statementData.client.debit.toLocaleString('en-US')} ريال  |  إجمالي الدائن: ${statementData.client.credit.toLocaleString('en-US')} ريال`;
+      doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
+      
+      let yPosition = summaryY + 12;
       
       // Prepare table data (RTL order - reversed columns)
       const tableData = statementData.transactions.map(transaction => [
         transaction.balance.toLocaleString('en-US') + ' ريال',
-        transaction.credit > 0 ? transaction.credit.toLocaleString('en-US') + ' ريال' : 0,
-        transaction.debit > 0 ? transaction.debit.toLocaleString('en-US') + ' ريال' : 0,
+        transaction.credit > 0 ? transaction.credit.toLocaleString('en-US') + ' ريال' : '0',
+        transaction.debit > 0 ? transaction.debit.toLocaleString('en-US') + ' ريال' : '0',
         transaction.description,
         getTransactionTypeArabic(transaction.type),
-        new Date(transaction.date).toLocaleDateString('en-US')
+        dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
       ]);
       
       // Table headers (RTL order - reversed)
@@ -70,62 +78,127 @@ export const exportStatementToPDF = async (statementData, clientName) => {
         ['الرصيد', 'دائن', 'مدين', 'الوصف', 'نوع المعاملة', 'التاريخ']
       ];
       
-      // Create table with RTL support
+      // Optimize column widths to fit on one page
+      const columnWidths = {
+        0: 26, // الرصيد
+        1: 22, // دائن
+        2: 22, // مدين
+        3: 45, // الوصف
+        4: 25, // نوع المعاملة
+        5: 26  // التاريخ
+      };
+      
+      // Calculate table width to center it properly
+      const pageWidth = doc.internal.pageSize.width;
+      const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      
+      // Create table with RTL support - centered and larger, no extra borders
       autoTable(doc, {
         startY: yPosition,
+        startX: tableStartX, // Center the table
         head: headers,
         body: tableData,
-        theme: 'grid',
-        tableLineColor: [0, 0, 0],
-        tableLineWidth: 0.1,
+        theme: 'striped', // Simpler theme without heavy borders
         styles: {
           font: 'Amiri',
           fontStyle: 'normal',
           fontSize: 8,
-          cellPadding: 2,
-          lineColor: [0, 0, 0],
-          lineWidth: 0.1
+          cellPadding: 3,
+          lineColor: [200, 200, 200], // Lighter borders
+          lineWidth: 0.1,
+          halign: 'center',
+          valign: 'middle'
         },
         headStyles: {
           fillColor: [13, 64, 165],
           textColor: 255,
           fontStyle: 'bold',
-          fontSize: 9
+          fontSize: 9,
+          halign: 'center',
+          valign: 'middle',
+          cellPadding: 4,
+          lineColor: [13, 64, 165],
+          lineWidth: 0.1
+        },
+        bodyStyles: {
+          halign: 'center',
+          valign: 'middle',
+          cellPadding: 2,
+          lineColor: [220, 220, 220],
+          lineWidth: 0.1
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250]
         },
         columnStyles: {
-          0: { cellWidth: 25 }, // الرصيد
-          1: { cellWidth: 25 }, // دائن
-          2: { cellWidth: 25 }, // مدين
-          3: { cellWidth: 50 }, // الوصف
-          4: { cellWidth: 25 }, // نوع المعاملة
-          5: { cellWidth: 25 }  // التاريخ
+          0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد
+          1: { cellWidth: columnWidths[1], fontSize: 8 }, // دائن
+          2: { cellWidth: columnWidths[2], fontSize: 8 }, // مدين
+          3: { cellWidth: columnWidths[3], fontSize: 7, halign: 'right' }, // الوصف
+          4: { cellWidth: columnWidths[4], fontSize: 7 }, // نوع المعاملة
+          5: { cellWidth: columnWidths[5], fontSize: 7 }  // التاريخ
         },
-        margin: { top: yPosition, right: 14, left: 14 },
-        tableWidth: 'auto',
-        horizontalPageBreak: true
+        margin: { top: yPosition, bottom: 20 },
+        tableWidth: totalColumnWidth,
+        horizontalPageBreak: false, // Disable horizontal page break to keep headers together
+        pageBreak: 'auto',
+        showHead: 'everyPage',
+        didParseCell: function (data) {
+          // Prevent cell content from being too wide
+          if (data.cell.text && data.cell.text.length > 0) {
+            const maxLength = data.column.index === 3 ? 40 : 20; // Longer for description
+            if (data.cell.text[0].length > maxLength) {
+              data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
+            }
+          }
+        }
       });
       
-      // Footer
+      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
+      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(8);
+        
+        // Draw footer line
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(
+          footerMargin,
+          doc.internal.pageSize.height - 15,
+          doc.internal.pageSize.width - footerMargin,
+          doc.internal.pageSize.height - 15
+        );
+        
+        // Footer text
+        doc.setFontSize(9);
+        doc.setFont('Amiri', 'normal');
+        doc.setTextColor(100, 100, 100);
+        
+        // Page number - centered
         doc.text(
           `صفحة ${i} من ${pageCount}`,
           doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 10,
+          doc.internal.pageSize.height - 8,
           { align: 'center' }
         );
+        
+        // Creation date - right aligned
+        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
         doc.text(
-          `تم الإنشاء في: ${new Date().toLocaleDateString('ar-SA')}`,
-          doc.internal.pageSize.width - 14,
-          doc.internal.pageSize.height - 10,
-          { align: 'left' }
+          `تم الإنشاء في: ${creationDate}`,
+          doc.internal.pageSize.width - footerMargin,
+          doc.internal.pageSize.height - 8,
+          { align: 'right' }
         );
+        
+        // Reset text color
+        doc.setTextColor(0, 0, 0);
       }
       
       // Save PDF
-      const fileName = `كشف_حساب_${clientName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `كشف_حساب_${clientName}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
     } catch (error) {
@@ -160,7 +233,7 @@ export const exportStatementToExcel = async (statementData, clientName) => {
       'مدين': transaction.debit > 0 ? transaction.debit : '-',
       'الوصف': transaction.description,
       'نوع المعاملة': getTransactionTypeArabic(transaction.type),
-      'التاريخ': new Date(transaction.date).toLocaleDateString('en-US')
+      'التاريخ': dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
     }));
     
     // Create summary sheet
@@ -179,7 +252,7 @@ export const exportStatementToExcel = async (statementData, clientName) => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
     });
     
-    const fileName = `كشف_حساب_${clientName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `كشف_حساب_${clientName}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
     
   } catch (error) {

@@ -43,7 +43,6 @@ const Login = () => {
   const {fetchPermissions} = usePermissions();
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
-  // Load saved email on mount
   useEffect(() => {
     const savedEmailFromStorage = localStorage.getItem('rememberedEmail');
     if (savedEmailFromStorage) {
@@ -60,24 +59,21 @@ const Login = () => {
         email: values.email.trim(),
       };
 
-      // 1️⃣ تسجيل الدخول
+  
       const response = await Api.post("/api/auth/login", cleanedValues);
       const { accessToken, user } = response.data;
 
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Handle Remember Me
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", cleanedValues.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // 3️⃣ جلب الصلاحيات مباشرة من API
       let userPermissions = [];
       try {
-        // Fetch permissions directly from API
         const modulesRes = await Api.get("/api/auth/modules");
         const allPermissions = [];
 
@@ -86,7 +82,6 @@ const Login = () => {
           res.data.forEach((perm) => {
             const cleanName = perm.replace("can", "");
             
-            // Handle special module names
             let moduleKey = module;
             switch (module) {
               case "messages-templates":
@@ -113,14 +108,10 @@ const Login = () => {
         }
       } catch (permissionsError) {
         console.error('Error fetching permissions:', permissionsError);
-        // لا نوقف عملية تسجيل الدخول إذا فشل جلب الصلاحيات
         notifyError('تم تسجيل الدخول ولكن حدث خطأ في جلب الصلاحيات');
       }
 
-      notifySuccess("تم تسجيل الدخول بنجاح");
 
-      // 4️⃣ العثور على أول صفحة مسموح بها والتوجيه إليها
-      // Helper function to convert module name to permission format
       const convertModuleToPermission = (module) => {
         switch (module) {
           case "messages-templates":
@@ -134,7 +125,6 @@ const Login = () => {
         }
       };
 
-      // Find first accessible page
       let firstPage = '/dashboard';
       for (const route of routes) {
         if (route.protected && route.requiresPermissions && route.module) {
@@ -147,7 +137,7 @@ const Login = () => {
           }
         }
       }
-
+      notifySuccess("تم تسجيل الدخول بنجاح");  
       navigate(firstPage, { replace: true });
     } catch (error) {
       notifyError("خطأ في تسجيل الدخول");
@@ -221,7 +211,6 @@ const Login = () => {
             }) => (
               <Form onSubmit={handleSubmit}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  {/* البريد الإلكتروني */}
                   <TextField
                     fullWidth
                     label="البريد الإلكتروني"
@@ -237,7 +226,6 @@ const Login = () => {
                     disabled={isLoading}
                   />
 
-                  {/* كلمة المرور */}
                   <TextField
                     fullWidth
                     label="كلمة المرور"
@@ -267,7 +255,6 @@ const Login = () => {
                     }}
                   />
 
-                  {/* Remember Me and Forgot Password Row */}
                   <Box 
                     sx={{ 
                       display: 'flex', 
@@ -276,7 +263,6 @@ const Login = () => {
                       direction: 'rtl'
                     }}
                   >
-                    {/* Remember Me Checkbox */}
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -303,7 +289,6 @@ const Login = () => {
                       }}
                     />
 
-                    {/* Forgot Password Link */}
                     <Link 
                       to="/forgot-password" 
                       style={{ 

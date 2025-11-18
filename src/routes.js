@@ -13,6 +13,7 @@ import { MdAttachMoney as LoanIcon } from 'react-icons/md';
 import { MdAttachMoney as InstallmentsIcon } from 'react-icons/md';
 import { MdMessage as Message } from 'react-icons/md';
 import { MdDescription as JournalIcon } from 'react-icons/md';
+import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -29,6 +30,7 @@ const Journals = React.lazy(() => import('./pages/Journals/Journals'));
 const Logs = React.lazy(() => import('./pages/logs/logs'));
 const Treasury = React.lazy(() => import('./pages/treasury/treasury'));
 const GeneralLedger = React.lazy(() => import('./pages/generalLedger/GeneralLedger'));
+const PeriodClosing = React.lazy(() => import('./pages/periodClosing/periodClosing'));
 const routes = [
   {
     path: '/login',
@@ -186,6 +188,17 @@ const routes = [
     module: 'general-ledger',
     requiresPermissions: true,
     icon: JournalIcon,
+    parent: 'إدارة المالية'
+  },
+  {
+    path: '/period-closing',
+    element: PeriodClosing,
+    protected: true,
+    showInSidebar: true,
+    label: 'تقفيل الفترات',
+    module: 'period',
+    requiresPermissions: true,
+    icon: CalendarMonthIcon,
     parent: 'إدارة المالية'
   },
   {

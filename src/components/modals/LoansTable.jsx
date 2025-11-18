@@ -497,7 +497,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               لا توجد سلف
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              لم يتم العثور على أي سلف مطابقة لبحثك
+              لم يتم العثور على أي سلف  
             </Typography>
           </Box>
         ) : (

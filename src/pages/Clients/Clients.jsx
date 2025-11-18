@@ -1203,7 +1203,7 @@ export default function Clients() {
                 <Typography variant="h6" mb={3}>
                   المعلومات المالية
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={3} justifyContent="center" alignItems="center">
                   <Grid item xs={12} md={4}>
                     <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>

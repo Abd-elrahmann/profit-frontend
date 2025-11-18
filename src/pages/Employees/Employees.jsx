@@ -27,7 +27,9 @@ import {
   Edit,
   Delete,
   AdminPanelSettingsOutlined as AdminPanelSettings,
-  History as HistoryIcon
+  History as HistoryIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon
 } from "@mui/icons-material";
 
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
@@ -42,6 +44,7 @@ import { debounce } from 'lodash';
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { exportEmployeesToPDF, exportEmployeesToExcel } from "../../utilities/employeesExporter";
 
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
@@ -72,6 +75,36 @@ export default function Employees() {
     queryFn: () => getUsers(page + 1, searchQuery),
     retry:1,
   });
+
+  const handleExportPDF = async () => {
+    if (!usersData || usersData.length === 0) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    try {
+      await exportEmployeesToPDF(usersData, searchQuery);
+      notifySuccess("تم تصدير بيانات الموظفين إلى PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error('PDF export error:', error);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!usersData || usersData.length === 0) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    try {
+      await exportEmployeesToExcel(usersData, searchQuery);
+      notifySuccess("تم تصدير بيانات الموظفين إلى Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error('Excel export error:', error);
+    }
+  };
 
   const debouncedSearch = debounce((value) => {
     setSearchQuery(value);
@@ -418,22 +451,66 @@ export default function Employees() {
             }}
           />
           
-          {permissions.includes("users_Add") && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={handleAdd}
-              sx={{
-                bgcolor: "#1E40AF",
-                "&:hover": { bgcolor: "#1E3A8A" },
-                fontWeight: "bold",
-                minWidth: isSmallScreen ? '100%' : 'auto',
-                py: isSmallScreen ? 1.5 : 1,
-              }}
-            >
-              إضافة مسؤول جديد
-            </Button>
-          )}
+          <Stack 
+            direction={isSmallScreen ? "column" : "row"} 
+            spacing={1}
+            sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
+          >
+            {/* Export Buttons */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportPDF}
+                disabled={!usersData || usersData.length === 0}
+                sx={{
+                  borderColor: "#d32f2f",
+                  color: "#d32f2f",
+                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: "bold",
+                  minWidth: isSmallScreen ? '50%' : 'auto',
+                }}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportExcel}
+                disabled={!usersData || usersData.length === 0}
+                sx={{
+                  borderColor: "#2e7d32",
+                  color: "#2e7d32",
+                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: "bold",
+                  minWidth: isSmallScreen ? '50%' : 'auto',
+                }}
+              >
+                Excel
+              </Button>
+            </Stack>
+
+            {permissions.includes("users_Add") && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAdd}
+                sx={{
+                  bgcolor: "#1E40AF",
+                  "&:hover": { bgcolor: "#1E3A8A" },
+                  fontWeight: "bold",
+                  minWidth: isSmallScreen ? '100%' : 'auto',
+                  py: isSmallScreen ? 1.5 : 1,
+                }}
+              >
+                إضافة مسؤول جديد
+              </Button>
+            )}
+          </Stack>
         </Box>
 
         {/* Table for large screens, Cards for small screens */}

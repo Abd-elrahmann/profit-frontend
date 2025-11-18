@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
-
+import logo from '/assets/images/logo.webp';
 // Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
@@ -34,18 +34,29 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
 
       // Set Arabic as primary font
       doc.setFont('Amiri', 'normal');
-      doc.setFontSize(16);
       
-      // Title
-      doc.text('دفتر الأستاذ العام', 105, 20, { align: 'center' });
-      doc.setFontSize(12);
-      doc.text(`الحساب: ${account.name} (${account.code})`, 105, 30, { align: 'center' });
+      // Logo positioned on the right - small and at the very top
+      const logoWidth = 10;
+      const logoHeight = 10;
+      const logoX = doc.internal.pageSize.width - logoWidth - 5;
+      const logoY = 5;
+      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      
+      // Title section - start after logo
+      doc.setFontSize(18);
+      doc.setFont('Amiri', 'bold');
+      doc.text('دفتر الأستاذ العام', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      
+      doc.setFontSize(13);
+      doc.setFont('Amiri', 'normal');
+      doc.text(`الحساب: ${account.name} (${account.code})`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
       // Date range
       if (searchParams.fromDate || searchParams.toDate) {
         const fromDate = searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'بداية';
         const toDate = searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'نهاية';
-        doc.text(`الفترة: من ${fromDate} إلى ${toDate}`, 105, 37, { align: 'center' });
+        doc.setFontSize(11);
+        doc.text(`الفترة: من ${fromDate} إلى ${toDate}`, doc.internal.pageSize.width / 2, 42, { align: 'center' });
       }
       
       // Calculate totals from journal lines
@@ -59,19 +70,14 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       
       const closingBalance = ledgerData.account?.balance || 0;
       
-      // Summary section
-      doc.setFontSize(10);
-      let yPosition = 50;
+      // Summary section - single row, centered
+      doc.setFontSize(11);
+      doc.setFont('Amiri', 'bold');
+      const summaryY = 55;
+      const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')} ريال  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} ريال  |  الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} ريال  |  عدد القيود: ${ledgerData.totalJournals || 0}`;
+      doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
-      doc.text(`إجمالي المدين: ${totalDebit.toLocaleString('en-US')} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} ريال`, 14, yPosition);
-      yPosition += 7;
-      doc.text(`عدد القيود: ${ledgerData.totalJournals || 0}`, 14, yPosition);
-      
-      yPosition += 15;
+      let yPosition = summaryY + 12;
       
       // Prepare table data (RTL order) - flatten journal lines
       const tableData = [];
@@ -94,65 +100,126 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         ['الحالة', 'الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
       ];
       
-      // Create table with RTL support
+      // Create table with RTL support - centered and larger, no extra borders
+      const pageWidth = doc.internal.pageSize.width;
+      
+      // Optimize column widths to fit on one page - reduce widths to ensure all headers fit
+      const columnWidths = {
+        0: 16, // الحالة
+        1: 26, // الرصيد
+        2: 22, // دائن
+        3: 22, // مدين
+        4: 45, // الوصف
+        5: 22, // المرجع
+        6: 26  // التاريخ
+      };
+      
+      // Calculate table width to center it properly
+      const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      
       autoTable(doc, {
         startY: yPosition,
+        startX: tableStartX, // Center the table
         head: headers,
         body: tableData,
-        theme: 'grid',
-        tableLineColor: [0, 0, 0],
-        tableLineWidth: 0.1,
+        theme: 'striped', // Simpler theme without heavy borders
         styles: {
           font: 'Amiri',
           fontStyle: 'normal',
-          fontSize: 7,
-          cellPadding: 2,
-          lineColor: [0, 0, 0],
+          fontSize: 8,
+          cellPadding: 3,
+          lineColor: [200, 200, 200], // Lighter borders
           lineWidth: 0.1,
-          halign: 'center'
+          halign: 'center',
+          valign: 'middle'
         },
         headStyles: {
           fillColor: [13, 64, 165],
           textColor: 255,
           fontStyle: 'bold',
-          fontSize: 8,
-          halign: 'center'
+          fontSize: 9,
+          halign: 'center',
+          valign: 'middle',
+          cellPadding: 4,
+          lineColor: [13, 64, 165],
+          lineWidth: 0.1
         },
         bodyStyles: {
-          halign: 'center'
+          halign: 'center',
+          valign: 'middle',
+          cellPadding: 2,
+          lineColor: [220, 220, 220],
+          lineWidth: 0.1
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250]
         },
         columnStyles: {
-          0: { cellWidth: 15 }, // الحالة
-          1: { cellWidth: 25 }, // الرصيد
-          2: { cellWidth: 20 }, // دائن
-          3: { cellWidth: 20 }, // مدين
-          4: { cellWidth: 40 }, // الوصف
-          5: { cellWidth: 20 }, // المرجع
-          6: { cellWidth: 25 }  // التاريخ
+          0: { cellWidth: columnWidths[0], fontSize: 7 }, // الحالة
+          1: { cellWidth: columnWidths[1], fontSize: 8 }, // الرصيد
+          2: { cellWidth: columnWidths[2], fontSize: 8 }, // دائن
+          3: { cellWidth: columnWidths[3], fontSize: 8 }, // مدين
+          4: { cellWidth: columnWidths[4], fontSize: 7, halign: 'right' }, // الوصف
+          5: { cellWidth: columnWidths[5], fontSize: 7 }, // المرجع
+          6: { cellWidth: columnWidths[6], fontSize: 7 }  // التاريخ
         },
-        margin: { top: yPosition, right: 10, left: 10 },
-        tableWidth: 'wrap',
-        horizontalPageBreak: true,
-        pageBreak: 'auto'
+        margin: { top: yPosition, bottom: 20 },
+        tableWidth: totalColumnWidth,
+        horizontalPageBreak: false, // Disable horizontal page break to keep headers together
+        pageBreak: 'auto',
+        showHead: 'everyPage',
+        didParseCell: function (data) {
+          // Prevent cell content from being too wide
+          if (data.cell.text && data.cell.text.length > 0) {
+            const maxLength = data.column.index === 4 ? 40 : 20; // Longer for description
+            if (data.cell.text[0].length > maxLength) {
+              data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
+            }
+          }
+        }
       });
       
-      // Footer
+      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
+      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(8);
+        
+        // Draw footer line
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(
+          footerMargin,
+          doc.internal.pageSize.height - 15,
+          doc.internal.pageSize.width - footerMargin,
+          doc.internal.pageSize.height - 15
+        );
+        
+        // Footer text
+        doc.setFontSize(9);
+        doc.setFont('Amiri', 'normal');
+        doc.setTextColor(100, 100, 100);
+        
+        // Page number - centered
         doc.text(
           `صفحة ${i} من ${pageCount}`,
           doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 10,
+          doc.internal.pageSize.height - 8,
           { align: 'center' }
         );
+        
+        // Creation date - right aligned
+        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
         doc.text(
-          `تم الإنشاء في: ${new Date().toLocaleDateString('ar-SA')}`,
-          doc.internal.pageSize.width - 10,
-          doc.internal.pageSize.height - 10,
-          { align: 'left' }
+          `تم الإنشاء في: ${creationDate}`,
+          doc.internal.pageSize.width - footerMargin,
+          doc.internal.pageSize.height - 8,
+          { align: 'right' }
         );
+        
+        // Reset text color
+        doc.setTextColor(0, 0, 0);
       }
       
       // Save PDF

@@ -41,6 +41,8 @@ import {
   Print,
   Delete,
   Share,
+  PictureAsPdf,
+  TableChart,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +55,7 @@ import dayjs from "dayjs";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { exportInvestorsToPDF, exportInvestorsToExcel } from "../../utilities/investorsExporter";
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
   
@@ -75,6 +78,89 @@ const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   
   const response = await Api.get(url);
   return response.data;
+};
+
+// Get all investors for export (without pagination)
+const getAllInvestorsForExport = async (searchQuery = '', status = '') => {
+  try {
+    let queryParams = new URLSearchParams();
+    
+    if (searchQuery.trim()) {
+      if (/^\d+$/.test(searchQuery.trim())) {
+        queryParams.append('nationalId', searchQuery.trim());
+      } else {
+        queryParams.append('name', searchQuery.trim());
+      }
+    }
+    
+    if (status.trim()) {
+      queryParams.append('isActive', status.trim() === 'نشط' ? 'true' : 'false');
+    }
+
+    // Fetch first page to get total count
+    queryParams.append('limit', '10');
+    const firstPageUrl = `/api/partners/all/1${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const firstResponse = await Api.get(firstPageUrl);
+    
+    const allInvestors = [...(firstResponse.data.partners || [])];
+    const total = firstResponse.data.totalPartners || allInvestors.length;
+    const limit = 10; // Default limit per page
+    const totalPages = Math.ceil(total / limit);
+    
+    // Fetch remaining pages if there are more
+    if (totalPages > 1) {
+      for (let page = 2; page <= totalPages; page++) {
+        queryParams.set('page', page);
+        const pageUrl = `/api/partners/all/${page}?${queryParams.toString()}`;
+        const pageResponse = await Api.get(pageUrl);
+        allInvestors.push(...(pageResponse.data.partners || []));
+      }
+    }
+    
+    // Fetch details and transactions for each investor
+    const investorsWithDetails = await Promise.all(
+      allInvestors.map(async (investor) => {
+        try {
+          // Get investor details
+          const detailsResponse = await Api.get(`/api/partners/${investor.id}`);
+          const details = detailsResponse.data;
+          
+          // Get transactions (fetch multiple pages for export)
+          let transactions = [];
+          try {
+            const firstTransactionsResponse = await Api.get(`/api/partners/transaction/${investor.id}/1`);
+            transactions = [...(firstTransactionsResponse.data.transactions || [])];
+            const totalTransactions = firstTransactionsResponse.data.total || 0;
+            const transactionsLimit = 10; // Default limit per page
+            const totalTransactionsPages = Math.ceil(totalTransactions / transactionsLimit);
+            
+            // Fetch remaining transaction pages (limit to 5 pages max to avoid too many requests)
+            const maxPages = Math.min(totalTransactionsPages, 5);
+            for (let page = 2; page <= maxPages; page++) {
+              const pageResponse = await Api.get(`/api/partners/transaction/${investor.id}/${page}`);
+              transactions.push(...(pageResponse.data.transactions || []));
+            }
+          } catch (error) {
+            console.warn(`Could not fetch transactions for investor ${investor.id}:`, error);
+          }
+          
+          return {
+            ...investor,
+            ...details,
+            transactions
+          };
+        } catch (error) {
+          console.warn(`Could not fetch details for investor ${investor.id}:`, error);
+          return investor;
+        }
+      })
+    );
+    
+    return investorsWithDetails;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
 };
 
 const getInvestorDetails = async (investorId) => {
@@ -210,18 +296,55 @@ export default function Investors() {
 
   const handleDeleteInvestor = async (investorId) => {
     try {
-      await Api.delete(`/api/partners/${investorId}`);
+      // Find the index of the investor to delete
+      const currentIndex = investorsData?.partners?.findIndex(inv => inv.id === investorId) ?? -1;
+      const nextInvestorId = currentIndex >= 0 && currentIndex < investorsData.partners.length - 1 
+        ? investorsData.partners[currentIndex + 1]?.id
+        : currentIndex > 0 
+          ? investorsData.partners[currentIndex - 1]?.id
+          : null;
       
-      if (selectedInvestor?.id === investorId) {
-        setSelectedInvestor(null);
-      }
+      await Api.delete(`/api/partners/${investorId}`);
       
       setIsDeleteModalOpen(false);
       setInvestorToDelete(null);
       
-      await refetch();
+      // Refetch data
+      const refetchedData = await refetch();
       
-      notifySuccess('تم حذف المستثمر بنجاح');
+      // Make next investor active if exists
+      if (nextInvestorId) {
+        try {
+          // Find the investor in the refetched data
+          const nextInvestor = refetchedData.data?.partners?.find(inv => inv.id === nextInvestorId);
+          if (nextInvestor) {
+            await Api.patch(`/api/partners/${nextInvestorId}`, { isActive: true });
+            queryClient.invalidateQueries({ queryKey: ['investors'] });
+            notifySuccess(`تم حذف المستثمر بنجاح وتم تفعيل المستثمر التالي: ${nextInvestor.name}`);
+            
+            // Update selected investor
+            if (selectedInvestor?.id === investorId) {
+              setSelectedInvestor(nextInvestor);
+            }
+          } else {
+            notifySuccess('تم حذف المستثمر بنجاح');
+            if (selectedInvestor?.id === investorId) {
+              setSelectedInvestor(refetchedData.data?.partners?.[0] || null);
+            }
+          }
+        } catch (error) {
+          console.error('Error activating next investor:', error);
+          notifySuccess('تم حذف المستثمر بنجاح');
+          if (selectedInvestor?.id === investorId) {
+            setSelectedInvestor(refetchedData.data?.partners?.[0] || null);
+          }
+        }
+      } else {
+        notifySuccess('تم حذف المستثمر بنجاح');
+        if (selectedInvestor?.id === investorId) {
+          setSelectedInvestor(refetchedData.data?.partners?.[0] || null);
+        }
+      }
     } catch (error) { 
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف المستثمر');
       handleApiError(error);
@@ -231,6 +354,51 @@ export default function Investors() {
   const openDeleteModal = (investor) => {
     setInvestorToDelete(investor);
     setIsDeleteModalOpen(true);
+  };
+
+  // Export handlers
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      notifySuccess("جاري جلب بيانات المستثمرين...");
+      const allInvestors = await getAllInvestorsForExport(search, selectedStatus);
+      
+      if (!allInvestors || allInvestors.length === 0) {
+        notifyError("لا توجد بيانات للتصدير");
+        return;
+      }
+      
+      await exportInvestorsToPDF(allInvestors);
+      notifySuccess(`تم تصدير ${allInvestors.length} مستثمر إلى PDF بنجاح`);
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error('PDF export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      notifySuccess("جاري جلب بيانات المستثمرين...");
+      const allInvestors = await getAllInvestorsForExport(search, selectedStatus);
+      
+      if (!allInvestors || allInvestors.length === 0) {
+        notifyError("لا توجد بيانات للتصدير");
+        return;
+      }
+      
+      await exportInvestorsToExcel(allInvestors);
+      notifySuccess(`تم تصدير ${allInvestors.length} مستثمر إلى Excel بنجاح`);
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error('Excel export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // New transaction handlers
@@ -441,6 +609,38 @@ export default function Investors() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
+            onClick={handleExportPDF}
+            disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
+            sx={{
+              borderColor: "#d32f2f",
+              color: "#d32f2f",
+              "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+              borderRadius: 2,
+              px: 2,
+              fontWeight: "bold",
+            }}
+          >
+            PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableChart sx={{marginLeft: '10px'}} />}
+            onClick={handleExportExcel}
+            disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
+            sx={{
+              borderColor: "#2e7d32",
+              color: "#2e7d32",
+              "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+              borderRadius: 2,
+              px: 2,
+              fontWeight: "bold",
+            }}
+          >
+            Excel
+          </Button>
           {permissions.includes("partners_Add") && (
           <Button
             variant="contained"
@@ -470,11 +670,12 @@ export default function Investors() {
             borderRight: "1px solid #ddd",
             bgcolor: "#fafafa",
             height: "100%",
-            overflowY: "auto",
+            display: 'flex',
+            flexDirection: 'column',
             flexShrink: 0
           }}
         >
-          <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
+          <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa", flexShrink: 0 }}>
             <TextField
               placeholder="البحث بالاسم أو رقم الهوية"
               fullWidth
@@ -520,109 +721,123 @@ export default function Investors() {
           </Box>
 
           {/* Results info */}
-          {investorsData && !isInvestorsLoading && (
-            <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: '#f9f9f9' }}>
+          {investorsData && !isInvestorsLoading && investorsData.partners && investorsData.partners.length > 0 && (
+            <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: '#f9f9f9', flexShrink: 0 }}>
               <Typography variant="body2" color="black">
                 صفحة {investorsData.currentPage} من {investorsData.totalPages} - إجمالي {investorsData.totalPartners} مستثمر
               </Typography>
             </Box>
           )}
 
-          {isInvestorsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : investorsData?.partners?.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2, flexDirection: 'column' }}>
-              <Typography variant="h6" color="black" mb={1}>
-                لا توجد مستثمرين
-              </Typography>
-              <Typography variant="body2" color="black">
-                {search || selectedStatus ? 'لم يتم العثور على مستثمرين مطابقين للبحث' : 'لا توجد مستثمرين مسجلين'}
-              </Typography>
-            </Box>
-          ) : investorsData?.partners?.map((investor) => {
-            const isSelected = selectedInvestor?.id === investor.id;
-            return (
-              <Card
-                key={investor.id}
-                onClick={() => handleInvestorSelect(investor)}
-                sx={{
-                  mb: 1,
-                  mx: 2,
-                  mt: 2,
-                  cursor: "pointer",
-                  height: '100px',
-                  border: isSelected ? "2px solid #1E40AF" : "1px solid #E5E7EB",
-                  bgcolor: isSelected ? "#EEF2FF" : "background.paper",
-                  transition: "0.2s",
-                  "&:hover": { bgcolor: "#F3F4F6" },
-                }}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography fontWeight="bold">{investor.name}</Typography>
-                    <Chip
-                      label={getStatusText(investor.isActive)}
-                      size="small"
-                      color={getStatusColor(investor.isActive)}
-                    />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    رأس المال: {investor.capitalAmount?.toLocaleString()} ريال
-                  </Typography>
-                  <Box display="flex" justifyContent="flex-end" mt={1}>
-                    {permissions.includes("partners_Delete") && (
-                    <IconButton 
-                      size="small" 
-                      color="error"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDeleteModal(investor);
+          {/* Content area - scrollable */}
+          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            {isInvestorsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 3, minHeight: '200px' }}>
+                <CircularProgress />
+              </Box>
+            ) : !investorsData || !investorsData.partners || investorsData.partners.length === 0 ? (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                p: 4, 
+                flexDirection: 'column',
+                minHeight: 'calc(100vh - 400px)',
+                height: '100%'
+              }}>
+                <Typography variant="h5" color="text.secondary" mb={2} fontWeight="bold">
+                  لا يوجد مستثمرين
+                </Typography>
+                <Typography variant="body1" color="text.secondary" textAlign="center" mb={2}>
+                  {search || selectedStatus ? 'لم يتم العثور على مستثمرين مطابقين للبحث' : 'لا توجد مستثمرين مسجلين في النظام'}
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                {investorsData.partners.map((investor) => {
+                  const isSelected = selectedInvestor?.id === investor.id;
+                  return (
+                    <Card
+                      key={investor.id}
+                      onClick={() => handleInvestorSelect(investor)}
+                      sx={{
+                        mb: 1,
+                        mx: 2,
+                        mt: 2,
+                        cursor: "pointer",
+                        height: '100px',
+                        border: isSelected ? "2px solid #1E40AF" : "1px solid #E5E7EB",
+                        bgcolor: isSelected ? "#EEF2FF" : "background.paper",
+                        transition: "0.2s",
+                        "&:hover": { bgcolor: "#F3F4F6" },
                       }}
                     >
-                      <Delete fontSize="small" />
-                    </IconButton>
-                    )}
+                      <CardContent sx={{ p: 2 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Typography fontWeight="bold">{investor.name}</Typography>
+                          <Chip
+                            label={getStatusText(investor.isActive)}
+                            size="small"
+                            color={getStatusColor(investor.isActive)}
+                          />
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          رأس المال: {investor.capitalAmount?.toLocaleString()} ريال
+                        </Typography>
+                        <Box display="flex" justifyContent="flex-end" mt={1}>
+                          {permissions.includes("partners_Delete") && (
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDeleteModal(investor);
+                            }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                
+                {/* Pagination */}
+                {investorsData && investorsData.totalPages > 1 && (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    p: 2, 
+                    gap: 2,
+                    borderTop: '1px solid #eee',
+                  }}>
+                    <Pagination
+                      count={investorsData.totalPages}
+                      page={currentPage}
+                      onChange={handlePageChange}
+                      color="primary"
+                      size="small"
+                      siblingCount={1}
+                      boundaryCount={1}
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          fontSize: '0.875rem',
+                        }
+                      }}
+                    />
                   </Box>
-                </CardContent>
-              </Card>
-            );
-          })}
-          
-          {/* Pagination */}
-          {investorsData && investorsData.totalPages > 1 && (
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center',
-              p: 2, 
-              gap: 2,
-              borderTop: '1px solid #eee',
-            }}>
-
-              <Pagination
-                count={investorsData.totalPages}
-                page={currentPage}
-                onChange={handlePageChange}
-                color="primary"
-                size="small"
-                siblingCount={1}
-                boundaryCount={1}
-                sx={{
-                  '& .MuiPaginationItem-root': {
-                    fontSize: '0.875rem',
-                  }
-                }}
-              />
-            </Box>
-          )}
+                )}
+              </>
+            )}
+          </Box>
         </Box>
 
         {/* Right section – investor details */}

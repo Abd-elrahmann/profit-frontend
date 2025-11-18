@@ -31,6 +31,7 @@ import {
   Share,
   PictureAsPdf,
   TableChart,
+  CheckCircle,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
@@ -52,6 +53,7 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  ComposedChart,
 } from "recharts";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
 import { exportJournalsToPDF, exportJournalsToExcel } from '../../utilities/treasuryJournalsExporter';
@@ -125,24 +127,17 @@ export default function Treasury() {
   const totalDebit = bankData?.account?.debit || 0;
   const totalCredit = bankData?.account?.credit || 0;
   const totalTransactions = bankData?.totalJournalEntries || 0;
+  
+  // Repayments data
+  const totalRepaymentsAmount = bankData?.repayments?.totalAmount || 0;
+  const paidRepaymentsUntilNow = bankData?.repayments?.paidUntilNow || 0;
+  const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
 
   const lowBalanceThreshold = 10000;
   const highCreditThreshold = 50000;
 
   const hasLowBalance = availableBalance < lowBalanceThreshold;
   const hasHighCredit = totalCredit > highCreditThreshold;
-
-  const monthlySummaryData = bankData?.journalsByMonth ? 
-    Object.entries(bankData.journalsByMonth)
-      .map(([month, data]) => ({
-        name: getMonthName(month),
-        monthKey: month,
-        الوارد: data.totalDebit,
-        المقرض: data.totalCredit,
-        الرصيد: data.totalBalance,
-        عدد_المعاملات: data.entries?.length || 0,
-      }))
-      .sort((a, b) => a.monthKey.localeCompare(b.monthKey)) : [];
 
   const monthlyBalanceData = bankData?.journalsByMonth ? 
     Object.entries(bankData.journalsByMonth)
@@ -177,6 +172,12 @@ export default function Treasury() {
   const currentTotalTransactions = selectedMonth && bankData?.journalsByMonth?.[selectedMonth] ? 
     bankData.journalsByMonth[selectedMonth].entries.length : 
     totalTransactions;
+
+  // حساب النسبة المئوية للرصيد المتاح
+  const totalBalance = availableBalance + totalCredit;
+  const balancePercentage = totalBalance > 0 ? (availableBalance / totalBalance) * 100 : 0;
+  const circumference = 2 * Math.PI * 45; // نصف القطر 45
+  const strokeDasharray = `${(balancePercentage / 100) * circumference} ${circumference}`;
 
   function getMonthName(monthKey) {
     const [year, month] = monthKey.split('-');
@@ -240,9 +241,16 @@ export default function Treasury() {
             <>
               {tab === 0 && (
                 <Box>
-                  <Grid container spacing={3} justifyContent="center" alignItems="center" sx={{ mb: 4 }}>
-                    <Grid item xs={12} md={3}>
-                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: 3, 
+                    mb: 4,
+                    justifyContent: 'center',
+                    alignItems: 'stretch'
+                  }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
@@ -269,10 +277,10 @@ export default function Treasury() {
                           />
                         </CardContent>
                       </Card>
-                    </Grid>
+                    </Box>
 
-                    <Grid item xs={12} md={3}>
-                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
@@ -299,40 +307,10 @@ export default function Treasury() {
                           />
                         </CardContent>
                       </Card>
-                    </Grid>
+                    </Box>
 
-                    <Grid item xs={12} md={3}>
-                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
-                        <CardContent sx={{ p: 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2,   
-                              mr: 2 
-                            }}>
-                              <TrendingDown sx={{ color: "#d32f2f", fontSize: 24 }} />
-                            </Box>
-                            <Box>
-                              <Typography variant="h4" fontWeight="bold" color="error.main">
-                                {totalCredit.toLocaleString('en-US')}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                إجمالي المقرض
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Chip 
-                            label="مقرض" 
-                            size="small" 
-                            color="error"
-                            variant="outlined"
-                          />
-                        </CardContent>
-                      </Card>
-                    </Grid>
-
-                    <Grid item xs={12} md={3}>
-                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
@@ -359,15 +337,80 @@ export default function Treasury() {
                           />
                         </CardContent>
                       </Card>
-                    </Grid>
-                  </Grid>
+                    </Box>
 
+                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                        <CardContent sx={{ p: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{ 
+                              p: 1, 
+                              borderRadius: 2, 
+                              mr: 2 
+                            }}>
+                              <TrendingUp sx={{ color: "#9c27b0", fontSize: 24 }} />
+                            </Box>
+                            <Box>
+                              <Typography variant="h4" fontWeight="bold" sx={{ color: "#9c27b0" }}>
+                                {totalRepaymentsAmount.toLocaleString('en-US')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                إجمالي التحصيل المقترض
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip 
+                            label="مقترض" 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: "#9c27b0", 
+                              color: "white",
+                              '&:hover': { bgcolor: "#7b1fa2" }
+                            }}
+                            variant="filled"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Box>
+
+                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                        <CardContent sx={{ p: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{ 
+                              p: 1, 
+                              borderRadius: 2, 
+                              mr: 2 
+                            }}>
+                              <CheckCircle sx={{ color: "#00C49F", fontSize: 24 }} />
+                            </Box>
+                            <Box>
+                              <Typography variant="h4" fontWeight="bold" color="success.main">
+                                {paidRepaymentsUntilNow.toLocaleString('en-US')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                الواصل من التحصيل حتى الآن
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip 
+                            label="واصل" 
+                            size="small" 
+                            color="success"
+                            variant="outlined"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Box>
+                  </Box>
+
+                  {/* التصفية والملاحظات */}
                   {availableMonths.length > 0 && (
                     <Paper sx={{ p: 2, mb: 3, borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                       <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={2}>
                           <Typography variant="body2" color="text.secondary">
-                            {selectedMonth ? `عرض بيانات ${getMonthName(selectedMonth)}` : ''}
+                            {selectedMonth ? `عرض بيانات ${getMonthName(selectedMonth)}` : 'عرض جميع البيانات'}
                           </Typography>
                         </Grid>
                         <Grid item xs={12} md={8}>
@@ -424,7 +467,8 @@ export default function Treasury() {
                     </Box>
                   )}
 
-                  <Grid container spacing={3} sx={{ mb: 3 }}>
+                  {/* رسمة رصيد الصندوق الدائرية */}
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12}>
                       <Paper sx={{ 
                         p: 3, 
@@ -432,29 +476,240 @@ export default function Treasury() {
                         boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         width: 'calc(100vw - 240px)',
                       }}>
-                        <Typography variant="h6" fontWeight="bold" mb={3}>
-                          تطور رصيد الصندوق 
+                        <Typography 
+                          variant="h6" 
+                          fontWeight="bold" 
+                          color="text.primary"
+                          sx={{ mb: 3 }}
+                        >
+                          رصيد الصندوق
                         </Typography>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <LineChart data={monthlyBalanceData.length > 0 ? monthlyBalanceData : []}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip formatter={(value) => `${value.toLocaleString('en-US')} ريال`} />
-                            <Legend />
-                            <Line 
-                              type="monotone" 
-                              dataKey="الرصيد" 
-                              stroke="#1976d2" 
-                              strokeWidth={2}
-                              name="الرصيد"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
+                        
+                        <Box sx={{ 
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          flexWrap: 'wrap'
+                        }}>
+                          {/* الدائرة الدائرية */}
+                          <Box sx={{ 
+                            position: 'relative', 
+                            width: 200, 
+                            height: 200,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <svg 
+                              width="200" 
+                              height="200" 
+                              viewBox="0 0 100 100"
+                              style={{ transform: 'rotate(-90deg)' }}
+                            >
+                              {/* دائرة الخلفية */}
+                              <circle
+                                cx="50"
+                                cy="50"
+                                r="45"
+                                fill="transparent"
+                                stroke="#E5E7EB"
+                                strokeWidth="10"
+                              />
+                              {/* دائرة الرصيد المتاح */}
+                              <circle
+                                cx="50"
+                                cy="50"
+                                r="45"
+                                fill="transparent"
+                                stroke="#1976d2"
+                                strokeWidth="10"
+                                strokeDasharray={strokeDasharray}
+                                strokeLinecap="round"
+                                style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                              />
+                            </svg>
+                            
+                            {/* النص في المنتصف */}
+                            <Box sx={{
+                              position: 'absolute',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Typography 
+                                variant="h4" 
+                                fontWeight="bold" 
+                                color="primary"
+                                sx={{ mb: 0.5 }}
+                              >
+                                {availableBalance >= 1000000 
+                                  ? `${(availableBalance / 1000000).toFixed(1)}م`
+                                  : availableBalance >= 1000
+                                  ? `${(availableBalance / 1000).toFixed(0)} ألف`
+                                  : availableBalance.toLocaleString('en-US')
+                                }
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                color="text.secondary"
+                              >
+                                ريال سعودي
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* إحصائيات المقرض والمتاح */}
+                          <Box sx={{ 
+                            display: 'flex', 
+                            gap: 6,
+                            flex: 1,
+                            justifyContent: 'center',
+                            flexWrap: 'wrap'
+                          }}>
+                            <Box sx={{ textAlign: 'center', minWidth: 150 }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1,
+                                justifyContent: 'center',
+                                mb: 1
+                              }}>
+                                <Box 
+                                  sx={{ 
+                                    width: 12, 
+                                    height: 12, 
+                                    borderRadius: '50%', 
+                                    bgcolor: 'error.main' 
+                                  }} 
+                                />
+                                <Typography variant="body1" fontWeight="medium" color="text.primary">
+                                  مُقرض
+                                </Typography>
+                              </Box>
+                              <Typography 
+                                variant="h6" 
+                                fontWeight="semibold" 
+                                color="text.secondary"
+                              >
+                                {totalCredit >= 1000000 
+                                  ? `${(totalCredit / 1000000).toFixed(1)}م ر.س`
+                                  : totalCredit >= 1000
+                                  ? `${(totalCredit / 1000).toFixed(0)} ألف ر.س`
+                                  : `${totalCredit.toLocaleString('en-US')} ر.س`
+                                }
+                              </Typography>
+                            </Box>
+                            
+                            <Box sx={{ textAlign: 'center', minWidth: 150 }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1,
+                                justifyContent: 'center',
+                                mb: 1
+                              }}>
+                                <Box 
+                                  sx={{ 
+                                    width: 12, 
+                                    height: 12, 
+                                    borderRadius: '50%', 
+                                    bgcolor: 'grey.300' 
+                                  }} 
+                                />
+                                <Typography variant="body1" fontWeight="medium" color="text.primary">
+                                  متاح
+                                </Typography>
+                              </Box>
+                              <Typography 
+                                variant="h6" 
+                                fontWeight="semibold" 
+                                color="text.secondary"
+                              >
+                                {availableBalance >= 1000000 
+                                  ? `${(availableBalance / 1000000).toFixed(1)}م ر.س`
+                                  : availableBalance >= 1000
+                                  ? `${(availableBalance / 1000).toFixed(0)} ألف ر.س`
+                                  : `${availableBalance.toLocaleString('en-US')} ر.س`
+                                }
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
                       </Paper>
                     </Grid>
                   </Grid>
 
+                  {/* رسمة Area Chart المكدسة لتطور الوارد والمقرض والرصيد */}
+                  {monthlyBalanceData.length > 0 && (
+                    <Grid container spacing={3} sx={{ mb: 3 }}>
+                      <Grid item xs={12}>
+                        <Paper sx={{ 
+                          p: 3, 
+                          borderRadius: 2, 
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                          width: 'calc(100vw - 240px)',
+                        }}>
+                          <Typography variant="h6" fontWeight="bold" mb={3}>
+                            تطور الوارد والمقرض والرصيد
+                          </Typography>
+                          <ResponsiveContainer width="100%" height={400}>
+                            <ComposedChart data={monthlyBalanceData}>
+                              <defs>
+                                <linearGradient id="colorDebit" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1}/>
+                                </linearGradient>
+                                <linearGradient id="colorCredit" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip 
+                                formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                                contentStyle={{ borderRadius: '8px' }}
+                              />
+                              <Legend />
+                              <Area 
+                                type="monotone" 
+                                dataKey="الوارد" 
+                                stackId="1"
+                                stroke="#00C49F" 
+                                fill="url(#colorDebit)" 
+                                name="الوارد"
+                                strokeWidth={2}
+                              />
+                              <Area 
+                                type="monotone" 
+                                dataKey="المقرض" 
+                                stackId="1"
+                                stroke="#FF8042" 
+                                fill="url(#colorCredit)" 
+                                name="المقرض"
+                                strokeWidth={2}
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="الرصيد" 
+                                stroke="#1976d2" 
+                                strokeWidth={3}
+                                name="الرصيد"
+                                dot={{ fill: '#1976d2', r: 5 }}
+                                activeDot={{ r: 7 }}
+                              />
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  )}
+
+                  {/* رسمة Pie Chart لتوزيع المعاملات */}
                   <Grid container spacing={3} sx={{ mb: 3 }}>
                     <Grid item xs={12}>
                       <Paper sx={{ 
@@ -492,34 +747,6 @@ export default function Treasury() {
                     </Grid>
                   </Grid>
 
-                  {monthlySummaryData.length > 0 && (
-                    <Grid container spacing={3} sx={{ mb: 3 }}>
-                      <Grid item xs={12}>
-                        <Paper sx={{ 
-                          p: 3, 
-                          borderRadius: 2, 
-                          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                          width: 'calc(100vw - 240px)',
-                        }}>
-                          <Typography variant="h6" fontWeight="bold" mb={3}>
-                            المقارنة الشهرية
-                          </Typography>
-                          <ResponsiveContainer width="100%" height={400}>
-                            <BarChart data={monthlySummaryData}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="name" />
-                              <YAxis />
-                              <Tooltip />
-                              <Legend />
-                              <Bar dataKey="الوارد" fill="#00C49F" />
-                              <Bar dataKey="المقرض" fill="#FF8042" />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                  )}
-
                   <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12}>
                       <Paper sx={{ 
@@ -556,6 +783,80 @@ export default function Treasury() {
                       </Paper>
                     </Grid>
                   </Grid>
+
+                  {/* Repayments Chart */}
+                  {totalRepaymentsAmount > 0 && (
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                      <Grid item xs={12}>
+                        <Paper sx={{ 
+                          p: 3, 
+                          borderRadius: 2, 
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                          width: 'calc(100vw - 240px)',
+                        }}>
+                          <Typography variant="h6" fontWeight="bold" mb={3}>
+                            توزيع التحصيل المقترض
+                          </Typography>
+                          <ResponsiveContainer width="100%" height={400}>
+                            <BarChart
+                              data={[
+                                {
+                                  name: 'الواصل حتى الآن',
+                                  value: paidRepaymentsUntilNow,
+                                  color: '#00C49F'
+                                },
+                                {
+                                  name: 'المتبقي',
+                                  value: remainingRepayments,
+                                  color: '#FF8042'
+                                },
+                                {
+                                  name: 'الإجمالي',
+                                  value: totalRepaymentsAmount,
+                                  color: '#9c27b0'
+                                }
+                              ]}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis 
+                                dataKey="name" 
+                                tick={{ fill: '#666', fontSize: 14 }}
+                              />
+                              <YAxis 
+                                tick={{ fill: '#666', fontSize: 14 }}
+                                tickFormatter={(value) => `${value.toLocaleString('en-US')}`}
+                              />
+                              <Tooltip 
+                                formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                                contentStyle={{ 
+                                  borderRadius: '8px',
+                                  border: '1px solid #e0e0e0'
+                                }}
+                              />
+                              <Legend 
+                                verticalAlign="top"
+                                height={36}
+                              />
+                              <Bar 
+                                dataKey="value" 
+                                name="المبلغ"
+                                radius={[8, 8, 0, 0]}
+                              >
+                                {[
+                                  { name: 'الواصل حتى الآن', value: paidRepaymentsUntilNow, color: '#00C49F' },
+                                  { name: 'المتبقي', value: remainingRepayments, color: '#FF8042' },
+                                  { name: 'الإجمالي', value: totalRepaymentsAmount, color: '#9c27b0' }
+                                ].map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  )}
                 </Box>
               )}
 
