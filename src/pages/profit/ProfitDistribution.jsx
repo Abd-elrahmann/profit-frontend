@@ -153,7 +153,6 @@ const ProfitDistribution = () => {
     return new Date(dateString).toLocaleDateString('en-US');
   };
 
-
   // Get journal status in Arabic
   const getJournalStatusText = (status) => {
     switch (status) {
@@ -168,9 +167,9 @@ const ProfitDistribution = () => {
     }
   };
 
-  // Check if period has distribution (has distribution journal)
+  // Check if period has distribution using isDistributed field
   const hasDistribution = (period) => {
-    return period.closingJournalId !== null;
+    return period.isDistributed === true;
   };
 
   // Render desktop sidebar
@@ -618,7 +617,7 @@ const ProfitDistribution = () => {
         </Stack>
       </Paper>
 
-      {/* Partner Profits */}
+      {/* Partner Profits with additional data */}
       {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
         <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
           <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
@@ -633,13 +632,45 @@ const ProfitDistribution = () => {
                     <Typography variant="subtitle2" fontWeight="bold">
                       {partner.partnerName}
                     </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="textSecondary">
-                        الربح:
-                      </Typography>
-                      <Typography variant="body2" fontWeight="bold" color="success.main">
-                        {partner.totalProfit.toLocaleString()}
-                      </Typography>
+                    
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          الرقم القومي:
+                        </Typography>
+                        <Typography variant="body2" fontWeight="medium">
+                          {partner.partnerNationalId || "-"}
+                        </Typography>
+                      </Box>
+                      
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          الهاتف:
+                        </Typography>
+                        <Typography variant="body2" fontWeight="medium">
+                          {partner.partnerPhone || "-"}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          نسبة الربح:
+                        </Typography>
+                        <Typography variant="body2" fontWeight="medium">
+                          {partner.orgProfitPercent}%
+                        </Typography>
+                      </Box>
+                      
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          الربح:
+                        </Typography>
+                        <Typography variant="body2" fontWeight="bold" color="success.main">
+                          {partner.totalProfit.toLocaleString()}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Stack>
                 </CardContent>
@@ -760,7 +791,7 @@ const ProfitDistribution = () => {
         </Grid>
       </Grid>
 
-      {/* Partner Profits */}
+      {/* Partner Profits with additional data */}
       {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
         <>
           <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
@@ -771,6 +802,9 @@ const ProfitDistribution = () => {
               <TableHead>
                 <StyledTableRow>
                   <StyledTableCell align="center">اسم الشريك</StyledTableCell>
+                  <StyledTableCell align="center">الرقم القومي</StyledTableCell>
+                  <StyledTableCell align="center">الهاتف</StyledTableCell>
+                  <StyledTableCell align="center">نسبة الربح</StyledTableCell>
                   <StyledTableCell align="center">الربح</StyledTableCell>
                 </StyledTableRow>
               </TableHead>
@@ -781,6 +815,15 @@ const ProfitDistribution = () => {
                       {partner.partnerName}
                     </StyledTableCell>
                     <StyledTableCell align="center">
+                      {partner.partnerNationalId || "-"}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {partner.partnerPhone || "-"}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {partner.orgProfitPercent}%
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
                       <Typography fontWeight="bold" color="success.main">
                         {partner.totalProfit.toLocaleString()}
                       </Typography>
@@ -788,7 +831,7 @@ const ProfitDistribution = () => {
                   </StyledTableRow>
                 ))}
                 <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell align="center">
+                  <StyledTableCell colSpan={4} align="center">
                     <Typography fontWeight="bold">الإجمالي</Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">

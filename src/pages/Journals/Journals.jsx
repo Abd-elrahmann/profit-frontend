@@ -585,6 +585,248 @@ const Journals = () => {
   const totals = calculateTotals();
   const totalsForTable = calculateTotalsForTable();
 
+  // Render mobile lines cards
+  const renderMobileLinesCards = () => (
+    <Stack spacing={2}>
+      {journalLines.map((line, index) => {
+        const lineBalance =
+          parseFloat(line.debit || 0) - parseFloat(line.credit || 0);
+        return (
+          <Card key={line.id || index} variant="outlined" sx={{ borderRadius: 2 }}>
+            <CardContent sx={{ p: 2 }}>
+              <Stack spacing={1.5}>
+                {/* Header */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                      {line.account?.code} - {line.account?.name}
+                    </Typography>
+                    {line.description && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                        {line.description}
+                      </Typography>
+                    )}
+                  </Box>
+                  {(isEditMode || isAddMode) && (
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleEditLine(index)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteLine(index)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Line Details */}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      مدين
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" color="error">
+                      {parseFloat(line.debit || 0).toLocaleString()}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      دائن
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" color="success.main">
+                      {parseFloat(line.credit || 0).toLocaleString()}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      الإجمالي
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      color={
+                        lineBalance === 0
+                          ? "text.primary"
+                          : lineBalance > 0
+                          ? "error"
+                          : "success.main"
+                      }
+                    >
+                      {lineBalance.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {/* Summary Card */}
+      <Card
+        variant="outlined"
+        sx={{
+          borderRadius: 2,
+          backgroundColor: "#f5f5f5",
+          border: "2px solid #ddd",
+        }}
+      >
+        <CardContent sx={{ p: 2 }}>
+          <Typography variant="subtitle2" fontWeight="bold" mb={1.5}>
+            الإجمالي
+          </Typography>
+          <Stack spacing={1}>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography variant="caption" color="text.secondary">
+                إجمالي المدين
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" color="error">
+                {totalsForTable.totalDebit.toLocaleString()}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography variant="caption" color="text.secondary">
+                إجمالي الدائن
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" color="success.main">
+                {totalsForTable.totalCredit.toLocaleString()}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography variant="caption" color="text.secondary">
+                الفرق
+              </Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {totalsForTable.totalBalance.toLocaleString()}
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {!isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
+        <Alert severity="error">
+          القيد غير متوازن! إجمالي المدين: {totalsForTable.totalDebit.toFixed(2)} ≠ إجمالي الدائن: {totalsForTable.totalCredit.toFixed(2)} (الفرق: {Math.abs(totalsForTable.totalBalance).toFixed(2)})
+        </Alert>
+      )}
+    </Stack>
+  );
+
+  // Render desktop table
+  const renderDesktopLinesTable = () => (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <StyledTableRow>
+            <StyledTableCell align="center">الحساب</StyledTableCell>
+            <StyledTableCell align="center">الوصف</StyledTableCell>
+            <StyledTableCell align="center">مدين</StyledTableCell>
+            <StyledTableCell align="center">دائن</StyledTableCell>
+            <StyledTableCell align="center">الإجمالي</StyledTableCell>
+            {(isEditMode || isAddMode) && (
+              <StyledTableCell align="center" className="hide-on-print">
+                الإجراءات
+              </StyledTableCell>
+            )}
+          </StyledTableRow>
+        </TableHead>
+        <TableBody>
+          {journalLines.map((line, index) => {
+            const lineBalance =
+              parseFloat(line.debit || 0) - parseFloat(line.credit || 0);
+            return (
+              <StyledTableRow key={line.id || index}>
+                <StyledTableCell align="center">
+                  {line.account?.code} - {line.account?.name}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  {line.description || "-"}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  {parseFloat(line.debit || 0).toLocaleString()}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  {parseFloat(line.credit || 0).toLocaleString()}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  <Typography
+                    fontWeight="medium"
+                    color={
+                      lineBalance === 0
+                        ? "text.primary"
+                        : lineBalance > 0
+                        ? "error"
+                        : "success.main"
+                    }
+                  >
+                    {lineBalance.toLocaleString()}
+                  </Typography>
+                </StyledTableCell>
+                {(isEditMode || isAddMode) && (
+                  <StyledTableCell align="center" className="hide-on-print">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => handleEditLine(index)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteLine(index)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </StyledTableCell>
+                )}
+              </StyledTableRow>
+            );
+          })}
+          <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
+            <StyledTableCell colSpan={2} align="center">
+              <Typography fontWeight="bold">الإجمالي</Typography>
+            </StyledTableCell>
+            <StyledTableCell align="center">
+              <Typography fontWeight="bold" color="error">
+                {totalsForTable.totalDebit.toLocaleString()}
+              </Typography>
+            </StyledTableCell>
+            <StyledTableCell align="center">
+              <Typography fontWeight="bold" color="success.main">
+                {totalsForTable.totalCredit.toLocaleString()}
+              </Typography>
+            </StyledTableCell>
+            <StyledTableCell align="center">
+              <Typography fontWeight="bold">
+                {totalsForTable.totalBalance.toLocaleString()}
+              </Typography>
+            </StyledTableCell>
+            {(isEditMode || isAddMode) && (
+              <StyledTableCell align="center"></StyledTableCell>
+            )}
+          </StyledTableRow>
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
   const renderLinesForm = () => (
     <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
       <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
@@ -695,7 +937,7 @@ const Journals = () => {
   );
 
   const renderLinesList = () => (
-    <Paper sx={{ p: 3, borderRadius: 2 }}>
+    <Paper sx={{ p: isSmallScreen ? 2 : 3, borderRadius: 2 }}>
       <Typography variant="h6" fontWeight="bold" mb={3}>
         بنود القيد
       </Typography>
@@ -704,103 +946,9 @@ const Journals = () => {
         <Alert severity="info">لا توجد بنود مضافة</Alert>
       ) : (
         <>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <StyledTableRow>
-                  <StyledTableCell align="center">الحساب</StyledTableCell>
-                  <StyledTableCell align="center">الوصف</StyledTableCell>
-                  <StyledTableCell align="center">مدين</StyledTableCell>
-                  <StyledTableCell align="center">دائن</StyledTableCell>
-                  <StyledTableCell align="center">الإجمالي</StyledTableCell>
-                  {(isEditMode || isAddMode) && (
-                    <StyledTableCell align="center" className="hide-on-print">
-                      الإجراءات
-                    </StyledTableCell>
-                  )}
-                </StyledTableRow>
-              </TableHead>
-              <TableBody>
-                {journalLines.map((line, index) => {
-                  const lineBalance =
-                    parseFloat(line.debit || 0) - parseFloat(line.credit || 0);
-                  return (
-                    <StyledTableRow key={line.id || index}>
-                      <StyledTableCell align="center">
-                        {line.account?.code} - {line.account?.name}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {line.description || "-"}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {parseFloat(line.debit || 0).toLocaleString()}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {parseFloat(line.credit || 0).toLocaleString()}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        <Typography
-                          fontWeight="medium"
-                          color={
-                            lineBalance === 0
-                              ? "text.primary"
-                              : lineBalance > 0
-                              ? "error"
-                              : "success.main"
-                          }
-                        >
-                          {lineBalance.toLocaleString()}
-                        </Typography>
-                      </StyledTableCell>
-                      {(isEditMode || isAddMode) && (
-                        <StyledTableCell align="center" className="hide-on-print">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditLine(index)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteLine(index)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </StyledTableCell>
-                      )}
-                    </StyledTableRow>
-                  );
-                })}
-                <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell colSpan={2} align="center">
-                    <Typography fontWeight="bold">الإجمالي</Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="error">
-                      {totalsForTable.totalDebit.toLocaleString()}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="success.main">
-                      {totalsForTable.totalCredit.toLocaleString()}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold">
-                      {totalsForTable.totalBalance.toLocaleString()}
-                    </Typography>
-                  </StyledTableCell>
-                  {(isEditMode || isAddMode) && (
-                    <StyledTableCell align="center"></StyledTableCell>
-                  )}
-                </StyledTableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {isSmallScreen ? renderMobileLinesCards() : renderDesktopLinesTable()}
 
-          {!isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
+          {!isSmallScreen && !isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
             <Alert severity="error" sx={{ mt: 2 }}>
               القيد غير متوازن! إجمالي المدين: {totalsForTable.totalDebit.toFixed(2)} ≠ إجمالي الدائن: {totalsForTable.totalCredit.toFixed(2)} (الفرق: {Math.abs(totalsForTable.totalBalance).toFixed(2)})
             </Alert>

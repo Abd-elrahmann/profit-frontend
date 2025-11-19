@@ -26,6 +26,9 @@ import {
   DialogActions,
   TextField,
   Checkbox,
+  Card,
+  CardContent,
+  useMediaQuery,
 } from "@mui/material";
 import {
   MoreVert as MoreVertIcon,
@@ -99,6 +102,10 @@ const Installments = () => {
   const [earlyPaymentModalOpen, setEarlyPaymentModalOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("0");
   const paymentProofGeneratorRef = useRef(null);
+
+  const isMobile = useMediaQuery("(max-width: 480px)");
+  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isSmallScreen = isMobile || isTablet;
 
   useEffect(() => {
     if (loanId) {
@@ -554,6 +561,452 @@ const Installments = () => {
     );
   };
 
+  // Render mobile installment cards
+  const renderMobileInstallmentCards = () => {
+    const paidCount = sortedInstallments.filter(
+      (inst) => inst.status === "PAID" || inst.status === "EARLY_PAID"
+    ).length;
+    const totalAmount = sortedInstallments.reduce(
+      (sum, inst) => sum + (inst.amount || 0),
+      0
+    );
+    const totalPaid = sortedInstallments.reduce(
+      (sum, inst) => sum + (inst.paidAmount || 0),
+      0
+    );
+    const totalRemaining = sortedInstallments.reduce(
+      (sum, inst) => sum + (inst.remaining || 0),
+      0
+    );
+
+    return (
+      <Box sx={{ p: 1 }}>
+        <Stack spacing={2}>
+          {sortedInstallments.map((installment) => (
+            <Card
+              key={installment.id}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                border:
+                  hasPendingDocuments(installment)
+                    ? "2px solid #1E40AF"
+                    : "1px solid #e0e0e0",
+                borderLeft: hasPendingDocuments(installment)
+                  ? "4px solid #1E40AF"
+                  : "none",
+                backgroundColor:
+                  activeInstallmentId === installment.id
+                    ? "#e6f0ff"
+                    : hasPendingDocuments(installment)
+                    ? "#f0f4ff"
+                    : "inherit",
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor:
+                    activeInstallmentId === installment.id
+                      ? "#d4e4ff"
+                      : hasPendingDocuments(installment)
+                      ? "#e6f0ff"
+                      : "#f5f5f5",
+                },
+              }}
+              onClick={() => handleRowClick(installment)}
+            >
+              <CardContent sx={{ p: 2 }}>
+                <Stack spacing={1.5}>
+                  {/* Header */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {(installment.status === "PAID" ||
+                        installment.status === "EARLY_PAID") && (
+                        <Checkbox checked size="small" />
+                      )}
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                          دفعة #{installment.count}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {dayjs(installment.dueDate).format("DD/MM/YYYY")}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 0.5,
+                      }}
+                    >
+                      <Chip
+                        label={getStatusText(installment.status, installment)}
+                        color={getStatusColor(
+                          installment.status,
+                          installment
+                        )}
+                        size="small"
+                        sx={{ fontWeight: "500" }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMenuOpen(e, installment);
+                        }}
+                        disabled={shouldDisableActions(installment)}
+                        sx={{
+                          opacity: shouldDisableActions(installment) ? 0.5 : 1,
+                          cursor: shouldDisableActions(installment)
+                            ? "not-allowed"
+                            : "pointer",
+                        }}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  {/* Installment Details */}
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        قيمة الدفعة
+                      </Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {installment.amount?.toFixed(2)}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        المبلغ المدفوع
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="bold"
+                        sx={{
+                          color: installment.paidAmount > 0 ? "green" : "red",
+                        }}
+                      >
+                        {installment.paidAmount > 0
+                          ? `${installment.paidAmount.toFixed(2)}`
+                          : "0.00"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        الرصيد المتبقي
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="bold"
+                        sx={{
+                          color: installment.remaining === 0 ? "black" : "red",
+                        }}
+                      >
+                        {installment.remaining?.toFixed(2) || "0.00"}
+                      </Typography>
+                    </Box>
+
+                    {installment.paymentDate && (
+                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                        <Typography variant="caption" color="text.secondary">
+                          تاريخ الدفع
+                        </Typography>
+                        <Typography variant="body2">
+                          {dayjs(installment.paymentDate).format("DD/MM/YYYY")}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Summary Card */}
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              backgroundColor: "#f5f5f5",
+              border: "2px solid #ddd",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="subtitle2" fontWeight="bold" mb={1.5}>
+                الإجمالي
+              </Typography>
+              <Stack spacing={1}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    الدفعات المدفوعة
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold">
+                    {paidCount}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    إجمالي الدفعات
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold">
+                    {totalAmount.toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    إجمالي المدفوع
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    sx={{ color: "green" }}
+                  >
+                    {totalPaid.toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    إجمالي المتبقي
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    sx={{ color: "red" }}
+                  >
+                    {totalRemaining.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Box>
+    );
+  };
+
+  // Render desktop table
+  const renderDesktopTable = () => (
+    <TableContainer>
+      <Table stickyHeader>
+        <TableHead>
+          <StyledTableRow>
+            <StyledTableCell align="center" sx={{width: "70px"}}>
+              الدفعات المدفوعة
+            </StyledTableCell>
+            <StyledTableCell align="center">رقم الدفعة</StyledTableCell>
+            <StyledTableCell align="center">
+              تاريخ الاستحقاق
+            </StyledTableCell>
+            <StyledTableCell align="center">الدفعة</StyledTableCell>
+            <StyledTableCell align="center">
+              المبلغ المدفوع
+            </StyledTableCell>
+            <StyledTableCell align="center">
+              الرصيد المتبقي
+            </StyledTableCell>
+            <StyledTableCell align="center">الحالة</StyledTableCell>
+            <StyledTableCell align="center">
+              {" "}
+              تاريخ الدفع
+            </StyledTableCell>
+            <StyledTableCell align="center">الإجراءات</StyledTableCell>
+          </StyledTableRow>
+        </TableHead>
+        <TableBody>
+          {sortedInstallments.map((installment) => (
+            <StyledTableRow
+              key={installment.id}
+              hover
+              onClick={() => handleRowClick(installment)}
+              sx={{
+                cursor: "pointer",
+                border: hasPendingDocuments(installment)
+                  ? "2px solid #1E40AF"
+                  : "none",
+                borderLeft: hasPendingDocuments(installment)
+                  ? "4px solid #1E40AF"
+                  : "none",
+                backgroundColor:
+                  activeInstallmentId === installment.id
+                    ? "#e6f0ff"
+                    : hasPendingDocuments(installment)
+                    ? "#f0f4ff"
+                    : "inherit",
+                "&:hover": {
+                  backgroundColor:
+                    activeInstallmentId === installment.id
+                      ? "#d4e4ff"
+                      : hasPendingDocuments(installment)
+                      ? "#e6f0ff"
+                      : "#f5f5f5",
+                },
+              }}
+            >
+              <StyledTableCell align="center" sx={{width: "70px"}}>
+                {(installment.status === "PAID" ||
+                  installment.status === "EARLY_PAID") && (
+                  <Checkbox checked size="small" />
+                )}
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                {installment.count}
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                {dayjs(installment.dueDate).format("DD/MM/YYYY")}
+              </StyledTableCell>
+              <StyledTableCell
+                align="center"
+                sx={{ fontWeight: "bold" }}
+              >
+                {installment.amount?.toFixed(2)}
+              </StyledTableCell>
+              <StyledTableCell
+                align="center"
+                style={{
+                  color: installment.paidAmount > 0 ? "green" : "red",
+                  fontWeight: "bold",
+                }}
+              >
+                {installment.paidAmount > 0
+                  ? `${installment.paidAmount.toFixed(2)}`
+                  : "0.00"}
+              </StyledTableCell>
+              <StyledTableCell
+                align="center"
+                style={{
+                  color: installment.remaining === 0 ? "black" : "red",
+                  fontWeight: "bold",
+                }}
+              >
+                {installment.remaining?.toFixed(2) || "0.00"}
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                <Chip
+                  label={getStatusText(installment.status, installment)}
+                  color={getStatusColor(
+                    installment.status,
+                    installment
+                  )}
+                  size="small"
+                />
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                {installment.paymentDate
+                  ? dayjs(installment.paymentDate).format("DD/MM/YYYY")
+                  : "لم يأتي بعد"}
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="center"
+                >
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleMenuOpen(e, installment)}
+                    disabled={shouldDisableActions(installment)}
+                    sx={{
+                      opacity: shouldDisableActions(installment)
+                        ? 0.5
+                        : 1,
+                      cursor: shouldDisableActions(installment)
+                        ? "not-allowed"
+                        : "pointer",
+                    }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Stack>
+              </StyledTableCell>
+            </StyledTableRow>
+          ))}
+          {/* صف الإجمالي */}
+          {(() => {
+            const paidCount = sortedInstallments.filter(
+              (inst) =>
+                inst.status === "PAID" || inst.status === "EARLY_PAID"
+            ).length;
+            const totalAmount = sortedInstallments.reduce(
+              (sum, inst) => sum + (inst.amount || 0),
+              0
+            );
+            const totalPaid = sortedInstallments.reduce(
+              (sum, inst) => sum + (inst.paidAmount || 0),
+              0
+            );
+            const totalRemaining = sortedInstallments.reduce(
+              (sum, inst) => sum + (inst.remaining || 0),
+              0
+            );
+
+            return (
+              <StyledTableRow
+                sx={{
+                  backgroundColor: "#f5f5f5",
+                  "& td": {
+                    fontWeight: "bold",
+                    fontSize: "1rem",
+                    borderTop: "2px solid #ddd",
+                  },
+                }}
+              >
+                <StyledTableCell align="center" sx={{width: "70px"}}>
+                  {paidCount > 0 && (
+                    <Typography variant="body2" fontWeight="bold">
+                      {paidCount}
+                    </Typography>
+                  )}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  <Typography variant="body2" fontWeight="bold">
+                    الإجمالي
+                  </Typography>
+                </StyledTableCell>
+                <StyledTableCell align="center">-</StyledTableCell>
+                <StyledTableCell align="center">
+                  <Typography variant="body2" fontWeight="bold">
+                    {totalAmount.toFixed(2)}
+                  </Typography>
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{
+                    color: "green",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {totalPaid.toFixed(2)}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{
+                    color: "red",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {totalRemaining.toFixed(2)}
+                </StyledTableCell>
+                <StyledTableCell align="center">-</StyledTableCell>
+                <StyledTableCell align="center">-</StyledTableCell>
+                <StyledTableCell align="center">-</StyledTableCell>
+              </StyledTableRow>
+            );
+          })()}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
   if (!loanId) {
     return (
       <Box
@@ -638,16 +1091,16 @@ const Installments = () => {
       <Box
         sx={{
           display: "flex",
-          flexDirection: "row",
+          flexDirection: isSmallScreen ? "column" : "row",
           flex: 1,
-          height: "calc(100vh - 80px)",
+          height: isSmallScreen ? "auto" : "calc(100vh - 80px)",
           width: "100%",
         }}
       >
         <Box
           sx={{
             flex: 1,
-            p: 4,
+            p: isSmallScreen ? 2 : 4,
             bgcolor: "#fff",
             overflowY: "auto",
           }}
@@ -706,6 +1159,185 @@ const Installments = () => {
             </Grid>
           </Paper>
 
+          {/* خطوات المراجعة للشاشات الصغيرة */}
+          {isSmallScreen && (
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#fafafa" }}>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                خطوات المراجعة
+              </Typography>
+
+              <Stepper
+                orientation="vertical"
+                activeStep={activeStep}
+                sx={{ mb: 2 }}
+              >
+                {steps.map((label, index) => (
+                  <Step key={index}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+
+              <Divider sx={{ my: 2 }} />
+
+              {activeInstallmentId ? (
+                <Box>
+                  <Typography variant="body2" color="text.secondary" mb={1}>
+                    الدفعة المحددة: #{selectedInstallment?.count}
+                  </Typography>
+
+                  {selectedInstallment && (
+                    <Typography variant="body2" color="text.secondary" mb={2}>
+                      المبلغ: {selectedInstallment.amount?.toFixed(2)}
+                    </Typography>
+                  )}
+
+                  {activeStep === 0 && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      في انتظار رفع الإيصال من العميل
+                    </Alert>
+                  )}
+
+                  {activeStep === 1 && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      جاري مراجعة الإيصال المرفوع
+                    </Alert>
+                  )}
+
+                  {activeStep === 2 && (
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      تم إتمام العملية بنجاح
+                    </Alert>
+                  )}
+
+                  {/* Display files if they exist */}
+                  {hasFiles(selectedInstallment) ? (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        الملفات المرفوعة:
+                      </Typography>
+
+                      {/* Display attachments */}
+                      {selectedInstallment?.attachments &&
+                        selectedInstallment.attachments.length > 0 && (
+                          <Box
+                            sx={{
+                              mb: 2,
+                              p: 2,
+                              bgcolor: "grey.100",
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight="bold"
+                              gutterBottom
+                            >
+                              المستندات:
+                            </Typography>
+                            {selectedInstallment.attachments.map(
+                              (attachment, index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    cursor: "pointer",
+                                    "&:hover": { bgcolor: "grey.200" },
+                                    p: 1,
+                                    borderRadius: 1,
+                                    mb: 1,
+                                  }}
+                                  onClick={() => {
+                                    window.open(attachment, "_blank");
+                                  }}
+                                >
+                                  <Typography variant="body2" sx={{ flex: 1 }}>
+                                    {extractFileName(attachment)}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const link = document.createElement("a");
+                                      link.href = attachment;
+                                      link.download = extractFileName(attachment);
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                  >
+                                    <Download />
+                                  </IconButton>
+                                </Box>
+                              )
+                            )}
+                          </Box>
+                        )}
+
+                      {/* Display payment proof */}
+                      {selectedInstallment?.PaymentProof && (
+                        <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            gutterBottom
+                          >
+                            إيصال الدفع:
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              cursor: "pointer",
+                              "&:hover": { bgcolor: "grey.200" },
+                              p: 1,
+                              borderRadius: 1,
+                            }}
+                            onClick={() => {
+                              window.open(
+                                selectedInstallment.PaymentProof,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ flex: 1 }}>
+                              {extractFileName(selectedInstallment.PaymentProof)}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const link = document.createElement("a");
+                                link.href = selectedInstallment.PaymentProof;
+                                link.download = extractFileName(
+                                  selectedInstallment.PaymentProof
+                                );
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                            >
+                              <Download />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  ) : (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                      هذه الدفعة لا يحتوي على أي ملفات
+                    </Alert>
+                  )}
+                </Box>
+              ) : (
+                <Alert severity="info">اختر دفعة لعرض التفاصيل</Alert>
+              )}
+            </Paper>
+          )}
+
           {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
           {allInstallmentsPaid() && !isSettlementCompleted() && (
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
@@ -736,228 +1368,25 @@ const Installments = () => {
           )}
 
           <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
-            <TableContainer>
-              <Table stickyHeader>
-                <TableHead>
-                  <StyledTableRow>
-                    <StyledTableCell align="center" sx={{width: "70px"}}>
-                      الدفعات المدفوعة
-                    </StyledTableCell>
-                    <StyledTableCell align="center">رقم الدفعة</StyledTableCell>
-                    <StyledTableCell align="center">
-                      تاريخ الاستحقاق
-                    </StyledTableCell>
-                    <StyledTableCell align="center">الدفعة</StyledTableCell>
-                    <StyledTableCell align="center">
-                      المبلغ المدفوع
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      الرصيد المتبقي
-                    </StyledTableCell>
-                    <StyledTableCell align="center">الحالة</StyledTableCell>
-                    <StyledTableCell align="center">
-                      {" "}
-                      تاريخ الدفع
-                    </StyledTableCell>
-                    <StyledTableCell align="center">الإجراءات</StyledTableCell>
-                  </StyledTableRow>
-                </TableHead>
-                <TableBody>
-                  {sortedInstallments.map((installment) => (
-                    <StyledTableRow
-                      key={installment.id}
-                      hover
-                      onClick={() => handleRowClick(installment)}
-                      sx={{
-                        cursor: "pointer",
-                        border: hasPendingDocuments(installment)
-                          ? "2px solid #1E40AF"
-                          : "none",
-                        borderLeft: hasPendingDocuments(installment)
-                          ? "4px solid #1E40AF"
-                          : "none",
-                        backgroundColor:
-                          activeInstallmentId === installment.id
-                            ? "#e6f0ff"
-                            : hasPendingDocuments(installment)
-                            ? "#f0f4ff"
-                            : "inherit",
-                        "&:hover": {
-                          backgroundColor:
-                            activeInstallmentId === installment.id
-                              ? "#d4e4ff"
-                              : hasPendingDocuments(installment)
-                              ? "#e6f0ff"
-                              : "#f5f5f5",
-                        },
-                      }}
-                    >
-                      <StyledTableCell align="center" sx={{width: "70px"}}>
-                        {(installment.status === "PAID" ||
-                          installment.status === "EARLY_PAID") && (
-                          <Checkbox checked size="small" />
-                        )}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {installment.count}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {dayjs(installment.dueDate).format("DD/MM/YYYY")}
-                      </StyledTableCell>
-                      <StyledTableCell
-                        align="center"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        {installment.amount?.toFixed(2)}
-                      </StyledTableCell>
-                      <StyledTableCell
-                        align="center"
-                        style={{
-                          color: installment.paidAmount > 0 ? "green" : "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {installment.paidAmount > 0
-                          ? `${installment.paidAmount.toFixed(2)}`
-                          : "0.00"}
-                      </StyledTableCell>
-                      <StyledTableCell
-                        align="center"
-                        style={{
-                          color: installment.remaining === 0 ? "black" : "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {installment.remaining?.toFixed(2) || "0.00"}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        <Chip
-                          label={getStatusText(installment.status, installment)}
-                          color={getStatusColor(
-                            installment.status,
-                            installment
-                          )}
-                          size="small"
-                        />
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {installment.paymentDate
-                          ? dayjs(installment.paymentDate).format("DD/MM/YYYY")
-                          : "لم يأتي بعد"}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          justifyContent="center"
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleMenuOpen(e, installment)}
-                            disabled={shouldDisableActions(installment)}
-                            sx={{
-                              opacity: shouldDisableActions(installment)
-                                ? 0.5
-                                : 1,
-                              cursor: shouldDisableActions(installment)
-                                ? "not-allowed"
-                                : "pointer",
-                            }}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                        </Stack>
-                      </StyledTableCell>
-                    </StyledTableRow>
-                  ))}
-                  {/* صف الإجمالي */}
-                  {(() => {
-                    const paidCount = sortedInstallments.filter(
-                      (inst) =>
-                        inst.status === "PAID" || inst.status === "EARLY_PAID"
-                    ).length;
-                    const totalAmount = sortedInstallments.reduce(
-                      (sum, inst) => sum + (inst.amount || 0),
-                      0
-                    );
-                    const totalPaid = sortedInstallments.reduce(
-                      (sum, inst) => sum + (inst.paidAmount || 0),
-                      0
-                    );
-                    const totalRemaining = sortedInstallments.reduce(
-                      (sum, inst) => sum + (inst.remaining || 0),
-                      0
-                    );
-
-                    return (
-                      <StyledTableRow
-                        sx={{
-                          backgroundColor: "#f5f5f5",
-                          "& td": {
-                            fontWeight: "bold",
-                            fontSize: "1rem",
-                            borderTop: "2px solid #ddd",
-                          },
-                        }}
-                      >
-                        <StyledTableCell align="center" sx={{width: "70px"}}>
-                          {paidCount > 0 && (
-                            <Typography variant="body2" fontWeight="bold">
-                              {paidCount}
-                            </Typography>
-                          )}
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <Typography variant="body2" fontWeight="bold">
-                            الإجمالي
-                          </Typography>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">-</StyledTableCell>
-                        <StyledTableCell align="center">
-                          <Typography variant="body2" fontWeight="bold">
-                            {totalAmount.toFixed(2)}
-                          </Typography>
-                        </StyledTableCell>
-                        <StyledTableCell
-                          align="center"
-                          sx={{
-                            color: "green",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {totalPaid.toFixed(2)}
-                        </StyledTableCell>
-                        <StyledTableCell
-                          align="center"
-                          sx={{
-                            color: "red",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {totalRemaining.toFixed(2)}
-                        </StyledTableCell>
-                        <StyledTableCell align="center">-</StyledTableCell>
-                        <StyledTableCell align="center">-</StyledTableCell>
-                        <StyledTableCell align="center">-</StyledTableCell>
-                      </StyledTableRow>
-                    );
-                  })()}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {isSmallScreen ? (
+              renderMobileInstallmentCards()
+            ) : (
+              renderDesktopTable()
+            )}
           </Paper>
         </Box>
 
-        <Box
-          sx={{
-            width: "270px",
-            borderRight: "1px solid #ddd",
-            bgcolor: "#fafafa",
-            height: "100%",
-            overflowY: "auto",
-            flexShrink: 0,
-          }}
-        >
+        {!isSmallScreen && (
+          <Box
+            sx={{
+              width: "270px",
+              borderRight: "1px solid #ddd",
+              bgcolor: "#fafafa",
+              height: "100%",
+              overflowY: "auto",
+              flexShrink: 0,
+            }}
+          >
           <Box sx={{ p: 3 }}>
             <Typography variant="h6" fontWeight="bold" mb={3}>
               خطوات المراجعة
@@ -1134,6 +1563,7 @@ const Installments = () => {
             )}
           </Box>
         </Box>
+        )}
       </Box>
 
       <Menu
