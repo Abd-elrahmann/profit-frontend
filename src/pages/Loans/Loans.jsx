@@ -77,6 +77,8 @@ const Loans = () => {
   });
   const [isCreatingLoan, setIsCreatingLoan] = useState(false);
   const [isAdditionalLoan, setIsAdditionalLoan] = useState(false);
+  const [bankBalance, setBankBalance] = useState(null);
+  const [isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
   const { permissions } = usePermissions();
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
@@ -110,6 +112,7 @@ const Loans = () => {
     if (activeTab === 1) {
       fetchContractTemplates();
       calculateInstallments();
+      fetchBankBalance();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -180,8 +183,24 @@ const Loans = () => {
     setSelectedKafeel(newValue);
   };
 
-  const handleBankSelect = (event, newValue) => {
+  const handleBankSelect = async (event, newValue) => {
     setSelectedBank(newValue);
+    // Keep fetching balance even when bank is cleared to show current balance
+    await fetchBankBalance();
+  };
+
+  const fetchBankBalance = async () => {
+    try {
+      setIsLoadingBankBalance(true);
+      const response = await Api.get("/api/accounts/bank");
+      const balance = response?.data?.account?.balance || 0;
+      setBankBalance(balance);
+    } catch (error) {
+      handleApiError(error);
+      setBankBalance(null);
+    } finally {
+      setIsLoadingBankBalance(false);
+    }
   };
 
   const handlePartnerSelect = (event, newValue) => {
@@ -227,7 +246,7 @@ const Loans = () => {
       setPreviewOpen(true);
     } catch (error) {
       handleApiError(error);
-      notifyError("حدث خطأ أثناء توليد معاينة العقود");
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء توليد معاينة العقود");
     }
   };
 
@@ -260,7 +279,7 @@ const Loans = () => {
       setActiveTab(0);
     } catch (error) {
       handleApiError(error);
-      notifyError("حدث خطأ أثناء حفظ العقود");
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ العقود");
     }
   };
 
@@ -390,6 +409,17 @@ const Loans = () => {
       return;
     }
 
+    // Validate amount against bank balance
+    if (bankBalance !== null) {
+      const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
+      if (loanAmount > bankBalance) {
+        notifyError(
+          `المبلغ المدخل (${formatAmount(loanAmount.toFixed(2))}) يتجاوز رصيد الصندوق المتاح (${formatAmount(bankBalance.toFixed(2))})`
+        );
+        return;
+      }
+    }
+
     try {
       setIsCreatingLoan(true);
 
@@ -440,6 +470,7 @@ const Loans = () => {
     setSelectedLoan(null);
     setSelectedBank(null);
     setSelectedPartner(null);
+    setBankBalance(null);
     setLoanForm({
       amount: "",
       interestRate: "",
@@ -520,6 +551,10 @@ const Loans = () => {
 
       if (loan.bankAccount) {
         setSelectedBank(loan.bankAccount);
+        await fetchBankBalance();
+      } else {
+        setSelectedBank(null);
+        setBankBalance(null);
       }
 
       if (loan.partner) {
@@ -625,6 +660,16 @@ const Loans = () => {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
+        
+        // Validate amount against bank balance
+        if (field === "amount" && bankBalance !== null) {
+          const numericAmount = parseFloat(rawValue);
+          if (numericAmount > bankBalance) {
+            notifyError(
+              `المبلغ المدخل (${formatAmount(numericAmount.toFixed(2))}) يتجاوز رصيد الصندوق المتاح (${formatAmount(bankBalance.toFixed(2))})`
+            );
+          }
+        }
       }
     }
     setLoanForm((prev) => ({
@@ -1249,32 +1294,68 @@ const Loans = () => {
                       justifyContent="center"
                     >
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          label="مبلغ السلفة"
-                          value={formatAmount(loanForm.amount)}
-                          onChange={(e) =>
-                            handleInputChange("amount", e.target.value)
-                          }
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          disabled={isReadOnlyMode}
-                          onKeyDown={(e) => {
-                            if (e.key === "-" || e.key === "+")
-                              e.preventDefault();
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: isReadOnlyMode
-                                ? "#f5f5f5"
-                                : "#f9fafb",
-                            },
-                          }}
-                        />
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                          <TextField
+                            fullWidth
+                            type="text"
+                            label="مبلغ السلفة"
+                            value={formatAmount(loanForm.amount)}
+                            onChange={(e) =>
+                              handleInputChange("amount", e.target.value)
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            disabled={isReadOnlyMode}
+                            onKeyDown={(e) => {
+                              if (e.key === "-" || e.key === "+")
+                                e.preventDefault();
+                            }}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                height: "56px",
+                                width: "200px",
+                                backgroundColor: isReadOnlyMode
+                                  ? "#f5f5f5"
+                                  : "#f9fafb",
+                              },
+                            }}
+                          />
+                          {!isReadOnlyMode && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "text.secondary",
+                                fontSize: "16px",
+                                mt: -0.5,
+                                ml: 1,
+                              }}
+                            >
+                              {isLoadingBankBalance ? (
+                                "جاري تحميل رصيد الصندوق..."
+                              ) : bankBalance !== null ? (
+                                <>
+                                  رصيد الصندوق المتاح:{" "}
+                                  <span
+                                    style={{
+                                      fontWeight: "bold",
+                                      fontSize: "16px",
+                                      color:
+                                        parseFloat(loanForm.amount.replace(/,/g, "") || 0) >
+                                        bankBalance
+                                          ? "#d32f2f"
+                                          : "#0d40a5",
+                                    }}
+                                  >
+                                    {formatAmount(Math.round(bankBalance).toString())}
+                                  </span>
+                                </>
+                              ) : (
+                                "لا يوجد رصيد متاح"
+                              )}
+                            </Typography>
+                          )}
+                        </Box>
                       </Grid>
 
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>

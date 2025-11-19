@@ -31,6 +31,7 @@ const Logs = React.lazy(() => import('./pages/logs/logs'));
 const Treasury = React.lazy(() => import('./pages/treasury/treasury'));
 const GeneralLedger = React.lazy(() => import('./pages/generalLedger/GeneralLedger'));
 const PeriodClosing = React.lazy(() => import('./pages/periodClosing/periodClosing'));
+const ProfitDistribution = React.lazy(() => import('./pages/profit/ProfitDistribution'));
 const routes = [
   {
     path: '/login',
@@ -202,6 +203,17 @@ const routes = [
     parent: 'إدارة المالية'
   },
   {
+    path: '/profit-distribution',
+    element: ProfitDistribution,
+    protected: true,
+    showInSidebar: true,
+    label: 'توزيع الأرباح',
+    module: 'distribution',
+    icon: AccountBalance,
+    requiresPermissions: true,
+    parent: 'إدارة المالية'
+  },
+  {  
     path: '/treasury',
     element: Treasury,
     protected: true,
