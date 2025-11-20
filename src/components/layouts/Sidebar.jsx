@@ -14,6 +14,7 @@ import {
   MdExpandMore as ExpandMoreIcon,
   MdExpandLess as ExpandLessIcon
 } from 'react-icons/md';
+import { RadioButtonUnchecked } from '@mui/icons-material';
 import { getSidebarMenuItems } from '../../routes';
 import { usePermissions } from '../Contexts/PermissionsContext';
 
@@ -171,7 +172,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             sx={{
               '& .MuiListItemText-primary': {
                 fontSize: '0.95rem',
-                fontWeight: 600,
+                fontWeight: 'bold',
                 color: 'text.primary',
                 textAlign: 'right'
               }
@@ -190,7 +191,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </ListItem>
         
         <Collapse in={isGroupOpen && isOpen} timeout="auto">
-          <List component="div" disablePadding sx={{ pl: 2 }}>
+          <List component="div" disablePadding sx={{ pr: 2 }}>
             {filteredChildren.map((child, childIndex) => (
               <ListItem
                 key={child.path}
@@ -202,6 +203,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   justifyContent: 'space-between',
                   borderRadius: 2,
                   mb: 1,
+                  pr: 3, // Move children to the right when parent is open
                   textDecoration: 'none',
                   color: 'text.primary',
                   opacity: isOpen ? 1 : 0,
@@ -236,21 +238,19 @@ const Sidebar = ({ isOpen, onClose }) => {
                     }
                   }}
                 />
-                {child.icon && (
-                  <ListItemIcon sx={{ 
-                    minWidth: 0,
-                    marginLeft: '10px',
-                    justifyContent: 'center',
-                    color: 'text.primary',
-                    transition: 'transform 0.03s ease',
-                    transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
-                    '& > *': {
-                      fontSize: '1.3rem !important'
-                    }
-                  }}>
-                    <child.icon />
-                  </ListItemIcon>
-                )}
+                <ListItemIcon sx={{ 
+                  minWidth: 0,
+                  marginLeft: '10px',
+                  justifyContent: 'center',
+                  color: 'text.primary',
+                  transition: 'transform 0.03s ease',
+                  transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
+                  '& > *': {
+                    fontSize: '1rem !important'
+                  }
+                }}>
+                  <RadioButtonUnchecked />
+                </ListItemIcon>
               </ListItem>
             ))}
           </List>

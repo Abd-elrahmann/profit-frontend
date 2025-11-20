@@ -162,14 +162,28 @@ const Logs = () => {
     const screenTranslations = {
       "Auth": "المصادقة",
       "Bank Accounts": "الحسابات البنكية",
+      "Banks": "البنوك",
       "Clients": "العملاء",
+      "Dashboard": "لوحة التحكم",
       "Journals": "القيود اليومية",
+      "Journal Entries": "القيود اليومية",
       "Loans": "السلف",
       "Partners": "المستثمرين",
+      "Investors": "المستثمرين",
       "Repayments": "الأقساط",
+      "Installments": "الدفعات",
       "Roles": "الأدوار",
       "Templates": "القوالب",
+      "Contract Templates": "القوالب العقدية",
+      "Messages Templates": "قوالب الرسائل",
       "Users": "المستخدمين",
+      "Employees": "المسؤولين",
+      "Profile": "الملف الشخصي",
+      "General Ledger": "دفتر الأستاذ العام",
+      "Period": "تقفيل الفترات",
+      "Profit Distribution": "توزيع الأرباح",
+      "Treasury": "الصندوق",
+      "Logs": "السجلات",
     };
     return screenTranslations[screen] || screen;
   };

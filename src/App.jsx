@@ -108,6 +108,7 @@ const AppLayout = () => {
           } 
         />
         
+        
         {/* Protected routes */}
         {routes
           .filter(route => route.protected)

@@ -542,7 +542,7 @@ const ProfitDistribution = () => {
       {/* Summary Cards */}
       <Grid container spacing={2} mb={3}>
         <Grid item xs={6}>
-          <Card sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", textAlign: "center" }}>
+          <Card sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", textAlign: "center",justifyContent: "center" }}>
             <CardContent sx={{ p: 2 }}>
               <Typography variant="body2" color="primary.main">
                 أرباح الشركة
@@ -554,7 +554,7 @@ const ProfitDistribution = () => {
           </Card>
         </Grid>
         <Grid item xs={6}>
-          <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center" }}>
+          <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center",justifyContent: "center" }}>
             <CardContent sx={{ p: 2 }}>
               <Typography variant="body2" color="success.main">
                 أرباح الشركاء
@@ -1033,7 +1033,7 @@ const ProfitDistribution = () => {
               <Box sx={{ mb: 3 }}>
                 {activeTab === 1 ? (
                   // Back button for mobile details view
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center' }}>
                     <IconButton onClick={handleBackToList} size="small">
                       <ArrowBackIcon />
                     </IconButton>

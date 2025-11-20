@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Toolbar,
   Typography,
@@ -14,64 +14,98 @@ import {
   MdMenuOpen as MenuOpenIcon,
   MdPerson as Person,
   MdExitToApp as ExitToApp,
+  MdSettings as SettingsIcon,
 } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "/assets/images/logo.webp";
+
 const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
   const [userData, setUserData] = useState(null);
 
-  // Validate user data on mount and when location changes
-  useEffect(() => {
-    const validateUserData = () => {
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
-      
-      // If there's a token but no user data, clear everything
-      if (token && !userStr) {
-        console.warn('Token exists but no user data found. Clearing auth data...');
-        localStorage.removeItem('token');
-        localStorage.removeItem('profile');
-        if (location.pathname !== '/login') {
-          navigate('/login', { replace: true });
-        }
-        return;
+  // Function to validate and update user data
+  const validateUserData = useCallback(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    // If there's a token but no user data, clear everything
+    if (token && !userStr) {
+      console.warn('Token exists but no user data found. Clearing auth data...');
+      localStorage.removeItem('token');
+      localStorage.removeItem('profile');
+      if (location.pathname !== '/login') {
+        navigate('/login', { replace: true });
       }
-      
-      // If there's user data, try to parse it
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          // Validate that user object has required properties
-          if (!user || !user.name) {
-            console.warn('Invalid user data format. Clearing auth data...');
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('profile');
-            if (location.pathname !== '/login') {
-              navigate('/login', { replace: true });
-            }
-            return;
-          }
-          setUserData(user);
-        } catch (error) {
-          console.error('Error parsing user data:', error);
+      return;
+    }
+    
+    // If there's user data, try to parse it
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        // Validate that user object has required properties
+        if (!user || !user.name) {
+          console.warn('Invalid user data format. Clearing auth data...');
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           localStorage.removeItem('profile');
           if (location.pathname !== '/login') {
             navigate('/login', { replace: true });
           }
+          return;
         }
-      } else {
-        setUserData(null);
+        setUserData(user);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('profile');
+        if (location.pathname !== '/login') {
+          navigate('/login', { replace: true });
+        }
+      }
+    } else {
+      setUserData(null);
+    }
+  }, [location, navigate]);
+
+  // Validate user data on mount and when location changes
+  useEffect(() => {
+    validateUserData();
+  }, [validateUserData]);
+
+  // Listen for storage changes and custom events to update user data immediately
+  useEffect(() => {
+    // Listen for custom profile update event
+    const handleProfileUpdate = () => {
+      validateUserData();
+    };
+
+    // Listen for storage events (works across tabs)
+    const handleStorageChange = (e) => {
+      if (e.key === 'user' || e.key === null) {
+        validateUserData();
       }
     };
-    
-    validateUserData();
-  }, [location, navigate]);
+
+    // Listen for custom event dispatched from Profile page
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for custom storage event (for same-tab updates)
+    const handleCustomStorage = () => {
+      validateUserData();
+    };
+    window.addEventListener('userDataUpdated', handleCustomStorage);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userDataUpdated', handleCustomStorage);
+    };
+  }, [validateUserData]);
 
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -79,6 +113,11 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
 
   const handleUserMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleProfileClick = () => {
+    handleUserMenuClose();
+    navigate("/profile");
   };
 
   const handleLogout = () => {
@@ -89,7 +128,6 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
     handleUserMenuClose();
     navigate("/login", { replace: true });
   };
-
 
   if (location.pathname === "/login") {
     return null;
@@ -187,7 +225,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                     fontSize: "1.2rem",
                   }}
                 >
-                  {!userData?.profileImage && userData?.fullName?.charAt(0)}
+                  {!userData?.profileImage && userData?.name?.charAt(0)}
                 </Avatar>
               </IconButton>
 
@@ -203,6 +241,10 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                   },
                 }}
               >
+                <MenuItem onClick={handleProfileClick}>
+                  <Person sx={{ mr: 1, ml: 0 }} />
+                  الملف الشخصي
+                </MenuItem>
                 <MenuItem onClick={handleLogout}>
                   <ExitToApp sx={{ mr: 1, ml: 0 }} />
                   تسجيل الخروج

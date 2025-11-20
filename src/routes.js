@@ -32,6 +32,8 @@ const Treasury = React.lazy(() => import('./pages/treasury/treasury'));
 const GeneralLedger = React.lazy(() => import('./pages/generalLedger/GeneralLedger'));
 const PeriodClosing = React.lazy(() => import('./pages/periodClosing/periodClosing'));
 const ProfitDistribution = React.lazy(() => import('./pages/profit/ProfitDistribution'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const ChartOfAccounts = React.lazy(() => import('./pages/chartOfAccounts/chartOfAccounts'));
 const routes = [
   {
     path: '/login',
@@ -135,7 +137,17 @@ const routes = [
     parent: 'القوالب'
   },
 
-  // المالية مجموعة واحدة
+  {
+    path: '/chart-of-accounts',
+    element: ChartOfAccounts,
+    protected: true,
+    showInSidebar: true,
+    label: 'شجرة الحسابات',
+    icon: AccountBalance,
+    module: 'accounts',
+    requiresPermissions: true,
+    parent: 'إدارة المالية'
+  },
   {
     path: '/loans',
     element: Loans,
@@ -223,6 +235,13 @@ const routes = [
     requiresPermissions: true,
     icon: AccountBalance,
     parent: 'إدارة الصندوق'
+  },
+  {
+    path: '/profile',
+    element: Profile,
+    protected: true,
+    showInSidebar: false,
+    requiresPermissions: false
   }
 ];
 
