@@ -25,7 +25,7 @@ export const createAccount = async (accountData) => {
 
 // Update account
 export const updateAccount = async (accountId, accountData) => {
-  const response = await Api.put(`/api/accounts/${accountId}`, accountData);
+  const response = await Api.patch(`/api/accounts/${accountId}`, accountData);
   return response.data;
 };
 

@@ -78,13 +78,18 @@ const ChartOfAccount = () => {
         if (isEditing) {
           await updateAccount(selectedAccount.id, values);
           notifySuccess('تم تحديث الحساب بنجاح');
+          const updatedAccount = { ...selectedAccount, ...values };
+          setSelectedAccount(updatedAccount);
+          queryClient.invalidateQueries(['accountsTree']);
+          setIsEditing(false);
+          setIsAdding(false);
+          formik.setValues(updatedAccount);
         } else {
           await createAccount(values);
           notifySuccess('تم إنشاء الحساب بنجاح');
+          queryClient.invalidateQueries(['accountsTree']);
+          resetForm();
         }
-        
-        queryClient.invalidateQueries(['accountsTree']);
-        resetForm();
       } catch (error) {
         notifyError(error.response?.data?.message || 'فشلت العملية');
       }
@@ -422,7 +427,7 @@ const ChartOfAccount = () => {
                     required
                     size="small"
                   />
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isEditing && !isAdding} size="small">
+                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
                     <InputLabel>نوع الحساب</InputLabel>
                     <Select
                       name="type"
@@ -448,11 +453,11 @@ const ChartOfAccount = () => {
                     name="code"
                     value={formik.values.code}
                     onChange={formik.handleChange}
-                    disabled={!isEditing && !isAdding}
+                    disabled={!isAdding}
                     required
                     size="small"
                   />
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isEditing && !isAdding} size="small">
+                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
                     <InputLabel>طبيعة الحساب</InputLabel>
                     <Select
                       name="nature"
@@ -472,7 +477,7 @@ const ChartOfAccount = () => {
 
                 {/* الصف الثالث: النوع الأساسي والمستوى */}
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isEditing && !isAdding} size="small">
+                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
                     <InputLabel>النوع الأساسي</InputLabel>
                     <Select
                       name="accountBasicType"
@@ -497,7 +502,7 @@ const ChartOfAccount = () => {
                     name="level"
                     value={formik.values.level}
                     onChange={formik.handleChange}
-                    disabled={!isEditing && !isAdding}
+                    disabled={!isAdding}
                     InputProps={{ inputProps: { min: 1 } }}
                     size="small"
                   />
@@ -505,7 +510,7 @@ const ChartOfAccount = () => {
 
                 {/* الصف الرابع: الحالة */}
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isEditing && !isAdding} size="small">
+                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
                     <InputLabel>الحالة</InputLabel>
                     <Select
                       name="isActive"
