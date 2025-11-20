@@ -20,6 +20,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useMediaQuery,
+  Stack,
 } from "@mui/material";
 import {
   AccountBalance,
@@ -78,6 +80,10 @@ export default function Treasury() {
   const [tab, setTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState('');
+
+  const isMobile = useMediaQuery("(max-width: 480px)");
+  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isSmallScreen = isMobile || isTablet;
 
   const { data: bankData, isLoading, error } = useQuery({
     queryKey: ["bank-account", selectedMonth],
@@ -188,6 +194,211 @@ export default function Treasury() {
     return `${monthNames[parseInt(month) - 1]} ${year}`;
   }
 
+  // Render mobile journal cards
+  const renderMobileJournalCards = () => (
+    <Stack spacing={2} sx={{ p: 2 }}>
+      {currentJournals.map((journal) => (
+        <Card key={journal.id} variant="outlined" sx={{ borderRadius: 2 }}>
+          <CardContent sx={{ p: 2 }}>
+            <Stack spacing={1.5}>
+              {/* Header */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                    {journal.reference}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {dayjs(journal.date).format('DD/MM/YYYY')}
+                  </Typography>
+                </Box>
+                <Chip 
+                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
+                  size="small"
+                  color={journal.status === 'POSTED' ? 'success' : 'default'}
+                  variant="outlined"
+                  sx={{ 
+                    fontWeight: 'bold',
+                    fontSize: '0.7rem'
+                  }}
+                />
+              </Box>
+
+              {/* Description */}
+              <Box>
+                <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
+                  {journal.description}
+                </Typography>
+                {journal.postedBy && (
+                  <Typography variant="caption" color="text.secondary">
+                    بواسطة: {journal.postedBy}
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Journal Details */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    مدين
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    fontWeight="bold"
+                    color={journal.debit > 0 ? "success.main" : "text.secondary"}
+                  >
+                    {journal.debit > 0 ? journal.debit.toLocaleString('en-US') : '0'}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    دائن
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    fontWeight="bold"
+                    color={journal.credit > 0 ? "error.main" : "text.secondary"}
+                  >
+                    {journal.credit > 0 ? journal.credit.toLocaleString('en-US') : '0'}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    الرصيد
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    fontWeight="bold"
+                    color={journal.balance >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    {journal.balance.toLocaleString('en-US')}
+                  </Typography>
+                </Box>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
+    </Stack>
+  );
+
+  // Render desktop table
+  const renderDesktopJournalTable = () => (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <StyledTableRow>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
+              التاريخ
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '200px' }}>
+              المرجع
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>
+              الوصف
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
+              مدين
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
+              دائن
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
+              الرصيد
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
+              الحالة
+            </StyledTableCell>
+          </StyledTableRow>
+        </TableHead>
+        <TableBody>
+          {currentJournals.map((journal) => (
+            <StyledTableRow key={journal.id} hover>
+              <StyledTableCell align="center">
+                <Typography variant="body2">
+                  {dayjs(journal.date).format('DD/MM/YYYY')}
+                </Typography>
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ width: '200px' }}>
+                <Typography variant="body2" fontWeight="500" color="primary">
+                  {journal.reference}
+                </Typography>
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  {journal.description}
+                </Typography>
+                {journal.postedBy && (
+                  <Typography variant="caption" color="text.secondary">
+                    بواسطة: {journal.postedBy}
+                  </Typography>
+                )}
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
+                {journal.debit > 0 ? (
+                  <Typography 
+                    variant="body2" 
+                    fontWeight="bold"
+                    color="success.main"
+                  >
+                    {journal.debit.toLocaleString('en-US')}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    0
+                  </Typography>
+                )}
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
+                {journal.credit > 0 ? (
+                  <Typography 
+                    variant="body2" 
+                    fontWeight="bold"
+                    color="error.main"
+                  >
+                    {journal.credit.toLocaleString('en-US')}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    0
+                  </Typography>
+                )}
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
+                <Typography 
+                  variant="body2" 
+                  fontWeight="bold"
+                  color={journal.balance >= 0 ? 'success.main' : 'error.main'}
+                >
+                  {journal.balance.toLocaleString('en-US')}
+                </Typography>
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
+                <Chip 
+                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
+                  size="small"
+                  color={journal.status === 'POSTED' ? 'success' : 'default'}
+                  variant="outlined"
+                  sx={{ 
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem'
+                  }}
+                />
+              </StyledTableCell>
+            </StyledTableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
@@ -205,18 +416,18 @@ export default function Treasury() {
         <meta name="description" content="إدارة الصندوق والنقدية" />
       </Helmet>
 
-      <Box sx={{ p: 3, mb: 3 }}>
+      <Box sx={{ p: isSmallScreen ? 2 : 3, mb: 3 }}>
         <Tabs
           value={tab}
           onChange={handleTabChange}
           textColor="primary"
           sx={{ 
-            px: 2,
+            px: isSmallScreen ? 1 : 2,
             '& .MuiTab-root': {
               fontWeight: '600',
-              fontSize: '0.95rem',
-              py: 2,
-              minHeight: '60px'
+              fontSize: isSmallScreen ? '0.8rem' : '0.95rem',
+              py: isSmallScreen ? 1 : 2,
+              minHeight: isSmallScreen ? '48px' : '60px'
             }
           }}
         >
@@ -232,7 +443,7 @@ export default function Treasury() {
           />
         </Tabs>
 
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: isSmallScreen ? 2 : 4 }}>
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
               <CircularProgress size={60} />
@@ -244,14 +455,14 @@ export default function Treasury() {
                   <Box sx={{ 
                     display: 'flex', 
                     flexWrap: 'wrap', 
-                    gap: 3, 
-                    mb: 4,
+                    gap: isSmallScreen ? 2 : 3, 
+                    mb: isSmallScreen ? 2 : 4,
                     justifyContent: 'center',
                     alignItems: 'stretch'
                   }}>
-                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                    <Box sx={{ flex: isSmallScreen ? '1 1 100%' : '1 1 200px', minWidth: isSmallScreen ? '100%' : '200px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
-                        <CardContent sx={{ p: 3 }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
                               p: 1, 
@@ -261,7 +472,7 @@ export default function Treasury() {
                               <AccountBalance sx={{ color: "#1976d2", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h4" fontWeight="bold" color="primary">
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="primary">
                                 {availableBalance.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -281,7 +492,7 @@ export default function Treasury() {
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
-                        <CardContent sx={{ p: 3 }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
                               p: 1, 
@@ -291,7 +502,7 @@ export default function Treasury() {
                               <TrendingUp sx={{ color: "#2e7d32", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h4" fontWeight="bold" color="success.main">
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
                                 {totalDebit.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -311,7 +522,7 @@ export default function Treasury() {
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
-                        <CardContent sx={{ p: 3 }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
                               p: 1, 
@@ -321,7 +532,7 @@ export default function Treasury() {
                               <AccountBalance sx={{ color: "#ef6c00", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h4" fontWeight="bold" color="warning.main">
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="warning.main">
                                 {currentTotalTransactions}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -341,7 +552,7 @@ export default function Treasury() {
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
-                        <CardContent sx={{ p: 3 }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
                               p: 1, 
@@ -351,7 +562,7 @@ export default function Treasury() {
                               <TrendingUp sx={{ color: "#9c27b0", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h4" fontWeight="bold" sx={{ color: "#9c27b0" }}>
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" sx={{ color: "#9c27b0" }}>
                                 {totalRepaymentsAmount.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -375,7 +586,7 @@ export default function Treasury() {
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
-                        <CardContent sx={{ p: 3 }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Box sx={{ 
                               p: 1, 
@@ -385,7 +596,7 @@ export default function Treasury() {
                               <CheckCircle sx={{ color: "#00C49F", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h4" fontWeight="bold" color="success.main">
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
                                 {paidRepaymentsUntilNow.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -471,10 +682,10 @@ export default function Treasury() {
                   <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12}>
                       <Paper sx={{ 
-                        p: 3, 
+                        p: isSmallScreen ? 2 : 3, 
                         borderRadius: 2, 
                         boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                        width: 'calc(100vw - 240px)',
+                        width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                       }}>
                         <Typography 
                           variant="h6" 
@@ -487,24 +698,25 @@ export default function Treasury() {
                         
                         <Box sx={{ 
                           display: 'flex',
+                          flexDirection: isSmallScreen ? 'column' : 'row',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 6,
+                          gap: isSmallScreen ? 3 : 6,
                           flexWrap: 'wrap'
                         }}>
                           {/* الدائرة الدائرية */}
                           <Box sx={{ 
                             position: 'relative', 
-                            width: 200, 
-                            height: 200,
+                            width: isSmallScreen ? 150 : 200, 
+                            height: isSmallScreen ? 150 : 200,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             flexShrink: 0
                           }}>
                             <svg 
-                              width="200" 
-                              height="200" 
+                              width={isSmallScreen ? "150" : "200"} 
+                              height={isSmallScreen ? "150" : "200"} 
                               viewBox="0 0 100 100"
                               style={{ transform: 'rotate(-90deg)' }}
                             >
@@ -540,7 +752,7 @@ export default function Treasury() {
                               justifyContent: 'center'
                             }}>
                               <Typography 
-                                variant="h4" 
+                                variant={isSmallScreen ? "h5" : "h4"} 
                                 fontWeight="bold" 
                                 color="primary"
                                 sx={{ mb: 0.5 }}
@@ -564,7 +776,8 @@ export default function Treasury() {
                           {/* إحصائيات المقرض والمتاح */}
                           <Box sx={{ 
                             display: 'flex', 
-                            gap: 6,
+                            flexDirection: isSmallScreen ? 'row' : 'row',
+                            gap: isSmallScreen ? 3 : 6,
                             flex: 1,
                             justifyContent: 'center',
                             flexWrap: 'wrap'
@@ -647,15 +860,15 @@ export default function Treasury() {
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                       <Grid item xs={12}>
                         <Paper sx={{ 
-                          p: 3, 
+                          p: isSmallScreen ? 2 : 3, 
                           borderRadius: 2, 
                           boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                          width: 'calc(100vw - 240px)',
+                          width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                         }}>
                           <Typography variant="h6" fontWeight="bold" mb={3}>
                             تطور الوارد والمقرض والرصيد
                           </Typography>
-                          <ResponsiveContainer width="100%" height={400}>
+                          <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
                             <ComposedChart data={monthlyBalanceData}>
                               <defs>
                                 <linearGradient id="colorDebit" x1="0" y1="0" x2="0" y2="1">
@@ -710,152 +923,146 @@ export default function Treasury() {
                   )}
 
                   {/* رسمة Pie Chart لتوزيع المعاملات */}
-                  <Grid container spacing={3} sx={{ mb: 3 }}>
-                    <Grid item xs={12}>
-                      <Paper sx={{ 
-                        p: 3, 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                        width: 'calc(100vw - 240px)',
-                      }}>
-                        <Typography variant="h6" fontWeight="bold" mb={3}>
-                          توزيع المعاملات
-                        </Typography>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <PieChart>
-                            <Pie
-                              data={transactionTypeData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={120}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {transactionTypeData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} />
-                            <Legend 
-                              verticalAlign="bottom" 
-                              height={36}
-                              formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </Paper>
-                    </Grid>
-                  </Grid>
+                  <Box sx={{ mb: 3 }}>
+                    <Paper sx={{ 
+                      p: isSmallScreen ? 2 : 3, 
+                      borderRadius: 2, 
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                      width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
+                    }}>
+                      <Typography variant="h6" fontWeight="bold" mb={3}>
+                        توزيع المعاملات
+                      </Typography>
+                      <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                        <PieChart>
+                          <Pie
+                            data={transactionTypeData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={120}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {transactionTypeData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} />
+                          <Legend 
+                            verticalAlign="bottom" 
+                            height={36}
+                            formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Box>
 
-                  <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={12}>
-                      <Paper sx={{ 
-                        p: 3, 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                        width: 'calc(100vw - 240px)',
-                      }}>
-                        <Typography variant="h6" fontWeight="bold" mb={3}>
-                          توزيع حالات القيود
-                        </Typography>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <PieChart>
-                            <Pie
-                              data={statusDistribution}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={120}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {statusDistribution.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value, name) => [`${value} قيد`, name]} />
-                            <Legend 
-                              verticalAlign="bottom" 
-                              height={36}
-                              formatter={(value, entry) => `${value}: ${entry.payload.value} قيد`}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </Paper>
-                    </Grid>
-                  </Grid>
+                  <Box sx={{ mb: 4 }}>
+                    <Paper sx={{ 
+                      p: isSmallScreen ? 2 : 3, 
+                      borderRadius: 2, 
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                      width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
+                    }}>
+                      <Typography variant="h6" fontWeight="bold" mb={3}>
+                        توزيع حالات القيود
+                      </Typography>
+                      <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                        <PieChart>
+                          <Pie
+                            data={statusDistribution}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={120}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {statusDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value, name) => [`${value} قيد`, name]} />
+                          <Legend 
+                            verticalAlign="bottom" 
+                            height={36}
+                            formatter={(value, entry) => `${value}: ${entry.payload.value} قيد`}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Box>
 
                   {/* Repayments Chart */}
                   {totalRepaymentsAmount > 0 && (
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                      <Grid item xs={12}>
-                        <Paper sx={{ 
-                          p: 3, 
-                          borderRadius: 2, 
-                          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                          width: 'calc(100vw - 240px)',
-                        }}>
-                          <Typography variant="h6" fontWeight="bold" mb={3}>
-                            توزيع التحصيل المقترض
-                          </Typography>
-                          <ResponsiveContainer width="100%" height={400}>
-                            <BarChart
-                              data={[
-                                {
-                                  name: 'الواصل حتى الآن',
-                                  value: paidRepaymentsUntilNow,
-                                  color: '#00C49F'
-                                },
-                                {
-                                  name: 'المتبقي',
-                                  value: remainingRepayments,
-                                  color: '#FF8042'
-                                },
-                                {
-                                  name: 'الإجمالي',
-                                  value: totalRepaymentsAmount,
-                                  color: '#9c27b0'
-                                }
-                              ]}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    <Box sx={{ mb: 4 }}>
+                      <Paper sx={{ 
+                        p: isSmallScreen ? 2 : 3, 
+                        borderRadius: 2, 
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                        width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
+                      }}>
+                        <Typography variant="h6" fontWeight="bold" mb={3}>
+                          توزيع التحصيل المقترض
+                        </Typography>
+                        <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                          <BarChart
+                            data={[
+                              {
+                                name: 'الواصل حتى الآن',
+                                value: paidRepaymentsUntilNow,
+                                color: '#00C49F'
+                              },
+                              {
+                                name: 'المتبقي',
+                                value: remainingRepayments,
+                                color: '#FF8042'
+                              },
+                              {
+                                name: 'الإجمالي',
+                                value: totalRepaymentsAmount,
+                                color: '#9c27b0'
+                              }
+                            ]}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis 
+                              dataKey="name" 
+                              tick={{ fill: '#666', fontSize: 14 }}
+                            />
+                            <YAxis 
+                              tick={{ fill: '#666', fontSize: 14 }}
+                              tickFormatter={(value) => `${value.toLocaleString('en-US')}`}
+                            />
+                            <Tooltip 
+                              formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                              contentStyle={{ 
+                                borderRadius: '8px',
+                                border: '1px solid #e0e0e0'
+                              }}
+                            />
+                            <Legend 
+                              verticalAlign="top"
+                              height={36}
+                            />
+                            <Bar 
+                              dataKey="value" 
+                              name="المبلغ"
+                              radius={[8, 8, 0, 0]}
                             >
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis 
-                                dataKey="name" 
-                                tick={{ fill: '#666', fontSize: 14 }}
-                              />
-                              <YAxis 
-                                tick={{ fill: '#666', fontSize: 14 }}
-                                tickFormatter={(value) => `${value.toLocaleString('en-US')}`}
-                              />
-                              <Tooltip 
-                                formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
-                                contentStyle={{ 
-                                  borderRadius: '8px',
-                                  border: '1px solid #e0e0e0'
-                                }}
-                              />
-                              <Legend 
-                                verticalAlign="top"
-                                height={36}
-                              />
-                              <Bar 
-                                dataKey="value" 
-                                name="المبلغ"
-                                radius={[8, 8, 0, 0]}
-                              >
-                                {[
-                                  { name: 'الواصل حتى الآن', value: paidRepaymentsUntilNow, color: '#00C49F' },
-                                  { name: 'المتبقي', value: remainingRepayments, color: '#FF8042' },
-                                  { name: 'الإجمالي', value: totalRepaymentsAmount, color: '#9c27b0' }
-                                ].map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </Paper>
-                      </Grid>
-                    </Grid>
+                              {[
+                                { name: 'الواصل حتى الآن', value: paidRepaymentsUntilNow, color: '#00C49F' },
+                                { name: 'المتبقي', value: remainingRepayments, color: '#FF8042' },
+                                { name: 'الإجمالي', value: totalRepaymentsAmount, color: '#9c27b0' }
+                              ].map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Paper>
+                    </Box>
                   )}
                 </Box>
               )}
@@ -865,14 +1072,16 @@ export default function Treasury() {
                   <Paper sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                     <Box sx={{ 
                       display: 'flex', 
+                      flexDirection: isSmallScreen ? 'column' : 'row',
                       justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      p: 3,
+                      alignItems: isSmallScreen ? 'flex-start' : 'center', 
+                      p: isSmallScreen ? 2 : 3,
+                      gap: isSmallScreen ? 2 : 0,
                       borderBottom: '1px solid #e0e0e0',
                       bgcolor: '#fafafa'
                     }}>
                       <Box>
-                        <Typography variant="h6" fontWeight="bold" color="primary">
+                        <Typography variant={isSmallScreen ? "subtitle1" : "h6"} fontWeight="bold" color="primary">
                           سجل القيود المحاسبية
                         </Typography>
                         {selectedMonth && (
@@ -882,8 +1091,14 @@ export default function Treasury() {
                         )}
                       </Box>
                       
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <FormControl size="small" sx={{ minWidth: 250 }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: isSmallScreen ? 'column' : 'row',
+                        alignItems: isSmallScreen ? 'stretch' : 'center', 
+                        gap: 2,
+                        width: isSmallScreen ? '100%' : 'auto'
+                      }}>
+                        <FormControl size="small" sx={{ minWidth: isSmallScreen ? '100%' : 250 }}>
                           <InputLabel>الشهر</InputLabel>
                           <Select
                             value={selectedMonth}
@@ -899,11 +1114,11 @@ export default function Treasury() {
                           </Select>
                         </FormControl>
 
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary" sx={{ alignSelf: isSmallScreen ? 'center' : 'auto' }}>
                           إجمالي {currentTotalTransactions} قيد
                         </Typography>
                         
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: isSmallScreen ? 'center' : 'flex-start' }}>
                           <IconButton
                             onClick={handleExportPDF}
                             disabled={isExporting || currentJournals.length === 0}
@@ -935,114 +1150,7 @@ export default function Treasury() {
                       </Box>
                     </Box>
 
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <StyledTableRow>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-                              التاريخ
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '200px' }}>
-                              المرجع
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>
-                              الوصف
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                              مدين
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                              دائن
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-                              الرصيد
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                              الحالة
-                            </StyledTableCell>
-                          </StyledTableRow>
-                        </TableHead>
-                        <TableBody>
-                          {currentJournals.map((journal) => (
-                            <StyledTableRow key={journal.id} hover>
-                              <StyledTableCell align="center">
-                                <Typography variant="body2">
-                                  {dayjs(journal.date).format('DD/MM/YYYY')}
-                                </Typography>
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ width: '200px' }}>
-                                <Typography variant="body2" fontWeight="500" color="primary">
-                                  {journal.reference}
-                                </Typography>
-                              </StyledTableCell>
-                              <StyledTableCell align="center">
-                                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                  {journal.description}
-                                </Typography>
-                                {journal.postedBy && (
-                                  <Typography variant="caption" color="text.secondary">
-                                    بواسطة: {journal.postedBy}
-                                  </Typography>
-                                )}
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                                {journal.debit > 0 ? (
-                                  <Typography 
-                                    variant="body2" 
-                                    fontWeight="bold"
-                                    color="success.main"
-                                  >
-                                    {journal.debit.toLocaleString('en-US')}
-                                  </Typography>
-                                ) : (
-                                  <Typography variant="body2" color="text.secondary">
-                                    0
-                                  </Typography>
-                                )}
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                                {journal.credit > 0 ? (
-                                  <Typography 
-                                    variant="body2" 
-                                    fontWeight="bold"
-                                    color="error.main"
-                                  >
-                                    {journal.credit.toLocaleString('en-US')}
-                                  </Typography>
-                                ) : (
-                                  <Typography variant="body2" color="text.secondary">
-                                    0
-                                  </Typography>
-                                )}
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-                                <Typography 
-                                  variant="body2" 
-                                  fontWeight="bold"
-                                  color={journal.balance >= 0 ? 'success.main' : 'error.main'}
-                                >
-                                  {journal.balance.toLocaleString('en-US')}
-                                </Typography>
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                                <Chip 
-                                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
-                                  size="small"
-                                  color={journal.status === 'POSTED' ? 'success' : 'default'}
-                                  variant="outlined"
-                                  sx={{ 
-                                    fontWeight: 'bold',
-                                    fontSize: '0.75rem'
-                                  }}
-                                />
-                              </StyledTableCell>
-                            </StyledTableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-
-                    {currentJournals.length === 0 && (
+                    {currentJournals.length === 0 ? (
                       <Box sx={{ textAlign: 'center', py: 6 }}>
                         <AccountBalance sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                         <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -1052,6 +1160,10 @@ export default function Treasury() {
                           لم يتم تسجيل أي قيود محاسبية حتى الآن
                         </Typography>
                       </Box>
+                    ) : (
+                      <>
+                        {isSmallScreen ? renderMobileJournalCards() : renderDesktopJournalTable()}
+                      </>
                     )}
                   </Paper>
                 </Box>
