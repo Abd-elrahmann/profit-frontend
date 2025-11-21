@@ -34,6 +34,7 @@ const PeriodClosing = React.lazy(() => import('./pages/periodClosing/periodClosi
 const ProfitDistribution = React.lazy(() => import('./pages/profit/ProfitDistribution'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const ChartOfAccounts = React.lazy(() => import('./pages/chartOfAccounts/chartOfAccounts'));
+const Zakah = React.lazy(() => import('./pages/Zakah/zakah'));
 const routes = [
   {
     path: '/login',
@@ -235,6 +236,17 @@ const routes = [
     requiresPermissions: true,
     icon: AccountBalance,
     parent: 'إدارة الصندوق'
+  },
+  {
+    path: '/zakah',
+    element: Zakah,
+    protected: true,
+    showInSidebar: true,
+    label: 'الزكاة',
+    module: 'zakat',
+    requiresPermissions: true,
+    icon: AccountBalance,
+    parent: 'الزكاة والادخار'
   },
   {
     path: '/profile',

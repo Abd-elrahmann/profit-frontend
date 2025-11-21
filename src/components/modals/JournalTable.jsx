@@ -148,9 +148,6 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchQuery = "" }) => 
             journalsData?.journals?.map((journal) => (
               <StyledTableRow 
                 key={journal.id} 
-                hover
-                onClick={() => onViewDetails(journal.id)}
-                sx={{ cursor: "pointer" }}
               >
                 <StyledTableCell align="center">
                   {journal.reference}
