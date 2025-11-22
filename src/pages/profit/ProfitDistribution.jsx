@@ -25,6 +25,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -32,6 +34,7 @@ import {
   Visibility as VisibilityIcon,
   ArrowBack as ArrowBackIcon,
   AccountBalance as BalanceIcon,
+  Savings as SavingsIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -48,6 +51,9 @@ import {
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import DeleteModal from "../../components/modals/DeleteModal";
+import SavingPercentage from "../../components/modals/SavingPercentage";
+import "dayjs/locale/ar";
+import dayjs from "dayjs";
 
 const ProfitDistribution = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -59,7 +65,13 @@ const ProfitDistribution = () => {
     periodName: "",
     action: "", // 'post' or 'unpost'
   });
+  const [savingDialog, setSavingDialog] = useState({
+    open: false,
+    periodId: null,
+  });
   const [isDistributing, setIsDistributing] = useState(false);
+  const [enableSaving, setEnableSaving] = useState(false);
+  const [savingPercentage, setSavingPercentage] = useState(0);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -89,6 +101,8 @@ const ProfitDistribution = () => {
   const handleBackToList = () => {
     setActiveTab(0);
     setSelectedPeriod(null);
+    setEnableSaving(false);
+    setSavingPercentage(0);
   };
 
   const handleOpenDistributionDialog = (periodId, periodName, action) => {
@@ -109,19 +123,44 @@ const ProfitDistribution = () => {
     });
   };
 
+  const handleOpenSavingDialog = () => {
+    setSavingDialog({
+      open: true,
+      periodId: selectedPeriod,
+    });
+  };
+
+  const handleCloseSavingDialog = () => {
+    setSavingDialog({
+      open: false,
+      periodId: null,
+    });
+  };
+
+  const handleApplySavingPercentage = (percentage) => {
+    setSavingPercentage(percentage);
+    setEnableSaving(true);
+  };
+
   const handleConfirmDistribution = async () => {
     const { periodId, action } = distributionDialog;
-    
+
     try {
       setIsDistributing(true);
-      if (action === 'post') {
-        await postDistribution(periodId);
-        notifySuccess("تم توزيع الأرباح بنجاح");
+      if (action === "post") {
+        // إرسال نسبة الادخار إذا كانت مفعلة
+        const savingPercent = enableSaving ? savingPercentage : 0;
+        await postDistribution(periodId, savingPercent);
+        notifySuccess(`تم توزيع الأرباح بنجاح ${enableSaving ? `مع ادخار ${savingPercentage}%` : ''}`);
       }
-      
+
       queryClient.invalidateQueries(["closed-periods"]);
       queryClient.invalidateQueries(["period", periodId]);
       handleCloseDistributionDialog();
+      
+      // إعادة تعيين إعدادات الادخار
+      setEnableSaving(false);
+      setSavingPercentage(0);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء العملية");
     } finally {
@@ -131,12 +170,12 @@ const ProfitDistribution = () => {
 
   const handleConfirmUnpost = async () => {
     const { periodId } = distributionDialog;
-    
+
     try {
       setIsDistributing(true);
       await unpostDistribution(periodId);
       notifySuccess("تم إلغاء توزيع الأرباح بنجاح");
-      
+
       queryClient.invalidateQueries(["closed-periods"]);
       queryClient.invalidateQueries(["period", periodId]);
       handleCloseDistributionDialog();
@@ -150,7 +189,15 @@ const ProfitDistribution = () => {
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
-    return new Date(dateString).toLocaleDateString('en-US');
+    return new Date(dateString).toLocaleDateString("en-US");
+  };
+
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " " 
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
 
   // Get journal status in Arabic
@@ -167,10 +214,33 @@ const ProfitDistribution = () => {
     }
   };
 
-  // Check if period has distribution using isDistributed field
   const hasDistribution = (period) => {
-    return period.isDistributed === true;
+    return period.isdistributed === true || 
+           (period.journals && period.journals.some(j => j.type === "CLOSING" && j.status === "POSTED"));
   };
+
+  // حساب الأرباح بعد الادخار
+  const calculateProfitAfterSaving = () => {
+    if (!periodData) return { companyProfit: 0, partnerProfit: 0, savedAmount: 0 };
+    
+    const totalProfit = (periodData.companyProfit || 0) + (periodData.totalPartnerProfit || 0);
+    const savedAmount = totalProfit * (savingPercentage / 100);
+    const remainingProfit = totalProfit - savedAmount;
+    
+    // توزيع الأرباح المتبقية بنفس النسب
+    const companyRatio = periodData.companyProfit / totalProfit;
+    const partnerRatio = periodData.totalPartnerProfit / totalProfit;
+    
+    return {
+      savedAmount,
+      companyProfit: remainingProfit * companyRatio,
+      partnerProfit: remainingProfit * partnerRatio,
+      originalCompanyProfit: periodData.companyProfit,
+      originalPartnerProfit: periodData.totalPartnerProfit
+    };
+  };
+
+  const profitAfterSaving = calculateProfitAfterSaving();
 
   // Render desktop sidebar
   const renderDesktopSidebar = () => (
@@ -189,18 +259,78 @@ const ProfitDistribution = () => {
           ملخص التوزيع
         </Typography>
         <Stack spacing={2}>
+          {/* إعدادات الادخار */}
+          {!hasDistribution(periodData) && (
+            <Box sx={{ mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={enableSaving}
+                    onChange={(e) => {
+                      setEnableSaving(e.target.checked);
+                      if (e.target.checked && savingPercentage === 0) {
+                        handleOpenSavingDialog();
+                      }
+                    }}
+                    color="primary"
+                  />
+                }
+                label="هل تريد الادخار من هذا التوزيع؟"
+              />
+              
+              {enableSaving && (
+                <Box sx={{ mt: 1, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="body2">نسبة الادخار:</Typography>
+                    <Typography variant="body2" fontWeight="bold">
+                      {savingPercentage}%
+                    </Typography>
+                  </Box>
+                  <Button
+                    size="small"
+                    startIcon={<SavingsIcon sx={{marginLeft:"10px"}} />}
+                    onClick={handleOpenSavingDialog}
+                    sx={{ mt: 1 }}
+                  >
+                    تعديل النسبة
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* ملخص الأرباح */}
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color="primary.main">
-              {periodData?.companyProfit?.toLocaleString() || 0}
+              {enableSaving ? 
+                profitAfterSaving.companyProfit.toLocaleString() : 
+                periodData?.companyProfit?.toLocaleString() || 0
+              }
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي أرباح الشركاء:</Typography>
             <Typography fontWeight="bold" color="success.main">
-              {periodData?.totalPartnerProfit?.toLocaleString() || 0}
+              {enableSaving ? 
+                profitAfterSaving.partnerProfit.toLocaleString() : 
+                periodData?.totalPartnerProfit?.toLocaleString() || 0
+              }
             </Typography>
           </Box>
+          
+          {/* عرض المبلغ المدخر إذا كان الادخار مفعل */}
+          {enableSaving && savingPercentage > 0 && (
+            <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: '1px solid #e0e0e0' }}>
+              <Typography variant="body2" color="warning.main">
+                المبلغ المدخر ({savingPercentage}%):
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" color="warning.main">
+                {profitAfterSaving.savedAmount.toLocaleString()}
+              </Typography>
+            </Box>
+          )}
+          
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>عدد الشركاء:</Typography>
             <Typography fontWeight="bold">
@@ -223,46 +353,48 @@ const ProfitDistribution = () => {
           الإجراءات
         </Typography>
         <Stack spacing={2}>
-          {!hasDistribution(periodData) && permissions.includes("distribution_Post") && (
-            <Button
-              variant="contained"
-              startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
-              onClick={() => 
-                handleOpenDistributionDialog(
-                  selectedPeriod, 
-                  periodData?.name, 
-                  'post'
-                )
-              }
-              sx={{
-                bgcolor: "success.main",
-                "&:hover": { bgcolor: "success.dark" },
-              }}
-            >
-              توزيع الأرباح
-            </Button>
-          )}
+          {!hasDistribution(periodData) &&
+            permissions.includes("distribution_Post") && (
+              <Button
+                variant="contained"
+                startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
+                onClick={() =>
+                  handleOpenDistributionDialog(
+                    selectedPeriod,
+                    periodData?.name,
+                    "post"
+                  )
+                }
+                sx={{
+                  bgcolor: "success.main",
+                  "&:hover": { bgcolor: "success.dark" },
+                }}
+              >
+                توزيع الأرباح
+              </Button>
+            )}
 
-          {hasDistribution(periodData) && permissions.includes("distribution_Post") && (
-            <Button
-              variant="outlined"
-              startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
-              onClick={() => 
-                handleOpenDistributionDialog(
-                  selectedPeriod, 
-                  periodData?.name, 
-                  'unpost'
-                )
-              }
-              sx={{
-                borderColor: "error.main",
-                color: "error.main",
-                "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-              }}
-            >
-              إلغاء التوزيع
-            </Button>
-          )}
+          {hasDistribution(periodData) &&
+            permissions.includes("distribution_Post") && (
+              <Button
+                variant="outlined"
+                startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
+                onClick={() =>
+                  handleOpenDistributionDialog(
+                    selectedPeriod,
+                    periodData?.name,
+                    "unpost"
+                  )
+                }
+                sx={{
+                  borderColor: "error.main",
+                  color: "error.main",
+                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                }}
+              >
+                إلغاء التوزيع
+              </Button>
+            )}
         </Stack>
       </Box>
     </Box>
@@ -274,44 +406,88 @@ const ProfitDistribution = () => {
       <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
         الإجراءات
       </Typography>
-      <Stack spacing={1}>
-        {!hasDistribution(periodData) && permissions.includes("distribution_Post") && (
-          <Button
-            variant="contained"
-            startIcon={<CheckIcon />}
-            onClick={() => 
-              handleOpenDistributionDialog(
-                selectedPeriod, 
-                periodData?.name, 
-                'post'
-              )
+      
+      {/* إعدادات الادخار للجوال */}
+      {!hasDistribution(periodData) && (
+        <Box sx={{ mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={enableSaving}
+                onChange={(e) => {
+                  setEnableSaving(e.target.checked);
+                  if (e.target.checked && savingPercentage === 0) {
+                    handleOpenSavingDialog();
+                  }
+                }}
+                color="primary"
+              />
             }
-            fullWidth
-            size="small"
-            sx={{ bgcolor: "success.main" }}
-          >
-            توزيع الأرباح
-          </Button>
-        )}
+            label="ادخار من التوزيع"
+          />
+          
+          {enableSaving && (
+            <Box sx={{ mt: 1, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body2">نسبة الادخار:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {savingPercentage}%
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                startIcon={<SavingsIcon sx={{marginLeft:"10px"}} />}
+                onClick={handleOpenSavingDialog}
+                fullWidth
+                sx={{ mt: 1 }}
+              >
+                تعديل النسبة
+              </Button>
+            </Box>
+          )}
+        </Box>
+      )}
 
-        {hasDistribution(periodData) && permissions.includes("distribution_Post") && (
-          <Button
-            variant="outlined"
-            startIcon={<CancelIcon />}
-            onClick={() => 
-              handleOpenDistributionDialog(
-                selectedPeriod, 
-                periodData?.name, 
-                'unpost'
-              )
-            }
-            fullWidth
-            size="small"
-            color="error"
-          >
-            إلغاء التوزيع
-          </Button>
-        )}
+      <Stack spacing={1}>
+        {!hasDistribution(periodData) &&
+          permissions.includes("distribution_Post") && (
+            <Button
+              variant="contained"
+              startIcon={<CheckIcon />}
+              onClick={() =>
+                handleOpenDistributionDialog(
+                  selectedPeriod,
+                  periodData?.name,
+                  "post"
+                )
+              }
+              fullWidth
+              size="small"
+              sx={{ bgcolor: "success.main" }}
+            >
+              توزيع الأرباح
+            </Button>
+          )}
+
+        {hasDistribution(periodData) &&
+          permissions.includes("distribution_Post") && (
+            <Button
+              variant="outlined"
+              startIcon={<CancelIcon />}
+              onClick={() =>
+                handleOpenDistributionDialog(
+                  selectedPeriod,
+                  periodData?.name,
+                  "unpost"
+                )
+              }
+              fullWidth
+              size="small"
+              color="error"
+            >
+              إلغاء التوزيع
+            </Button>
+          )}
       </Stack>
     </Paper>
   );
@@ -357,20 +533,15 @@ const ProfitDistribution = () => {
             </StyledTableRow>
           ) : (
             closedPeriods?.map((period) => (
-              <StyledTableRow 
-                key={period.periodId} 
-                hover
-                onClick={() => handleViewDetails(period.periodId)}
-                sx={{ cursor: "pointer" }}
+              <StyledTableRow
+                key={period.periodId}
               >
-                <StyledTableCell align="center">
-                  {period.name}
+                <StyledTableCell align="center">{period.name}</StyledTableCell>
+                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {formatArabicDate(period.startDate)}
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatDate(period.startDate)}
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatDate(period.endDate)}
+                  {formatArabicDate(period.endDate)}
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Typography fontWeight="bold" color="primary.main">
@@ -413,11 +584,11 @@ const ProfitDistribution = () => {
   const renderClosedPeriodsCards = () => (
     <Box sx={{ p: 1 }}>
       {isPeriodsLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress size={30} />
         </Box>
       ) : closedPeriods?.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <Typography variant="h6" color="textSecondary">
             لا توجد فترات مقفلة
           </Typography>
@@ -426,23 +597,33 @@ const ProfitDistribution = () => {
         <Grid container spacing={2}>
           {closedPeriods?.map((period) => (
             <Grid item xs={12} key={period.periodId}>
-              <Card 
-                sx={{ 
-                  border: '1px solid #e0e0e0',
+              <Card
+                sx={{
+                  border: "1px solid #e0e0e0",
                   borderRadius: 2,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  "&:hover": {
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
                   },
-                  cursor: 'pointer'
+                  cursor: "pointer",
                 }}
                 onClick={() => handleViewDetails(period.periodId)}
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Typography variant="h6" fontWeight="bold" color="primary.main">
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="primary.main"
+                      >
                         {period.name}
                       </Typography>
                       <Chip
@@ -453,7 +634,13 @@ const ProfitDistribution = () => {
                     </Box>
 
                     {/* Period Details */}
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 1,
+                      }}
+                    >
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           من:
@@ -462,7 +649,7 @@ const ProfitDistribution = () => {
                           {formatDate(period.startDate)}
                         </Typography>
                       </Box>
-                      
+
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           إلى:
@@ -478,7 +665,11 @@ const ProfitDistribution = () => {
                       <Typography variant="body2" color="textSecondary">
                         أرباح الشركة:
                       </Typography>
-                      <Typography variant="body1" fontWeight="bold" color="primary.main">
+                      <Typography
+                        variant="body1"
+                        fontWeight="bold"
+                        color="primary.main"
+                      >
                         {period.companyProfit?.toLocaleString() || 0}
                       </Typography>
                     </Box>
@@ -494,7 +685,14 @@ const ProfitDistribution = () => {
                     </Box>
 
                     {/* Action Buttons */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, pt: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 1,
+                        pt: 1,
+                      }}
+                    >
                       {permissions.includes("distribution_View") && (
                         <IconButton
                           title="عرض التفاصيل"
@@ -510,7 +708,11 @@ const ProfitDistribution = () => {
                       )}
                       {permissions.includes("distribution_Post") && (
                         <IconButton
-                          title={hasDistribution(period) ? "إلغاء التوزيع" : "توزيع الأرباح"}
+                          title={
+                            hasDistribution(period)
+                              ? "إلغاء التوزيع"
+                              : "توزيع الأرباح"
+                          }
                           size="small"
                           color={hasDistribution(period) ? "error" : "success"}
                           onClick={(e) => {
@@ -518,11 +720,15 @@ const ProfitDistribution = () => {
                             handleOpenDistributionDialog(
                               period.periodId,
                               period.name,
-                              hasDistribution(period) ? 'unpost' : 'post'
+                              hasDistribution(period) ? "unpost" : "post"
                             );
                           }}
                         >
-                          {hasDistribution(period) ? <CancelIcon style={{ fontSize: "20px" }} /> : <CheckIcon style={{ fontSize: "20px" }} />}
+                          {hasDistribution(period) ? (
+                            <CancelIcon style={{ fontSize: "20px" }} />
+                          ) : (
+                            <CheckIcon style={{ fontSize: "20px" }} />
+                          )}
                         </IconButton>
                       )}
                     </Box>
@@ -542,25 +748,43 @@ const ProfitDistribution = () => {
       {/* Summary Cards */}
       <Grid container spacing={2} mb={3}>
         <Grid item xs={6}>
-          <Card sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", textAlign: "center",justifyContent: "center" }}>
+          <Card
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.1)",
+              textAlign: "center",
+              justifyContent: "center",
+            }}
+          >
             <CardContent sx={{ p: 2 }}>
               <Typography variant="body2" color="primary.main">
                 أرباح الشركة
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="primary.main">
-                {periodData?.companyProfit?.toLocaleString() || 0}
+                {enableSaving ? 
+                  profitAfterSaving.companyProfit.toLocaleString() : 
+                  periodData?.companyProfit?.toLocaleString() || 0
+                }
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={6}>
-          <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center",justifyContent: "center" }}>
+          <Card
+            sx={{
+              bgcolor: "rgba(46, 125, 50, 0.1)",
+              textAlign: "center",
+              justifyContent: "center",
+            }}
+          >
             <CardContent sx={{ p: 2 }}>
               <Typography variant="body2" color="success.main">
                 أرباح الشركاء
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="success.main">
-                {periodData?.totalPartnerProfit?.toLocaleString() || 0}
+                {enableSaving ? 
+                  profitAfterSaving.partnerProfit.toLocaleString() : 
+                  periodData?.totalPartnerProfit?.toLocaleString() || 0
+                }
               </Typography>
             </CardContent>
           </Card>
@@ -591,7 +815,7 @@ const ProfitDistribution = () => {
               تاريخ البداية
             </Typography>
             <Typography variant="body1" fontWeight="bold">
-              {formatDate(periodData?.startDate)}
+              {formatArabicDate(periodData?.startDate)}
             </Typography>
           </Box>
 
@@ -600,7 +824,7 @@ const ProfitDistribution = () => {
               تاريخ النهاية
             </Typography>
             <Typography variant="body1" fontWeight="bold">
-              {formatDate(periodData?.endDate)}
+              {formatArabicDate(periodData?.endDate)}
             </Typography>
           </Box>
 
@@ -614,6 +838,21 @@ const ProfitDistribution = () => {
               size="small"
             />
           </Box>
+
+          {/* عرض معلومات الادخار للجوال */}
+          {enableSaving && savingPercentage > 0 && (
+            <Box sx={{ pt: 2, borderTop: '1px solid #e0e0e0' }}>
+              <Typography variant="body2" color="warning.main" gutterBottom>
+                معلومات الادخار:
+              </Typography>
+              <Typography variant="body2">
+                نسبة الادخار: {savingPercentage}%
+              </Typography>
+              <Typography variant="body2">
+                المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()} ريال
+              </Typography>
+            </Box>
+          )}
         </Stack>
       </Paper>
 
@@ -623,7 +862,7 @@ const ProfitDistribution = () => {
           <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
             أرباح الشركاء
           </Typography>
-          
+
           <Stack spacing={2}>
             {periodData.partnerProfits.map((partner) => (
               <Card key={partner.partnerId} variant="outlined">
@@ -632,8 +871,14 @@ const ProfitDistribution = () => {
                     <Typography variant="subtitle2" fontWeight="bold">
                       {partner.partnerName}
                     </Typography>
-                    
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 1,
+                      }}
+                    >
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           الرقم القومي:
@@ -642,7 +887,7 @@ const ProfitDistribution = () => {
                           {partner.partnerNationalId || "-"}
                         </Typography>
                       </Box>
-                      
+
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           الهاتف:
@@ -653,7 +898,13 @@ const ProfitDistribution = () => {
                       </Box>
                     </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 1,
+                      }}
+                    >
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           نسبة الربح:
@@ -662,12 +913,16 @@ const ProfitDistribution = () => {
                           {partner.orgProfitPercent}%
                         </Typography>
                       </Box>
-                      
+
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           الربح:
                         </Typography>
-                        <Typography variant="body2" fontWeight="bold" color="success.main">
+                        <Typography
+                          variant="body2"
+                          fontWeight="bold"
+                          color="success.main"
+                        >
                           {partner.totalProfit.toLocaleString()}
                         </Typography>
                       </Box>
@@ -681,39 +936,54 @@ const ProfitDistribution = () => {
       )}
 
       {/* Distribution Journal */}
-      {periodData?.journals?.find(j => j.type === "CLOSING") && (
+      {periodData?.journals?.find((j) => j.type === "CLOSING") && (
         <Paper sx={{ p: 2, borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
             قيد توزيع الأرباح
           </Typography>
-          
+
           {periodData.journals
-            .filter(journal => journal.type === "CLOSING")
+            .filter((journal) => journal.type === "CLOSING")
             .map((journal) => (
               <Card key={journal.id} variant="outlined" sx={{ mb: 2 }}>
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="bold"
+                        color="primary"
+                      >
                         {journal.reference}
                       </Typography>
                       <Chip
                         label={getJournalStatusText(journal.status)}
-                        color={journal.status === "POSTED" ? "success" : "default"}
+                        color={
+                          journal.status === "POSTED" ? "success" : "default"
+                        }
                         size="small"
                       />
                     </Box>
-                    
+
                     <Typography variant="body2">
                       {journal.description}
                     </Typography>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
                       <Typography variant="body2" color="textSecondary">
-                        {formatDate(journal.date)}
+                        {formatArabicDate(journal.date)}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        مدين: {journal.totalDebit?.toLocaleString() || 0} | دائن: {journal.totalCredit?.toLocaleString() || 0}
+                        مدين: {journal.totalDebit?.toLocaleString() || 0} |
+                        دائن: {journal.totalCredit?.toLocaleString() || 0}
                       </Typography>
                     </Box>
                   </Stack>
@@ -728,12 +998,24 @@ const ProfitDistribution = () => {
   // Render desktop period details
   const renderDesktopPeriodDetails = () => (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={"center"}>
+      <Typography
+        variant="h6"
+        color="primary"
+        fontWeight="bold"
+        mb={3}
+        textAlign={"center"}
+      >
         تفاصيل توزيع الأرباح
       </Typography>
 
       {/* Period Information */}
-      <Grid container spacing={10} mb={4} justifyContent="center" alignItems="center">
+      <Grid
+        container
+        spacing={10}
+        mb={4}
+        justifyContent="center"
+        alignItems="center"
+      >
         <Grid item xs={12} md={6}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             اسم الفترة:
@@ -753,48 +1035,98 @@ const ProfitDistribution = () => {
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             تاريخ البداية:
           </Typography>
-          <Typography variant="body1">{formatDate(periodData?.startDate)}</Typography>
+          <Typography variant="body1">
+            {formatDate(periodData?.startDate)}
+          </Typography>
         </Grid>
         <Grid item xs={12} md={6}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             تاريخ النهاية:
           </Typography>
-          <Typography variant="body1">{formatDate(periodData?.endDate)}</Typography>
+          <Typography variant="body1">
+            {formatDate(periodData?.endDate)}
+          </Typography>
         </Grid>
       </Grid>
 
       <Divider sx={{ my: 3 }} />
 
       {/* Profit Summary */}
-      <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
+      <Grid
+        container
+        spacing={3}
+        mb={4}
+        justifyContent="center"
+        alignItems="center"
+      >
         <Grid item xs={12} md={6}>
           <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center" }}>
             <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="primary.main">
-              {periodData?.companyProfit?.toLocaleString() || 0}
+              {enableSaving ? 
+                profitAfterSaving.companyProfit.toLocaleString() : 
+                periodData?.companyProfit?.toLocaleString() || 0
+              }
             </Typography>
             <Typography variant="body1" color="primary.main">
               أرباح الشركة
             </Typography>
+            {enableSaving && (
+              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                (بعد ادخار {savingPercentage}%)
+              </Typography>
+            )}
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
           <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center" }}>
             <BalanceIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="success.main">
-              {periodData?.totalPartnerProfit?.toLocaleString() || 0}
+              {enableSaving ? 
+                profitAfterSaving.partnerProfit.toLocaleString() : 
+                periodData?.totalPartnerProfit?.toLocaleString() || 0
+              }
             </Typography>
             <Typography variant="body1" color="success.main">
               إجمالي أرباح الشركاء
             </Typography>
+            {enableSaving && (
+              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                (بعد ادخار {savingPercentage}%)
+              </Typography>
+            )}
           </Card>
         </Grid>
       </Grid>
 
+      {/* عرض معلومات الادخار */}
+      {enableSaving && savingPercentage > 0 && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body1" fontWeight="bold">
+            معلومات الادخار:
+          </Typography>
+          <Typography variant="body2">
+            - نسبة الادخار: {savingPercentage}%
+          </Typography>
+          <Typography variant="body2">
+            - المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()} ريال
+          </Typography>
+          <Typography variant="body2">
+            - إجمالي الأرباح قبل الادخار: {(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit).toLocaleString()} ريال
+          </Typography>
+        </Alert>
+      )}
+
       {/* Partner Profits with additional data */}
       {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
         <>
-          <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
+          <Typography
+            variant="h6"
+            color="primary"
+            fontWeight="bold"
+            mb={3}
+            textAlign="center"
+          >
             توزيع الأرباح على الشركاء
           </Typography>
           <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
@@ -804,8 +1136,14 @@ const ProfitDistribution = () => {
                   <StyledTableCell align="center">اسم الشريك</StyledTableCell>
                   <StyledTableCell align="center">الرقم القومي</StyledTableCell>
                   <StyledTableCell align="center">الهاتف</StyledTableCell>
-                  <StyledTableCell align="center">نسبة الربح</StyledTableCell>
-                  <StyledTableCell align="center">الربح</StyledTableCell>
+                  <StyledTableCell align="center">
+                    {" "}
+                    المبلغ الأصلي
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    نسبة ربح الشركة
+                  </StyledTableCell>
+                  <StyledTableCell align="center" >الربح الموزع بعد الخصم</StyledTableCell>
                 </StyledTableRow>
               </TableHead>
               <TableBody>
@@ -821,6 +1159,12 @@ const ProfitDistribution = () => {
                       {partner.partnerPhone || "-"}
                     </StyledTableCell>
                     <StyledTableCell align="center">
+                      {(
+                        partner.totalProfit /
+                        (1 - partner.orgProfitPercent / 100)
+                      ).toLocaleString()}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
                       {partner.orgProfitPercent}%
                     </StyledTableCell>
                     <StyledTableCell align="center">
@@ -831,7 +1175,7 @@ const ProfitDistribution = () => {
                   </StyledTableRow>
                 ))}
                 <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell colSpan={4} align="center">
+                  <StyledTableCell colSpan={5} align="center">
                     <Typography fontWeight="bold">الإجمالي</Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
@@ -847,17 +1191,25 @@ const ProfitDistribution = () => {
       )}
 
       {/* Distribution Journal */}
-      {periodData?.journals?.find(j => j.type === "CLOSING") && (
+      {periodData?.journals?.find((j) => j.type === "CLOSING") && (
         <>
           <Divider sx={{ my: 3 }} />
-          <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
+          <Typography
+            variant="h6"
+            color="primary"
+            fontWeight="bold"
+            mb={3}
+            textAlign="center"
+          >
             قيد توزيع الأرباح
           </Typography>
           <TableContainer component={Paper} variant="outlined">
             <Table>
               <TableHead>
                 <StyledTableRow>
-                  <StyledTableCell align="center">الرقم المرجعي</StyledTableCell>
+                  <StyledTableCell align="center">
+                    الرقم المرجعي
+                  </StyledTableCell>
                   <StyledTableCell align="center">الوصف</StyledTableCell>
                   <StyledTableCell align="center">الحالة</StyledTableCell>
                   <StyledTableCell align="center">التاريخ</StyledTableCell>
@@ -867,7 +1219,7 @@ const ProfitDistribution = () => {
               </TableHead>
               <TableBody>
                 {periodData.journals
-                  .filter(journal => journal.type === "CLOSING")
+                  .filter((journal) => journal.type === "CLOSING")
                   .map((journal) => (
                     <StyledTableRow key={journal.id}>
                       <StyledTableCell align="center">
@@ -879,7 +1231,9 @@ const ProfitDistribution = () => {
                       <StyledTableCell align="center">
                         <Chip
                           label={getJournalStatusText(journal.status)}
-                          color={journal.status === "POSTED" ? "success" : "default"}
+                          color={
+                            journal.status === "POSTED" ? "success" : "default"
+                          }
                           size="small"
                         />
                       </StyledTableCell>
@@ -903,8 +1257,8 @@ const ProfitDistribution = () => {
   );
 
   // Confirmation Dialog for post distribution
-  const renderConfirmationDialog = () => (
-    distributionDialog.action === 'post' && (
+  const renderConfirmationDialog = () =>
+    distributionDialog.action === "post" && (
       <Dialog
         open={distributionDialog.open}
         onClose={handleCloseDistributionDialog}
@@ -920,34 +1274,52 @@ const ProfitDistribution = () => {
           <Typography>
             هل أنت متأكد من توزيع أرباح الفترة "{distributionDialog.periodName}"؟
           </Typography>
+          
+          {enableSaving && savingPercentage > 0 && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>ملاحظة:</strong> سيتم ادخار {savingPercentage}% من الأرباح قبل التوزيع
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()} ريال
+              </Typography>
+            </Alert>
+          )}
+          
           <Alert severity="warning" sx={{ mt: 2 }}>
             سيتم إنشاء قيد محاسبي لتوزيع الأرباح على الشركاء
           </Alert>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDistributionDialog} disabled={isDistributing}>
+        <DialogActions sx={{ p: 2.5, gap: 1, flexDirection: 'row-reverse' }}>
+          <Button
+            onClick={handleCloseDistributionDialog}
+            disabled={isDistributing}
+          >
             إلغاء
           </Button>
           <Button
             onClick={handleConfirmDistribution}
             variant="contained"
             color="success"
-            startIcon={<CheckIcon />}
+            startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
             disabled={isDistributing}
           >
             تأكيد التوزيع
             {isDistributing && (
-              <CircularProgress size={16} color="inherit" style={{ marginLeft: 8 }} />
+              <CircularProgress
+                size={16}
+                color="inherit"
+                style={{ marginLeft: 8 }}
+              />
             )}
           </Button>
         </DialogActions>
       </Dialog>
-    )
-  );
+    );
 
   // Delete Modal for unpost distribution
-  const renderUnpostModal = () => (
-    distributionDialog.action === 'unpost' && (
+  const renderUnpostModal = () =>
+    distributionDialog.action === "unpost" && (
       <DeleteModal
         open={distributionDialog.open}
         onClose={handleCloseDistributionDialog}
@@ -957,8 +1329,7 @@ const ProfitDistribution = () => {
         isLoading={isDistributing}
         ButtonText="إلغاء التوزيع"
       />
-    )
-  );
+    );
 
   return (
     <Box
@@ -973,7 +1344,7 @@ const ProfitDistribution = () => {
         <title>توزيع الأرباح</title>
         <meta name="description" content="توزيع الأرباح على الشركاء" />
       </Helmet>
-      
+
       <Box
         sx={{
           display: "flex",
@@ -984,7 +1355,10 @@ const ProfitDistribution = () => {
         }}
       >
         {/* Sidebar for desktop */}
-        {!isSmallScreen && activeTab === 1 && periodData && renderDesktopSidebar()}
+        {!isSmallScreen &&
+          activeTab === 1 &&
+          periodData &&
+          renderDesktopSidebar()}
 
         <Box
           sx={{
@@ -1033,7 +1407,14 @@ const ProfitDistribution = () => {
               <Box sx={{ mb: 3 }}>
                 {activeTab === 1 ? (
                   // Back button for mobile details view
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center' }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 2,
+                      justifyContent: "center",
+                    }}
+                  >
                     <IconButton onClick={handleBackToList} size="small">
                       <ArrowBackIcon />
                     </IconButton>
@@ -1058,7 +1439,7 @@ const ProfitDistribution = () => {
                         borderRadius: "6px",
                         p: 1,
                         border: "1px solid #e0e0e0",
-                        bgcolor: "background.paper"
+                        bgcolor: "background.paper",
                       }}
                     />
                   </Box>
@@ -1067,8 +1448,17 @@ const ProfitDistribution = () => {
             )}
 
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
-              <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
-                {isSmallScreen ? renderClosedPeriodsCards() : renderClosedPeriodsTable()}
+              <Paper
+                sx={{
+                  flex: 1,
+                  width: "100%",
+                  overflow: "hidden",
+                  borderRadius: 2,
+                }}
+              >
+                {isSmallScreen
+                  ? renderClosedPeriodsCards()
+                  : renderClosedPeriodsTable()}
               </Paper>
             ) : (
               <Box>
@@ -1088,7 +1478,11 @@ const ProfitDistribution = () => {
                     <CircularProgress size={20} />
                   </Box>
                 ) : periodData ? (
-                  isSmallScreen ? renderMobilePeriodDetails() : renderDesktopPeriodDetails()
+                  isSmallScreen ? (
+                    renderMobilePeriodDetails()
+                  ) : (
+                    renderDesktopPeriodDetails()
+                  )
                 ) : (
                   <Alert severity="error">حدث خطأ في تحميل بيانات الفترة</Alert>
                 )}
@@ -1097,6 +1491,14 @@ const ProfitDistribution = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Saving Percentage Dialog */}
+      <SavingPercentage
+        open={savingDialog.open}
+        onClose={handleCloseSavingDialog}
+        onApply={handleApplySavingPercentage}
+        currentPercentage={savingPercentage}
+      />
 
       {/* Confirmation Dialog */}
       {renderConfirmationDialog()}

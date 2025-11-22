@@ -6,9 +6,11 @@ export const getClosedPeriods = async () => {
   return response.data;
 };
 
-// Post distribution for a period
-export const postDistribution = async (periodId) => {
-  const response = await Api.post(`/api/distribution/post/${periodId}`);
+// Post distribution for a period with saving percentage
+export const postDistribution = async (periodId, savingPercentage = 0) => {
+  const response = await Api.post(`/api/distribution/post/${periodId}`, {
+    savingPercentage
+  });
   return response.data;
 };
 

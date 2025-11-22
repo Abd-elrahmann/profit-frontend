@@ -14,6 +14,7 @@ import { MdAttachMoney as InstallmentsIcon } from 'react-icons/md';
 import { MdMessage as Message } from 'react-icons/md';
 import { MdDescription as JournalIcon } from 'react-icons/md';
 import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
+import { Savings as SavingsIcon } from '@mui/icons-material';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -35,6 +36,7 @@ const ProfitDistribution = React.lazy(() => import('./pages/profit/ProfitDistrib
 const Profile = React.lazy(() => import('./pages/Profile'));
 const ChartOfAccounts = React.lazy(() => import('./pages/chartOfAccounts/chartOfAccounts'));
 const Zakah = React.lazy(() => import('./pages/Zakah/zakah'));
+const Saving = React.lazy(() => import('./pages/Saving/Saving'));
 const routes = [
   {
     path: '/login',
@@ -246,6 +248,17 @@ const routes = [
     module: 'zakat',
     requiresPermissions: true,
     icon: AccountBalance,
+    parent: 'الزكاة والادخار'
+  },
+  {
+    path: '/saving',
+    element: Saving,
+    protected: true,
+    showInSidebar: true,
+    label: 'الادخار',
+    module: 'saving',
+    requiresPermissions: true,
+    icon: SavingsIcon,
     parent: 'الزكاة والادخار'
   },
   {

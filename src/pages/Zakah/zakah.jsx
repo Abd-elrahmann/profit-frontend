@@ -25,32 +25,45 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   AccountBalance as BalanceIcon,
+  Paid as PaidIcon,
+  Pending as PendingIcon,
 } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
-import { getPartnerZakah } from "./zakahApi";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getPartnerZakah, getZakatAccountReport, withdrawZakat } from "./zakahApi";
 import ZakahTable from "../../components/modals/zakahTable";
+import WithdrawZakah from "../../components/modals/WithdrawZakah";
 import {
   StyledTableCell,
   StyledTableRow,
 } from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import { notifySuccess, notifyError } from "../../utilities/toastify";
 
 const Zakah = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
 
+  const queryClient = useQueryClient();
 
   // Query for partner zakah details
   const { data: partnerZakahData, isLoading: isPartnerLoading } = useQuery({
     queryKey: ["partner-zakah", selectedPartner],
     queryFn: () => getPartnerZakah(selectedPartner),
     enabled: !!selectedPartner && activeTab === 1,
+  });
+
+  // Query for zakat account report
+  const { data: accountReport, isLoading: isAccountLoading } = useQuery({
+    queryKey: ["zakat-account"],
+    queryFn: () => getZakatAccountReport(),
+    enabled: activeTab === 2,
   });
 
   const handleViewDetails = (partnerId, year) => {
@@ -63,6 +76,17 @@ const Zakah = () => {
     setActiveTab(0);
     setSelectedPartner(null);
     setSelectedYear(null);
+  };
+
+  const handleWithdraw = async (amount) => {
+    try {
+      await withdrawZakat(amount);
+      notifySuccess(`تم سحب مبلغ ${amount} ريال بنجاح`);
+      queryClient.invalidateQueries(["zakat-account"]);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء سحب الزكاة");
+      throw error;
+    }
   };
 
   // Format currency
@@ -79,9 +103,19 @@ const Zakah = () => {
     return months[month - 1] || month;
   };
 
-  // Render desktop sidebar
+  // Get status chip
+  const getStatusChip = (status) => {
+    if (status === 'PAID') {
+      return <Chip icon={<PaidIcon />} label="مدفوع" color="success" size="small" />;
+    }
+    return <Chip icon={<PendingIcon />} label="غير مدفوع" color="default" size="small" />;
+  };
+
+  // Render desktop sidebar for partner details
   const renderDesktopSidebar = () => {
-    const currentYearData = partnerZakahData?.find?.(item => item.year === selectedYear) || partnerZakahData;
+    const currentYearData = Array.isArray(partnerZakahData) 
+      ? partnerZakahData.find(item => item.year === selectedYear) 
+      : partnerZakahData;
 
     return (
       <Box
@@ -168,7 +202,44 @@ const Zakah = () => {
     );
   };
 
-  // Render mobile actions
+  // Render account summary for financial operations tab
+  const renderAccountSummary = () => (
+    <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa",width:"300px" }}>
+      <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
+        ملخص حساب الزكاة
+      </Typography>
+      <Stack spacing={2}>
+        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography>رصيد الحساب:</Typography>
+          <Typography fontWeight="bold" color="primary.main">
+            {formatCurrency(accountReport?.account?.balance)}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography>الزكاة المدفوعة:</Typography>
+          <Typography fontWeight="bold" color="success.main">
+            {formatCurrency(accountReport?.account?.credit)}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography>الزكاة المتبقية:</Typography>
+          <Typography fontWeight="bold">
+            {formatCurrency(accountReport?.account?.debit)}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => setWithdrawDialogOpen(true)}
+          disabled={!accountReport?.account?.balance || accountReport?.account?.balance <= 0}
+          startIcon={<PaidIcon sx={{marginLeft:"10px"}} />}
+        >
+          سحب الزكاة
+        </Button>
+      </Stack>
+    </Box>
+  );
+
+  // Render mobile actions for partner details
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
       <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
@@ -202,7 +273,9 @@ const Zakah = () => {
 
   // Render mobile partner details
   const renderMobilePartnerDetails = () => {
-    const currentYearData = partnerZakahData?.find?.(item => item.year === selectedYear) || partnerZakahData;
+    const currentYearData = Array.isArray(partnerZakahData) 
+      ? partnerZakahData.find(item => item.year === selectedYear) 
+      : partnerZakahData;
 
     return (
       <Box>
@@ -327,14 +400,7 @@ const Zakah = () => {
                           {formatCurrency(month.amount)}
                         </Typography>
                       </Box>
-                      {month.paid && (
-                        <Chip
-                          label="مدفوع"
-                          color="success"
-                          size="small"
-                          sx={{ alignSelf: 'flex-start' }}
-                        />
-                      )}
+                      {getStatusChip(month.status)}
                     </Stack>
                   </CardContent>
                 </Card>
@@ -348,7 +414,9 @@ const Zakah = () => {
 
   // Render desktop partner details
   const renderDesktopPartnerDetails = () => {
-    const currentYearData = partnerZakahData?.find?.(item => item.year === selectedYear) || partnerZakahData;
+    const currentYearData = Array.isArray(partnerZakahData) 
+      ? partnerZakahData.find(item => item.year === selectedYear) 
+      : partnerZakahData;
 
     return (
       <Paper sx={{ p: 4, borderRadius: 2 }}>
@@ -463,11 +531,7 @@ const Zakah = () => {
                         {formatCurrency(month.amount)}
                       </StyledTableCell>
                       <StyledTableCell align="center">
-                        <Chip
-                          label={month.paid ? "مدفوع" : "غير مدفوع"}
-                          color={month.paid ? "success" : "default"}
-                          size="small"
-                        />
+                        {getStatusChip(month.status)}
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}
@@ -477,6 +541,113 @@ const Zakah = () => {
           </>
         )}
       </Paper>
+    );
+  };
+
+  // Render financial operations tab
+  const renderFinancialOperations = () => {
+    if (isAccountLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    return (
+      <Box>
+        {/* Account Summary */}
+        <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
+          <Grid item xs={12} md={4}>
+            <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center" }}>
+              <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold" color="primary.main">
+                {formatCurrency(accountReport?.account?.balance)}
+              </Typography>
+              <Typography variant="body1" color="primary.main">
+                رصيد الحساب
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center" }}>
+              <PaidIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold" color="success.main">
+                {formatCurrency(accountReport?.account?.credit)}
+              </Typography>
+              <Typography variant="body1" color="success.main">
+                الزكاة المدفوعة
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ bgcolor: "warning.50", p: 3, textAlign: "center" }}>
+              <PendingIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold" color="warning.main">
+                {formatCurrency(accountReport?.account?.debit)}
+              </Typography>
+              <Typography variant="body1" color="warning.main">
+                الزكاة المتبقية
+              </Typography>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Journal Entries */}
+        {accountReport?.journalsByMonth && Object.keys(accountReport.journalsByMonth).length > 0 ? (
+          <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
+              العمليات المالية
+            </Typography>
+            
+            {Object.entries(accountReport.journalsByMonth).map(([month, data]) => (
+              <Box key={month} sx={{ mb: 4 }}>
+                <Typography variant="h6" color="primary" sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  شهر {month}
+                </Typography>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <StyledTableRow>
+                        <StyledTableCell align="center">التاريخ</StyledTableCell>
+                        <StyledTableCell align="center">الوصف</StyledTableCell>
+                        <StyledTableCell align="center">مدين</StyledTableCell>
+                        <StyledTableCell align="center">دائن</StyledTableCell>
+                        <StyledTableCell align="center">الرصيد</StyledTableCell>
+                      </StyledTableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.entries.map((entry) => (
+                        <StyledTableRow key={entry.id}>
+                          <StyledTableCell align="center">
+                            {new Date(entry.date).toLocaleDateString('ar-EG')}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            {entry.description}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            {formatCurrency(entry.debit)}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            {formatCurrency(entry.credit)}
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            {formatCurrency(entry.balance)}
+                          </StyledTableCell>
+                        </StyledTableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            ))}
+          </Paper>
+        ) : (
+          <Alert severity="info">
+            لا توجد عمليات مالية لحساب الزكاة
+          </Alert>
+        )}
+      </Box>
     );
   };
 
@@ -505,6 +676,7 @@ const Zakah = () => {
       >
         {/* Sidebar for desktop */}
         {!isSmallScreen && activeTab === 1 && partnerZakahData && renderDesktopSidebar()}
+        {!isSmallScreen && activeTab === 2 && accountReport && renderAccountSummary()}
 
         <Box
           sx={{
@@ -533,8 +705,7 @@ const Zakah = () => {
                     label="عرض جميع الزكاة"
                     sx={{
                       fontWeight: "bold",
-                      borderBottom:
-                        activeTab === 0 ? "3px solid #0d40a5" : "none",
+                      borderBottom: activeTab === 0 ? "3px solid #0d40a5" : "none",
                       color: activeTab === 0 ? "#0d40a5" : "text.secondary",
                     }}
                   />
@@ -542,9 +713,16 @@ const Zakah = () => {
                     label={selectedPartner ? "تفاصيل الزكاة" : "زكاة محددة"}
                     sx={{
                       fontWeight: "bold",
-                      borderBottom:
-                        activeTab === 1 ? "3px solid #0d40a5" : "none",
+                      borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
                       color: activeTab === 1 ? "#0d40a5" : "text.secondary",
+                    }}
+                  />
+                  <Tab
+                    label="صندوق الزكاة"
+                    sx={{
+                      fontWeight: "bold",
+                      borderBottom: activeTab === 2 ? "3px solid #0d40a5" : "none",
+                      color: activeTab === 2 ? "#0d40a5" : "text.secondary",
                     }}
                   />
                 </Tabs>
@@ -562,6 +740,10 @@ const Zakah = () => {
                       تفاصيل الزكاة
                     </Typography>
                   </Box>
+                ) : activeTab === 2 ? (
+                  <Typography variant="h6" fontWeight="bold" mb={2}>
+                    صندوق الزكاة
+                  </Typography>
                 ) : (
                   // Title for mobile list view
                   <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -571,26 +753,19 @@ const Zakah = () => {
               </Box>
             )}
 
-            {activeTab === 0 || (isSmallScreen && !selectedPartner) ? (
+            {activeTab === 0 || (isSmallScreen && !selectedPartner && activeTab !== 2) ? (
               <ZakahTable
                 onViewDetails={handleViewDetails}
                 isMobile={isMobile}
               />
-            ) : (
+            ) : activeTab === 1 ? (
               <Box>
                 {!selectedPartner ? (
                   <Alert severity="info" sx={{ mt: 2 }}>
                     يرجى اختيار شريك لعرض تفاصيل زكاته
                   </Alert>
                 ) : isPartnerLoading ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      height: "100%",
-                    }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                     <CircularProgress size={20} />
                   </Box>
                 ) : partnerZakahData ? (
@@ -599,10 +774,21 @@ const Zakah = () => {
                   <Alert severity="error">حدث خطأ في تحميل بيانات الزكاة</Alert>
                 )}
               </Box>
+            ) : (
+              // Financial Operations Tab
+              renderFinancialOperations()
             )}
           </Box>
         </Box>
       </Box>
+
+      {/* Withdraw Dialog */}
+      <WithdrawZakah
+        open={withdrawDialogOpen}
+        onClose={() => setWithdrawDialogOpen(false)}
+        onWithdraw={handleWithdraw}
+        accountBalance={accountReport?.account?.balance}
+      />
     </Box>
   );
 };

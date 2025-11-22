@@ -800,8 +800,8 @@ const Installments = () => {
       <Table stickyHeader>
         <TableHead>
           <StyledTableRow>
-            <StyledTableCell align="center" sx={{width: "70px"}}>
-              الدفعات المدفوعة
+            <StyledTableCell align="center" style={{maxWidth: "100px"}}>
+            المدفوع
             </StyledTableCell>
             <StyledTableCell align="center">رقم الدفعة</StyledTableCell>
             <StyledTableCell align="center">
@@ -852,7 +852,7 @@ const Installments = () => {
                 },
               }}
             >
-              <StyledTableCell align="center" sx={{width: "70px"}}>
+              <StyledTableCell align="center" style={{maxWidth: "100px"}}>
                 {(installment.status === "PAID" ||
                   installment.status === "EARLY_PAID") && (
                   <Checkbox checked size="small" />

@@ -36,6 +36,7 @@ import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLay
 import Api from "../../config/Api";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import "dayjs/locale/ar";
 import AddEmployee from "../../components/modals/AddEmployee";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AssignRole from "../../components/modals/AssignRole";
@@ -76,6 +77,13 @@ export default function Employees() {
     retry:1,
   });
 
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " " 
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
   const handleExportPDF = async () => {
     if (!usersData || usersData.length === 0) {
       notifyError("لا توجد بيانات للتصدير");
@@ -221,7 +229,7 @@ export default function Employees() {
                 />
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ color: "gray" }}>
-                {dayjs(user.createdAt).format("DD/MM/YYYY")}
+                {formatArabicDate(user.createdAt)}
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                 {permissions.includes("users_Update") && (
@@ -367,7 +375,7 @@ export default function Employees() {
                           تاريخ الإنشاء:
                         </Typography>
                         <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {dayjs(user.createdAt).format("DD/MM/YYYY")}
+                          {formatArabicDate(user.createdAt)}
                         </Typography>
                       </Box>
                     </Box>

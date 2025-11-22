@@ -24,6 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getLogs, getAllLogsForExport } from "./logsApi";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import dayjs from "dayjs";
+import "dayjs/locale/ar";
 import LogsToolbar from "../../components/modals/LogsToolbar";
 import { Helmet } from "react-helmet-async";
 import { exportLogsToPDF, exportLogsToExcel } from "../../utilities/logsExporter";
@@ -49,6 +50,14 @@ const Logs = () => {
     queryFn: () => getLogs(page, filters),
   });
 
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " " 
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
+  
   const handleExportPDF = async () => {
     try {
       notifySuccess("جاري جلب جميع السجلات...");
@@ -249,7 +258,7 @@ const Logs = () => {
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {dayjs(log.createdAt).format("DD/MM/YYYY HH:mm a")}
+                  {formatArabicDate(log.createdAt)}
                 </StyledTableCell>
               </StyledTableRow>
             ))
@@ -333,7 +342,7 @@ const Logs = () => {
                           display: 'inline-block'
                         }}
                       >
-                        {dayjs(log.createdAt).format("DD/MM/YYYY HH:mm a")}
+                        {formatArabicDate(log.createdAt)}
                       </Typography>
                     </Box>
 
