@@ -9,7 +9,9 @@ import {
   Divider,
   Alert,
   CircularProgress,
-  IconButton
+  IconButton,
+  useTheme,
+  useMediaQuery
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -25,6 +27,10 @@ const PaymentReceipt = () => {
   const queryClient = useQueryClient();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
   
   const { data: repaymentData, isLoading, error } = useQuery({
     queryKey: ["repayment", repaymentId],
@@ -89,22 +95,38 @@ const PaymentReceipt = () => {
     setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
+  // Container styles with responsive height
+  const containerStyles = {
+    minHeight: isLargeScreen ? "80vh" : "100vh",
+    height: isLargeScreen ? "auto" : "100vh",
+    display: "flex",
+    alignItems: isSmallScreen ? "flex-start" : "center",
+    justifyContent: "center",
+    direction: "rtl",
+    fontFamily: "Tajawal",
+    py: isSmallScreen ? 2 : 0,
+    overflow: "auto"
+  };
+
+  // Paper styles with responsive padding
+  const paperStyles = {
+    p: isSmallScreen ? 2 : 4,
+    borderRadius: 3,
+    width: "100%",
+    maxWidth: "500px",
+    my: isSmallScreen ? 2 : 0
+  };
+
   if (repaymentData?.attachments && repaymentData?.attachments.length > 0) {
     return (
-      <Container
-        maxWidth="sm"
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          direction: "rtl",
-          fontFamily: "Tajawal"
-        }}
-      >
-        <Paper elevation={4} sx={{ p: 4, borderRadius: 3, width: "100%" }}>
+      <Container maxWidth="sm" sx={containerStyles}>
+        <Paper elevation={4} sx={paperStyles}>
           <Box textAlign="center" mb={3}>
-            <Typography variant="h5" fontWeight="bold" color="success.main">
+            <Typography 
+              variant={isSmallScreen ? "h6" : "h5"} 
+              fontWeight="bold" 
+              color="success.main"
+            >
               ✓ تم رفع الإيصال بنجاح
             </Typography>
             <Typography variant="body2" color="gray" mt={2}>
@@ -112,11 +134,18 @@ const PaymentReceipt = () => {
             </Typography>
           </Box>
 
-          <Paper sx={{ p: 3, bgcolor: "#f5f5f5", borderRadius: 2, mb: 3 }}>
+          <Paper sx={{ 
+            p: isSmallScreen ? 2 : 3, 
+            bgcolor: "#f5f5f5", 
+            borderRadius: 2, 
+            mb: 3 
+          }}>
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between">
-                <Typography color="gray">اسم العميل:</Typography>
-                <Typography fontWeight="bold" fontSize="1.1rem">
+                <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+                  اسم العميل:
+                </Typography>
+                <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
                   {repaymentData?.loan?.client?.name || clientName}
                 </Typography>
               </Box>
@@ -124,8 +153,10 @@ const PaymentReceipt = () => {
               <Divider />
 
               <Box display="flex" justifyContent="space-between">
-                <Typography color="gray">المبلغ المستحق:</Typography>
-                <Typography fontWeight="bold" fontSize="1.1rem">
+                <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+                  المبلغ المستحق:
+                </Typography>
+                <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
                   {repaymentData?.amount?.toFixed(2)}
                 </Typography>
               </Box>
@@ -133,10 +164,12 @@ const PaymentReceipt = () => {
               <Divider />
 
               <Box display="flex" justifyContent="space-between">
-                <Typography color="gray">حالة المراجعة:</Typography>
+                <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+                  حالة المراجعة:
+                </Typography>
                 <Typography 
                   fontWeight="bold" 
-                  fontSize="1.1rem"
+                  fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}
                   color="warning.main"
                 >
                   قيد المراجعة
@@ -149,12 +182,17 @@ const PaymentReceipt = () => {
             fullWidth
             variant="outlined"
             onClick={() => window.open(repaymentData.attachments, '_blank')}
-            sx={{ py: 1.2, borderRadius: 2, mb: 2 }}
+            sx={{ 
+              py: isSmallScreen ? 1 : 1.2, 
+              borderRadius: 2, 
+              mb: 2,
+              fontSize: isSmallScreen ? "0.8rem" : "0.9rem"
+            }}
           >
             عرض الإيصال المرفوع
           </Button>
 
-          <Alert severity="info">
+          <Alert severity="info" sx={{ fontSize: isSmallScreen ? "0.8rem" : "0.9rem" }}>
             سيتم إشعارك بنتيجة المراجعة قريباً
           </Alert>
         </Paper>
@@ -164,17 +202,7 @@ const PaymentReceipt = () => {
 
   if (isLoading) {
     return (
-      <Container
-        maxWidth="sm"
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          direction: "rtl",
-          fontFamily: "Tajawal"
-        }}
-      >
+      <Container maxWidth="sm" sx={containerStyles}>
         <CircularProgress />
       </Container>
     );
@@ -182,17 +210,7 @@ const PaymentReceipt = () => {
 
   if (error) {
     return (
-      <Container
-        maxWidth="sm"
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          direction: "rtl",
-          fontFamily: "Tajawal"
-        }}
-      >
+      <Container maxWidth="sm" sx={containerStyles}>
         <Alert severity="error">حدث خطأ في تحميل بيانات الدفعة</Alert>
       </Container>
     );
@@ -200,37 +218,17 @@ const PaymentReceipt = () => {
 
   if (!repaymentData) {
     return (
-      <Container
-        maxWidth="sm"
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          direction: "rtl",
-          fontFamily: "Tajawal"
-        }}
-      >
+      <Container maxWidth="sm" sx={containerStyles}>
         <Alert severity="warning">لم يتم العثور على بيانات الدفعة</Alert>
       </Container>
     );
   }
 
   return (
-    <Container
-      maxWidth="sm"
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        direction: "rtl",
-        fontFamily: "Tajawal"
-      }}
-    >
-      <Paper elevation={4} sx={{ p: 4, borderRadius: 3, width: "100%" }}>
+    <Container maxWidth="sm" sx={containerStyles}>
+      <Paper elevation={4} sx={paperStyles}>
         <Box textAlign="center" mb={3}>
-          <Typography variant="h5" fontWeight="bold">
+          <Typography variant={isSmallScreen ? "h6" : "h5"} fontWeight="bold">
             دفع الدفعة
           </Typography>
           <Typography variant="body2" color="gray">
@@ -238,11 +236,18 @@ const PaymentReceipt = () => {
           </Typography>
         </Box>
 
-        <Paper sx={{ p: 3, bgcolor: "#f5f5f5", borderRadius: 2, mb: 3 }}>
+        <Paper sx={{ 
+          p: isSmallScreen ? 2 : 3, 
+          bgcolor: "#f5f5f5", 
+          borderRadius: 2, 
+          mb: 3 
+        }}>
           <Stack spacing={2}>
             <Box display="flex" justifyContent="space-between">
-              <Typography color="gray">اسم العميل:</Typography>
-              <Typography fontWeight="bold" fontSize="1.1rem">
+              <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+                اسم العميل:
+              </Typography>
+              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
                 {repaymentData?.loan?.client?.name || clientName}
               </Typography>
             </Box>
@@ -250,8 +255,10 @@ const PaymentReceipt = () => {
             <Divider />
 
             <Box display="flex" justifyContent="space-between">
-              <Typography color="gray">المبلغ المستحق:</Typography>
-              <Typography fontWeight="bold" fontSize="1.1rem">
+              <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+                المبلغ المستحق:
+              </Typography>
+              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
                 {repaymentData?.amount?.toFixed(2)}
               </Typography>
             </Box>
@@ -259,8 +266,10 @@ const PaymentReceipt = () => {
             <Divider />
 
             <Box display="flex" justifyContent="space-between">
-              <Typography color="gray">تاريخ الاستحقاق:</Typography>
-              <Typography fontWeight="bold" fontSize="1.1rem">
+              <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+                تاريخ الاستحقاق:
+              </Typography>
+              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
                 {dayjs(repaymentData?.dueDate).format("DD/MM/YYYY")}
               </Typography>
             </Box>
@@ -273,58 +282,87 @@ const PaymentReceipt = () => {
             border: '2px dashed',
             borderColor: isDragActive ? '#1E40AF' : '#bdbdbd',
             backgroundColor: isDragActive ? '#f0f4ff' : 'transparent',
-            p: 4,
+            p: isSmallScreen ? 2 : 4,
             borderRadius: 2,
             mb: 2,
             textAlign: 'center',
             cursor: 'pointer',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            minHeight: isSmallScreen ? '120px' : '200px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}
         >
           <input {...getInputProps()} />
-          <CloudUploadIcon sx={{ fontSize: 60, color: "gray", mb: 1 }} />
+          <CloudUploadIcon sx={{ 
+            fontSize: isSmallScreen ? 40 : 60, 
+            color: "gray", 
+            mb: 1 
+          }} />
 
           {files.length > 0 ? (
-            <Stack spacing={1}>
+            <Stack spacing={1} sx={{ width: '100%' }}>
               {files.map((file, index) => (
-                <Box key={index} display="flex" alignItems="center">
-                  <Typography fontWeight="bold" color="#1E40AF">
-                    {file.name}
-                  </Typography>
-                  <Typography variant="caption" color="gray">
-                    {Math.round(file.size / 1024)} KB
-                  </Typography>
+                <Box key={index} display="flex" alignItems="center" justifyContent="space-between">
+                  <Box display="flex" alignItems="center" flex={1}>
+                    <Typography 
+                      fontWeight="bold" 
+                      color="#1E40AF" 
+                      fontSize={isSmallScreen ? "0.8rem" : "0.9rem"}
+                      noWrap
+                      sx={{ maxWidth: '150px' }}
+                    >
+                      {file.name}
+                    </Typography>
+                    <Typography variant="caption" color="gray" sx={{ ml: 1 }}>
+                      {Math.round(file.size / 1024)} KB
+                    </Typography>
+                  </Box>
                   <IconButton
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRemoveFile(index);
                     }}
                     size="small"
-                    sx={{ color: "#ff4444", ml: 1 }}
+                    sx={{ color: "#ff4444" }}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon fontSize={isSmallScreen ? "small" : "medium"} />
                   </IconButton>
                 </Box>
               ))}
             </Stack>
           ) : (
             <>
-              <Typography fontSize="0.9rem" mt={1} color="gray">
+              <Typography 
+                fontSize={isSmallScreen ? "0.8rem" : "0.9rem"} 
+                mt={1} 
+                color="gray"
+              >
                 {isDragActive ? 'أفلت الملفات هنا' : 'اسحب وأفلت الملفات هنا'}
               </Typography>
 
-              <Typography fontSize="0.8rem" color="gray" mb={1}>
+              <Typography fontSize={isSmallScreen ? "0.7rem" : "0.8rem"} color="gray" mb={1}>
                 أو
               </Typography>
 
               <Button
                 variant="outlined"
-                sx={{ mb: 1, borderRadius: 2 }}
+                sx={{ 
+                  mb: 1, 
+                  borderRadius: 2,
+                  fontSize: isSmallScreen ? "0.7rem" : "0.8rem"
+                }}
               >
                 تصفح الملفات
               </Button>
 
-              <Typography variant="caption" color="gray">
+              <Typography 
+                variant="caption" 
+                color="gray"
+                fontSize={isSmallScreen ? "0.6rem" : "0.7rem"}
+              >
                 PNG, JPG, PDF حتى 10MB
               </Typography>
             </>
@@ -332,7 +370,7 @@ const PaymentReceipt = () => {
         </Box>
 
         {files.length > 0 && (
-          <Alert severity="info" sx={{ mb: 2 }}>
+          <Alert severity="info" sx={{ mb: 2, fontSize: isSmallScreen ? "0.8rem" : "0.9rem" }}>
             تم اختيار {files.length} ملفات
           </Alert>
         )}
@@ -343,11 +381,12 @@ const PaymentReceipt = () => {
           onClick={handleSubmit}
           disabled={!files.length || uploading}
           sx={{
-            py: 1.2,
+            py: isSmallScreen ? 1 : 1.2,
             borderRadius: 2,
             fontWeight: "bold",
             background: "#1E40AF",
-            "&:hover": { background: "#153482" }
+            "&:hover": { background: "#153482" },
+            fontSize: isSmallScreen ? "0.8rem" : "0.9rem"
           }}
         >
           {uploading ? <CircularProgress size={24} /> : 'تأكيد وإرسال الإيصال'}
@@ -362,6 +401,7 @@ const PaymentReceipt = () => {
           justifyContent="center"
           alignItems="center"
           gap={0.5}
+          fontSize={isSmallScreen ? "0.6rem" : "0.7rem"}
         >
           🔒 اتصال آمن ومشفّر
         </Typography>

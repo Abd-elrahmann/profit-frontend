@@ -15,6 +15,7 @@ import { MdMessage as Message } from 'react-icons/md';
 import { MdDescription as JournalIcon } from 'react-icons/md';
 import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 import { Savings as SavingsIcon } from '@mui/icons-material';
+import { ReceiptLong as ReceiptLongIcon } from '@mui/icons-material';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -37,6 +38,7 @@ const Profile = React.lazy(() => import('./pages/Profile'));
 const ChartOfAccounts = React.lazy(() => import('./pages/chartOfAccounts/chartOfAccounts'));
 const Zakah = React.lazy(() => import('./pages/Zakah/zakah'));
 const Saving = React.lazy(() => import('./pages/Saving/Saving'));
+const ClientCollections = React.lazy(() => import('./pages/clientCollections/ClientCollections'));
 const routes = [
   {
     path: '/login',
@@ -104,6 +106,18 @@ const routes = [
     requiresPermissions: true,
     parent: 'إدارة العملاء'
   },
+  {
+    path: '/client-collections',
+    element: ClientCollections,
+    protected: true,
+    showInSidebar: true,
+    label: 'كشف تحصيلات العملاء',
+    icon: ReceiptLongIcon,
+    module: 'client-report',
+    requiresPermissions: true,
+    parent: 'إدارة العملاء'
+  },  
+   
   {
     path: '/investors',
     element: Investors,
