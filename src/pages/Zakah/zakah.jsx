@@ -39,6 +39,24 @@ import {
 import { Helmet } from "react-helmet-async";
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  ComposedChart,
+} from "recharts";
 
 const Zakah = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -102,6 +120,46 @@ const Zakah = () => {
     ];
     return months[month - 1] || month;
   };
+
+  // Helper function to get month name from monthKey (YYYY-MM format)
+  const getMonthNameFromKey = (monthKey) => {
+    if (!monthKey) return "";
+    const [year, month] = monthKey.split('-');
+    const monthNames = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  };
+
+  // Prepare chart data
+  const prepareChartData = () => {
+    if (!accountReport) return { monthlyData: [], transactionData: [] };
+
+    // Monthly balance data
+    const monthlyData = accountReport.journalsByMonth
+      ? Object.entries(accountReport.journalsByMonth)
+          .map(([month, data]) => ({
+            name: getMonthNameFromKey(month),
+            monthKey: month,
+            الرصيد: data.totalBalance || 0,
+            المدفوع: data.totalCredit || 0,
+            المتبقي: data.totalDebit || 0,
+          }))
+          .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+      : [];
+
+    // Transaction type distribution
+    const transactionData = [
+      { name: 'الزكاة المدفوعة', value: accountReport.account?.credit || 0, color: '#00C49F' },
+      { name: 'الزكاة المتبقية', value: accountReport.account?.debit || 0, color: '#FF8042' },
+    ];
+
+    return { monthlyData, transactionData };
+  };
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  const { monthlyData, transactionData } = prepareChartData();
 
   // Get status chip
   const getStatusChip = (status) => {
@@ -555,7 +613,7 @@ const Zakah = () => {
     }
 
     return (
-      <Box>
+      <Box sx={{ textAlign: "center" }}>
         {/* Account Summary */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={4}>
@@ -592,6 +650,152 @@ const Zakah = () => {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Charts Section */}
+        {accountReport && (
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* Monthly Balance Trend Chart */}
+            {monthlyData.length > 0 && (
+              <Grid item xs={12}>
+                <Paper sx={{ 
+                  p: isSmallScreen ? 2 : 3, 
+                  borderRadius: 2, 
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                }}>
+                  <Typography variant="h6" fontWeight="bold" mb={3}>
+                    تطور الرصيد والزكاة المدفوعة والمتبقية
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                    <ComposedChart data={monthlyData}>
+                      <defs>
+                        <linearGradient id="colorCreditZakah" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1}/>
+                        </linearGradient>
+                        <linearGradient id="colorDebitZakah" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                        contentStyle={{ borderRadius: '8px' }}
+                      />
+                      <Legend />
+                      <Area 
+                        type="monotone" 
+                        dataKey="المدفوع" 
+                        stackId="1"
+                        stroke="#00C49F" 
+                        fill="url(#colorCreditZakah)" 
+                        name="الزكاة المدفوعة"
+                        strokeWidth={2}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="المتبقي" 
+                        stackId="1"
+                        stroke="#FF8042" 
+                        fill="url(#colorDebitZakah)" 
+                        name="الزكاة المتبقية"
+                        strokeWidth={2}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="الرصيد" 
+                        stroke="#1976d2" 
+                        strokeWidth={3}
+                        name="الرصيد"
+                        dot={{ fill: '#1976d2', r: 5 }}
+                        activeDot={{ r: 7 }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </Paper>
+              </Grid>
+            )}
+
+            {/* Transaction Distribution Pie Chart */}
+            {transactionData.some(t => t.value > 0) && (
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: isSmallScreen ? 2 : 3, 
+                  borderRadius: 2, 
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                }}>
+                  <Typography variant="h6" fontWeight="bold" mb={3}>
+                    توزيع الزكاة المدفوعة والمتبقية
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                    <PieChart>
+                      <Pie
+                        data={transactionData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={isSmallScreen ? 80 : 120}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                      >
+                        {transactionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                        contentStyle={{ borderRadius: '8px' }}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Paper>
+              </Grid>
+            )}
+
+            {/* Monthly Transactions Bar Chart */}
+            {monthlyData.length > 0 && (
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: isSmallScreen ? 2 : 3, 
+                  borderRadius: 2, 
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                }}>
+                  <Typography variant="h6" fontWeight="bold" mb={3}>
+                    عدد العمليات الشهرية
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                    <BarChart data={monthlyData.map(month => ({
+                      ...month,
+                      العمليات: accountReport.journalsByMonth[month.monthKey]?.entries?.length || 0
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value, name) => [name === 'العمليات' ? `${value} عملية` : `${value.toLocaleString('en-US')} ريال`, name]} 
+                        contentStyle={{ borderRadius: '8px' }}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="العمليات" 
+                        fill="#8884D8"
+                        radius={[8, 8, 0, 0]}
+                        name="عدد العمليات"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
+        )}
 
         {/* Journal Entries */}
         {accountReport?.journalsByMonth && Object.keys(accountReport.journalsByMonth).length > 0 ? (

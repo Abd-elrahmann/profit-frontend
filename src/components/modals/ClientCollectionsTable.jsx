@@ -239,7 +239,7 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
                         />
                       </Box>
                       <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2" color="primary.main">
                           الدفعات
                         </Typography>
                         <Chip

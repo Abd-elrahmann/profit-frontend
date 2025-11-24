@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -37,11 +37,11 @@ import {
   Savings as SavingsIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   getClosedPeriods,
   postDistribution,
   unpostDistribution,
-  getPeriodById,
 } from "./profitApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import {
@@ -56,9 +56,12 @@ import "dayjs/locale/ar";
 import dayjs from "dayjs";
 
 const ProfitDistribution = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cameFromSaving, setCameFromSaving] = useState(false);
   const [distributionDialog, setDistributionDialog] = useState({
     open: false,
     periodId: null,
@@ -80,18 +83,41 @@ const ProfitDistribution = () => {
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
 
+  // Check for periodId in URL query parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const periodIdParam = searchParams.get('periodId');
+    if (periodIdParam) {
+      const periodId = parseInt(periodIdParam, 10);
+      if (!isNaN(periodId)) {
+        setSelectedPeriod(periodId);
+        setActiveTab(1);
+        setCameFromSaving(true); // Mark that user came from saving page
+      }
+    }
+  }, [location.search]);
+
+  const handleBackToSaving = () => {
+    navigate('/saving');
+  };
+
   // Query for closed periods
   const { data: closedPeriods, isLoading: isPeriodsLoading } = useQuery({
     queryKey: ["closed-periods"],
-    queryFn: getClosedPeriods,
+    queryFn: () => getClosedPeriods(),
   });
 
   // Query for period details when selected
-  const { data: periodData, isLoading: isPeriodLoading } = useQuery({
-    queryKey: ["period", selectedPeriod],
-    queryFn: () => getPeriodById(selectedPeriod),
+  const { data: periodDetailsData, isLoading: isPeriodLoading } = useQuery({
+    queryKey: ["closed-periods", selectedPeriod],
+    queryFn: () => getClosedPeriods(selectedPeriod),
     enabled: !!selectedPeriod && activeTab === 1,
   });
+
+  // Extract period data from the array response
+  const periodData = periodDetailsData && periodDetailsData.length > 0 
+    ? periodDetailsData[0] 
+    : null;
 
   const handleViewDetails = (periodId) => {
     setSelectedPeriod(periodId);
@@ -155,7 +181,6 @@ const ProfitDistribution = () => {
       }
 
       queryClient.invalidateQueries(["closed-periods"]);
-      queryClient.invalidateQueries(["period", periodId]);
       handleCloseDistributionDialog();
       
       // إعادة تعيين إعدادات الادخار
@@ -177,7 +202,6 @@ const ProfitDistribution = () => {
       notifySuccess("تم إلغاء توزيع الأرباح بنجاح");
 
       queryClient.invalidateQueries(["closed-periods"]);
-      queryClient.invalidateQueries(["period", periodId]);
       handleCloseDistributionDialog();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء العملية");
@@ -215,28 +239,29 @@ const ProfitDistribution = () => {
   };
 
   const hasDistribution = (period) => {
-    return period.isdistributed === true || 
-           (period.journals && period.journals.some(j => j.type === "CLOSING" && j.status === "POSTED"));
+    return period?.isDistributed === true || 
+           (period?.distributionJournal && period.distributionJournal.status === "POSTED");
   };
 
   // حساب الأرباح بعد الادخار
+  // الادخار يطبق فقط على أرباح الشركاء، وأرباح الشركة لا تتغير
   const calculateProfitAfterSaving = () => {
     if (!periodData) return { companyProfit: 0, partnerProfit: 0, savedAmount: 0 };
     
-    const totalProfit = (periodData.companyProfit || 0) + (periodData.totalPartnerProfit || 0);
-    const savedAmount = totalProfit * (savingPercentage / 100);
-    const remainingProfit = totalProfit - savedAmount;
+    // Calculate total partner profit from partners array
+    const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.totalProfit || 0), 0) || 0;
+    const companyProfit = periodData.companyProfit || 0;
     
-    // توزيع الأرباح المتبقية بنفس النسب
-    const companyRatio = periodData.companyProfit / totalProfit;
-    const partnerRatio = periodData.totalPartnerProfit / totalProfit;
+    // الادخار يطبق فقط على أرباح الشركاء
+    const savedAmount = totalPartnerProfit * (savingPercentage / 100);
+    const partnerProfitAfterSaving = totalPartnerProfit - savedAmount;
     
     return {
       savedAmount,
-      companyProfit: remainingProfit * companyRatio,
-      partnerProfit: remainingProfit * partnerRatio,
-      originalCompanyProfit: periodData.companyProfit,
-      originalPartnerProfit: periodData.totalPartnerProfit
+      companyProfit: companyProfit, // أرباح الشركة لا تتغير
+      partnerProfit: partnerProfitAfterSaving,
+      originalCompanyProfit: companyProfit,
+      originalPartnerProfit: totalPartnerProfit
     };
   };
 
@@ -314,27 +339,27 @@ const ProfitDistribution = () => {
             <Typography fontWeight="bold" color="success.main">
               {enableSaving ? 
                 profitAfterSaving.partnerProfit.toLocaleString() : 
-                periodData?.totalPartnerProfit?.toLocaleString() || 0
+                (periodData?.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
               }
             </Typography>
           </Box>
           
-          {/* عرض المبلغ المدخر إذا كان الادخار مفعل */}
-          {enableSaving && savingPercentage > 0 && (
+          {/* عرض المبلغ المدخر إذا كان الادخار مفعل أو موجود في البيانات */}
+          {(enableSaving && savingPercentage > 0) || periodData?.totalSaving > 0 ? (
             <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: '1px solid #e0e0e0' }}>
               <Typography variant="body2" color="warning.main">
-                المبلغ المدخر ({savingPercentage}%):
+                المبلغ المدخر {enableSaving && savingPercentage > 0 ? `(${savingPercentage}%)` : ''}:
               </Typography>
               <Typography variant="body2" fontWeight="bold" color="warning.main">
-                {profitAfterSaving.savedAmount.toLocaleString()}
+                {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()}
               </Typography>
             </Box>
-          )}
+          ) : null}
           
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>عدد الشركاء:</Typography>
             <Typography fontWeight="bold">
-              {periodData?.partnerProfits?.length || 0}
+              {periodData?.partners?.length || 0}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -676,12 +701,14 @@ const ProfitDistribution = () => {
 
                     {/* Partners Count */}
                     <Box>
+                      <Box>
                       <Typography variant="body2" color="textSecondary">
                         عدد الشركاء:
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
                         {period.partners?.length || 0}
                       </Typography>
+                    </Box>
                     </Box>
 
                     {/* Action Buttons */}
@@ -783,7 +810,7 @@ const ProfitDistribution = () => {
               <Typography variant="h6" fontWeight="bold" color="success.main">
                 {enableSaving ? 
                   profitAfterSaving.partnerProfit.toLocaleString() : 
-                  periodData?.totalPartnerProfit?.toLocaleString() || 0
+                  (periodData?.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
                 }
               </Typography>
             </CardContent>
@@ -840,31 +867,33 @@ const ProfitDistribution = () => {
           </Box>
 
           {/* عرض معلومات الادخار للجوال */}
-          {enableSaving && savingPercentage > 0 && (
+          {(enableSaving && savingPercentage > 0) || periodData?.totalSaving > 0 ? (
             <Box sx={{ pt: 2, borderTop: '1px solid #e0e0e0' }}>
               <Typography variant="body2" color="warning.main" gutterBottom>
                 معلومات الادخار:
               </Typography>
+              {enableSaving && savingPercentage > 0 && (
+                <Typography variant="body2">
+                  نسبة الادخار: {savingPercentage}%
+                </Typography>
+              )}
               <Typography variant="body2">
-                نسبة الادخار: {savingPercentage}%
-              </Typography>
-              <Typography variant="body2">
-                المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()} ريال
+                المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()} ريال
               </Typography>
             </Box>
-          )}
+          ) : null}
         </Stack>
       </Paper>
 
       {/* Partner Profits with additional data */}
-      {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
+      {periodData?.partners && periodData.partners.length > 0 && (
         <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
           <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
             أرباح الشركاء
           </Typography>
 
           <Stack spacing={2}>
-            {periodData.partnerProfits.map((partner) => (
+            {periodData.partners.map((partner) => (
               <Card key={partner.partnerId} variant="outlined">
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
@@ -884,7 +913,7 @@ const ProfitDistribution = () => {
                           الرقم القومي:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
-                          {partner.partnerNationalId || "-"}
+                          {partner.nationalId || "-"}
                         </Typography>
                       </Box>
 
@@ -893,7 +922,7 @@ const ProfitDistribution = () => {
                           الهاتف:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
-                          {partner.partnerPhone || "-"}
+                          {partner.phone || "-"}
                         </Typography>
                       </Box>
                     </Box>
@@ -918,15 +947,27 @@ const ProfitDistribution = () => {
                         <Typography variant="body2" color="textSecondary">
                           الربح:
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          fontWeight="bold"
-                          color="success.main"
-                        >
-                          {partner.totalProfit.toLocaleString()}
-                        </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="bold"
+                        color="success.main"
+                      >
+                        {(enableSaving && partner.savingAmount) || partner.totalAfterSaving ? 
+                          (partner.totalAfterSaving || partner.totalProfit).toLocaleString() : 
+                          partner.totalProfit.toLocaleString()
+                        }
+                      </Typography>
                       </Box>
                     </Box>
+
+                    {/* Show saving amount when saving is enabled or exists in data */}
+                    {partner.savingAmount && (enableSaving || partner.savingAmount > 0) && (
+                      <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0' }}>
+                        <Typography variant="body2" color="warning.main">
+                          المبلغ المدخر: {partner.savingAmount.toLocaleString()} ريال
+                        </Typography>
+                      </Box>
+                    )}
                   </Stack>
                 </CardContent>
               </Card>
@@ -936,60 +977,52 @@ const ProfitDistribution = () => {
       )}
 
       {/* Distribution Journal */}
-      {periodData?.journals?.find((j) => j.type === "CLOSING") && (
+      {periodData?.distributionJournal && (
         <Paper sx={{ p: 2, borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
             قيد توزيع الأرباح
           </Typography>
 
-          {periodData.journals
-            .filter((journal) => journal.type === "CLOSING")
-            .map((journal) => (
-              <Card key={journal.id} variant="outlined" sx={{ mb: 2 }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Stack spacing={1}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight="bold"
-                        color="primary"
-                      >
-                        {journal.reference}
-                      </Typography>
-                      <Chip
-                        label={getJournalStatusText(journal.status)}
-                        color={
-                          journal.status === "POSTED" ? "success" : "default"
-                        }
-                        size="small"
-                      />
-                    </Box>
+          <Card variant="outlined" sx={{ mb: 2 }}>
+            <CardContent sx={{ p: 2 }}>
+              <Stack spacing={1}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="bold"
+                    color="primary"
+                  >
+                    {periodData.distributionJournal.reference}
+                  </Typography>
+                  <Chip
+                    label={getJournalStatusText(periodData.distributionJournal.status)}
+                    color={
+                      periodData.distributionJournal.status === "POSTED" ? "success" : "default"
+                    }
+                    size="small"
+                  />
+                </Box>
 
-                    <Typography variant="body2">
-                      {journal.description}
-                    </Typography>
+                <Typography variant="body2">
+                  {periodData.distributionJournal.description}
+                </Typography>
 
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                      <Typography variant="body2" color="textSecondary">
-                        {formatArabicDate(journal.date)}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        مدين: {journal.totalDebit?.toLocaleString() || 0} |
-                        دائن: {journal.totalCredit?.toLocaleString() || 0}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
+                <Box
+                  sx={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <Typography variant="body2" color="textSecondary">
+                    {formatArabicDate(periodData.distributionJournal.date)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Paper>
       )}
     </Box>
@@ -1084,7 +1117,7 @@ const ProfitDistribution = () => {
             <Typography variant="h5" fontWeight="bold" color="success.main">
               {enableSaving ? 
                 profitAfterSaving.partnerProfit.toLocaleString() : 
-                periodData?.totalPartnerProfit?.toLocaleString() || 0
+                (periodData?.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
               }
             </Typography>
             <Typography variant="body1" color="success.main">
@@ -1100,25 +1133,34 @@ const ProfitDistribution = () => {
       </Grid>
 
       {/* عرض معلومات الادخار */}
-      {enableSaving && savingPercentage > 0 && (
+      {(enableSaving && savingPercentage > 0) || periodData?.totalSaving > 0 ? (
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body1" fontWeight="bold">
             معلومات الادخار:
           </Typography>
+          {enableSaving && savingPercentage > 0 && (
+            <Typography variant="body2">
+              - نسبة الادخار: {savingPercentage}%
+            </Typography>
+          )}
           <Typography variant="body2">
-            - نسبة الادخار: {savingPercentage}%
+            - المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()} ريال
           </Typography>
-          <Typography variant="body2">
-            - المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()} ريال
-          </Typography>
-          <Typography variant="body2">
-            - إجمالي الأرباح قبل الادخار: {(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit).toLocaleString()} ريال
-          </Typography>
+          {enableSaving && savingPercentage > 0 && (
+            <Typography variant="body2">
+              - إجمالي الأرباح قبل الادخار: {(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit).toLocaleString()} ريال
+            </Typography>
+          )}
+          {periodData?.totalAfterSaving && (
+            <Typography variant="body2">
+              - إجمالي الأرباح بعد الادخار: {periodData.totalAfterSaving.toLocaleString()} ريال
+            </Typography>
+          )}
         </Alert>
-      )}
+      ) : null}
 
       {/* Partner Profits with additional data */}
-      {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
+      {periodData?.partners && periodData.partners.length > 0 && (
         <>
           <Typography
             variant="h6"
@@ -1137,26 +1179,28 @@ const ProfitDistribution = () => {
                   <StyledTableCell align="center">الرقم القومي</StyledTableCell>
                   <StyledTableCell align="center">الهاتف</StyledTableCell>
                   <StyledTableCell align="center">
-                    {" "}
                     المبلغ الأصلي
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     نسبة ربح الشركة
                   </StyledTableCell>
-                  <StyledTableCell align="center" >الربح الموزع بعد الخصم</StyledTableCell>
+                  {periodData.partners.some(p => p.savingAmount) && (
+                    <StyledTableCell align="center">المبلغ المدخر</StyledTableCell>
+                  )}
+                  <StyledTableCell align="center">الربح الموزع {periodData.partners.some(p => p.savingAmount) ? 'بعد الخصم' : ''}</StyledTableCell>
                 </StyledTableRow>
               </TableHead>
               <TableBody>
-                {periodData.partnerProfits.map((partner) => (
+                {periodData.partners.map((partner) => (
                   <StyledTableRow key={partner.partnerId}>
                     <StyledTableCell align="center">
                       {partner.partnerName}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {partner.partnerNationalId || "-"}
+                      {partner.nationalId || "-"}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {partner.partnerPhone || "-"}
+                      {partner.phone || "-"}
                     </StyledTableCell>
                     <StyledTableCell align="center">
                       {(
@@ -1167,20 +1211,33 @@ const ProfitDistribution = () => {
                     <StyledTableCell align="center">
                       {partner.orgProfitPercent}%
                     </StyledTableCell>
+                    {periodData.partners.some(p => p.savingAmount) && (
+                      <StyledTableCell align="center">
+                        <Typography fontWeight="bold" color="warning.main">
+                          {partner.savingAmount?.toLocaleString() || 0}
+                        </Typography>
+                      </StyledTableCell>
+                    )}
                     <StyledTableCell align="center">
                       <Typography fontWeight="bold" color="success.main">
-                        {partner.totalProfit.toLocaleString()}
+                        {partner.totalAfterSaving ? 
+                          partner.totalAfterSaving.toLocaleString() : 
+                          partner.totalProfit.toLocaleString()
+                        }
                       </Typography>
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
                 <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell colSpan={5} align="center">
+                  <StyledTableCell colSpan={periodData.partners.some(p => p.savingAmount) ? 6 : 5} align="center">
                     <Typography fontWeight="bold">الإجمالي</Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <Typography fontWeight="bold" color="success.main">
-                      {periodData.totalPartnerProfit.toLocaleString()}
+                      {periodData.totalAfterSaving ? 
+                        periodData.totalAfterSaving.toLocaleString() : 
+                        (periodData.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
+                      }
                     </Typography>
                   </StyledTableCell>
                 </StyledTableRow>
@@ -1191,7 +1248,7 @@ const ProfitDistribution = () => {
       )}
 
       {/* Distribution Journal */}
-      {periodData?.journals?.find((j) => j.type === "CLOSING") && (
+      {periodData?.distributionJournal && (
         <>
           <Divider sx={{ my: 3 }} />
           <Typography
@@ -1213,41 +1270,29 @@ const ProfitDistribution = () => {
                   <StyledTableCell align="center">الوصف</StyledTableCell>
                   <StyledTableCell align="center">الحالة</StyledTableCell>
                   <StyledTableCell align="center">التاريخ</StyledTableCell>
-                  <StyledTableCell align="center">مدين</StyledTableCell>
-                  <StyledTableCell align="center">دائن</StyledTableCell>
                 </StyledTableRow>
               </TableHead>
               <TableBody>
-                {periodData.journals
-                  .filter((journal) => journal.type === "CLOSING")
-                  .map((journal) => (
-                    <StyledTableRow key={journal.id}>
-                      <StyledTableCell align="center">
-                        {journal.reference}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {journal.description}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        <Chip
-                          label={getJournalStatusText(journal.status)}
-                          color={
-                            journal.status === "POSTED" ? "success" : "default"
-                          }
-                          size="small"
-                        />
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {formatDate(journal.date)}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {journal.totalDebit?.toLocaleString() || 0}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {journal.totalCredit?.toLocaleString() || 0}
-                      </StyledTableCell>
-                    </StyledTableRow>
-                  ))}
+                <StyledTableRow>
+                  <StyledTableCell align="center">
+                    {periodData.distributionJournal.reference}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {periodData.distributionJournal.description}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <Chip
+                      label={getJournalStatusText(periodData.distributionJournal.status)}
+                      color={
+                        periodData.distributionJournal.status === "POSTED" ? "success" : "default"
+                      }
+                      size="small"
+                    />
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {formatDate(periodData.distributionJournal.date)}
+                  </StyledTableCell>
+                </StyledTableRow>
               </TableBody>
             </Table>
           </TableContainer>
@@ -1370,6 +1415,23 @@ const ProfitDistribution = () => {
           }}
         >
           <Box sx={{ width: "100%" }}>
+            {/* Back button if came from saving page */}
+            {cameFromSaving && activeTab === 1 && (
+              <Box sx={{ mb: 2, display: "flex", alignItems: "center" }}>
+                <IconButton 
+                  onClick={handleBackToSaving} 
+                  size="small"
+                  sx={{ mr: 1 }}
+                  title="العودة إلى صفحة المدخرات"
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+                <Typography variant="body2" color="text.secondary">
+                  العودة إلى صفحة المدخرات
+                </Typography>
+              </Box>
+            )}
+
             {/* Tabs for desktop, simple navigation for mobile */}
             {!isSmallScreen ? (
               <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
@@ -1415,9 +1477,15 @@ const ProfitDistribution = () => {
                       justifyContent: "center",
                     }}
                   >
-                    <IconButton onClick={handleBackToList} size="small">
-                      <ArrowBackIcon />
-                    </IconButton>
+                    {cameFromSaving ? (
+                      <IconButton onClick={handleBackToSaving} size="small">
+                        <ArrowBackIcon />
+                      </IconButton>
+                    ) : (
+                      <IconButton onClick={handleBackToList} size="small">
+                        <ArrowBackIcon />
+                      </IconButton>
+                    )}
                     <Typography variant="h6" fontWeight="bold" sx={{ ml: 1 }}>
                       تفاصيل التوزيع
                     </Typography>
