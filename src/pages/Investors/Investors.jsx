@@ -884,23 +884,23 @@ export default function Investors() {
             </Box>
 
             {/* Summary Cards */}
-            <Grid container spacing={2} mb={3} sx={{width: '100%'}}>
-              <Grid item xs={12} md={4}>
-                <Card sx={{width: '250px'}}>
-                  <CardContent>
-                    <Typography color="text.secondary" variant="body1">
+            <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <CardContent sx={{textAlign: 'center'}}>
+                    <Typography color="text.secondary" variant="body1" gutterBottom>
                       إجمالي مبلغ الاستثمار
                     </Typography>
                     <Typography variant="h6" fontWeight="bold" color="success">
-                      {investorDetails.capitalAmount?.toLocaleString()} ريال
+                      {investorDetails.capitalAmount?.toLocaleString()}
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={12} md={4}>
-                <Card sx={{width: '250px'}}>
-                  <CardContent>
-                    <Typography color="text.secondary" variant="body1">
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <CardContent sx={{textAlign: 'center'}}>
+                    <Typography color="text.secondary" variant="body1" gutterBottom>
                       نسبة أرباح المنشأة
                     </Typography>
                     <Typography variant="h6" fontWeight="bold">
@@ -909,14 +909,26 @@ export default function Investors() {
                   </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={12} md={4}>
-                <Card sx={{width: '250px'}}>
-                  <CardContent>
-                    <Typography color="text.secondary" variant="body1">
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <CardContent sx={{textAlign: 'center'}}>
+                    <Typography color="text.secondary" variant="body1" gutterBottom>
                       نسبة أرباح المستثمر
                     </Typography>
                     <Typography variant="h6" fontWeight="bold">
                       {investorDetails.partnerProfitPercent}%
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <CardContent sx={{textAlign: 'center'}}>
+                    <Typography color="text.secondary" variant="body1" gutterBottom>
+                      إجمالي الأرباح
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold" color="primary">
+                      {investorDetails.totalProfit?.toLocaleString() || 0}
                     </Typography>
                   </CardContent>
                 </Card>
