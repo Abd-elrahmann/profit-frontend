@@ -17,7 +17,7 @@ import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 import { Savings as SavingsIcon } from '@mui/icons-material';
 import { ReceiptLong as ReceiptLongIcon } from '@mui/icons-material';
 
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Employees = React.lazy(() => import('./pages/Employees/Employees'));
 const Roles = React.lazy(() => import('./pages/Roles/Roles'));
