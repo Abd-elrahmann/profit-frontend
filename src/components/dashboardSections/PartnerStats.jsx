@@ -87,16 +87,50 @@ const PartnerStats = () => {
   }
 
   return (
-    <Box sx={{ width: '100vw', maxWidth: '100%', p: { xs: 1.5, sm: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Box sx={{ 
+      width: '100%', 
+      p: { xs: 2, sm: 3, md: 4 }, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      backgroundColor: 'background.default'
+    }}>
       {/* Header and Filter */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 }, width: '100%', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
-        <FormControl sx={{ minWidth: { xs: 100, sm: 120 } }} size="small">
-          <InputLabel>الفترة</InputLabel>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        gap: 15,
+        alignItems: 'center', 
+        mb: { xs: 3, sm: 4, md: 5 }, 
+        width: '100%', 
+        maxWidth: '1200px'
+      }}>
+        <Typography 
+          variant="h5" 
+          fontWeight="600" 
+          sx={{ 
+            color: 'text.primary',
+            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+          }}
+        >
+          إحصائيات الشركاء
+        </Typography>
+        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
+          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
           <Select
             value={filter}
             label="الفترة"
             onChange={(e) => setFilter(e.target.value)}
             size="small"
+            sx={{
+              borderRadius: 2,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'divider',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.main',
+              },
+            }}
           >
             <MenuItem value="all">الكل</MenuItem>
             <MenuItem value="daily">يومي</MenuItem>
@@ -107,63 +141,155 @@ const PartnerStats = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px' }}>
+        {/* إجمالي الشركاء */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'primary.50', height: '100%' }}>
-            <CardContent>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  إجمالي الشركاء
-                </Typography>
-                <Typography variant="h4" fontWeight="bold" color="primary.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
-                  {animatedPartnersCount}
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'primary.50',
+                mb: 2
+              }}>
+                <Typography variant="h6" color="primary.main" fontWeight="600">
+                  👥
                 </Typography>
               </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                إجمالي الشركاء
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {animatedPartnersCount}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
 
+        {/* شركاء نشطين */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'success.50', height: '100%' }}>
-            <CardContent>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  شركاء نشطين
-                </Typography>
-                <Typography variant="h4" fontWeight="bold" color="success.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
-                  {animatedActivePartners}
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'success.50',
+                mb: 2
+              }}>
+                <Typography variant="h6" color="success.main" fontWeight="600">
+                  ✅
                 </Typography>
               </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                شركاء نشطين
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {animatedActivePartners}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
 
+        {/* إجمالي رأس المال */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'warning.50', height: '100%' }}>
-            <CardContent>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  إجمالي رأس المال
-                </Typography>
-                <Typography variant="h4" fontWeight="bold" color="warning.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
-                  {formatCurrency(animatedCapital)}
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'warning.50',
+                mb: 2
+              }}>
+                <Typography variant="h6" color="warning.main" fontWeight="600">
+                  💼
                 </Typography>
               </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                إجمالي رأس المال
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="warning.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {formatCurrency(animatedCapital)}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
 
+        {/* إجمالي الأرباح */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'info.50', height: '100%' }}>
-            <CardContent>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  إجمالي الأرباح
-                </Typography>
-                <Typography variant="h4" fontWeight="bold" color="info.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
-                  {formatCurrency(animatedProfit)}
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'info.50',
+                mb: 2
+              }}>
+                <Typography variant="h6" color="info.main" fontWeight="600">
+                  📈
                 </Typography>
               </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                إجمالي الأرباح
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="info.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {formatCurrency(animatedProfit)}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>

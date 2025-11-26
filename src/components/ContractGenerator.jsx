@@ -6,7 +6,7 @@ import { notifySuccess, notifyError } from '../utilities/toastify';
 
 const numberToArabicWords = (num) => {
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-  const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+  const tens = ['', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
   const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
   const hundreds = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
 
@@ -15,29 +15,41 @@ const numberToArabicWords = (num) => {
 
   let result = '';
 
-  // الآلاف
-  if (num >= 1000) {
-    const thousandsPart = Math.floor(num / 1000);
-
-    if (thousandsPart === 1) {
-      result += 'ألف';
-    } else if (thousandsPart === 2) {
-      result += 'ألفان';
-    } else if (thousandsPart < 11) {
-      result += ones[thousandsPart] + ' آلاف';
+  // الملايين
+  if (num >= 1000000) {
+    const millionsPart = Math.floor(num / 1000000);
+    if (millionsPart === 1) {
+      result += 'مليون';
+    } else if (millionsPart === 2) {
+      result += 'مليونان';
+    } else if (millionsPart <= 10) {
+      result += ones[millionsPart] + ' ملايين';
     } else {
-      result += numberToArabicWords(thousandsPart) + ' ألف';
+      result += numberToArabicWords(millionsPart) + ' مليون';
     }
-
-    num %= 1000;
-
-    // ✅ إضافة حرف (و) لو فيه بقية بعد الألف
-    if (num > 0) {
-      result += ' و ';
-    } else {
-      result += ' ';
-    }
+    num %= 1000000;
+    if (num > 0) result += ' و ';
   }
+
+  // الآلاف
+if (num >= 1000) {
+  const thousandsPart = Math.floor(num / 1000);
+
+  if (thousandsPart === 1) {
+    result += 'ألف';
+  } else if (thousandsPart === 2) {
+    result += 'ألفان';
+  } else if (thousandsPart < 11) {
+    // من 3 إلى 10
+    result += numberToArabicWords(thousandsPart) + ' آلاف';
+  } else {
+    result += numberToArabicWords(thousandsPart) + ' ألف';
+  }
+
+  num %= 1000;
+  if (num > 0) result += ' و ';
+}
+
 
   // المئات
   if (num >= 100) {
@@ -51,9 +63,10 @@ const numberToArabicWords = (num) => {
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
-    result += tens[tensPart];
     if (onesPart > 0) {
-      result += ' و' + ones[onesPart];
+      result += ones[onesPart] + ' و' + tens[tensPart];
+    } else {
+      result += tens[tensPart];
     }
   } else if (num >= 10) {
     result += teens[num - 10];

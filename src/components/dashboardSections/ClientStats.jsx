@@ -88,16 +88,50 @@ const ClientStats = () => {
   }
 
   return (
-    <Box sx={{ width: '100vw', maxWidth: '100%', p: { xs: 1.5, sm: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Box sx={{ 
+      width: '100%', 
+      p: { xs: 2, sm: 3, md: 4 }, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      backgroundColor: 'background.default'
+    }}>
       {/* Header and Filter */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 }, width: '100%', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
-        <FormControl sx={{ minWidth: { xs: 100, sm: 120 } }} size="small">
-          <InputLabel>الفترة</InputLabel>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        gap: 15,
+        mb: { xs: 3, sm: 4, md: 5 }, 
+        width: '100%', 
+        maxWidth: '1200px'
+      }}>
+        <Typography 
+          variant="h5" 
+          fontWeight="600" 
+          sx={{ 
+            color: 'text.primary',
+            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+          }}
+        >
+          إحصائيات العملاء
+        </Typography>
+        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
+          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
           <Select
             value={filter}
             label="الفترة"
             onChange={(e) => setFilter(e.target.value)}
             size="small"
+            sx={{
+              borderRadius: 2,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'divider',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.main',
+              },
+            }}
           >
             <MenuItem value="all">الكل</MenuItem>
             <MenuItem value="daily">يومي</MenuItem>
@@ -108,24 +142,59 @@ const ClientStats = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px' }}>
         {/* إجمالي العملاء + عملاء جدد */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'primary.50', height: '100%' }}>
-            <CardContent>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  backgroundColor: 'primary.50',
+                  mb: 2
+                }}>
+                  <Typography variant="h6" color="primary.main" fontWeight="600">
+                    👥
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                   إجمالي العملاء
                 </Typography>
-                <Typography variant="h4" fontWeight="bold" color="primary.main" sx={{ mb: 2, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
+                <Typography variant="h4" fontWeight="700" color="primary.main" sx={{ mb: 2.5, fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
                   {animatedCount}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  عملاء جدد اليوم
-                </Typography>
-                <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                  {animatedNewClients}
-                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  gap: 1,
+                  p: 1.5,
+                  borderRadius: 2,
+                  backgroundColor: 'success.50',
+                  border: `1px solid ${theme.palette.success[100]}`
+                }}>
+                  <Typography variant="body2" color="success.main" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, fontWeight: 600 }}>
+                    عملاء جدد اليوم
+                  </Typography>
+                  <Typography variant="h6" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}>
+                    {animatedNewClients}
+                  </Typography>
+                </Box>
               </Box>
             </CardContent>
           </Card>
@@ -133,56 +202,147 @@ const ClientStats = () => {
 
         {/* حالة العملاء */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'success.50', height: '100%' }}>
-            <CardContent>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+          <Card sx={{ 
+            height: '100%',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  backgroundColor: 'success.50',
+                  mb: 2
+                }}>
+                  <Typography variant="h6" color="success.main" fontWeight="600">
+                    ✅
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                   عملاء نشطين
                 </Typography>
-                <Typography variant="h4" fontWeight="bold" color="success.main" sx={{ mb: 2, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
+                <Typography variant="h4" fontWeight="700" color="success.main" sx={{ mb: 2.5, fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
                   {animatedActive}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  عملاء متعثرين
-                </Typography>
-                <Typography variant="h6" fontWeight="bold" color="error.main" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                  {animatedOverdue}
-                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  gap: 1,
+                  p: 1.5,
+                  borderRadius: 2,
+                  backgroundColor: 'error.50',
+                  border: `1px solid ${theme.palette.error[100]}`
+                }}>
+                  <Typography variant="body2" color="error.main" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, fontWeight: 600 }}>
+                    عملاء متعثرين
+                  </Typography>
+                  <Typography variant="h6" fontWeight="700" color="error.main" sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}>
+                    {animatedOverdue}
+                  </Typography>
+                </Box>
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
         {/* المديونية والمدفوعات */}
-        <Grid item xs={12} sm={12} md={6}>
-          <Card sx={{ bgcolor: 'warning.50', height: '100%' }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100%', p: { xs: 2, sm: 3 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' }, flexWrap: 'wrap', gap: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
-                <Box sx={{ textAlign: 'center', minWidth: { xs: '100%', sm: '150px' }, flex: { xs: '0 0 100%', sm: '0 0 auto' } }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                    إجمالي المديونية
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold" color="warning.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.5rem' } }}>
-                    {formatCurrency(animatedDebit)}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ 
+            borderRadius: 3,
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.palette.divider}`,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  backgroundColor: 'warning.50',
+                  mr: 2
+                }}>
+                  <Typography variant="h6" color="warning.main" fontWeight="600">
+                    💰
                   </Typography>
                 </Box>
-                <Box sx={{ textAlign: 'center', minWidth: { xs: '100%', sm: '150px' }, flex: { xs: '0 0 100%', sm: '0 0 auto' } }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                    المبلغ المدفوع
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold" color="success.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.5rem' } }}>
-                    {formatCurrency(animatedPaid)}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'center', minWidth: { xs: '100%', sm: '150px' }, flex: { xs: '0 0 100%', sm: '0 0 auto' } }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                    المتبقي للتحصيل
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold" color="info.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.5rem' } }}>
-                    {formatCurrency(animatedRemaining)}
-                  </Typography>
-                </Box>
+                <Typography variant="h6" fontWeight="600" color="text.primary">
+                  المديونية والمدفوعات
+                </Typography>
               </Box>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    p: 2.5,
+                    borderRadius: 2,
+                    backgroundColor: 'primary.50',
+                    border: `1px solid ${theme.palette.primary[100]}`,
+                    height: '100%'
+                  }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                      إجمالي المديونية
+                    </Typography>
+                    <Typography variant="h5" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                      {formatCurrency(animatedDebit)}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    p: 2.5,
+                    borderRadius: 2,
+                    backgroundColor: 'success.50',
+                    border: `1px solid ${theme.palette.success[100]}`,
+                    height: '100%'
+                  }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                      المبلغ المدفوع
+                    </Typography>
+                    <Typography variant="h5" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                      {formatCurrency(animatedPaid)}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    p: 2.5,
+                    borderRadius: 2,
+                    backgroundColor: 'info.50',
+                    border: `1px solid ${theme.palette.info[100]}`,
+                    height: '100%'
+                  }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                      المتبقي للتحصيل
+                    </Typography>
+                    <Typography variant="h5" fontWeight="700" color="info.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                      {formatCurrency(animatedRemaining)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
         </Grid>

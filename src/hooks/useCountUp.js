@@ -1,27 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useMotionValue, useSpring, useTransform } from 'framer-motion';
 
-/**
- * Hook for smooth animated counter using framer-motion
- * @param {number} end - Target value
- * @param {number} duration - Animation duration in ms (default: 600)
- * @param {boolean} enabled - Whether animation is enabled (default: true)
- * @returns {number} - Current animated value
- */
-export const useCountUp = (end = 0, duration = 600, enabled = true) => {
+// eslint-disable-next-line no-unused-vars
+export const useCountUp = (end = 0, duration = 400, enabled = true) => {
   const [displayValue, setDisplayValue] = useState(0);
   const motionValue = useMotionValue(0);
   
-  // Optimized spring settings for ultra-smooth animation
-  // Lower stiffness and damping = smoother, longer animation
+  // إعدادات سبرنج محسنة للسرعة مع الحفاظ على السلاسة
   const spring = useSpring(motionValue, {
-    stiffness: 50,
-    damping: 20,
-    mass: 0.8,
-    restDelta: 0.0001,
+    stiffness: 120, // زيادة الصلابة للسرعة
+    damping: 25,    // تقليل التخميد للسرعة
+    mass: 0.5,      // تقليل الكتلة للاستجابة الأسرع
+    restDelta: 0.001,
   });
 
-  // Use transform to round smoothly without jumps
   const roundedValue = useTransform(spring, (latest) => {
     return Math.round(latest);
   });
@@ -33,13 +25,10 @@ export const useCountUp = (end = 0, duration = 600, enabled = true) => {
       return;
     }
 
-    // Reset to 0 and animate to end smoothly
+    // بدء الأنيميشن فوراً بدون تأخير
     motionValue.set(0);
-    const timeout = setTimeout(() => {
-      motionValue.set(end);
-    }, 10);
+    motionValue.set(end);
 
-    return () => clearTimeout(timeout);
   }, [end, enabled, motionValue]);
 
   useEffect(() => {
@@ -50,11 +39,5 @@ export const useCountUp = (end = 0, duration = 600, enabled = true) => {
     return () => unsubscribe();
   }, [roundedValue]);
 
-  // Suppress unused parameter warning
-  if (duration) {
-    // Duration is kept for API compatibility but spring physics handle timing
-  }
-
   return displayValue;
 };
-

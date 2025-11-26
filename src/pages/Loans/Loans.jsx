@@ -507,13 +507,63 @@ const Loans = () => {
         kafeelId: selectedKafeel?.id || null,
       };
 
+      const oldAmount = selectedLoan.amount;
+      const newAmount = loanData.amount;
+      const amountChanged = oldAmount !== newAmount;
+
       await updateLoan(selectedLoan.id, loanData);
       notifySuccess("تم تعديل السلفة بنجاح");
 
-      resetLoanForm();
+      // If amount changed, regenerate contracts and open preview
+      if (amountChanged) {
+        // Refetch updated loan data
+        const updatedLoan = await getLoanById(selectedLoan.id);
+        
+        // Set saved loan data to trigger contract generation
+        setSavedLoanData({
+          ...updatedLoan,
+          client: selectedClient?.client || updatedLoan.client,
+          kafeel: selectedKafeel || updatedLoan.kafeel || null,
+        });
+
+        // Generate preview contracts
+        try {
+          const previewLoanData = {
+            id: updatedLoan.id,
+            amount: newAmount,
+            paymentAmount: loanData.paymentAmount,
+            startDate: loanData.startDate,
+            client: selectedClient?.client || updatedLoan.client,
+          };
+
+          const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
+            false,
+            previewLoanData,
+            selectedKafeel
+          );
+          const promissoryNoteHtml =
+            await promissoryNoteGeneratorRef.current.generateContract(
+              false,
+              previewLoanData,
+              selectedKafeel
+            );
+
+          setPreviewContracts({
+            debtAck: debtAckHtml,
+            promissoryNote: promissoryNoteHtml,
+          });
+          setPreviewOpen(true);
+        } catch (error) {
+          console.error("Error generating preview contracts:", error);
+          notifyError("تم تحديث السلفة لكن حدث خطأ أثناء توليد معاينة العقود");
+        }
+      }
+
       queryClient.invalidateQueries(["loans"]);
-      setActiveTab(0);
+      setIsEditMode(false);
+      setIsViewMode(false);
     } catch (error) {
+      handleApiError(error);
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تعديل السلفة"
       );

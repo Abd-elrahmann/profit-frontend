@@ -34,7 +34,7 @@ return `
   }
   .icon {
     font-size: 28px;
-    color: #d4af37; /* نفس لون علامة الصح */
+    color: #d4af37;
   }
   .title {
     font-size: 22px;
@@ -124,6 +124,14 @@ return `
     line-height: 2;
   }
 
+  .separator {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 16px;
+    color: #666;
+    letter-spacing: 3px;
+  }
+
   .strong {
     font-weight: bold;
     margin-top: 6px;
@@ -145,6 +153,16 @@ return `
     border-bottom: 2px solid #666;
   }
 
+  .footer-note {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+  }
+
   @media print {
     .contract-wrapper {
       background: #fff;
@@ -163,20 +181,21 @@ return `
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
-        <p class="title">سند تسوية الدفعة</p>
+        <p class="title">إشعار تسوية سلفة وخلو طرف</p>
       </div>
-      <p class="sub-text">رقم السند: {{رقم_السند}}</p>
+      <p class="sub-text">رقم الإشعار: {{رقم_الإشعار}}</p>
     </div>
 
     <div class="grid-wrapper">
 
       <div class="details-box">
-        <h2>معلومات العميل والدفعة</h2>
+        <h2>معلومات العميل والسلفة</h2>
         <div class="row"><p>اسم العميل:</p> <span>{{اسم_العميل}}</span></div>
-        <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_العميل}}</span></div>
-        <div class="row"><p>رقم الدفعة:</p> <span>{{رقم_الدفعة}}</span></div>
-        <div class="row"><p>تاريخ التسوية:</p> <span>{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</span></div>
-        {{معلومات_الخصم}}
+        <div class="row"><p>رقم الهوية الوطنية:</p> <span>{{رقم_هوية_العميل}}</span></div>
+        <div class="row"><p>سند أمر رقم:</p> <span>{{سند_أمر_رقم}}</span></div>
+        <div class="row"><p>إقرار دين وتعهد بالسداد رقم:</p> <span>{{إقرار_دين_رقم}}</span></div>
+        <div class="row"><p>تاريخ الإشعار:</p> <span>{{التاريخ_الميلادي}}</span></div>
+        <div class="row"><p>المكان:</p> <span>{{المكان}}</span></div>
       </div>
 
       <div class="content-box">
@@ -189,27 +208,42 @@ return `
 
     </div>
 
-    <div class="section-title">تفاصيل التسوية</div>
+    <div class="section-title">نص الإشعار</div>
     <div class="text-box">
       <p>
-        نقر نحن شركة التمويل بأنه تم استلام مبلغ وقدره {{المبلغ_رقما}} ريال سعودي 
-        من العميل المذكور أعلاه مقابل سداد الدفعة رقم {{رقم_الدفعة}} بالكامل.
-        {{نص_الخصم}}
-        وبناءً عليه تم تسوية الدفعة وإقفاله في نظام الشركة ولا يترتب عليه أي مسؤوليات مالية أخرى.
+        أُقر أنا الموقع أدناه، بأن السيد <strong>{{اسم_العميل}}</strong><br>
+        رقم الهوية الوطنية: <strong>{{رقم_هوية_العميل}}</strong><br><br>
+        
+        قد قام بسداد كامل مبلغ السلفة الممنوحة له بموجب:<br>
+        • سند أمر رقم (<strong>{{سند_أمر_رقم}}</strong>)<br>
+        • إقرار دين وتعهد بالسداد رقم (<strong>{{إقرار_دين_رقم}}</strong>)<br><br>
+        
+        وذلك بمبلغ وقدره (<strong>{{المبلغ_كتابة}}</strong>) فقط لا غير.<br><br>
+        
+        وبناءً على ذلك، فقد تم استلام المبلغ كاملًا وتُعتبر هذه السلفة مقفلة نهائيًا،<br>
+        ولا يترتب على السيد {{اسم_العميل}} أي التزامات مالية أخرى تخص السلفة أو السند المشار إليهما أعلاه.<br><br>
+        
+        ويُعد هذا الإشعار خلو طرف نهائي صادر بناءً على السداد الكامل والمطابقة مع المستندات الرسمية.
       </p>
     </div>
 
+    <div class="separator">───────────────────────────────</div>
+
     <div class="signatures">
       <div>
-        <p class="strong">توقيع الموظف المختص</p>
+        <p class="strong">الاسم والتوقيع:</p>
         <div class="sign-line"></div>
         <p>{{اسم_الموظف}}</p>
       </div>
       <div>
-        <p class="strong">توقيع العميل</p>
+        <p class="strong">ختم المؤسسة</p>
         <div class="sign-line"></div>
-        <p>{{اسم_العميل}}</p>
+        <p>{{اسم_الشركة}}</p>
       </div>
+    </div>
+
+    <div class="footer-note">
+      * هذا النموذج رسمي ويُستخدم لإثبات السداد الكامل وخلو الطرف من أي التزامات مالية.
     </div>
 
   </div>

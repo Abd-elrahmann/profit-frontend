@@ -20,6 +20,11 @@ import {
   CardContent,
   useMediaQuery,
   Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import {
   Visibility,
@@ -29,6 +34,11 @@ import {
   Pause,
   MoreVert,
   Add,
+  Description,
+  Download,
+  Print,
+  Share,
+  Close,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -42,6 +52,8 @@ import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
+import { saveAs } from 'file-saver';
+import { handleApiError } from "../../config/Api";
 const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,6 +62,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
   const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
+  const [isContractsModalOpen, setIsContractsModalOpen] = useState(false);
+  const [selectedLoanContracts, setSelectedLoanContracts] = useState(null);
   const { permissions } = usePermissions();
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -126,6 +140,87 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
       return;
     }
     onViewInstallments(loan);
+  };
+
+  const handleViewContracts = (loan) => {
+    setSelectedLoanContracts(loan);
+    setIsContractsModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleDownloadContract = async (fileUrl, contractName) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      
+      const originalName = fileUrl.split('/').pop();
+      const decodedName = decodeURIComponent(originalName);
+      const newFileName = `${contractName}_${decodedName}`;
+      
+      saveAs(blob, newFileName);
+      notifySuccess("تم تحميل الملف بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تحميل الملف");
+      handleApiError(error);
+    }
+  };
+
+  const handlePrintContract = async (fileUrl) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const printWindow = window.open(blobUrl, '_blank');
+      
+      printWindow?.addEventListener('load', () => {
+        printWindow.print();
+        printWindow.addEventListener('afterprint', () => {
+          URL.revokeObjectURL(blobUrl);
+        });
+      }, { once: true });
+      
+    } catch (error) {
+      notifyError("حدث خطأ أثناء محاولة الطباعة");
+      handleApiError(error);
+    }
+  };
+
+  const handleShareContract = async (fileUrl, contractName) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+  
+      const originalName = fileUrl.split('/').pop();
+      const decodedName = decodeURIComponent(originalName);
+      const fileName = `${contractName}_${decodedName}`;
+  
+      const file = new File([blob], fileName, { type: blob.type });
+  
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: fileName,
+          text: `مشاركة ${contractName}`,
+          files: [file],
+        });
+        return;
+      }
+  
+      await navigator.clipboard.writeText(fileUrl);
+      notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+  
+    } catch (error) {
+      console.error("Share error:", error);
+      notifyError("تعذرت مشاركة الملف");
+    }
+  };
+
+  const handleViewContract = (fileUrl) => {
+    try {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      notifyError("حدث خطأ أثناء فتح الملف");
+      handleApiError(error);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -555,6 +650,212 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
         ButtonText="حذف"
       />
 
+      {/* Contracts Modal */}
+      <Dialog
+        open={isContractsModalOpen}
+        onClose={() => {
+          setIsContractsModalOpen(false);
+          setSelectedLoanContracts(null);
+        }}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            direction: 'rtl'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          pb: 1
+        }}>
+          <Typography variant="h6" fontWeight="bold">
+            عقود السلفة - {selectedLoanContracts?.code}
+          </Typography>
+          <IconButton 
+            onClick={() => {
+              setIsContractsModalOpen(false);
+              setSelectedLoanContracts(null);
+            }}
+            size="small"
+          >
+            <Close fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {/* Debt Acknowledgment Contract */}
+            {selectedLoanContracts?.DEBT_ACKNOWLEDGMENT && (
+              <Card variant="outlined" sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Description color="primary" />
+                    <Typography variant="h6" fontWeight="bold">
+                      إقرار الدين
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Visibility sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleViewContract(selectedLoanContracts.DEBT_ACKNOWLEDGMENT)}
+                    size="small"
+                    sx={{ bgcolor: "#1976D2", "&:hover": { bgcolor: "#1565C0" } }}
+                  >
+                    عرض
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Download sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleDownloadContract(selectedLoanContracts.DEBT_ACKNOWLEDGMENT, 'إقرار_الدين')}
+                    size="small"
+                  >
+                    تحميل
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Print sx={{marginLeft:'10px'}} />}
+                    onClick={() => handlePrintContract(selectedLoanContracts.DEBT_ACKNOWLEDGMENT)}
+                    size="small"
+                  >
+                    طباعة
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Share sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleShareContract(selectedLoanContracts.DEBT_ACKNOWLEDGMENT, 'إقرار_الدين')}
+                    size="small"
+                  >
+                    مشاركة
+                  </Button>
+                </Box>
+              </Card>
+            )}
+
+            {/* Promissory Note Contract */}
+            {selectedLoanContracts?.PROMISSORY_NOTE && (
+              <Card variant="outlined" sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Description color="primary" />
+                    <Typography variant="h6" fontWeight="bold">
+                      سند لأمر
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Visibility sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleViewContract(selectedLoanContracts.PROMISSORY_NOTE)}
+                    size="small"
+                    sx={{ bgcolor: "#1976D2", "&:hover": { bgcolor: "#1565C0" } }}
+                  >
+                    عرض
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Download sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleDownloadContract(selectedLoanContracts.PROMISSORY_NOTE, 'سند_لأمر')}
+                    size="small"
+                  >
+                    تحميل
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Print sx={{marginLeft:'10px'}} />}
+                    onClick={() => handlePrintContract(selectedLoanContracts.PROMISSORY_NOTE)}
+                    size="small"
+                  >
+                    طباعة
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Share sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleShareContract(selectedLoanContracts.PROMISSORY_NOTE, 'سند_لأمر')}
+                    size="small"
+                  >
+                    مشاركة
+                  </Button>
+                </Box>
+              </Card>
+            )}
+
+            {/* Settlement Contract - Only for COMPLETED loans */}
+            {selectedLoanContracts?.status === "COMPLETED" && selectedLoanContracts?.SETTLEMENT && (
+              <Card variant="outlined" sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Description color="success" />
+                    <Typography variant="h6" fontWeight="bold">
+                      عقد التسوية
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Visibility sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleViewContract(selectedLoanContracts.SETTLEMENT)}
+                    size="small"
+                    sx={{ bgcolor: "#1976D2", "&:hover": { bgcolor: "#1565C0" } }}
+                  >
+                    عرض
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Download sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleDownloadContract(selectedLoanContracts.SETTLEMENT, 'عقد_التسوية')}
+                    size="small"
+                  >
+                    تحميل
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Print sx={{marginLeft:'10px'}} />}
+                    onClick={() => handlePrintContract(selectedLoanContracts.SETTLEMENT)}
+                    size="small"
+                  >
+                    طباعة
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Share sx={{marginLeft:'10px'}} />}
+                    onClick={() => handleShareContract(selectedLoanContracts.SETTLEMENT, 'عقد_التسوية')}
+                    size="small"
+                  >
+                    مشاركة
+                  </Button>
+                </Box>
+              </Card>
+            )}
+
+            {!selectedLoanContracts?.DEBT_ACKNOWLEDGMENT && !selectedLoanContracts?.PROMISSORY_NOTE && !(selectedLoanContracts?.status === "COMPLETED" && selectedLoanContracts?.SETTLEMENT) && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body1" color="text.secondary">
+                  لا توجد عقود متاحة لهذه السلفة
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, flexDirection: 'row-reverse' }}>
+          <Button
+            onClick={() => {
+              setIsContractsModalOpen(false);
+              setSelectedLoanContracts(null);
+            }}
+            variant="contained"
+          >
+            إغلاق
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Actions Menu */}
       <Menu
         anchorEl={anchorEl}
@@ -589,6 +890,21 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
           </ListItemIcon>
           عرض الأقساط
         </MenuItem>
+
+        {/* View Contracts */}
+        {(selectedLoanForMenu?.DEBT_ACKNOWLEDGMENT || selectedLoanForMenu?.PROMISSORY_NOTE || selectedLoanForMenu?.SETTLEMENT) && (
+          <MenuItem
+            onClick={() => {
+              handleViewContracts(selectedLoanForMenu);
+            }}
+            sx={{ color: "#7B1FA2" }} // Purple
+          >
+            <ListItemIcon>
+              <Description fontSize="small" sx={{ color: "#7B1FA2" }} />
+            </ListItemIcon>
+            عرض عقود السلفة
+          </MenuItem>
+        )}
 
         {/* Create Additional Loan */}
         {permissions.includes("loans_Add") && (
@@ -630,10 +946,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               handleDeactivateLoan(selectedLoanForMenu?.id);
               handleMenuClose();
             }}
-            sx={{ color: "#8E24AA" }} // Purple
+            sx={{ color: "red" }}
           >
             <ListItemIcon>
-              <Pause fontSize="small" sx={{ color: "#8E24AA" }} />
+              <Pause fontSize="small" sx={{ color: "red" }} />
             </ListItemIcon>
             إلغاء تفعيل السلفة
           </MenuItem>

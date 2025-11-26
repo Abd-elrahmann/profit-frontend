@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Grid,
@@ -49,6 +49,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from 'lodash';
 import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
+import ContractGenerator from "../../components/ContractGenerator";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { saveAs } from 'file-saver';
 import dayjs from "dayjs";
@@ -56,6 +57,7 @@ import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLay
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportInvestorsToPDF, exportInvestorsToExcel } from "../../utilities/investorsExporter";
+
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
   
@@ -80,83 +82,43 @@ const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   return response.data;
 };
 
-// Get all investors for export (without pagination)
-const getAllInvestorsForExport = async (searchQuery = '', status = '') => {
+// Get all partners for export using partner-report endpoint
+const getAllPartnersForExport = async () => {
   try {
-    let queryParams = new URLSearchParams();
+    // Fetch all partners using partner-report endpoint with pagination
+    const allPartners = [];
+    let page = 1;
+    let hasMore = true;
+    const limit = 100; // Fetch more per page for export
     
-    if (searchQuery.trim()) {
-      if (/^\d+$/.test(searchQuery.trim())) {
-        queryParams.append('nationalId', searchQuery.trim());
+    while (hasMore) {
+      const response = await Api.get(`/api/partner-report/${page}?limit=${limit}`);
+      const data = response.data;
+      
+      if (data.data && data.data.length > 0) {
+        allPartners.push(...data.data);
+        
+        // Check if there are more pages
+        const totalPages = Math.ceil(data.totalPartners / limit);
+        hasMore = page < totalPages;
+        page++;
       } else {
-        queryParams.append('name', searchQuery.trim());
+        hasMore = false;
       }
     }
     
-    if (status.trim()) {
-      queryParams.append('isActive', status.trim() === 'نشط' ? 'true' : 'false');
-    }
+    return allPartners;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
 
-    // Fetch first page to get total count
-    queryParams.append('limit', '10');
-    const firstPageUrl = `/api/partners/all/1${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const firstResponse = await Api.get(firstPageUrl);
-    
-    const allInvestors = [...(firstResponse.data.partners || [])];
-    const total = firstResponse.data.totalPartners || allInvestors.length;
-    const limit = 10; // Default limit per page
-    const totalPages = Math.ceil(total / limit);
-    
-    // Fetch remaining pages if there are more
-    if (totalPages > 1) {
-      for (let page = 2; page <= totalPages; page++) {
-        queryParams.set('page', page);
-        const pageUrl = `/api/partners/all/${page}?${queryParams.toString()}`;
-        const pageResponse = await Api.get(pageUrl);
-        allInvestors.push(...(pageResponse.data.partners || []));
-      }
-    }
-    
-    // Fetch details and transactions for each investor
-    const investorsWithDetails = await Promise.all(
-      allInvestors.map(async (investor) => {
-        try {
-          // Get investor details
-          const detailsResponse = await Api.get(`/api/partners/${investor.id}`);
-          const details = detailsResponse.data;
-          
-          // Get transactions (fetch multiple pages for export)
-          let transactions = [];
-          try {
-            const firstTransactionsResponse = await Api.get(`/api/partners/transaction/${investor.id}/1`);
-            transactions = [...(firstTransactionsResponse.data.transactions || [])];
-            const totalTransactions = firstTransactionsResponse.data.total || 0;
-            const transactionsLimit = 10; // Default limit per page
-            const totalTransactionsPages = Math.ceil(totalTransactions / transactionsLimit);
-            
-            // Fetch remaining transaction pages (limit to 5 pages max to avoid too many requests)
-            const maxPages = Math.min(totalTransactionsPages, 5);
-            for (let page = 2; page <= maxPages; page++) {
-              const pageResponse = await Api.get(`/api/partners/transaction/${investor.id}/${page}`);
-              transactions.push(...(pageResponse.data.transactions || []));
-            }
-          } catch (error) {
-            console.warn(`Could not fetch transactions for investor ${investor.id}:`, error);
-          }
-          
-          return {
-            ...investor,
-            ...details,
-            transactions
-          };
-        } catch (error) {
-          console.warn(`Could not fetch details for investor ${investor.id}:`, error);
-          return investor;
-        }
-      })
-    );
-    
-    return investorsWithDetails;
+// Get specific partner details for export using partner-report endpoint
+const getPartnerDetailsForExport = async (partnerId) => {
+  try {
+    const response = await Api.get(`/api/partner-report/partner/${partnerId}`);
+    return response.data;
   } catch (error) {
     handleApiError(error);
     throw error;
@@ -205,6 +167,14 @@ export default function Investors() {
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
+
+  // New states for contract generation
+  // eslint-disable-next-line no-unused-vars
+  const [isContractModalOpen, setIsContractModalOpen] = useState(false);
+  const [contractInvestorData, setContractInvestorData] = useState(null);
+  const [mudarabahTemplate, setMudarabahTemplate] = useState('');
+  const contractGeneratorRef = useRef(null);
+
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
@@ -270,6 +240,36 @@ export default function Investors() {
     }));
   };
 
+  // Add this function to fetch the mudarabah template
+  const fetchMudarabahTemplate = async () => {
+    try {
+      const response = await Api.get('/api/templates/mudarabah');
+      setMudarabahTemplate(response.data.content || '');
+    } catch (error) {
+      console.warn('Could not fetch Mudarabah template:', error);
+      notifyError('حدث خطأ أثناء تحميل قالب العقد');
+    }
+  };
+
+  // Add this function to handle contract generation after update
+  const handleGenerateContractAfterUpdate = async (updatedInvestorData) => {
+    try {
+      await fetchMudarabahTemplate();
+      setContractInvestorData(updatedInvestorData);
+      setIsContractModalOpen(true);
+      
+      // Wait a bit for the modal to open and ref to be available
+      setTimeout(() => {
+        if (contractGeneratorRef.current) {
+          contractGeneratorRef.current.generateContract();
+        }
+      }, 500);
+    } catch (error) {
+      console.error('Error preparing contract generation:', error);
+      notifyError('حدث خطأ أثناء تحضير توليد العقد');
+    }
+  };
+
   const handleSaveChanges = async () => {
     try {
       const dataToSend = {
@@ -283,11 +283,32 @@ export default function Investors() {
       queryClient.invalidateQueries({ queryKey: ['investors'] });
       notifySuccess('تم تحديث بيانات المستثمر بنجاح');
       
-      setEditMode(false);
+      // Check if capital amount was changed and ask if user wants to generate new contract
+      const originalCapital = investorDetails.capitalAmount;
+      const newCapital = parseInt(editFormData.capitalAmount);
+      
+      if (originalCapital !== newCapital) {
+        // Auto-generate new contract with updated data
+        handleGenerateContractAfterUpdate({
+          ...investorDetails,
+          ...dataToSend,
+          partnerProfitPercent: investorDetails.partnerProfitPercent || (100 - parseInt(editFormData.orgProfitPercent))
+        });
+      } else {
+        setEditMode(false);
+      }
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحديث البيانات');
       handleApiError(error);
     }
+  };
+
+  // Add contract generation success handler
+  const handleContractGenerated = () => {
+    setIsContractModalOpen(false);
+    setContractInvestorData(null);
+    setEditMode(false);
+    notifySuccess('تم توليد العقد الجديد بنجاح');
   };
 
   const handleAddInvestor = () => {
@@ -363,15 +384,15 @@ export default function Investors() {
     try {
       setIsExporting(true);
       notifySuccess("جاري جلب بيانات المستثمرين...");
-      const allInvestors = await getAllInvestorsForExport(search, selectedStatus);
+      const allPartners = await getAllPartnersForExport();
       
-      if (!allInvestors || allInvestors.length === 0) {
+      if (!allPartners || allPartners.length === 0) {
         notifyError("لا توجد بيانات للتصدير");
         return;
       }
       
-      await exportInvestorsToPDF(allInvestors);
-      notifySuccess(`تم تصدير ${allInvestors.length} مستثمر إلى PDF بنجاح`);
+      await exportInvestorsToPDF(allPartners);
+      notifySuccess(`تم تصدير ${allPartners.length} مستثمر إلى PDF بنجاح`);
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير PDF");
       console.error('PDF export error:', error);
@@ -384,15 +405,72 @@ export default function Investors() {
     try {
       setIsExporting(true);
       notifySuccess("جاري جلب بيانات المستثمرين...");
-      const allInvestors = await getAllInvestorsForExport(search, selectedStatus);
+      const allPartners = await getAllPartnersForExport();
       
-      if (!allInvestors || allInvestors.length === 0) {
+      if (!allPartners || allPartners.length === 0) {
         notifyError("لا توجد بيانات للتصدير");
         return;
       }
       
-      await exportInvestorsToExcel(allInvestors);
-      notifySuccess(`تم تصدير ${allInvestors.length} مستثمر إلى Excel بنجاح`);
+      await exportInvestorsToExcel(allPartners);
+      notifySuccess(`تم تصدير ${allPartners.length} مستثمر إلى Excel بنجاح`);
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error('Excel export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Export specific partner
+  const handleExportSpecificPartnerPDF = async () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر للتصدير");
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      notifySuccess("جاري جلب بيانات المستثمر...");
+      const partnerDetails = await getPartnerDetailsForExport(selectedInvestor.id);
+      
+      if (!partnerDetails) {
+        notifyError("لا توجد بيانات للتصدير");
+        return;
+      }
+      
+      // Convert partner details to array format for exporter
+      const partnerData = [partnerDetails];
+      await exportInvestorsToPDF(partnerData);
+      notifySuccess(`تم تصدير بيانات ${selectedInvestor.name} إلى PDF بنجاح`);
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error('PDF export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportSpecificPartnerExcel = async () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر للتصدير");
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      notifySuccess("جاري جلب بيانات المستثمر...");
+      const partnerDetails = await getPartnerDetailsForExport(selectedInvestor.id);
+      
+      if (!partnerDetails) {
+        notifyError("لا توجد بيانات للتصدير");
+        return;
+      }
+      
+      // Convert partner details to array format for exporter
+      const partnerData = [partnerDetails];
+      await exportInvestorsToExcel(partnerData);
+      notifySuccess(`تم تصدير بيانات ${selectedInvestor.name} إلى Excel بنجاح`);
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير Excel");
       console.error('Excel export error:', error);
@@ -842,24 +920,65 @@ export default function Investors() {
 
         {/* Right section – investor details */}
         {selectedInvestor && investorDetails ? (
-          <Box sx={{ flex: 1, p: 4, bgcolor: "#fff", overflowY: "auto" }}>
+          <Box sx={{ flex: 1, bgcolor: "#fff", overflowY: "auto", position: 'relative' }}>
+            {/* Sticky Action Buttons Header */}
             <Box
               sx={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 1000,
+                bgcolor: '#fff',
+                p: 2,
+                borderBottom: '1px solid #ddd',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                mb: 3,
+                flexWrap: 'wrap',
+                gap: 2,
               }}
             >
-              <Box>
-                <Typography variant="h6" fontWeight="bold">
+              <Box sx={{ minWidth: '200px' }}>
+                <Typography variant="h6" fontWeight="bold" noWrap>
                   {investorDetails.name}
                 </Typography>
-                <Typography color="text.secondary">
+                <Typography color="text.secondary" variant="body2" noWrap>
                   رقم الهوية: {investorDetails.nationalId}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
+                  onClick={handleExportSpecificPartnerPDF}
+                  disabled={isExporting}
+                  sx={{
+                    borderColor: "#d32f2f",
+                    color: "#d32f2f",
+                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: "bold",
+                  }}
+                >
+                  تصدير PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<TableChart sx={{marginLeft: '10px'}} />}
+                  onClick={handleExportSpecificPartnerExcel}
+                  disabled={isExporting}
+                  sx={{
+                    borderColor: "#2e7d32",
+                    color: "#2e7d32",
+                    "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: "bold",
+                  }}
+                >
+                  تصدير Excel
+                </Button>
                 {permissions.includes("partners_Update") && (
                 <Button 
                   variant="outlined" 
@@ -883,439 +1002,498 @@ export default function Investors() {
               </Box>
             </Box>
 
-            {/* Summary Cards */}
-            <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
-                  <CardContent sx={{textAlign: 'center'}}>
-                    <Typography color="text.secondary" variant="body1" gutterBottom>
-                      إجمالي مبلغ الاستثمار
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="success">
-                      {investorDetails.capitalAmount?.toLocaleString()}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
-                  <CardContent sx={{textAlign: 'center'}}>
-                    <Typography color="text.secondary" variant="body1" gutterBottom>
-                      نسبة أرباح المنشأة
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold">
-                      {investorDetails.orgProfitPercent}%
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
-                  <CardContent sx={{textAlign: 'center'}}>
-                    <Typography color="text.secondary" variant="body1" gutterBottom>
-                      نسبة أرباح المستثمر
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold">
-                      {investorDetails.partnerProfitPercent}%
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
-                  <CardContent sx={{textAlign: 'center'}}>
-                    <Typography color="text.secondary" variant="body1" gutterBottom>
-                      إجمالي الأرباح
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="primary">
-                      {investorDetails.totalProfit?.toLocaleString() || 0}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-
-            {/* Tabs */}
-            <Tabs
-              value={tab}
-              onChange={handleTabChange}
-              textColor="primary"
-              indicatorColor="primary"
-              sx={{ mb: 3 }}
-            >
-              <Tab label="التفاصيل الشخصية" />
-              <Tab label="المعلومات المالية" />
-              <Tab label="العمليات المالية" />
-              <Tab label="المستندات" />
-            </Tabs>
-
-            <Divider sx={{ mb: 3 }} />
-
-            {/* التفاصيل الشخصية */}
-            {tab === 0 && (
-              <Box>
-                <Paper sx={{ p: 3, mb: 3 }}>
-                  <Typography variant="h6" mb={3}>المعلومات الشخصية</Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>الاسم الكامل</Typography>
-                      <TextField 
-                        value={editMode ? editFormData.name : investorDetails.name} 
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        fullWidth
-                        disabled={!editMode}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? '#fff' : '#f9fafb',
-                            borderRadius: '6px',
-                            '&:hover fieldset': {
-                              borderColor: '#0d40a5',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
-                      <TextField 
-                        value={editMode ? editFormData.email : investorDetails.email || 'لا يوجد بريد إلكتروني'} 
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        fullWidth
-                        disabled={!editMode}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? '#fff' : '#f9fafb',
-                            borderRadius: '6px',
-                            '&:hover fieldset': {
-                              borderColor: '#0d40a5',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>رقم الهوية الوطنية</Typography>
-                      <TextField 
-                        value={investorDetails.nationalId} 
-                        fullWidth
-                        disabled
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#f9fafb',
-                            borderRadius: '6px',
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>رقم الجوال</Typography>
-                      <TextField
-                        value={editMode ? editFormData.phone : investorDetails.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        fullWidth
-                        disabled={!editMode}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? '#fff' : '#f9fafb',
-                            borderRadius: '6px',
-                            '&:hover fieldset': {
-                              borderColor: '#0d40a5',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>العنوان</Typography>
-                      <TextField
-                        value={editMode ? editFormData.address : investorDetails.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        fullWidth
-                        disabled={!editMode}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? '#fff' : '#f9fafb',
-                            borderRadius: '6px',
-                            '&:hover fieldset': {
-                              borderColor: '#0d40a5',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام</Typography>
-                      <TextField
-                        value={investorDetails.createdAt ? new Date(investorDetails.createdAt).toLocaleDateString('en-US') : ''}
-                        fullWidth
-                        disabled
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#f9fafb',
-                            borderRadius: '6px',
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>الحالة</Typography>
-                      <TextField
-                        value={getStatusText(investorDetails.isActive)}
-                        fullWidth
-                        disabled
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#f9fafb',
-                            borderRadius: '6px',
-                          },
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </Box>
-            )}
-
-            {/* المعلومات المالية */}
-            {tab === 1 && (
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" mb={3}>المعلومات المالية</Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
-                    <TextField 
-                      value={editMode ? editFormData.capitalAmount : investorDetails.capitalAmount?.toLocaleString()} 
-                      onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                          '&:hover fieldset': {
-                            borderColor: '#0d40a5',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المنشأة</Typography>
-                    <TextField 
-                      value={editMode ? editFormData.orgProfitPercent : investorDetails.orgProfitPercent} 
-                      onChange={(e) => handleInputChange('orgProfitPercent', e.target.value)}
-                      fullWidth
-                      disabled={!editMode}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: editMode ? '#fff' : '#f9fafb',
-                          borderRadius: '6px',
-                          '&:hover fieldset': {
-                            borderColor: '#0d40a5',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المستثمر</Typography>
-                    <TextField 
-                      value={investorDetails.partnerProfitPercent} 
-                      fullWidth
-                      disabled
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>حساب رأس المال</Typography>
-                    <TextField 
-                      value={investorDetails.AccountEquity?.name} 
-                      fullWidth
-                      disabled
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" mb={1} fontWeight={500}>حساب المستحقات</Typography>
-                    <TextField 
-                      value={investorDetails.AccountPayable?.name} 
-                      fullWidth
-                      disabled
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#f9fafb',
-                          borderRadius: '6px',
-                        },
-                      }}
-                    />
-                  </Grid>
+            {/* Main Content Area */}
+            <Box sx={{ p: 3 }}>
+              {/* Summary Cards */}
+              <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        إجمالي مبلغ الاستثمار
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold" color="success">
+                        {investorDetails.capitalAmount?.toLocaleString()}
+                      </Typography>
+                    </CardContent>
+                  </Card>
                 </Grid>
-              </Paper>
-            )}
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        نسبة أرباح المنشأة
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold">
+                        {investorDetails.orgProfitPercent}%
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        نسبة أرباح المستثمر
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold">
+                        {investorDetails.partnerProfitPercent}%
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        إجمالي الأرباح
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold" color="primary">
+                        {investorDetails.totalProfit?.toLocaleString() || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        الزكاة السنوية المستحقة
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold" color="warning.main">
+                        {investorDetails.yearlyZakatRequired?.toLocaleString() || 0} ريال
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        الزكاة السنوية المدفوعة
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold" color="success.main">
+                        {investorDetails.yearlyZakatPaid?.toLocaleString() || 0} ريال
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        رصيد الزكاة السنوية
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold" color="error.main">
+                        {investorDetails.yearlyZakatBalance?.toLocaleString() || 0} ريال
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
 
-            {/* العمليات المالية */}
-            {tab === 2 && (
-              <Box>
-                {/* Add Transaction Button */}
-                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                  {permissions.includes("partners_Add") && (
-                  <Button
-                    variant="contained"
-                    startIcon={<Add sx={{ marginLeft: '10px' }} />}
-                    onClick={handleAddTransaction}
-                    sx={{
-                      bgcolor: "#0d40a5",
-                      "&:hover": { bgcolor: "#0b3589" },
-                      fontWeight: "bold",
-                    }}
-                  >
-                    إضافة عملية مالية
-                  </Button>
-                  )}
-                </Box>
+              {/* Tabs */}
+              <Tabs
+                value={tab}
+                onChange={handleTabChange}
+                textColor="primary"
+                indicatorColor="primary"
+                sx={{ mb: 3 }}
+              >
+                <Tab label="التفاصيل الشخصية" />
+                <Tab label="المعلومات المالية" />
+                <Tab label="العمليات المالية" />
+                <Tab label="المستندات" />
+              </Tabs>
 
-                {/* Transactions Table */}
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                  <TableContainer>
-                    <Table stickyHeader>
-                      <TableHead sx={{ bgcolor: "#F3F4F6" }}>
-                        <StyledTableRow>
-                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>رقم المرجع</StyledTableCell>
-                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>نوع العملية</StyledTableCell>
-                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>المبلغ</StyledTableCell>
-                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>التاريخ</StyledTableCell>
-                          <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
-                        </StyledTableRow>
-                      </TableHead>
-                      <TableBody>
-                        {isTransactionsLoading ? (
-                          <StyledTableRow>
-                            <StyledTableCell colSpan={5} align="center">
-                              <CircularProgress size={20} />
-                            </StyledTableCell>
-                          </StyledTableRow>
-                        ) : transactionsData?.transactions?.length === 0 ? (
-                          <StyledTableRow>
-                            <StyledTableCell colSpan={5} align="center">
-                              <Typography>لا توجد عمليات مالية</Typography>
-                            </StyledTableCell>
-                          </StyledTableRow>
-                        ) : (
-                          transactionsData?.transactions?.map((transaction) => (
-                            <StyledTableRow key={transaction.id} hover>
-                              <StyledTableCell align="center">{transaction.reference}</StyledTableCell>
-                              <StyledTableCell align="center">
-                                <Chip
-                                  label={getTransactionTypeText(transaction.type)}
-                                  color={getTransactionTypeColor(transaction.type)}
-                                  size="small"
-                                />
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ 
-                                color: transaction.type === "DEPOSIT" ? "success.main" : "error.main",
-                                fontWeight: "bold"
-                              }}>
-                                {transaction.amount?.toLocaleString()} ريال
-                              </StyledTableCell>
-                              <StyledTableCell align="center">
-                                {dayjs(transaction.date).format("DD/MM/YYYY HH:mm a")}
-                              </StyledTableCell>
-                              <StyledTableCell align="center">
-                                {permissions.includes("partners_Delete") && (
-                                <IconButton
-                                  color="error"
-                                  size="small"
-                                  onClick={() => openDeleteTransactionModal(transaction)}
-                                >
-                                  <Delete fontSize="small" />
-                                </IconButton>
-                                )}
-                              </StyledTableCell>
-                            </StyledTableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+              <Divider sx={{ mb: 3 }} />
 
-                  {/* Pagination for Transactions */}
-                  {transactionsData && transactionsData.totalPages > 1 && (
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      alignItems: 'center',
-                      p: 2, 
-                      borderTop: '1px solid #eee',
-                    }}>
-                      <Pagination
-                        count={transactionsData.totalPages}
-                        page={transactionsPage}
-                        onChange={handleTransactionsPageChange}
-                        color="primary"
-                        size="small"
-                        siblingCount={1}
-                        boundaryCount={1}
-                      />
-                    </Box>
-                  )}
-                </Paper>
-              </Box>
-            )}
-
-            {/* المستندات */}
-            {tab === 3 && (
-              <Box>
-                {/* Existing Documents */}
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>المستندات المرفوعة</Typography>
-                  {investorDetails.mudarabahFileUrl ? (
-                    <Grid container spacing={2}>
+              {/* التفاصيل الشخصية */}
+              {tab === 0 && (
+                <Box>
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" mb={3}>المعلومات الشخصية</Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>الاسم الكامل</Typography>
+                        <TextField 
+                          value={editMode ? editFormData.name : investorDetails.name} 
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          fullWidth
+                          disabled={!editMode}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              borderRadius: '6px',
+                              '&:hover fieldset': {
+                                borderColor: '#0d40a5',
+                              },
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
+                        <TextField 
+                          value={editMode ? editFormData.email : investorDetails.email || 'لا يوجد بريد إلكتروني'} 
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          fullWidth
+                          disabled={!editMode}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              borderRadius: '6px',
+                              '&:hover fieldset': {
+                                borderColor: '#0d40a5',
+                              },
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>رقم الهوية الوطنية</Typography>
+                        <TextField 
+                          value={investorDetails.nationalId} 
+                          fullWidth
+                          disabled
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#f9fafb',
+                              borderRadius: '6px',
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>رقم الجوال</Typography>
+                        <TextField
+                          value={editMode ? editFormData.phone : investorDetails.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          fullWidth
+                          disabled={!editMode}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              borderRadius: '6px',
+                              '&:hover fieldset': {
+                                borderColor: '#0d40a5',
+                              },
+                            },
+                          }}
+                        />
+                      </Grid>
                       <Grid item xs={12}>
-                        <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <CheckCircle color="success" fontSize="small" />
-                            <Box>
-                              <Typography fontWeight="500">عقد المضاربة</Typography>
-                            </Box>
-                          </Box>
-                          <Box>
-                            <IconButton onClick={() => handlePrintFile(investorDetails.mudarabahFileUrl)}>
-                              <Print />
-                            </IconButton>
-                            <IconButton 
-                              onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
-                              title="تحميل"
-                            >
-                              <Download />
-                            </IconButton>
-                            <IconButton 
-                              onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
-                              title="مشاركة"
-                            >
-                              <Share />
-                            </IconButton>
-                          </Box>
-                        </Paper>
+                        <Typography variant="body2" mb={1} fontWeight={500}>العنوان</Typography>
+                        <TextField
+                          value={editMode ? editFormData.address : investorDetails.address}
+                          onChange={(e) => handleInputChange('address', e.target.value)}
+                          fullWidth
+                          disabled={!editMode}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              borderRadius: '6px',
+                              '&:hover fieldset': {
+                                borderColor: '#0d40a5',
+                              },
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام</Typography>
+                        <TextField
+                          value={investorDetails.createdAt ? new Date(investorDetails.createdAt).toLocaleDateString('en-US') : ''}
+                          fullWidth
+                          disabled
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#f9fafb',
+                              borderRadius: '6px',
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>الحالة</Typography>
+                        <TextField
+                          value={getStatusText(investorDetails.isActive)}
+                          fullWidth
+                          disabled
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#f9fafb',
+                              borderRadius: '6px',
+                            },
+                          }}
+                        />
                       </Grid>
                     </Grid>
-                  ) : (
-                    <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
-                      <Typography color="text.secondary">لا توجد مستندات مرفوعة</Typography>
-                    </Paper>
-                  )}
+                  </Paper>
                 </Box>
-              </Box>
-            )}
+              )}
+
+              {/* المعلومات المالية */}
+              {tab === 1 && (
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" mb={3}>المعلومات المالية</Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
+                      <TextField 
+                        value={editMode ? editFormData.capitalAmount : investorDetails.capitalAmount?.toLocaleString()} 
+                        onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                            '&:hover fieldset': {
+                              borderColor: '#0d40a5',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المنشأة</Typography>
+                      <TextField 
+                        value={editMode ? editFormData.orgProfitPercent : investorDetails.orgProfitPercent} 
+                        onChange={(e) => handleInputChange('orgProfitPercent', e.target.value)}
+                        fullWidth
+                        disabled={!editMode}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            borderRadius: '6px',
+                            '&:hover fieldset': {
+                              borderColor: '#0d40a5',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المستثمر</Typography>
+                      <TextField 
+                        value={investorDetails.partnerProfitPercent} 
+                        fullWidth
+                        disabled
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>حساب رأس المال</Typography>
+                      <TextField 
+                        value={investorDetails.AccountEquity?.name} 
+                        fullWidth
+                        disabled
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>حساب المستحقات</Typography>
+                      <TextField 
+                        value={investorDetails.AccountPayable?.name} 
+                        fullWidth
+                        disabled
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '6px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* Add Generate Contract Button */}
+                  <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PictureAsPdf sx={{ marginLeft: '10px' }} />}
+                      onClick={() => handleGenerateContractAfterUpdate({
+                        ...investorDetails,
+                        ...editFormData,
+                        partnerProfitPercent: investorDetails.partnerProfitPercent || (100 - parseInt(editFormData.orgProfitPercent || investorDetails.orgProfitPercent))
+                      })}
+                      sx={{
+                        borderColor: "#d32f2f",
+                        color: "#d32f2f",
+                        "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                      }}
+                    >
+                      توليد عقد مضاربة جديد
+                    </Button>
+                  </Box>
+                </Paper>
+              )}
+
+              {/* العمليات المالية */}
+              {tab === 2 && (
+                <Box>
+                  {/* Add Transaction Button */}
+                  <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                    {permissions.includes("partners_Add") && (
+                    <Button
+                      variant="contained"
+                      startIcon={<Add sx={{ marginLeft: '10px' }} />}
+                      onClick={handleAddTransaction}
+                      sx={{
+                        bgcolor: "#0d40a5",
+                        "&:hover": { bgcolor: "#0b3589" },
+                        fontWeight: "bold",
+                      }}
+                    >
+                      إضافة عملية مالية
+                    </Button>
+                    )}
+                  </Box>
+
+                  {/* Transactions Table */}
+                  <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                    <TableContainer>
+                      <Table stickyHeader>
+                        <TableHead sx={{ bgcolor: "#F3F4F6" }}>
+                          <StyledTableRow>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>رقم المرجع</StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>نوع العملية</StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>المبلغ</StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>التاريخ</StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
+                          </StyledTableRow>
+                        </TableHead>
+                        <TableBody>
+                          {isTransactionsLoading ? (
+                            <StyledTableRow>
+                              <StyledTableCell colSpan={5} align="center">
+                                <CircularProgress size={20} />
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ) : transactionsData?.transactions?.length === 0 ? (
+                            <StyledTableRow>
+                              <StyledTableCell colSpan={5} align="center">
+                                <Typography>لا توجد عمليات مالية</Typography>
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ) : (
+                            transactionsData?.transactions?.map((transaction) => (
+                              <StyledTableRow key={transaction.id} hover>
+                                <StyledTableCell align="center">{transaction.reference}</StyledTableCell>
+                                <StyledTableCell align="center">
+                                  <Chip
+                                    label={getTransactionTypeText(transaction.type)}
+                                    color={getTransactionTypeColor(transaction.type)}
+                                    size="small"
+                                  />
+                                </StyledTableCell>
+                                <StyledTableCell align="center" sx={{ 
+                                  color: transaction.type === "DEPOSIT" ? "success.main" : "error.main",
+                                  fontWeight: "bold"
+                                }}>
+                                  {transaction.amount?.toLocaleString()} ريال
+                                </StyledTableCell>
+                                <StyledTableCell align="center">
+                                  {dayjs(transaction.date).format("DD/MM/YYYY HH:mm a")}
+                                </StyledTableCell>
+                                <StyledTableCell align="center">
+                                  {permissions.includes("partners_Delete") && (
+                                  <IconButton
+                                    color="error"
+                                    size="small"
+                                    onClick={() => openDeleteTransactionModal(transaction)}
+                                  >
+                                    <Delete fontSize="small" />
+                                  </IconButton>
+                                  )}
+                                </StyledTableCell>
+                              </StyledTableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+
+                    {/* Pagination for Transactions */}
+                    {transactionsData && transactionsData.totalPages > 1 && (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
+                        p: 2, 
+                        borderTop: '1px solid #eee',
+                      }}>
+                        <Pagination
+                          count={transactionsData.totalPages}
+                          page={transactionsPage}
+                          onChange={handleTransactionsPageChange}
+                          color="primary"
+                          size="small"
+                          siblingCount={1}
+                          boundaryCount={1}
+                        />
+                      </Box>
+                    )}
+                  </Paper>
+                </Box>
+              )}
+
+              {/* المستندات */}
+              {tab === 3 && (
+                <Box>
+                  {/* Existing Documents */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>المستندات المرفوعة</Typography>
+                    {investorDetails.mudarabahFileUrl ? (
+                      <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                          <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <CheckCircle color="success" fontSize="small" />
+                              <Box>
+                                <Typography fontWeight="500">عقد المضاربة</Typography>
+                              </Box>
+                            </Box>
+                            <Box>
+                              <IconButton onClick={() => handlePrintFile(investorDetails.mudarabahFileUrl)}>
+                                <Print />
+                              </IconButton>
+                              <IconButton 
+                                onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
+                                title="تحميل"
+                              >
+                                <Download />
+                              </IconButton>
+                              <IconButton 
+                                onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
+                                title="مشاركة"
+                              >
+                                <Share />
+                              </IconButton>
+                            </Box>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+                    ) : (
+                      <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
+                        <Typography color="text.secondary">لا توجد مستندات مرفوعة</Typography>
+                      </Paper>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            </Box>
           </Box>
         ) : (
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2 }}>
@@ -1354,6 +1532,17 @@ export default function Investors() {
         message={`هل أنت متأكد من حذف المستثمر ${investorToDelete?.name}؟`}
         ButtonText="حذف"
       />
+
+      {/* Contract Generator Modal */}
+      {contractInvestorData && mudarabahTemplate && (
+        <ContractGenerator
+          ref={contractGeneratorRef}
+          investorData={contractInvestorData}
+          templateContent={mudarabahTemplate}
+          onContractGenerated={handleContractGenerated}
+          contractType="MUDARABAH_UPDATE"
+        />
+      )}
 
       {/* Add Transaction Modal */}
       <Dialog 

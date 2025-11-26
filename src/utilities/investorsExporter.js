@@ -15,6 +15,60 @@ const registerArabicFonts = (doc) => {
   }
 };
 
+// Normalize partner data from different endpoints to a consistent format
+const normalizePartnerData = (partnerData) => {
+  // Check if it's the detailed format from getPartnerDetails endpoint
+  if (partnerData.profile) {
+    return {
+      id: partnerData.profile.id,
+      name: partnerData.profile.name,
+      nationalId: partnerData.profile.nationalId,
+      phone: partnerData.profile.phone || '-',
+      email: partnerData.profile.email || 'لا يوجد',
+      address: partnerData.profile.address || '-',
+      capitalAmount: partnerData.profile.capitalAmount || 0,
+      orgProfitPercent: partnerData.profile.orgProfitPercent || 0,
+      partnerProfitPercent: 100 - (partnerData.profile.orgProfitPercent || 0),
+      totalProfit: partnerData.profile.totalProfit || 0,
+      totalAmount: partnerData.profile.totalAmount || 0,
+      createdAt: partnerData.profile.createdAt,
+      isActive: partnerData.profile.isActive !== undefined ? partnerData.profile.isActive : true,
+      transactions: partnerData.transactions || [],
+      loans: partnerData.loans || [],
+      summary: partnerData.summary || {},
+      AccountEquity: partnerData.AccountEquity || null,
+      AccountPayable: partnerData.AccountPayable || null,
+    };
+  }
+  
+  // Otherwise, it's the summary format from getAllPartners endpoint
+  return {
+    id: partnerData.id,
+    name: partnerData.name,
+    nationalId: partnerData.nationalId,
+    phone: partnerData.phone || '-',
+    email: partnerData.email || 'لا يوجد',
+    address: partnerData.address || '-',
+    capitalAmount: partnerData.capitalAmount || 0,
+    orgProfitPercent: partnerData.orgProfitPercent || 0,
+    partnerProfitPercent: partnerData.partnerProfitPercent || 0,
+    totalProfit: partnerData.totalProfit || 0,
+    totalAmount: partnerData.totalAmount || 0,
+    accountBalance: partnerData.accountBalance || 0,
+    loansCount: partnerData.loansCount || 0,
+    totalDeposits: partnerData.totalDeposits || 0,
+    totalWithdrawals: partnerData.totalWithdrawals || 0,
+    totalAccruedProfit: partnerData.totalAccruedProfit || 0,
+    zakat: partnerData.zakat || {},
+    createdAt: partnerData.createdAt,
+    isActive: partnerData.isActive !== undefined ? partnerData.isActive : true,
+    transactions: partnerData.transactions || [],
+    loans: partnerData.loans || [],
+    AccountEquity: partnerData.AccountEquity || null,
+    AccountPayable: partnerData.AccountPayable || null,
+  };
+};
+
 export const exportInvestorsToPDF = async (investorsData) => {
   return new Promise((resolve, reject) => {
     try {
@@ -59,29 +113,43 @@ export const exportInvestorsToPDF = async (investorsData) => {
       doc.text(summaryText, doc.internal.pageSize.width / 2, 45, { align: 'center' });
       
       const pageWidth = doc.internal.pageSize.width;
-      const tableMargin = 5; // Reduced margin to widen table
+      const pageHeight = doc.internal.pageSize.height;
+      const tableMargin = 10; // Professional margin
+      const tableMaxWidth = pageWidth - (tableMargin * 2);
 
       // Process each investor - each investor gets a new page
-      investorsData.forEach((investor, index) => {
+      investorsData.forEach((partnerData, index) => {
+        // Normalize partner data to consistent format
+        const investor = normalizePartnerData(partnerData);
+        
         // Start new page for each investor (except first one)
         if (index > 0) {
           doc.addPage();
         }
 
-        let yPosition = 60; // Increased starting position to avoid overlap with title and summary
+        let yPosition = 55; // Starting position
 
-        // Investor header - Name and National ID
-        doc.setFontSize(14);
+        // Investor header - Name and National ID with better styling
+        doc.setFontSize(16);
         doc.setFont('Amiri', 'bold');
+        doc.setTextColor(13, 64, 165);
         doc.text(`المستثمر: ${investor.name}`, pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 10;
+        yPosition += 8;
         
         doc.setFontSize(11);
         doc.setFont('Amiri', 'normal');
+        doc.setTextColor(100, 100, 100);
         doc.text(`رقم الهوية الوطنية: ${investor.nationalId}`, pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 15;
+        yPosition += 12;
 
-        // Tab 1: Personal Details Table - Horizontal layout
+        // Add section title
+        doc.setFontSize(12);
+        doc.setFont('Amiri', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('التفاصيل الشخصية', pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 8;
+
+        // Tab 1: Personal Details Table - Professional layout
         const personalHeaders = [['الاسم الكامل', 'رقم الهوية', 'البريد الإلكتروني', 'رقم الجوال', 'العنوان', 'تاريخ الانضمام', 'الحالة']];
         const personalData = [[
           investor.name || '-',
@@ -93,8 +161,9 @@ export const exportInvestorsToPDF = async (investorsData) => {
           investor.isActive ? 'نشط' : 'غير نشط'
         ]];
 
-        const personalTableWidth = pageWidth - (tableMargin * 2);
-        const personalTableStartX = tableMargin;
+        // Calculate centered table position
+        const personalTableWidth = Math.min(tableMaxWidth, 190);
+        const personalTableStartX = (pageWidth - personalTableWidth) / 2;
 
         autoTable(doc, {
           startY: yPosition,
@@ -105,10 +174,10 @@ export const exportInvestorsToPDF = async (investorsData) => {
           styles: {
             font: 'Amiri',
             fontStyle: 'normal',
-            fontSize: 8,
-            cellPadding: 3,
-            lineColor: [200, 200, 200],
-            lineWidth: 0.1,
+            fontSize: 9,
+            cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+            lineColor: [220, 220, 220],
+            lineWidth: 0.2,
             halign: 'right',
             valign: 'middle',
             overflow: 'linebreak',
@@ -118,36 +187,44 @@ export const exportInvestorsToPDF = async (investorsData) => {
             fillColor: [13, 64, 165],
             textColor: 255,
             fontStyle: 'bold',
-            fontSize: 9,
+            fontSize: 10,
             halign: 'right',
             valign: 'middle',
-            cellPadding: 5,
-            overflow: 'hidden', // Prevent line break in headers
+            cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
+            overflow: 'linebreak',
+            minCellHeight: 10,
             direction: 'rtl'
           },
           bodyStyles: {
             halign: 'right',
             valign: 'middle',
-            cellPadding: 3,
+            cellPadding: 4,
             direction: 'rtl'
           },
           columnStyles: {
-            0: { cellWidth: 25, halign: 'right' },
-            1: { cellWidth: 20, halign: 'right' },
-            2: { cellWidth: 30, halign: 'right' },
-            3: { cellWidth: 20, halign: 'right' },
+            0: { cellWidth: 28, halign: 'right' },
+            1: { cellWidth: 25, halign: 'right' },
+            2: { cellWidth: 32, halign: 'right' },
+            3: { cellWidth: 25, halign: 'right' },
             4: { cellWidth: 35, halign: 'right' },
-            5: { cellWidth: 20, halign: 'right' },
-            6: { cellWidth: 15, halign: 'right' }
+            5: { cellWidth: 25, halign: 'right' },
+            6: { cellWidth: 20, halign: 'right' }
           },
           margin: { top: yPosition, bottom: 5 },
           tableWidth: personalTableWidth,
           horizontalPageBreak: false
         });
 
-        yPosition = doc.lastAutoTable.finalY + 10;
+        yPosition = doc.lastAutoTable.finalY + 12;
 
-        // Tab 2: Financial Information Table - Horizontal layout
+        // Add section title
+        doc.setFontSize(12);
+        doc.setFont('Amiri', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('المعلومات المالية', pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 8;
+
+        // Tab 2: Financial Information Table - Professional layout
         const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر', 'حساب رأس المال', 'حساب المستحقات']];
         const financialData = [[
           investor.capitalAmount ? investor.capitalAmount.toLocaleString('en-US') + ' ريال' : '-',
@@ -157,19 +234,22 @@ export const exportInvestorsToPDF = async (investorsData) => {
           investor.AccountPayable?.name || '-'
         ]];
 
+        const financialTableWidth = Math.min(tableMaxWidth, 190);
+        const financialTableStartX = (pageWidth - financialTableWidth) / 2;
+
         autoTable(doc, {
           startY: yPosition,
-          startX: personalTableStartX,
+          startX: financialTableStartX,
           head: financialHeaders,
           body: financialData,
           theme: 'striped',
           styles: {
             font: 'Amiri',
             fontStyle: 'normal',
-            fontSize: 8,
-            cellPadding: 3,
-            lineColor: [200, 200, 200],
-            lineWidth: 0.1,
+            fontSize: 9,
+            cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+            lineColor: [220, 220, 220],
+            lineWidth: 0.2,
             halign: 'right',
             valign: 'middle',
             overflow: 'linebreak',
@@ -179,49 +259,157 @@ export const exportInvestorsToPDF = async (investorsData) => {
             fillColor: [13, 64, 165],
             textColor: 255,
             fontStyle: 'bold',
-            fontSize: 9,
+            fontSize: 10,
             halign: 'right',
             valign: 'middle',
-            cellPadding: 5,
-            overflow: 'hidden', // Prevent line break in headers
+            cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
+            overflow: 'linebreak',
+            minCellHeight: 10,
             direction: 'rtl'
           },
           bodyStyles: {
             halign: 'right',
             valign: 'middle',
-            cellPadding: 3,
+            cellPadding: 4,
             direction: 'rtl'
           },
           columnStyles: {
-            0: { cellWidth: 35, halign: 'right' },
-            1: { cellWidth: 30, halign: 'right' },
-            2: { cellWidth: 30, halign: 'right' },
+            0: { cellWidth: 38, halign: 'right' },
+            1: { cellWidth: 35, halign: 'right' },
+            2: { cellWidth: 35, halign: 'right' },
             3: { cellWidth: 40, halign: 'right' },
             4: { cellWidth: 40, halign: 'right' }
           },
           margin: { top: yPosition, bottom: 5 },
-          tableWidth: personalTableWidth,
+          tableWidth: financialTableWidth,
           horizontalPageBreak: false
         });
 
-        yPosition = doc.lastAutoTable.finalY + 10;
+        yPosition = doc.lastAutoTable.finalY + 12;
+
+        // Summary Section (if available from detailed endpoint)
+        if (investor.summary) {
+          // Check if we need a new page
+          if (yPosition > pageHeight - 120) {
+            doc.addPage();
+            yPosition = 55;
+            doc.setFontSize(16);
+            doc.setFont('Amiri', 'bold');
+            doc.setTextColor(13, 64, 165);
+            doc.text(`المستثمر: ${investor.name}`, pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 8;
+            doc.setFontSize(11);
+            doc.setFont('Amiri', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`رقم الهوية الوطنية: ${investor.nationalId}`, pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 12;
+          }
+
+          // Add section title
+          doc.setFontSize(12);
+          doc.setFont('Amiri', 'bold');
+          doc.setTextColor(0, 0, 0);
+          doc.text('ملخص البيانات', pageWidth / 2, yPosition, { align: 'center' });
+          yPosition += 8;
+
+          // Summary Headers
+          const summaryHeaders = [['الملخص', 'القيمة']];
+          const summaryData = [
+            ['إجمالي الأرباح الخام', investor.summary.profits?.totalRawShare?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['حصة الشركة', investor.summary.profits?.totalCompanyCut?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['إجمالي أرباح المستثمر', investor.summary.profits?.totalPartnerProfit?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['الأرباح الموزعة', investor.summary.profits?.distributedProfit?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['الأرباح غير الموزعة', investor.summary.profits?.undistributedProfit?.toLocaleString('en-US') + ' ريال' || '0'],
+            [''],
+            ['إجمالي القروض', investor.summary.loans?.totalLoans || '0'],
+            ['القروض النشطة', investor.summary.loans?.activeLoans || '0'],
+            ['القروض المكتملة', investor.summary.loans?.completedLoans || '0'],
+            ['إجمالي مبلغ القروض', investor.summary.loans?.totalLoanAmount?.toLocaleString('en-US') + ' ريال' || '0'],
+            [''],
+            ['إجمالي الإيداعات', investor.summary.transactions?.totalDeposits?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['إجمالي السحوبات', investor.summary.transactions?.totalWithdrawals?.toLocaleString('en-US') + ' ريال' || '0'],
+            [''],
+            ['الزكاة المستحقة', investor.summary.zakat?.totalZakatAccrued?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['الزكاة المدفوعة', investor.summary.zakat?.totalZakatPaid?.toLocaleString('en-US') + ' ريال' || '0'],
+            ['رصيد الزكاة', investor.summary.zakat?.zakatBalance?.toLocaleString('en-US') + ' ريال' || '0'],
+          ];
+
+          const summaryTableWidth = Math.min(tableMaxWidth, 120);
+          const summaryTableStartX = (pageWidth - summaryTableWidth) / 2;
+
+          autoTable(doc, {
+            startY: yPosition,
+            startX: summaryTableStartX,
+            head: summaryHeaders,
+            body: summaryData,
+            theme: 'striped',
+            styles: {
+              font: 'Amiri',
+              fontStyle: 'normal',
+              fontSize: 9,
+              cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+              lineColor: [220, 220, 220],
+              lineWidth: 0.2,
+              halign: 'right',
+              valign: 'middle',
+              overflow: 'linebreak',
+              direction: 'rtl'
+            },
+            headStyles: {
+              fillColor: [13, 64, 165],
+              textColor: 255,
+              fontStyle: 'bold',
+              fontSize: 10,
+              halign: 'right',
+              valign: 'middle',
+              cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
+              overflow: 'linebreak',
+              minCellHeight: 10,
+              direction: 'rtl'
+            },
+            bodyStyles: {
+              halign: 'right',
+              valign: 'middle',
+              cellPadding: 4,
+              direction: 'rtl'
+            },
+            columnStyles: {
+              0: { cellWidth: (summaryTableWidth * 0.55), halign: 'right' },
+              1: { cellWidth: (summaryTableWidth * 0.45), halign: 'right' }
+            },
+            margin: { top: yPosition, bottom: 5 },
+            tableWidth: summaryTableWidth,
+            horizontalPageBreak: false
+          });
+
+          yPosition = doc.lastAutoTable.finalY + 12;
+        }
 
         // Tab 3: Financial Transactions Table (if available)
         if (investor.transactions && Array.isArray(investor.transactions) && investor.transactions.length > 0) {
           // Check if we need a new page for transactions (within same investor page)
-          if (yPosition > doc.internal.pageSize.height - 80) {
+          if (yPosition > pageHeight - 80) {
             doc.addPage();
-            yPosition = 60;
+            yPosition = 55;
             // Redraw investor header on new page
-            doc.setFontSize(14);
+            doc.setFontSize(16);
             doc.setFont('Amiri', 'bold');
+            doc.setTextColor(13, 64, 165);
             doc.text(`المستثمر: ${investor.name}`, pageWidth / 2, yPosition, { align: 'center' });
-            yPosition += 10;
+            yPosition += 8;
             doc.setFontSize(11);
             doc.setFont('Amiri', 'normal');
+            doc.setTextColor(100, 100, 100);
             doc.text(`رقم الهوية الوطنية: ${investor.nationalId}`, pageWidth / 2, yPosition, { align: 'center' });
-            yPosition += 15;
+            yPosition += 12;
           }
+
+          // Add section title
+          doc.setFontSize(12);
+          doc.setFont('Amiri', 'bold');
+          doc.setTextColor(0, 0, 0);
+          doc.text('العمليات المالية', pageWidth / 2, yPosition, { align: 'center' });
+          yPosition += 8;
 
           const transactionsData = investor.transactions.map(transaction => [
             transaction.reference || '-',
@@ -232,8 +420,8 @@ export const exportInvestorsToPDF = async (investorsData) => {
 
           const transactionsHeaders = [['المرجع', 'نوع العملية', 'المبلغ', 'التاريخ']];
           
-          const transactionsTableWidth = pageWidth - (tableMargin * 2);
-          const transactionsTableStartX = tableMargin;
+          const transactionsTableWidth = Math.min(tableMaxWidth, 190);
+          const transactionsTableStartX = (pageWidth - transactionsTableWidth) / 2;
 
           autoTable(doc, {
             startY: yPosition,
@@ -244,10 +432,10 @@ export const exportInvestorsToPDF = async (investorsData) => {
             styles: {
               font: 'Amiri',
               fontStyle: 'normal',
-              fontSize: 8,
-              cellPadding: 3,
-              lineColor: [200, 200, 200],
-              lineWidth: 0.1,
+              fontSize: 9,
+              cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+              lineColor: [220, 220, 220],
+              lineWidth: 0.2,
               halign: 'right',
               valign: 'middle',
               overflow: 'linebreak',
@@ -257,24 +445,25 @@ export const exportInvestorsToPDF = async (investorsData) => {
               fillColor: [13, 64, 165],
               textColor: 255,
               fontStyle: 'bold',
-              fontSize: 9,
+              fontSize: 10,
               halign: 'right',
               valign: 'middle',
-              cellPadding: 5,
-              overflow: 'hidden', // Prevent line break in headers
+              cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
+              overflow: 'linebreak',
+              minCellHeight: 10,
               direction: 'rtl'
             },
             bodyStyles: {
               halign: 'right',
               valign: 'middle',
-              cellPadding: 2,
+              cellPadding: 4,
               direction: 'rtl'
             },
             columnStyles: {
-              0: { cellWidth: (transactionsTableWidth * 0.2), fontSize: 7, halign: 'right' },
-              1: { cellWidth: (transactionsTableWidth * 0.25), fontSize: 7, halign: 'right' },
-              2: { cellWidth: (transactionsTableWidth * 0.25), fontSize: 8, halign: 'right' },
-              3: { cellWidth: (transactionsTableWidth * 0.3), fontSize: 7, halign: 'right' }
+              0: { cellWidth: (transactionsTableWidth * 0.22), halign: 'right' },
+              1: { cellWidth: (transactionsTableWidth * 0.25), halign: 'right' },
+              2: { cellWidth: (transactionsTableWidth * 0.28), halign: 'right' },
+              3: { cellWidth: (transactionsTableWidth * 0.25), halign: 'right' }
             },
             margin: { top: yPosition, bottom: 5 },
             tableWidth: transactionsTableWidth,
@@ -284,77 +473,6 @@ export const exportInvestorsToPDF = async (investorsData) => {
           });
 
           yPosition = doc.lastAutoTable.finalY + 8;
-        }
-
-        // Tab 4: Documents (if available)
-        if (investor.mudarabahFileUrl) {
-          if (yPosition > doc.internal.pageSize.height - 50) {
-            doc.addPage();
-            yPosition = 60;
-            // Redraw investor header on new page
-            doc.setFontSize(14);
-            doc.setFont('Amiri', 'bold');
-            doc.text(`المستثمر: ${investor.name}`, pageWidth / 2, yPosition, { align: 'center' });
-            yPosition += 10;
-            doc.setFontSize(11);
-            doc.setFont('Amiri', 'normal');
-            doc.text(`رقم الهوية الوطنية: ${investor.nationalId}`, pageWidth / 2, yPosition, { align: 'center' });
-            yPosition += 15;
-          }
-
-          const documentsData = [
-            ['عقد المضاربة', 'مرفوع']
-          ];
-
-          const documentsHeaders = [['المستند', 'الحالة']];
-          const documentsTableWidth = pageWidth - (tableMargin * 2);
-          const documentsTableStartX = tableMargin;
-
-          autoTable(doc, {
-            startY: yPosition,
-            startX: documentsTableStartX,
-            head: documentsHeaders,
-            body: documentsData,
-            theme: 'striped',
-            styles: {
-              font: 'Amiri',
-              fontStyle: 'normal',
-              fontSize: 9,
-              cellPadding: 3,
-              lineColor: [200, 200, 200],
-              lineWidth: 0.1,
-              halign: 'right',
-              valign: 'middle',
-              overflow: 'linebreak',
-              direction: 'rtl'
-            },
-            headStyles: {
-              fillColor: [13, 64, 165],
-              textColor: 255,
-              fontStyle: 'bold',
-              fontSize: 9,
-              halign: 'right',
-              valign: 'middle',
-              cellPadding: 5,
-              overflow: 'hidden', // Prevent line break in headers
-              direction: 'rtl'
-            },
-            bodyStyles: {
-              halign: 'right',
-              valign: 'middle',
-              cellPadding: 3,
-              direction: 'rtl'
-            },
-            columnStyles: {
-              0: { cellWidth: (documentsTableWidth / 2), halign: 'right' },
-              1: { cellWidth: (documentsTableWidth / 2), halign: 'right' }
-            },
-            margin: { top: yPosition, bottom: 5 },
-            tableWidth: documentsTableWidth,
-            horizontalPageBreak: false
-          });
-
-          yPosition = doc.lastAutoTable.finalY + 10;
         }
       });
       
@@ -422,7 +540,10 @@ export const exportInvestorsToExcel = async (investorsData) => {
     const workbook = XLSX.utils.book_new();
     
     // Process each investor
-    investorsData.forEach((investor, index) => {
+    investorsData.forEach((partnerData, index) => {
+      // Normalize partner data to consistent format
+      const investor = normalizePartnerData(partnerData);
+      
       const sheetName = `${investor.name.substring(0, 25)}` || `مستثمر ${index + 1}`;
       
       // Personal Details
@@ -444,8 +565,52 @@ export const exportInvestorsToExcel = async (investorsData) => {
         ['نسبة أرباح المستثمر', investor.partnerProfitPercent || 0],
         ['حساب رأس المال', investor.AccountEquity?.name || '-'],
         ['حساب المستحقات', investor.AccountPayable?.name || '-'],
-        ['']
       ];
+
+      // Add summary data if available (from detailed endpoint)
+      if (investor.summary) {
+        personalData.push(['']);
+        personalData.push(['ملخص الأرباح']);
+        personalData.push(['']);
+        personalData.push(['إجمالي الأرباح الخام', investor.summary.profits?.totalRawShare || 0]);
+        personalData.push(['حصة الشركة', investor.summary.profits?.totalCompanyCut || 0]);
+        personalData.push(['إجمالي أرباح المستثمر', investor.summary.profits?.totalPartnerProfit || 0]);
+        personalData.push(['الأرباح الموزعة', investor.summary.profits?.distributedProfit || 0]);
+        personalData.push(['الأرباح غير الموزعة', investor.summary.profits?.undistributedProfit || 0]);
+        personalData.push(['']);
+        personalData.push(['ملخص القروض']);
+        personalData.push(['']);
+        personalData.push(['إجمالي القروض', investor.summary.loans?.totalLoans || 0]);
+        personalData.push(['القروض النشطة', investor.summary.loans?.activeLoans || 0]);
+        personalData.push(['القروض المكتملة', investor.summary.loans?.completedLoans || 0]);
+        personalData.push(['إجمالي مبلغ القروض', investor.summary.loans?.totalLoanAmount || 0]);
+        personalData.push(['']);
+        personalData.push(['ملخص المعاملات']);
+        personalData.push(['']);
+        personalData.push(['إجمالي الإيداعات', investor.summary.transactions?.totalDeposits || 0]);
+        personalData.push(['إجمالي السحوبات', investor.summary.transactions?.totalWithdrawals || 0]);
+        personalData.push(['']);
+        personalData.push(['ملخص الزكاة']);
+        personalData.push(['']);
+        personalData.push(['الزكاة المستحقة', investor.summary.zakat?.totalZakatAccrued || 0]);
+        personalData.push(['الزكاة المدفوعة', investor.summary.zakat?.totalZakatPaid || 0]);
+        personalData.push(['رصيد الزكاة', investor.summary.zakat?.zakatBalance || 0]);
+      } else {
+        // Add summary from basic endpoint
+        personalData.push(['']);
+        personalData.push(['إجمالي الإيداعات', investor.totalDeposits || 0]);
+        personalData.push(['إجمالي السحوبات', investor.totalWithdrawals || 0]);
+        personalData.push(['إجمالي الأرباح المستحقة', investor.totalAccruedProfit || 0]);
+        personalData.push(['رصيد الحساب', investor.accountBalance || 0]);
+        if (investor.zakat) {
+          personalData.push(['']);
+          personalData.push(['الزكاة المستحقة', investor.zakat.required || 0]);
+          personalData.push(['الزكاة المدفوعة', investor.zakat.paid || 0]);
+          personalData.push(['رصيد الزكاة', investor.zakat.balance || 0]);
+        }
+      }
+      
+      personalData.push(['']);
 
       // Financial Transactions
       if (investor.transactions && Array.isArray(investor.transactions) && investor.transactions.length > 0) {
@@ -461,13 +626,6 @@ export const exportInvestorsToExcel = async (investorsData) => {
           ]);
         });
         personalData.push(['']);
-      }
-
-      // Documents
-      if (investor.mudarabahFileUrl) {
-        personalData.push(['المستندات']);
-        personalData.push(['']);
-        personalData.push(['عقد المضاربة', 'مرفوع']);
       }
 
       // Create sheet

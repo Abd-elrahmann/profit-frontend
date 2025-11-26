@@ -33,6 +33,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
   const [generateContract, setGenerateContract] = useState(true);
   const [savedInvestorData, setSavedInvestorData] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
+  
   const contractGeneratorRef = useRef(null);
 
   const handleChange = (field) => (event) => {

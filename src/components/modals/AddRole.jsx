@@ -151,12 +151,52 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
     setFieldValue('permissions', updatedPermissions);
   };
 
+  const handleSelectAllPermissions = (values, setFieldValue, checked) => {
+    const updatedPermissions = values.permissions.map(permission => ({
+      ...permission,
+      canView: checked,
+      canAdd: checked,
+      canUpdate: checked,
+      canDelete: checked,
+      canPost: checked
+    }));
+    setFieldValue('permissions', updatedPermissions);
+  };
+
+  const isAllSelected = (values, field) => {
+    return values.permissions.every(permission => permission[field] === true);
+  };
+
+  const isAnySelected = (values, field) => {
+    return values.permissions.some(permission => permission[field] === true);
+  };
+
+  const isAllPermissionsSelected = (values) => {
+    const allFields = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'];
+    return allFields.every(field => isAllSelected(values, field));
+  };
+
   // Render permissions section for desktop
   const renderDesktopPermissions = (values, errors, touched, handleChange, handleBlur, setFieldValue) => (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-        الصلاحيات
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          الصلاحيات
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => handleSelectAllPermissions(values, setFieldValue, !isAllPermissionsSelected(values))}
+          sx={{
+            minWidth: 120,
+            fontSize: '0.75rem',
+            py: 0.5,
+            px: 1.5
+          }}
+        >
+          {isAllPermissionsSelected(values) ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+        </Button>
+      </Box>
       
       {/* Header with Select All checkboxes */}
       <Box sx={{ 
@@ -172,22 +212,29 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
           الصلاحيات
         </Typography>
-        {['عرض', 'إضافة', 'تعديل', 'حذف', 'اعتماد'].map((action, index) => (
-          <Box key={action} sx={{ textAlign: 'center' }}>
-            <Typography variant="subtitle2" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
-              {action}
-            </Typography>
-            <Checkbox
-              size="small"
-              onChange={(e) => handleSelectAll(
-                values, 
-                setFieldValue, 
-                ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'][index], 
-                e.target.checked
-              )}
-            />
-          </Box>
-        ))}
+        {['عرض', 'إضافة', 'تعديل', 'حذف', 'اعتماد'].map((action, index) => {
+          const field = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'][index];
+          const allSelected = isAllSelected(values, field);
+          const someSelected = isAnySelected(values, field);
+          return (
+            <Box key={action} sx={{ textAlign: 'center' }}>
+              <Typography variant="subtitle2" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
+                {action}
+              </Typography>
+              <Checkbox
+                size="small"
+                checked={allSelected}
+                indeterminate={someSelected && !allSelected}
+                onChange={(e) => handleSelectAll(
+                  values, 
+                  setFieldValue, 
+                  field, 
+                  e.target.checked
+                )}
+              />
+            </Box>
+          );
+        })}
       </Box>
 
       {/* Permissions List */}
@@ -244,9 +291,24 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
   // Render permissions section for mobile
   const renderMobilePermissions = (values, setFieldValue) => (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-        الصلاحيات
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          الصلاحيات
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => handleSelectAllPermissions(values, setFieldValue, !isAllPermissionsSelected(values))}
+          sx={{
+            minWidth: 120,
+            fontSize: '0.75rem',
+            py: 0.5,
+            px: 1.5
+          }}
+        >
+          {isAllPermissionsSelected(values) ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+        </Button>
+      </Box>
       
       <Stack spacing={2}>
         {values.permissions.map((permission, index) => {

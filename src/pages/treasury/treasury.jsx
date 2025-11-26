@@ -566,12 +566,12 @@ export default function Treasury() {
                                 {totalRepaymentsAmount.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                إجمالي التحصيل المقترض
+                              إجمالي المطلوب تحصيله
                               </Typography>
                             </Box>
                           </Box>
                           <Chip 
-                            label="مقترض" 
+                            label="مطلوب تحصيله" 
                             size="small" 
                             sx={{ 
                               bgcolor: "#9c27b0", 
@@ -600,7 +600,7 @@ export default function Treasury() {
                                 {paidRepaymentsUntilNow.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                الواصل من التحصيل حتى الآن
+                                الواصل من المطلوب تحصيله حتى الآن
                               </Typography>
                             </Box>
                           </Box>

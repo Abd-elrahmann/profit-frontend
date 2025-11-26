@@ -33,6 +33,7 @@ import {
   Share,
   PictureAsPdf,
   TableChart,
+  Visibility,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -2785,6 +2786,12 @@ export default function Clients() {
                               >
                                 الحالة
                               </StyledTableCell>
+                              <StyledTableCell
+                                align="center"
+                                sx={{ fontWeight: "bold" }}
+                              >
+                                عرض التفاصيل
+                              </StyledTableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -2825,6 +2832,25 @@ export default function Clients() {
                                       size="small"
                                       variant="outlined"
                                     />
+                                  </StyledTableCell>
+                                  {/* Add View Details Icon Button */}
+                                  <StyledTableCell align="center">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => {
+                                        // Navigate to loan details page
+                                        window.location.href = `/loans/${loan.id}`;
+                                      }}
+                                      sx={{
+                                        color: '#0d40a5',
+                                        '&:hover': {
+                                          backgroundColor: 'rgba(13, 64, 165, 0.1)',
+                                        }
+                                      }}
+                                      title="عرض التفاصيل"
+                                    >
+                                      <Visibility fontSize="small" />
+                                    </IconButton>
                                   </StyledTableCell>
                                 </StyledTableRow>
                               );

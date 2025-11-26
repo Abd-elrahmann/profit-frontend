@@ -967,7 +967,7 @@ export default function ContractTemplates() {
               <Tab label="سند القبض" value="receipt-voucher" />
               <Tab label="سند الصرف" value="payment-voucher" />
               <Tab label="إيصال سداد دفعة" value="payment-proof" />
-              <Tab label="إيصال تسوية دفعة" value="settlement" />
+              <Tab label="تسوية سلفة وخلو طرف" value="settlement" />
             </Tabs>
 
             <Box sx={{ mt: 3 }}>
