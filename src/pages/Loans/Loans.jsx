@@ -109,8 +109,8 @@ const Loans = () => {
   });
 
   useEffect(() => {
+    fetchContractTemplates(); // Load templates when component mounts
     if (activeTab === 1) {
-      fetchContractTemplates();
       calculateInstallments();
       fetchBankBalance();
     }
@@ -214,29 +214,48 @@ const Loans = () => {
 
   const handleOpenPreview = async () => {
     try {
-      if (!selectedClient || !loanForm.amount) {
-        notifyError("يرجى ملء بيانات العميل والسلفة أولاً");
-        return;
-      }
-
-      const previewLoanData = {
+      // Use saved loan data if available (after loan creation), otherwise use form data
+      const loanDataToUse = savedLoanData || {
         id: `preview-${Date.now()}`,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         startDate: loanForm.startDate,
-        client: selectedClient.client,
       };
+
+      const clientDataToUse = savedLoanData?.client || selectedClient?.client;
+
+      if (!clientDataToUse || !loanDataToUse.amount) {
+        notifyError("يرجى ملء بيانات العميل والسلفة أولاً");
+        return;
+      }
+
+      // Ensure templates are loaded before generating preview
+      if (!debtAckTemplate || !promissoryNoteTemplate) {
+        notifyError("جاري تحميل قوالب العقود، يرجى المحاولة مرة أخرى");
+        return;
+      }
+
+      const previewLoanData = {
+        ...loanDataToUse,
+        client: clientDataToUse,
+      };
+
+      // التأكد من وجود المراجع قبل الاستخدام
+      if (!debtAckGeneratorRef.current || !promissoryNoteGeneratorRef.current) {
+        notifyError("مولدات العقود غير جاهزة بعد، يرجى المحاولة مرة أخرى");
+        return;
+      }
 
       const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
         false,
         previewLoanData,
-        selectedKafeel
+        selectedKafeel || savedLoanData?.kafeel
       );
       const promissoryNoteHtml =
         await promissoryNoteGeneratorRef.current.generateContract(
           false,
           previewLoanData,
-          selectedKafeel
+          selectedKafeel || savedLoanData?.kafeel
         );
 
       setPreviewContracts({
@@ -245,8 +264,11 @@ const Loans = () => {
       });
       setPreviewOpen(true);
     } catch (error) {
+      console.error("Error in handleOpenPreview:", error);
       handleApiError(error);
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء توليد معاينة العقود");
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء توليد معاينة العقود"
+      );
     }
   };
 
@@ -384,22 +406,37 @@ const Loans = () => {
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
 
     const installmentsCount = installments.length;
-    let numberOfMonths = installmentsCount;
     const loanType = loanForm.type;
 
+    // دالة مساعدة لتحديد صيغة الجمع في العربية
+    const getPluralForm = (count, singular, plural) => {
+      return count === 1 ? singular : plural;
+    };
+
+    // حساب عدد الأشهر التقريبي والنص المعروض
+    let approximateMonths = installmentsCount;
+    let durationLabel = "عدد الأشهر";
+    let durationText = `${installmentsCount} ${getPluralForm(installmentsCount, 'شهر', 'أشهر')}`;
+
     if (loanType === "DAILY") {
-      numberOfMonths = Math.ceil(installmentsCount / 30);
+      approximateMonths = Math.ceil(installmentsCount / 30);
+      durationLabel = "عدد الأيام";
+      durationText = `${installmentsCount} ${getPluralForm(installmentsCount, 'يوم', 'أيام')} (≈ ${approximateMonths} ${getPluralForm(approximateMonths, 'شهر', 'أشهر')})`;
     } else if (loanType === "WEEKLY") {
-      numberOfMonths = Math.ceil(installmentsCount / 4);
+      approximateMonths = Math.ceil(installmentsCount / 4);
+      durationLabel = "عدد الأسابيع";
+      durationText = `${installmentsCount} ${getPluralForm(installmentsCount, 'أسبوع', 'أسابيع')} (≈ ${approximateMonths} ${getPluralForm(approximateMonths, 'شهر', 'أشهر')})`;
     }
 
     return {
       paymentAmount,
       totalInterest,
       totalAmount,
-      numberOfMonths,
+      numberOfMonths: approximateMonths,
       installmentsCount,
       loanType,
+      durationLabel, // التسمية (عدد الأيام/الأسابيع/الأشهر)
+      durationText,  // النص المعروض (37 يوم ≈ 2 شهر)
     };
   };
 
@@ -414,7 +451,11 @@ const Loans = () => {
       const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
       if (loanAmount > bankBalance) {
         notifyError(
-          `المبلغ المدخل (${formatAmount(loanAmount.toFixed(2))}) يتجاوز رصيد الصندوق المتاح (${formatAmount(bankBalance.toFixed(2))})`
+          `المبلغ المدخل (${formatAmount(
+            loanAmount.toFixed(2)
+          )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
+            bankBalance.toFixed(2)
+          )})`
         );
         return;
       }
@@ -448,6 +489,9 @@ const Loans = () => {
       });
 
       queryClient.invalidateQueries(["loans"]);
+
+      // Automatically open preview after loan creation
+      await handleOpenPreview();
     } catch (error) {
       handleApiError(error);
       notifyError(
@@ -518,7 +562,7 @@ const Loans = () => {
       if (amountChanged) {
         // Refetch updated loan data
         const updatedLoan = await getLoanById(selectedLoan.id);
-        
+
         // Set saved loan data to trigger contract generation
         setSavedLoanData({
           ...updatedLoan,
@@ -536,11 +580,12 @@ const Loans = () => {
             client: selectedClient?.client || updatedLoan.client,
           };
 
-          const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
-            false,
-            previewLoanData,
-            selectedKafeel
-          );
+          const debtAckHtml =
+            await debtAckGeneratorRef.current.generateContract(
+              false,
+              previewLoanData,
+              selectedKafeel
+            );
           const promissoryNoteHtml =
             await promissoryNoteGeneratorRef.current.generateContract(
               false,
@@ -710,13 +755,17 @@ const Loans = () => {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
-        
+
         // Validate amount against bank balance
         if (field === "amount" && bankBalance !== null) {
           const numericAmount = parseFloat(rawValue);
           if (numericAmount > bankBalance) {
             notifyError(
-              `المبلغ المدخل (${formatAmount(numericAmount.toFixed(2))}) يتجاوز رصيد الصندوق المتاح (${formatAmount(bankBalance.toFixed(2))})`
+              `المبلغ المدخل (${formatAmount(
+                numericAmount.toFixed(2)
+              )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
+                bankBalance.toFixed(2)
+              )})`
             );
           }
         }
@@ -810,29 +859,6 @@ const Loans = () => {
                   >
                     <Typography color="text.secondary">
                       {simulationSummary.loanType === "DAILY"
-                        ? "الدفعة اليومية"
-                        : simulationSummary.loanType === "WEEKLY"
-                        ? "الدفعة الأسبوعية"
-                        : "الدفعة الشهرية"}
-                    </Typography>
-                    <Typography
-                      color="#0d40a5"
-                      fontWeight="bold"
-                      fontSize="20px"
-                    >
-                      {formatAmount(simulationSummary.paymentAmount.toFixed(2))}{" "}
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography color="text.secondary">
-                      {simulationSummary.loanType === "DAILY"
                         ? "عدد الأيام"
                         : simulationSummary.loanType === "WEEKLY"
                         ? "عدد الأسابيع"
@@ -841,16 +867,12 @@ const Loans = () => {
                     <Typography
                       color="#0d40a5"
                       fontWeight="bold"
-                      fontSize="18px"
+                      fontSize="20px"
                     >
-                      {simulationSummary.installmentsCount}{" "}
-                      {simulationSummary.loanType === "DAILY"
-                        ? "يوم"
-                        : simulationSummary.loanType === "WEEKLY"
-                        ? "أسبوع"
-                        : "شهر"}
+                      {simulationSummary.durationText}
                     </Typography>
                   </Box>
+
 
                   <Box
                     sx={{
@@ -1344,7 +1366,13 @@ const Loans = () => {
                       justifyContent="center"
                     >
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1,
+                          }}
+                        >
                           <TextField
                             fullWidth
                             type="text"
@@ -1391,13 +1419,16 @@ const Loans = () => {
                                       fontWeight: "bold",
                                       fontSize: "16px",
                                       color:
-                                        parseFloat(loanForm.amount.replace(/,/g, "") || 0) >
-                                        bankBalance
+                                        parseFloat(
+                                          loanForm.amount.replace(/,/g, "") || 0
+                                        ) > bankBalance
                                           ? "#d32f2f"
                                           : "#0d40a5",
                                     }}
                                   >
-                                    {formatAmount(Math.round(bankBalance).toString())}
+                                    {formatAmount(
+                                      Math.round(bankBalance).toString()
+                                    )}
                                   </span>
                                 </>
                               ) : (
@@ -1567,7 +1598,11 @@ const Loans = () => {
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
                         <Autocomplete
                           options={partnersData?.partners || []}
-                          getOptionLabel={(option) => option.name + " - " + (option.isActive ? "نشط" : "غير نشط")}
+                          getOptionLabel={(option) =>
+                            option.name +
+                            " - " +
+                            (option.isActive ? "نشط" : "غير نشط")
+                          }
                           value={selectedPartner}
                           onChange={handlePartnerSelect}
                           onInputChange={handlePartnersSearchChange}
@@ -1604,9 +1639,9 @@ const Loans = () => {
                             />
                           )}
                         />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Paper>
+                  </Paper>
                 )}
 
                 {/* محاكاة السلفة على الشاشات الصغيرة */}
@@ -1620,11 +1655,7 @@ const Loans = () => {
                       bgcolor: "#fafafa",
                     }}
                   >
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight="bold"
-                      mb={2}
-                    >
+                    <Typography variant="subtitle1" fontWeight="bold" mb={2}>
                       محاكاة السلفة
                     </Typography>
                     {simulationSummary ? (
@@ -1648,7 +1679,9 @@ const Loans = () => {
                             fontWeight="bold"
                             fontSize="18px"
                           >
-                            {formatAmount(simulationSummary.paymentAmount.toFixed(2))}{" "}
+                            {formatAmount(
+                              simulationSummary.paymentAmount.toString()
+                            )}{" "}
                           </Typography>
                         </Box>
 
@@ -1660,23 +1693,14 @@ const Loans = () => {
                           }}
                         >
                           <Typography color="text.secondary" variant="body2">
-                            {simulationSummary.loanType === "DAILY"
-                              ? "عدد الأيام"
-                              : simulationSummary.loanType === "WEEKLY"
-                              ? "عدد الأسابيع"
-                              : "عدد الأشهر"}
+                            {simulationSummary.durationLabel}
                           </Typography>
                           <Typography
                             color="#0d40a5"
                             fontWeight="bold"
                             fontSize="16px"
                           >
-                            {simulationSummary.installmentsCount}{" "}
-                            {simulationSummary.loanType === "DAILY"
-                              ? "يوم"
-                              : simulationSummary.loanType === "WEEKLY"
-                              ? "أسبوع"
-                              : "شهر"}
+                            {simulationSummary.durationText}
                           </Typography>
                         </Box>
 
@@ -1691,7 +1715,9 @@ const Loans = () => {
                             إجمالي الفائدة
                           </Typography>
                           <Typography color="#333" fontSize="14px">
-                            {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
+                            {formatAmount(
+                              simulationSummary.totalInterest.toFixed(2)
+                            )}{" "}
                           </Typography>
                         </Box>
 
@@ -1706,7 +1732,9 @@ const Loans = () => {
                             المبلغ الإجمالي المستحق
                           </Typography>
                           <Typography color="#333" fontSize="14px">
-                            {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
+                            {formatAmount(
+                              simulationSummary.totalAmount.toFixed(2)
+                            )}{" "}
                           </Typography>
                         </Box>
 
@@ -1719,10 +1747,16 @@ const Loans = () => {
                             alignItems: "center",
                           }}
                         >
-                          <Typography color="text.secondary" variant="body2">حالة السلفة</Typography>
+                          <Typography color="text.secondary" variant="body2">
+                            حالة السلفة
+                          </Typography>
                           <Chip
                             label={
-                              isViewMode ? "عرض" : isEditMode ? "تحت التعديل" : "جديد"
+                              isViewMode
+                                ? "عرض"
+                                : isEditMode
+                                ? "تحت التعديل"
+                                : "جديد"
                             }
                             size="small"
                             sx={{
@@ -1760,11 +1794,7 @@ const Loans = () => {
                       bgcolor: "#fafafa",
                     }}
                   >
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight="bold"
-                      mb={2}
-                    >
+                    <Typography variant="subtitle1" fontWeight="bold" mb={2}>
                       الإجراءات
                     </Typography>
                     <Stack spacing={1.5}>
@@ -1858,7 +1888,7 @@ const Loans = () => {
         }}
       />
 
-      {generateContracts && savedLoanData && selectedClient && (
+      {generateContracts && debtAckTemplate && promissoryNoteTemplate && (
         <>
           <LoanContractGenerator
             ref={debtAckGeneratorRef}

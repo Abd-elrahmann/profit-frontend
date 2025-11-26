@@ -129,9 +129,25 @@ const Banks = () => {
     setIsEditMode(false);
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = (updatedBankData = null, operationType = null) => {
     handleCloseModal();
-    queryClient.invalidateQueries(["banks"]);
+
+    if (updatedBankData && operationType === 'update') {
+      // تحديث البيانات محليًا في الـ cache بدلاً من إعادة جلب كل شيء
+      queryClient.setQueryData(["banks", page, searchQuery], (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          data: oldData.data.map(bank =>
+            bank.id === updatedBankData.id ? { ...bank, ...updatedBankData } : bank
+          )
+        };
+      });
+    } else {
+      // إعادة جلب البيانات للعمليات الأخرى (إنشاء أو غير محدد)
+      queryClient.invalidateQueries(["banks"]);
+    }
   };
 
   // Render table for large screens

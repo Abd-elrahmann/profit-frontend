@@ -71,7 +71,10 @@ const numberToArabicWords = (num) => {
       if (part === 1) result += s.singular;
       else if (part === 2) result += s.dual;
       else if (part < 11) result += ones[part] + " " + s.plural;
-      else result += numberToArabicWords(part) + " " + s.singular;
+      else {
+        // للأرقام المركبة (>= 11)، نضع الوحدة بعد العدد
+        result += numberToArabicWords(part) + " " + s.singular;
+      }
 
       num %= s.value;
       if (num > 0) result += " و ";
@@ -90,8 +93,12 @@ const numberToArabicWords = (num) => {
   if (num >= 20) {
     const t = Math.floor(num / 10);
     const o = num % 10;
-    result += tens[t];
-    if (o > 0) result += " و " + ones[o];
+    if (o > 0) {
+      // استخدام التنسيق "واحد وعشرون" بدلاً من "عشرون وواحد"
+      result += ones[o] + " و" + tens[t];
+    } else {
+      result += tens[t];
+    }
   } else if (num >= 10) {
     result += teens[num - 10];
   } else if (num > 0) {
@@ -280,6 +287,11 @@ const InstallmentSettlementReceipt = React.forwardRef(
           employeeName,
         };
 
+        // Debug: طباعة البيانات للتأكد من وجود الأرقام
+        console.log('Loan Data:', loanData);
+        console.log('Debt Acknowledgment Number:', loanData?.debtAcknowledgmentNumber);
+        console.log('Promissory Note Number:', loanData?.promissoryNoteNumber);
+
         if (
           !dataToUse.installmentData ||
           !dataToUse.clientData ||
@@ -305,7 +317,19 @@ const InstallmentSettlementReceipt = React.forwardRef(
             .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || "N/A")
             .replace(
               /{{رقم_السند}}/g,
-              `SETTLEMENT-${dataToUse.installmentData.id}-${Date.now()}`
+              dataToUse.loanData.promissoryNoteNumber || "غير محدد"
+            )
+            .replace(
+              /{{رقم_الإقرار}}/g,
+              dataToUse.loanData.debtAcknowledgmentNumber || "غير محدد"
+            )
+            .replace(
+              /{{سند_أمر_رقم}}/g,
+              dataToUse.loanData.promissoryNoteNumber || "غير محدد"
+            )
+            .replace(
+              /{{إقرار_دين_رقم}}/g,
+              dataToUse.loanData.debtAcknowledgmentNumber || "غير محدد"
             )
 
             .replace(
@@ -320,7 +344,8 @@ const InstallmentSettlementReceipt = React.forwardRef(
             .replace(
               /{{اسم_الموظف}}/g,
               dataToUse.employeeName || "ربيش سالم ناصر الهمامي"
-            );
+            )
+            .replace(/{{المكان}}/g, "الرياض");
 
           setContractHtml(filledTemplate);
 

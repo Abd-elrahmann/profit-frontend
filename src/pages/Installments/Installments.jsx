@@ -195,6 +195,20 @@ const Installments = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
 
+  // Auto-open settlement preview when all installments are paid
+  useEffect(() => {
+    if (
+      sortedInstallments.length > 0 &&
+      allInstallmentsPaid() &&
+      !isSettlementCompleted() &&
+      !settlementModalOpen &&
+      settlementTemplate
+    ) {
+      handleSettlement();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedInstallments, settlementTemplate]);
+
   const handleApprove = async (installment) => {
     try {
       setSelectedProofInstallment(installment);
@@ -439,10 +453,10 @@ const Installments = () => {
   const handleSaveSettlement = async () => {
     try {
       setIsGeneratingSettlement(true);
-
+  
       const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
+  
       const finalSettlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
@@ -450,26 +464,30 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
         });
-
+  
       await settlementReceiptRef.current.generatePDF(finalSettlementHtml);
-
+  
       notifySuccess("تم حفظ سند التسوية بنجاح");
-
+  
+      // إغلاق الدايلوج فوراً بعد الحفظ الناجح
       setSettlementModalOpen(false);
-
+  
+      // إظهار رسالة النجاح الثانية بعد إغلاق الموديل
       setTimeout(() => {
         notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
-      }, 500);
-
+      }, 300);
+  
       queryClient.invalidateQueries(["loan", loanId]);
+      
+      return true;
     } catch (error) {
       handleApiError(error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ السند");
+      return false;
     } finally {
       setIsGeneratingSettlement(false);
     }
   };
-
   const getStatusColor = (status, installment) => {
     if (checkIfOverdue(installment)) {
       return "error";
@@ -1903,21 +1921,20 @@ const Installments = () => {
         autoGenerate={false}
       />
 
-      <InstallmentSettlementPreview
-        open={settlementModalOpen}
-        onClose={() => {
-          setSettlementModalOpen(false);
-        }}
-        settlementHtml={settlementHtml}
-        onSaveSettlement={handleSaveSettlement}
-        loading={isGeneratingSettlement}
-        clientName={loanData?.client?.name}
-        installmentAmount={loanData?.totalAmount || 0}
-        installmentNumber={
-          sortedInstallments[sortedInstallments.length - 1]?.count || ""
-        }
-      />
-
+<InstallmentSettlementPreview
+  open={settlementModalOpen}
+  onClose={() => {
+    setSettlementModalOpen(false);
+  }}
+  settlementHtml={settlementHtml}
+  onSaveSettlement={handleSaveSettlement}
+  loading={isGeneratingSettlement}
+  clientName={loanData?.client?.name}
+  installmentAmount={loanData?.totalAmount || 0}
+  installmentNumber={
+    sortedInstallments[sortedInstallments.length - 1]?.count || ""
+  }
+/>
       <Dialog
         open={documentsModalOpen}
         onClose={() => setDocumentsModalOpen(false)}

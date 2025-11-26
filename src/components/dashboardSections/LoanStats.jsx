@@ -13,6 +13,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import { Assessment, AttachMoney, Bolt, AccountBalance } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getLoanStats } from '../../pages/dashboard/dashboardApi';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -178,7 +179,7 @@ const LoanStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -188,9 +189,7 @@ const LoanStats = () => {
                 backgroundColor: 'primary.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="primary.main" fontWeight="600">
-                  📊
-                </Typography>
+                <Assessment sx={{ fontSize: '1.75rem', color: 'primary.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 إجمالي السلف
@@ -216,7 +215,7 @@ const LoanStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -226,9 +225,7 @@ const LoanStats = () => {
                 backgroundColor: 'success.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="success.main" fontWeight="600">
-                  💰
-                </Typography>
+                <AttachMoney sx={{ fontSize: '1.75rem', color: 'success.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 إجمالي مبلغ السلف
@@ -254,7 +251,7 @@ const LoanStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -264,9 +261,7 @@ const LoanStats = () => {
                 backgroundColor: 'warning.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="warning.main" fontWeight="600">
-                  ⚡
-                </Typography>
+                <Bolt sx={{ fontSize: '1.75rem', color: 'warning.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 سلف نشطة
@@ -292,7 +287,7 @@ const LoanStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -302,9 +297,7 @@ const LoanStats = () => {
                 backgroundColor: 'info.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="info.main" fontWeight="600">
-                  🏦
-                </Typography>
+                <AccountBalance sx={{ fontSize: '1.75rem', color: 'info.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 رصيد البنك

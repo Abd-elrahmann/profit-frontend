@@ -2039,6 +2039,7 @@ export default function Clients() {
                               simaReport: "تقرير SIMA",
                               DEBT_ACKNOWLEDGMENT: "إقرار الدين",
                               PROMISSORY_NOTE: "سند الأمر",
+                              SETTLEMENT: " تسوية سلفة ",
                             };
 
                             // تأكد إن القيمة موجودة ومفتاحها من ضمن الأنواع اللي بنعرضها

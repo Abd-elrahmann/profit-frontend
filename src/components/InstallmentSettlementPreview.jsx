@@ -72,18 +72,33 @@ const InstallmentSettlementPreview = ({
     }
   };
 
+  // دالة للإغلاق
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  // دالة للحفظ ثم الإغلاق
+  const handleSaveAndClose = async () => {
+    if (onSaveSettlement) {
+      await onSaveSettlement();
+      // بعد الحفظ الناجح، إغلاق الدايلوج
+      handleClose();
+    }
+  };
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="md"
+    <Dialog
+      open={open}
+      onClose={handleClose} // استخدام الدالة المعدلة
+      maxWidth="lg"
       fullWidth
-      fullScreen={true}
       dir="rtl"
       PaperProps={{
         sx: {
           borderRadius: 2,
-          maxHeight: '100vh'
+          maxHeight: '90vh'
         }
       }}
     >
@@ -110,7 +125,7 @@ const InstallmentSettlementPreview = ({
             </Typography>
           )}
         </Box>
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={handleClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -198,11 +213,10 @@ const InstallmentSettlementPreview = ({
           }
         }}
       >
-        <Button 
-          onClick={onClose}
-          disabled={loading}
+        <Button
+          onClick={handleClose}
           variant="outlined"
-          sx={{ 
+          sx={{
             minWidth: '100px',
             borderColor: 'grey.300',
             color: 'text.secondary',
@@ -236,7 +250,7 @@ const InstallmentSettlementPreview = ({
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
-          onClick={onSaveSettlement}
+          onClick={handleSaveAndClose} // استخدام الدالة المعدلة
           disabled={loading || !settlementHtml}
           sx={{
             bgcolor: "#0d40a5",
@@ -250,4 +264,5 @@ const InstallmentSettlementPreview = ({
     </Dialog>
   );
 };
+
 export default InstallmentSettlementPreview;

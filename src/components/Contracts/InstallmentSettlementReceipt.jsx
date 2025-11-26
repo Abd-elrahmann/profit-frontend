@@ -48,9 +48,11 @@ return `
 
   .grid-wrapper {
     display: flex;
+    flex-direction: row;
     gap: 20px;
     flex-wrap: wrap;
     margin-bottom: 25px;
+    align-items: flex-start;
   }
 
   .details-box {
@@ -172,6 +174,17 @@ return `
       border: none;
       box-shadow: none;
     }
+    .grid-wrapper {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      gap: 20px !important;
+    }
+    .details-box,
+    .content-box {
+      flex: 1 1 auto !important;
+      min-width: 250px !important;
+    }
   }
 </style>
 
@@ -183,7 +196,7 @@ return `
         <span class="icon">✔</span>
         <p class="title">إشعار تسوية سلفة وخلو طرف</p>
       </div>
-      <p class="sub-text">رقم الإشعار: {{رقم_الإشعار}}</p>
+      <p class="sub-text">{{التاريخ_الميلادي}}</p>
     </div>
 
     <div class="grid-wrapper">
@@ -195,7 +208,7 @@ return `
         <div class="row"><p>سند أمر رقم:</p> <span>{{سند_أمر_رقم}}</span></div>
         <div class="row"><p>إقرار دين وتعهد بالسداد رقم:</p> <span>{{إقرار_دين_رقم}}</span></div>
         <div class="row"><p>تاريخ الإشعار:</p> <span>{{التاريخ_الميلادي}}</span></div>
-        <div class="row"><p>المكان:</p> <span>{{المكان}}</span></div>
+        <div class="row"><p>المكان:</p> <span>الرياض</span></div>
       </div>
 
       <div class="content-box">
@@ -208,22 +221,21 @@ return `
 
     </div>
 
-    <div class="section-title">نص الإشعار</div>
     <div class="text-box">
       <p>
         أُقر أنا الموقع أدناه، بأن السيد <strong>{{اسم_العميل}}</strong><br>
         رقم الهوية الوطنية: <strong>{{رقم_هوية_العميل}}</strong><br><br>
-        
+
         قد قام بسداد كامل مبلغ السلفة الممنوحة له بموجب:<br>
         • سند أمر رقم (<strong>{{سند_أمر_رقم}}</strong>)<br>
         • إقرار دين وتعهد بالسداد رقم (<strong>{{إقرار_دين_رقم}}</strong>)<br><br>
-        
+
         وذلك بمبلغ وقدره (<strong>{{المبلغ_كتابة}}</strong>) فقط لا غير.<br><br>
-        
+
         وبناءً على ذلك، فقد تم استلام المبلغ كاملًا وتُعتبر هذه السلفة مقفلة نهائيًا،<br>
         ولا يترتب على السيد {{اسم_العميل}} أي التزامات مالية أخرى تخص السلفة أو السند المشار إليهما أعلاه.<br><br>
-        
-        ويُعد هذا الإشعار خلو طرف نهائي صادر بناءً على السداد الكامل والمطابقة مع المستندات الرسمية.
+
+        ويُعد هذا الإشعار خلو طرف نهائي صادر بناءً على السداد الكامل والمطابقة مع المستندات الرسمية.<br><br>
       </p>
     </div>
 
@@ -236,9 +248,9 @@ return `
         <p>{{اسم_الموظف}}</p>
       </div>
       <div>
-        <p class="strong">ختم المؤسسة</p>
+        <p class="strong">توقيع العميل:</p>
         <div class="sign-line"></div>
-        <p>{{اسم_الشركة}}</p>
+        <p>{{اسم_العميل}}</p>
       </div>
     </div>
 

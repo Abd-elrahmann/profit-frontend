@@ -862,13 +862,30 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
+        {/* Activate Loan (PENDING) - First Item */}
+        {selectedLoanForMenu?.status === "PENDING" && permissions.includes("loans_Post") && (
+          <MenuItem
+            onClick={() => {
+              handleActivateLoan(selectedLoanForMenu?.id);
+              handleMenuClose();
+            }}
+            sx={{ color: "#2E7D32", fontWeight: 'bold', fontSize: '0.875rem' }} // Green
+          >
+
+            <ListItemIcon>
+              <PlayArrow fontSize="small" sx={{ color: "#2E7D32" }} />
+            </ListItemIcon>
+            تفعيل السلفة
+          </MenuItem>
+        )}
+
         {/* View Loan Details */}
         <MenuItem
           onClick={() => {
             onViewDetails(selectedLoanForMenu?.id);
             handleMenuClose();
           }}
-          sx={{ color: "#1976D2" }} // Blue
+          sx={{ color: "#1976D2", fontWeight: 'bold', fontSize: '0.875rem' }} // Blue
         >
           <ListItemIcon>
             <Visibility fontSize="small" sx={{ color: "#1976D2" }} />
@@ -882,7 +899,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
             handleViewInstallmentsClick(selectedLoanForMenu);
             handleMenuClose();
           }}
-          sx={{ color: "#2E7D32" }} // Green
+          sx={{ color: "#2E7D32", fontWeight: 'bold', fontSize: '0.875rem' }} // Green
         >
 
           <ListItemIcon>
@@ -897,7 +914,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
             onClick={() => {
               handleViewContracts(selectedLoanForMenu);
             }}
-            sx={{ color: "#7B1FA2" }} // Purple
+            sx={{ color: "#7B1FA2", fontWeight: 'bold', fontSize: '0.875rem' }} // Purple
           >
             <ListItemIcon>
               <Description fontSize="small" sx={{ color: "#7B1FA2" }} />
@@ -913,29 +930,12 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               onCreateAdditionalLoan(selectedLoanForMenu?.client);
               handleMenuClose();
             }}
-            sx={{ color: "black" }} 
+            sx={{ color: "black", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
               <Add fontSize="small" sx={{ color: "black" }} />
             </ListItemIcon>
             سلفة إضافية
-          </MenuItem>
-        )}
-
-        {/* Activate Loan (PENDING) */}
-        {selectedLoanForMenu?.status === "PENDING" && permissions.includes("loans_Post") && (
-          <MenuItem
-            onClick={() => {
-              handleActivateLoan(selectedLoanForMenu?.id);
-              handleMenuClose();
-            }}
-            sx={{ color: "#FB8C00" }} // Orange
-          >
-            
-            <ListItemIcon>
-              <PlayArrow fontSize="small" sx={{ color: "#FB8C00" }} />
-            </ListItemIcon>
-            تفعيل السلفة
           </MenuItem>
         )}
 
@@ -946,7 +946,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               handleDeactivateLoan(selectedLoanForMenu?.id);
               handleMenuClose();
             }}
-            sx={{ color: "red" }}
+            sx={{ color: "red", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
               <Pause fontSize="small" sx={{ color: "red" }} />
@@ -963,7 +963,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               setIsDeleteModalOpen(true);
               handleMenuClose();
             }}
-            sx={{ color: "#D32F2F" }} // Red
+            sx={{ color: "#D32F2F", fontWeight: 'bold', fontSize: '0.875rem' }} // Red
           >
             <ListItemIcon>
               <Delete fontSize="small" sx={{ color: "#D32F2F" }} />

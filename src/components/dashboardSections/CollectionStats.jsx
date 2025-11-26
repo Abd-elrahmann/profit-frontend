@@ -8,6 +8,7 @@ import {
   CircularProgress,
   useMediaQuery,
 } from '@mui/material';
+import { AttachMoney, TrendingUp } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getMonthlyCollection } from '../../pages/dashboard/dashboardApi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
@@ -81,7 +82,7 @@ const CollectionStats = () => {
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ 
+                <Box sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -91,9 +92,7 @@ const CollectionStats = () => {
                   backgroundColor: 'primary.50',
                   mr: 2
                 }}>
-                  <Typography variant="h6" color="primary.main" fontWeight="600">
-                    💰
-                  </Typography>
+                  <AttachMoney sx={{ fontSize: '1.75rem', color: 'primary.main' }} />
                 </Box>
                 <Typography variant="h6" fontWeight="600" color="text.primary">
                   ملخص التحصيل
@@ -171,7 +170,7 @@ const CollectionStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -181,9 +180,7 @@ const CollectionStats = () => {
                 backgroundColor: 'info.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="info.main" fontWeight="600">
-                  📈
-                </Typography>
+                <TrendingUp sx={{ fontSize: '1.75rem', color: 'info.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 نسبة التحصيل

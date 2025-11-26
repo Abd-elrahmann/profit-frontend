@@ -13,6 +13,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import { People, CheckCircle, BusinessCenter, TrendingUp } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getPartnerStats } from '../../pages/dashboard/dashboardApi';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -156,7 +157,7 @@ const PartnerStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -166,9 +167,7 @@ const PartnerStats = () => {
                 backgroundColor: 'primary.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="primary.main" fontWeight="600">
-                  👥
-                </Typography>
+                <People sx={{ fontSize: '1.75rem', color: 'primary.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 إجمالي الشركاء
@@ -194,7 +193,7 @@ const PartnerStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -204,9 +203,7 @@ const PartnerStats = () => {
                 backgroundColor: 'success.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="success.main" fontWeight="600">
-                  ✅
-                </Typography>
+                <CheckCircle sx={{ fontSize: '1.75rem', color: 'success.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 شركاء نشطين
@@ -232,7 +229,7 @@ const PartnerStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -242,9 +239,7 @@ const PartnerStats = () => {
                 backgroundColor: 'warning.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="warning.main" fontWeight="600">
-                  💼
-                </Typography>
+                <BusinessCenter sx={{ fontSize: '1.75rem', color: 'warning.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 إجمالي رأس المال
@@ -270,7 +265,7 @@ const PartnerStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -280,9 +275,7 @@ const PartnerStats = () => {
                 backgroundColor: 'info.50',
                 mb: 2
               }}>
-                <Typography variant="h6" color="info.main" fontWeight="600">
-                  📈
-                </Typography>
+                <TrendingUp sx={{ fontSize: '1.75rem', color: 'info.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 إجمالي الأرباح
