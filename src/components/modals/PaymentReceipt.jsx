@@ -16,22 +16,32 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDropzone } from "react-dropzone";
-import { useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import { uploadAttachment, getRepaymentById } from "../../pages/Installments/InstallmentsApi";
+import { uploadAttachment, getRepaymentById, decodePaymentToken } from "../../pages/Installments/InstallmentsApi";
 import dayjs from "dayjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const PaymentReceipt = () => {
-  const { loanId, clientName, repaymentId } = useParams();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
   const queryClient = useQueryClient();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
-  
+
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
-  
+
+  // Decode the token to get the actual data
+  const { data: decodedData, isLoading: isDecoding, error: decodeError } = useQuery({
+    queryKey: ["decodeToken", token],
+    queryFn: () => decodePaymentToken(token),
+    enabled: !!token,
+  });
+
+  const { loanId, clientName, repaymentId } = decodedData?.data || {};
+
   const { data: repaymentData, isLoading, error } = useQuery({
     queryKey: ["repayment", repaymentId],
     queryFn: () => getRepaymentById(repaymentId),
@@ -196,6 +206,30 @@ const PaymentReceipt = () => {
             سيتم إشعارك بنتيجة المراجعة قريباً
           </Alert>
         </Paper>
+      </Container>
+    );
+  }
+
+  if (isDecoding) {
+    return (
+      <Container maxWidth="sm" sx={containerStyles}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (decodeError) {
+    return (
+      <Container maxWidth="sm" sx={containerStyles}>
+        <Alert severity="error">حدث خطأ في فك شفرة الرابط</Alert>
+      </Container>
+    );
+  }
+
+  if (!token) {
+    return (
+      <Container maxWidth="sm" sx={containerStyles}>
+        <Alert severity="warning">رابط غير صحيح</Alert>
       </Container>
     );
   }

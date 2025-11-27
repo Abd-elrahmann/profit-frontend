@@ -133,7 +133,7 @@ const AppLayout = () => {
         />
 
 <Route path="/installments/:loanId" element={<Installments />} />
-<Route path="/payment-receipt/:loanId/:repaymentId/:clientName" element={<RestrictedNavigationRoute><PaymentReceipt /></RestrictedNavigationRoute>} />
+      <Route path="/payment-receipt" element={<RestrictedNavigationRoute><PaymentReceipt /></RestrictedNavigationRoute>} />
       </Routes>
     </Layout>
   );

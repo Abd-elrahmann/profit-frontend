@@ -1,5 +1,16 @@
 import Api, { handleApiError } from '../../config/Api';
 
+// Decode payment token
+export const decodePaymentToken = async (token) => {
+  try {
+    const response = await Api.post('/api/notifications/decode-token', { token });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // Get loan by ID with installments
 export const getLoanById = async (loanId) => {
   try {
