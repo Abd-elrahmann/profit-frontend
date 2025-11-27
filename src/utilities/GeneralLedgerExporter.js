@@ -84,7 +84,6 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       ledgerData.journals?.forEach(journal => {
         journal.lines.forEach(line => {
           tableData.push([
-            getJournalStatusArabic(journal.status),
             line.balance.toLocaleString('en-US') + ' ريال',
             line.credit > 0 ? line.credit.toLocaleString('en-US') + ' ريال' : '0',
             line.debit > 0 ? line.debit.toLocaleString('en-US') + ' ريال' : '0',
@@ -97,7 +96,7 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       
       // Table headers (RTL order)
       const headers = [
-        ['الحالة', 'الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
+        ['الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
       ];
       
       // Create table with RTL support - centered and larger, no extra borders
@@ -105,7 +104,6 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       
       // Optimize column widths to fit on one page - reduce widths to ensure all headers fit
       const columnWidths = {
-        0: 16, // الحالة
         1: 26, // الرصيد
         2: 22, // دائن
         3: 22, // مدين
@@ -156,7 +154,6 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
           fillColor: [250, 250, 250]
         },
         columnStyles: {
-          0: { cellWidth: columnWidths[0], fontSize: 7 }, // الحالة
           1: { cellWidth: columnWidths[1], fontSize: 8 }, // الرصيد
           2: { cellWidth: columnWidths[2], fontSize: 8 }, // دائن
           3: { cellWidth: columnWidths[3], fontSize: 8 }, // مدين
@@ -281,7 +278,6 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
           'مدين': line.debit > 0 ? line.debit : 0,
           'دائن': line.credit > 0 ? line.credit : 0,
           'الرصيد': line.balance,
-          'الحالة': getJournalStatusArabic(journal.status),
           'المرحل بواسطة': journal.postedBy || 'غير محدد'
         });
       });
@@ -301,7 +297,6 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
       { wch: 12 }, // مدين
       { wch: 12 }, // دائن
       { wch: 15 }, // الرصيد
-      { wch: 10 }, // الحالة
       { wch: 15 }  // المرحل بواسطة
     ];
     journalsSheet['!cols'] = wscols;
@@ -328,16 +323,6 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
     console.error('Excel export error:', error.message);
     throw error;
   }
-};
-
-const getJournalStatusArabic = (status) => {
-  const statusMap = {
-    'POSTED': 'مرحل',
-    'DRAFT': 'مسودة',
-    'PENDING': 'قيد الانتظار',
-    'CANCELLED': 'ملغي'
-  };
-  return statusMap[status] || status;
 };
 
 const getAccountTypeArabic = (type) => {

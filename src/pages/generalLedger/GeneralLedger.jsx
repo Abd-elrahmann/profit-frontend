@@ -152,13 +152,6 @@ export default function GeneralLedger() {
                       {dayjs(journal.date).format('HH:mm')}
                     </Typography>
                   </Box>
-                  <Chip 
-                    label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
-                    size="small"
-                    color={journal.status === 'POSTED' ? 'success' : 'default'}
-                    variant="outlined"
-                    sx={{ fontWeight: '500', minWidth: 60 }}
-                  />
                 </Box>
 
                 {/* Description */}
@@ -246,9 +239,6 @@ export default function GeneralLedger() {
             <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
               الرصيد
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-              الحالة
-            </StyledTableCell>
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -305,15 +295,6 @@ export default function GeneralLedger() {
                     color={line.balance >= 0 ? 'primary.main' : 'error.main'}>
                     {line.balance.toLocaleString('en-US')}
                   </Typography>
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Chip 
-                    label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
-                    size="small"
-                    color={journal.status === 'POSTED' ? 'success' : 'default'}
-                    variant="outlined"
-                    sx={{ fontWeight: '500' }}
-                  />
                 </StyledTableCell>
               </StyledTableRow>
             ))

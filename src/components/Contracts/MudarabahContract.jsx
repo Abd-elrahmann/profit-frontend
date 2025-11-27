@@ -5,7 +5,7 @@ const MudarabahContract = () => {
   return `
     <div class="contract-container" dir="rtl">
       <header class="contract-header">
-        <div class="header-logo-section">
+        <div class="header-left">
           <img src="/assets/images/logo.webp" alt="شعار الشركة" class="contract-logo" />
           <h1 class="contract-title">عقد مضاربة</h1>
         </div>
@@ -294,23 +294,23 @@ const MudarabahContract = () => {
         }
 
         .contract-header {
-          text-align: center;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           border-bottom: 2px solid #e5e7eb;
           padding-bottom: 1.5rem;
           margin-bottom: 2rem;
         }
 
-        .header-logo-section {
+        .header-left {
           display: flex;
-          flex-direction: column;
           align-items: center;
           gap: 1rem;
-          margin-bottom: 1.5rem;
         }
 
         .contract-logo {
-          max-width: 120px;
-          max-height: 120px;
+          max-width: 40px;
+          max-height: 40px;
           width: auto;
           height: auto;
           object-fit: contain;
@@ -318,11 +318,10 @@ const MudarabahContract = () => {
         }
 
         .contract-title {
-          font-size: 2rem;
+          font-size: 1.5rem;
           font-weight: 800;
           color: #1f2937;
           margin: 0;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .contract-dates {

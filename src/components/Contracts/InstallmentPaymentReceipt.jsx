@@ -170,7 +170,7 @@ return `
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
-        <p class="title">إيصال سداد الدفعة</p>
+        <p class="title">سند قبض دفعة</p>
       </div>
       <p class="sub-text">رقم الإيصال: {{رقم_الايصال}}</p>
     </div>
