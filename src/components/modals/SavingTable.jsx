@@ -78,10 +78,10 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
                 </Typography>
               </StyledTableCell>
             </StyledTableRow>
-          ) : savingData?.data?.length === 0 ? (
+          ) : !savingData?.data || savingData?.data?.length === 0 ? (
             <StyledTableRow>
               <StyledTableCell colSpan={7} align="center">
-                <Typography variant="body1" color="textSecondary">
+                <Typography variant="body1" color="primary.main">
                   لا توجد مدخرات للشركاء
                 </Typography>
               </StyledTableCell>
@@ -181,9 +181,9 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={40} />
         </Box>
-      ) : savingData?.data?.length === 0 ? (
+      ) : !savingData?.data || savingData?.data?.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Typography variant="h6" color="textSecondary">
+          <Typography variant="h6" color="primary.main">
             لا توجد مدخرات للشركاء
           </Typography>
         </Box>
@@ -221,7 +221,7 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
                       {/* Savings Summary */}
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="body2" color="textSecondary">
+                          <Typography variant="body2" color="primary.main">
                             فترات الادخار
                           </Typography>
                           <Chip
@@ -232,7 +232,7 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
                           />
                         </Box>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="body2" color="textSecondary">
+                          <Typography variant="body2" color="primary.main">
                             إجمالي المدخرات
                           </Typography>
                           <Typography 
@@ -248,7 +248,7 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
                       {/* Last Period */}
                       {lastPeriod && (
                         <Box sx={{ p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
-                          <Typography variant="body2" color="textSecondary">
+                          <Typography variant="body2" color="primary.main">
                             آخر فترة: {lastPeriod.period.name}
                           </Typography>
                           <Typography variant="body2" fontWeight="bold">

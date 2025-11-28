@@ -22,6 +22,13 @@ import {
   MenuItem,
   useMediaQuery,
   Stack,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Pagination,
 } from "@mui/material";
 import {
   AccountBalance,
@@ -67,11 +74,12 @@ const getBankAccountData = async (month = null) => {
   if (month) {
     params.append('month', month);
   }
-  
+
   const queryString = params.toString();
   const response = await Api.get(`/api/accounts/bank${queryString ? `?${queryString}` : ''}`);
   return response.data;
 };
+
 
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -80,6 +88,7 @@ export default function Treasury() {
   const [tab, setTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState('');
+
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -90,6 +99,7 @@ export default function Treasury() {
     queryFn: () => getBankAccountData(selectedMonth),
     retry: 1,
   });
+
 
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
@@ -116,7 +126,7 @@ export default function Treasury() {
 
   const handleExportExcel = async () => {
     if (!bankData) return;
-    
+
     setIsExporting(true);
     try {
       await exportJournalsToExcel(bankData, 'النقد في البنك');
@@ -128,6 +138,7 @@ export default function Treasury() {
       setIsExporting(false);
     }
   };
+
 
   const availableBalance = bankData?.account?.balance || 0;
   const totalDebit = bankData?.account?.debit || 0;
@@ -421,7 +432,7 @@ export default function Treasury() {
           value={tab}
           onChange={handleTabChange}
           textColor="primary"
-          sx={{ 
+          sx={{
             px: isSmallScreen ? 1 : 2,
             '& .MuiTab-root': {
               fontWeight: '600',
@@ -431,13 +442,13 @@ export default function Treasury() {
             }
           }}
         >
-          <Tab 
-            label="إحصائيات الصندوق" 
+          <Tab
+            label="إحصائيات الصندوق"
             icon={<TrendingUp />}
             iconPosition="start"
           />
-          <Tab 
-            label="سجل القيود" 
+          <Tab
+            label="سجل القيود"
             icon={<AccountBalance />}
             iconPosition="start"
           />
@@ -1168,6 +1179,7 @@ export default function Treasury() {
                   </Paper>
                 </Box>
               )}
+
             </>
           )}
         </Box>

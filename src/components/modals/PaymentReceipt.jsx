@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -63,12 +63,6 @@ const PaymentReceipt = () => {
     }
   });
 
-  useEffect(() => {
-    if (repaymentData?.attachments && repaymentData?.attachments.length > 0) {
-      notifySuccess("تم رفع الإيصال مسبقاً وجاري مراجعته");
-    }
-  }, [repaymentData?.attachments, repaymentData?.attachments.length]);
-
   const handleSubmit = async () => {
     if (!files.length) {
       notifyError("يرجى إرفاق إيصال الدفع");
@@ -78,18 +72,22 @@ const PaymentReceipt = () => {
     try {
       setUploading(true);
       await uploadAttachment(repaymentId, files);
-      
+
+      notifySuccess("تم رفع المستند بنجاح");
+
+      await queryClient.invalidateQueries({ queryKey: ["repayment", repaymentId] });
+
       queryClient.setQueryData(["repayment", repaymentId], (oldData) => ({
         ...oldData,
         attachments: files.map(file => URL.createObjectURL(file)),
         status: "PENDING_REVIEW"
       }));
-      
+
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["repayments", loanId]);
-      
+
       setFiles([]);
-      
+
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -127,7 +125,12 @@ const PaymentReceipt = () => {
     my: isSmallScreen ? 2 : 0
   };
 
-  if (repaymentData?.attachments && repaymentData?.attachments.length > 0) {
+  // Check if there are server-side attachments (not local blob URLs)
+  const hasServerAttachments = repaymentData?.attachments &&
+    repaymentData?.attachments.length > 0 &&
+    !repaymentData.attachments.some(attachment => attachment.startsWith('blob:'));
+
+  if (hasServerAttachments) {
     return (
       <Container maxWidth="sm" sx={containerStyles}>
         <Paper elevation={4} sx={paperStyles}>

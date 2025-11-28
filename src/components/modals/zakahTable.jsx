@@ -31,7 +31,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { permissions } = usePermissions();
 
-  // Generate years from 2020 to current year + 1
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2019 + 2 }, (_, i) => 2020 + i);
 
@@ -39,7 +38,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     queryKey: ['zakah-year', selectedYear, page + 1, rowsPerPage],
     queryFn: () => getZakahByYear(selectedYear, page + 1, rowsPerPage),
     enabled: !!selectedYear && selectedYear >= 2000 && selectedYear <= 2100,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30000,
   });
 
   const zakahData = zakahResponse?.data || [];
@@ -53,7 +52,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   const handleYearChange = (event, newValue) => {
     if (newValue !== null && newValue !== undefined) {
       setSelectedYear(newValue);
-      setPage(0); // Reset to first page when year changes
+      setPage(0);
     }
   };
 
@@ -63,10 +62,9 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to first page when rows per page changes
+    setPage(0);
   };
 
-  // Calculate totals from current page data
   const totals = zakahData?.reduce((acc, item) => ({
     capitalAmount: acc.capitalAmount + (item.capitalAmount || 0),
     annualZakat: acc.annualZakat + (item.annualZakat || 0),
@@ -76,7 +74,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     capitalAmount: 0, annualZakat: 0, totalPaid: 0, remaining: 0
   };
 
-  // Render table for large screens
   const renderTable = () => (
     <Box>
       <TableContainer sx={{ height: "100%", width: "100%" }}>
@@ -131,8 +128,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               zakahData?.map((zakah) => (
                 <StyledTableRow 
                   key={zakah.partnerId} 
-                  hover
-                  sx={{ cursor: "pointer" }}
                 >
                   <StyledTableCell align="center">
                     {zakah.partnerName}
@@ -182,7 +177,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               ))
             )}
             
-            {/* Totals Row */}
             {zakahData && zakahData.length > 0 && (
               <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
                 <StyledTableCell align="center">
@@ -244,7 +238,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     </Box>
   );
 
-  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: 1 }}>
       {isLoading ? (
@@ -283,7 +276,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               >
                 <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Stack spacing={1} sx={{ flex: 1 }}>
-                    {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Typography variant="h6" fontWeight="bold" color="primary.main">
                         {zakah.partnerName}
@@ -295,7 +287,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                       />
                     </Box>
 
-                    {/* Zakah Details */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary">
@@ -316,7 +307,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                       </Box>
                     </Box>
 
-                    {/* Payment Details */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary">
@@ -337,7 +327,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                       </Box>
                     </Box>
 
-                    {/* Remaining */}
                     <Box>
                       <Typography variant="body2" color="textSecondary">
                         المتبقي:
@@ -351,7 +340,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                       </Typography>
                     </Box>
 
-                    {/* Action Button */}
                     {permissions.includes("zakat_View") && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
                         <IconButton
@@ -376,7 +364,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
-      {/* Year Selection */}
       <Box sx={{ mb: 2 }}>
         <Autocomplete
           options={years}
@@ -395,11 +382,9 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
         />
       </Box>
 
-      {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
         {isMobile ? renderCards() : renderTable()}
 
-        {/* Totals Summary for Mobile */}
         {isMobile && zakahData && zakahData.length > 0 && (
           <Card sx={{ m: 1, bgcolor: 'primary.50' }}>
             <CardContent sx={{ p: 2 }}>
@@ -448,7 +433,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
           </Card>
         )}
 
-        {/* Pagination for Mobile */}
         {isMobile && zakahData && zakahData.length > 0 && (
           <Box sx={{ p: 2 }}>
             <TablePagination

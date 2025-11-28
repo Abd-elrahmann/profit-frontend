@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -28,7 +28,6 @@ const getFirstAccessiblePage = (permissions) => {
     }
   };
 
-  // Find first route user has permission for
   for (const route of routes) {
     if (route.protected && route.requiresPermissions && route.module) {
       const moduleKey = convertModuleToPermission(route.module);
@@ -40,7 +39,6 @@ const getFirstAccessiblePage = (permissions) => {
     }
   }
 
-  // If no accessible page found, return dashboard (will be handled by ProtectedRoute)
   return '/dashboard';
 };
 
@@ -53,7 +51,6 @@ const RestrictedNavigationRoute = ({ children }) => {
     };
 
     const handleKeyDown = (event) => {
-      // منع اختصارات التنقل مثل Alt + ArrowLeft/ArrowRight
       if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
         event.preventDefault();
       }
@@ -75,7 +72,6 @@ const AppLayout = () => {
   return (
     <Layout>
       <Routes>
-        {/* Public routes */}
         {routes
           .filter(route => !route.protected)
           .map(route => (
@@ -90,7 +86,6 @@ const AppLayout = () => {
             />
           ))}
         
-        {/* Auth routes - Forgot Password & Reset Password */}
         <Route 
           path="/forgot-password" 
           element={
@@ -109,7 +104,6 @@ const AppLayout = () => {
         />
         
         
-        {/* Protected routes */}
         {routes
           .filter(route => route.protected)
           .map(route => (
@@ -124,7 +118,6 @@ const AppLayout = () => {
             />
           ))}
         
-        {/* Default redirect - will be handled by ProtectedRoute */}
         <Route 
           path="/" 
           element={
@@ -144,20 +137,21 @@ const ProtectedRoute = ({ children, route }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { permissions, loading } = usePermissions();
+  const permissionErrorShownRef = useRef(false);
 
   useEffect(() => {
-    // Wait for permissions to load
+    permissionErrorShownRef.current = false;
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (loading) return;
 
-    // If no token, redirect to login
     if (!token) {
       navigate('/login', { replace: true });
       return;
     }
 
-    // Save current path as last valid path if user has permission
     if (route?.requiresPermissions && route?.module) {
-      // Convert module name to permission format
       let moduleKey = route.module;
       switch (route.module) {
         case "messages-templates":
@@ -173,17 +167,18 @@ const ProtectedRoute = ({ children, route }) => {
           moduleKey = route.module;
       }
 
-      // Check if user has View permission for this module
       const hasPermission = permissions.includes(`${moduleKey}_View`);
 
       if (!hasPermission) {
-        notifyError('ليس لديك صلاحية للوصول إلى هذه الصفحة');
-        // If trying to access dashboard without permission, find first accessible page
+        if (!permissionErrorShownRef.current) {
+          notifyError('ليس لديك صلاحية للوصول إلى هذه الصفحة');
+          permissionErrorShownRef.current = true;
+        }
+
         if (location.pathname === '/dashboard' || location.pathname === '/') {
           const firstPage = getFirstAccessiblePage(permissions);
           navigate(firstPage, { replace: true });
         } else {
-          // Get last valid path from sessionStorage or find first accessible page
           const lastValidPath = sessionStorage.getItem('lastValidPath');
           if (lastValidPath) {
             navigate(lastValidPath, { replace: true });
@@ -194,26 +189,22 @@ const ProtectedRoute = ({ children, route }) => {
         }
         return;
       } else {
-        // Save current path as last valid path
         sessionStorage.setItem('lastValidPath', location.pathname);
       }
     } else {
-      // For routes that don't require permissions, save as last valid path
       sessionStorage.setItem('lastValidPath', location.pathname);
     }
   }, [token, permissions, loading, route, location, navigate]);
 
-  // Show loading while checking permissions
   if (loading) {
-    return null; // or a loading spinner
+    return null;
   }
 
-  // If no token, don't render children (will redirect in useEffect)
   if (!token) {
     return null;
   }
 
-  // If route requires permissions, check them
+
   if (route?.requiresPermissions && route?.module) {
     let moduleKey = route.module;
     switch (route.module) {

@@ -39,6 +39,7 @@ const ChartOfAccounts = React.lazy(() => import('./pages/chartOfAccounts/chartOf
 const Zakah = React.lazy(() => import('./pages/Zakah/zakah'));
 const Saving = React.lazy(() => import('./pages/Saving/Saving'));
 const ClientCollections = React.lazy(() => import('./pages/clientCollections/ClientCollections'));
+const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProfit'));
 const routes = [
   {
     path: '/login',
@@ -242,7 +243,18 @@ const routes = [
     requiresPermissions: true,
     parent: 'إدارة المالية'
   },
-  {  
+  {
+    path: '/company-profit',
+    element: CompanyProfit,
+    protected: true,
+    showInSidebar: true,
+    label: 'أرباح الشركة',
+    module: 'company',
+    requiresPermissions: true,
+    icon: AccountBalance,
+    parent: 'إدارة المالية'
+  },
+  {
     path: '/treasury',
     element: Treasury,
     protected: true,

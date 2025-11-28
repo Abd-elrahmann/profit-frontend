@@ -62,6 +62,7 @@ import PaymentProofGenerator from "../../components/PaymentProofGenerator";
 import PaymentProofPreview from "../../components/PaymentProofPreview";
 import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
 import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
+import DeleteModal from "../../components/modals/DeleteModal";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -99,6 +100,9 @@ const Installments = () => {
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [selectedDocumentsInstallment, setSelectedDocumentsInstallment] =
     useState(null);
+
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectLoading, setRejectLoading] = useState(false);
   const [earlyPaymentModalOpen, setEarlyPaymentModalOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("0");
   const paymentProofGeneratorRef = useRef(null);
@@ -279,17 +283,27 @@ const Installments = () => {
     }
   };
 
-  const handleReject = async (installment) => {
+  const handleReject = (installment) => {
+    setSelectedActionInstallment(installment);
+    setRejectModalOpen(true);
+    setAnchorEl(null);
+  };
+
+  const handleConfirmReject = async () => {
     try {
-      await rejectRepayment(installment.id, "تم رفض الإيصال");
+      setRejectLoading(true);
+      await rejectRepayment(selectedActionInstallment.id, "تم رفض الإيصال");
       notifySuccess("تم رفض السداد");
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["repayments", loanId]);
       setActiveStep(0);
+      setRejectModalOpen(false);
+      setSelectedActionInstallment(null);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض السداد");
+    } finally {
+      setRejectLoading(false);
     }
-    setAnchorEl(null);
   };
 
   const handlePartialPayment = async () => {
@@ -2121,6 +2135,16 @@ const Installments = () => {
           <Button onClick={() => setDocumentsModalOpen(false)}>إغلاق</Button>
         </DialogActions>
       </Dialog>
+
+      <DeleteModal
+        open={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        onConfirm={handleConfirmReject}
+        title="رفض الدفعة"
+        message={`هل أنت متأكد من رفض دفعة رقم ${selectedActionInstallment?.count}؟`}
+        isLoading={rejectLoading}
+        ButtonText="رفض"
+      />
     </Box>
   );
 };

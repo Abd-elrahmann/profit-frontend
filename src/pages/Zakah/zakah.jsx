@@ -21,6 +21,12 @@ import {
   IconButton,
   Chip,
   InputBase,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -30,6 +36,7 @@ import {
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPartnerZakah, getZakatAccountReport, withdrawZakat } from "./zakahApi";
+import { exportZakahToPDF, exportZakahToExcel } from "../../utilities/zakahExporter";
 import ZakahTable from "../../components/modals/zakahTable";
 import WithdrawZakah from "../../components/modals/WithdrawZakah";
 import {
@@ -39,34 +46,53 @@ import {
 import { Helmet } from "react-helmet-async";
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  ComposedChart,
-} from "recharts";
 
 const Zakah = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [selectedFilterMonth, setSelectedFilterMonth] = useState(new Date().getMonth() + 1);
+  const [selectedFilterYear, setSelectedFilterYear] = useState(new Date().getFullYear());
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Debounced values to prevent excessive API calls
+  const [debouncedMonth, setDebouncedMonth] = useState(selectedFilterMonth);
+  const [debouncedYear, setDebouncedYear] = useState(selectedFilterYear);
+
+  // Update debounced values after delay
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedMonth(selectedFilterMonth);
+      setDebouncedYear(selectedFilterYear);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedFilterMonth, selectedFilterYear]);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
+
+  // Data for autocomplete options
+  const monthOptions = [
+    { value: 1, label: "يناير" },
+    { value: 2, label: "فبراير" },
+    { value: 3, label: "مارس" },
+    { value: 4, label: "أبريل" },
+    { value: 5, label: "مايو" },
+    { value: 6, label: "يونيو" },
+    { value: 7, label: "يوليو" },
+    { value: 8, label: "أغسطس" },
+    { value: 9, label: "سبتمبر" },
+    { value: 10, label: "أكتوبر" },
+    { value: 11, label: "نوفمبر" },
+    { value: 12, label: "ديسمبر" },
+  ];
+
+  const yearOptions = Array.from({ length: 31 }, (_, i) => ({
+    value: 2020 + i,
+    label: (2020 + i).toString()
+  }));
 
   const queryClient = useQueryClient();
 
@@ -78,10 +104,16 @@ const Zakah = () => {
   });
 
   // Query for zakat account report
-  const { data: accountReport, isLoading: isAccountLoading } = useQuery({
-    queryKey: ["zakat-account"],
-    queryFn: () => getZakatAccountReport(),
+  const { data: accountReport, isLoading: isAccountLoading, error: accountError } = useQuery({
+    queryKey: ["zakat-account", debouncedMonth, debouncedYear],
+    queryFn: () => getZakatAccountReport(`${debouncedYear}-${debouncedMonth.toString().padStart(2, '0')}`),
     enabled: activeTab === 2,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 
   const handleViewDetails = (partnerId, year) => {
@@ -107,6 +139,72 @@ const Zakah = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    let exportData, filters;
+
+    if (activeTab === 2 && accountReport) {
+      // صندوق الزكاة
+      exportData = accountReport;
+      filters = {
+        month: selectedFilterMonth.toString().padStart(2, '0'),
+        year: selectedFilterYear
+      };
+    } else if (activeTab === 1 && partnerZakahData) {
+      // زكاة محددة
+      exportData = partnerZakahData;
+      filters = {
+        partner: selectedPartner,
+        year: selectedYear
+      };
+    } else {
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      await exportZakahToPDF(exportData, filters);
+      notifySuccess("تم تصدير تقرير الزكاة إلى PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error("PDF export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    let exportData, filters;
+
+    if (activeTab === 2 && accountReport) {
+      // صندوق الزكاة
+      exportData = accountReport;
+      filters = {
+        month: selectedFilterMonth.toString().padStart(2, '0'),
+        year: selectedFilterYear
+      };
+    } else if (activeTab === 1 && partnerZakahData) {
+      // زكاة محددة
+      exportData = partnerZakahData;
+      filters = {
+        partner: selectedPartner,
+        year: selectedYear
+      };
+    } else {
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      await exportZakahToExcel(exportData, filters);
+      notifySuccess("تم تصدير تقرير الزكاة إلى Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error("Excel export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || "0";
@@ -121,45 +219,7 @@ const Zakah = () => {
     return months[month - 1] || month;
   };
 
-  // Helper function to get month name from monthKey (YYYY-MM format)
-  const getMonthNameFromKey = (monthKey) => {
-    if (!monthKey) return "";
-    const [year, month] = monthKey.split('-');
-    const monthNames = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ];
-    return `${monthNames[parseInt(month) - 1]} ${year}`;
-  };
 
-  // Prepare chart data
-  const prepareChartData = () => {
-    if (!accountReport) return { monthlyData: [], transactionData: [] };
-
-    // Monthly balance data
-    const monthlyData = accountReport.journalsByMonth
-      ? Object.entries(accountReport.journalsByMonth)
-          .map(([month, data]) => ({
-            name: getMonthNameFromKey(month),
-            monthKey: month,
-            الرصيد: data.totalBalance || 0,
-            المدفوع: data.totalCredit || 0,
-            المتبقي: data.totalDebit || 0,
-          }))
-          .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
-      : [];
-
-    // Transaction type distribution
-    const transactionData = [
-      { name: 'الزكاة المدفوعة', value: accountReport.account?.credit || 0, color: '#00C49F' },
-      { name: 'الزكاة المتبقية', value: accountReport.account?.debit || 0, color: '#FF8042' },
-    ];
-
-    return { monthlyData, transactionData };
-  };
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-  const { monthlyData, transactionData } = prepareChartData();
 
   // Get status chip
   const getStatusChip = (status) => {
@@ -283,6 +343,12 @@ const Zakah = () => {
           <Typography>الزكاة المتبقية:</Typography>
           <Typography fontWeight="bold">
             {formatCurrency(accountReport?.account?.debit)}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography>إجمالي العمليات:</Typography>
+          <Typography fontWeight="bold" color="info.main">
+            {accountReport?.totalJournalEntries || 0}
           </Typography>
         </Box>
         <Button
@@ -576,7 +642,6 @@ const Zakah = () => {
                   <StyledTableRow>
                     <StyledTableCell align="center">الشهر</StyledTableCell>
                     <StyledTableCell align="center">المبلغ</StyledTableCell>
-                    <StyledTableCell align="center">الحالة</StyledTableCell>
                   </StyledTableRow>
                 </TableHead>
                 <TableBody>
@@ -587,9 +652,6 @@ const Zakah = () => {
                       </StyledTableCell>
                       <StyledTableCell align="center">
                         {formatCurrency(month.amount)}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {getStatusChip(month.status)}
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}
@@ -614,196 +676,145 @@ const Zakah = () => {
 
     return (
       <Box sx={{ textAlign: "center" }}>
-        {/* Account Summary */}
+        {/* Filters */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
-          <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center" }}>
-              <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" color="primary.main">
+          <Grid item xs={12} md={8}>
+            <Autocomplete
+              value={monthOptions.find(option => option.value === selectedFilterMonth) || null}
+              onChange={(event, newValue) => {
+                setSelectedFilterMonth(newValue ? newValue.value : new Date().getMonth() + 1);
+              }}
+              options={monthOptions}
+              getOptionLabel={(option) => option.label}
+              renderInput={(params) => (
+                <TextField {...params} label="الشهر" />
+              )}
+              sx={{ width: "250px" }}
+            />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <Autocomplete
+              value={yearOptions.find(option => option.value === selectedFilterYear) || null}
+              onChange={(event, newValue) => {
+                setSelectedFilterYear(newValue ? newValue.value : new Date().getFullYear());
+              }}
+              options={yearOptions}
+              getOptionLabel={(option) => option.label}
+              renderInput={(params) => (
+                <TextField {...params} label="السنة" />
+              )}
+              sx={{ width: "250px" }}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Export Buttons - At the top */}
+        {!isAccountLoading && !accountError && accountReport && activeTab === 2 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
+              startIcon={<span>📄</span>}
+              onClick={() => handleExportPDF()}
+              disabled={isExporting}
+            >
+              {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
+              startIcon={<span>📊</span>}
+              onClick={() => handleExportExcel()}
+              disabled={isExporting}
+            >
+              {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
+            </Button>
+          </Box>
+        )}
+
+        {/* Loading Message */}
+        {isAccountLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4, width: "100%" }}>
+            <CircularProgress sx={{ mr: 2 }} />
+            <Typography>جاري تحميل بيانات الزكاة...</Typography>
+          </Box>
+        )}
+
+        {/* Error Message */}
+        {accountError && !isAccountLoading && (
+          <Alert severity="error" sx={{ mb: 4, width: "100%" }}>
+            فشل في تحميل بيانات الزكاة: {accountError.message || "حدث خطأ غير متوقع"}
+          </Alert>
+        )}
+
+        {/* Account Summary */}
+        {!isAccountLoading && !accountError && (
+          <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
+          <Grid item xs={12} md={2.4}>
+            <Card sx={{ bgcolor: "primary.100", p: 3, textAlign: "center" }}>
+              <BalanceIcon sx={{ fontSize: 40, mb: 1, color: "#1565c0" }} />
+              <Typography variant="h5" fontWeight="bold" color="primary.900">
                 {formatCurrency(accountReport?.account?.balance)}
               </Typography>
-              <Typography variant="body1" color="primary.main">
+              <Typography variant="body1" color="primary.900">
                 رصيد الحساب
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center" }}>
-              <PaidIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" color="success.main">
+          <Grid item xs={12} md={2.4}>
+            <Card sx={{ bgcolor: "success.100", p: 3, textAlign: "center" }}>
+              <PaidIcon sx={{ fontSize: 40, mb: 1, color: "#2e7d32" }} />
+              <Typography variant="h5" fontWeight="bold" color="success.900">
                 {formatCurrency(accountReport?.account?.credit)}
               </Typography>
-              <Typography variant="body1" color="success.main">
+              <Typography variant="body1" color="success.900">
                 الزكاة المدفوعة
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "warning.50", p: 3, textAlign: "center" }}>
-              <PendingIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" color="warning.main">
+          <Grid item xs={12} md={2.4}>
+            <Card sx={{ bgcolor: "warning.100", p: 3, textAlign: "center" }}>
+              <PendingIcon sx={{ fontSize: 40, mb: 1, color: "#f57c00" }} />
+              <Typography variant="h5" fontWeight="bold" color="warning.900">
                 {formatCurrency(accountReport?.account?.debit)}
               </Typography>
-              <Typography variant="body1" color="warning.main">
+              <Typography variant="body1" color="warning.900">
                 الزكاة المتبقية
               </Typography>
             </Card>
           </Grid>
-        </Grid>
-
-        {/* Charts Section */}
-        {accountReport && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            {/* Monthly Balance Trend Chart */}
-            {monthlyData.length > 0 && (
-              <Grid item xs={12}>
-                <Paper sx={{ 
-                  p: isSmallScreen ? 2 : 3, 
-                  borderRadius: 2, 
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                }}>
-                  <Typography variant="h6" fontWeight="bold" mb={3}>
-                    تطور الرصيد والزكاة المدفوعة والمتبقية
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
-                    <ComposedChart data={monthlyData}>
-                      <defs>
-                        <linearGradient id="colorCreditZakah" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="colorDebitZakah" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
-                        contentStyle={{ borderRadius: '8px' }}
-                      />
-                      <Legend />
-                      <Area 
-                        type="monotone" 
-                        dataKey="المدفوع" 
-                        stackId="1"
-                        stroke="#00C49F" 
-                        fill="url(#colorCreditZakah)" 
-                        name="الزكاة المدفوعة"
-                        strokeWidth={2}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="المتبقي" 
-                        stackId="1"
-                        stroke="#FF8042" 
-                        fill="url(#colorDebitZakah)" 
-                        name="الزكاة المتبقية"
-                        strokeWidth={2}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="الرصيد" 
-                        stroke="#1976d2" 
-                        strokeWidth={3}
-                        name="الرصيد"
-                        dot={{ fill: '#1976d2', r: 5 }}
-                        activeDot={{ r: 7 }}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </Paper>
-              </Grid>
-            )}
-
-            {/* Transaction Distribution Pie Chart */}
-            {transactionData.some(t => t.value > 0) && (
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ 
-                  p: isSmallScreen ? 2 : 3, 
-                  borderRadius: 2, 
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                }}>
-                  <Typography variant="h6" fontWeight="bold" mb={3}>
-                    توزيع الزكاة المدفوعة والمتبقية
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
-                    <PieChart>
-                      <Pie
-                        data={transactionData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={isSmallScreen ? 80 : 120}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                      >
-                        {transactionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
-                        contentStyle={{ borderRadius: '8px' }}
-                      />
-                      <Legend 
-                        verticalAlign="bottom" 
-                        height={36}
-                        formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </Paper>
-              </Grid>
-            )}
-
-            {/* Monthly Transactions Bar Chart */}
-            {monthlyData.length > 0 && (
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ 
-                  p: isSmallScreen ? 2 : 3, 
-                  borderRadius: 2, 
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                }}>
-                  <Typography variant="h6" fontWeight="bold" mb={3}>
-                    عدد العمليات الشهرية
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
-                    <BarChart data={monthlyData.map(month => ({
-                      ...month,
-                      العمليات: accountReport.journalsByMonth[month.monthKey]?.entries?.length || 0
-                    }))}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value, name) => [name === 'العمليات' ? `${value} عملية` : `${value.toLocaleString('en-US')} ريال`, name]} 
-                        contentStyle={{ borderRadius: '8px' }}
-                      />
-                      <Legend />
-                      <Bar 
-                        dataKey="العمليات" 
-                        fill="#8884D8"
-                        radius={[8, 8, 0, 0]}
-                        name="عدد العمليات"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </Paper>
-              </Grid>
-            )}
+          <Grid item xs={12} md={2.4}>
+            <Card sx={{ bgcolor: "info.100", p: 3, textAlign: "center" }}>
+              <VolunteerActivismIcon sx={{ fontSize: 40, mb: 1, color: "#0277bd" }} />
+              <Typography variant="h5" fontWeight="bold" color="info.900">
+                {accountReport?.totalJournalEntries || 0}
+              </Typography>
+              <Typography variant="body1" color="info.900">
+                إجمالي العمليات
+              </Typography>
+            </Card>
           </Grid>
+          <Grid item xs={12} md={2.4}>
+            <Card sx={{ bgcolor: "secondary.100", p: 3, textAlign: "center" }}>
+              <VolunteerActivismIcon sx={{ fontSize: 40, mb: 1, color: "#616161" }} />
+              <Typography variant="h5" fontWeight="bold" color="secondary.900">
+                {formatCurrency(accountReport?.journalsByMonth?.[`${selectedFilterYear}-${selectedFilterMonth.toString().padStart(2, '0')}`]?.requiredZakat || 0)}
+              </Typography>
+              <Typography variant="body1" color="secondary.900">
+                الزكاة المطلوبة لهذا الشهر
+              </Typography>
+            </Card>
+          </Grid>
+        </Grid>
         )}
 
         {/* Journal Entries */}
         {accountReport?.journalsByMonth && Object.keys(accountReport.journalsByMonth).length > 0 ? (
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
+          <Paper sx={{ p: 3, borderRadius: 2, mb: 4 }}>
             <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
               العمليات المالية
             </Typography>
-            
+
             {Object.entries(accountReport.journalsByMonth).map(([month, data]) => (
               <Box key={month} sx={{ mb: 4 }}>
                 <Typography variant="h6" color="primary" sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -814,32 +825,54 @@ const Zakah = () => {
                     <TableHead>
                       <StyledTableRow>
                         <StyledTableCell align="center">التاريخ</StyledTableCell>
+                        <StyledTableCell align="center">المرجع</StyledTableCell>
                         <StyledTableCell align="center">الوصف</StyledTableCell>
+                        <StyledTableCell align="center">المرسل</StyledTableCell>
+                        <StyledTableCell align="center">النوع</StyledTableCell>
                         <StyledTableCell align="center">مدين</StyledTableCell>
                         <StyledTableCell align="center">دائن</StyledTableCell>
                         <StyledTableCell align="center">الرصيد</StyledTableCell>
                       </StyledTableRow>
                     </TableHead>
                     <TableBody>
-                      {data.entries.map((entry) => (
-                        <StyledTableRow key={entry.id}>
+                      {data.entries && data.entries.length > 0 ? (
+                        data.entries.map((entry) => (
+                          <StyledTableRow key={entry.id}>
                           <StyledTableCell align="center">
-                            {new Date(entry.date).toLocaleDateString('ar-EG')}
+                            {new Date(entry.date).toLocaleDateString('en-US')}
                           </StyledTableCell>
-                          <StyledTableCell align="center">
-                            {entry.description}
-                          </StyledTableCell>
-                          <StyledTableCell align="center">
-                            {formatCurrency(entry.debit)}
-                          </StyledTableCell>
-                          <StyledTableCell align="center">
-                            {formatCurrency(entry.credit)}
-                          </StyledTableCell>
-                          <StyledTableCell align="center">
-                            {formatCurrency(entry.balance)}
+                            <StyledTableCell align="center">
+                              {entry.reference || '-'}
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              {entry.description}
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              {entry.postedBy || '-'}
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              {entry.type === 'GENERAL' ? 'عام' : entry.type || '-'}
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              {formatCurrency(entry.debit)}
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              {formatCurrency(entry.credit)}
+                            </StyledTableCell>
+                            <StyledTableCell align="center">
+                              {formatCurrency(entry.balance)}
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        ))
+                      ) : (
+                        <StyledTableRow>
+                          <StyledTableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                            <Typography variant="body1" color="textSecondary">
+                              لا توجد عمليات مالية لهذا الشهر
+                            </Typography>
                           </StyledTableCell>
                         </StyledTableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -847,10 +880,11 @@ const Zakah = () => {
             ))}
           </Paper>
         ) : (
-          <Alert severity="info">
+          <Alert severity="info" sx={{ mb: 4 }}>
             لا توجد عمليات مالية لحساب الزكاة
           </Alert>
         )}
+
       </Box>
     );
   };
@@ -973,7 +1007,31 @@ const Zakah = () => {
                     <CircularProgress size={20} />
                   </Box>
                 ) : partnerZakahData ? (
-                  isSmallScreen ? renderMobilePartnerDetails() : renderDesktopPartnerDetails()
+                  <>
+                    {/* Export Buttons for Partner Zakah - At the top */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
+                        startIcon={<span>📄</span>}
+                        onClick={() => handleExportPDF()}
+                        disabled={isExporting}
+                      >
+                        {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
+                      </Button>
+                      <Button
+                        variant="contained"
+                        sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
+                        startIcon={<span>📊</span>}
+                        onClick={() => handleExportExcel()}
+                        disabled={isExporting}
+                      >
+                        {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
+                      </Button>
+                    </Box>
+
+                    {isSmallScreen ? renderMobilePartnerDetails() : renderDesktopPartnerDetails()}
+                  </>
                 ) : (
                   <Alert severity="error">حدث خطأ في تحميل بيانات الزكاة</Alert>
                 )}

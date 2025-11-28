@@ -52,7 +52,6 @@ export default function ContractTemplates() {
     mudarabah: "",
     promissoryNote: "",
     debtAcknowledgment: "",
-    receiptVoucher: "",
     paymentVoucher: "",
     paymentProof: "",
     settlement: "",
@@ -61,7 +60,6 @@ export default function ContractTemplates() {
     mudarabah: "",
     promissoryNote: "",
     debtAcknowledgment: "",
-    receiptVoucher: "",
     paymentVoucher: "",
     paymentProof: "",
     settlement: "",
@@ -70,7 +68,6 @@ export default function ContractTemplates() {
     mudarabah: [],
     promissoryNote: [],
     debtAcknowledgment: [],
-    receiptVoucher: [],
     paymentVoucher: [],
     paymentProof: [],
     settlement: [],
@@ -138,16 +135,16 @@ export default function ContractTemplates() {
       { key: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي", group: "التواريخ" },
     ],
     "payment-voucher": [
-      { key: "{{رقم_السند}}", description: "رقم سند الصرف", group: "بيانات السند" },
-      { key: "{{اسم_المستلم}}", description: "اسم الشخص المستلم للمبلغ", group: "بيانات الأطراف" },
-      { key: "{{هوية_المستلم}}", description: "رقم هوية المستلم", group: "بيانات الأطراف" },
+      { key: "{{رقم_السند}}", description: "رقم السند المرجعي", group: "بيانات السند" },
+      { key: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري", group: "التواريخ" },
+      { key: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي", group: "التواريخ" },
+      { key: "{{سبب_الصرف}}", description: "سبب صرف المبلغ", group: "بيانات السند" },
       { key: "{{المبلغ_رقما}}", description: "المبلغ المصروف بالأرقام", group: "البيانات المالية" },
       { key: "{{المبلغ_كتابة}}", description: "المبلغ المصروف مكتوباً بالحروف", group: "البيانات المالية" },
-      { key: "{{سبب_الصرف}}", description: "سبب صرف المبلغ", group: "بيانات السند" },
-      { key: "{{طريقة_الصرف}}", description: "طريقة الصرف (نقداً، شيك، تحويل)", group: "بيانات السند" },
-      { key: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي", group: "التواريخ" },
-      { key: "{{اسم_المسلم}}", description: "اسم الشخص المسلم للمبلغ", group: "بيانات الأطراف" },
-      { key: "{{ملاحظات}}", description: "ملاحظات إضافية", group: "بيانات السند" },
+      { key: "{{اسم_المساهم}}", description: "اسم المساهم (المسلم للمبلغ)", group: "بيانات الأطراف" },
+      { key: "{{رقم_هوية_المساهم}}", description: "رقم هوية المساهم", group: "بيانات الأطراف" },
+      { key: "{{اسم_المستلم}}", description: "اسم المستلم للمبلغ", group: "بيانات الأطراف" },
+      { key: "{{رقم_هوية_المستلم}}", description: "رقم هوية المستلم", group: "بيانات الأطراف" }
     ],
     "payment-proof": [
       { key: "{{رقم_الايصال}}", description: "رقم الإيصال المرجعي", group: "بيانات الإيصال" },
@@ -567,8 +564,8 @@ export default function ContractTemplates() {
               sx={{
                 borderBottom: "1px solid #e5e7eb",
                 mb: 3,
-                "& .MuiTab-root": { 
-                  fontWeight: "bold", 
+                "& .MuiTab-root": {
+                  fontWeight: "bold",
                   fontSize: "0.9rem",
                   minWidth: "auto",
                   px: 2

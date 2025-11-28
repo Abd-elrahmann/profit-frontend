@@ -69,12 +69,14 @@ const Saving = () => {
   // Query for all partners savings
   const { data: savingData, isLoading: isSavingLoading } = useQuery({
     queryKey: ["partners-savings", page],
+    retry: 1,
     queryFn: () => getAllPartnerSavings(page, limit),
   });
 
   // Query for partner saving details when selected
   const { data: partnerSavingDetails, isLoading: isPartnerLoading } = useQuery({
     queryKey: ["partner-saving-details", selectedPartner],
+    retry: 1,
     queryFn: () => getPartnerSavingDetails(selectedPartner),
     enabled: !!selectedPartner && activeTab === 1,
   });
@@ -82,6 +84,7 @@ const Saving = () => {
   // Query for saving account report
   const { data: accountReport, isLoading: isAccountLoading } = useQuery({
     queryKey: ["saving-account"],
+    retry: 1,
     queryFn: () => getSavingAccountReport(),
     enabled: activeTab === 2,
   });
@@ -485,7 +488,7 @@ const Saving = () => {
                   <Typography variant="h6" fontWeight="bold" mb={3}>
                     تطور الرصيد والإيداعات والسحوبات
                   </Typography>
-                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                  <ResponsiveContainer width={1200} height={isSmallScreen ? 300 : 400}>
                     <ComposedChart data={monthlyData}>
                       <defs>
                         <linearGradient id="colorCredit" x1="0" y1="0" x2="0" y2="1">
@@ -540,16 +543,16 @@ const Saving = () => {
 
             {/* Transaction Distribution Pie Chart */}
             {transactionData.some(t => t.value > 0) && (
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ 
-                  p: isSmallScreen ? 2 : 3, 
-                  borderRadius: 2, 
+              <Grid item xs={12}>
+                <Paper sx={{
+                  p: isSmallScreen ? 2 : 3,
+                  borderRadius: 2,
                   boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                 }}>
                   <Typography variant="h6" fontWeight="bold" mb={3}>
                     توزيع الإيداعات والسحوبات
                   </Typography>
-                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                  <ResponsiveContainer width={1200} height={isSmallScreen ? 300 : 400}>
                     <PieChart>
                       <Pie
                         data={transactionData}
@@ -564,12 +567,12 @@ const Saving = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip 
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                      <Tooltip
+                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]}
                         contentStyle={{ borderRadius: '8px' }}
                       />
-                      <Legend 
-                        verticalAlign="bottom" 
+                      <Legend
+                        verticalAlign="bottom"
                         height={36}
                         formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
                       />
@@ -581,7 +584,7 @@ const Saving = () => {
 
             {/* Monthly Transactions Bar Chart */}
             {monthlyData.length > 0 && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <Paper sx={{ 
                   p: isSmallScreen ? 2 : 3, 
                   borderRadius: 2, 
@@ -590,7 +593,7 @@ const Saving = () => {
                   <Typography variant="h6" fontWeight="bold" mb={3}>
                     عدد العمليات الشهرية
                   </Typography>
-                  <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
+                  <ResponsiveContainer width={1200} height={isSmallScreen ? 300 : 400}>
                     <BarChart data={monthlyData.map(month => ({
                       ...month,
                       العمليات: accountReport.journalsByMonth[month.monthKey]?.entries?.length || 0

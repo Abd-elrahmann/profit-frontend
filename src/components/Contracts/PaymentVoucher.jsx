@@ -3,77 +3,212 @@ import React from 'react';
 
 const PaymentVoucher = () => {
   return `
-    <div style="font-family: 'Noto Sans Arabic', sans-serif; direction: rtl; line-height: 1.8; padding: 20px; max-width: 800px; margin: 0 auto;">
-      <h2 style="text-align:center; font-weight:bold; margin-bottom: 10px;">سند الصرف</h2>
-      <p style="text-align:center; font-size: 16px; margin-bottom: 20px;">
-        رقم السند: <span style="background:#e0e7ff; padding:3px 8px; border-radius:4px;">{{رقم_السند}}</span>
-      </p>
-      
-      <div style="border: 2px solid #2d3748; border-radius: 10px; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <p style="font-size: 18px; font-weight: bold;">أقر أنا الموقع أدناه بأنني قد سلمت مبلغاً نقدياً إلى</p>
-        </div>
+   <style>
+  .contract-wrapper {
+    background: #f8f9fc;
+    padding: 30px;
+    font-family: "Manrope","Noto Sans Arabic",sans-serif;
+    direction: rtl;
+  }
 
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-          <tr>
-            <td style="padding: 10px; width: 40%; font-weight: bold; border: 1px solid #cbd5e0;">اسم المستلم</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{اسم_المستلم}}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">رقم الهوية</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{هوية_المستلم}}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">المبلغ رقماً</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{المبلغ_رقما}} ريال سعودي</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">المبلغ كتابة</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{المبلغ_كتابة}}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">سبب الصرف</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{سبب_الصرف}}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">طريقة الصرف</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{طريقة_الصرف}}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">التاريخ الهجري</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{التاريخ_الهجري}}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; font-weight: bold; border: 1px solid #cbd5e0;">التاريخ الميلادي</td>
-            <td style="padding: 10px; border: 1px solid #cbd5e0; background: #f7fafc;">{{التاريخ_الميلادي}}</td>
-          </tr>
-        </table>
+  .contract-container {
+    max-width: 900px;
+    margin: auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 30px;
+  }
 
-        <div style="text-align: center; margin: 30px 0;">
-          <p style="font-weight: bold; font-size: 16px;">وذلك مقابل البضاعة/الخدمة المذكورة أعلاه</p>
-        </div>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  .header-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .icon {
+    font-size: 28px;
+    color: #d4af37;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #111;
+  }
+  .sub-text {
+    color: #555;
+    font-size: 13px;
+  }
 
-        <div style="display: flex; justify-content: space-around; margin-top: 40px;">
-          <div style="text-align: center;">
-            <p style="font-weight: bold; margin-bottom: 10px;">توقيع المسلم</p>
-            <div style="height: 80px; border-bottom: 1px solid #cbd5e0; margin-bottom: 5px; min-width: 200px;"></div>
-            <p>الاسم: {{اسم_المسلم}}</p>
-            <p>التاريخ: ___________________</p>
-          </div>
-          <div style="text-align: center;">
-            <p style="font-weight: bold; margin-bottom: 10px;">توقيع المستلم</p>
-            <div style="height: 80px; border-bottom: 1px solid #cbd5e0; margin-bottom: 5px; min-width: 200px;"></div>
-            <p>الاسم: {{اسم_المستلم}}</p>
-            <p>التاريخ: ___________________</p>
-          </div>
-        </div>
+  .grid-wrapper {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+  }
 
-        <div style="margin-top: 20px; padding: 15px; background: #f0f4ff; border-radius: 8px;">
-          <p style="font-weight: bold; margin-bottom: 5px;">ملاحظات:</p>
-          <p>{{ملاحظات}}</p>
+  .details-box {
+    flex: 1;
+    min-width: 260px;
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 8px;
+  }
+  .details-box h2 {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    border-top: 1px solid #ddd;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .row span {
+    font-weight: bold;
+    color: #111;
+  }
+
+  .content-box {
+    flex: 2;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .amount-box {
+    text-align: center;
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  .amount-box h3 {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .amount-box h1 {
+    font-size: 34px;
+    font-weight: 800;
+    color: #1e40af;
+  }
+  .amount-box p {
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 20px 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    color: #2d3748;
+  }
+
+  .info-box {
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  .signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    gap: 20px;
+  }
+  .sign-line {
+    width: 180px;
+    height: 40px;
+    margin: auto;
+    border-bottom: 2px solid #666;
+  }
+
+  @media print {
+    .contract-wrapper {
+      background: #fff;
+      padding: 0;
+    }
+    .contract-container {
+      border: none;
+      box-shadow: none;
+    }
+  }
+</style>
+
+<div class="contract-wrapper">
+  <div class="contract-container">
+
+    <div class="header">
+      <div class="header-left">
+        <span class="icon">✔</span>
+        <p class="title">سند صرف – زكاة مقدَّمة</p>
+      </div>
+      <p class="sub-text">رقم السند: {{رقم_السند}}</p>
+    </div>
+
+    <div class="grid-wrapper">
+
+      <div class="details-box">
+        <h2>بيانات السند</h2>
+        <div class="row"><p>نوع السند:</p> <span>سند صرف</span></div>
+        <div class="row"><p>البند:</p> <span>زكاة مقدَّمة</span></div>
+        <div class="row"><p>التاريخ الهجري:</p> <span>{{التاريخ_الهجري}}</span></div>
+        <div class="row"><p>التاريخ الميلادي:</p> <span>{{التاريخ_الميلادي}}</span></div>
+        <div class="row"><p>سبب الصرف:</p> <span>{{سبب_الصرف}}</span></div>
+      </div>
+
+      <div class="content-box">
+        <div class="amount-box">
+          <h3>المبلغ المصروف</h3>
+          <h1>{{المبلغ_رقما}}</h1>
+          <p>{{المبلغ_كتابة}}</p>
         </div>
       </div>
+
     </div>
+
+    <div class="section-title">بيانات المساهم</div>
+    <div class="info-box">
+      <div class="row"><p>اسم المساهم:</p> <span>{{اسم_المساهم}}</span></div>
+      <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_المساهم}}</span></div>
+    </div>
+
+    <div class="section-title">بيانات المستلم</div>
+    <div class="info-box">
+      <div class="row"><p>اسم المستلم:</p> <span>{{اسم_المستلم}}</span></div>
+      <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_المستلم}}</span></div>
+    </div>
+
+    <div class="signatures">
+      <div>
+        <p class="strong">توقيع المساهم</p>
+        <div class="sign-line"></div>
+        <p>{{اسم_المساهم}}</p>
+      </div>
+      <div>
+        <p class="strong">توقيع المستلم</p>
+        <div class="sign-line"></div>
+        <p>{{اسم_المستلم}}</p>
+      </div>
+    </div>
+
+  </div>
+</div>
   `;
 };
 

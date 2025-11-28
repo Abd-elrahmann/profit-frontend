@@ -53,7 +53,7 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ZakatIcon color="primary" />
+          <ZakatIcon color="primary" sx={{marginRight: "10px"}} />
           <Typography variant="h6" fontWeight="bold">
             سحب مبلغ الزكاة
           </Typography>
@@ -96,7 +96,7 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
           variant="contained"
           color="primary"
           disabled={loading || !amount}
-          startIcon={loading ? <CircularProgress size={16} /> : <ZakatIcon />}
+          startIcon={loading ? <CircularProgress size={16} /> : <ZakatIcon sx={{marginLeft: "10px"}} />}
         >
           {loading ? 'جاري السحب...' : 'سحب المبلغ'}
         </Button>
