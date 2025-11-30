@@ -145,14 +145,17 @@ const PartnerStats = () => {
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px' }}>
         {/* إجمالي الشركاء */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -181,14 +184,17 @@ const PartnerStats = () => {
 
         {/* شركاء نشطين */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -217,14 +223,17 @@ const PartnerStats = () => {
 
         {/* إجمالي رأس المال */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -253,14 +262,17 @@ const PartnerStats = () => {
 
         {/* إجمالي الأرباح */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -290,7 +302,15 @@ const PartnerStats = () => {
 
       {/* Bar Charts */}
       <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{ p: { xs: 1.5, sm: 2, md: 3 }, height: { xs: 300, sm: 350, md: 400 } }}>
+        <Card sx={{
+          p: { xs: 1.5, sm: 2, md: 3 },
+          height: { xs: 300, sm: 350, md: 400 },
+          borderRadius: 3,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
+        }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             توزيع الشركاء حسب الحالة
           </Typography>
@@ -318,7 +338,15 @@ const PartnerStats = () => {
       </Box>
 
       <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{ p: { xs: 1.5, sm: 2, md: 3 }, height: { xs: 300, sm: 350, md: 400 } }}>
+        <Card sx={{
+          p: { xs: 1.5, sm: 2, md: 3 },
+          height: { xs: 300, sm: 350, md: 400 },
+          borderRadius: 3,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
+        }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             رأس المال والأرباح
           </Typography>
@@ -347,7 +375,15 @@ const PartnerStats = () => {
       {/* Pie Chart */}
       {statusData.some(item => item.value > 0) && (
         <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-          <Card sx={{ p: { xs: 1.5, sm: 2, md: 3 }, height: { xs: 300, sm: 350, md: 400 } }}>
+          <Card sx={{
+          p: { xs: 1.5, sm: 2, md: 3 },
+          height: { xs: 300, sm: 350, md: 400 },
+          borderRadius: 3,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
+        }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               حالة الشركاء
             </Typography>

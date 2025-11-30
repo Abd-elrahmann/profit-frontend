@@ -80,10 +80,20 @@ if (num >= 1000) {
 
 const getCurrentDates = () => {
   const now = new Date();
-  const gregorianDate = now.toLocaleDateString('ar-SA');
 
-  const hijriYear = Math.floor((now.getFullYear() - 622) * 1.030684) + 1;
-  const hijriDate = `${now.getDate()}/${now.getMonth() + 1}/${hijriYear}`;
+  // التاريخ الميلادي
+  const gregorianDate = now.toLocaleDateString('ar-EG', { 
+    day: 'numeric', 
+    month: 'numeric', 
+    year: 'numeric' 
+  }) + ' م';
+
+  // التاريخ الهجري  
+  const hijriDate = now.toLocaleDateString('ar-SA-u-ca-islamic-umalqura', {
+    day: 'numeric',
+    month: 'numeric', 
+    year: 'numeric'
+  }).replace(/م/g, 'هـ'); // استبدال م بـ هـ
 
   return { gregorianDate, hijriDate };
 };

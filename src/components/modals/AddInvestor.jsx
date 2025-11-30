@@ -59,13 +59,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     if (!formData.orgProfitPercent) newErrors.orgProfitPercent = 'نسبة أرباح المنشأة مطلوبة';
     if (!formData.capitalAmount) newErrors.capitalAmount = 'رأس المال مطلوب';
     
-    if (formData.nationalId && !/^\d{10}$/.test(formData.nationalId)) {
-      newErrors.nationalId = 'رقم الهوية يجب أن يكون 10 أرقام';
-    }
-    
-    if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
-      newErrors.phone = 'رقم الجوال يجب أن يحتوي على 10 أرقام';
-    }
     
     
     if (formData.orgProfitPercent && (formData.orgProfitPercent < 0 || formData.orgProfitPercent > 100)) {
@@ -203,7 +196,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
                 error={!!errors.nationalId}
                 helperText={errors.nationalId}
                 required
-                inputProps={{ maxLength: 14 }}
+                inputProps={{ maxLength: 12 }}
                 size="medium"
                 sx={{width: '250px'}}
               />

@@ -41,16 +41,26 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
     return amount?.toLocaleString() || '0';
   };
 
-  // Get status color based on remaining amount
-  const getStatusColor = (remaining) => {
-    if (remaining > 0) return 'error'; // مديون
-    if (remaining === 0) return 'success'; // مدفوع بالكامل
+  // Get status color based on client data
+  const getStatusColor = (client) => {
+    // إذا لم يكن لدى العميل أي ديون أو مدفوعات (عميل جديد)
+    if (client.totalDebit === 0 && client.totalPaid === 0) {
+      return 'default'; // عميل جديد
+    }
+
+    if (client.remaining > 0) return 'error'; // مديون
+    if (client.remaining === 0) return 'success'; // مدفوع بالكامل
     return 'info'; // لديه رصيد (paid more than required)
   };
 
-  const getStatusText = (remaining) => {
-    if (remaining > 0) return 'مديون';
-    if (remaining === 0) return 'مدفوع بالكامل';
+  const getStatusText = (client) => {
+    // إذا لم يكن لدى العميل أي ديون أو مدفوعات (عميل جديد)
+    if (client.totalDebit === 0 && client.totalPaid === 0) {
+      return 'عميل جديد';
+    }
+
+    if (client.remaining > 0) return 'مديون';
+    if (client.remaining === 0) return 'مدفوع بالكامل';
     return 'لديه رصيد';
   };
 
@@ -129,15 +139,15 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
                   <StyledTableCell align="center">
                     <Typography
                       fontWeight="bold"
-                      color={getStatusColor(client.remaining)}
+                      color={getStatusColor(client)}
                     >
                       {formatCurrency(Math.abs(client.remaining))}
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <Chip
-                      label={getStatusText(client.remaining)}
-                      color={getStatusColor(client.remaining)}
+                      label={getStatusText(client)}
+                      color={getStatusColor(client)}
                       size="small"
                     />
                   </StyledTableCell>

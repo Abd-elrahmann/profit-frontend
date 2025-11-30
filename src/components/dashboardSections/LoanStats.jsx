@@ -167,14 +167,17 @@ const LoanStats = () => {
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px' }}>
         {/* إجمالي السلف */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -203,14 +206,17 @@ const LoanStats = () => {
 
         {/* إجمالي مبلغ السلف */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -239,14 +245,17 @@ const LoanStats = () => {
 
         {/* سلف نشطة */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -275,14 +284,17 @@ const LoanStats = () => {
 
         {/* رصيد البنك */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             height: '100%',
             borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`,
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.12)',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
               transform: 'translateY(-2px)'
             }
           }}>
@@ -313,12 +325,14 @@ const LoanStats = () => {
       {/* Bar Charts with 100vw width */}
       {loanStatusBarData.length > 0 && (
         <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-          <Card sx={{ 
-            p: { xs: 1.5, sm: 2, md: 3 }, 
+          <Card sx={{
+            p: { xs: 1.5, sm: 2, md: 3 },
             height: { xs: 300, sm: 350, md: 400 },
             borderRadius: 3,
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
           }}>
             <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               توزيع السلف حسب الحالة
@@ -418,12 +432,14 @@ const LoanStats = () => {
       {/* Pie Chart with 100vw width */}
       {statusData.length > 0 && (
         <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-          <Card sx={{ 
-            p: { xs: 1.5, sm: 2, md: 3 }, 
+          <Card sx={{
+            p: { xs: 1.5, sm: 2, md: 3 },
             height: { xs: 300, sm: 350, md: 400 },
             borderRadius: 3,
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            border: `1px solid ${theme.palette.divider}`
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
           }}>
             <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               حالة السلف

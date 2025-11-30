@@ -848,7 +848,7 @@ const Loans = () => {
               >
                 محاكاة السلفة
               </Typography>
-              {simulationSummary ? (
+              {simulationSummary && loanForm.type ? (
                 <Stack spacing={3}>
                   <Box
                     sx={{
@@ -1658,7 +1658,7 @@ const Loans = () => {
                     <Typography variant="subtitle1" fontWeight="bold" mb={2}>
                       محاكاة السلفة
                     </Typography>
-                    {simulationSummary ? (
+                    {simulationSummary && loanForm.type ? (
                       <Stack spacing={2}>
                         <Box
                           sx={{

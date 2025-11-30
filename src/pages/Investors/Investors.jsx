@@ -30,6 +30,7 @@ import {
   Select,
   InputLabel,
   TablePagination,
+  Alert,
 } from "@mui/material";
 import {
   Add,
@@ -43,6 +44,7 @@ import {
   Share,
   PictureAsPdf,
   TableChart,
+  Info,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -647,7 +649,11 @@ export default function Investors() {
       case "DEPOSIT":
         return "إيداع";
       case "WITHDRAWAL":
-        return "سحب";
+        return "سحب من رأس المال";
+      case "PROFIT_WITHDRAWAL":
+        return "سحب أرباح";
+      case "SAVING_WITHDRAWAL":
+        return "سحب ادخار";
       default:
         return type;
     }
@@ -659,6 +665,10 @@ export default function Investors() {
         return "success";
       case "WITHDRAWAL":
         return "error";
+      case "PROFIT_WITHDRAWAL":
+        return "warning";
+      case "SAVING_WITHDRAWAL":
+        return "info";
       default:
         return "default";
     }
@@ -1090,7 +1100,55 @@ export default function Investors() {
                     </CardContent>
                   </Card>
                 </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <CardContent sx={{textAlign: 'center'}}>
+                      <Typography color="text.secondary" variant="body1" gutterBottom>
+                        إجمالي الادخار
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold" color="info.main">
+                        {investorDetails.totalSaving?.toLocaleString() || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
+
+              {/* Saving Progress Alert */}
+              {(() => {
+                const capital = investorDetails.capitalAmount || 0;
+                const saving = investorDetails.totalSaving || 0;
+                const difference = capital - saving;
+
+                if (saving === 0) return null; // لا نعرض التنبيه إذا لم يكن هناك ادخار
+
+                return (
+                  <Alert
+                    severity={difference <= 0 ? "success" : "info"}
+                    icon={<Info />}
+                    sx={{ mb: 3, mt: 2 }}
+                  >
+                    <Typography variant="body2">
+                      رأس مالك {capital.toLocaleString()} ريال • ادخارك {saving.toLocaleString()} ريال
+                      {difference > 0 && (
+                        <Typography component="span" fontWeight="bold" color="primary.main">
+                          {" • ناقص " + difference.toLocaleString() + " ريال عشان ينتهي ادخارك"}
+                        </Typography>
+                      )}
+                      {difference === 0 && (
+                        <Typography component="span" fontWeight="bold" color="success.main">
+                          {" • رائع! وصل ادخارك لرأس المال بالضبط 🎉"}
+                        </Typography>
+                      )}
+                      {difference < 0 && (
+                        <Typography component="span" fontWeight="bold" color="success.main">
+                          {" • مبروك! تجاوز ادخارك رأس المال بـ " + Math.abs(difference).toLocaleString() + " ريال 🎊"}
+                        </Typography>
+                      )}
+                    </Typography>
+                  </Alert>
+                );
+              })()}
 
               {/* Tabs */}
               <Tabs
@@ -1566,7 +1624,9 @@ export default function Investors() {
                 onChange={(e) => handleTransactionInputChange('type', e.target.value)}
               >
                 <MenuItem value="DEPOSIT">إيداع</MenuItem>
-                <MenuItem value="WITHDRAWAL">سحب</MenuItem>
+                <MenuItem value="WITHDRAWAL">سحب من رأس المال</MenuItem>
+                <MenuItem value="PROFIT_WITHDRAWAL">سحب أرباح</MenuItem>
+                <MenuItem value="SAVING_WITHDRAWAL">سحب ادخار</MenuItem>
               </TextField>
             </FormControl>
             

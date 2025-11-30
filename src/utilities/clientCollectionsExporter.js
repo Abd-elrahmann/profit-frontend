@@ -16,15 +16,25 @@ const registerArabicFonts = (doc) => {
 };
 
 // Get status text and color
-const getStatusText = (remaining) => {
-  if (remaining > 0) return 'مديون';
-  if (remaining === 0) return 'مدفوع بالكامل';
+const getStatusText = (client) => {
+  // إذا لم يكن لدى العميل أي ديون أو مدفوعات (عميل جديد)
+  if (client.totalDebit === 0 && client.totalPaid === 0) {
+    return 'عميل جديد';
+  }
+
+  if (client.remaining > 0) return 'مديون';
+  if (client.remaining === 0) return 'مدفوع بالكامل';
   return 'لديه رصيد';
 };
 
-const getStatusColor = (remaining) => {
-  if (remaining > 0) return [220, 53, 69]; // error red
-  if (remaining === 0) return [40, 167, 69]; // success green
+const getStatusColor = (client) => {
+  // إذا لم يكن لدى العميل أي ديون أو مدفوعات (عميل جديد)
+  if (client.totalDebit === 0 && client.totalPaid === 0) {
+    return [128, 128, 128]; // gray for new client
+  }
+
+  if (client.remaining > 0) return [220, 53, 69]; // error red
+  if (client.remaining === 0) return [40, 167, 69]; // success green
   return [23, 162, 184]; // info blue
 };
 

@@ -171,7 +171,7 @@ return `
 
       <div class="content-box">
         <div class="amount-box">
-          <h3>مبلغ و قدره</h3>
+          <h3>مبلغ وقدره</h3>
           <h1>{{المبلغ_رقما}}</h1>
           <p>{{المبلغ_كتابة}}</p>
         </div>
