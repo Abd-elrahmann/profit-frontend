@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -13,6 +13,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { notifyError } from './utilities/toastify';
+import { Box, CircularProgress } from '@mui/material';
 
 const getFirstAccessiblePage = (permissions) => {
   const convertModuleToPermission = (module) => {
@@ -68,10 +69,17 @@ const RestrictedNavigationRoute = ({ children }) => {
   return children;
 };
 
+const LoadingFallback = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <CircularProgress />
+  </Box>
+);
+
 const AppLayout = () => {
   return (
     <Layout>
-      <Routes>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
         {routes
           .filter(route => !route.protected)
           .map(route => (
@@ -125,9 +133,10 @@ const AppLayout = () => {
           } 
         />
 
-<Route path="/installments/:loanId" element={<Installments />} />
-      <Route path="/payment-receipt" element={<RestrictedNavigationRoute><PaymentReceipt /></RestrictedNavigationRoute>} />
-      </Routes>
+        <Route path="/installments/:loanId" element={<Installments />} />
+        <Route path="/payment-receipt" element={<RestrictedNavigationRoute><PaymentReceipt /></RestrictedNavigationRoute>} />
+        </Routes>
+      </Suspense>
     </Layout>
   );
 };

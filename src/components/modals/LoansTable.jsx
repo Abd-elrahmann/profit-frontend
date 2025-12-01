@@ -321,10 +321,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="caption" color="text.secondary">
-                    معدل الفائدة
+                    الفائدة
                   </Typography>
                   <Typography variant="body2">
-                    {loan.interestRate}%
+                    {loan.interestAmount?.toLocaleString()} ({loan.interestRate}%)
                   </Typography>
                 </Box>
 
@@ -424,7 +424,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               مبلغ الدفعة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              معدل الفائدة
+              الفائدة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               النوع
@@ -501,7 +501,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
                 >
-                  {loan.interestRate}%
+                  {loan.interestAmount?.toLocaleString()} ({loan.interestRate}%)
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"

@@ -327,7 +327,7 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{تاريخ_الانشاء}}/g, finalDate)
             .replace(/{{تاريخ_الاستحقاق}}/g, "لدي الاطلاع")
 
-            .replace(/{{اسم_الدائن}}/g, "أحمد لحول")
+            .replace(/{{اسم_الدائن}}/g, loanDataToUse?.partner?.name || "لا يوجد كفيل")
             .replace(/{{اسم_المدين}}/g, clientData.name || "")
             .replace(/{{رقم_السند}}/g, `LOAN-${Date.now()}`)
             .replace(/{{رقم_الإقرار}}/g, `ACK-${Date.now()}`)
@@ -335,10 +335,10 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{مدينة_الوفاء}}/g, "الرياض - المملكة العربية السعودية")
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")
 
-            .replace(/{{رقم_هوية_الدائن}}/g, "1234567890")
+            .replace(/{{رقم_هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")
             .replace(/{{رقم_هوية_المدين}}/g, clientData.nationalId || "")
             .replace(/{{رقم_هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "لا يوجد كفيل")
-            .replace(/{{هوية_الدائن}}/g, "1234567890")
+            .replace(/{{هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")
             .replace(/{{هوية_المدين}}/g, clientData.nationalId || "")
             .replace(/{{اسم_الكفيل}}/g, kafeelDataToUse?.name || "لا يوجد كفيل")
             .replace(/{{هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "لا يوجد كفيل");

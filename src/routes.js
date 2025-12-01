@@ -95,7 +95,7 @@ const routes = [
     parent: 'إدارة المستخدمين'
   },
 
-  // العملاء والمستثمرين مجموعة واحدة
+  // العملاء مجموعة منفصلة
   {
     path: '/clients',
     element: Clients,
@@ -117,8 +117,9 @@ const routes = [
     module: 'client-report',
     requiresPermissions: true,
     parent: 'إدارة العملاء'
-  },  
-   
+  },
+
+  // المستثمرين مجموعة منفصلة
   {
     path: '/investors',
     element: Investors,
@@ -128,7 +129,7 @@ const routes = [
     icon: TrendingUp,
     module: 'partners',
     requiresPermissions: true,
-    parent: 'إدارة العملاء'
+    parent: 'إدارة المستثمرين'
   },
 
   // القوالب مجموعة واحدة
@@ -155,6 +156,7 @@ const routes = [
     parent: 'القوالب'
   },
 
+  // المحاسبة المالية
   {
     path: '/chart-of-accounts',
     element: ChartOfAccounts,
@@ -164,40 +166,7 @@ const routes = [
     icon: AccountBalance,
     module: 'accounts',
     requiresPermissions: true,
-    parent: 'إدارة المالية'
-  },
-  {
-    path: '/loans',
-    element: Loans,
-    protected: true,
-    showInSidebar: true,
-    label: 'السلف',
-    icon: LoanIcon,
-    module: 'loans',
-    requiresPermissions: true,
-    parent: 'إدارة المالية'
-  },
-  {
-    path: '/banks',
-    element: Banks,
-    protected: true,
-    showInSidebar: true,
-    label: 'البنوك',
-    icon: AccountBalance,
-    module: 'banks',
-    requiresPermissions: true,
-    parent: 'إدارة المالية'
-  },
-  {
-    path: '/installments',
-    element: Installments,
-    protected: true,
-    showInSidebar: true,
-    label: 'الدفعات',
-    module: 'repayments',
-    requiresPermissions: true,
-    icon: InstallmentsIcon,
-    parent: 'إدارة المالية'
+    parent: 'المحاسبة المالية'
   },
   {
     path: '/journal-entries',
@@ -208,7 +177,7 @@ const routes = [
     module: 'journals',
     requiresPermissions: true,
     icon: JournalIcon,
-    parent: 'إدارة المالية'
+    parent: 'المحاسبة المالية'
   },
   {
     path: '/general-ledger',
@@ -219,7 +188,7 @@ const routes = [
     module: 'general-ledger',
     requiresPermissions: true,
     icon: JournalIcon,
-    parent: 'إدارة المالية'
+    parent: 'المحاسبة المالية'
   },
   {
     path: '/period-closing',
@@ -230,29 +199,42 @@ const routes = [
     module: 'period',
     requiresPermissions: true,
     icon: CalendarMonthIcon,
-    parent: 'إدارة المالية'
+    parent: 'المحاسبة المالية'
   },
+
+  // العمليات المالية
   {
-    path: '/profit-distribution',
-    element: ProfitDistribution,
+    path: '/loans',
+    element: Loans,
     protected: true,
     showInSidebar: true,
-    label: 'توزيع الأرباح',
-    module: 'distribution',
-    icon: AccountBalance,
+    label: 'السلف',
+    icon: LoanIcon,
+    module: 'loans',
     requiresPermissions: true,
-    parent: 'إدارة المالية'
+    parent: 'العمليات المالية'
   },
   {
-    path: '/company-profit',
-    element: CompanyProfit,
+    path: '/banks',
+    element: Banks,
     protected: true,
     showInSidebar: true,
-    label: 'أرباح الشركة',
-    module: 'company',
-    requiresPermissions: true,
+    label: 'البنوك',
     icon: AccountBalance,
-    parent: 'إدارة المالية'
+    module: 'banks',
+    requiresPermissions: true,
+    parent: 'العمليات المالية'
+  },
+  {
+    path: '/installments',
+    element: Installments,
+    protected: true,
+    showInSidebar: true,
+    label: 'الدفعات',
+    module: 'repayments',
+    requiresPermissions: true,
+    icon: InstallmentsIcon,
+    parent: 'العمليات المالية'
   },
   {
     path: '/treasury',
@@ -263,7 +245,31 @@ const routes = [
     module: 'treasury',
     requiresPermissions: true,
     icon: AccountBalance,
-    parent: 'إدارة الصندوق'
+    parent: 'العمليات المالية'
+  },
+
+  // الأرباح والتقارير
+  {
+    path: '/company-profit',
+    element: CompanyProfit,
+    protected: true,
+    showInSidebar: true,
+    label: 'أرباح الشركة',
+    module: 'company',
+    requiresPermissions: true,
+    icon: AccountBalance,
+    parent: 'الأرباح والتقارير'
+  },
+  {
+    path: '/profit-distribution',
+    element: ProfitDistribution,
+    protected: true,
+    showInSidebar: true,
+    label: 'توزيع الأرباح',
+    module: 'distribution',
+    icon: AccountBalance,
+    requiresPermissions: true,
+    parent: 'الأرباح والتقارير'
   },
   {
     path: '/zakah',

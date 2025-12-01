@@ -32,7 +32,7 @@ return `
     gap: 10px;
     align-items: center;
   }
-  .icon {
+   .icon {
     font-size: 28px;
     color: #d4af37;
   }
@@ -50,11 +50,12 @@ return `
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+    margin-bottom: 25px;
   }
 
   .details-box {
     flex: 1;
-    min-width: 260px;
+    min-width: 300px;
     background: #f9fafb;
     padding: 15px;
     border-radius: 8px;
@@ -81,7 +82,7 @@ return `
     min-width: 300px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    justify-content: center;
   }
 
   .amount-box {
@@ -105,6 +106,20 @@ return `
     text-align: center;
   }
 
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 25px 0 10px;
+    color: #222;
+  }
+
+  .info-box {
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
   .text-box {
     background: #f3f4f6;
     padding: 15px;
@@ -113,8 +128,9 @@ return `
   .text-box p {
     font-size: 14px;
     color: #444;
-    line-height: 1.7;
+    line-height: 2;
   }
+
   .strong {
     font-weight: bold;
     margin-top: 6px;
@@ -122,14 +138,14 @@ return `
 
   .signatures {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     text-align: center;
     margin-top: 30px;
     padding-top: 20px;
     border-top: 1px solid #ddd;
   }
   .sign-line {
-    width: 180px;
+    width: 160px;
     height: 40px;
     margin: auto;
     border-bottom: 2px solid #666;
@@ -171,7 +187,7 @@ return `
 
       <div class="content-box">
         <div class="amount-box">
-          <h3>مبلغ وقدره</h3>
+          <h3>قيمة السند</h3>
           <h1>{{المبلغ_رقما}}</h1>
           <p>{{المبلغ_كتابة}}</p>
         </div>

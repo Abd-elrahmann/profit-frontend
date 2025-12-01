@@ -15,6 +15,8 @@ import ClientStats from '../../components/dashboardSections/ClientStats';
 import PartnerStats from '../../components/dashboardSections/PartnerStats';
 import LoanStats from '../../components/dashboardSections/LoanStats';
 import CollectionStats from '../../components/dashboardSections/CollectionStats';
+import UpcomingRepayments from '../../components/dashboardSections/UpcomingRepayments';
+import LastActions from '../../components/dashboardSections/LastActions';
 
 function TabPanel({ children, value, index }) {
   return (
@@ -75,6 +77,8 @@ const Dashboard = () => {
             <Tab label="إحصائيات الشركاء" />
             <Tab label="إحصائيات السلف والقروض" />
             <Tab label="التحصيل الشهري" />
+            <Tab label="الدفعات القادمة" />
+            <Tab label="آخر الأنشطة" />
           </Tabs>
         </Box>
 
@@ -99,6 +103,18 @@ const Dashboard = () => {
         <TabPanel value={value} index={3}>
           <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             <CollectionStats />
+          </Box>
+        </TabPanel>
+
+        <TabPanel value={value} index={4}>
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <UpcomingRepayments />
+          </Box>
+        </TabPanel>
+
+        <TabPanel value={value} index={5}>
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <LastActions />
           </Box>
         </TabPanel>
       </Container>

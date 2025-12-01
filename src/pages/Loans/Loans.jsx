@@ -52,6 +52,7 @@ const Loans = () => {
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [loanForm, setLoanForm] = useState({
     amount: "",
+    totalInterest: "",
     interestRate: "",
     paymentAmount: "",
     type: "",
@@ -141,7 +142,7 @@ const Loans = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     loanForm.amount,
-    loanForm.interestRate,
+    loanForm.totalInterest,
     loanForm.paymentAmount,
     activeTab,
   ]);
@@ -238,6 +239,8 @@ const Loans = () => {
       const previewLoanData = {
         ...loanDataToUse,
         client: clientDataToUse,
+        partner: loanDataToUse.partner || selectedPartner,
+        kafeel: loanDataToUse.kafeel || selectedKafeel,
       };
 
       // التأكد من وجود المراجع قبل الاستخدام
@@ -264,7 +267,6 @@ const Loans = () => {
       });
       setPreviewOpen(true);
     } catch (error) {
-      console.error("Error in handleOpenPreview:", error);
       handleApiError(error);
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء توليد معاينة العقود"
@@ -280,11 +282,17 @@ const Loans = () => {
       }
 
       if (contractType === "both" || contractType === "debt-acknowledgment") {
-        await debtAckGeneratorRef.current?.generatePDF();
+        // Generate HTML content first
+        const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, savedLoanData, savedLoanData?.kafeel, true);
+        // Then generate PDF with the HTML content
+        await debtAckGeneratorRef.current?.generatePDF(debtAckHtml);
       }
 
       if (contractType === "both" || contractType === "promissory-note") {
-        await promissoryNoteGeneratorRef.current?.generatePDF();
+        // Generate HTML content first
+        const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, savedLoanData, savedLoanData?.kafeel, true);
+        // Then generate PDF with the HTML content
+        await promissoryNoteGeneratorRef.current?.generatePDF(promissoryNoteHtml);
       }
 
       notifySuccess("تم حفظ العقود بنجاح");
@@ -307,13 +315,13 @@ const Loans = () => {
 
   const calculateInstallments = () => {
     const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
-    const interestRate = parseFloat(loanForm.interestRate) || 0;
+    const totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
     const paymentAmount =
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const loanType = loanForm.type;
 
-    if (amount > 0 && paymentAmount > 0) {
-      const profit = amount * (interestRate / 100);
+    if (amount > 0 && paymentAmount > 0 && totalInterest > 0) {
+      const profit = totalInterest;
       const total = amount + profit;
 
       const fullMonths = Math.floor(total / paymentAmount);
@@ -408,12 +416,10 @@ const Loans = () => {
     const installmentsCount = installments.length;
     const loanType = loanForm.type;
 
-    // دالة مساعدة لتحديد صيغة الجمع في العربية
     const getPluralForm = (count, singular, plural) => {
       return count === 1 ? singular : plural;
     };
 
-    // حساب عدد الأشهر التقريبي والنص المعروض
     let approximateMonths = installmentsCount;
     let durationLabel = "عدد الأشهر";
     let durationText = `${installmentsCount} ${getPluralForm(installmentsCount, 'شهر', 'أشهر')}`;
@@ -435,8 +441,8 @@ const Loans = () => {
       numberOfMonths: approximateMonths,
       installmentsCount,
       loanType,
-      durationLabel, // التسمية (عدد الأيام/الأسابيع/الأشهر)
-      durationText,  // النص المعروض (37 يوم ≈ 2 شهر)
+      durationLabel,
+      durationText,
     };
   };
 
@@ -446,7 +452,11 @@ const Loans = () => {
       return;
     }
 
-    // Validate amount against bank balance
+    if (!selectedPartner) {
+      notifyError("يرجى اختيار المستثمر");
+      return;
+    }
+
     if (bankBalance !== null) {
       const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
       if (loanAmount > bankBalance) {
@@ -467,7 +477,8 @@ const Loans = () => {
       const loanData = {
         clientId: selectedClient.client.id,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        interestRate: parseFloat(loanForm.interestRate),
+        TotalInterest: parseFloat(loanForm.totalInterest.replace(/,/g, "")),
+        InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
         startDate: loanForm.startDate,
@@ -482,15 +493,17 @@ const Loans = () => {
 
       notifySuccess("تم إنشاء السلفة بنجاح");
 
+      const finalPartner = selectedPartner || newLoan.partner;
+
       setSavedLoanData({
         ...newLoan,
+        partner: finalPartner,
         client: selectedClient.client,
         kafeel: selectedKafeel || null,
       });
 
       queryClient.invalidateQueries(["loans"]);
-
-      // Automatically open preview after loan creation
+      
       await handleOpenPreview();
     } catch (error) {
       handleApiError(error);
@@ -502,8 +515,7 @@ const Loans = () => {
     }
   };
 
-  const handleContractGenerated = (pdfBlob, contractType) => {
-    console.log(`Contract generated: ${contractType}`);
+  const handleContractGenerated = () => {
     const newCount = contractsGenerated + 1;
     setContractsGenerated(newCount);
   };
@@ -517,6 +529,7 @@ const Loans = () => {
     setBankBalance(null);
     setLoanForm({
       amount: "",
+      totalInterest: "",
       interestRate: "",
       paymentAmount: "",
       type: "",
@@ -541,7 +554,8 @@ const Loans = () => {
     try {
       const loanData = {
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        interestRate: parseFloat(loanForm.interestRate),
+        TotalInterest: parseFloat(loanForm.totalInterest.replace(/,/g, "")),
+        InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
         startDate: loanForm.startDate,
@@ -558,19 +572,15 @@ const Loans = () => {
       await updateLoan(selectedLoan.id, loanData);
       notifySuccess("تم تعديل السلفة بنجاح");
 
-      // If amount changed, regenerate contracts and open preview
       if (amountChanged) {
-        // Refetch updated loan data
         const updatedLoan = await getLoanById(selectedLoan.id);
 
-        // Set saved loan data to trigger contract generation
         setSavedLoanData({
           ...updatedLoan,
           client: selectedClient?.client || updatedLoan.client,
           kafeel: selectedKafeel || updatedLoan.kafeel || null,
         });
 
-        // Generate preview contracts
         try {
           const previewLoanData = {
             id: updatedLoan.id,
@@ -623,7 +633,6 @@ const Loans = () => {
       setIsEditMode(false);
 
       if (loan.client) {
-        // محاولة تحميل بيانات العميل مع kafeels
         try {
           const clientsResponse = await getClients(
             1,
@@ -686,8 +695,11 @@ const Loans = () => {
 
       setInstallments(formattedRepayments);
 
+      const totalInterestAmount = loan.totalInterest || (loan.amount * (loan.interestRate / 100));
+
       setLoanForm({
         amount: loan.amount.toString(),
+        totalInterest: totalInterestAmount.toString(),
         interestRate: loan.interestRate.toString(),
         paymentAmount: loan.paymentAmount?.toString() || "",
         type: loan.type,
@@ -703,19 +715,14 @@ const Loans = () => {
     }
   };
 
-  // تحديث الدالة لفتح صفحة الأقساط
   const handleViewInstallments = (loan) => {
     navigate(`/installments/${loan.id}`);
   };
 
-  // دالة للتعامل مع السلفة الإضافية
   const handleCreateAdditionalLoan = async (client) => {
-    // إعادة تعيين النموذج
     resetLoanForm();
 
-    // تحميل بيانات العميل مع kafeels إذا لزم الأمر
     try {
-      // البحث عن العميل في البيانات المحملة للحصول على kafeels
       const clientsResponse = await getClients(
         1,
         client.nationalId || client.name
@@ -727,7 +734,6 @@ const Loans = () => {
       if (fullClientData) {
         setSelectedClient(fullClientData);
       } else {
-        // إذا لم يتم العثور عليه، استخدم البيانات المتاحة
         setSelectedClient({ client, kafeels: [] });
       }
     } catch (error) {
@@ -737,7 +743,6 @@ const Loans = () => {
 
     setIsAdditionalLoan(true);
 
-    // الانتقال لتاب إنشاء السلفة
     setActiveTab(1);
   };
 
@@ -751,12 +756,11 @@ const Loans = () => {
   };
 
   const handleInputChange = (field, value) => {
-    if (field === "amount" || field === "paymentAmount") {
+    if (field === "amount" || field === "paymentAmount" || field === "totalInterest") {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
 
-        // Validate amount against bank balance
         if (field === "amount" && bankBalance !== null) {
           const numericAmount = parseFloat(rawValue);
           if (numericAmount > bankBalance) {
@@ -771,10 +775,27 @@ const Loans = () => {
         }
       }
     }
-    setLoanForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+
+    setLoanForm((prev) => {
+      const updatedForm = {
+        ...prev,
+        [field]: value,
+      };
+      
+      if (field === "amount" || field === "totalInterest") {
+        const amount = parseFloat((field === "amount" ? value : prev.amount).replace(/,/g, "")) || 0;
+        const totalInterest = parseFloat((field === "totalInterest" ? value : prev.totalInterest).replace(/,/g, "")) || 0;
+
+        if (amount > 0 && totalInterest > 0) {
+          const percentage = (totalInterest / amount) * 100;
+          updatedForm.interestRate = percentage.toFixed(2);
+        } else if (amount > 0) {
+          updatedForm.interestRate = "";
+        }
+      }
+
+      return updatedForm;
+    });
   };
 
   const handleSaveLoan = () => {
@@ -791,6 +812,7 @@ const Loans = () => {
     return (
       selectedClient &&
       loanForm.amount &&
+      loanForm.totalInterest &&
       loanForm.interestRate &&
       loanForm.paymentAmount &&
       loanForm.repaymentDay &&
@@ -1442,11 +1464,11 @@ const Loans = () => {
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
                         <TextField
                           fullWidth
-                          type="number"
-                          label="معدل الفائدة السنوي (%)"
-                          value={loanForm.interestRate}
+                          type="text"
+                          label="مبلغ الفائدة الإجمالي"
+                          value={formatAmount(loanForm.totalInterest)}
                           onChange={(e) =>
-                            handleInputChange("interestRate", e.target.value)
+                            handleInputChange("totalInterest", e.target.value)
                           }
                           InputLabelProps={{
                             shrink: true,
@@ -1463,6 +1485,26 @@ const Loans = () => {
                               backgroundColor: isReadOnlyMode
                                 ? "#f5f5f5"
                                 : "#f9fafb",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="معدل الفائدة السنوي (%)"
+                          value={loanForm.interestRate}
+                          disabled={true} // Always read-only, calculated automatically
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              width: "200px",
+                              backgroundColor: "#f5f5f5", // Always disabled appearance
                             },
                           }}
                         />

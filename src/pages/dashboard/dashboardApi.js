@@ -26,3 +26,15 @@ export const getMonthlyCollection = async () => {
   const response = await Api.get('/api/dashboard/monthly-collection');
   return response.data;
 };
+
+// Get upcoming repayments
+export const getUpcomingRepayments = async () => {
+  const response = await Api.get('/api/dashboard/Upcoming-Repayments');
+  return response.data;
+};
+
+// Get last actions
+export const getLastActions = async () => {
+  const response = await Api.get('/api/dashboard/Last-Actions');
+  return response.data;
+};

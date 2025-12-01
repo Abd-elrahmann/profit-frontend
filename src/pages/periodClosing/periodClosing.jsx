@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -28,6 +28,7 @@ import {
   Visibility as VisibilityIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getPeriodById,
@@ -47,7 +48,10 @@ const PeriodClosing = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showDraftAlert, setShowDraftAlert] = useState(false);
+  const [draftCount, setDraftCount] = useState(0);
 
+  const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
@@ -61,6 +65,17 @@ const PeriodClosing = () => {
     enabled: !!selectedPeriod && activeTab === 1,
   });
 
+  // Check for draft entries when period data loads
+  useEffect(() => {
+    if (periodData?.journals) {
+      const draftEntries = periodData.journals.filter(journal => journal.status === "DRAFT");
+      const draftEntriesCount = draftEntries.length;
+
+      setDraftCount(draftEntriesCount);
+      setShowDraftAlert(draftEntriesCount > 0);
+    }
+  }, [periodData]);
+
   const handleViewDetails = (periodId) => {
     setSelectedPeriod(periodId);
     setActiveTab(1);
@@ -69,9 +84,15 @@ const PeriodClosing = () => {
   const handleBackToList = () => {
     setActiveTab(0);
     setSelectedPeriod(null);
+    setShowDraftAlert(false); // Reset alert when going back to list
   };
 
   const handleClosePeriod = async () => {
+    // Don't allow closing if there are draft entries
+    if (showDraftAlert) {
+      return;
+    }
+
     try {
       await closePeriod(selectedPeriod);
       notifySuccess("تم تقفيل الفترة بنجاح");
@@ -91,6 +112,10 @@ const PeriodClosing = () => {
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء إلغاء التقفيل");
     }
+  };
+
+  const handleNavigateToJournalEntries = () => {
+    navigate("/journal-entries");
   };
 
   // Format date for display
@@ -152,6 +177,48 @@ const PeriodClosing = () => {
               {periodData?.journals?.length || 0}
             </Typography>
           </Box>
+
+          {/* Journal Totals */}
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography>إجمالي المدين:</Typography>
+            <Typography fontWeight="bold" color="success.main">
+              {periodData?.journals
+                ?.reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
+                .toLocaleString() || 0}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography>إجمالي الدائن:</Typography>
+            <Typography fontWeight="bold" color="error.main">
+              {periodData?.journals
+                ?.reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
+                .toLocaleString() || 0}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography>إجمالي الرصيد:</Typography>
+            <Typography
+              fontWeight="bold"
+              color={
+                periodData?.journals?.reduce(
+                  (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                  0
+                ) >= 0
+                  ? "success.main"
+                  : "error.main"
+              }
+            >
+              {periodData?.journals
+                ?.reduce(
+                  (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                  0
+                )
+                .toLocaleString() || 0}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ my: 1 }} />
+
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركاء:</Typography>
             <Typography fontWeight="bold" color="success.main">
@@ -250,6 +317,26 @@ const PeriodClosing = () => {
   // Render mobile period details
   const renderMobilePeriodDetails = () => (
     <Box>
+      {/* Draft Entries Alert */}
+      {showDraftAlert && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={handleNavigateToJournalEntries}
+              sx={{ fontWeight: "bold" }}
+            >
+              انتقل للقيود
+            </Button>
+          }
+        >
+          لا يمكنك إغلاق هذه الفترة لأن هناك {draftCount} قيد غير معتمد. برجاء اعتمادها أولاً.
+        </Alert>
+      )}
+
       {/* Summary Cards */}
       <Grid container spacing={2} mb={3}>
         <Grid item xs={6} md={4}>
@@ -260,6 +347,73 @@ const PeriodClosing = () => {
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="primary.main">
                 {periodData?.journals?.length || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} md={4}>
+          <Card sx={{ bgcolor: "rgba(76, 175, 80, 0.1)", textAlign: "center" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="success.main">
+                إجمالي المدين
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="success.main">
+                {periodData?.journals
+                  ?.reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
+                  .toLocaleString() || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} md={4}>
+          <Card sx={{ bgcolor: "rgba(244, 67, 54, 0.1)", textAlign: "center" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="error.main">
+                إجمالي الدائن
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="error.main">
+                {periodData?.journals
+                  ?.reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
+                  .toLocaleString() || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} md={4}>
+          <Card sx={{
+            bgcolor: periodData?.journals?.reduce(
+              (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+              0
+            ) >= 0
+              ? "rgba(76, 175, 80, 0.1)"
+              : "rgba(244, 67, 54, 0.1)",
+            textAlign: "center"
+          }}>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color={
+                periodData?.journals?.reduce(
+                  (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                  0
+                ) >= 0
+                  ? "success.main"
+                  : "error.main"
+              }>
+                إجمالي الرصيد
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color={
+                periodData?.journals?.reduce(
+                  (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                  0
+                ) >= 0
+                  ? "success.main"
+                  : "error.main"
+              }>
+                {periodData?.journals
+                  ?.reduce(
+                    (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                    0
+                  )
+                  .toLocaleString() || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -492,6 +646,26 @@ const PeriodClosing = () => {
       <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={"center"}>
         تفاصيل الفترة
       </Typography>
+
+      {/* Draft Entries Alert */}
+      {showDraftAlert && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={handleNavigateToJournalEntries}
+              sx={{ fontWeight: "bold" }}
+            >
+              انتقل للقيود
+            </Button>
+          }
+        >
+          لا يمكنك إغلاق هذه الفترة لأن هناك {draftCount} قيد غير معتمد. برجاء اعتمادها أولاً.
+        </Alert>
+      )}
 
       {/* Period Information */}
       <Grid container spacing={10} mb={4} justifyContent="center" alignItems="center">

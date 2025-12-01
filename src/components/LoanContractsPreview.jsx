@@ -1,3 +1,4 @@
+// components/contracts/LoanContractsPreview.jsx
 import React from 'react';
 import {
   Dialog,
@@ -12,8 +13,9 @@ import {
   Divider,
   Tabs,
   Tab,
+  CircularProgress,
 } from '@mui/material';
-import { Close as CloseIcon, Download } from '@mui/icons-material';
+import { Close as CloseIcon, Download, Print } from '@mui/icons-material';
 
 const LoanContractsPreview = ({ 
   open, 
@@ -26,11 +28,74 @@ const LoanContractsPreview = ({
   loanAmount = 0
 }) => {
   const [activeTab, setActiveTab] = React.useState(0);
+  const [isPrinting, setIsPrinting] = React.useState(false);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
+  const handlePrint = async () => {
+    try {
+      setIsPrinting(true);
+      
+      // Get the current active contract content
+      const currentHtml = activeTab === 0 ? debtAckHtml : promissoryNoteHtml;
+      
+      if (!currentHtml) {
+        console.error('No contract content available for printing');
+        return;
+      }
+
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('يجب السماح بالنوافذ المنبثقة للطباعة');
+        return;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${activeTab === 0 ? 'إقرار الدين' : 'سند الأمر'}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <style>
+            body { 
+              margin: 0; 
+              padding: 0; 
+              background: white;
+              font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            @page { margin: 15mm; }
+          </style>
+        </head>
+        <body>
+          ${currentHtml}
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(() => {
+                window.close();
+              }, 1000);
+            }
+          </script>
+        </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      
+    } catch (error) {
+      console.error('Error printing contract:', error);
+      alert('حدث خطأ أثناء الطباعة');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const contracts = [
     { 
@@ -51,12 +116,13 @@ const LoanContractsPreview = ({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      fullScreen={true}
+      fullScreen={false}
       dir="rtl"
       PaperProps={{
         sx: {
           borderRadius: 2,
-          maxHeight: '100vh'
+          maxHeight: '95vh',
+          minHeight: '80vh'
         }
       }}
     >
@@ -68,13 +134,14 @@ const LoanContractsPreview = ({
           alignItems: 'center',
           pb: 1,
           borderBottom: '1px solid #e0e0e0',
+          backgroundColor: '#fafafa',
           '@media print': {
             display: 'none !important'
           }
         }}
       >
         <Box>
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold" color="#0d40a5">
             معاينة عقود السلفة
           </Typography>
           {clientName && (
@@ -94,6 +161,7 @@ const LoanContractsPreview = ({
         sx={{ 
           borderBottom: 1, 
           borderColor: 'divider',
+          backgroundColor: '#f8f9fa',
           '@media print': {
             display: 'none !important'
           }
@@ -104,26 +172,31 @@ const LoanContractsPreview = ({
             label="إقرار الدين" 
             sx={{
               fontWeight: activeTab === 0 ? 'bold' : 'normal',
-              color: activeTab === 0 ? '#0d40a5' : 'text.secondary'
+              color: activeTab === 0 ? '#0d40a5' : 'text.secondary',
+              minWidth: 120
             }}
           />
           <Tab 
             label="سند الأمر" 
             sx={{
               fontWeight: activeTab === 1 ? 'bold' : 'normal',
-              color: activeTab === 1 ? '#0d40a5' : 'text.secondary'
+              color: activeTab === 1 ? '#0d40a5' : 'text.secondary',
+              minWidth: 120
             }}
           />
         </Tabs>
       </Box>
 
-      <DialogContent sx={{ 
+      <DialogContent sx={{
         p: 0,
         display: 'flex',
         flexDirection: 'column',
+        backgroundColor: '#f8f9fc',
+        overflow: 'auto',
         '@media print': {
           p: 0,
-          m: 0
+          m: 0,
+          backgroundColor: 'white'
         }
       }}>
         {contracts.map((contract, index) => (
@@ -131,73 +204,85 @@ const LoanContractsPreview = ({
             key={contract.id}
             id={`contract-tab-${index}`}
             sx={{
-              display: activeTab === index ? 'block' : 'none',
+              display: activeTab === index ? 'flex' : 'none',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              width: '100%',
+              height: '100%',
+              overflow: 'auto',
+              p: 2,
               '@media print': {
                 display: 'block !important',
-                pageBreakAfter: index === 0 ? 'always' : 'auto'
+                pageBreakAfter: index === 0 ? 'always' : 'auto',
+                p: 0
               }
             }}
           >
-            <Paper 
-              sx={{ 
-                m: 3, 
-                p: 4, 
-                minHeight: '500px',
-                bgcolor: 'white',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                border: '1px solid #e0e0e0',
-                '@media print': {
-                  m: 0,
-                  p: 2,
-                  boxShadow: 'none',
-                  border: 'none',
-                  minHeight: 'auto',
-                  pageBreakInside: 'avoid'
-                }
-              }}
-            >
-              {contract.html ? (
+            {contract.html ? (
+              <Paper
+                sx={{
+                  width: '100%',
+                  maxWidth: '900px',
+                  minHeight: '600px',
+                  maxHeight: 'calc(100vh - 300px)', // Prevent it from being too tall
+                  bgcolor: 'white',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  border: '1px solid #e0e0e0',
+                  overflow: 'auto',
+                  '@media print': {
+                    m: 0,
+                    p: 0,
+                    boxShadow: 'none',
+                    border: 'none',
+                    minHeight: 'auto',
+                    maxHeight: 'none',
+                    pageBreakInside: 'avoid',
+                    breakInside: 'avoid',
+                    width: '100%',
+                    maxWidth: '100%'
+                  }
+                }}
+              >
                 <Box
-
                   dangerouslySetInnerHTML={{ __html: contract.html }}
                   sx={{
                     '& *': {
-                      fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
-                      lineHeight: 1.8
+                      fontFamily: '"Cairo", "Noto Sans Arabic", sans-serif !important',
                     },
-                    '& h1, & h2, & h3': {
-                      textAlign: 'center',
-                      color: '#1976d2',
-                      marginBottom: '20px'
-                    },
-                    '& p': {
-                      marginBottom: '15px',
-                      textAlign: 'justify'
-                    },
-                    '& strong': {
-                      color: '#1976d2',
-                      fontWeight: 'bold'
+                    '@media print': {
+                      '& .contract-wrapper': {
+                        background: 'white !important',
+                        padding: '0 !important',
+                        margin: '0 !important'
+                      },
+                      '& .contract-container': {
+                        border: 'none !important',
+                        boxShadow: 'none !important',
+                        margin: '0 !important',
+                        padding: '15mm !important'
+                      }
                     }
                   }}
                 />
-              ) : (
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center', 
-                  height: '400px',
-                  flexDirection: 'column',
-                  color: 'text.secondary'
-                }}>
-                  <Typography variant="h6" mb={2}>
-                    لا يوجد محتوى للعرض
-                  </Typography>
-                  <Typography variant="body2">
-                    يرجى التأكد من وجود قالب العقد وبيانات العميل
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
+              </Paper>
+            ) : (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '400px',
+                flexDirection: 'column',
+                color: 'text.secondary'
+              }}>
+                <Typography variant="h6" mb={2}>
+                  لا يوجد محتوى للعرض
+                </Typography>
+                <Typography variant="body2">
+                  يرجى التأكد من وجود قالب العقد وبيانات العميل
+                </Typography>
+              </Box>
+            )}
           </Box>
         ))}
       </DialogContent>
@@ -233,7 +318,23 @@ const LoanContractsPreview = ({
           إغلاق
         </Button>
         
-      
+        <Button
+          variant="outlined"
+          startIcon={<Print sx={{marginLeft: '10px'}} />}
+          onClick={handlePrint}
+          disabled={isPrinting || !debtAckHtml || !promissoryNoteHtml}
+          sx={{
+            borderColor: '#0d40a5',
+            color: '#0d40a5',
+            minWidth: '120px',
+            '&:hover': {
+              bgcolor: 'rgba(13, 64, 165, 0.1)'
+            }
+          }}
+        >
+          {isPrinting ? <CircularProgress size={20} /> : 'طباعة'}
+        </Button>
+        
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
@@ -251,4 +352,5 @@ const LoanContractsPreview = ({
     </Dialog>
   );
 };
+
 export default LoanContractsPreview;
