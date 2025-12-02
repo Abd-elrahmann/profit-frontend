@@ -370,13 +370,36 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                   </Box>
                 )}
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Typography variant="caption" color="text.secondary">
-                    تاريخ البدء
+                    تاريخ الإنشاء
                   </Typography>
-                  <Typography variant="body2">
-                    {dayjs(loan.startDate).format("DD/MM/YYYY")}
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" fontWeight="bold">
+                      {dayjs(loan.createdAt).format("DD/MM/YYYY")}
+                    </Typography>
+                    {loan.createdAtHijri && (
+                      <Typography variant="caption" color="text.secondary">
+                        {loan.createdAtHijri}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    تاريخ التفعيل
                   </Typography>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" fontWeight="bold">
+                      {loan.startDate ? dayjs(loan.startDate).format("DD/MM/YYYY") : "-"}
+                    </Typography>
+                    {loan.startDateHijri && (
+                      <Typography variant="caption" color="text.secondary">
+                        {loan.startDateHijri}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -437,7 +460,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               الحالة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              تاريخ البدء
+              تاريخ الإنشاء
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              تاريخ التفعيل
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               الإجراءات
@@ -529,7 +555,31 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
                 >
-                  {dayjs(loan.startDate).format("DD/MM/YYYY")}
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {dayjs(loan.createdAt).format("DD/MM/YYYY")}
+                    </Typography>
+                    {loan.createdAtHijri && (
+                      <Typography variant="caption" color="text.secondary">
+                        {loan.createdAtHijri}
+                      </Typography>
+                    )}
+                  </Box>
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {loan.startDate ? dayjs(loan.startDate).format("DD/MM/YYYY") : "-"}
+                    </Typography>
+                    {loan.startDateHijri && (
+                      <Typography variant="caption" color="text.secondary">
+                        {loan.startDateHijri}
+                      </Typography>
+                    )}
+                  </Box>
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"

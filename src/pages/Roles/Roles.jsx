@@ -26,6 +26,7 @@ import {
   Search,
   Edit,
   Delete,
+  Dashboard,
 } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
 import Api from "../../config/Api";
@@ -33,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import AddRole from "../../components/modals/AddRole";
 import DeleteModal from "../../components/modals/DeleteModal";
+import DashboardPermissions from "../../components/modals/DashboardPermissions";
 import { debounce } from 'lodash';
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { Helmet } from "react-helmet-async";
@@ -52,6 +54,8 @@ export default function Roles() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
+  const [selectedRoleForDashboard, setSelectedRoleForDashboard] = useState(null);
   
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -101,12 +105,17 @@ export default function Roles() {
       refetch();
       setIsDeleteModalOpen(false);
       setSelectedRoleId(null);
-      
+
       // Refresh permissions to update sidebar immediately after deletion
       await refreshPermissions();
     } catch (error) {
       console.error("Error deleting role:", error);
     }
+  };
+
+  const handleDashboardPermissions = (role) => {
+    setSelectedRoleForDashboard(role);
+    setIsDashboardModalOpen(true);
   };
 
   const openDeleteModal = (roleId) => {
@@ -169,6 +178,11 @@ export default function Roles() {
                   <Edit />
                 </IconButton>
                 )}
+                {permissions.includes("roles_Update") && (
+                <IconButton color="info" onClick={() => handleDashboardPermissions(role)} title="صلاحيات الداشبورد">
+                  <Dashboard />
+                </IconButton>
+                )}
                 {permissions.includes("roles_Delete") && (
                 <IconButton color="error" onClick={() => openDeleteModal(role.id)}>
                   <Delete />
@@ -228,17 +242,27 @@ export default function Roles() {
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {permissions.includes("roles_Update") && (
-                          <IconButton 
-                            color="primary" 
+                          <IconButton
+                            color="primary"
                             onClick={() => handleEdit(role)}
                             size="small"
                           >
                             <Edit fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
                         )}
+                        {permissions.includes("roles_Update") && (
+                          <IconButton
+                            color="info"
+                            onClick={() => handleDashboardPermissions(role)}
+                            size="small"
+                            title="صلاحيات الداشبورد"
+                          >
+                            <Dashboard fontSize={isMobile ? "small" : "medium"} />
+                          </IconButton>
+                        )}
                         {permissions.includes("roles_Delete") && (
-                          <IconButton 
-                            color="error" 
+                          <IconButton
+                            color="error"
                             onClick={() => openDeleteModal(role.id)}
                             size="small"
                           >
@@ -404,6 +428,14 @@ export default function Roles() {
         title="حذف الدور"
         message="هل أنت متأكد من حذف هذا الدور؟"
         ButtonText="حذف"
+      />
+      <DashboardPermissions
+        open={isDashboardModalOpen}
+        onClose={() => setIsDashboardModalOpen(false)}
+        roleId={selectedRoleForDashboard?.id}
+        roleName={selectedRoleForDashboard?.name}
+        refetchRoles={refetch}
+        isMobile={isMobile}
       />
     </Box>
   );

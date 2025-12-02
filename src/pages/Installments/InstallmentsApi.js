@@ -12,9 +12,9 @@ export const decodePaymentToken = async (token) => {
 };
 
 // Get loan by ID with installments
-export const getLoanById = async (loanId) => {
+export const getLoanById = async (loanId, page = 1, limit = 10) => {
   try {
-    const response = await Api.get(`/api/loans/${loanId}`);
+    const response = await Api.get(`/api/loans/${loanId}/${page}?limit=${limit}`);
     return response.data;
   } catch (error) {
     handleApiError(error);

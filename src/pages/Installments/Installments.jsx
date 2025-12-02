@@ -29,6 +29,7 @@ import {
   Card,
   CardContent,
   useMediaQuery,
+  Pagination,
 } from "@mui/material";
 import {
   MoreVert as MoreVertIcon,
@@ -74,6 +75,8 @@ const Installments = () => {
   const [selectedActionInstallment, setSelectedActionInstallment] =
     useState(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
 
   const [postponeModalOpen, setPostponeModalOpen] = useState(false);
   const [newDueDate, setNewDueDate] = useState("");
@@ -98,6 +101,10 @@ const Installments = () => {
   const settlementReceiptRef = useRef(null);
 
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+
+  const handleChangePage = (event, value) => {
+    setPage(value);
+  };
   const [selectedDocumentsInstallment, setSelectedDocumentsInstallment] =
     useState(null);
 
@@ -141,16 +148,9 @@ const Installments = () => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["loan", loanId],
-    queryFn: () => getLoanById(loanId),
+    queryKey: ["loan", loanId, page, limit],
+    queryFn: () => getLoanById(loanId, page, limit),
     enabled: !!loanId,
-  });
-
-  const { data: repaymentsData } = useQuery({
-    queryKey: ["repayments", loanId],
-    queryFn: () => getLoanById(loanId),
-    enabled:
-      !!loanId && (!loanData?.repayments || loanData.repayments.length === 0),
   });
 
   const steps = [
@@ -161,8 +161,6 @@ const Installments = () => {
 
   const installments = Array.isArray(loanData?.repayments)
     ? loanData.repayments
-    : Array.isArray(repaymentsData)
-    ? repaymentsData
     : [];
 
   const sortedInstallments = [...installments].sort((a, b) => {
@@ -894,7 +892,16 @@ const Installments = () => {
                 {installment.count}
               </StyledTableCell>
               <StyledTableCell align="center">
-                {dayjs(installment.dueDate).format("DD/MM/YYYY")}
+                <Box>
+                  <Typography variant="body2" fontWeight="bold">
+                    {dayjs(installment.dueDate).format("DD/MM/YYYY")}
+                  </Typography>
+                  {installment.dueDateHijri && (
+                    <Typography variant="caption" color="text.secondary">
+                      {installment.dueDateHijri}
+                    </Typography>
+                  )}
+                </Box>
               </StyledTableCell>
               <StyledTableCell
                 align="center"
@@ -933,9 +940,18 @@ const Installments = () => {
                 />
               </StyledTableCell>
               <StyledTableCell align="center">
-                {installment.paymentDate
-                  ? dayjs(installment.paymentDate).format("DD/MM/YYYY")
-                  : "لم يأتي بعد"}
+                <Box>
+                  <Typography variant="body2" fontWeight="bold">
+                    {installment.paymentDate
+                      ? dayjs(installment.paymentDate).format("DD/MM/YYYY")
+                      : "لم يأتي بعد"}
+                  </Typography>
+                  {installment.paymentDateHijri && (
+                    <Typography variant="caption" color="text.secondary" >
+                      {installment.paymentDateHijri}
+                    </Typography>
+                  )}
+                </Box>
               </StyledTableCell>
               <StyledTableCell align="center">
                 <Stack
@@ -2145,6 +2161,26 @@ const Installments = () => {
         isLoading={rejectLoading}
         ButtonText="رفض"
       />
+
+      {/* Pagination */}
+      {loanData?.totalPages > 1 && (
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          mt: 3,
+          mb: 2
+        }}>
+          <Pagination
+            count={loanData.totalPages}
+            page={page}
+            onChange={handleChangePage}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
+      )}
     </Box>
   );
 };

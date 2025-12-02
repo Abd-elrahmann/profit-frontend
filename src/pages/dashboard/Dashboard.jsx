@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -9,6 +9,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
+import { useQuery } from '@tanstack/react-query';
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
+import Api from '../../config/Api';
 
 // Import components
 import ClientStats from '../../components/dashboardSections/ClientStats';
@@ -35,10 +38,134 @@ const Dashboard = () => {
   const [value, setValue] = useState(0);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const { permissions } = usePermissions();
+
+  // Fetch dashboard permissions
+  const { data: dashboardPermissions } = useQuery({
+    queryKey: ['dashboard-permissions'],
+    queryFn: async () => {
+      try {
+        const response = await Api.get('/api/roles/permissions');
+        const rolePermissions = response.data.permissions || [];
+        return rolePermissions.filter(p => p.canView && [
+          'client-stats',
+          'partner-stats',
+          'loan-stats',
+          'monthly-collection',
+          'Upcoming-Repayments',
+          'Last-Actions'
+        ].includes(p.module));
+      } catch (error) {
+        console.error('Error fetching dashboard permissions:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Define all available tabs with their permissions
+  const allTabs = [
+    {
+      label: "إحصائيات العملاء",
+      component: <ClientStats />,
+      permission: 'client-stats',
+      index: 0
+    },
+    {
+      label: "إحصائيات الشركاء",
+      component: <PartnerStats />,
+      permission: 'partner-stats',
+      index: 1
+    },
+    {
+      label: "إحصائيات السلف والقروض",
+      component: <LoanStats />,
+      permission: 'loan-stats',
+      index: 2
+    },
+    {
+      label: "التحصيل الشهري",
+      component: <CollectionStats />,
+      permission: 'monthly-collection',
+      index: 3
+    },
+    {
+      label: "الدفعات القادمة",
+      component: <UpcomingRepayments />,
+      permission: 'Upcoming-Repayments',
+      index: 4
+    },
+    {
+      label: "آخر الأنشطة",
+      component: <LastActions />,
+      permission: 'Last-Actions',
+      index: 5
+    }
+  ];
+
+  // Filter tabs based on permissions
+  const availableTabs = allTabs.filter(tab =>
+    dashboardPermissions?.some(perm => perm.module === tab.permission && perm.canView)
+  );
+
+  // Adjust selected tab if it's out of bounds after filtering
+  useEffect(() => {
+    if (availableTabs.length > 0 && value >= availableTabs.length) {
+      setValue(0);
+    }
+  }, [availableTabs.length, value]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+
+  // Show loading or empty state if no permissions
+  if (!dashboardPermissions) {
+    return (
+      <Box
+        sx={{
+          bgcolor: '#f6f6f8',
+          minHeight: '100vh',
+          py: 3,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <Helmet>
+          <title>لوحة التحكم - النظام المالي</title>
+        </Helmet>
+        <Typography>جاري التحميل...</Typography>
+      </Box>
+    );
+  }
+
+  if (availableTabs.length === 0) {
+    return (
+      <Box
+        sx={{
+          bgcolor: '#f6f6f8',
+          minHeight: '100vh',
+          py: 3,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <Helmet>
+          <title>لوحة التحكم - النظام المالي</title>
+        </Helmet>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" color="textSecondary" gutterBottom>
+            لا توجد صلاحيات لعرض الداشبورد
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            يرجى التواصل مع مدير النظام لمنحك الصلاحيات المطلوبة
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -73,50 +200,19 @@ const Dashboard = () => {
               },
             }}
           >
-            <Tab label="إحصائيات العملاء" />
-            <Tab label="إحصائيات الشركاء" />
-            <Tab label="إحصائيات السلف والقروض" />
-            <Tab label="التحصيل الشهري" />
-            <Tab label="الدفعات القادمة" />
-            <Tab label="آخر الأنشطة" />
+            {availableTabs.map((tab, index) => (
+              <Tab key={tab.permission} label={tab.label} />
+            ))}
           </Tabs>
         </Box>
 
-        <TabPanel value={value} index={0}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <ClientStats />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={value} index={1}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <PartnerStats />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={value} index={2}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <LoanStats />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={value} index={3}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <CollectionStats />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={value} index={4}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <UpcomingRepayments />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={value} index={5}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <LastActions />
-          </Box>
-        </TabPanel>
+        {availableTabs.map((tab, index) => (
+          <TabPanel key={tab.permission} value={value} index={index}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              {tab.component}
+            </Box>
+          </TabPanel>
+        ))}
       </Container>
     </Box>
   );
