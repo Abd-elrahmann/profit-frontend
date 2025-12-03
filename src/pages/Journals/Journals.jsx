@@ -36,6 +36,7 @@ import {
   Add as AddIcon,
   PictureAsPdf as PDFIcon,
   TableChart as ExcelIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +51,7 @@ import {
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import JournalTable from "../../components/modals/JournalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
+import AdvancedSearchModal from "../../components/modals/AdvancedSearchModal";
 import {
   StyledTableCell,
   StyledTableRow,
@@ -66,6 +68,8 @@ const Journals = () => {
   const [journalToDelete, setJournalToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilters, setSearchFilters] = useState({});
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     description: "",
     date: "",
@@ -483,7 +487,7 @@ const Journals = () => {
   
   const handleExportExcel = async () => {
     if (!journalData) return;
-    
+
     try {
       await exportJournalToExcel(journalData);
       notifySuccess("تم تصدير القيد إلى Excel بنجاح");
@@ -491,6 +495,20 @@ const Journals = () => {
       notifyError("حدث خطأ أثناء تصدير Excel");
       console.error('Excel export error:', error);
     }
+  };
+
+  const handleOpenAdvancedSearch = () => {
+    setIsAdvancedSearchOpen(true);
+  };
+
+  const handleAdvancedSearch = (filters) => {
+    setSearchFilters(filters);
+    setSearchQuery(""); // Clear simple search when using advanced search
+  };
+
+  const handleClearSearch = () => {
+    setSearchFilters({});
+    setSearchQuery("");
   };
 
   const getJournalSourceTypeText = (sourceType) => {
@@ -1734,6 +1752,9 @@ const Journals = () => {
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
+                        if (e.target.value) {
+                          setSearchFilters({}); // Clear advanced filters when using simple search
+                        }
                       }}
                       sx={{
                         width: "280px",
@@ -1743,6 +1764,28 @@ const Journals = () => {
                         bgcolor: "background.paper"
                       }}
                     />
+                    <Button
+                      variant="outlined"
+                      startIcon={<SearchIcon sx={{marginLeft: "10px"}} />}
+                      onClick={handleOpenAdvancedSearch}
+                      sx={{
+                        borderColor: "#0d40a5",
+                        color: "#0d40a5",
+                        "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                      }}
+                    >
+                      بحث متقدم
+                    </Button>
+                    {(Object.keys(searchFilters).length > 0 || searchQuery) && (
+                      <Button
+                        variant="outlined"
+                        color="inherit"
+                        onClick={handleClearSearch}
+                        size="small"
+                      >
+                        مسح البحث
+                      </Button>
+                    )}
                     {permissions.includes("journals_Add") && (
                       <Button
                         sx={{
@@ -1783,31 +1826,63 @@ const Journals = () => {
                       <Typography variant="h6" fontWeight="bold">
                         القيود المحاسبية
                       </Typography>
-                      {permissions.includes("journals_Add") && (
+                      <Box sx={{ display: "flex", gap: 1 }}>
                         <Button
-                          variant="contained"
-                          startIcon={<AddIcon />}
-                          onClick={handleAddNewClick}
+                          variant="outlined"
+                          startIcon={<SearchIcon />}
+                          onClick={handleOpenAdvancedSearch}
                           size="small"
+                          sx={{
+                            borderColor: "#0d40a5",
+                            color: "#0d40a5",
+                            "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                          }}
                         >
-                          إضافة
+                          بحث متقدم
+                        </Button>
+                        {permissions.includes("journals_Add") && (
+                          <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={handleAddNewClick}
+                            size="small"
+                          >
+                            إضافة
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                      <InputBase
+                        placeholder="ابحث برقم القيد أو الوصف..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          if (e.target.value) {
+                            setSearchFilters({}); // Clear advanced filters when using simple search
+                          }
+                        }}
+                        sx={{
+                          width: "100%",
+                          borderRadius: "6px",
+                          p: 1,
+                          border: "1px solid #e0e0e0",
+                          bgcolor: "background.paper"
+                        }}
+                      />
+                      {(Object.keys(searchFilters).length > 0 || searchQuery) && (
+                        <Button
+                          variant="outlined"
+                          color="inherit"
+                          onClick={handleClearSearch}
+                          size="small"
+                          sx={{ mt: 1 }}
+                          fullWidth
+                        >
+                          مسح البحث
                         </Button>
                       )}
                     </Box>
-                    <InputBase
-                      placeholder="ابحث برقم القيد أو الوصف..."
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                      }}
-                      sx={{
-                        width: "100%",
-                        borderRadius: "6px",
-                        p: 1,
-                        border: "1px solid #e0e0e0",
-                        bgcolor: "background.paper"
-                      }}
-                    />
                   </Box>
                 )}
               </Box>
@@ -1818,7 +1893,7 @@ const Journals = () => {
               <JournalTable
                 onViewDetails={handleViewDetails}
                 isMobile={isMobile}
-                searchQuery={searchQuery}
+                searchFilters={searchQuery ? { search: searchQuery } : searchFilters}
               />
             ) : (
               <Box>
@@ -1868,6 +1943,12 @@ const Journals = () => {
         title="حذف القيد"
         message="هل أنت متأكد من حذف هذا القيد؟"
         ButtonText="حذف"
+      />
+
+      <AdvancedSearchModal
+        open={isAdvancedSearchOpen}
+        onClose={() => setIsAdvancedSearchOpen(false)}
+        onSearch={handleAdvancedSearch}
       />
     </Box>
   );

@@ -75,6 +75,8 @@ const LogsToolbar = ({
     { value: "Roles", label: "الأدوار" },
     { value: "Templates", label: "القوالب" },
     { value: "Users", label: "المستخدمين" },
+    { value: "Company Profit", label: "أرباح الشركة" },
+    { value: "Distribution", label: "توزيع الأرباح" },
   ];
 
   // Action options with Arabic translations

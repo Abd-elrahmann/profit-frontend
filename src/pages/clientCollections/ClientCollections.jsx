@@ -166,6 +166,7 @@ const ClientCollections = () => {
               bgcolor: "primary.50", 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -190,6 +191,7 @@ const ClientCollections = () => {
               bgcolor: "success.50", 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -214,6 +216,7 @@ const ClientCollections = () => {
               bgcolor: clientDetails?.totals?.remaining > 0 ? "error.50" : "success.50", 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -250,6 +253,7 @@ const ClientCollections = () => {
               bgcolor: "warning.50", 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -282,6 +286,7 @@ const ClientCollections = () => {
             sx={{ 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -304,6 +309,7 @@ const ClientCollections = () => {
             sx={{ 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -326,6 +332,7 @@ const ClientCollections = () => {
             sx={{ 
               textAlign: "center", 
               p: 3,
+              width: "250px",
               height: "100%",
               display: "flex",
               flexDirection: "column",
@@ -353,7 +360,7 @@ const ClientCollections = () => {
         sx={{ 
           mb: 4, 
           p: 4, 
-          width: "600px",
+          width: "1200px",
           boxShadow: 3,
           borderRadius: 1,
         }}

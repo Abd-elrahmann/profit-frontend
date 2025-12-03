@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,8 +11,11 @@ import {
   Box,
   IconButton,
   Typography,
+  Autocomplete,
 } from "@mui/material";
 import { Close as CloseIcon, Search as SearchIcon } from "@mui/icons-material";
+import { debounce } from "lodash";
+import Api from "../../config/Api";
 
 const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
   const [searchFilters, setSearchFilters] = useState({
@@ -22,7 +25,55 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     postedByName: "",
     status: "",
     type: "",
+    dateFrom: "",
+    dateTo: "",
   });
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // Fetch users when modal opens
+  useEffect(() => {
+    if (open) {
+      setSelectedUser(null); // Clear selected user when modal opens
+      if (users.length === 0) {
+        fetchUsers();
+      }
+    }
+  }, [open, users.length]);
+
+  const fetchUsers = async (searchQuery = '') => {
+    try {
+      setLoadingUsers(true);
+      // Clear previous results before any search
+      setUsers([]);
+
+      const response = await Api.get(`/api/users/1?name=${encodeURIComponent(searchQuery)}`);
+      const userResults = response.data.users || [];
+
+      // Set the results from the API response
+      setUsers(userResults);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Debounced search function using useRef to avoid dependency issues
+  const debouncedFetchUsers = useRef(
+    debounce((searchQuery) => {
+      fetchUsers(searchQuery);
+    }, 300)
+  ).current;
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedFetchUsers.cancel();
+    };
+  }, [debouncedFetchUsers]);
 
   const handleFilterChange = (field, value) => {
     setSearchFilters(prev => ({
@@ -49,7 +100,10 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
       postedByName: "",
       status: "",
       type: "",
+      dateFrom: "",
+      dateTo: "",
     });
+    setSelectedUser(null);
   };
 
   const sourceTypeOptions = [
@@ -95,7 +149,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <TextField
-              fullWidth
+              sx={{ width: "250px" }}
               label="رقم القيد"
               value={searchFilters.reference}
               onChange={(e) => handleFilterChange("reference", e.target.value)}
@@ -105,7 +159,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           
           <Grid item xs={12} md={6}>
             <TextField
-              fullWidth
+              sx={{ width: "250px" }}
               label="الوصف"
               value={searchFilters.description}
               onChange={(e) => handleFilterChange("description", e.target.value)}
@@ -115,7 +169,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           
           <Grid item xs={12} md={6}>
             <TextField
-              fullWidth
+              sx={{ width: "250px" }}
               select
               label="نوع المصدر"
               value={searchFilters.sourceType}
@@ -131,18 +185,42 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           </Grid>
           
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="اسم المعتمد"
-              value={searchFilters.postedByName}
-              onChange={(e) => handleFilterChange("postedByName", e.target.value)}
-              placeholder="ابحث باسم المعتمد..."
+            <Autocomplete
+              sx={{ width: "250px" }}
+              options={users}
+              getOptionLabel={(option) => option.name || ''}
+              value={selectedUser}
+              onChange={(event, newValue) => {
+                setSelectedUser(newValue);
+                handleFilterChange("postedByName", newValue ? newValue.name : "");
+              }}
+              onInputChange={(event, newInputValue, reason) => {
+                if (reason === 'input') {
+                  setSelectedUser(null);
+
+                  if (newInputValue.trim() === '') {
+                    setUsers([]);
+                    return;
+                  }
+
+                  debouncedFetchUsers(newInputValue);
+                }
+              }}
+              loading={loadingUsers}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="اسم المعتمد"
+                  placeholder="ابحث باسم المعتمد..."
+                />
+              )}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
             />
           </Grid>
           
           <Grid item xs={12} md={6}>
             <TextField
-              fullWidth
+              sx={{ width: "250px" }}
               select
               label="حالة القيد"
               value={searchFilters.status}
@@ -159,7 +237,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           
           <Grid item xs={12} md={6}>
             <TextField
-              fullWidth
+              sx={{ width: "250px" }}
               select
               label="نوع القيد"
               value={searchFilters.type}
@@ -173,10 +251,32 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               ))}
             </TextField>
           </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              sx={{ width: "250px" }}
+              label="من تاريخ"
+              type="date"
+              value={searchFilters.dateFrom}
+              onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              sx={{ width: "250px" }}
+              label="إلى تاريخ"
+              type="date"
+              value={searchFilters.dateTo}
+              onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
         </Grid>
       </DialogContent>
       
-      <DialogActions sx={{ p: 3, gap: 1 }}>
+      <DialogActions sx={{ p: 3, gap: 1,flexDirection: "row-reverse", justifyContent: "space-between" }}>
         <Button 
           onClick={handleReset}
           variant="outlined"
@@ -187,7 +287,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
         <Button 
           onClick={handleSearch}
           variant="contained"
-          startIcon={<SearchIcon />}
+          startIcon={<SearchIcon sx={{marginLeft: "10px"}} />}
           sx={{
             bgcolor: "#0d40a5",
             "&:hover": { bgcolor: "rgba(13, 64, 165, 0.9)" },

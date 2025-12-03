@@ -1,14 +1,35 @@
 import Api from '../../config/Api';
 
-// Get all periods
-export const getPeriods = async (page = 1, searchQuery = '') => {
+// Get all periods with filters
+export const getPeriods = async (page = 1, filters = {}) => {
   const params = new URLSearchParams();
-  if (searchQuery) {
-    params.append('search', searchQuery);
-  }
-  params.append('limit', '10');
   
-  const response = await Api.get(`/api/periods/all/${page}${params.toString() ? `?${params.toString()}` : ''}`);
+  // Add page parameter
+  params.append('page', page.toString());
+  
+  // Add filter parameters
+  if (filters.name) {
+    params.append('name', filters.name);
+  }
+  
+  if (filters.startDate) {
+    params.append('startDate', filters.startDate);
+  }
+  
+  if (filters.endDate) {
+    params.append('endDate', filters.endDate);
+  }
+  
+  if (filters.isClosed !== undefined) {
+    params.append('isClosed', filters.isClosed.toString());
+  }
+  
+  if (filters.limit) {
+    params.append('limit', filters.limit.toString());
+  }
+  
+  const queryString = params.toString();
+  const response = await Api.get(`/api/periods/all/${page}${queryString ? `?${queryString}` : ''}`);
   return response.data;
 };
 

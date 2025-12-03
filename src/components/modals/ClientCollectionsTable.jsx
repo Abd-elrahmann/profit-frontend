@@ -95,17 +95,13 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
             <StyledTableRow>
               <StyledTableCell colSpan={9} align="center">
                 <CircularProgress size={30} />
-                <Typography variant="body2" sx={{ mt: 1 }}>
                   جاري تحميل البيانات...
-                </Typography>
               </StyledTableCell>
             </StyledTableRow>
           ) : clientsData?.data?.length === 0 ? (
             <StyledTableRow>
               <StyledTableCell colSpan={9} align="center">
-                <Typography variant="body1" color="textSecondary">
                   لا توجد عملاء
-                </Typography>
               </StyledTableCell>
             </StyledTableRow>
           ) : (
@@ -116,33 +112,16 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
                   key={client.id}
                 >
                   <StyledTableCell align="center">
-                    <Typography fontWeight="medium">
                       {client.name}
-                    </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Typography
-                      fontWeight="bold"
-                      color="error.main"
-                    >
-                      {formatCurrency(client.totalDebit)}
-                    </Typography>
+                    {formatCurrency(client.totalDebit)}
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Typography
-                      fontWeight="bold"
-                      color="success.main"
-                    >
-                      {formatCurrency(client.totalPaid)}
-                    </Typography>
+                    {formatCurrency(client.totalPaid)}
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Typography
-                      fontWeight="bold"
-                      color={getStatusColor(client)}
-                    >
-                      {formatCurrency(Math.abs(client.remaining))}
-                    </Typography>
+                    {formatCurrency(Math.abs(client.remaining))}
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <Chip
@@ -153,6 +132,7 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <IconButton
+                      size="small"
                       aria-label="عرض التفاصيل"
                       onClick={() => onViewDetails(client.id)}
                       sx={{ cursor: 'pointer' }}

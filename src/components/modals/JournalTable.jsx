@@ -23,13 +23,13 @@ import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 
-const JournalTable = ({ onViewDetails, isMobile = false, searchQuery = "" }) => {
+const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) => {
   const [page, setPage] = useState(1);
-  const { permissions } = usePermissions(); 
-  
+  const { permissions } = usePermissions();
+
   const { data: journalsData, isLoading } = useQuery({
-    queryKey: ["journals", page, searchQuery],
-    queryFn: () => getJournals(page, searchQuery),
+    queryKey: ["journals", page, searchFilters],
+    queryFn: () => getJournals(page, searchFilters),
   });
 
 

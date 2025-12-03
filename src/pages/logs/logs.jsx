@@ -193,6 +193,8 @@ const Logs = () => {
       "Profit Distribution": "توزيع الأرباح",
       "Treasury": "الصندوق",
       "Logs": "السجلات",
+      "Company Profit": "أرباح الشركة",
+      "Distribution": "توزيع الأرباح",
     };
     return screenTranslations[screen] || screen;
   };
