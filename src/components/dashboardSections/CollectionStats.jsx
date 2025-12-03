@@ -70,7 +70,8 @@ const CollectionStats = () => {
         {/* ملخص التحصيل */}
         <Grid item xs={12} sm={12} md={8}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '300px', sm: '250px', md: '250px' },
+            width: { xs: '250px', sm: '100%', md: '700px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -84,25 +85,25 @@ const CollectionStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
                 <Box sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 48,
-                  height: 48,
+                  width: 30,
+                  height: 30,
                   borderRadius: 3,
                   backgroundColor: 'primary.50',
-                  mr: 2
+                  mr: 3
                 }}>
                   <AttachMoney sx={{ fontSize: '1.75rem', color: 'primary.main' }} />
                 </Box>
-                <Typography variant="h6" fontWeight="600" color="text.primary">
+                <Typography variant="h6" fontWeight="600" color="text.primary" textAlign="center">
                   ملخص التحصيل
                 </Typography>
               </Box>
               
-              <Grid container spacing={2}>
+              <Grid container spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: { xs: 'center', sm: 'space-between' } }}>
                 <Grid item xs={12} sm={4}>
                   <Box sx={{ 
                     textAlign: 'center', 
@@ -115,7 +116,7 @@ const CollectionStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       إجمالي المستحق
                     </Typography>
-                    <Typography variant="h5" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedTotalRepayment)}
                     </Typography>
                   </Box>
@@ -132,7 +133,7 @@ const CollectionStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       الواصل من التحصيل
                     </Typography>
-                    <Typography variant="h5" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedTotalPaid)}
                     </Typography>
                   </Box>
@@ -149,7 +150,7 @@ const CollectionStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       المتبقي للتحصيل
                     </Typography>
-                    <Typography variant="h5" fontWeight="700" color="warning.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="warning.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedTotalRemaining)}
                     </Typography>
                   </Box>
@@ -162,7 +163,8 @@ const CollectionStats = () => {
         {/* نسبة التحصيل + المبلغ المتاح */}
         <Grid item xs={12} sm={12} md={4}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '250px', sm: '250px', md: '250px' },
+            width: { xs: '250px', sm: '100%', md: '300px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -180,22 +182,22 @@ const CollectionStats = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
+                width: 30,
+                height: 30,
                 borderRadius: 3,
                 backgroundColor: 'info.50',
-                mb: 2
+                mb: 1
               }}>
                 <TrendingUp sx={{ fontSize: '1.75rem', color: 'info.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 نسبة التحصيل
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="info.main" sx={{ mb: 3, fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h3" fontWeight="700" color="info.main" sx={{ mb: 1, fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
                 {animatedPercentage}%
               </Typography>
               <Box sx={{ 
-                p: 2,
+                p: 1,
                 borderRadius: 2,
                 backgroundColor: 'primary.50',
                 border: `1px solid ${theme.palette.primary[100]}`
@@ -203,7 +205,7 @@ const CollectionStats = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                   المبلغ المتاح للإقراض
                 </Typography>
-                <Typography variant="h6" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1rem', sm: '1.50rem' } }}>
+                <Typography variant="h3" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                   {formatCurrency(animatedAvailableForLending)}
                 </Typography>
               </Box>

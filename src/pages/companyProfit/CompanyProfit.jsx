@@ -74,7 +74,7 @@ export default function CompanyProfit() {
     if (value && profitData?.availableAmount) {
       const amount = parseFloat(value);
       if (amount > profitData.availableAmount) {
-        setWithdrawError(`المبلغ المدخل (${amount.toLocaleString('en-US')} ريال) يتجاوز الرصيد المتاح (${profitData.availableAmount.toLocaleString('en-US')} ريال)`);
+        setWithdrawError(`المبلغ المدخل (${amount.toLocaleString('en-US')}) يتجاوز الرصيد المتاح (${profitData.availableAmount.toLocaleString('en-US')})`);
       } else if (amount <= 0) {
         setWithdrawError('يجب أن يكون المبلغ أكبر من صفر');
       } else {
@@ -176,17 +176,66 @@ export default function CompanyProfit() {
                   أرباح الشركة
                 </Typography>
               </Box>
-              {permissions.includes('company_Add') && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleWithdrawModalOpen}
-                disabled={!profitData || profitData.availableAmount <= 0}
-                sx={{ minWidth: isSmallScreen ? '100%' : 'auto', fontWeight: "bold" }}
-              >
-                سحب أرباح
-              </Button>
-              )}
+              <Box sx={{ display: 'flex', gap: 1, flexDirection: isSmallScreen ? 'column' : 'row' }}>
+                {permissions.includes('company_Add') && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleWithdrawModalOpen}
+                  disabled={!profitData || profitData.availableAmount <= 0}
+                  sx={{ minWidth: isSmallScreen ? '100%' : 'auto', fontWeight: "bold" }}
+                >
+                  سحب أرباح
+                </Button>
+                )}
+                <Button
+                  variant="outlined"
+                  startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
+                  onClick={handleExportPDF}
+                  disabled={isExporting}
+                  sx={{
+                    color: 'error.main',
+                    borderColor: 'error.main',
+                    '&:hover': {
+                      bgcolor: 'error.main',
+                      color: 'white',
+                      borderColor: 'error.main'
+                    },
+                    '&:disabled': {
+                      bgcolor: 'grey.200',
+                      color: 'grey.400',
+                      borderColor: 'grey.400'
+                    },
+                    minWidth: isSmallScreen ? '100%' : 'auto'
+                  }}
+                >
+                  {isExporting ? <CircularProgress size={16} /> : 'تصدير PDF'}
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  startIcon={<TableChart sx={{marginLeft: "10px"}} />}
+                  onClick={handleExportExcel}
+                  disabled={isExporting}
+                  sx={{
+                    color: 'success.main',
+                    borderColor: 'success.main',
+                    '&:hover': {
+                      bgcolor: 'success.main',
+                      color: 'white',
+                      borderColor: 'success.main'
+                    },
+                    '&:disabled': {
+                      bgcolor: 'grey.200',
+                      color: 'grey.400',
+                      borderColor: 'grey.400'
+                    },
+                    minWidth: isSmallScreen ? '100%' : 'auto'
+                  }}
+                >
+                  {isExporting ? <CircularProgress size={16} /> : 'تصدير Excel'}
+                </Button>
+              </Box>
             </Box>
 
             {profitLoading ? (
@@ -341,61 +390,6 @@ export default function CompanyProfit() {
                         </Box>
                       )}
 
-                      {/* Export Buttons */}
-                      <Box sx={{
-                        display: 'flex',
-                        gap: 2,
-                        justifyContent: 'center',
-                        mt: 3,
-                        p: 2,
-                        borderTop: '1px solid #e0e0e0'
-                      }}>
-                        <Button
-                          variant="outlined"
-                          startIcon={<PictureAsPdf />}
-                          onClick={handleExportPDF}
-                          disabled={isExporting}
-                          sx={{
-                            color: 'error.main',
-                            borderColor: 'error.main',
-                            '&:hover': {
-                              bgcolor: 'error.main',
-                              color: 'white',
-                              borderColor: 'error.main'
-                            },
-                            '&:disabled': {
-                              bgcolor: 'grey.200',
-                              color: 'grey.400',
-                              borderColor: 'grey.400'
-                            }
-                          }}
-                        >
-                          {isExporting ? <CircularProgress size={16} /> : 'تصدير PDF'}
-                        </Button>
-
-                        <Button
-                          variant="outlined"
-                          startIcon={<TableChart />}
-                          onClick={handleExportExcel}
-                          disabled={isExporting}
-                          sx={{
-                            color: 'success.main',
-                            borderColor: 'success.main',
-                            '&:hover': {
-                              bgcolor: 'success.main',
-                              color: 'white',
-                              borderColor: 'success.main'
-                            },
-                            '&:disabled': {
-                              bgcolor: 'grey.200',
-                              color: 'grey.400',
-                              borderColor: 'grey.400'
-                            }
-                          }}
-                        >
-                          {isExporting ? <CircularProgress size={16} /> : 'تصدير Excel'}
-                        </Button>
-                      </Box>
                     </>
                   )}
                 </Box>
@@ -420,7 +414,7 @@ export default function CompanyProfit() {
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              الرصيد المتاح: {profitData?.availableAmount?.toLocaleString('en-US') || 0} ريال
+              الرصيد المتاح: {profitData?.availableAmount?.toLocaleString('en-US') || 0}
             </Typography>
             <TextField
               fullWidth

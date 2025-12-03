@@ -237,6 +237,14 @@ const routes = [
     parent: 'العمليات المالية'
   },
   {
+    path: '/installments/:loanId',
+    element: Installments,
+    protected: true,
+    showInSidebar: false,
+    module: 'repayments',
+    requiresPermissions: true
+  },
+  {
     path: '/treasury',
     element: Treasury,
     protected: true,

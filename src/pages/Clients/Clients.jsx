@@ -139,7 +139,6 @@ export default function Clients() {
     useState(null);
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
-
   const {
     data: clientsData,
     isLoading: isClientsLoading,
@@ -501,6 +500,10 @@ export default function Clients() {
       notifyError("حدث خطأ أثناء تصدير Excel");
       console.error("Excel Export Error:", error);
     }
+  };
+
+  const handleViewLoanDetails = (loanId) => {
+    window.location.href = `/installments/${loanId}`;
   };
 
   useEffect(() => {
@@ -1215,7 +1218,7 @@ export default function Clients() {
                         fontWeight="bold"
                         color="primary"
                       >
-                        {clientDetails.client.salary?.toLocaleString()} ريال
+                        {clientDetails.client.salary?.toLocaleString()}
                       </Typography>
                     </Paper>
                   </Grid>
@@ -1226,7 +1229,6 @@ export default function Clients() {
                       </Typography>
                       <Typography variant="h5" fontWeight="bold" color="error">
                         {clientDetails.client.obligations?.toLocaleString()}{" "}
-                        ريال
                       </Typography>
                     </Paper>
                   </Grid>
@@ -2504,7 +2506,7 @@ export default function Clients() {
                           fontWeight="bold"
                           color="error"
                         >
-                          {clientStatement.client.debit}
+                          {clientStatement.totalDebit}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={3}>
@@ -2516,7 +2518,7 @@ export default function Clients() {
                           fontWeight="bold"
                           color="success.main"
                         >
-                          {clientStatement.client.credit}
+                          {clientStatement.totalCredit}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -2814,10 +2816,10 @@ export default function Clients() {
                                     {loan.kafeel?.name || "-"}
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
-                                    {loan.amount?.toLocaleString()} ريال
+                                    {loan.amount?.toLocaleString()}
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
-                                    {loan.totalAmount?.toLocaleString()} ريال
+                                    {loan.totalAmount?.toLocaleString()}
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
                                     {loan.durationMonths}{" "}
@@ -2838,10 +2840,7 @@ export default function Clients() {
                                   <StyledTableCell align="center">
                                     <IconButton
                                       size="small"
-                                      onClick={() => {
-                                        // Navigate to loan details page
-                                        window.location.href = `/loans/${loan.id}`;
-                                      }}
+                                      onClick={() => handleViewLoanDetails(loan.id)}
                                       sx={{
                                         color: '#0d40a5',
                                         '&:hover': {
@@ -3022,6 +3021,7 @@ export default function Clients() {
         kafeelId={selectedKafeelForDocuments?.id}
         kafeel={selectedKafeelForDocuments}
       />
+
     </Box>
   );
 }

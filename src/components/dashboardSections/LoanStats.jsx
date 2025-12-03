@@ -164,11 +164,12 @@ const LoanStats = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px' }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
         {/* إجمالي السلف */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -205,9 +206,10 @@ const LoanStats = () => {
         </Grid>
 
         {/* إجمالي مبلغ السلف */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -244,9 +246,10 @@ const LoanStats = () => {
         </Grid>
 
         {/* سلف نشطة */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -283,9 +286,10 @@ const LoanStats = () => {
         </Grid>
 
         {/* رصيد البنك */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',

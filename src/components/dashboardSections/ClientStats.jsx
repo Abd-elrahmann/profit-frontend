@@ -143,11 +143,12 @@ const ClientStats = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px' }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
         {/* إجمالي العملاء + عملاء جدد */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '180px', sm: '100%', md: '230px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -185,7 +186,7 @@ const ClientStats = () => {
                   alignItems: 'center', 
                   justifyContent: 'center',
                   gap: 1,
-                  p: 1.5,
+                  p: 1,
                   borderRadius: 2,
                   backgroundColor: 'success.50',
                   border: `1px solid ${theme.palette.success[100]}`
@@ -203,9 +204,10 @@ const ClientStats = () => {
         </Grid>
 
         {/* حالة العملاء */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
-            height: '100%',
+            height: { xs: '180px', sm: '100%', md: '230px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -243,7 +245,7 @@ const ClientStats = () => {
                   alignItems: 'center', 
                   justifyContent: 'center',
                   gap: 1,
-                  p: 1.5,
+                  p: 1,
                   borderRadius: 2,
                   backgroundColor: 'error.50',
                   border: `1px solid ${theme.palette.error[100]}`
@@ -261,8 +263,10 @@ const ClientStats = () => {
         </Grid>
 
         {/* المديونية والمدفوعات */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} sm={12} md={6}>
           <Card sx={{
+            height: { xs: '450px', sm: '100%', md: '230px' },
+            width: { xs: '100%', sm: '100%', md: '550px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -276,25 +280,25 @@ const ClientStats = () => {
             }
           }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
                 <Box sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 48,
-                  height: 48,
+                  width: 30,
+                  height: 30,
                   borderRadius: 3,
                   backgroundColor: 'warning.50',
-                  mr: 2
+                  mr: 1
                 }}>
                   <AttachMoney sx={{ fontSize: '1.75rem', color: 'warning.main' }} />
                 </Box>
-                <Typography variant="h6" fontWeight="600" color="text.primary">
+                <Typography variant="h6" fontWeight="600" color="text.primary" textAlign="center">
                   المديونية والمدفوعات
                 </Typography>
               </Box>
               
-              <Grid container spacing={2}>
+              <Grid container spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: { xs: 'center', sm: 'space-between' } }}>
                 <Grid item xs={12} sm={4}>
                   <Box sx={{ 
                     textAlign: 'center', 
@@ -307,7 +311,7 @@ const ClientStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       إجمالي المديونية
                     </Typography>
-                    <Typography variant="h5" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedDebit)}
                     </Typography>
                   </Box>
@@ -324,7 +328,7 @@ const ClientStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       المبلغ المدفوع
                     </Typography>
-                    <Typography variant="h5" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedPaid)}
                     </Typography>
                   </Box>
@@ -341,7 +345,7 @@ const ClientStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       المتبقي للتحصيل
                     </Typography>
-                    <Typography variant="h5" fontWeight="700" color="info.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="info.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedRemaining)}
                     </Typography>
                   </Box>

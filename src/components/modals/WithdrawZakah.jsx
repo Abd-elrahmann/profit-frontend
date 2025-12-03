@@ -62,7 +62,7 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
       
       <DialogContent>
         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-          الرصيد المتاح: {accountBalance?.toLocaleString() || 0} ريال
+          الرصيد المتاح: {accountBalance?.toLocaleString() || 0}
         </Typography>
 
         <TextField

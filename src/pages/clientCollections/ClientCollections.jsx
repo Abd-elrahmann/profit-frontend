@@ -353,8 +353,7 @@ const ClientCollections = () => {
         sx={{ 
           mb: 4, 
           p: 4, 
-          maxWidth: "1000px",
-          width: "100%",
+          width: "600px",
           boxShadow: 3,
           borderRadius: 1,
         }}
@@ -367,7 +366,7 @@ const ClientCollections = () => {
         >
           معلومات العميل
         </Typography>
-        <Grid container spacing={4} justifyContent="center">
+        <Grid container spacing={4} justifyContent="space-between">
           <Grid item xs={12} md={5}>
             <Box sx={{ mb: 3, textAlign: "right" }}>
               <Typography variant="body2" color="textSecondary" gutterBottom sx={{ mb: 1 }}>
@@ -395,7 +394,7 @@ const ClientCollections = () => {
             </Box>
           </Grid>
           <Grid item xs={12} md={5}>
-            <Box sx={{ mb: 3, textAlign: "right" }}>
+            <Box sx={{ mb: 3, textAlign: "center" }}>
               <Typography variant="body2" color="textSecondary" gutterBottom sx={{ mb: 1 }}>
                 العنوان
               </Typography>
@@ -403,11 +402,11 @@ const ClientCollections = () => {
                 {clientDetails?.client?.address || "-"}
               </Typography>
             </Box>
-            <Box sx={{ mb: 3, textAlign: "right" }}>
+            <Box sx={{ mb: 3, textAlign: "center" }}>
               <Typography variant="body2" color="textSecondary" gutterBottom sx={{ mb: 1 }}>
                 الحالة
               </Typography>
-              <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                 <Chip
                   label={clientDetails?.client?.status || "-"}
                   color="success"
@@ -416,7 +415,7 @@ const ClientCollections = () => {
                 />
               </Box>
             </Box>
-            <Box sx={{ mb: 3, textAlign: "right" }}>
+            <Box sx={{ mb: 3, textAlign: "center" }}>
               <Typography variant="body2" color="textSecondary" gutterBottom sx={{ mb: 1 }}>
                 تاريخ الانضمام
               </Typography>

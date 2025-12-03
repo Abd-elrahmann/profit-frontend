@@ -876,7 +876,7 @@ export default function Investors() {
                           />
                         </Box>
                         <Typography variant="body2" color="text.secondary">
-                          رأس المال: {investor.capitalAmount?.toLocaleString()} ريال
+                          رأس المال: {investor.capitalAmount?.toLocaleString()}
                         </Typography>
                         <Box display="flex" justifyContent="flex-end" mt={1}>
                           {permissions.includes("partners_Delete") && (
@@ -1017,7 +1017,7 @@ export default function Investors() {
               {/* Summary Cards */}
               <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         إجمالي مبلغ الاستثمار
@@ -1029,7 +1029,7 @@ export default function Investors() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         نسبة أرباح المنشأة
@@ -1041,7 +1041,7 @@ export default function Investors() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         نسبة أرباح المستثمر
@@ -1053,7 +1053,7 @@ export default function Investors() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                    <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         إجمالي الأرباح
@@ -1065,43 +1065,43 @@ export default function Investors() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         الزكاة السنوية المستحقة
                       </Typography>
                       <Typography variant="h6" fontWeight="bold" color="warning.main">
-                        {investorDetails.yearlyZakatRequired?.toLocaleString() || 0} ريال
+                        {investorDetails.yearlyZakatRequired?.toLocaleString() || 0}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         الزكاة السنوية المدفوعة
                       </Typography>
                       <Typography variant="h6" fontWeight="bold" color="success.main">
-                        {investorDetails.yearlyZakatPaid?.toLocaleString() || 0} ريال
+                        {investorDetails.yearlyZakatPaid?.toLocaleString() || 0}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         رصيد الزكاة السنوية
                       </Typography>
                       <Typography variant="h6" fontWeight="bold" color="error.main">
-                        {investorDetails.yearlyZakatBalance?.toLocaleString() || 0} ريال
+                        {investorDetails.yearlyZakatBalance?.toLocaleString() || 0}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '200px', maxWidth: '250px'}}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                     <CardContent sx={{textAlign: 'center'}}>
                       <Typography color="text.secondary" variant="body1" gutterBottom>
                         إجمالي الادخار
@@ -1129,10 +1129,10 @@ export default function Investors() {
                     sx={{ mb: 3, mt: 2 }}
                   >
                     <Typography variant="body2">
-                      رأس مالك {capital.toLocaleString()} ريال • ادخارك {saving.toLocaleString()} ريال
+                      رأس مالك {capital.toLocaleString()} • ادخارك {saving.toLocaleString()}
                       {difference > 0 && (
                         <Typography component="span" fontWeight="bold" color="primary.main">
-                          {" • ناقص " + difference.toLocaleString() + " ريال عشان ينتهي ادخارك"}
+                          {" • ناقص " + difference.toLocaleString() + " عشان ينتهي ادخارك"}
                         </Typography>
                       )}
                       {difference === 0 && (
@@ -1142,7 +1142,7 @@ export default function Investors() {
                       )}
                       {difference < 0 && (
                         <Typography component="span" fontWeight="bold" color="success.main">
-                          {" • مبروك! تجاوز ادخارك رأس المال بـ " + Math.abs(difference).toLocaleString() + " ريال 🎊"}
+                          {" • مبروك! تجاوز ادخارك رأس المال بـ " + Math.abs(difference).toLocaleString() + " 🎊"}
                         </Typography>
                       )}
                     </Typography>
@@ -1460,7 +1460,7 @@ export default function Investors() {
                                   color: transaction.type === "DEPOSIT" ? "success.main" : "error.main",
                                   fontWeight: "bold"
                                 }}>
-                                  {transaction.amount?.toLocaleString()} ريال
+                                  {transaction.amount?.toLocaleString()}
                                 </StyledTableCell>
                                 <StyledTableCell align="center">
                                   {dayjs(transaction.date).format("DD/MM/YYYY HH:mm a")}

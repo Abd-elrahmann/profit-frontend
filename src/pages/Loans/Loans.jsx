@@ -147,6 +147,7 @@ const Loans = () => {
     activeTab,
   ]);
 
+
   const debouncedSearch = debounce((value) => {
     setSearchQuery(value);
     setClientsPage(1);

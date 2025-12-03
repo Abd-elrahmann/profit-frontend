@@ -471,7 +471,7 @@ export default function Treasury() {
                     justifyContent: 'center',
                     alignItems: 'stretch'
                   }}>
-                    <Box sx={{ flex: isSmallScreen ? '1 1 100%' : '1 1 200px', minWidth: isSmallScreen ? '100%' : '200px', maxWidth: '100%' }}>
+                    <Box sx={{ flex: isSmallScreen ? '1 1 100%' : '1 1 200px', minWidth: isSmallScreen ? '100%' : '350px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -501,7 +501,7 @@ export default function Treasury() {
                       </Card>
                     </Box>
 
-                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -531,7 +531,7 @@ export default function Treasury() {
                       </Card>
                     </Box>
 
-                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -561,7 +561,7 @@ export default function Treasury() {
                       </Card>
                     </Box>
 
-                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -595,7 +595,7 @@ export default function Treasury() {
                       </Card>
                     </Box>
 
-                    <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '100%' }}>
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -669,7 +669,7 @@ export default function Treasury() {
                             تنبيه: رصيد الصندوق منخفض
                           </Typography>
                           <Typography variant="body2">
-                            الرصيد الحالي ({availableBalance.toLocaleString('en-US')} ريال) أقل من الحد الأدنى المطلوب ({lowBalanceThreshold.toLocaleString('en-US')} ريال)
+                            الرصيد الحالي ({availableBalance.toLocaleString('en-US')}) أقل من الحد الأدنى المطلوب ({lowBalanceThreshold.toLocaleString('en-US')})
                           </Typography>
                         </Alert>
                       )}
@@ -682,7 +682,7 @@ export default function Treasury() {
                             ملاحظة: المبالغ المقترضة مرتفعة
                           </Typography>
                           <Typography variant="body2">
-                            إجمالي المقر ض ({totalCredit.toLocaleString('en-US')} ريال) تجاوز الحد المسموح ({highCreditThreshold.toLocaleString('en-US')} ريال)
+                            إجمالي المقر ض ({totalCredit.toLocaleString('en-US')}) تجاوز الحد المسموح ({highCreditThreshold.toLocaleString('en-US')})
                           </Typography>
                         </Alert>
                       )}
@@ -779,7 +779,6 @@ export default function Treasury() {
                                 variant="body2" 
                                 color="text.secondary"
                               >
-                                ريال سعودي
                               </Typography>
                             </Box>
                           </Box>
@@ -819,10 +818,10 @@ export default function Treasury() {
                                 color="text.secondary"
                               >
                                 {totalCredit >= 1000000 
-                                  ? `${(totalCredit / 1000000).toFixed(1)}م ر.س`
+                                  ? `${(totalCredit / 1000000).toFixed(1)}م`
                                   : totalCredit >= 1000
-                                  ? `${(totalCredit / 1000).toFixed(0)} ألف ر.س`
-                                  : `${totalCredit.toLocaleString('en-US')} ر.س`
+                                  ? `${(totalCredit / 1000).toFixed(0)} ألف`
+                                  : `${totalCredit.toLocaleString('en-US')}`
                                 }
                               </Typography>
                             </Box>
@@ -853,10 +852,10 @@ export default function Treasury() {
                                 color="text.secondary"
                               >
                                 {availableBalance >= 1000000 
-                                  ? `${(availableBalance / 1000000).toFixed(1)}م ر.س`
+                                  ? `${(availableBalance / 1000000).toFixed(1)}م`
                                   : availableBalance >= 1000
-                                  ? `${(availableBalance / 1000).toFixed(0)} ألف ر.س`
-                                  : `${availableBalance.toLocaleString('en-US')} ر.س`
+                                  ? `${(availableBalance / 1000).toFixed(0)} ألف`
+                                  : `${availableBalance.toLocaleString('en-US')}`
                                 }
                               </Typography>
                             </Box>
@@ -895,7 +894,7 @@ export default function Treasury() {
                               <XAxis dataKey="name" />
                               <YAxis />
                               <Tooltip 
-                                formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                                formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
                                 contentStyle={{ borderRadius: '8px' }}
                               />
                               <Legend />
@@ -958,11 +957,11 @@ export default function Treasury() {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} />
+                          <Tooltip formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} />
                           <Legend 
                             verticalAlign="bottom" 
                             height={36}
-                            formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
+                            formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')}`}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -1047,7 +1046,7 @@ export default function Treasury() {
                               tickFormatter={(value) => `${value.toLocaleString('en-US')}`}
                             />
                             <Tooltip 
-                              formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                              formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
                               contentStyle={{ 
                                 borderRadius: '8px',
                                 border: '1px solid #e0e0e0'

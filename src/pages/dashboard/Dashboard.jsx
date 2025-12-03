@@ -208,8 +208,20 @@ const Dashboard = () => {
 
         {availableTabs.map((tab, index) => (
           <TabPanel key={tab.permission} value={value} index={index}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-              {tab.component}
+            <Box sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              px: { xs: 1, sm: 2 }
+            }}>
+              <Box sx={{
+                width: '100%',
+                maxWidth: '1200px',
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                {tab.component}
+              </Box>
             </Box>
           </TabPanel>
         ))}

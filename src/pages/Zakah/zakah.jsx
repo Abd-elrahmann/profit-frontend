@@ -20,11 +20,6 @@ import {
   CardContent,
   IconButton,
   Chip,
-  InputBase,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Autocomplete,
   TextField,
 } from "@mui/material";
@@ -33,6 +28,8 @@ import {
   AccountBalance as BalanceIcon,
   Paid as PaidIcon,
   Pending as PendingIcon,
+  TableChart,
+  PictureAsPdf,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPartnerZakah, getZakatAccountReport, withdrawZakat } from "./zakahApi";
@@ -131,7 +128,7 @@ const Zakah = () => {
   const handleWithdraw = async (amount) => {
     try {
       await withdrawZakat(amount);
-      notifySuccess(`تم سحب مبلغ ${amount} ريال بنجاح`);
+      notifySuccess(`تم سحب مبلغ ${amount} بنجاح`);
       queryClient.invalidateQueries(["zakat-account"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء سحب الزكاة");
@@ -549,30 +546,30 @@ const Zakah = () => {
         </Typography>
 
         {/* Partner Information */}
-        <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
+        <Grid container spacing={3} mb={4} justifyContent="space-between" alignItems="center">
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               اسم الشريك:
             </Typography>
-            <Typography variant="body1">{currentYearData?.partnerName || "-"}</Typography>
+            <Typography variant="body1" fontWeight="bold" color="primary.main">{currentYearData?.partnerName || "-"}</Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               السنة:
             </Typography>
-            <Typography variant="body1">{selectedYear}</Typography>
+            <Typography variant="body1" fontWeight="bold" color="primary.main">{selectedYear}</Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               رأس المال:
             </Typography>
-            <Typography variant="body1">{formatCurrency(currentYearData?.capitalAmount)}</Typography>
+            <Typography variant="body1" fontWeight="bold" color="primary.main">{formatCurrency(currentYearData?.capitalAmount)}</Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               الزكاة الشهرية:
             </Typography>
-            <Typography variant="body1">{formatCurrency(currentYearData?.monthlyZakat)}</Typography>
+            <Typography variant="body1" fontWeight="bold" color="primary.main">{formatCurrency(currentYearData?.monthlyZakat)}</Typography>
           </Grid>
         </Grid>
 
@@ -581,7 +578,7 @@ const Zakah = () => {
         {/* Zakat Summary */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center",width: "350px" }}>
               <VolunteerActivismIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h5" fontWeight="bold" color="primary.main">
                 {formatCurrency(currentYearData?.annualZakat)}
@@ -592,7 +589,7 @@ const Zakah = () => {
             </Card>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center",width: "350px" }}>
               <VolunteerActivismIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h5" fontWeight="bold" color="success.main">
                 {formatCurrency(currentYearData?.totalPaid)}
@@ -606,7 +603,8 @@ const Zakah = () => {
             <Card sx={{ 
               bgcolor: currentYearData?.remaining > 0 ? "error.50" : "success.50", 
               p: 3, 
-              textAlign: "center" 
+              textAlign: "center",
+              width: "350px"
             }}>
               <VolunteerActivismIcon 
                 color={currentYearData?.remaining > 0 ? "error" : "success"} 
@@ -714,7 +712,7 @@ const Zakah = () => {
             <Button
               variant="contained"
               sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
-              startIcon={<span>📄</span>}
+              startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
               onClick={() => handleExportPDF()}
               disabled={isExporting}
             >
@@ -723,7 +721,7 @@ const Zakah = () => {
             <Button
               variant="contained"
               sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
-              startIcon={<span>📊</span>}
+              startIcon={<TableChart sx={{marginLeft: "10px"}} />}
               onClick={() => handleExportExcel()}
               disabled={isExporting}
             >
@@ -751,7 +749,7 @@ const Zakah = () => {
         {!isAccountLoading && !accountError && (
           <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={2.4}>
-            <Card sx={{ bgcolor: "primary.100", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "primary.100", p: 3, textAlign: "center",width: "400px" }}>
               <BalanceIcon sx={{ fontSize: 40, mb: 1, color: "#1565c0" }} />
               <Typography variant="h5" fontWeight="bold" color="primary.900">
                 {formatCurrency(accountReport?.account?.balance)}
@@ -762,7 +760,7 @@ const Zakah = () => {
             </Card>
           </Grid>
           <Grid item xs={12} md={2.4}>
-            <Card sx={{ bgcolor: "success.100", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "success.100", p: 3, textAlign: "center",width: "400px" }}>
               <PaidIcon sx={{ fontSize: 40, mb: 1, color: "#2e7d32" }} />
               <Typography variant="h5" fontWeight="bold" color="success.900">
                 {formatCurrency(accountReport?.account?.credit)}
@@ -773,7 +771,7 @@ const Zakah = () => {
             </Card>
           </Grid>
           <Grid item xs={12} md={2.4}>
-            <Card sx={{ bgcolor: "warning.100", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "warning.100", p: 3, textAlign: "center",width: "400px" }}>
               <PendingIcon sx={{ fontSize: 40, mb: 1, color: "#f57c00" }} />
               <Typography variant="h5" fontWeight="bold" color="warning.900">
                 {formatCurrency(accountReport?.account?.debit)}
@@ -784,7 +782,7 @@ const Zakah = () => {
             </Card>
           </Grid>
           <Grid item xs={12} md={2.4}>
-            <Card sx={{ bgcolor: "info.100", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "info.100", p: 3, textAlign: "center",width: "400px" }}>
               <VolunteerActivismIcon sx={{ fontSize: 40, mb: 1, color: "#0277bd" }} />
               <Typography variant="h5" fontWeight="bold" color="info.900">
                 {accountReport?.totalJournalEntries || 0}
@@ -795,7 +793,7 @@ const Zakah = () => {
             </Card>
           </Grid>
           <Grid item xs={12} md={2.4}>
-            <Card sx={{ bgcolor: "secondary.100", p: 3, textAlign: "center" }}>
+            <Card sx={{ bgcolor: "secondary.100", p: 3, textAlign: "center",width: "400px" }}>
               <VolunteerActivismIcon sx={{ fontSize: 40, mb: 1, color: "#616161" }} />
               <Typography variant="h5" fontWeight="bold" color="secondary.900">
                 {formatCurrency(accountReport?.journalsByMonth?.[`${selectedFilterYear}-${selectedFilterMonth.toString().padStart(2, '0')}`]?.requiredZakat || 0)}
@@ -1013,7 +1011,7 @@ const Zakah = () => {
                       <Button
                         variant="contained"
                         sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
-                        startIcon={<span>📄</span>}
+                        startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
                         onClick={() => handleExportPDF()}
                         disabled={isExporting}
                       >
@@ -1022,7 +1020,7 @@ const Zakah = () => {
                       <Button
                         variant="contained"
                         sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
-                        startIcon={<span>📊</span>}
+                        startIcon={<TableChart sx={{marginLeft: "10px"}} />}
                         onClick={() => handleExportExcel()}
                         disabled={isExporting}
                       >

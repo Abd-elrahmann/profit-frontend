@@ -178,7 +178,7 @@ const DashboardPermissions = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <DashboardIcon color="primary" />
           <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-            صلاحيات الداشبورد - {roleName}
+            صلاحيات لوحة التحكم - {roleName}
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small">
@@ -205,7 +205,7 @@ const DashboardPermissions = ({
                   mb: 2
                 }}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    أقسام الداشبورد
+                    أقسام لوحة التحكم
                   </Typography>
                   <Button
                     variant="outlined"
@@ -223,7 +223,7 @@ const DashboardPermissions = ({
                 </Box>
 
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                  حدد الأقسام التي يمكن للمستخدمين الذين لديهم هذا الدور الوصول إليها في الداشبورد
+                  حدد الأقسام التي يمكن للمسؤولين الذين لديهم هذا الدور الوصول إليها في لوحة التحكم
                 </Typography>
 
                 <Grid container spacing={2} justifyContent="center">

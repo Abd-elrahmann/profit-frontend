@@ -121,7 +121,7 @@ const Saving = () => {
   const renderAccountSummary = () => (
     <Grid container spacing={3} sx={{ mb: 4, justifyContent: "center" }}>
       <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2 }}>
+        <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2,width: "350px" }}>
           <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="primary.main">
             {formatCurrency(accountReport?.account?.balance)}
@@ -132,7 +132,7 @@ const Saving = () => {
         </Card>
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2 }}>
+        <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
           <SavingsIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="success.main">
             {formatCurrency(accountReport?.account?.credit)}
@@ -143,7 +143,7 @@ const Saving = () => {
         </Card>
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2 }}>
+        <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2,width: "350px" }}>
           <SavingsIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="warning.main">
             {formatCurrency(accountReport?.account?.debit)}
@@ -154,7 +154,7 @@ const Saving = () => {
         </Card>
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "info.50", textAlign: "center", p: 2 }}>
+        <Card sx={{ bgcolor: "info.50", textAlign: "center", p: 2,width: "350px" }}>
           <CalendarIcon color="info" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="info.main">
             {accountReport?.totalJournalEntries || 0}
@@ -174,7 +174,7 @@ const Saving = () => {
     return (
       <Grid container spacing={3} sx={{ mb: 4, justifyContent: "center" }}>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2 }}>
+          <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2,width: "350px" }}>
             <SavingsIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="primary.main">
               {formatCurrency(totalSavings)}
@@ -185,7 +185,7 @@ const Saving = () => {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2 }}>
+          <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
             <CalendarIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="success.main">
               {partnerSavingDetails?.length || 0}
@@ -196,7 +196,7 @@ const Saving = () => {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2 }}>
+          <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2,width: "350px" }}>
             <BalanceIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="warning.main">
               {partnerSavingDetails?.reduce((total, period) => total + (period.accruals?.length || 0), 0) || 0}
@@ -504,7 +504,7 @@ const Saving = () => {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]} 
+                        formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
                         contentStyle={{ borderRadius: '8px' }}
                       />
                       <Legend />
@@ -568,13 +568,13 @@ const Saving = () => {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')} ريال`, name]}
+                        formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]}
                         contentStyle={{ borderRadius: '8px' }}
                       />
                       <Legend
                         verticalAlign="bottom"
                         height={36}
-                        formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')} ريال`}
+                        formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')}`}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -602,7 +602,7 @@ const Saving = () => {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value, name) => [name === 'العمليات' ? `${value} عملية` : `${value.toLocaleString('en-US')} ريال`, name]} 
+                        formatter={(value, name) => [name === 'العمليات' ? `${value} عملية` : `${value.toLocaleString('en-US')}`, name]} 
                         contentStyle={{ borderRadius: '8px' }}
                       />
                       <Legend />

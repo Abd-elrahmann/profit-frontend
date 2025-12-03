@@ -878,7 +878,7 @@ const ProfitDistribution = () => {
                 </Typography>
               )}
               <Typography variant="body2">
-                المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()} ريال
+                المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()}
               </Typography>
             </Box>
           ) : null}
@@ -964,7 +964,7 @@ const ProfitDistribution = () => {
                     {partner.savingAmount && (enableSaving || partner.savingAmount > 0) && (
                       <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="warning.main">
-                          المبلغ المدخر: {partner.savingAmount.toLocaleString()} ريال
+                          المبلغ المدخر: {partner.savingAmount.toLocaleString()}
                         </Typography>
                       </Box>
                     )}
@@ -1093,7 +1093,7 @@ const ProfitDistribution = () => {
         alignItems="center"
       >
         <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center" }}>
+          <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center",width: "350px" }}>
             <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="primary.main">
               {enableSaving ? 
@@ -1112,7 +1112,7 @@ const ProfitDistribution = () => {
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center" }}>
+          <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center",width: "350px" }}>
             <BalanceIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="success.main">
               {enableSaving ? 
@@ -1144,16 +1144,16 @@ const ProfitDistribution = () => {
             </Typography>
           )}
           <Typography variant="body2">
-            - المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()} ريال
+            - المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()}
           </Typography>
           {enableSaving && savingPercentage > 0 && (
             <Typography variant="body2">
-              - إجمالي الأرباح قبل الادخار: {(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit).toLocaleString()} ريال
+              - إجمالي الأرباح قبل الادخار: {(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit).toLocaleString()}
             </Typography>
           )}
           {periodData?.totalAfterSaving && (
             <Typography variant="body2">
-              - إجمالي الأرباح بعد الادخار: {periodData.totalAfterSaving.toLocaleString()} ريال
+              - إجمالي الأرباح بعد الادخار: {periodData.totalAfterSaving.toLocaleString()}
             </Typography>
           )}
         </Alert>
@@ -1326,7 +1326,7 @@ const ProfitDistribution = () => {
                 <strong>ملاحظة:</strong> سيتم ادخار {savingPercentage}% من الأرباح قبل التوزيع
               </Typography>
               <Typography variant="body2" sx={{ mt: 1 }}>
-                المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()} ريال
+                المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()}
               </Typography>
             </Alert>
           )}

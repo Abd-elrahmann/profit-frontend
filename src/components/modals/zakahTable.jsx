@@ -68,10 +68,11 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   const totals = zakahData?.reduce((acc, item) => ({
     capitalAmount: acc.capitalAmount + (item.capitalAmount || 0),
     annualZakat: acc.annualZakat + (item.annualZakat || 0),
+    monthlyZakat: acc.monthlyZakat + (item.monthlyZakat || 0),
     totalPaid: acc.totalPaid + (item.totalPaid || 0),
     remaining: acc.remaining + (item.remaining || 0),
-  }), { capitalAmount: 0, annualZakat: 0, totalPaid: 0, remaining: 0 }) || {
-    capitalAmount: 0, annualZakat: 0, totalPaid: 0, remaining: 0
+  }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 }) || {
+    capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0
   };
 
   const renderTable = () => (
@@ -193,7 +194,9 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
-                  <Typography fontWeight="bold">-</Typography>
+                  <Typography fontWeight="bold" color="info.main">
+                    {totals.monthlyZakat.toLocaleString()}
+                  </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography fontWeight="bold" color="success.main">
@@ -392,7 +395,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                 ملخص الإجماليات
               </Typography>
               <Grid container spacing={1}>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <Typography variant="body2" color="textSecondary">
                     إجمالي رأس المال:
                   </Typography>
@@ -400,15 +403,23 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     {totals.capitalAmount.toLocaleString()}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <Typography variant="body2" color="textSecondary">
-                    إجمالي الزكاة:
+                    إجمالي الزكاة السنوية:
                   </Typography>
                   <Typography variant="body2" fontWeight="bold" color="primary.main">
                     {totals.annualZakat.toLocaleString()}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
+                  <Typography variant="body2" color="textSecondary">
+                    إجمالي الزكاة الشهرية:
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold" color="info.main">
+                    {totals.monthlyZakat.toLocaleString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={4}>
                   <Typography variant="body2" color="textSecondary">
                     إجمالي المدفوع:
                   </Typography>
@@ -416,12 +427,12 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     {totals.totalPaid.toLocaleString()}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <Typography variant="body2" color="textSecondary">
                     إجمالي المتبقي:
                   </Typography>
-                  <Typography 
-                    variant="body2" 
+                  <Typography
+                    variant="body2"
                     fontWeight="bold"
                     color={totals.remaining > 0 ? "error" : "success.main"}
                   >
