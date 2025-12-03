@@ -13,7 +13,6 @@ import {
   MdMenu as MenuIcon,
   MdMenuOpen as MenuOpenIcon,
   MdPerson as Person,
-  MdExitToApp as ExitToApp,
   MdSettings as SettingsIcon,
 } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -120,14 +119,6 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
     navigate("/profile");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("profile");
-    setUserData(null);
-    handleUserMenuClose();
-    navigate("/login", { replace: true });
-  };
 
   if (location.pathname === "/login") {
     return null;
@@ -244,10 +235,6 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 <MenuItem onClick={handleProfileClick}>
                   <Person sx={{ mr: 1, ml: 0 }} />
                   الملف الشخصي
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>
-                  <ExitToApp sx={{ mr: 1, ml: 0 }} />
-                  تسجيل الخروج
                 </MenuItem>
               </Menu>
             </div>

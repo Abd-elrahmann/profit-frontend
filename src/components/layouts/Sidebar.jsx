@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { 
-  Button, 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
+import {
+  Button,
+  Box,
+  List,
+  ListItem,
+  ListItemIcon,
   ListItemText,
   Collapse
 } from '@mui/material';
-import { 
+import {
   MdExitToApp as ExitToApp,
   MdExpandMore as ExpandMoreIcon,
   MdExpandLess as ExpandLessIcon
@@ -17,6 +17,7 @@ import {
 import { RadioButtonUnchecked } from '@mui/icons-material';
 import { getSidebarMenuItems } from '../../routes';
 import { usePermissions } from '../Contexts/PermissionsContext';
+import Api from '../../config/Api';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -56,12 +57,21 @@ const Sidebar = ({ isOpen, onClose }) => {
   const singleItems = filteredMenuItems.filter(item => !item.children);
   const groupItems = filteredMenuItems.filter(item => item.children);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('profile');
-    localStorage.removeItem('rememberedEmail');
-    navigate('/login', { replace: true });
+  const handleLogout = async () => {
+    try {
+      // Call the backend logout endpoint
+      await Api.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with frontend logout even if backend call fails
+    } finally {
+      // Clear localStorage and navigate to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('profile');
+      localStorage.removeItem('rememberedEmail');
+      navigate('/login', { replace: true });
+    }
   };
 
   const toggleGroup = (groupLabel) => {
