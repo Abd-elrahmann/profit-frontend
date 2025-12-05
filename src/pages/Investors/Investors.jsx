@@ -697,38 +697,42 @@ export default function Investors() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
-            onClick={handleExportPDF}
-            disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
-            sx={{
-              borderColor: "#d32f2f",
-              color: "#d32f2f",
-              "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-              borderRadius: 2,
-              px: 2,
-              fontWeight: "bold",
-            }}
-          >
-            PDF
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<TableChart sx={{marginLeft: '10px'}} />}
-            onClick={handleExportExcel}
-            disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
-            sx={{
-              borderColor: "#2e7d32",
-              color: "#2e7d32",
-              "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-              borderRadius: 2,
-              px: 2,
-              fontWeight: "bold",
-            }}
-          >
-            Excel
-          </Button>
+          {permissions.includes("partners_Export") && (
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
+                onClick={handleExportPDF}
+                disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
+                sx={{
+                  borderColor: "#d32f2f",
+                  color: "#d32f2f",
+                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: "bold",
+                }}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<TableChart sx={{marginLeft: '10px'}} />}
+                onClick={handleExportExcel}
+                disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
+                sx={{
+                  borderColor: "#2e7d32",
+                  color: "#2e7d32",
+                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: "bold",
+                }}
+              >
+                Excel
+              </Button>
+            </>
+          )}
           {permissions.includes("partners_Add") && (
           <Button
             variant="contained"
@@ -956,7 +960,9 @@ export default function Investors() {
                   رقم الهوية: {investorDetails.nationalId}
                 </Typography>
               </Box>
+              
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: 'flex-end' }}>
+                {permissions.includes("partners_Export") && (
                 <Button
                   variant="outlined"
                   startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
@@ -973,6 +979,8 @@ export default function Investors() {
                 >
                   تصدير PDF
                 </Button>
+                )}
+                {permissions.includes("partners_Export") && ( 
                 <Button
                   variant="outlined"
                   startIcon={<TableChart sx={{marginLeft: '10px'}} />}
@@ -989,11 +997,13 @@ export default function Investors() {
                 >
                   تصدير Excel
                 </Button>
-                {permissions.includes("partners_Update") && (
+                )}
+                {permissions.includes("partners_Update") || permissions.includes("partners_Add") && (
                 <Button 
                   variant="outlined" 
                   startIcon={<Edit sx={{marginLeft: '10px'}} />}
                   onClick={() => setEditMode(!editMode)}
+                  disabled={!editMode}
                 >
                   {editMode ? 'إلغاء التعديل' : 'تعديل'}
                 </Button>
@@ -1523,23 +1533,25 @@ export default function Investors() {
                                 <Typography fontWeight="500">عقد المضاربة</Typography>
                               </Box>
                             </Box>
-                            <Box>
-                              <IconButton onClick={() => handlePrintFile(investorDetails.mudarabahFileUrl)}>
-                                <Print />
-                              </IconButton>
-                              <IconButton 
-                                onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
-                                title="تحميل"
-                              >
-                                <Download />
-                              </IconButton>
-                              <IconButton 
-                                onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
-                                title="مشاركة"
-                              >
-                                <Share />
-                              </IconButton>
-                            </Box>
+                            {permissions.includes("partners_Export") && (
+                              <Box>
+                                <IconButton onClick={() => handlePrintFile(investorDetails.mudarabahFileUrl)}>
+                                  <Print />
+                                </IconButton>
+                                <IconButton
+                                  onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
+                                  title="تحميل"
+                                >
+                                  <Download />
+                                </IconButton>
+                                <IconButton
+                                  onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
+                                  title="مشاركة"
+                                >
+                                  <Share />
+                                </IconButton>
+                              </Box>
+                            )}
                           </Paper>
                         </Grid>
                       </Grid>

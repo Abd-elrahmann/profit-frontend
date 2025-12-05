@@ -39,7 +39,7 @@ import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableL
 import GeneralLedgerSearch from '../../components/modals/GeneralLedgerSearch';
 import { exportGeneralLedgerToPDF, exportGeneralLedgerToExcel } from '../../utilities/GeneralLedgerExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
 const getAccountLedger = async (accountId, fromDate = null, toDate = null, page = 1, limit = 10) => {
   const params = new URLSearchParams();
   if (fromDate) {
@@ -56,6 +56,7 @@ const getAccountLedger = async (accountId, fromDate = null, toDate = null, page 
 };
 
 export default function GeneralLedger() {
+  const { permissions } = usePermissions();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useState(null);
   const [exportLoading, setExportLoading] = useState({ pdf: false, excel: false });
@@ -345,6 +346,7 @@ export default function GeneralLedger() {
               justifyContent: isSmallScreen ? 'center' : 'flex-start',
               order: isSmallScreen ? 2 : 1
             }}>
+              {permissions.includes("generalLedger_Export") && (
               <Button
                 variant="outlined"
                 startIcon={<PictureAsPdf sx={{marginLeft:'10px'}} />}
@@ -366,6 +368,8 @@ export default function GeneralLedger() {
                   'PDF'
                 )}
               </Button>
+              )}
+              {permissions.includes("generalLedger_Export") && (
               <Button
                 variant="outlined"
                 startIcon={<TableChart sx={{marginLeft:'10px'}} />}
@@ -387,8 +391,8 @@ export default function GeneralLedger() {
                   'Excel'
                 )}
               </Button>
+              )}
             </Box>
-
             {/* Search and Reset Buttons */}
             <Box sx={{ 
               display: 'flex', 
@@ -414,6 +418,7 @@ export default function GeneralLedger() {
                   {isSmallScreen ? 'إعادة' : 'إعادة تعيين'}
                 </Button>
               )}
+              {permissions.includes("generalLedger_Add") && (
               <Button
                 variant="contained"
                 startIcon={<Search sx={{marginLeft:'10px'}} />}
@@ -426,6 +431,7 @@ export default function GeneralLedger() {
               >
                 بحث
               </Button>
+              )}
             </Box>
           </Box>
 
@@ -483,7 +489,7 @@ export default function GeneralLedger() {
             }}>
               <Search sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="body2" color="text.secondary">
-                اختر حساباً من خلال زر البحث لعرض القيود المحاسبية
+               {permissions.includes("generalLedger_Add") ? "اختر حساباً من خلال زر البحث لعرض القيود المحاسبية" : "لا توجد صلاحيات لعرض القيود المحاسبية"}
               </Typography>
             </Paper>
           ) : isLoadingLedger ? (

@@ -43,7 +43,7 @@ import {
   exportClientDetailsToExcel,
 } from "../../utilities/clientCollectionsExporter";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const ClientCollections = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -53,6 +53,8 @@ const ClientCollections = () => {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
+
+  const { permissions } = usePermissions();
 
   // Query for all clients
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
@@ -573,6 +575,7 @@ const ClientCollections = () => {
   const renderMobileClientDetails = () => (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
       {/* Export buttons */}
+      {permissions.includes("clientReport_Export") && (
       <Box sx={{ display: "flex", gap: 1, mb: 2, width: "100%", maxWidth: "600px" }}>
         <Button
           variant="contained"
@@ -597,6 +600,7 @@ const ClientCollections = () => {
           {isExportingExcel ? "..." : "Excel"}
         </Button>
       </Box>
+      )}
       {/* Client Info */}
       <Card sx={{ mb: 3, p: 3, width: "100%", maxWidth: "600px", boxShadow: 2, borderRadius: 1 }}>
         <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mb: 3, textAlign: "center" }}>
@@ -708,6 +712,7 @@ const ClientCollections = () => {
   const renderDesktopClientDetails = () => (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
       {/* Export buttons */}
+      {permissions.includes("clientReport_Export") && (
       <Box sx={{ display: "flex", gap: 2, mb: 3, width: "100%", maxWidth: "1400px", justifyContent: "flex-end" }}>
                     <Button
                       variant="contained"
@@ -730,6 +735,7 @@ const ClientCollections = () => {
                       {isExportingExcel ? "جاري التصدير..." : "تصدير Excel"}
                     </Button>
       </Box>
+      )}
       {renderClientInfo()}
       {renderClientSummaryCards()}
       {renderRepaymentSummary()}

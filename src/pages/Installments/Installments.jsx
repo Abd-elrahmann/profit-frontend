@@ -1208,7 +1208,7 @@ const Installments = () => {
           </Paper>
 
           {/* خطوات المراجعة للشاشات الصغيرة */}
-          {isSmallScreen && (
+          {isSmallScreen && !isSettlementCompleted() && (
             <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#fafafa" }}>
               <Typography variant="h6" fontWeight="bold" mb={2}>
                 خطوات المراجعة
@@ -1386,6 +1386,20 @@ const Installments = () => {
             </Paper>
           )}
 
+          {/* رسالة التسوية المكتملة للشاشات الصغيرة */}
+          {isSmallScreen && isSettlementCompleted() && (
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#f0f9ff" }}>
+              <Box sx={{ textAlign: "center", py: 2 }}>
+                <Typography variant="h6" fontWeight="bold" color="success.main" mb={2}>
+                  🎉 تم تسوية السلفة بالكامل
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  جميع الدفعات تم سدادها بنجاح وإغلاق السلفة نهائياً
+                </Typography>
+              </Box>
+            </Paper>
+          )}
+
           {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
           {allInstallmentsPaid() && !isSettlementCompleted() && (
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
@@ -1424,7 +1438,7 @@ const Installments = () => {
           </Paper>
         </Box>
 
-        {!isSmallScreen && (
+        {!isSmallScreen && !isSettlementCompleted() && (
           <Box
             sx={{
               width: "270px",
@@ -1611,6 +1625,29 @@ const Installments = () => {
             )}
           </Box>
         </Box>
+        )}
+
+        {/* رسالة التسوية المكتملة للشاشات الكبيرة */}
+        {!isSmallScreen && isSettlementCompleted() && (
+          <Box
+            sx={{
+              width: "270px",
+              borderRight: "1px solid #ddd",
+              bgcolor: "#f0f9ff",
+              height: "100%",
+              overflowY: "auto",
+              flexShrink: 0,
+            }}
+          >
+            <Box sx={{ p: 3, textAlign: "center" }}>
+              <Typography variant="h6" fontWeight="bold" color="success.main" mb={2}>
+                🎉 تم تسوية السلفة بالكامل
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                جميع الدفعات تم سدادها بنجاح وإغلاق السلفة نهائياً
+              </Typography>
+            </Box>
+          </Box>
         )}
       </Box>
 

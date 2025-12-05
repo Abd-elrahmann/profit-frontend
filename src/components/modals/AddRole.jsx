@@ -42,6 +42,7 @@ const validationSchema = Yup.object().shape({
       canUpdate: Yup.boolean(),
       canDelete: Yup.boolean(),
       canPost: Yup.boolean(),
+      canExport: Yup.boolean(),
     })
   )
 });
@@ -61,7 +62,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       canAdd: false,
       canUpdate: false,
       canDelete: false,
-      canPost: false
+      canPost: false,
+      canExport: false
     }))
   });
 
@@ -75,7 +77,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           canAdd: existingPermission?.canAdd || false,
           canUpdate: existingPermission?.canUpdate || false,
           canDelete: existingPermission?.canDelete || false,
-          canPost: existingPermission?.canPost || false
+          canPost: existingPermission?.canPost || false,
+          canExport: existingPermission?.canExport || false
         };
       });
 
@@ -158,7 +161,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       canAdd: checked,
       canUpdate: checked,
       canDelete: checked,
-      canPost: checked
+      canPost: checked,
+      canExport: checked
     }));
     setFieldValue('permissions', updatedPermissions);
   };
@@ -172,7 +176,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
   };
 
   const isAllPermissionsSelected = (values) => {
-    const allFields = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'];
+    const allFields = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost', 'canExport'];
     return allFields.every(field => isAllSelected(values, field));
   };
 
@@ -199,9 +203,9 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       </Box>
       
       {/* Header with Select All checkboxes */}
-      <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr repeat(5, auto)',
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: '1fr repeat(6, auto)',
         gap: 1,
         alignItems: 'center',
         mb: 2,
@@ -212,8 +216,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
           الصلاحيات
         </Typography>
-        {['عرض', 'إضافة', 'تعديل', 'حذف', 'اعتماد'].map((action, index) => {
-          const field = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'][index];
+        {['عرض', 'إضافة', 'تعديل', 'حذف', 'اعتماد', 'تصدير'].map((action, index) => {
+          const field = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost', 'canExport'][index];
           const allSelected = isAllSelected(values, field);
           const someSelected = isAnySelected(values, field);
           return (
@@ -246,7 +250,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
               key={permission.module}
               sx={{
                 display: 'grid',
-                gridTemplateColumns: 'auto 1fr repeat(5, auto)',
+                gridTemplateColumns: 'auto 1fr repeat(6, auto)',
                 gap: 1,
                 alignItems: 'center',
                 p: 1,
@@ -261,7 +265,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                 {moduleConfig?.label || permission.module}
               </Typography>
               
-              {['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost'].map((field) => (
+              {['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost', 'canExport'].map((field) => (
                 <Box key={field} sx={{ display: 'flex', justifyContent: 'center' }}>
                   <FormControlLabel
                     control={
@@ -327,7 +331,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                     { field: 'canAdd', label: 'إضافة' },
                     { field: 'canUpdate', label: 'تعديل' },
                     { field: 'canDelete', label: 'حذف' },
-                    { field: 'canPost', label: 'اعتماد' }
+                    { field: 'canPost', label: 'اعتماد' },
+                    { field: 'canExport', label: 'تصدير' }
                   ].map(({ field, label }) => (
                     <FormControlLabel
                       key={field}

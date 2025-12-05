@@ -126,9 +126,11 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               تاريخ الإنشاء
             </StyledTableCell>
+            {permissions.includes("journals_Update") || permissions.includes("journals_Delete") || permissions.includes("journals_Add") && (
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               الإجراءات
             </StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -171,6 +173,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {dayjs(journal.createdAt).format("DD/MM/YYYY")}
                 </StyledTableCell>
+                {permissions.includes("journals_Update") || permissions.includes("journals_Delete") || permissions.includes("journals_Add") && (
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Stack direction="row" spacing={1} justifyContent="center">
                     {permissions.includes("journals_Update") && (
@@ -188,6 +191,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                     )}
                   </Stack>
                 </StyledTableCell>
+                )}
               </StyledTableRow>
             ))
           )}

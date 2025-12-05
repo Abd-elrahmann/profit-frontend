@@ -290,12 +290,14 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                     size="small"
                     sx={{ fontWeight: '500' }}
                   />
-                  <IconButton
-                    size="small"
-                    onClick={(event) => handleMenuOpen(event, loan)}
-                  >
-                    <MoreVert fontSize="small" />
-                  </IconButton>
+                  {(permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete")) && (
+                    <IconButton
+                      size="small"
+                      onClick={(event) => handleMenuOpen(event, loan)}
+                    >
+                      <MoreVert fontSize="small" />
+                    </IconButton>
+                  )}
                 </Box>
               </Box>
 
@@ -465,9 +467,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               تاريخ التفعيل
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              الإجراءات
-            </StyledTableCell>
+            {permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete") && (
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                الإجراءات
+              </StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -581,17 +585,19 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                     )}
                   </Box>
                 </StyledTableCell>
+                {permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete") && (
                 <StyledTableCell
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
                 >
-                  <IconButton
-                    size="small"
-                    onClick={(event) => handleMenuOpen(event, loan)}
-                  >
+                    <IconButton
+                      size="small"
+                      onClick={(event) => handleMenuOpen(event, loan)}
+                    >
                     <MoreVert fontSize="small" />
                   </IconButton>
                 </StyledTableCell>
+                )}
               </StyledTableRow>
             ))
           )}

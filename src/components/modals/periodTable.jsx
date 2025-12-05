@@ -119,9 +119,11 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               تاريخ الإنشاء
             </StyledTableCell>
+            {permissions.includes("period_Update") || permissions.includes("period_Delete") || permissions.includes("period_Add") && (
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               الإجراءات
             </StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -168,6 +170,7 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {dayjs(period.createdAt).format("DD/MM/YYYY")}
                 </StyledTableCell>
+                {permissions.includes("period_Update") || permissions.includes("period_Delete") || permissions.includes("period_Add") && (
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Stack direction="row" spacing={1} justifyContent="center">
                     {permissions.includes("period_View") && (
@@ -185,6 +188,7 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
                     )}
                   </Stack>
                 </StyledTableCell>
+                )}
               </StyledTableRow>
             ))
           )}

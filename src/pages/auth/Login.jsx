@@ -66,6 +66,28 @@ const Login = () => {
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
+      // Clear old cached permissions format (for backward compatibility)
+      localStorage.removeItem('cached_permissions');
+      localStorage.removeItem('cached_permissions_timestamp');
+
+      // Clear cached permissions for other users (keep only current user's cache)
+      const currentUserId = user.id;
+      const keysToRemove = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('cached_permissions_') || key.startsWith('cached_permissions_timestamp_'))) {
+          // Extract user ID from key
+          const userIdMatch = key.match(/cached_permissions_(?:timestamp_)?(\d+)/);
+          if (userIdMatch && userIdMatch[1] !== currentUserId.toString()) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+
+      // Remove cached permissions for other users
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", cleanedValues.email);
       } else {

@@ -1747,6 +1747,7 @@ const Journals = () => {
 
                 {activeTab === 0 && (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    {permissions.includes("journals_Add") && (
                     <InputBase
                       placeholder="ابحث برقم القيد..."
                       value={searchQuery}
@@ -1764,6 +1765,8 @@ const Journals = () => {
                         bgcolor: "background.paper"
                       }}
                     />
+                    )}
+                    {permissions.includes("journals_Add") && (
                     <Button
                       variant="outlined"
                       startIcon={<SearchIcon sx={{marginLeft: "10px"}} />}
@@ -1776,6 +1779,7 @@ const Journals = () => {
                     >
                       بحث متقدم
                     </Button>
+                    )}
                     {(Object.keys(searchFilters).length > 0 || searchQuery) && (
                       <Button
                         variant="outlined"

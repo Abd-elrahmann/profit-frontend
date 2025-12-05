@@ -29,6 +29,7 @@ import LogsToolbar from "../../components/modals/LogsToolbar";
 import { Helmet } from "react-helmet-async";
 import { exportLogsToPDF, exportLogsToExcel } from "../../utilities/logsExporter";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
 
 const Logs = () => {
   const [page, setPage] = useState(1);
@@ -40,7 +41,9 @@ const Logs = () => {
     to: "",
     userName: "",
   });
-  
+
+  const { permissions } = usePermissions();
+
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
@@ -397,42 +400,44 @@ const Logs = () => {
       {/* Main Content */}
       <Box sx={{ p: isMobile ? 2 : 5 }}>
         {/* Export Buttons */}
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <MuiStack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportPDF}
-              disabled={!logsData?.data || logsData.data.length === 0}
-              sx={{
-                borderColor: "#d32f2f",
-                color: "#d32f2f",
-                "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                borderRadius: 2,
-                px: 2,
-                fontWeight: "bold",
-              }}
-            >
-              PDF
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportExcel}
-              disabled={!logsData?.data || logsData.data.length === 0}
-              sx={{
-                borderColor: "#2e7d32",
-                color: "#2e7d32",
-                "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-                borderRadius: 2,
-                px: 2,
-                fontWeight: "bold",
-              }}
-            >
-              Excel
-            </Button>
-          </MuiStack>
-        </Box>
+        {permissions.includes("logs_Export") && (
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <MuiStack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportPDF}
+                disabled={!logsData?.data || logsData.data.length === 0}
+                sx={{
+                  borderColor: "#d32f2f",
+                  color: "#d32f2f",
+                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: "bold",
+                }}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportExcel}
+                disabled={!logsData?.data || logsData.data.length === 0}
+                sx={{
+                  borderColor: "#2e7d32",
+                  color: "#2e7d32",
+                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: "bold",
+                }}
+              >
+                Excel
+              </Button>
+            </MuiStack>
+          </Box>
+        )}
 
         {/* Logs Toolbar */}
         <LogsToolbar

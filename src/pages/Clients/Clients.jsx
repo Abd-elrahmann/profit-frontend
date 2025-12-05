@@ -872,18 +872,20 @@ export default function Clients() {
                         {editMode ? "إلغاء التعديل" : "تعديل"}
                       </Button>
                     )}
-                    <Button
-                      variant="contained"
-                      startIcon={<Save sx={{ marginLeft: "10px" }} />}
-                      sx={{
-                        bgcolor: "#0d40a5",
-                        "&:hover": { bgcolor: "#0b3589" },
-                      }}
-                      disabled={!editMode}
-                      onClick={handleSaveChanges}
-                    >
-                      حفظ التغييرات
-                    </Button>
+                    {permissions.includes("clients_Update") && (
+                      <Button
+                        variant="contained"
+                        startIcon={<Save sx={{ marginLeft: "10px" }} />}
+                        sx={{
+                          bgcolor: "#0d40a5",
+                          "&:hover": { bgcolor: "#0b3589" },
+                        }}
+                        disabled={!editMode}
+                        onClick={handleSaveChanges}
+                      >
+                        حفظ التغييرات
+                      </Button>
+                    )}
                   </Box>
                 )}
             </Box>
@@ -1260,7 +1262,7 @@ export default function Clients() {
                   }}
                 >
                   <Typography variant="h6">معلومات الكفيل</Typography>
-                  {selectedClient && (
+                  {selectedClient && permissions.includes("clients_Add") && (
                     <Button
                       variant="contained"
                       startIcon={<Add />}
@@ -2073,38 +2075,40 @@ export default function Clients() {
                                     </Box>
 
                                     {/* أزرار العمليات */}
-                                    <Box>
-                                      <IconButton
-                                        onClick={() => handlePrintFile(value)}
-                                      >
-                                        <Print />
-                                      </IconButton>
-                                      <IconButton
-                                        onClick={() =>
-                                          handleDownloadFile(
-                                            value,
-                                            "",
-                                            clientDocumentTypes[key],
-                                            clientDetails.client.name
-                                          )
-                                        }
-                                      >
-                                        <Download />
-                                      </IconButton>
-                                      <IconButton
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleShareFile(
-                                            value,
-                                            clientDocumentTypes[key],
-                                            clientDetails.client.name
-                                          );
-                                        }}
-                                        title="مشاركة"
-                                      >
-                                        <Share />
-                                      </IconButton>
-                                    </Box>
+                                    {permissions.includes("clients_Export") && (
+                                      <Box>
+                                        <IconButton
+                                          onClick={() => handlePrintFile(value)}
+                                        >
+                                          <Print />
+                                        </IconButton>
+                                        <IconButton
+                                          onClick={() =>
+                                            handleDownloadFile(
+                                              value,
+                                              "",
+                                              clientDocumentTypes[key],
+                                              clientDetails.client.name
+                                            )
+                                          }
+                                        >
+                                          <Download />
+                                        </IconButton>
+                                        <IconButton
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleShareFile(
+                                              value,
+                                              clientDocumentTypes[key],
+                                              clientDetails.client.name
+                                            );
+                                          }}
+                                          title="مشاركة"
+                                        >
+                                          <Share />
+                                        </IconButton>
+                                      </Box>
+                                    )}
                                   </Paper>
                                 </Grid>
                               );
@@ -2428,40 +2432,42 @@ export default function Clients() {
                       sx={{ width: 150 }}
                     />
                   </Box>
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PictureAsPdf sx={{ marginLeft: "10px" }} />}
-                      onClick={handleExportPDF}
-                      disabled={!clientStatement}
-                      sx={{
-                        borderColor: "#d32f2f",
-                        color: "#d32f2f",
-                        "&:hover": {
-                          borderColor: "#b71c1c",
-                          backgroundColor: "rgba(211, 47, 47, 0.04)",
-                        },
-                      }}
-                    >
-                      تصدير PDF
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<TableChart sx={{ marginLeft: "10px" }} />}
-                      onClick={handleExportExcel}
-                      disabled={!clientStatement}
-                      sx={{
-                        borderColor: "#2e7d32",
-                        color: "#2e7d32",
-                        "&:hover": {
-                          borderColor: "#1b5e20",
-                          backgroundColor: "rgba(46, 125, 50, 0.04)",
-                        },
-                      }}
-                    >
-                      تصدير Excel
-                    </Button>
-                  </Box>
+                  {permissions.includes("clients_Export") && (
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<PictureAsPdf sx={{ marginLeft: "10px" }} />}
+                        onClick={handleExportPDF}
+                        disabled={!clientStatement}
+                        sx={{
+                          borderColor: "#d32f2f",
+                          color: "#d32f2f",
+                          "&:hover": {
+                            borderColor: "#b71c1c",
+                            backgroundColor: "rgba(211, 47, 47, 0.04)",
+                          },
+                        }}
+                      >
+                        تصدير PDF
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        startIcon={<TableChart sx={{ marginLeft: "10px" }} />}
+                        onClick={handleExportExcel}
+                        disabled={!clientStatement}
+                        sx={{
+                          borderColor: "#2e7d32",
+                          color: "#2e7d32",
+                          "&:hover": {
+                            borderColor: "#1b5e20",
+                            backgroundColor: "rgba(46, 125, 50, 0.04)",
+                          },
+                        }}
+                      >
+                        تصدير Excel
+                      </Button>
+                    </Box>
+                  )}
                 </Box>
 
                 {/* Statement Summary */}
@@ -2838,19 +2844,21 @@ export default function Clients() {
                                   </StyledTableCell>
                                   {/* Add View Details Icon Button */}
                                   <StyledTableCell align="center">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleViewLoanDetails(loan.id)}
-                                      sx={{
-                                        color: '#0d40a5',
-                                        '&:hover': {
-                                          backgroundColor: 'rgba(13, 64, 165, 0.1)',
-                                        }
-                                      }}
-                                      title="عرض التفاصيل"
-                                    >
-                                      <Visibility fontSize="small" />
-                                    </IconButton>
+                                    {permissions.includes("loans_View") && (
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleViewLoanDetails(loan.id)}
+                                        sx={{
+                                          color: '#0d40a5',
+                                          '&:hover': {
+                                            backgroundColor: 'rgba(13, 64, 165, 0.1)',
+                                          }
+                                        }}
+                                        title="عرض التفاصيل"
+                                      >
+                                        <Visibility fontSize="small" />
+                                      </IconButton>
+                                    )}
                                   </StyledTableCell>
                                 </StyledTableRow>
                               );

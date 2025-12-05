@@ -198,12 +198,14 @@ const Banks = () => {
             >
               الحالة
             </StyledTableCell>
+            {permissions.includes("banks_Update") || permissions.includes("banks_Delete") || permissions.includes("banks_Add") && (
             <StyledTableCell
               align="center"
               sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
               الإجراءات
             </StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -255,6 +257,7 @@ const Banks = () => {
                     }}
                   />
                 </StyledTableCell>
+                {permissions.includes("banks_Update") || permissions.includes("banks_Delete") || permissions.includes("banks_Add") && (
                 <StyledTableCell align="center">
                   <Stack
                     direction="row"
@@ -262,7 +265,6 @@ const Banks = () => {
                     justifyContent="center"
                     alignItems="center"
                   >
-                    {permissions.includes("banks_Update") && (
                     <IconButton
                       size="small"
                       color="primary"
@@ -270,8 +272,6 @@ const Banks = () => {
                     >
                       <Edit fontSize="small" />
                     </IconButton>
-                    )}
-                    {permissions.includes("banks_Delete") && (
                     <IconButton
                       size="small"
                       color="error"
@@ -282,9 +282,9 @@ const Banks = () => {
                     >
                       <Delete fontSize="small" />
                     </IconButton>
-                    )}
                   </Stack>
                 </StyledTableCell>
+                )}
               </StyledTableRow>
             ))
           )}
@@ -475,7 +475,7 @@ const Banks = () => {
           sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
         >
           {/* Export Buttons */}
-          
+          {permissions.includes("banks_Export") && (
           <Stack direction="row" spacing={1}>
             <Button
               size="small"
@@ -514,7 +514,7 @@ const Banks = () => {
               Excel
             </Button>
           </Stack>
-
+          )}
           {permissions.includes("banks_Add") && (
             <Button
               variant="contained"

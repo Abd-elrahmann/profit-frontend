@@ -182,7 +182,9 @@ export default function Employees() {
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الحالة</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الدور</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الإنشاء</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
+            {permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add") && (
+              <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -231,7 +233,8 @@ export default function Employees() {
               <StyledTableCell align="center" sx={{ color: "gray" }}>
                 {formatArabicDate(user.createdAt)}
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+              {permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add") && (
+                <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                 {permissions.includes("users_Update") && (
                 <IconButton color="primary" onClick={() => handleEdit(user)} title="تعديل">
                   <Edit />
@@ -258,7 +261,8 @@ export default function Employees() {
                 >
                   <HistoryIcon />
                 </IconButton>
-              </StyledTableCell>
+                </StyledTableCell>
+              )}
             </StyledTableRow>
           ))}
         </TableBody>
@@ -346,14 +350,16 @@ export default function Employees() {
                             <AdminPanelSettings fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
                         )}
+                        {permissions.includes("users_Add") && (
                         <IconButton 
                           color="black" 
                           onClick={() => handleViewLogs(user)}
                           size="small"
                           title="عرض سجل الأنشطة"
                         >
-                          <HistoryIcon fontSize={isMobile ? "small" : "medium"} />
-                        </IconButton>
+                            <HistoryIcon fontSize={isMobile ? "small" : "medium"} />
+                          </IconButton>
+                        )}
                       </Box>
                     </Box>
 
@@ -465,6 +471,7 @@ export default function Employees() {
             sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
           >
             {/* Export Buttons */}
+            {permissions.includes("users_Export") && (
             <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
@@ -501,6 +508,7 @@ export default function Employees() {
                 Excel
               </Button>
             </Stack>
+            )}
 
             {permissions.includes("users_Add") && (
               <Button
