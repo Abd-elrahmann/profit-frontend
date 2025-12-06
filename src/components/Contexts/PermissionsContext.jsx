@@ -66,6 +66,9 @@ export const PermissionProvider = ({ children }) => {
             case "contract-templates":
               moduleKey = "contractTemplates";
               break;
+            case "general-ledger":
+              moduleKey = "generalLedger";
+              break;
             default:
               moduleKey = module;
           }

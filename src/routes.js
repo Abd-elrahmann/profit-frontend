@@ -185,7 +185,7 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'دفتر الأستاذ العام',
-    module: 'general-ledger',
+    module: 'generalLedger',
     requiresPermissions: true,
     icon: JournalIcon,
     parent: 'المحاسبة المالية'
