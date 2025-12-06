@@ -467,7 +467,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               تاريخ التفعيل
             </StyledTableCell>
-            {permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete") && (
+            {(permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete")) && (
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                 الإجراءات
               </StyledTableCell>
@@ -585,7 +585,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                     )}
                   </Box>
                 </StyledTableCell>
-                {permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete") && (
+                {(permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete")) && (
                 <StyledTableCell
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
