@@ -141,7 +141,7 @@ export default function Roles() {
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الوصف</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>عدد الصلاحيات</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الإنشاء</StyledTableCell>
-            {permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add") && (
+            {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
               <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
             )}
           </StyledTableRow>
@@ -174,7 +174,7 @@ export default function Roles() {
               <StyledTableCell align="center" sx={{ color: "gray" }}>
                 {dayjs(role.createdAt).format("DD/MM/YYYY")}
               </StyledTableCell>
-              {permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add") && (
+              {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                 {permissions.includes("roles_Update") && (
                 <IconButton color="primary" onClick={() => handleEdit(role)}>
@@ -245,7 +245,7 @@ export default function Roles() {
                         {role.name}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        {permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add") && (
+                        {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
                           <IconButton
                             color="primary"
                             onClick={() => handleEdit(role)}
