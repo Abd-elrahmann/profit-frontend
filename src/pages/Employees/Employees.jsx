@@ -182,7 +182,7 @@ export default function Employees() {
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الحالة</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الدور</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الإنشاء</StyledTableCell>
-            {permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add") && (
+            {(permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add")) && (
               <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
             )}
           </StyledTableRow>
@@ -233,7 +233,7 @@ export default function Employees() {
               <StyledTableCell align="center" sx={{ color: "gray" }}>
                 {formatArabicDate(user.createdAt)}
               </StyledTableCell>
-              {permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add") && (
+              {(permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                 {permissions.includes("users_Update") && (
                 <IconButton color="primary" onClick={() => handleEdit(user)} title="تعديل">
