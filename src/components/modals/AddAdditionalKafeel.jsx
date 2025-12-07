@@ -28,7 +28,10 @@ const kafeelValidationSchema = Yup.object().shape({
   name: Yup.string().required('اسم الكفيل مطلوب'),
   nationalId: Yup.string().required('رقم هوية الكفيل مطلوب'),
   phone: Yup.string().required('رقم جوال الكفيل مطلوب'),
-  email: Yup.string().email('البريد الإلكتروني غير صالح'),
+  email: Yup.string()
+    .transform((value) => (value?.trim() === '' ? null : value))
+    .nullable()
+    .email('البريد الإلكتروني غير صالح'),
   birthDate: Yup.string().required('تاريخ الميلاد مطلوب'),
   city: Yup.string().required('المدينة مطلوبة'),
   district: Yup.string().required('الحي مطلوب'),
