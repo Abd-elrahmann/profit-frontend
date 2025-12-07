@@ -141,7 +141,7 @@ export default function Roles() {
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الوصف</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>عدد الصلاحيات</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الإنشاء</StyledTableCell>
-            {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add") || permissions.includes("roles_View")) && (
+            {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
               <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
             )}
           </StyledTableRow>
@@ -154,7 +154,7 @@ export default function Roles() {
               </StyledTableCell>
             </StyledTableRow>
           ) : rolesData?.roles?.map((role) => (
-            <StyledTableRow key={role.id} hover>  
+            <StyledTableRow key={role.id} hover>
               <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                 {role.name}
               </StyledTableCell>
@@ -174,7 +174,7 @@ export default function Roles() {
               <StyledTableCell align="center" sx={{ color: "gray" }}>
                 {dayjs(role.createdAt).format("DD/MM/YYYY")}
               </StyledTableCell>
-              {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add") || permissions.includes("roles_View")) && (
+              {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                 <IconButton color="primary" onClick={() => handleEdit(role)}>
                   <Edit />
@@ -239,7 +239,7 @@ export default function Roles() {
                         {role.name}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add") || permissions.includes("roles_View")) && (
+                        {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
                           <IconButton
                             color="primary"
                             onClick={() => handleEdit(role)}
@@ -248,7 +248,7 @@ export default function Roles() {
                             <Edit fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
                         )}
-                        {permissions.includes("roles_Update") || permissions.includes("roles_View") && (
+                        {permissions.includes("roles_Update") && (
                           <IconButton
                             color="info"
                             onClick={() => handleDashboardPermissions(role)}
@@ -258,7 +258,7 @@ export default function Roles() {
                             <Dashboard fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
                         )}
-                        {permissions.includes("roles_Delete") || permissions.includes("roles_View") && (
+                        {permissions.includes("roles_Delete") && (
                           <IconButton
                             color="error"
                             onClick={() => openDeleteModal(role.id)}
@@ -359,7 +359,7 @@ export default function Roles() {
             }}
           />
           
-          {permissions.includes("roles_Add") || permissions.includes("roles_View") && (          
+          {permissions.includes("roles_Add") && (          
             <Button
               variant="contained"
               startIcon={<Add />}
