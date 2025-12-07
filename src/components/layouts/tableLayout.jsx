@@ -9,6 +9,39 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Box, Typography, CircularProgress, TablePagination } from '@mui/material';
 
+// Scrollable Table Container with custom scrollbar styles
+export const ScrollableTableContainer = ({ children, maxHeight = 650, minWidth = 1200 }) => (
+  <Box sx={{
+    overflowX: 'auto',
+    overflowY: 'auto',
+    maxHeight,
+    scrollbarWidth: 'thin',
+    scrollbarColor: 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+    '&::-webkit-scrollbar': {
+      height: '8px',
+      width: '8px',
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      borderRadius: '4px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      borderRadius: '4px',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      },
+    },
+    '&::-webkit-scrollbar-thumb:active': {
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+  }}>
+    <Table stickyHeader sx={{ minWidth }}>
+      {children}
+    </Table>
+  </Box>
+);
+
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.primary.main,
@@ -89,8 +122,34 @@ const TableLayout = ({
         backgroundColor: 'background.paper'
       }}
     >
-      <TableContainer sx={{ maxHeight }}>
-        <Table stickyHeader sx={{ minWidth: 700 }}>
+      <TableContainer
+        sx={{
+          maxHeight,
+          overflowX: 'auto',
+          overflowY: 'auto',
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+          '&::-webkit-scrollbar': {
+            height: '8px',
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            },
+          },
+          '&::-webkit-scrollbar-thumb:active': {
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          },
+        }}
+      >
+        <Table stickyHeader sx={{ minWidth: 1200 }}>
           <TableHead>
             <TableRow>
               {columns.map((column) => (

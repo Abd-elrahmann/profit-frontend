@@ -120,7 +120,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
   const getPermissionCount = (permissions) => {
     if (!permissions) return 0;
     return permissions.reduce((count, perm) => {
-      const hasPermissions = perm.canView || perm.canAdd || perm.canUpdate || perm.canDelete || perm.canPost;
+      const hasPermissions = perm.canView || perm.canAdd || perm.canUpdate || perm.canDelete || perm.canPost || perm.canExport;
       return count + (hasPermissions ? 1 : 0);
     }, 0);
   };

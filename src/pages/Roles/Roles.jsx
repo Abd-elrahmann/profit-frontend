@@ -176,21 +176,15 @@ export default function Roles() {
               </StyledTableCell>
               {(permissions.includes("roles_Update") || permissions.includes("roles_Delete") || permissions.includes("roles_Add")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                {permissions.includes("roles_Update") && (
                 <IconButton color="primary" onClick={() => handleEdit(role)}>
                   <Edit />
                 </IconButton>
-                )}
-                {permissions.includes("roles_Update") && (
                 <IconButton color="info" onClick={() => handleDashboardPermissions(role)} title="صلاحيات الداشبورد">
                   <Dashboard />
-                </IconButton>
-                )}
-                {permissions.includes("roles_Delete") && (
+                </IconButton> 
                 <IconButton color="error" onClick={() => openDeleteModal(role.id)}>
                   <Delete />
                 </IconButton>
-                )}
               </StyledTableCell>
               )}
             </StyledTableRow>

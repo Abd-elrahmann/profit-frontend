@@ -1022,7 +1022,7 @@ const Journals = () => {
         </Typography>
         <Stack spacing={2}>
           {/* Export buttons - always show when viewing journal details */}
-          {!isAddMode && journalData && (
+          {!isAddMode && journalData && permissions.includes("journals_Export") && (
             <>
               <Button
                 variant="outlined"
@@ -1178,7 +1178,7 @@ const Journals = () => {
       </Typography>
       <Stack spacing={1}>
         {/* Export buttons for mobile */}
-        {!isAddMode && journalData && (
+        {!isAddMode && journalData && permissions.includes("journals_Export") && (
           <>
             <Button
               variant="outlined"

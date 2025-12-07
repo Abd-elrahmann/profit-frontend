@@ -43,6 +43,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
 
 const Zakah = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -52,6 +53,8 @@ const Zakah = () => {
   const [selectedFilterMonth, setSelectedFilterMonth] = useState(new Date().getMonth() + 1);
   const [selectedFilterYear, setSelectedFilterYear] = useState(new Date().getFullYear());
   const [isExporting, setIsExporting] = useState(false);
+
+  const { permissions } = usePermissions();
 
   // Debounced values to prevent excessive API calls
   const [debouncedMonth, setDebouncedMonth] = useState(selectedFilterMonth);
@@ -707,7 +710,7 @@ const Zakah = () => {
         </Grid>
 
         {/* Export Buttons - At the top */}
-        {!isAccountLoading && !accountError && accountReport && activeTab === 2 && (
+        {!isAccountLoading && !accountError && accountReport && activeTab === 2 && permissions.includes("zakat_Export") && (
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
             <Button
               variant="contained"
@@ -1007,26 +1010,28 @@ const Zakah = () => {
                 ) : partnerZakahData ? (
                   <>
                     {/* Export Buttons for Partner Zakah - At the top */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
-                        startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
-                        onClick={() => handleExportPDF()}
-                        disabled={isExporting}
-                      >
-                        {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
-                      </Button>
-                      <Button
-                        variant="contained"
-                        sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
-                        startIcon={<TableChart sx={{marginLeft: "10px"}} />}
-                        onClick={() => handleExportExcel()}
-                        disabled={isExporting}
-                      >
-                        {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
-                      </Button>
-                    </Box>
+                    {permissions.includes("zakat_Export") && (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
+                        <Button
+                          variant="contained"
+                          sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
+                          startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
+                          onClick={() => handleExportPDF()}
+                          disabled={isExporting}
+                        >
+                          {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
+                        </Button>
+                        <Button
+                          variant="contained"
+                          sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
+                          startIcon={<TableChart sx={{marginLeft: "10px"}} />}
+                          onClick={() => handleExportExcel()}
+                          disabled={isExporting}
+                        >
+                          {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
+                        </Button>
+                      </Box>
+                    )}
 
                     {isSmallScreen ? renderMobilePartnerDetails() : renderDesktopPartnerDetails()}
                   </>

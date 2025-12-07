@@ -34,7 +34,7 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
     name: Yup.string().required('اسم الكفيل مطلوب'),
     nationalId: Yup.string().required('رقم هوية الكفيل مطلوب'),
     phone: Yup.string().required('رقم جوال الكفيل مطلوب'),
-    email: Yup.string().email('البريد الإلكتروني غير صالح').nullable().notRequired(),
+    email: Yup.string().optional().email('البريد الإلكتروني غير صالح'),
     employer: Yup.string().required('جهة عمل الكفيل مطلوبة'),
     salary: Yup.number().required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
     obligations: Yup.number().required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
@@ -46,7 +46,7 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
   const baseSchema = {
     name: Yup.string().required('اسم العميل مطلوب'),
     phone: Yup.string().required('رقم الجوال مطلوب'),
-    email: Yup.string().email('البريد الإلكتروني غير صالح').nullable().notRequired(),
+    email: Yup.string().optional().email('البريد الإلكتروني غير صالح'),
     nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
     birthDate: Yup.date().required('تاريخ الميلاد مطلوب'),
     city: Yup.string().required('المدينة مطلوبة'),

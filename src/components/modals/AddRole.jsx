@@ -203,8 +203,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       </Box>
       
       {/* Header with Select All checkboxes */}
-      <Box sx={{
-        display: 'grid',
+      <Box sx={{ 
+        display: 'grid', 
         gridTemplateColumns: '1fr repeat(6, auto)',
         gap: 1,
         alignItems: 'center',

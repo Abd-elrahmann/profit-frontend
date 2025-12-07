@@ -49,7 +49,7 @@ import {
 } from "../../pages/Loans/loanApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import DeleteModal from "../../components/modals/DeleteModal";
-import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
+import { StyledTableCell, StyledTableRow, ScrollableTableContainer } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import { saveAs } from 'file-saver';
@@ -422,9 +422,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
 
   // Render desktop table
   const renderDesktopTable = () => (
-    <TableContainer sx={{ height: "100%", width: "100%" }}>
-      <Table stickyHeader sx={{ width: "100%" }}>
-        <TableHead>
+    <ScrollableTableContainer maxHeight="100%" minWidth={1200}>
+      <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               رقم السلفة
@@ -602,8 +601,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
             ))
           )}
         </TableBody>
-      </Table>
-    </TableContainer>
+      </ScrollableTableContainer>
   );
 
   return (

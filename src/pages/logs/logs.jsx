@@ -189,7 +189,7 @@ const Logs = () => {
       "Contract Templates": "القوالب العقدية",
       "Messages Templates": "قوالب الرسائل",
       "Users": "المستخدمين",
-      "Employees": "المسؤولين",
+      "Employees": "الموظفين",
       "Profile": "الملف الشخصي",
       "General Ledger": "دفتر الأستاذ العام",
       "Period": "تقفيل الفترات",

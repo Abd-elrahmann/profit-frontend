@@ -30,6 +30,7 @@ import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import LoansTable from "../../components/modals/LoansTable";
 import AddClient from "../../components/modals/AddClient";
+import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import LoanContractGenerator from "../../components/LoanContractGenerator";
 import LoanContractsPreview from "../../components/LoanContractsPreview";
 import Api, { handleApiError } from "../../config/Api";
@@ -50,6 +51,7 @@ const Loans = () => {
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [isAddKafeelOpen, setIsAddKafeelOpen] = useState(false);
   const [loanForm, setLoanForm] = useState({
     amount: "",
     totalInterest: "",
@@ -183,6 +185,24 @@ const Loans = () => {
 
   const handleKafeelSelect = (event, newValue) => {
     setSelectedKafeel(newValue);
+  };
+
+  const refreshSelectedClientData = async () => {
+    if (!selectedClient?.client?.id) return;
+    try {
+      const clientsResponse = await getClients(
+        1,
+        selectedClient.client.nationalId || selectedClient.client.name
+      );
+      const updatedClient = clientsResponse?.clients?.find(
+        (c) => c.client.id === selectedClient.client.id
+      );
+      if (updatedClient) {
+        setSelectedClient(updatedClient);
+      }
+    } catch (error) {
+      console.error("Error refreshing client data:", error);
+    }
   };
 
   const handleBankSelect = async (event, newValue) => {
@@ -1203,25 +1223,49 @@ const Loans = () => {
                         md={4}
                         sx={{
                           display: "flex",
-                          alignItems: "end",
+                          alignItems: "center",
                           justifyContent: isSmallScreen
                             ? "center"
                             : "flex-start",
+                          gap: 1.5,
                         }}
                       >
-                        {!isViewMode && !isEditMode && !isAdditionalLoan && (
+                        {!isViewMode &&
+                          !isEditMode &&
+                          !isAdditionalLoan &&
+                          !selectedClient && (
                           <Button
-                            variant="text"
+                            variant="outlined"
                             sx={{
                               color: "#0d40a5",
+                              borderColor: "#0d40a5",
                               fontWeight: "bold",
                               fontSize: isSmallScreen ? "12px" : "14px",
+                              whiteSpace: "nowrap",
                             }}
                             onClick={() => setIsAddClientOpen(true)}
                           >
-                            أو إنشاء عميل جديد
+                            إنشاء عميل جديد
                           </Button>
                         )}
+                        {selectedClient &&
+                          (!selectedClient.kafeels ||
+                            selectedClient.kafeels.length === 0) &&
+                          !isViewMode && (
+                            <Button
+                              variant="outlined"
+                              onClick={() => setIsAddKafeelOpen(true)}
+                              sx={{
+                                color: "#0d40a5",
+                                borderColor: "#0d40a5",
+                                fontWeight: "bold",
+                                fontSize: isSmallScreen ? "12px" : "14px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              إضافة كفيل جديد
+                            </Button>
+                          )}
                       </Grid>
                       {selectedClient?.kafeels &&
                         selectedClient.kafeels.length > 0 && (
@@ -1254,6 +1298,19 @@ const Loans = () => {
                                 />
                               )}
                             />
+                          </Grid>
+                        )}
+                      {selectedClient &&
+                        (!selectedClient.kafeels ||
+                          selectedClient.kafeels.length === 0) && (
+                          <Grid item xs={12} sm={10} md={8}>
+                            <Typography
+                              variant="body2"
+                              color="error"
+                              sx={{ fontWeight: "bold", mt: 1 }}
+                            >
+                              هذا العميل لا يوجد له كفيل.
+                            </Typography>
                           </Grid>
                         )}
                     </Grid>
@@ -1929,6 +1986,16 @@ const Loans = () => {
           setIsAddClientOpen(false);
           queryClient.invalidateQueries(["clients"]);
         }}
+      />
+
+      <AddAdditionalKafeel
+        open={isAddKafeelOpen}
+        onClose={async () => {
+          setIsAddKafeelOpen(false);
+          queryClient.invalidateQueries(["clients"]);
+          await refreshSelectedClientData();
+        }}
+        clientId={selectedClient?.client?.id}
       />
 
       {generateContracts && debtAckTemplate && promissoryNoteTemplate && (

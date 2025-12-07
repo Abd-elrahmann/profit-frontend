@@ -77,11 +77,11 @@ const routes = [
     element: Employees,
     protected: true,
     showInSidebar: true,
-    label: 'المسؤولين',
+    label: 'الموظفين',
     icon: Badge,
     module: 'users',
     requiresPermissions: true,
-    parent: 'إدارة المستخدمين'
+    parent: 'إدارة الموظفين'
   },
   {
     path: '/roles',
@@ -92,7 +92,7 @@ const routes = [
     icon: Security,
     module: 'roles',
     requiresPermissions: true,
-    parent: 'إدارة المستخدمين'
+    parent: 'إدارة الموظفين'
   },
 
   // العملاء مجموعة منفصلة
@@ -185,7 +185,7 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'دفتر الأستاذ العام',
-    module: 'generalLedger',
+    module: 'general-ledger',
     requiresPermissions: true,
     icon: JournalIcon,
     parent: 'المحاسبة المالية'

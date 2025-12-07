@@ -11,23 +11,23 @@ export const PermissionProvider = ({ children }) => {
     try {
       // Check if user is logged in before fetching
       const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
+      if (!token) {
+        console.warn('No token found, skipping permissions fetch');
 
-      if (!token || !user) {
-        console.warn('No token or user found, skipping permissions fetch');
+
         setLoading(false);
         return;
       }
 
-      const currentUser = JSON.parse(user);
-      const userId = currentUser.id;
+
+
       setLoading(true);
 
-      // Check if permissions are cached for this user and not expired (24 hours)
-      const userCacheKey = `cached_permissions_${userId}`;
-      const userTimestampKey = `cached_permissions_timestamp_${userId}`;
-      const cachedPermissions = localStorage.getItem(userCacheKey);
-      const cachedTimestamp = localStorage.getItem(userTimestampKey);
+      // Check if permissions are cached and not expired (24 hours)
+      const cachedPermissions = localStorage.getItem('cached_permissions');
+      const cachedTimestamp = localStorage.getItem('cached_permissions_timestamp');
+
+
       const now = Date.now();
 
       if (cachedPermissions && cachedTimestamp && (now - parseInt(cachedTimestamp)) < 24 * 60 * 60 * 1000) {
@@ -66,9 +66,9 @@ export const PermissionProvider = ({ children }) => {
             case "contract-templates":
               moduleKey = "contractTemplates";
               break;
-            case "general-ledger":
-              moduleKey = "generalLedger";
-              break;
+
+
+
             default:
               moduleKey = module;
           }
@@ -79,11 +79,11 @@ export const PermissionProvider = ({ children }) => {
 
       setPermissions(allPermissions);
 
-      // Cache permissions for this user for 24 hours
-      const saveCacheKey = `cached_permissions_${userId}`;
-      const saveTimestampKey = `cached_permissions_timestamp_${userId}`;
-      localStorage.setItem(saveCacheKey, JSON.stringify(allPermissions));
-      localStorage.setItem(saveTimestampKey, now.toString());
+      // Cache permissions for 24 hours
+      localStorage.setItem('cached_permissions', JSON.stringify(allPermissions));
+      localStorage.setItem('cached_permissions_timestamp', now.toString());
+
+
 
     } catch (err) {
       console.error("Error fetching permissions:", err);
@@ -94,17 +94,17 @@ export const PermissionProvider = ({ children }) => {
 
   // Function to refresh permissions manually
   const refreshPermissions = async () => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const currentUser = JSON.parse(user);
-      const userId = currentUser.id;
+    // Clear cache before refreshing
+    localStorage.removeItem('cached_permissions');
+    localStorage.removeItem('cached_permissions_timestamp');
 
-      // Clear cache for current user before refreshing
-      const refreshCacheKey = `cached_permissions_${userId}`;
-      const refreshTimestampKey = `cached_permissions_timestamp_${userId}`;
-      localStorage.removeItem(refreshCacheKey);
-      localStorage.removeItem(refreshTimestampKey);
-    }
+
+
+
+
+
+
+
     await fetchPermissions();
   };
 

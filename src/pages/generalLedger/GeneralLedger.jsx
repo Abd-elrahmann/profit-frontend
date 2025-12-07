@@ -39,6 +39,7 @@ import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableL
 import GeneralLedgerSearch from '../../components/modals/GeneralLedgerSearch';
 import { exportGeneralLedgerToPDF, exportGeneralLedgerToExcel } from '../../utilities/GeneralLedgerExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
 const getAccountLedger = async (accountId, fromDate = null, toDate = null, page = 1, limit = 10) => {
   const params = new URLSearchParams();
   if (fromDate) {
@@ -64,6 +65,8 @@ export default function GeneralLedger() {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
+
+  const { permissions } = usePermissions();
 
   // Query for account ledger data
   const { data: ledgerData, isLoading: isLoadingLedger, error } = useQuery({
@@ -338,55 +341,57 @@ export default function GeneralLedger() {
             alignItems: isSmallScreen ? 'stretch' : 'center',
           }}>
             {/* Export Buttons */}
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 1,
-              justifyContent: isSmallScreen ? 'center' : 'flex-start',
-              order: isSmallScreen ? 2 : 1
-            }}>
-              <Button
-                variant="outlined"
-                startIcon={<PictureAsPdf sx={{marginLeft:'10px'}} />}
-                onClick={handleExportPDF}
-                disabled={exportLoading.pdf || !ledgerData}
-                size={isSmallScreen ? "small" : "medium"}
-                sx={{
-                  borderColor: '#d32f2f',
-                  color: '#d32f2f',
-                  '&:hover': {
-                    borderColor: '#b71c1c',
-                    backgroundColor: 'rgba(211, 47, 47, 0.04)'
-                  }
-                }}
-              >
-                {exportLoading.pdf ? (
-                  <CircularProgress size={20} sx={{ color: '#d32f2f' }} />
-                ) : (
-                  'PDF'
-                )}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<TableChart sx={{marginLeft:'10px'}} />}
-                onClick={handleExportExcel}
-                disabled={exportLoading.excel || !ledgerData}
-                size={isSmallScreen ? "small" : "medium"}
-                sx={{
-                  borderColor: '#2e7d32',
-                  color: '#2e7d32',
-                  '&:hover': {
-                    borderColor: '#1b5e20',
-                    backgroundColor: 'rgba(46, 125, 50, 0.04)'
-                  }
-                }}
-              >
-                {exportLoading.excel ? (
-                  <CircularProgress size={20} sx={{ color: '#2e7d32' }} />
-                ) : (
-                  'Excel'
-                )}
-              </Button>
-            </Box>
+            {permissions.includes("general-ledger_Export") && (
+              <Box sx={{
+                display: 'flex',
+                gap: 1,
+                justifyContent: isSmallScreen ? 'center' : 'flex-start',
+                order: isSmallScreen ? 2 : 1
+              }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<PictureAsPdf sx={{marginLeft:'10px'}} />}
+                  onClick={handleExportPDF}
+                  disabled={exportLoading.pdf || !ledgerData}
+                  size={isSmallScreen ? "small" : "medium"}
+                  sx={{
+                    borderColor: '#d32f2f',
+                    color: '#d32f2f',
+                    '&:hover': {
+                      borderColor: '#b71c1c',
+                      backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                    }
+                  }}
+                >
+                  {exportLoading.pdf ? (
+                    <CircularProgress size={20} sx={{ color: '#d32f2f' }} />
+                  ) : (
+                    'PDF'
+                  )}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<TableChart sx={{marginLeft:'10px'}} />}
+                  onClick={handleExportExcel}
+                  disabled={exportLoading.excel || !ledgerData}
+                  size={isSmallScreen ? "small" : "medium"}
+                  sx={{
+                    borderColor: '#2e7d32',
+                    color: '#2e7d32',
+                    '&:hover': {
+                      borderColor: '#1b5e20',
+                      backgroundColor: 'rgba(46, 125, 50, 0.04)'
+                    }
+                  }}
+                >
+                  {exportLoading.excel ? (
+                    <CircularProgress size={20} sx={{ color: '#2e7d32' }} />
+                  ) : (
+                    'Excel'
+                  )}
+                </Button>
+              </Box>
+            )}
             {/* Search and Reset Buttons */}
             <Box sx={{ 
               display: 'flex', 

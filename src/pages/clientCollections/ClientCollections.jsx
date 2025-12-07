@@ -575,7 +575,7 @@ const ClientCollections = () => {
   const renderMobileClientDetails = () => (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
       {/* Export buttons */}
-      {permissions.includes("clientReport_Export") && (
+      {permissions.includes("client-report_Export") && (
       <Box sx={{ display: "flex", gap: 1, mb: 2, width: "100%", maxWidth: "600px" }}>
         <Button
           variant="contained"
@@ -712,7 +712,7 @@ const ClientCollections = () => {
   const renderDesktopClientDetails = () => (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
       {/* Export buttons */}
-      {permissions.includes("clientReport_Export") && (
+      {permissions.includes("client-report_Export") && (
       <Box sx={{ display: "flex", gap: 2, mb: 3, width: "100%", maxWidth: "1400px", justifyContent: "flex-end" }}>
                     <Button
                       variant="contained"

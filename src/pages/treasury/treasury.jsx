@@ -67,6 +67,7 @@ import {
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
 import { exportJournalsToPDF, exportJournalsToExcel } from '../../utilities/treasuryJournalsExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
 
 
 const getBankAccountData = async (month = null) => {
@@ -93,6 +94,8 @@ export default function Treasury() {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
+
+  const { permissions } = usePermissions();
 
   const { data: bankData, isLoading, error } = useQuery({
     queryKey: ["bank-account", selectedMonth],
@@ -1128,35 +1131,37 @@ export default function Treasury() {
                           إجمالي {currentTotalTransactions} قيد
                         </Typography>
                         
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: isSmallScreen ? 'center' : 'flex-start' }}>
-                          <IconButton
-                            onClick={handleExportPDF}
-                            disabled={isExporting || currentJournals.length === 0}
-                            size="small"
-                            title="تصدير PDF"
-                            sx={{
-                              color: 'error.main',
-                              '&:hover': { bgcolor: 'error.main', color: 'white' },
-                              '&:disabled': { bgcolor: 'grey.200', color: 'grey.400' }
-                            }}
-                          >
-                            {isExporting ? <CircularProgress size={16} /> : <PictureAsPdf fontSize="small" />}
-                          </IconButton>
-                          
-                          <IconButton
-                            onClick={handleExportExcel}
-                            disabled={isExporting || currentJournals.length === 0}
-                            size="small"
-                            title="تصدير Excel"
-                            sx={{
-                              color: 'success.main',
-                              '&:hover': { bgcolor: 'success.main', color: 'white' },
-                              '&:disabled': { bgcolor: 'grey.200', color: 'grey.400' }
-                            }}
-                          >
-                            {isExporting ? <CircularProgress size={16} /> : <TableChart fontSize="small" />}
-                          </IconButton>
-                        </Box>
+                        {permissions.includes("treasury_Export") && (
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: isSmallScreen ? 'center' : 'flex-start' }}>
+                            <IconButton
+                              onClick={handleExportPDF}
+                              disabled={isExporting || currentJournals.length === 0}
+                              size="small"
+                              title="تصدير PDF"
+                              sx={{
+                                color: 'error.main',
+                                '&:hover': { bgcolor: 'error.main', color: 'white' },
+                                '&:disabled': { bgcolor: 'grey.200', color: 'grey.400' }
+                              }}
+                            >
+                              {isExporting ? <CircularProgress size={16} /> : <PictureAsPdf fontSize="small" />}
+                            </IconButton>
+
+                            <IconButton
+                              onClick={handleExportExcel}
+                              disabled={isExporting || currentJournals.length === 0}
+                              size="small"
+                              title="تصدير Excel"
+                              sx={{
+                                color: 'success.main',
+                                '&:hover': { bgcolor: 'success.main', color: 'white' },
+                                '&:disabled': { bgcolor: 'grey.200', color: 'grey.400' }
+                              }}
+                            >
+                              {isExporting ? <CircularProgress size={16} /> : <TableChart fontSize="small" />}
+                            </IconButton>
+                          </Box>
+                        )}
                       </Box>
                     </Box>
 

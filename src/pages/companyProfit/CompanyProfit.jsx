@@ -188,53 +188,57 @@ export default function CompanyProfit() {
                   سحب أرباح
                 </Button>
                 )}
-                <Button
-                  variant="outlined"
-                  startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
-                  onClick={handleExportPDF}
-                  disabled={isExporting}
-                  sx={{
-                    color: 'error.main',
-                    borderColor: 'error.main',
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      borderColor: 'error.main'
-                    },
-                    '&:disabled': {
-                      bgcolor: 'grey.200',
-                      color: 'grey.400',
-                      borderColor: 'grey.400'
-                    },
-                    minWidth: isSmallScreen ? '100%' : 'auto'
-                  }}
-                >
-                  {isExporting ? <CircularProgress size={16} /> : 'تصدير PDF'}
-                </Button>
+                {permissions.includes("company_Export") && (
+                  <>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
+                      onClick={handleExportPDF}
+                      disabled={isExporting}
+                      sx={{
+                        color: 'error.main',
+                        borderColor: 'error.main',
+                        '&:hover': {
+                          bgcolor: 'error.main',
+                          color: 'white',
+                          borderColor: 'error.main'
+                        },
+                        '&:disabled': {
+                          bgcolor: 'grey.200',
+                          color: 'grey.400',
+                          borderColor: 'grey.400'
+                        },
+                        minWidth: isSmallScreen ? '100%' : 'auto'
+                      }}
+                    >
+                      {isExporting ? <CircularProgress size={16} /> : 'تصدير PDF'}
+                    </Button>
 
-                <Button
-                  variant="outlined"
-                  startIcon={<TableChart sx={{marginLeft: "10px"}} />}
-                  onClick={handleExportExcel}
-                  disabled={isExporting}
-                  sx={{
-                    color: 'success.main',
-                    borderColor: 'success.main',
-                    '&:hover': {
-                      bgcolor: 'success.main',
-                      color: 'white',
-                      borderColor: 'success.main'
-                    },
-                    '&:disabled': {
-                      bgcolor: 'grey.200',
-                      color: 'grey.400',
-                      borderColor: 'grey.400'
-                    },
-                    minWidth: isSmallScreen ? '100%' : 'auto'
-                  }}
-                >
-                  {isExporting ? <CircularProgress size={16} /> : 'تصدير Excel'}
-                </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<TableChart sx={{marginLeft: "10px"}} />}
+                      onClick={handleExportExcel}
+                      disabled={isExporting}
+                      sx={{
+                        color: 'success.main',
+                        borderColor: 'success.main',
+                        '&:hover': {
+                          bgcolor: 'success.main',
+                          color: 'white',
+                          borderColor: 'success.main'
+                        },
+                        '&:disabled': {
+                          bgcolor: 'grey.200',
+                          color: 'grey.400',
+                          borderColor: 'grey.400'
+                        },
+                        minWidth: isSmallScreen ? '100%' : 'auto'
+                      }}
+                    >
+                      {isExporting ? <CircularProgress size={16} /> : 'تصدير Excel'}
+                    </Button>
+                  </>
+                )}
               </Box>
             </Box>
 
