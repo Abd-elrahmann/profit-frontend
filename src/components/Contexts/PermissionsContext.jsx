@@ -23,19 +23,6 @@ export const PermissionProvider = ({ children }) => {
 
       setLoading(true);
 
-      // Check if permissions are cached and not expired (24 hours)
-      const cachedPermissions = localStorage.getItem('cached_permissions');
-      const cachedTimestamp = localStorage.getItem('cached_permissions_timestamp');
-
-
-      const now = Date.now();
-
-      if (cachedPermissions && cachedTimestamp && (now - parseInt(cachedTimestamp)) < 24 * 60 * 60 * 1000) {
-        setPermissions(JSON.parse(cachedPermissions));
-        setLoading(false);
-        return;
-      }
-
       const modulesRes = await Api.get("/api/auth/modules");
 
       // Use Promise.all to fetch all permissions in parallel instead of sequentially
@@ -79,12 +66,7 @@ export const PermissionProvider = ({ children }) => {
 
       setPermissions(allPermissions);
 
-      // Cache permissions for 24 hours
-      localStorage.setItem('cached_permissions', JSON.stringify(allPermissions));
-      localStorage.setItem('cached_permissions_timestamp', now.toString());
-
-
-
+      // No caching: always pull latest permissions so UI reflects changes immediately
     } catch (err) {
       console.error("Error fetching permissions:", err);
     } finally {
