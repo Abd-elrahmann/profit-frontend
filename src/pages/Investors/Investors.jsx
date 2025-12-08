@@ -569,6 +569,7 @@ export default function Investors() {
         email: investorDetails.email || '',
         orgProfitPercent: investorDetails.orgProfitPercent || '',
         capitalAmount: investorDetails.capitalAmount || '',
+        isActive: investorDetails.isActive,
       });
     }
   }, [investorDetails]);
@@ -1055,17 +1056,44 @@ export default function Investors() {
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <Typography variant="body2" mb={1} fontWeight={500}>الحالة</Typography>
-                        <TextField
-                          value={getStatusText(investorDetails.isActive)}
-                          fullWidth
-                          disabled
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#f9fafb',
-                              borderRadius: '6px',
-                            },
-                          }}
-                        />
+                        {editMode ? (
+                          <Box>
+                            <TextField
+                              select
+                              value={editFormData.isActive !== undefined ? editFormData.isActive : investorDetails.isActive}
+                              onChange={(e) => handleInputChange('isActive', e.target.value)}
+                              fullWidth
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: '#ffffff',
+                                  borderRadius: '6px',
+                                },
+                              }}
+                            >
+                              <MenuItem value={true}>نشط</MenuItem>
+                              <MenuItem value={false}>غير نشط</MenuItem>
+                            </TextField>
+                            {editFormData.isActive !== investorDetails.isActive && (
+                              <Alert severity="info" sx={{ mt: 1, fontSize: '0.85rem' }}>
+                                {editFormData.isActive ? 
+                                  'سيتم تفعيل المستثمر وسيدخل في توزيع الأرباح' : 
+                                  'سيتم إيقاف المستثمر وسيخرج من توزيع الأرباح'}
+                              </Alert>
+                            )}
+                          </Box>
+                        ) : (
+                          <TextField
+                            value={getStatusText(investorDetails.isActive)}
+                            fullWidth
+                            disabled
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#f9fafb',
+                                borderRadius: '6px',
+                              },
+                            }}
+                          />
+                        )}
                       </Grid>
                     </Grid>
                   </Paper>
@@ -1231,6 +1259,7 @@ export default function Investors() {
                             email: investorDetails.email || '',
                             orgProfitPercent: investorDetails.orgProfitPercent || '',
                             capitalAmount: investorDetails.capitalAmount || '',
+                            isActive: investorDetails.isActive,
                           });
                           setHasDataChanged(false);
                         }

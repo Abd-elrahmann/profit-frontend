@@ -16,25 +16,15 @@ const registerArabicFonts = (doc) => {
 };
 
 // Get status text and color
-const getStatusText = (client) => {
-  // إذا لم يكن لدى العميل أي ديون أو مدفوعات (عميل جديد)
-  if (client.totalDebit === 0 && client.totalPaid === 0) {
-    return 'عميل جديد';
-  }
-
-  if (client.remaining > 0) return 'مديون';
-  if (client.remaining === 0) return 'مدفوع بالكامل';
+const getStatusText = (remaining) => {
+  if (remaining > 0) return 'مديون';
+  if (remaining === 0) return 'مدفوع بالكامل';
   return 'لديه رصيد';
 };
 
-const getStatusColor = (client) => {
-  // إذا لم يكن لدى العميل أي ديون أو مدفوعات (عميل جديد)
-  if (client.totalDebit === 0 && client.totalPaid === 0) {
-    return [128, 128, 128]; // gray for new client
-  }
-
-  if (client.remaining > 0) return [220, 53, 69]; // error red
-  if (client.remaining === 0) return [40, 167, 69]; // success green
+const getStatusColor = (remaining) => {
+  if (remaining > 0) return [220, 53, 69]; // error red
+  if (remaining === 0) return [40, 167, 69]; // success green
   return [23, 162, 184]; // info blue
 };
 
@@ -43,7 +33,7 @@ const formatCurrency = (amount) => {
   return amount?.toLocaleString('en-US') || '0';
 };
 
-export const exportClientCollectionsToPDF = async (clientsData) => {
+export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE') => {
   return new Promise((resolve, reject) => {
     try {
       // Validate data
@@ -57,9 +47,13 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
       // Register Arabic fonts
       registerArabicFonts(doc);
       
+      // Determine title based on status
+      const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
+      const documentTitle = `كشف تحصيل ${statusTitle}`;
+      
       // Set document properties
       doc.setProperties({
-        title: 'كشف تحصيل العملاء',
+        title: documentTitle,
         subject: 'تقرير تحصيل العملاء',
         author: 'نظام إدارة السلف',
         keywords: 'تحصيل, عملاء, تقرير',
@@ -79,7 +73,7 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
       // Title section
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
-      doc.text('كشف تحصيل العملاء', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      doc.text(documentTitle, doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
@@ -89,29 +83,39 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
       const pageWidth = doc.internal.pageSize.width;
       let yPosition = 45;
 
-      // Prepare table data
+      // Prepare table data with the new structure
       const tableData = clientsData.data.map(client => [
-        getStatusText(client.remaining),
-        formatCurrency(Math.abs(client.remaining)),
-        formatCurrency(client.totalPaid),
-        formatCurrency(client.totalDebit),
+        getStatusText(client.financials.remaining),
+        formatCurrency(Math.abs(client.financials.remaining)),
+        formatCurrency(client.financials.totalDiscounts || 0),
+        formatCurrency(client.financials.totalInterestPaid || 0),
+        formatCurrency(client.financials.totalPaid),
+        formatCurrency(client.financials.totalDebit),
+        `${client.repaymentSummary.paidRepayments}/${client.repaymentSummary.remainingRepayments}`,
+        client.loansSummary.loansCount,
+        client.address || '-',
         client.phone || '-',
         client.name
       ]);
 
       // Table headers (RTL order)
       const headers = [
-        ['الحالة', 'المتبقي', 'إجمالي المدفوع', 'إجمالي المديونية', 'الهاتف', 'اسم العميل']
+        ['الحالة', 'المتبقي', 'الخصومات', 'الفوائد', 'إجمالي المدفوع', 'إجمالي المديونية', 'الدفعات (مدفوعة/متبقية)', 'عدد السلف', 'العنوان', 'الهاتف', 'اسم العميل']
       ];
 
       // Column widths for landscape
       const columnWidths = {
-        0: 25, // الحالة
-        1: 30, // المتبقي
-        2: 30, // إجمالي المدفوع
-        3: 30, // إجمالي المديونية
-        4: 30, // الهاتف
-        5: 50  // اسم العميل
+        0: 22,  // الحالة
+        1: 24,  // المتبقي
+        2: 20,  // الخصومات
+        3: 20,  // الفوائد
+        4: 24,  // إجمالي المدفوع
+        5: 24,  // إجمالي المديونية
+        6: 30,  // الدفعات
+        7: 18,  // عدد السلف
+        8: 30,  // العنوان
+        9: 22,  // الهاتف
+        10: 35  // اسم العميل
       };
 
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
@@ -127,8 +131,8 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
         styles: {
           font: 'Amiri',
           fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 3,
+          fontSize: 7,
+          cellPadding: 2,
           lineColor: [200, 200, 200],
           lineWidth: 0.1,
           halign: 'right',
@@ -140,37 +144,38 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
           fillColor: [13, 64, 165],
           textColor: 255,
           fontStyle: 'bold',
-          fontSize: 9,
+          fontSize: 8,
           halign: 'right',
           valign: 'middle',
-          cellPadding: 5,
+          cellPadding: 3,
           overflow: 'hidden',
           direction: 'rtl'
         },
         bodyStyles: {
           halign: 'right',
           valign: 'middle',
-          cellPadding: 3,
+          cellPadding: 2,
           direction: 'rtl'
         },
         columnStyles: {
-          0: { 
-            cellWidth: columnWidths[0],
-            cellPadding: 4,
-            halign: 'center'
-          },
-          1: { cellWidth: columnWidths[1], halign: 'right' },
-          2: { cellWidth: columnWidths[2], halign: 'right' },
-          3: { cellWidth: columnWidths[3], halign: 'right' },
-          4: { cellWidth: columnWidths[4], halign: 'right' },
-          5: { cellWidth: columnWidths[5], halign: 'right' }
+          0: { cellWidth: columnWidths[0], halign: 'center' },  // الحالة
+          1: { cellWidth: columnWidths[1], halign: 'right' },   // المتبقي
+          2: { cellWidth: columnWidths[2], halign: 'right' },   // الخصومات
+          3: { cellWidth: columnWidths[3], halign: 'right' },   // الفوائد
+          4: { cellWidth: columnWidths[4], halign: 'right' },   // إجمالي المدفوع
+          5: { cellWidth: columnWidths[5], halign: 'right' },   // إجمالي المديونية
+          6: { cellWidth: columnWidths[6], halign: 'center' },  // الدفعات
+          7: { cellWidth: columnWidths[7], halign: 'center' },  // عدد السلف
+          8: { cellWidth: columnWidths[8], halign: 'right' },   // العنوان
+          9: { cellWidth: columnWidths[9], halign: 'right' },   // الهاتف
+          10: { cellWidth: columnWidths[10], halign: 'right' }  // اسم العميل
         },
         didParseCell: function (data) {
           // Color status cells based on remaining amount
           if (data.column.index === 0 && data.row.index >= 0) {
             const client = clientsData.data[data.row.index];
             if (client) {
-              const color = getStatusColor(client.remaining);
+              const color = getStatusColor(client.financials.remaining);
               data.cell.styles.fillColor = color;
               data.cell.styles.textColor = [255, 255, 255];
             }
@@ -226,7 +231,8 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
       }
       
       // Save PDF
-      const fileName = `كشف_تحصيل_العملاء_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
+      const fileName = `كشف_تحصيل_العملاء_${statusSuffix}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
     } catch (error) {
@@ -611,7 +617,7 @@ export const exportClientDetailsToExcel = async (clientDetails) => {
   }
 };
 
-export const exportClientCollectionsToExcel = async (clientsData) => {
+export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTIVE') => {
   try {
     // Validate data
     if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
@@ -621,37 +627,47 @@ export const exportClientCollectionsToExcel = async (clientsData) => {
     // Create workbook
     const workbook = XLSX.utils.book_new();
     
+    // Determine title based on status
+    const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
+    
     // Summary data
     const summaryData = [
-      ['كشف تحصيل العملاء'],
+      [`كشف تحصيل ${statusTitle}`],
       [`تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`],
       [`إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length}`],
       [''],
       ['ملخص الإحصائيات'],
       [''],
-      ['إجمالي المديونية', clientsData.data.reduce((sum, c) => sum + (c.totalDebit || 0), 0)],
-      ['إجمالي المدفوع', clientsData.data.reduce((sum, c) => sum + (c.totalPaid || 0), 0)],
-      ['إجمالي المتبقي', clientsData.data.reduce((sum, c) => sum + (Math.abs(c.remaining) || 0), 0)],
+      ['إجمالي المديونية', clientsData.data.reduce((sum, c) => sum + (c.financials.totalDebit || 0), 0)],
+      ['إجمالي المدفوع', clientsData.data.reduce((sum, c) => sum + (c.financials.totalPaid || 0), 0)],
+      ['إجمالي الفوائد', clientsData.data.reduce((sum, c) => sum + (c.financials.totalInterestPaid || 0), 0)],
+      ['إجمالي الخصومات', clientsData.data.reduce((sum, c) => sum + (c.financials.totalDiscounts || 0), 0)],
+      ['إجمالي المتبقي', clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials.remaining) || 0), 0)],
       [''],
       ['تفاصيل العملاء'],
       ['']
     ];
     
-    // Clients data
+    // Clients data with updated structure
     const clientsTableData = [
-      ['اسم العميل', 'الهاتف', 'إجمالي المديونية', 'إجمالي المدفوع', 'المتبقي', 'الحالة', 'عدد القروض', 'عدد الدفعات']
+      ['اسم العميل', 'الهاتف', 'العنوان', 'عدد السلف', 'الدفعات المدفوعة', 'الدفعات المتبقية', 'إجمالي المديونية', 'إجمالي المدفوع', 'الفوائد', 'الخصومات', 'المتبقي', 'الحالة', 'ملاحظات']
     ];
     
     clientsData.data.forEach(client => {
       clientsTableData.push([
         client.name || '-',
         client.phone || '-',
-        client.totalDebit || 0,
-        client.totalPaid || 0,
-        Math.abs(client.remaining) || 0,
-        getStatusText(client.remaining),
-        client.loansCount || 0,
-        client.repaymentsCount || 0
+        client.address || '-',
+        client.loansSummary.loansCount || 0,
+        client.repaymentSummary.paidRepayments || 0,
+        client.repaymentSummary.remainingRepayments || 0,
+        client.financials.totalDebit || 0,
+        client.financials.totalPaid || 0,
+        client.financials.totalInterestPaid || 0,
+        client.financials.totalDiscounts || 0,
+        Math.abs(client.financials.remaining) || 0,
+        getStatusText(client.financials.remaining),
+        client.note || '-'
       ]);
     });
     
@@ -665,12 +681,17 @@ export const exportClientCollectionsToExcel = async (clientsData) => {
     sheet['!cols'] = [
       { wch: 25 }, // اسم العميل
       { wch: 15 }, // الهاتف
+      { wch: 25 }, // العنوان
+      { wch: 12 }, // عدد السلف
+      { wch: 15 }, // الدفعات المدفوعة
+      { wch: 15 }, // الدفعات المتبقية
       { wch: 18 }, // إجمالي المديونية
       { wch: 18 }, // إجمالي المدفوع
+      { wch: 15 }, // الفوائد
+      { wch: 15 }, // الخصومات
       { wch: 15 }, // المتبقي
       { wch: 15 }, // الحالة
-      { wch: 12 }, // عدد القروض
-      { wch: 12 }  // عدد الدفعات
+      { wch: 30 }  // ملاحظات
     ];
     
     // Style header row (row 12 in 0-indexed, which is row 13 in Excel)
@@ -699,7 +720,8 @@ export const exportClientCollectionsToExcel = async (clientsData) => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
     });
     
-    const fileName = `كشف_تحصيل_العملاء_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
+    const fileName = `كشف_تحصيل_العملاء_${statusSuffix}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
     
   } catch (error) {

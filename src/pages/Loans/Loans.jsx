@@ -502,7 +502,7 @@ const Loans = () => {
         InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
-        startDate: loanForm.startDate,
+        startDate: loanForm.startDate || undefined,
         repaymentDay: parseInt(loanForm.repaymentDay),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
@@ -579,7 +579,7 @@ const Loans = () => {
         InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
-        startDate: loanForm.startDate,
+        startDate: loanForm.startDate || undefined,
         repaymentDay: parseInt(loanForm.repaymentDay),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
@@ -1668,6 +1668,32 @@ const Loans = () => {
                                 : "#f9fafb",
                             },
                           }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+                        <TextField
+                          fullWidth
+                          type="date"
+                          label="تاريخ البداية (اختياري)"
+                          value={loanForm.startDate}
+                          onChange={(e) =>
+                            handleInputChange("startDate", e.target.value)
+                          }
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          disabled={isReadOnlyMode}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: "56px",
+                              width: "200px",
+                              backgroundColor: isReadOnlyMode
+                                ? "#f5f5f5"
+                                : "#f9fafb",
+                            },
+                          }}
+                          helperText="إذا تُرك فارغاً، سيتم استخدام التاريخ الحالي"
                         />
                       </Grid>
 

@@ -5,7 +5,6 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
-// Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
