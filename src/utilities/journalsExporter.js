@@ -34,7 +34,7 @@ export const exportJournalToPDF = async (journalData) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -49,7 +49,7 @@ export const exportJournalToPDF = async (journalData) => {
       doc.text('تفاصيل القيد المحاسبي', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(13);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       doc.text(`رقم القيد: ${journalData.reference || journalData.id}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
       // Journal header info as a table
@@ -76,7 +76,7 @@ export const exportJournalToPDF = async (journalData) => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 9,
           cellPadding: 3,
           lineColor: [200, 200, 200],
@@ -170,7 +170,7 @@ export const exportJournalToPDF = async (journalData) => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200],
@@ -250,7 +250,7 @@ export const exportJournalToPDF = async (journalData) => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

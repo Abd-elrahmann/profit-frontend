@@ -97,6 +97,28 @@ export const unpostJournal = async (journalId) => {
   }
 };
 
+// Post multiple journals
+export const postMultipleJournals = async (journalIds) => {
+  try {
+    const response = await Api.post('/api/journals/post-multiple', { ids: journalIds });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Unpost multiple journals
+export const unpostMultipleJournals = async (journalIds) => {
+  try {
+    const response = await Api.post('/api/journals/unpost-multiple', { ids: journalIds });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // Get chart of accounts for dropdown
 export const getChartOfAccounts = async () => {
   try {

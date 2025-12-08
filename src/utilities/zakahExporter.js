@@ -34,7 +34,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
 
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -52,12 +52,12 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
       let yPosition = 35;
       if (filters.month && filters.year) {
         doc.setFontSize(11);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text(`الشهر: ${filters.month}/${filters.year}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
         yPosition += 8;
       } else if (filters.partner && filters.year) {
         doc.setFontSize(11);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text(`الشريك: ${filters.partner} | السنة: ${filters.year}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
         yPosition += 8;
       }
@@ -157,10 +157,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           ];
         }
 
-        // Create table
-        const pageWidth = doc.internal.pageSize.width;
-
-        // Column widths based on data type
+    
         let columnWidths;
         if (zakahData.account) {
           // صندوق الزكاة - more columns
@@ -193,7 +190,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           theme: 'striped',
           styles: {
             font: 'Amiri',
-            fontStyle: 'normal',
+              fontStyle: 'bold',
             fontSize: 7,
             cellPadding: 2,
             lineColor: [200, 200, 200],
@@ -230,7 +227,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
       } else {
         // No data message
         doc.setFontSize(14);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text('لا توجد عمليات مالية في الفترة المحددة', doc.internal.pageSize.width / 2, yPosition + 20, { align: 'center' });
       }
 
@@ -252,7 +249,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
 
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
 
         // Page number - centered

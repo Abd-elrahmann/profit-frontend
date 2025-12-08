@@ -34,7 +34,7 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -51,7 +51,7 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
       // Search query info if exists
       if (searchQuery) {
         doc.setFontSize(11);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text(`نتائج البحث عن: "${searchQuery}"`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       }
       
@@ -110,7 +110,7 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200],
@@ -170,7 +170,7 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

@@ -39,7 +39,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -54,7 +54,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       doc.text('سجل القيود المحاسبية', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(13);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       doc.text(`الحساب: ${accountName}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
       // Collect all journals from journalsByMonth
@@ -85,7 +85,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 45;
-      const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')} ريال  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} ريال  |  الرصيد الحالي: ${currentBalance.toLocaleString('en-US')} ريال  |  عدد القيود: ${totalJournals}`;
+      const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')}  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')}  |  الرصيد الحالي: ${currentBalance.toLocaleString('en-US')}  |  عدد القيود: ${totalJournals}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
       let yPosition = summaryY + 12;
@@ -137,7 +137,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
         theme: 'striped', // Simpler theme without heavy borders
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200], // Lighter borders
@@ -210,7 +210,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

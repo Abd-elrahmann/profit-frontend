@@ -13,7 +13,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Assessment, AttachMoney, Bolt, AccountBalance } from '@mui/icons-material';
+import { Assessment, AttachMoney, Bolt, AccountBalance, CheckCircle, ErrorOutline } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getLoanStats } from '../../pages/dashboard/dashboardApi';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -33,6 +33,8 @@ const LoanStats = () => {
   const animatedLoansCount = useCountUp(stats?.loans?.count || 0, 600, !isLoading);
   const animatedTotalAmount = useCountUp(stats?.loans?.totalAmount || 0, 600, !isLoading);
   const animatedActiveLoans = useCountUp(stats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
+  const animatedCompletedLoans = useCountUp(stats?.loans?.byStatus?.COMPLETED || 0, 600, !isLoading);
+  const animatedOverdueLoans = useCountUp(stats?.loans?.byStatus?.OVERDUE || 0, 600, !isLoading);
   const animatedBankBalance = useCountUp(stats?.bank?.balance || 0, 600, !isLoading);
 
   // Format currency
@@ -205,46 +207,6 @@ const LoanStats = () => {
           </Card>
         </Grid>
 
-        {/* إجمالي مبلغ السلف */}
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'success.50',
-                mb: 2
-              }}>
-                <AttachMoney sx={{ fontSize: '1.75rem', color: 'success.main' }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
-                إجمالي مبلغ السلف
-              </Typography>
-              <Typography variant="h4" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
-                {formatCurrency(animatedTotalAmount)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
         {/* سلف نشطة */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
@@ -280,6 +242,126 @@ const LoanStats = () => {
               </Typography>
               <Typography variant="h4" fontWeight="700" color="warning.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
                 {animatedActiveLoans}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* سلف مكتملة */}
+        <Grid item xs={6} sm={12} md={3}>
+          <Card sx={{
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
+            borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'success.50',
+                mb: 2
+              }}>
+                <CheckCircle sx={{ fontSize: '1.75rem', color: 'success.main' }} />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                سلف مكتملة
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {animatedCompletedLoans}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* سلف متأخرة */}
+        <Grid item xs={6} sm={12} md={3}>
+          <Card sx={{
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
+            borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'error.50',
+                mb: 2
+              }}>
+                <ErrorOutline sx={{ fontSize: '1.75rem', color: 'error.main' }} />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                سلف متأخرة
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="error.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {animatedOverdueLoans}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* إجمالي مبلغ السلف */}
+        <Grid item xs={6} sm={12} md={3}>
+          <Card sx={{
+            height: { xs: '200px', sm: '100%', md: '200px' },
+            width: { xs: '250px', sm: '100%', md: '250px' },
+            borderRadius: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+              <Box sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                backgroundColor: 'success.50',
+                mb: 2
+              }}>
+                <AttachMoney sx={{ fontSize: '1.75rem', color: 'success.main' }} />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                إجمالي مبلغ السلف
+              </Typography>
+              <Typography variant="h4" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+                {formatCurrency(animatedTotalAmount)}
               </Typography>
             </CardContent>
           </Card>

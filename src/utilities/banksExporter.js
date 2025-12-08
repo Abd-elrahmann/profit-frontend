@@ -51,7 +51,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
       // Search query info if exists
       if (searchQuery) {
         doc.setFontSize(11);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text(`نتائج البحث عن: "${searchQuery}"`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       }
       
@@ -187,7 +187,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -70,6 +71,7 @@ const Journals = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilters, setSearchFilters] = useState({});
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const location = useLocation();
   const [editForm, setEditForm] = useState({
     description: "",
     date: "",
@@ -171,6 +173,19 @@ const Journals = () => {
 
     fetchChartAccounts();
   }, []);
+
+  // Handle navigation state for journal details
+  useEffect(() => {
+    if (location.state) {
+      const { journalId, activeTab: targetTab } = location.state;
+      if (journalId) {
+        setSelectedJournal(journalId);
+        setActiveTab(targetTab || 1);
+        setIsEditMode(false);
+        setIsAddMode(false);
+      }
+    }
+  }, [location.state]);
 
   const handleViewDetails = (journalId) => {
     setSelectedJournal(journalId);

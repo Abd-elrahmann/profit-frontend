@@ -137,7 +137,7 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
                       onClick={() => onViewDetails(client.id)}
                       sx={{ cursor: 'pointer' }}
                     >
-                      <VisibilityIcon color="primary" />
+                      <VisibilityIcon color="primary" sx={{ fontSize: '20px' }} />
                     </IconButton>
                   </StyledTableCell>
                 </StyledTableRow>
@@ -282,7 +282,7 @@ const ClientCollectionsTable = ({ onViewDetails, isLoading, clientsData }) => {
                         onClick={() => onViewDetails(client.id)}
                         sx={{ cursor: 'pointer' }}
                       >
-                        <VisibilityIcon color="primary" />
+                        <VisibilityIcon color="primary" sx={{ fontSize: '20px' }} />
                       </IconButton>
                     </Box>
                   </Stack>

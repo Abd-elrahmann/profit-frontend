@@ -34,7 +34,7 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -59,7 +59,7 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
       
       if (filtersInfo) {
         doc.setFontSize(10);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text(filtersInfo, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       }
       
@@ -113,7 +113,7 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 7,
           cellPadding: 3,
           lineColor: [200, 200, 200],
@@ -170,7 +170,7 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

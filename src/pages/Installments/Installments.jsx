@@ -40,10 +40,13 @@ import {
   Print as PrintIcon,
   Share as ShareIcon,
   Payment as PartialPaymentIcon,
+  ArrowBack as ArrowBackIcon,
+  PictureAsPdf as PDFIcon,
+  TableChart as ExcelIcon,
 } from "@mui/icons-material";
 import { Download } from "@mui/icons-material";
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getLoanById,
@@ -52,11 +55,14 @@ import {
   postponeRepayment,
   markAsPartialPaid,
   earlyPayment,
+  approveMultipleRepayments,
+  rejectMultipleRepayments,
 } from "./InstallmentsApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import {
   StyledTableCell,
   StyledTableRow,
+  ScrollableTableContainer
 } from "../../components/layouts/tableLayout";
 import dayjs from "dayjs";
 import PaymentProofGenerator from "../../components/PaymentProofGenerator";
@@ -67,8 +73,10 @@ import DeleteModal from "../../components/modals/DeleteModal";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { exportRepaymentsToPDF, exportRepaymentsToExcel } from "../../utilities/repaymentsExporter";
 const Installments = () => {
   const { loanId } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedInstallment, setSelectedInstallment] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -77,6 +85,9 @@ const Installments = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+  const [isExporting, setIsExporting] = useState(false);
+  const [selectedInstallments, setSelectedInstallments] = useState([]);
+  const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
 
   const [postponeModalOpen, setPostponeModalOpen] = useState(false);
   const [newDueDate, setNewDueDate] = useState("");
@@ -96,6 +107,7 @@ const Installments = () => {
   const [settlementModalOpen, setSettlementModalOpen] = useState(false);
   const [settlementHtml, setSettlementHtml] = useState("");
   const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
+  const [settlementJustSaved, setSettlementJustSaved] = useState(false);
   const [settlementTemplate, setSettlementTemplate] = useState("");
   const { permissions } = usePermissions();
   const settlementReceiptRef = useRef(null);
@@ -104,6 +116,90 @@ const Installments = () => {
 
   const handleChangePage = (event, value) => {
     setPage(value);
+    setSelectedInstallments([]); // Clear selection when changing page
+  };
+
+  // Handle individual installment selection
+  const handleInstallmentSelect = (installmentId) => {
+    setSelectedInstallments(prev =>
+      prev.includes(installmentId)
+        ? prev.filter(id => id !== installmentId)
+        : [...prev, installmentId]
+    );
+  };
+
+  // Handle select all installments
+  const handleSelectAll = () => {
+    if (selectedInstallments.length === sortedInstallments.length) {
+      setSelectedInstallments([]);
+    } else {
+      setSelectedInstallments(sortedInstallments.map(installment => installment.id));
+    }
+  };
+
+  // Bulk approve installments
+  const handleBulkApprove = async () => {
+    if (selectedInstallments.length === 0) {
+      notifyError("يرجى اختيار الدفعات المراد اعتمادها");
+      return;
+    }
+
+    // Check if any selected installments are already paid or completed
+    const installmentsToApprove = sortedInstallments.filter(installment =>
+      selectedInstallments.includes(installment.id)
+    );
+    const alreadyPaid = installmentsToApprove.filter(installment => installment.status === 'PAID' || installment.status === 'EARLY_PAID' || installment.status === 'COMPLETED');
+
+    if (alreadyPaid.length > 0) {
+      notifyError(`لا يمكن الموافقة على الدفعات التالية لأنها مدفوعة بالفعل: ${alreadyPaid.map(inst => `دفعة ${inst.count}`).join(', ')}`);
+      return;
+    }
+
+
+    try {
+      setIsBulkOperationLoading(true);
+      await approveMultipleRepayments(selectedInstallments, null, "تمت الموافقة على الدفعات ");
+      notifySuccess(`تم اعتماد ${selectedInstallments.length} دفعة بنجاح`);
+      setSelectedInstallments([]);
+      queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["repayments", loanId]);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء اعتماد الدفعات");
+    } finally {
+      setIsBulkOperationLoading(false);
+    }
+  };
+
+  // Bulk reject installments
+  const handleBulkReject = async () => {
+    if (selectedInstallments.length === 0) {
+      notifyError("يرجى اختيار الدفعات المراد رفضها");
+      return;
+    }
+
+    // Check if any selected installments are completed (can't reject completed ones)
+    const installmentsToReject = sortedInstallments.filter(installment =>
+      selectedInstallments.includes(installment.id)
+    );
+    const completedInstallments = installmentsToReject.filter(installment => installment.status === 'COMPLETED');
+
+    if (completedInstallments.length > 0) {
+      notifyError(`لا يمكن رفض الدفعات التالية لأنها مكتملة: ${completedInstallments.map(inst => `دفعة ${inst.count}`).join(', ')}`);
+      return;
+    }
+
+    try {
+      setIsBulkOperationLoading(true);
+      await rejectMultipleRepayments(selectedInstallments);
+      notifySuccess(`تم رفض ${selectedInstallments.length} دفعة بنجاح`);
+      setSelectedInstallments([]);
+      queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["repayments", loanId]);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض الدفعات");
+    } finally {
+      setIsBulkOperationLoading(false);
+    }
   };
   const [selectedDocumentsInstallment, setSelectedDocumentsInstallment] =
     useState(null);
@@ -197,6 +293,11 @@ const Installments = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
 
+  // Reset settlement flag when loan changes
+  useEffect(() => {
+    setSettlementJustSaved(false);
+  }, [loanId]);
+
   // Auto-open settlement preview when all installments are paid
   useEffect(() => {
     if (
@@ -204,12 +305,13 @@ const Installments = () => {
       allInstallmentsPaid() &&
       !isSettlementCompleted() &&
       !settlementModalOpen &&
-      settlementTemplate
+      settlementTemplate &&
+      !settlementJustSaved
     ) {
       handleSettlement();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedInstallments, settlementTemplate]);
+  }, [sortedInstallments, settlementTemplate, settlementJustSaved]);
 
   const handleApprove = async (installment) => {
     try {
@@ -483,13 +585,21 @@ const Installments = () => {
   
       // إغلاق الدايلوج فوراً بعد الحفظ الناجح
       setSettlementModalOpen(false);
-  
+
+      // تعيين علامة منع إعادة فتح الموديل تلقائياً
+      setSettlementJustSaved(true);
+
       // إظهار رسالة النجاح الثانية بعد إغلاق الموديل
       setTimeout(() => {
         notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
       }, 300);
-  
+
       queryClient.invalidateQueries(["loan", loanId]);
+
+      // إعادة تعيين العلامة بعد تحديث البيانات
+      setTimeout(() => {
+        setSettlementJustSaved(false);
+      }, 2000);
       
       return true;
     } catch (error) {
@@ -500,6 +610,34 @@ const Installments = () => {
       setIsGeneratingSettlement(false);
     }
   };
+
+  // Export functions
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportRepaymentsToPDF(sortedInstallments, loanData);
+      notifySuccess("تم تصدير تقرير PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error("PDF export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await exportRepaymentsToExcel(sortedInstallments, loanData);
+      notifySuccess("تم تصدير تقرير Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error("Excel export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getStatusColor = (status, installment) => {
     if (checkIfOverdue(installment)) {
       return "error";
@@ -611,6 +749,20 @@ const Installments = () => {
 
     return (
       <Box sx={{ p: 1 }}>
+        {/* Select All for Mobile */}
+        {permissions.includes("repayments_Post") && sortedInstallments.length > 0 && (
+          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Checkbox
+              checked={selectedInstallments.length === sortedInstallments.length && sortedInstallments.length > 0}
+              indeterminate={selectedInstallments.length > 0 && selectedInstallments.length < sortedInstallments.length}
+              onChange={handleSelectAll}
+              size="small"
+            />
+            <Typography variant="body2" color="text.secondary">
+              اختيار الكل
+            </Typography>
+          </Box>
+        )}
         <Stack spacing={2}>
           {sortedInstallments.map((installment) => (
             <Card
@@ -654,6 +806,17 @@ const Installments = () => {
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {permissions.includes("repayments_Post") && (
+                        <Checkbox
+                          checked={selectedInstallments.includes(installment.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleInstallmentSelect(installment.id);
+                          }}
+                          size="small"
+                          disabled={installment.status === "COMPLETED"}
+                        />
+                      )}
                       {(installment.status === "PAID" ||
                         installment.status === "EARLY_PAID") && (
                         <Checkbox checked size="small" />
@@ -826,10 +989,21 @@ const Installments = () => {
 
   // Render desktop table
   const renderDesktopTable = () => (
-    <TableContainer>
+    <ScrollableTableContainer>
       <Table stickyHeader>
         <TableHead>
           <StyledTableRow>
+            {permissions.includes("repayments_Post") && (
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", width: "50px" }}>
+                <Checkbox
+                  checked={selectedInstallments.length === sortedInstallments.length && sortedInstallments.length > 0}
+                  indeterminate={selectedInstallments.length > 0 && selectedInstallments.length < sortedInstallments.length}
+                  onChange={handleSelectAll}
+                  size="small"
+                  sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }}
+                />
+              </StyledTableCell>
+            )}
             <StyledTableCell align="center" style={{maxWidth: "100px"}}>
             المدفوع
             </StyledTableCell>
@@ -882,6 +1056,16 @@ const Installments = () => {
                 },
               }}
             >
+              {permissions.includes("repayments_Post") && (
+                <StyledTableCell align="center">
+                  <Checkbox
+                    checked={selectedInstallments.includes(installment.id)}
+                    onChange={() => handleInstallmentSelect(installment.id)}
+                    size="small"
+                    disabled={installment.status === "COMPLETED"}
+                  />
+                </StyledTableCell>
+              )}
               <StyledTableCell align="center" style={{maxWidth: "100px"}}>
                 {(installment.status === "PAID" ||
                   installment.status === "EARLY_PAID") && (
@@ -1008,6 +1192,9 @@ const Installments = () => {
                   },
                 }}
               >
+                {permissions.includes("repayments_Post") && (
+                  <StyledTableCell align="center" sx={{width: "50px"}}></StyledTableCell>
+                )}
                 <StyledTableCell align="center" sx={{width: "70px"}}>
                   {paidCount > 0 && (
                     <Typography variant="body2" fontWeight="bold">
@@ -1052,7 +1239,7 @@ const Installments = () => {
           })()}
         </TableBody>
       </Table>
-    </TableContainer>
+    </ScrollableTableContainer>
   );
 
   if (!loanId) {
@@ -1153,11 +1340,27 @@ const Installments = () => {
             overflowY: "auto",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold" mb={3}>
-              دفعات السلفة - {loanData?.client?.name}
-            </Typography>
-            {/* زر السداد المبكر - يظهر فقط إذا كان هناك أقساط معلقة ولم يتم تسوية القسط النهائي */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon sx={{marginLeft: '8px'}} />}
+                onClick={() => navigate('/loans')}
+                sx={{
+                  color: "primary.main",
+                  "&:hover": { color: "primary.dark" },
+                }}
+              >
+                رجوع لجدول السلف
+              </Button>
+              <Typography variant="h5" fontWeight="bold">
+                دفعات السلفة - {loanData?.client?.name}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Early Payment Button */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
             {!isSettlementCompleted() &&
               sortedInstallments.some((inst) => inst.status === "PENDING") &&
               permissions.includes("repayments_Post") && (
@@ -1206,6 +1409,94 @@ const Installments = () => {
               </Grid>
             </Grid>
           </Paper>
+
+          {/* Bulk Actions */}
+          {selectedInstallments.length > 0 && permissions.includes("repayments_Post") && (
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#f5f5f5" }}>
+              <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
+                <Typography variant="body2" color="text.secondary">
+                  تم اختيار {selectedInstallments.length} دفعة
+                </Typography>
+                <Stack direction="row" sx={{ gap: 2 }}>
+                  {/* Show approve button only if no paid installments are selected */}
+                  {!selectedInstallments.some(id => {
+                    const installment = sortedInstallments.find(inst => inst.id === id);
+                    return installment && (installment.status === "PAID" || installment.status === "EARLY_PAID" || installment.status === "COMPLETED");
+                  }) && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<ApproveIcon sx={{ marginLeft: "10px" }} />}
+                      onClick={handleBulkApprove}
+                      disabled={isBulkOperationLoading}
+                      sx={{
+                        bgcolor: "success.main",
+                        "&:hover": { bgcolor: "success.dark" },
+                      }}
+                    >
+                      الموافقة علي الدفعات المحددة
+                    </Button>
+                  )}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<RejectIcon sx={{ marginLeft: "10px" }} />}
+                    onClick={handleBulkReject}
+                    disabled={isBulkOperationLoading}
+                    sx={{
+                      borderColor: "error.main",
+                      color: "error.main",
+                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                    }}
+                  >
+                    رفض الدفعات المحددة
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setSelectedInstallments([])}
+                    disabled={isBulkOperationLoading}
+                  >
+                    إلغاء اختيار الدفعات المحددة
+                  </Button>
+                </Stack>
+              </Stack>
+              {isBulkOperationLoading && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  جاري معالجة العملية...
+                </Alert>
+              )}
+            </Paper>
+          )}
+
+          {/* Export Buttons */}
+          <Box sx={{ display: "flex", gap: 2, mb: 3, justifyContent: "center" }}>
+            <Button
+              variant="contained"
+              startIcon={<PDFIcon sx={{ marginLeft: "10px" }} />}
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              sx={{
+                bgcolor: "#d32f2f",
+                "&:hover": { bgcolor: "#b71c1c" },
+              }}
+            >
+              تصدير PDF
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+              onClick={handleExportExcel}
+              disabled={isExporting}
+              sx={{
+                bgcolor: "#2e7d32",
+                "&:hover": { bgcolor: "#1b5e20" },
+              }}
+            >
+              تصدير Excel
+            </Button>
+          </Box>
 
           {/* خطوات المراجعة للشاشات الصغيرة */}
           {isSmallScreen && !isSettlementCompleted() && (

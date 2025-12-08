@@ -15,17 +15,24 @@ import {
   Card,
   CardContent,
   Grid,
+  Checkbox,
+  Button,
+  Alert,
 } from "@mui/material";
-import { Visibility } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
-import { getJournals } from "../../pages/Journals/journalsApi";
+import { Visibility, CheckCircle, Cancel } from "@mui/icons-material";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getJournals, postMultipleJournals, unpostMultipleJournals } from "../../pages/Journals/journalsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
+import { notifySuccess, notifyError } from "../../utilities/toastify";
 
 const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) => {
   const [page, setPage] = useState(1);
+  const [selectedJournals, setSelectedJournals] = useState([]);
+  const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const { permissions } = usePermissions();
+  const queryClient = useQueryClient();
 
   const { data: journalsData, isLoading } = useQuery({
     queryKey: ["journals", page, searchFilters],
@@ -35,6 +42,87 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
+    setSelectedJournals([]); // Clear selection when changing page
+  };
+
+  // Handle individual journal selection
+  const handleJournalSelect = (journalId) => {
+    setSelectedJournals(prev =>
+      prev.includes(journalId)
+        ? prev.filter(id => id !== journalId)
+        : [...prev, journalId]
+    );
+  };
+
+  // Handle select all journals
+  const handleSelectAll = () => {
+    if (selectedJournals.length === journalsData?.journals?.length) {
+      setSelectedJournals([]);
+    } else {
+      setSelectedJournals(journalsData?.journals?.map(journal => journal.id) || []);
+    }
+  };
+
+  // Bulk post journals
+  const handleBulkPost = async () => {
+    if (selectedJournals.length === 0) {
+      notifyError("يرجى اختيار القيود المراد اعتمادها");
+      return;
+    }
+
+    // Check if any selected journals are already posted
+    const journalsToPost = journalsData?.journals?.filter(journal =>
+      selectedJournals.includes(journal.id)
+    );
+    const alreadyPosted = journalsToPost.filter(journal => journal.status === 'POSTED');
+
+    if (alreadyPosted.length > 0) {
+      notifyError(`لا يمكن اعتماد القيود التالية لأنها معتمدة بالفعل: ${alreadyPosted.map(j => j.reference).join(', ')}`);
+      return;
+    }
+
+    try {
+      setIsBulkOperationLoading(true);
+      await postMultipleJournals(selectedJournals);
+      notifySuccess(`تم اعتماد ${selectedJournals.length} قيد بنجاح`);
+      setSelectedJournals([]);
+      queryClient.invalidateQueries(["journals"]);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء اعتماد القيود");
+    } finally {
+      setIsBulkOperationLoading(false);
+    }
+  };
+
+  // Bulk unpost journals
+  const handleBulkUnpost = async () => {
+    if (selectedJournals.length === 0) {
+      notifyError("يرجى اختيار القيود المراد إلغاء اعتمادها");
+      return;
+    }
+
+    // Check if any selected journals are not posted
+    const journalsToUnpost = journalsData?.journals?.filter(journal =>
+      selectedJournals.includes(journal.id)
+    );
+    const notPosted = journalsToUnpost.filter(journal => journal.status !== 'POSTED');
+
+    if (notPosted.length > 0) {
+      notifyError(`لا يمكن إلغاء اعتماد القيود التالية لأنها غير معتمدة: ${notPosted.map(j => j.reference).join(', ')}`);
+      return;
+    }
+
+    try {
+      setIsBulkOperationLoading(true);
+      await unpostMultipleJournals(selectedJournals);
+      notifySuccess(`تم إلغاء اعتماد ${selectedJournals.length} قيد بنجاح`);
+      setSelectedJournals([]);
+      queryClient.invalidateQueries(["journals"]);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء إلغاء اعتماد القيود");
+    } finally {
+      setIsBulkOperationLoading(false);
+    }
   };
 
   // Journal Type Arabic translations
@@ -108,6 +196,17 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       <Table stickyHeader sx={{ width: "100%" }}>
         <TableHead>
           <StyledTableRow>
+            {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", width: "50px" }}>
+                <Checkbox
+                  checked={selectedJournals.length === journalsData?.journals?.length && journalsData?.journals?.length > 0}
+                  indeterminate={selectedJournals.length > 0 && selectedJournals.length < (journalsData?.journals?.length || 0)}
+                  onChange={handleSelectAll}
+                  size="small"
+                  sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }}
+                />
+              </StyledTableCell>
+            )}
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               رقم القيد
             </StyledTableCell>
@@ -136,21 +235,31 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={7} align="center">
+              <StyledTableCell colSpan={8} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : journalsData?.journals?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={7} align="center">
+              <StyledTableCell colSpan={8} align="center">
                 <Typography>لا توجد قيود</Typography>
               </StyledTableCell>
             </StyledTableRow>
           ) : (
             journalsData?.journals?.map((journal) => (
-              <StyledTableRow 
-                key={journal.id} 
+              <StyledTableRow
+                key={journal.id}
               >
+                {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
+                  <StyledTableCell align="center">
+                    <Checkbox
+                      checked={selectedJournals.includes(journal.id)}
+                      onChange={() => handleJournalSelect(journal.id)}
+                      size="small"
+                      sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }}
+                    />
+                  </StyledTableCell>
+                )}
                 <StyledTableCell align="center">
                   {journal.reference}
                 </StyledTableCell>
@@ -214,11 +323,26 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <>
+          {/* Select All for Mobile */}
+          {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && journalsData?.journals?.length > 0 && (
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Checkbox
+                checked={selectedJournals.length === journalsData?.journals?.length && journalsData?.journals?.length > 0}
+                indeterminate={selectedJournals.length > 0 && selectedJournals.length < (journalsData?.journals?.length || 0)}
+                onChange={handleSelectAll}
+                size="small"
+              />
+              <Typography variant="body2" color="text.secondary">
+                اختيار الكل
+              </Typography>
+            </Box>
+          )}
+          <Grid container spacing={2}>
           {journalsData?.journals?.map((journal) => (
             <Grid item xs={12} key={journal.id}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   border: '1px solid #e0e0e0',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -231,11 +355,24 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
-                    {/* Header */}
+                    {/* Header with Checkbox */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Typography variant="h6" fontWeight="bold" color="primary.main">
-                        {journal.reference}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
+                          <Checkbox
+                            checked={selectedJournals.includes(journal.id)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleJournalSelect(journal.id);
+                            }}
+                            size="small"
+                            sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }}
+                          />
+                        )}
+                        <Typography variant="h6" fontWeight="bold" color="primary.main">
+                          {journal.reference}
+                        </Typography>
+                      </Box>
                       <Chip
                         label={getStatusText(journal.status)}
                         color={getStatusColor(journal.status)}
@@ -306,7 +443,8 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
               </Card>
             </Grid>
           ))}
-        </Grid>
+          </Grid>
+        </>
       )}
     </Box>
   );
@@ -320,6 +458,63 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         height: "100%",
       }}
     >
+      {/* Bulk Actions */}
+      {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
+        <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: "#f5f5f5" }}>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
+            <Typography variant="body2" color="text.secondary">
+              تم اختيار {selectedJournals.length} قيد
+            </Typography>
+            <Stack direction="row" sx={{ gap: 2 }}>
+              {permissions.includes("journals_Post") && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CheckCircle sx={{marginLeft: "10px"}} />}
+                  onClick={handleBulkPost}
+                  disabled={isBulkOperationLoading}
+                  sx={{
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
+                  }}
+                >
+                  اعتماد المحدد
+                </Button>
+              )}
+              {permissions.includes("journals_Post") && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Cancel sx={{marginLeft: "10px"}} />}
+                  onClick={handleBulkUnpost}
+                  disabled={isBulkOperationLoading}
+                  sx={{
+                    borderColor: "error.main",
+                    color: "error.main",
+                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                  }}
+                >
+                  إلغاء اعتماد المحدد
+                </Button>
+              )}
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setSelectedJournals([])}
+                disabled={isBulkOperationLoading}
+              >
+                إلغاء الاختيار
+              </Button>
+            </Stack>
+          </Stack>
+          {isBulkOperationLoading && (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              جاري معالجة العملية...
+            </Alert>
+          )}
+        </Paper>
+      )}
+
       {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
         {isMobile ? renderCards() : renderTable()}

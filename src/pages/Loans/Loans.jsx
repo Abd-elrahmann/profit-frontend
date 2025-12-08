@@ -991,6 +991,26 @@ const Loans = () => {
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
+                {/* Alert for active loans that cannot be edited */}
+                {isViewMode && selectedLoan?.status === "ACTIVE" && (
+                  <Alert
+                    severity="warning"
+                    sx={{ mb: 2 }}
+                    action={
+                      <Button
+                        color="inherit"
+                        size="small"
+                        onClick={() => navigate('/installments/' + selectedLoan.id)}
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        عرض الأقساط
+                      </Button>
+                    }
+                  >
+                    لا يمكنك تعديل هذه السلفة لأنها في حالة نشطة. للتعديل يجب إلغاء تفعيل السلفة أولاً.
+                  </Alert>
+                )}
+
                 {!isViewMode && (
                   <Button
                     variant="contained"
@@ -1898,6 +1918,26 @@ const Loans = () => {
                       الإجراءات
                     </Typography>
                     <Stack spacing={1.5}>
+                      {/* Alert for active loans that cannot be edited */}
+                      {isViewMode && selectedLoan?.status === "ACTIVE" && (
+                        <Alert
+                          severity="warning"
+                          sx={{ mb: 2 }}
+                          action={
+                            <Button
+                              color="inherit"
+                              size="small"
+                              onClick={() => navigate('/installments/' + selectedLoan.id)}
+                              sx={{ fontWeight: "bold" }}
+                            >
+                              عرض الأقساط
+                            </Button>
+                          }
+                        >
+                          لا يمكنك تعديل هذه السلفة لأنها في حالة نشطة. للتعديل يجب إلغاء تفعيل السلفة أولاً.
+                        </Alert>
+                      )}
+
                       {!isViewMode && (
                         <Button
                           variant="contained"

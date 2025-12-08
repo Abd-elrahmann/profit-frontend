@@ -84,37 +84,6 @@ const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   return response.data;
 };
 
-// Get all partners for export using partner-report endpoint
-const getAllPartnersForExport = async () => {
-  try {
-    // Fetch all partners using partner-report endpoint with pagination
-    const allPartners = [];
-    let page = 1;
-    let hasMore = true;
-    const limit = 100; // Fetch more per page for export
-    
-    while (hasMore) {
-      const response = await Api.get(`/api/partner-report/${page}?limit=${limit}`);
-      const data = response.data;
-      
-      if (data.data && data.data.length > 0) {
-        allPartners.push(...data.data);
-        
-        // Check if there are more pages
-        const totalPages = Math.ceil(data.totalPartners / limit);
-        hasMore = page < totalPages;
-        page++;
-      } else {
-        hasMore = false;
-      }
-    }
-    
-    return allPartners;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
 
 // Get specific partner details for export using partner-report endpoint
 const getPartnerDetailsForExport = async (partnerId) => {
@@ -159,6 +128,7 @@ export default function Investors() {
   const [editMode, setEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [editFormData, setEditFormData] = useState({});
+  const [hasDataChanged, setHasDataChanged] = useState(false);
   
   // New states for transactions
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -169,6 +139,9 @@ export default function Investors() {
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
+
+  // Export handlers for individual partners
+  const [isExporting, setIsExporting] = useState(false);
 
   // New states for contract generation
   // eslint-disable-next-line no-unused-vars
@@ -233,6 +206,13 @@ export default function Investors() {
       ...prev,
       [field]: value
     }));
+    // Check if the value changed for contract-related fields
+    if (field === 'capitalAmount' || field === 'orgProfitPercent') {
+      const originalValue = field === 'capitalAmount'
+        ? investorDetails.capitalAmount?.toString()
+        : investorDetails.orgProfitPercent?.toString();
+      setHasDataChanged(value !== originalValue);
+    }
   };
 
   const handleTransactionInputChange = (field, value) => {
@@ -298,6 +278,7 @@ export default function Investors() {
         });
       } else {
         setEditMode(false);
+        setHasDataChanged(false);
       }
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحديث البيانات');
@@ -379,50 +360,6 @@ export default function Investors() {
     setIsDeleteModalOpen(true);
   };
 
-  // Export handlers
-  const [isExporting, setIsExporting] = useState(false);
-
-  const handleExportPDF = async () => {
-    try {
-      setIsExporting(true);
-      notifySuccess("جاري جلب بيانات المستثمرين...");
-      const allPartners = await getAllPartnersForExport();
-      
-      if (!allPartners || allPartners.length === 0) {
-        notifyError("لا توجد بيانات للتصدير");
-        return;
-      }
-      
-      await exportInvestorsToPDF(allPartners);
-      notifySuccess(`تم تصدير ${allPartners.length} مستثمر إلى PDF بنجاح`);
-    } catch (error) {
-      notifyError("حدث خطأ أثناء تصدير PDF");
-      console.error('PDF export error:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportExcel = async () => {
-    try {
-      setIsExporting(true);
-      notifySuccess("جاري جلب بيانات المستثمرين...");
-      const allPartners = await getAllPartnersForExport();
-      
-      if (!allPartners || allPartners.length === 0) {
-        notifyError("لا توجد بيانات للتصدير");
-        return;
-      }
-      
-      await exportInvestorsToExcel(allPartners);
-      notifySuccess(`تم تصدير ${allPartners.length} مستثمر إلى Excel بنجاح`);
-    } catch (error) {
-      notifyError("حدث خطأ أثناء تصدير Excel");
-      console.error('Excel export error:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   // Export specific partner
   const handleExportSpecificPartnerPDF = async () => {
@@ -697,42 +634,6 @@ export default function Investors() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
-          {permissions.includes("partners_Export") && (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
-                onClick={handleExportPDF}
-                disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
-                sx={{
-                  borderColor: "#d32f2f",
-                  color: "#d32f2f",
-                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: "bold",
-                }}
-              >
-                PDF
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<TableChart sx={{marginLeft: '10px'}} />}
-                onClick={handleExportExcel}
-                disabled={isExporting || !investorsData?.partners || investorsData.partners.length === 0}
-                sx={{
-                  borderColor: "#2e7d32",
-                  color: "#2e7d32",
-                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: "bold",
-                }}
-              >
-                Excel
-              </Button>
-            </>
-          )}
           {permissions.includes("partners_Add") && (
           <Button
             variant="contained"
@@ -980,7 +881,7 @@ export default function Investors() {
                   تصدير PDF
                 </Button>
                 )}
-                {permissions.includes("partners_Export") && ( 
+                {permissions.includes("partners_Export") && (
                 <Button
                   variant="outlined"
                   startIcon={<TableChart sx={{marginLeft: '10px'}} />}
@@ -998,167 +899,11 @@ export default function Investors() {
                   تصدير Excel
                 </Button>
                 )}
-                {permissions.includes("partners_Update") || permissions.includes("partners_Add") && (
-                <Button 
-                  variant="outlined" 
-                  startIcon={<Edit sx={{marginLeft: '10px'}} />}
-                  onClick={() => setEditMode(!editMode)}
-                  disabled={!editMode}
-                >
-                  {editMode ? 'إلغاء التعديل' : 'تعديل'}
-                </Button>
-                )}
-                {permissions.includes("partners_Add") && (
-                <Button
-                  variant="contained"
-                  startIcon={<Save sx={{marginLeft: '10px'}} />}
-                  sx={{ bgcolor: "#0d40a5", "&:hover": { bgcolor: "#0b3589" } }}
-                  disabled={!editMode}
-                  onClick={handleSaveChanges}
-                >
-                  حفظ التغييرات
-                </Button>
-                )}
               </Box>
             </Box>
 
             {/* Main Content Area */}
             <Box sx={{ p: 3 }}>
-              {/* Summary Cards */}
-              <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        إجمالي مبلغ الاستثمار
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold" color="success">
-                        {investorDetails.capitalAmount?.toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        نسبة أرباح المنشأة
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold">
-                        {investorDetails.orgProfitPercent}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        نسبة أرباح المستثمر
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold">
-                        {investorDetails.partnerProfitPercent}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        إجمالي الأرباح
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold" color="primary">
-                        {investorDetails.totalProfit?.toLocaleString() || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        الزكاة السنوية المستحقة
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold" color="warning.main">
-                        {investorDetails.yearlyZakatRequired?.toLocaleString() || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        الزكاة السنوية المدفوعة
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold" color="success.main">
-                        {investorDetails.yearlyZakatPaid?.toLocaleString() || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        رصيد الزكاة السنوية
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold" color="error.main">
-                        {investorDetails.yearlyZakatBalance?.toLocaleString() || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                    <CardContent sx={{textAlign: 'center'}}>
-                      <Typography color="text.secondary" variant="body1" gutterBottom>
-                        إجمالي الادخار
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold" color="info.main">
-                        {investorDetails.totalSaving?.toLocaleString() || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Saving Progress Alert */}
-              {(() => {
-                const capital = investorDetails.capitalAmount || 0;
-                const saving = investorDetails.totalSaving || 0;
-                const difference = capital - saving;
-
-                if (saving === 0) return null; // لا نعرض التنبيه إذا لم يكن هناك ادخار
-
-                return (
-                  <Alert
-                    severity={difference <= 0 ? "success" : "info"}
-                    icon={<Info />}
-                    sx={{ mb: 3, mt: 2 }}
-                  >
-                    <Typography variant="body2">
-                      رأس مالك {capital.toLocaleString()} • ادخارك {saving.toLocaleString()}
-                      {difference > 0 && (
-                        <Typography component="span" fontWeight="bold" color="primary.main">
-                          {" • ناقص " + difference.toLocaleString() + " عشان ينتهي ادخارك"}
-                        </Typography>
-                      )}
-                      {difference === 0 && (
-                        <Typography component="span" fontWeight="bold" color="success.main">
-                          {" • رائع! وصل ادخارك لرأس المال بالضبط 🎉"}
-                        </Typography>
-                      )}
-                      {difference < 0 && (
-                        <Typography component="span" fontWeight="bold" color="success.main">
-                          {" • مبروك! تجاوز ادخارك رأس المال بـ " + Math.abs(difference).toLocaleString() + " 🎊"}
-                        </Typography>
-                      )}
-                    </Typography>
-                  </Alert>
-                );
-              })()}
 
               {/* Tabs */}
               <Tabs
@@ -1180,7 +925,33 @@ export default function Investors() {
               {tab === 0 && (
                 <Box>
                   <Paper sx={{ p: 3, mb: 3 }}>
-                    <Typography variant="h6" mb={3}>المعلومات الشخصية</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                      <Typography variant="h6">المعلومات الشخصية</Typography>
+                      <Box sx={{ display: "flex", gap: 2 }}>
+                        {permissions.includes("partners_Update") && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<Edit sx={{marginLeft: '10px'}} />}
+                          onClick={() => setEditMode(!editMode)}
+                          size="small"
+                        >
+                          {editMode ? 'إلغاء التعديل' : 'تعديل'}
+                        </Button>
+                        )}
+                        {permissions.includes("partners_Add") && (
+                        <Button
+                          variant="contained"
+                          startIcon={<Save sx={{marginLeft: '10px'}} />}
+                          sx={{ bgcolor: "#0d40a5", "&:hover": { bgcolor: "#0b3589" } }}
+                          disabled={!editMode}
+                          onClick={handleSaveChanges}
+                          size="small"
+                        >
+                          حفظ التغييرات
+                        </Button>
+                        )}
+                      </Box>
+                    </Box>
                     <Grid container spacing={3}>
                       <Grid item xs={12} md={6}>
                         <Typography variant="body2" mb={1} fontWeight={500}>الاسم الكامل</Typography>
@@ -1304,7 +1075,185 @@ export default function Investors() {
               {/* المعلومات المالية */}
               {tab === 1 && (
                 <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" mb={3}>المعلومات المالية</Typography>
+                  <Typography variant="h6" sx={{ mb: 3 }}>المعلومات المالية</Typography>
+
+                  {/* Summary Cards */}
+                  <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            إجمالي مبلغ الاستثمار
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="success">
+                            {investorDetails.capitalAmount?.toLocaleString()}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            نسبة أرباح المنشأة
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold">
+                            {investorDetails.orgProfitPercent}%
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            نسبة أرباح المستثمر
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold">
+                            {investorDetails.partnerProfitPercent}%
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            إجمالي الأرباح
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="primary">
+                            {investorDetails.totalProfit?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            الزكاة السنوية المستحقة
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="warning.main">
+                            {investorDetails.yearlyZakatRequired?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            الزكاة السنوية المدفوعة
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="success.main">
+                            {investorDetails.yearlyZakatPaid?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            رصيد الزكاة السنوية
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="error.main">
+                            {investorDetails.yearlyZakatBalance?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                          <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            إجمالي الادخار
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="info.main">
+                            {investorDetails.totalSaving?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+
+                  {/* Saving Progress Alert */}
+                  {(() => {
+                    const capital = investorDetails.capitalAmount || 0;
+                    const saving = investorDetails.totalSaving || 0;
+                    const difference = capital - saving;
+
+                    if (saving === 0) return null; // لا نعرض التنبيه إذا لم يكن هناك ادخار
+
+                    return (
+                      <Alert
+                        severity={difference <= 0 ? "success" : "info"}
+                        icon={<Info />}
+                        sx={{ mb: 3, mt: 2 }}
+                      >
+                        <Typography variant="body2">
+                          رأس مالك {capital.toLocaleString()} • ادخارك {saving.toLocaleString()}
+                          {difference > 0 && (
+                            <Typography component="span" fontWeight="bold" color="primary.main">
+                              {" • ناقص " + difference.toLocaleString() + " عشان ينتهي ادخارك"}
+                            </Typography>
+                          )}
+                          {difference === 0 && (
+                            <Typography component="span" fontWeight="bold" color="success.main">
+                              {" • رائع! وصل ادخارك لرأس المال بالضبط 🎉"}
+                            </Typography>
+                          )}
+                          {difference < 0 && (
+                            <Typography component="span" fontWeight="bold" color="success.main">
+                              {" • مبروك! تجاوز ادخارك رأس المال بـ " + Math.abs(difference).toLocaleString() + " 🎊"}
+                            </Typography>
+                          )}
+                        </Typography>
+                      </Alert>
+                    );
+                  })()}
+
+                  {/* Edit/Save Buttons */}
+                  <Box sx={{ display: "flex", gap: 2, mb: 3, justifyContent: 'flex-end' }}>
+                    {permissions.includes("partners_Update") && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<Edit sx={{marginLeft: '10px'}} />}
+                      onClick={() => {
+                        const newEditMode = !editMode;
+                        setEditMode(newEditMode);
+                        if (!newEditMode) {
+                          // Reset form data and change flag when canceling edit
+                          setEditFormData({
+                            name: investorDetails.name || '',
+                            phone: investorDetails.phone || '',
+                            address: investorDetails.address || '',
+                            email: investorDetails.email || '',
+                            orgProfitPercent: investorDetails.orgProfitPercent || '',
+                            capitalAmount: investorDetails.capitalAmount || '',
+                          });
+                          setHasDataChanged(false);
+                        }
+                      }}
+                      size="small"
+                    >
+                      {editMode ? 'إلغاء التعديل' : 'تعديل'}
+                    </Button>
+                    )}
+                    {permissions.includes("partners_Add") && (
+                    <Button
+                      variant="contained"
+                      startIcon={<Save sx={{marginLeft: '10px'}} />}
+                      sx={{ bgcolor: "#0d40a5", "&:hover": { bgcolor: "#0b3589" } }}
+                      disabled={!editMode}
+                      onClick={handleSaveChanges}
+                      size="small"
+                    >
+                      حفظ التغييرات
+                    </Button>
+                    )}
+                  </Box>
+
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
@@ -1386,25 +1335,27 @@ export default function Investors() {
                     </Grid>
                   </Grid>
 
-                  {/* Add Generate Contract Button */}
-                  <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PictureAsPdf sx={{ marginLeft: '10px' }} />}
-                      onClick={() => handleGenerateContractAfterUpdate({
-                        ...investorDetails,
-                        ...editFormData,
-                        partnerProfitPercent: investorDetails.partnerProfitPercent || (100 - parseInt(editFormData.orgProfitPercent || investorDetails.orgProfitPercent))
-                      })}
-                      sx={{
-                        borderColor: "#d32f2f",
-                        color: "#d32f2f",
-                        "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                      }}
-                    >
-                      توليد عقد مضاربة جديد
-                    </Button>
-                  </Box>
+                  {/* Add Generate Contract Button - Only show if data has been modified */}
+                  {hasDataChanged ? (
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<PictureAsPdf sx={{ marginLeft: '10px' }} />}
+                        onClick={() => handleGenerateContractAfterUpdate({
+                          ...investorDetails,
+                          ...editFormData,
+                          partnerProfitPercent: investorDetails.partnerProfitPercent || (100 - parseInt(editFormData.orgProfitPercent || investorDetails.orgProfitPercent))
+                        })}
+                        sx={{
+                          borderColor: "#d32f2f",
+                          color: "#d32f2f",
+                          "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                        }}
+                      >
+                        توليد عقد مضاربة جديد
+                      </Button>
+                    </Box>
+                  ) : null}
                 </Paper>
               )}
 

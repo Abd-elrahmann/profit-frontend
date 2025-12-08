@@ -98,6 +98,28 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
     return dayjs(dateString).format("DD/MM/YYYY");
   };
 
+  // Format date with Hijri for display
+  const formatDateWithHijri = (period, dateType) => {
+    const dateString = dateType === 'start' ? period.startDate : period.endDate;
+    const hijriDate = dateType === 'start' ? period.startDateHijri : period.endDateHijri;
+
+    if (!dateString) return "مستمرة";
+
+    const gregorianDate = dayjs(dateString).format("DD/MM/YYYY");
+    const hijriText = hijriDate || "غير محدد";
+
+    return (
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+          {gregorianDate}
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem',fontWeight: 'bold' }}>
+          {hijriText}
+        </Typography>
+      </Box>
+    );
+  };
+
   // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
@@ -154,11 +176,11 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
                 <StyledTableCell align="center">
                   {period.name}
                 </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatDate(period.startDate)}
+                <StyledTableCell align="center">
+                  {formatDateWithHijri(period, 'start')}
                 </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatDate(period.endDate)}
+                <StyledTableCell align="center">
+                  {formatDateWithHijri(period, 'end')}
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Chip
@@ -424,14 +446,20 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
                         <Typography variant="body2" fontWeight="medium">
                           {formatDate(period.startDate)}
                         </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                          {period.startDateHijri || "غير محدد"}
+                        </Typography>
                       </Box>
-                      
+
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           تاريخ النهاية:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
                           {formatDate(period.endDate)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                          {period.endDateHijri || "غير محدد"}
                         </Typography>
                       </Box>
                     </Box>

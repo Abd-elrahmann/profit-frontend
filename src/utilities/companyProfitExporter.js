@@ -39,7 +39,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
 
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -55,7 +55,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
 
       // Summary section
       doc.setFontSize(13);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       doc.text('ملخص أرباح الشركة', doc.internal.pageSize.width / 2, 40, { align: 'center' });
 
       // Profit summary data
@@ -67,13 +67,13 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 50;
-      const summaryText = `الرصيد المتاح للسحب: ${availableAmount.toLocaleString('en-US')} ريال  |  إجمالي عمليات السحب: ${totalWithdrawals}`;
+      const summaryText = `الرصيد المتاح للسحب: ${availableAmount.toLocaleString('en-US')}  |  إجمالي عمليات السحب: ${totalWithdrawals}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
 
       // Total withdrawn amount
       const totalWithdrawnAmount = withdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
       doc.setFontSize(11);
-      const totalWithdrawnText = `إجمالي المبالغ المسحوبة: ${totalWithdrawnAmount.toLocaleString('en-US')} ريال`;
+      const totalWithdrawnText = `إجمالي المبالغ المسحوبة: ${totalWithdrawnAmount.toLocaleString('en-US')}`;
       doc.text(totalWithdrawnText, doc.internal.pageSize.width / 2, summaryY + 8, { align: 'center' });
 
       let yPosition = summaryY + 20;
@@ -81,7 +81,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       // Check if there are withdrawals to display
       if (withdrawals.length === 0) {
         doc.setFontSize(14);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.text('لا توجد عمليات سحب حتى الآن', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
       } else {
         // Prepare table data (RTL order)
@@ -125,7 +125,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           theme: 'striped', // Simpler theme without heavy borders
           styles: {
             font: 'Amiri',
-            fontStyle: 'normal',
+            fontStyle: 'bold',
             fontSize: 9,
             cellPadding: 4,
             lineColor: [200, 200, 200], // Lighter borders
@@ -196,7 +196,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
 
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
 
         // Page number - centered

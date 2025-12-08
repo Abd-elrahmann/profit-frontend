@@ -34,7 +34,7 @@ export const exportStatementToPDF = async (statementData, clientName) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -49,7 +49,7 @@ export const exportStatementToPDF = async (statementData, clientName) => {
       doc.text('كشف حساب العميل', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(13);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       doc.text(`العميل: ${clientName}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       doc.setFontSize(11);
       doc.text(`رقم الهوية: ${statementData.client.nationalId}`, doc.internal.pageSize.width / 2, 42, { align: 'center' });
@@ -58,16 +58,16 @@ export const exportStatementToPDF = async (statementData, clientName) => {
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 55;
-      const summaryText = `الرصيد الافتتاحي: ${statementData.openingBalance.toLocaleString('en-US')} ريال  |  الرصيد الختامي: ${statementData.closingBalance.toLocaleString('en-US')} ريال  |  إجمالي المدين: ${statementData.client.debit.toLocaleString('en-US')} ريال  |  إجمالي الدائن: ${statementData.client.credit.toLocaleString('en-US')} ريال`;
+      const summaryText = `الرصيد الافتتاحي: ${statementData.openingBalance.toLocaleString('en-US')}  |  الرصيد الختامي: ${statementData.closingBalance.toLocaleString('en-US')}  |  إجمالي المدين: ${statementData.client.debit.toLocaleString('en-US')}  |  إجمالي الدائن: ${statementData.client.credit.toLocaleString('en-US')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
       let yPosition = summaryY + 12;
       
       // Prepare table data (RTL order - reversed columns)
       const tableData = statementData.transactions.map(transaction => [
-        transaction.balance.toLocaleString('en-US') + ' ريال',
-        transaction.credit > 0 ? transaction.credit.toLocaleString('en-US') + ' ريال' : '0',
-        transaction.debit > 0 ? transaction.debit.toLocaleString('en-US') + ' ريال' : '0',
+        transaction.balance.toLocaleString('en-US'),
+        transaction.credit > 0 ? transaction.credit.toLocaleString('en-US') : '0',
+        transaction.debit > 0 ? transaction.debit.toLocaleString('en-US') : '0',
         transaction.description,
         getTransactionTypeArabic(transaction.type),
         dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
@@ -102,7 +102,7 @@ export const exportStatementToPDF = async (statementData, clientName) => {
         theme: 'striped', // Simpler theme without heavy borders
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200], // Lighter borders
@@ -173,7 +173,7 @@ export const exportStatementToPDF = async (statementData, clientName) => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

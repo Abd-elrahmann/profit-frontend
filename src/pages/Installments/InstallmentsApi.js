@@ -135,3 +135,30 @@ export const earlyPayment = async (loanId, discount = 0) => {
     throw error;
   }
 };
+
+// Approve multiple repayments
+export const approveMultipleRepayments = async (repaymentIds, reason) => {
+  try {
+    const response = await Api.post('/api/repayments/approve-many', {
+      ids: repaymentIds,
+      reason
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Reject multiple repayments
+export const rejectMultipleRepayments = async (repaymentIds) => {
+  try {
+    const response = await Api.post('/api/repayments/reject-many', {
+      ids: repaymentIds
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, IconButton, CircularProgress } from '@mui/material';
+import { Sync as SyncIcon } from '@mui/icons-material';
+import Api from '../../config/Api';
+import { notifyError, notifySuccess } from '../../utilities/toastify';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
@@ -9,6 +12,7 @@ const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Initialize sidebar state
   useEffect(() => {
@@ -55,6 +59,25 @@ const Layout = ({ children }) => {
   const handleSidebarClose = () => {
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      setIsSyncing(true);
+      const response = await Api.get('/api');
+      if (response.data && response.data.refresh === true) {
+        // Refresh the page
+        window.location.reload();
+        notifySuccess('تم تحديث البيانات بنجاح');
+      } else {
+        notifyError('فشل في تحديث البيانات');
+      }
+    } catch (error) {
+      notifyError('حدث خطأ أثناء تحديث البيانات');
+      console.error('تحديث البيانات error:', error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -125,11 +148,42 @@ const Layout = ({ children }) => {
       
       {/* Sidebar */}
       {isLoggedIn && isInitialized && (
-        <Sidebar 
-          isOpen={isSidebarOpen} 
+        <Sidebar
+          isOpen={isSidebarOpen}
           onClose={handleSidebarClose}
           onToggle={handleMenuToggle}
         />
+      )}
+
+      {/* Sync/Refresh Button - only for logged in users and not auth pages */}
+      {isLoggedIn && !isAuthPage && !isPaymentReceiptPage && (
+        <IconButton
+          onClick={handleSync}
+          disabled={isSyncing}
+          style={{
+            position: 'fixed',
+            bottom: 35,
+            left: 20,
+          }}
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            backgroundColor: 'primary.main',
+            color: 'white',
+            zIndex: 9999,
+            boxShadow: 2,
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+          }}
+        >
+          {isSyncing ? (
+            <CircularProgress size={24} />
+          ) : (
+            <SyncIcon sx={{ fontSize: 30 }} />
+          )}
+        </IconButton>
       )}
     </Box>
   );

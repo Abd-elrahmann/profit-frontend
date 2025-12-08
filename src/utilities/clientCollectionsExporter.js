@@ -67,7 +67,7 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -82,12 +82,11 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
       doc.text('كشف تحصيل العملاء', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(11);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
       const pageWidth = doc.internal.pageSize.width;
-      const tableMargin = 5;
       let yPosition = 45;
 
       // Prepare table data
@@ -127,7 +126,7 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200],
@@ -202,7 +201,7 @@ export const exportClientCollectionsToPDF = async (clientsData) => {
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered
@@ -261,7 +260,7 @@ export const exportClientDetailsToPDF = async (clientDetails) => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right
       const logoWidth = 10;
@@ -276,7 +275,7 @@ export const exportClientDetailsToPDF = async (clientDetails) => {
       doc.text('كشف تحصيل العميل', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(13);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       doc.text(`العميل: ${clientDetails.client.name}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
       doc.setFontSize(11);
@@ -314,7 +313,7 @@ export const exportClientDetailsToPDF = async (clientDetails) => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 9,
           cellPadding: 4,
           halign: 'right',
@@ -372,7 +371,7 @@ export const exportClientDetailsToPDF = async (clientDetails) => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 9,
           cellPadding: 4,
           halign: 'right',
@@ -435,7 +434,7 @@ export const exportClientDetailsToPDF = async (clientDetails) => {
           theme: 'striped',
           styles: {
             font: 'Amiri',
-            fontStyle: 'normal',
+            fontStyle: 'bold',
             fontSize: 8,
             cellPadding: 3,
             halign: 'right',
@@ -486,7 +485,7 @@ export const exportClientDetailsToPDF = async (clientDetails) => {
         );
         
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         doc.text(

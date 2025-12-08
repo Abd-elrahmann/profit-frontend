@@ -33,7 +33,7 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
@@ -48,7 +48,7 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       doc.text('دفتر الأستاذ العام', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
       doc.setFontSize(13);
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       doc.text(`الحساب: ${account.name} (${account.code})`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
       // Date range
@@ -74,7 +74,7 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 55;
-      const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')} ريال  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} ريال  |  الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} ريال  |  عدد القيود: ${ledgerData.totalJournals || 0}`;
+      const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')}  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')}  |  الرصيد الختامي: ${closingBalance.toLocaleString('en-US')}  |  عدد القيود: ${ledgerData.totalJournals || 0}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
       let yPosition = summaryY + 12;
@@ -84,9 +84,9 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       ledgerData.journals?.forEach(journal => {
         journal.lines.forEach(line => {
           tableData.push([
-            line.balance.toLocaleString('en-US') + ' ريال',
-            line.credit > 0 ? line.credit.toLocaleString('en-US') + ' ريال' : '0',
-            line.debit > 0 ? line.debit.toLocaleString('en-US') + ' ريال' : '0',
+            line.balance.toLocaleString('en-US'),
+            line.credit > 0 ? line.credit.toLocaleString('en-US') : '0',
+            line.debit > 0 ? line.debit.toLocaleString('en-US') : '0',
             line.description || journal.description || '-',
             journal.reference || '-',
             dayjs(journal.date).format('DD/MM/YYYY HH:mm')
@@ -124,7 +124,7 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         theme: 'striped', // Simpler theme without heavy borders
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200], // Lighter borders
@@ -195,7 +195,7 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         
         // Footer text
         doc.setFontSize(9);
-        doc.setFont('Amiri', 'normal');
+        doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
         // Page number - centered

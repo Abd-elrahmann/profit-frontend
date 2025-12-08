@@ -35,6 +35,8 @@ import {
   ArrowBack as ArrowBackIcon,
   AccountBalance as BalanceIcon,
   Savings as SavingsIcon,
+  PictureAsPdf as PDFIcon,
+  TableRows as ExcelIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -47,11 +49,13 @@ import { notifySuccess, notifyError } from "../../utilities/toastify";
 import {
   StyledTableCell,
   StyledTableRow,
+  ScrollableTableContainer,
 } from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import DeleteModal from "../../components/modals/DeleteModal";
 import SavingPercentage from "../../components/modals/SavingPercentage";
+import { exportProfitDistributionToPDF, exportProfitDistributionToExcel } from "../../utilities/ProfitDistributionExporter";
 import "dayjs/locale/ar";
 import dayjs from "dayjs";
 
@@ -75,6 +79,7 @@ const ProfitDistribution = () => {
   const [isDistributing, setIsDistributing] = useState(false);
   const [enableSaving, setEnableSaving] = useState(false);
   const [savingPercentage, setSavingPercentage] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -210,6 +215,30 @@ const ProfitDistribution = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportProfitDistributionToPDF(periodData, enableSaving, savingPercentage);
+      notifySuccess("تم تصدير التقرير بنجاح");
+    } catch (error) {
+      notifyError(error.message || "حدث خطأ أثناء التصدير");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await exportProfitDistributionToExcel(periodData, enableSaving, savingPercentage);
+      notifySuccess("تم تصدير التقرير بنجاح");
+    } catch (error) {
+      notifyError(error.message || "حدث خطأ أثناء التصدير");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
@@ -222,6 +251,12 @@ const ProfitDistribution = () => {
       .format("D [من] MMMM [الساعة] h:mm") // format without A
       + " " 
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
+
+  // Format number without decimals
+  const formatNumber = (num) => {
+    if (!num) return "0";
+    return Math.round(num).toLocaleString();
   };
 
   // Get journal status in Arabic
@@ -243,22 +278,30 @@ const ProfitDistribution = () => {
            (period?.distributionJournal && period.distributionJournal.status === "POSTED");
   };
 
-  // حساب الأرباح بعد الادخار
-  // الادخار يطبق فقط على أرباح الشركاء، وأرباح الشركة لا تتغير
+
   const calculateProfitAfterSaving = () => {
     if (!periodData) return { companyProfit: 0, partnerProfit: 0, savedAmount: 0 };
-    
-    // Calculate total partner profit from partners array
+
+    if (periodData.totalAfterSaving !== undefined && periodData.totalSaving !== undefined) {
+      const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.totalAfterSaving || partner.totalProfit || 0), 0) || 0;
+      return {
+        savedAmount: periodData.totalSaving,
+        companyProfit: periodData.companyProfit || 0,
+        partnerProfit: periodData.totalAfterSaving,
+        originalCompanyProfit: periodData.companyProfit || 0,
+        originalPartnerProfit: totalPartnerProfit + periodData.totalSaving
+      };
+    }
+
     const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.totalProfit || 0), 0) || 0;
     const companyProfit = periodData.companyProfit || 0;
-    
-    // الادخار يطبق فقط على أرباح الشركاء
-    const savedAmount = totalPartnerProfit * (savingPercentage / 100);
+
+    const savedAmount = enableSaving ? totalPartnerProfit * (savingPercentage / 100) : 0;
     const partnerProfitAfterSaving = totalPartnerProfit - savedAmount;
-    
+
     return {
       savedAmount,
-      companyProfit: companyProfit, // أرباح الشركة لا تتغير
+      companyProfit: companyProfit,
       partnerProfit: partnerProfitAfterSaving,
       originalCompanyProfit: companyProfit,
       originalPartnerProfit: totalPartnerProfit
@@ -328,30 +371,35 @@ const ProfitDistribution = () => {
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color="primary.main">
-              {enableSaving ? 
-                profitAfterSaving.companyProfit.toLocaleString() : 
-                periodData?.companyProfit?.toLocaleString() || 0
+              {enableSaving ?
+                formatNumber(profitAfterSaving.companyProfit) :
+                formatNumber(periodData?.companyProfit) || 0
               }
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي أرباح الشركاء:</Typography>
             <Typography fontWeight="bold" color="success.main">
-              {enableSaving ? 
-                profitAfterSaving.partnerProfit.toLocaleString() : 
-                (periodData?.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
+              {enableSaving && savingPercentage > 0 ?
+                formatNumber(profitAfterSaving.partnerProfit) :
+                formatNumber((periodData?.totalAfterSaving ||
+                 periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
+                ))
               }
             </Typography>
           </Box>
           
           {/* عرض المبلغ المدخر إذا كان الادخار مفعل أو موجود في البيانات */}
-          {(enableSaving && savingPercentage > 0) || periodData?.totalSaving > 0 ? (
+          {(enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) ? (
             <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: '1px solid #e0e0e0' }}>
               <Typography variant="body2" color="warning.main">
                 المبلغ المدخر {enableSaving && savingPercentage > 0 ? `(${savingPercentage}%)` : ''}:
               </Typography>
               <Typography variant="body2" fontWeight="bold" color="warning.main">
-                {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()}
+                {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
+                  (periodData?.totalSaving ||
+                   periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0)
+                 ))}
               </Typography>
             </Box>
           ) : null}
@@ -536,6 +584,9 @@ const ProfitDistribution = () => {
               أرباح الشركة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              إجمالي أرباح الشركاء
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               حالة التوزيع
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -570,7 +621,12 @@ const ProfitDistribution = () => {
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Typography fontWeight="bold" color="primary.main">
-                    {period.companyProfit?.toLocaleString() || 0}
+                    {formatNumber(period.companyProfit) || 0}
+                  </Typography>
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  <Typography fontWeight="bold" color="success.main">
+                    {formatNumber(period.totalAfterSaving) || 0}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -695,7 +751,7 @@ const ProfitDistribution = () => {
                         fontWeight="bold"
                         color="primary.main"
                       >
-                        {period.companyProfit?.toLocaleString() || 0}
+                        {formatNumber(period.companyProfit) || 0}
                       </Typography>
                     </Box>
 
@@ -787,9 +843,9 @@ const ProfitDistribution = () => {
                 أرباح الشركة
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="primary.main">
-                {enableSaving ? 
-                  profitAfterSaving.companyProfit.toLocaleString() : 
-                  periodData?.companyProfit?.toLocaleString() || 0
+                {enableSaving ?
+                  formatNumber(profitAfterSaving.companyProfit) :
+                  formatNumber(periodData?.companyProfit) || 0
                 }
               </Typography>
             </CardContent>
@@ -808,9 +864,11 @@ const ProfitDistribution = () => {
                 أرباح الشركاء
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="success.main">
-                {enableSaving ? 
-                  profitAfterSaving.partnerProfit.toLocaleString() : 
-                  (periodData?.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
+                {enableSaving && savingPercentage > 0 ?
+                  formatNumber(profitAfterSaving.partnerProfit) :
+                  formatNumber((periodData?.totalAfterSaving ||
+                   periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
+                  ))
                 }
               </Typography>
             </CardContent>
@@ -878,7 +936,10 @@ const ProfitDistribution = () => {
                 </Typography>
               )}
               <Typography variant="body2">
-                المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()}
+                المبلغ المدخر: {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
+                  (periodData?.totalSaving ||
+                   periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0)
+                 ))}
               </Typography>
             </Box>
           ) : null}
@@ -936,35 +997,69 @@ const ProfitDistribution = () => {
                     >
                       <Box>
                         <Typography variant="body2" color="textSecondary">
-                          نسبة الربح:
+                          الأرباح قبل الخصم:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
-                          {partner.orgProfitPercent}%
+                          {formatNumber(partner.rawProfit) || formatNumber(partner.totalProfit) || 0}
                         </Typography>
                       </Box>
 
                       <Box>
                         <Typography variant="body2" color="textSecondary">
-                          الربح:
+                          نسبة ربح الشركة:
                         </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight="bold"
-                        color="success.main"
-                      >
-                        {(enableSaving && partner.savingAmount) || partner.totalAfterSaving ? 
-                          (partner.totalAfterSaving || partner.totalProfit).toLocaleString() : 
-                          partner.totalProfit.toLocaleString()
-                        }
-                      </Typography>
+                        <Typography variant="body2" fontWeight="medium">
+                          {partner.orgProfitPercent}%
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 1,
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          مبلغ ربح الشركة:
+                        </Typography>
+                        <Typography variant="body2" fontWeight="medium" color="error.main">
+                          {formatNumber(partner.companyCut) || 0}
+                        </Typography>
+                      </Box>
+
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr",
+                        gap: 1,
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          صافي الأرباح:
+                        </Typography>
+                        <Typography variant="body2" fontWeight="bold" color="success.main">
+                          {formatNumber((enableSaving && savingPercentage > 0 ?
+                            (partner.finalProfit || partner.totalProfit || 0) * (1 - savingPercentage / 100) :
+                            partner.totalAfterSaving || partner.totalProfit || 0
+                          ))}
+                        </Typography>
                       </Box>
                     </Box>
 
                     {/* Show saving amount when saving is enabled or exists in data */}
-                    {partner.savingAmount && (enableSaving || partner.savingAmount > 0) && (
+                    {((enableSaving && savingPercentage > 0) || partner.savingAmount > 0) && (
                       <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="warning.main">
-                          المبلغ المدخر: {partner.savingAmount.toLocaleString()}
+                          المبلغ المدخر: {formatNumber((enableSaving && savingPercentage > 0 ?
+                            (partner.finalProfit || partner.totalProfit || 0) * (savingPercentage / 100) :
+                            partner.savingAmount || 0
+                          ))}
                         </Typography>
                       </Box>
                     )}
@@ -1031,15 +1126,60 @@ const ProfitDistribution = () => {
   // Render desktop period details
   const renderDesktopPeriodDetails = () => (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
-      <Typography
-        variant="h6"
-        color="primary"
-        fontWeight="bold"
-        mb={3}
-        textAlign={"center"}
-      >
-        تفاصيل توزيع الأرباح
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography
+          variant="h6"
+          color="primary"
+          fontWeight="bold"
+          textAlign={"center"}
+        >
+          تفاصيل توزيع الأرباح
+        </Typography>
+        {permissions.includes("distribution_Export") && (
+        <Stack direction="row" spacing={1} sx={{gap: "10px"}}>
+          <Button
+             variant="contained"
+             startIcon={<PDFIcon sx={{ marginLeft: "10px" }} />}
+             onClick={handleExportPDF}
+             disabled={isExporting}
+             sx={{
+               bgcolor: "#d32f2f",
+               "&:hover": { bgcolor: "#b71c1c" },
+             }}
+          >
+            تصدير PDF
+            {isExporting && (
+              <CircularProgress
+                size={14}
+                color="inherit"
+                style={{ marginLeft: 8 }}
+              />
+            )}
+          </Button>
+          <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+              onClick={handleExportExcel}
+              disabled={isExporting}
+              sx={{
+                borderColor: "success.main",
+                color: "success.main",
+                "&:hover": { bgcolor: "success.50" },
+            }}  
+          >
+            تصدير Excel
+            {isExporting && (
+              <CircularProgress
+                size={14}
+                color="inherit"
+                style={{ marginLeft: 8 }}
+              />
+            )}
+          </Button>
+        </Stack>
+        )}
+      </Box>
 
       {/* Period Information */}
       <Grid
@@ -1096,9 +1236,9 @@ const ProfitDistribution = () => {
           <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center",width: "350px" }}>
             <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="primary.main">
-              {enableSaving ? 
-                profitAfterSaving.companyProfit.toLocaleString() : 
-                periodData?.companyProfit?.toLocaleString() || 0
+              {enableSaving ?
+                formatNumber(profitAfterSaving.companyProfit) :
+                formatNumber(periodData?.companyProfit) || 0
               }
             </Typography>
             <Typography variant="body1" color="primary.main">
@@ -1115,9 +1255,11 @@ const ProfitDistribution = () => {
           <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center",width: "350px" }}>
             <BalanceIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="h5" fontWeight="bold" color="success.main">
-              {enableSaving ? 
-                profitAfterSaving.partnerProfit.toLocaleString() : 
-                (periodData?.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
+              {enableSaving && savingPercentage > 0 ?
+                formatNumber(profitAfterSaving.partnerProfit) :
+                formatNumber((periodData?.totalAfterSaving ||
+                 periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
+                ))
               }
             </Typography>
             <Typography variant="body1" color="success.main">
@@ -1144,16 +1286,24 @@ const ProfitDistribution = () => {
             </Typography>
           )}
           <Typography variant="body2">
-            - المبلغ المدخر: {(enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount : periodData?.totalSaving || 0).toLocaleString()}
+            - المبلغ المدخر: {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
+              (periodData?.totalSaving ||
+               periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0)
+             ))}
           </Typography>
           {enableSaving && savingPercentage > 0 && (
             <Typography variant="body2">
-              - إجمالي الأرباح قبل الادخار: {(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit).toLocaleString()}
+              - إجمالي الأرباح قبل الادخار: {formatNumber(profitAfterSaving.originalCompanyProfit + profitAfterSaving.originalPartnerProfit)}
+            </Typography>
+          )}
+          {periodData?.totalAfterSaving && !enableSaving && (
+            <Typography variant="body2">
+              - إجمالي الأرباح بعد الادخار: {formatNumber(periodData.totalAfterSaving)}
             </Typography>
           )}
           {periodData?.totalAfterSaving && (
             <Typography variant="body2">
-              - إجمالي الأرباح بعد الادخار: {periodData.totalAfterSaving.toLocaleString()}
+              - إجمالي الأرباح بعد الادخار: {formatNumber(periodData.totalAfterSaving)}
             </Typography>
           )}
         </Alert>
@@ -1172,22 +1322,27 @@ const ProfitDistribution = () => {
             توزيع الأرباح على الشركاء
           </Typography>
           <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-            <Table>
+            <ScrollableTableContainer maxHeight="100%" minWidth={1200}>
               <TableHead>
                 <StyledTableRow>
                   <StyledTableCell align="center">اسم الشريك</StyledTableCell>
                   <StyledTableCell align="center">الرقم القومي</StyledTableCell>
                   <StyledTableCell align="center">الهاتف</StyledTableCell>
                   <StyledTableCell align="center">
-                    المبلغ الأصلي
+                    الأرباح قبل الخصم
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     نسبة ربح الشركة
                   </StyledTableCell>
-                  {periodData.partners.some(p => p.savingAmount) && (
+                  <StyledTableCell align="center">
+                    مبلغ ربح الشركة
+                  </StyledTableCell>
+                  {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
                     <StyledTableCell align="center">المبلغ المدخر</StyledTableCell>
                   )}
-                  <StyledTableCell align="center">الربح الموزع {periodData.partners.some(p => p.savingAmount) ? 'بعد الخصم' : ''}</StyledTableCell>
+                  <StyledTableCell align="center">
+                    صافي الأرباح {(periodData.partners.some(p => p.savingAmount) || enableSaving) ? 'بعد الادخار' : ''}
+                  </StyledTableCell>
                 </StyledTableRow>
               </TableHead>
               <TableBody>
@@ -1203,46 +1358,70 @@ const ProfitDistribution = () => {
                       {partner.phone || "-"}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {(
-                        partner.totalProfit /
-                        (1 - partner.orgProfitPercent / 100)
-                      ).toLocaleString()}
+                      {formatNumber(partner.rawProfit) || formatNumber(partner.totalProfit) || 0}
                     </StyledTableCell>
                     <StyledTableCell align="center">
                       {partner.orgProfitPercent}%
                     </StyledTableCell>
-                    {periodData.partners.some(p => p.savingAmount) && (
+                    <StyledTableCell align="center">
+                      {formatNumber(partner.companyCut) || 0}
+                    </StyledTableCell>
+                    {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
                       <StyledTableCell align="center">
-                        <Typography fontWeight="bold" color="warning.main">
-                          {partner.savingAmount?.toLocaleString() || 0}
-                        </Typography>
+                          {formatNumber((enableSaving && savingPercentage > 0 ?
+                            (partner.finalProfit || partner.totalProfit || 0) * (savingPercentage / 100) :
+                            partner.savingAmount || 0
+                          ))}
                       </StyledTableCell>
                     )}
                     <StyledTableCell align="center">
-                      <Typography fontWeight="bold" color="success.main">
-                        {partner.totalAfterSaving ? 
-                          partner.totalAfterSaving.toLocaleString() : 
-                          partner.totalProfit.toLocaleString()
-                        }
-                      </Typography>
+                        {formatNumber((enableSaving && savingPercentage > 0 ?
+                          (partner.finalProfit || partner.totalProfit || 0) * (1 - savingPercentage / 100) :
+                          partner.totalAfterSaving || partner.totalProfit || 0
+                        ))}
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
                 <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell colSpan={periodData.partners.some(p => p.savingAmount) ? 6 : 5} align="center">
+                  <StyledTableCell colSpan={3} align="center">
                     <Typography fontWeight="bold">الإجمالي</Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
+                    <Typography fontWeight="bold" color="primary.main">
+                      {formatNumber(periodData?.partners?.reduce((sum, p) => sum + (p.rawProfit || p.totalProfit || 0), 0) || 0)}
+                    </Typography>
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <Typography fontWeight="bold">-</Typography>
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <Typography fontWeight="bold" color="error.main">
+                      {formatNumber(periodData?.partners?.reduce((sum, p) => sum + (p.companyCut || 0), 0) || 0)}
+                    </Typography>
+                  </StyledTableCell>
+                  {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
+                    <StyledTableCell align="center">
+                      <Typography fontWeight="bold" color="warning.main">
+                        {formatNumber((enableSaving && savingPercentage > 0 ?
+                          periodData?.partners?.reduce((sum, p) => sum + ((p.finalProfit || p.totalProfit || 0) * (savingPercentage / 100)), 0) || 0 :
+                          periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0
+                        ))}
+                      </Typography>
+                    </StyledTableCell>
+                  )}
+                  <StyledTableCell align="center">
                     <Typography fontWeight="bold" color="success.main">
-                      {periodData.totalAfterSaving ? 
-                        periodData.totalAfterSaving.toLocaleString() : 
-                        (periodData.partners?.reduce((sum, p) => sum + (p.totalProfit || 0), 0) || 0).toLocaleString()
+                      {enableSaving && savingPercentage > 0 ?
+                        formatNumber(profitAfterSaving.partnerProfit) :
+                        formatNumber((periodData.totalAfterSaving ||
+                         periodData.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
+                        ))
                       }
                     </Typography>
                   </StyledTableCell>
                 </StyledTableRow>
               </TableBody>
-            </Table>
+            </ScrollableTableContainer>
           </TableContainer>
         </>
       )}
@@ -1326,7 +1505,7 @@ const ProfitDistribution = () => {
                 <strong>ملاحظة:</strong> سيتم ادخار {savingPercentage}% من الأرباح قبل التوزيع
               </Typography>
               <Typography variant="body2" sx={{ mt: 1 }}>
-                المبلغ المدخر: {profitAfterSaving.savedAmount.toLocaleString()}
+                المبلغ المدخر: {formatNumber(profitAfterSaving.savedAmount)}
               </Typography>
             </Alert>
           )}
@@ -1486,9 +1665,33 @@ const ProfitDistribution = () => {
                         <ArrowBackIcon />
                       </IconButton>
                     )}
-                    <Typography variant="h6" fontWeight="bold" sx={{ ml: 1 }}>
-                      تفاصيل التوزيع
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <Typography variant="h6" fontWeight="bold">
+                        تفاصيل التوزيع
+                      </Typography>
+                      {permissions.includes("distribution_Export") && (
+                      <Stack direction="row" spacing={0.5}>
+                        <IconButton
+                          size="small"
+                          onClick={handleExportPDF}
+                          disabled={isExporting}
+                          sx={{ color: 'primary.main' }}
+                          title="تصدير PDF"
+                        >
+                          <CheckIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={handleExportExcel}
+                          disabled={isExporting}
+                          sx={{ color: 'success.main' }}
+                          title="تصدير Excel"
+                        >
+                          <CheckIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
+                      )}
+                    </Box>
                   </Box>
                 ) : (
                   // Title for mobile list view

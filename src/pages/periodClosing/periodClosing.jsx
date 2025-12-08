@@ -56,6 +56,12 @@ const PeriodClosing = () => {
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
 
+  // Handle view journal details
+  const handleViewJournal = (journalId) => {
+    // Navigate to journal entries page with details tab and selected journal
+    navigate('/journal-entries', { state: { journalId: journalId, activeTab: 1 } });
+  };
+
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
 
@@ -96,8 +102,11 @@ const PeriodClosing = () => {
     try {
       await closePeriod(selectedPeriod);
       notifySuccess("تم تقفيل الفترة بنجاح");
+      // Force refetch of current period data
       queryClient.invalidateQueries(["period", selectedPeriod]);
       queryClient.invalidateQueries(["periods"]);
+      // Also refetch the current period data immediately
+      await queryClient.refetchQueries(["period", selectedPeriod]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تقفيل الفترة");
     }
@@ -109,6 +118,8 @@ const PeriodClosing = () => {
       notifySuccess("تم إلغاء تقفيل الفترة بنجاح");
       queryClient.invalidateQueries(["period", selectedPeriod]);
       queryClient.invalidateQueries(["periods"]);
+      // Also refetch the current period data immediately
+      await queryClient.refetchQueries(["period", selectedPeriod]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء إلغاء التقفيل");
     }
@@ -122,6 +133,25 @@ const PeriodClosing = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
     return new Date(dateString).toLocaleDateString('en-US');
+  };
+
+  // Format date with Hijri for display
+  const formatDateWithHijri = (dateString, hijriDate) => {
+    if (!dateString) return "غير محدد";
+
+    const gregorianDate = new Date(dateString).toLocaleDateString('en-US');
+    const hijriText = hijriDate || "غير محدد";
+
+    return (
+      <Box>
+        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+          {gregorianDate}
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem',fontWeight: 'bold' }}>
+          {hijriText}
+        </Typography>
+      </Box>
+    );
   };
 
   // Get journal type in Arabic
@@ -318,7 +348,7 @@ const PeriodClosing = () => {
   const renderMobilePeriodDetails = () => (
     <Box>
       {/* Draft Entries Alert */}
-      {showDraftAlert && (
+      {showDraftAlert && !periodData?.isClosed && (
         <Alert
           severity="warning"
           sx={{ mb: 3 }}
@@ -455,18 +485,14 @@ const PeriodClosing = () => {
             <Typography variant="body2" color="textSecondary" gutterBottom>
               تاريخ البداية
             </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {formatDate(periodData?.startDate)}
-            </Typography>
+            {formatDateWithHijri(periodData?.startDate, periodData?.startDateHijri)}
           </Box>
 
           <Box>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               تاريخ النهاية
             </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {formatDate(periodData?.endDate)}
-            </Typography>
+            {formatDateWithHijri(periodData?.endDate, periodData?.endDateHijri)}
           </Box>
 
           <Box>
@@ -648,7 +674,7 @@ const PeriodClosing = () => {
       </Typography>
 
       {/* Draft Entries Alert */}
-      {showDraftAlert && (
+      {showDraftAlert && !periodData?.isClosed && (
         <Alert
           severity="warning"
           sx={{ mb: 3 }}
@@ -688,13 +714,13 @@ const PeriodClosing = () => {
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             تاريخ البداية:
           </Typography>
-          <Typography variant="body1">{formatDate(periodData?.startDate)}</Typography>
+          {formatDateWithHijri(periodData?.startDate, periodData?.startDateHijri)}
         </Grid>
         <Grid item xs={12} md={6}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             تاريخ النهاية:
           </Typography>
-          <Typography variant="body1">{formatDate(periodData?.endDate)}</Typography>
+          {formatDateWithHijri(periodData?.endDate, periodData?.endDateHijri)}
         </Grid>
       </Grid>
 
@@ -720,21 +746,17 @@ const PeriodClosing = () => {
                     <StyledTableCell align="center">
                       {partner.partnerName}
                     </StyledTableCell>
-                    <StyledTableCell align="center">
-                      <Typography fontWeight="bold" color="success.main">
-                        {partner.totalProfit.toLocaleString()}
-                      </Typography>
+                    <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                      {partner.totalProfit.toLocaleString()}
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
-                <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold">إجمالي أرباح الشركاء</Typography>
+                <StyledTableRow style={{ backgroundColor: "#f5f5f5" }}>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
+                    إجمالي أرباح الشركاء
                   </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="success.main">
-                      {periodData.totalPartnerProfit.toLocaleString()}
-                    </Typography>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                    {periodData.totalPartnerProfit.toLocaleString()}
                   </StyledTableCell>
                 </StyledTableRow>
               </TableBody>
@@ -751,26 +773,23 @@ const PeriodClosing = () => {
       </Typography>
 
       {periodData?.journals && periodData.journals.length > 0 ? (
-        <TableContainer component={Paper} variant="outlined">
+        <TableContainer component={Paper} variant="outlined" >
           <Table>
             <TableHead>
               <StyledTableRow>
-                <StyledTableCell align="center">الرقم المرجعي</StyledTableCell>
-                <StyledTableCell align="center">الوصف</StyledTableCell>
+                <StyledTableCell align="center" >الوصف</StyledTableCell>
                 <StyledTableCell align="center">النوع</StyledTableCell>
                 <StyledTableCell align="center">الحالة</StyledTableCell>
                 <StyledTableCell align="center">التاريخ</StyledTableCell>
                 <StyledTableCell align="center">مدين</StyledTableCell>
                 <StyledTableCell align="center">دائن</StyledTableCell>
                 <StyledTableCell align="center">الرصيد</StyledTableCell>
+                <StyledTableCell align="center">الإجراءات</StyledTableCell>
               </StyledTableRow>
             </TableHead>
             <TableBody>
               {periodData.journals.map((journal) => (
                 <StyledTableRow key={journal.id}>
-                  <StyledTableCell align="center">
-                    {journal.reference}
-                  </StyledTableCell>
                   <StyledTableCell align="center">
                     {journal.description}
                   </StyledTableCell>
@@ -787,70 +806,75 @@ const PeriodClosing = () => {
                   <StyledTableCell align="center">
                     {formatDate(journal.date)}
                   </StyledTableCell>
-                  <StyledTableCell align="center">
+                  <StyledTableCell align="center" style={{ color: '#d32f2f', fontWeight: 'bold' }}>
                     {journal.totalDebit?.toLocaleString() || 0}
                   </StyledTableCell>
-                  <StyledTableCell align="center">
+                  <StyledTableCell align="center" style={{ color: '#2e7d32', fontWeight: 'bold' }}>
                     {journal.totalCredit?.toLocaleString() || 0}
                   </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography
-                      fontWeight="bold"
-                      color={
+                  <StyledTableCell
+                    align="center"
+                    style={{
+                      fontWeight: 'bold',
+                      color:
                         (journal.totalDebit || 0) - (journal.totalCredit || 0) > 0
-                          ? "success.main"
+                          ? '#2e7d32'
                           : (journal.totalDebit || 0) - (journal.totalCredit || 0) < 0
-                          ? "error.main"
-                          : "text.primary"
-                      }
+                          ? '#d32f2f'
+                          : 'inherit'
+                    }}
+                  >
+                    {((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleViewJournal(journal.id)}
+                      title="عرض تفاصيل القيد"
                     >
-                      {((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
-                    </Typography>
+                      <VisibilityIcon color="primary" style={{ fontSize: '20px' }} />
+                    </IconButton>
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
-              <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                <StyledTableCell align="center" colSpan={5}>
-                  <Typography fontWeight="bold">الإجمالي</Typography>
+              <StyledTableRow style={{ backgroundColor: "#f5f5f5" }}>
+                <StyledTableCell align="center" colSpan={5} style={{ fontWeight: 'bold' }}>
+                  الإجمالي
                 </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography fontWeight="bold">
-                    {periodData.journals
-                      .reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
-                      .toLocaleString()}
-                  </Typography>
+                <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
+                  {periodData.journals
+                    .reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
+                    .toLocaleString()}
                 </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography fontWeight="bold">
-                    {periodData.journals
-                      .reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
-                      .toLocaleString()}
-                  </Typography>
+                <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
+                  {periodData.journals
+                    .reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
+                    .toLocaleString()}
                 </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography
-                    fontWeight="bold"
-                    color={
+                <StyledTableCell
+                  align="center"
+                  style={{
+                    fontWeight: 'bold',
+                    color:
                       periodData.journals.reduce(
                         (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
                         0
                       ) > 0
-                        ? "success.main"
+                        ? '#2e7d32'
                         : periodData.journals.reduce(
                             (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
                             0
                           ) < 0
-                        ? "error.main"
-                        : "text.primary"
-                    }
-                  >
-                    {periodData.journals
-                      .reduce(
-                        (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
-                        0
-                      )
-                      .toLocaleString()}
-                  </Typography>
+                        ? '#d32f2f'
+                        : 'inherit'
+                  }}
+                >
+                  {periodData.journals
+                    .reduce(
+                      (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                      0
+                    )
+                    .toLocaleString()}
                 </StyledTableCell>
               </StyledTableRow>
             </TableBody>
