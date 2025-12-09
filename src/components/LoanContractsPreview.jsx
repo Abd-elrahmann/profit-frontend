@@ -337,7 +337,7 @@ const LoanContractsPreview = ({
         
         <Button
           variant="contained"
-          startIcon={<Download sx={{marginLeft: '10px'}} />}
+          startIcon={loading ? null : <Download sx={{marginLeft: '10px'}} />}
           onClick={() => onSaveContracts('both')}
           disabled={loading || !debtAckHtml || !promissoryNoteHtml}
           sx={{
@@ -346,7 +346,7 @@ const LoanContractsPreview = ({
             minWidth: '180px'
           }}
         >
-          {loading ? 'جاري الحفظ...' : 'حفظ كلا العقدين'}
+          {loading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'حفظ العقود'}
         </Button>
       </DialogActions>
     </Dialog>

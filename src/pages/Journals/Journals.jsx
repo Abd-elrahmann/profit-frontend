@@ -540,6 +540,8 @@ const Journals = () => {
         return "سحب مالي لشريك";
       case "PARTNER_TRANSACTION_DEPOSIT":
         return "إيداع مالي لشريك";
+      case "EXPENSES":
+        return "مصروف";
       case "OTHER":
         return "أخرى";
       default:

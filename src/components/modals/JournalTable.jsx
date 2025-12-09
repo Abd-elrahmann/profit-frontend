@@ -156,6 +156,8 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         return "سحب مالي لشريك";
       case "PARTNER_TRANSACTION_DEPOSIT":
         return "إيداع مالي لشريك";
+      case "EXPENSES":
+        return "مصروف";
       case "OTHER":
         return "أخرى";
       default:
@@ -256,7 +258,12 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                       checked={selectedJournals.includes(journal.id)}
                       onChange={() => handleJournalSelect(journal.id)}
                       size="small"
-                      sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }}
+                      sx={{ 
+                        color: 'primary.main',
+                        '&.Mui-checked': { 
+                          color: 'primary.main' 
+                        }
+                      }}
                     />
                   </StyledTableCell>
                 )}
@@ -332,6 +339,15 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                 indeterminate={selectedJournals.length > 0 && selectedJournals.length < (journalsData?.journals?.length || 0)}
                 onChange={handleSelectAll}
                 size="small"
+                sx={{ 
+                  color: 'primary.main',
+                  '&.Mui-checked': { 
+                    color: 'primary.main' 
+                  },
+                  '&.MuiCheckbox-indeterminate': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <Typography variant="body2" color="text.secondary">
                 اختيار الكل
@@ -366,7 +382,12 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                               handleJournalSelect(journal.id);
                             }}
                             size="small"
-                            sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }}
+                            sx={{ 
+                              color: 'primary.main',
+                              '&.Mui-checked': { 
+                                color: 'primary.main' 
+                              }
+                            }}
                           />
                         )}
                         <Typography variant="h6" fontWeight="bold" color="primary.main">

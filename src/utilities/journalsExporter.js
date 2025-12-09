@@ -66,11 +66,11 @@ export const exportJournalToPDF = async (journalData) => {
       const headerTableHeaders = [['المعلومة', 'القيمة']];
       const pageWidth = doc.internal.pageSize.width;
       const headerTableWidth = 100;
-      const headerTableStartX = (pageWidth - headerTableWidth) / 2;
+      // Calculate left margin to center the table exactly
+      const leftMargin = (pageWidth - headerTableWidth) / 2;
       
       autoTable(doc, {
         startY: headerTableY,
-        startX: headerTableStartX,
         head: headerTableHeaders,
         body: headerTableData,
         theme: 'striped',
@@ -102,7 +102,12 @@ export const exportJournalToPDF = async (journalData) => {
           0: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }, // المعلومة
           1: { cellWidth: 60, halign: 'right' }  // القيمة
         },
-        margin: { top: headerTableY, bottom: 5 },
+        margin: { 
+          top: headerTableY, 
+          left: leftMargin,
+          right: leftMargin,
+          bottom: 5 
+        },
         tableWidth: headerTableWidth,
         horizontalPageBreak: false
       });
@@ -414,6 +419,8 @@ const getJournalSourceTypeText = (sourceType) => {
       return "سحب مالي لشريك";
     case "PARTNER_TRANSACTION_DEPOSIT":
       return "إيداع مالي لشريك";
+    case "EXPENSES":
+      return "مصروف";
     case "OTHER":
       return "أخرى";
     default:

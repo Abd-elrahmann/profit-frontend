@@ -14,9 +14,11 @@ import {
   MdMenuOpen as MenuOpenIcon,
   MdPerson as Person,
   MdSettings as SettingsIcon,
+  MdExitToApp as ExitToAppIcon,
 } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "/assets/images/logo.webp";
+import Api from "../../config/Api";
 
 const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const navigate = useNavigate();
@@ -117,6 +119,21 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const handleProfileClick = () => {
     handleUserMenuClose();
     navigate("/profile");
+  };
+
+  const handleLogout = async () => {
+    handleUserMenuClose();
+    try {
+      await Api.post("/api/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("profile");
+      localStorage.removeItem("rememberedEmail");
+      navigate("/login", { replace: true });
+    }
   };
 
 
@@ -235,6 +252,10 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 <MenuItem onClick={handleProfileClick}>
                   <Person sx={{ mr: 1, ml: 0 }} />
                   الملف الشخصي
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                  <ExitToAppIcon style={{ marginLeft: 6 }} />
+                  تسجيل الخروج
                 </MenuItem>
               </Menu>
             </div>

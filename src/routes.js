@@ -16,6 +16,7 @@ import { MdDescription as JournalIcon } from 'react-icons/md';
 import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 import { Savings as SavingsIcon } from '@mui/icons-material';
 import { ReceiptLong as ReceiptLongIcon } from '@mui/icons-material';
+import { MdReceipt as ReceiptIcon } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
@@ -40,6 +41,7 @@ const Zakah = React.lazy(() => import('./pages/Zakah/zakah'));
 const Saving = React.lazy(() => import('./pages/Saving/Saving'));
 const ClientCollections = React.lazy(() => import('./pages/clientCollections/ClientCollections'));
 const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProfit'));
+const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
 const routes = [
   {
     path: '/login',
@@ -48,6 +50,7 @@ const routes = [
     showInSidebar: false
   },
  
+  // 1. لوحة التحكم
   {
     path: '/dashboard',
     element: Dashboard,
@@ -59,7 +62,7 @@ const routes = [
     requiresPermissions: true
   },
 
-  // صفحات فردية بدون أب
+  // 2. السجلات
   {
     path: '/logs',
     element: Logs,
@@ -71,7 +74,7 @@ const routes = [
     icon: HistoryIcon,
   },
 
-  // الموظفين والأدوار مجموعة واحدة
+  // 3. ادارة الموظفين
   {
     path: '/employees',
     element: Employees,
@@ -95,7 +98,7 @@ const routes = [
     parent: 'إدارة الموظفين'
   },
 
-  // العملاء مجموعة منفصلة
+  // 4. ادارة العملاء
   {
     path: '/clients',
     element: Clients,
@@ -112,14 +115,14 @@ const routes = [
     element: ClientCollections,
     protected: true,
     showInSidebar: true,
-    label: 'كشف تحصيلات العملاء',
+    label: 'كشف التحصيلات ',
     icon: ReceiptLongIcon,
     module: 'client-report',
     requiresPermissions: true,
     parent: 'إدارة العملاء'
   },
 
-  // المستثمرين مجموعة منفصلة
+  // 5. ادارة المستثمرين
   {
     path: '/investors',
     element: Investors,
@@ -132,31 +135,20 @@ const routes = [
     parent: 'إدارة المستثمرين'
   },
 
-  // القوالب مجموعة واحدة
+  // 6. ادارة المصروفات
   {
-    path: '/contract-templates',
-    element: ContractTemplates,
+    path: '/expenses',
+    element: Expenses,
     protected: true,
     showInSidebar: true,
-    label: 'القوالب العقدية',
-    icon: Contract,
-    module: 'templates',
+    label: 'المصروفات',
+    module: 'expenses',
     requiresPermissions: true,
-    parent: 'القوالب'
-  },
-  {
-    path: '/messages-templates',
-    element: MessagesTemplates,
-    protected: true,
-    showInSidebar: true,
-    label: 'قوالب الرسائل',
-    icon: Message,
-    module: 'templates',
-    requiresPermissions: true,
-    parent: 'القوالب'
+    icon: ReceiptIcon,
+    parent: 'ادارة المصروفات'
   },
 
-  // المحاسبة المالية
+  // 7. المحاسبة المالية
   {
     path: '/chart-of-accounts',
     element: ChartOfAccounts,
@@ -202,7 +194,7 @@ const routes = [
     parent: 'المحاسبة المالية'
   },
 
-  // العمليات المالية
+  // 8. العمليات المالية
   {
     path: '/loans',
     element: Loans,
@@ -256,7 +248,7 @@ const routes = [
     parent: 'العمليات المالية'
   },
 
-  // الأرباح والتقارير
+  // 9. الأرباح والتقارير
   {
     path: '/company-profit',
     element: CompanyProfit,
@@ -279,6 +271,8 @@ const routes = [
     requiresPermissions: true,
     parent: 'الأرباح والتقارير'
   },
+
+  // 10. الزكاة والادخار
   {
     path: '/zakah',
     element: Zakah,
@@ -301,6 +295,30 @@ const routes = [
     icon: SavingsIcon,
     parent: 'الزكاة والادخار'
   },
+
+  // 11. القوالب
+  {
+    path: '/contract-templates',
+    element: ContractTemplates,
+    protected: true,
+    showInSidebar: true,
+    label: 'القوالب العقدية',
+    icon: Contract,
+    module: 'templates',
+    requiresPermissions: true,
+    parent: 'القوالب'
+  },
+  {
+    path: '/messages-templates',
+    element: MessagesTemplates,
+    protected: true,
+    showInSidebar: true,
+    label: 'قوالب الرسائل',
+    icon: Message,
+    module: 'templates',
+    requiresPermissions: true,
+    parent: 'القوالب'
+  },
   {
     path: '/profile',
     element: Profile,
@@ -312,6 +330,19 @@ const routes = [
 
 export const getSidebarMenuItems = () => {
   const routesWithParent = routes.filter(route => route.showInSidebar && route.protected);
+  
+  // ترتيب المجموعات المحدد
+  const parentOrder = [
+    'إدارة الموظفين',
+    'إدارة العملاء',
+    'إدارة المستثمرين',
+    'ادارة المصروفات',
+    'المحاسبة المالية',
+    'العمليات المالية',
+    'الأرباح والتقارير',
+    'الزكاة والادخار',
+    'القوالب'
+  ];
   
   // تجميع العناصر حسب الأب
   const groupedItems = {};
@@ -331,17 +362,26 @@ export const getSidebarMenuItems = () => {
     }
   });
   
-  // تحويل الكائن إلى مصفوفة وإضافة العناصر الفردية
+  // تحويل الكائن إلى مصفوفة مع الحفاظ على الترتيب المحدد
   const result = [];
   
-  // إضافة المجموعات
-  Object.values(groupedItems).forEach(group => {
-    result.push(group);
-  });
-  
-  // إضافة العناصر الفردية
+  // إضافة العناصر الفردية أولاً (لوحة التحكم، السجلات)
   singleItems.forEach(item => {
     result.push(item);
+  });
+  
+  // إضافة المجموعات بالترتيب المحدد
+  parentOrder.forEach(parentLabel => {
+    if (groupedItems[parentLabel]) {
+      result.push(groupedItems[parentLabel]);
+    }
+  });
+  
+  // إضافة أي مجموعات أخرى لم يتم تحديدها في الترتيب
+  Object.keys(groupedItems).forEach(parentLabel => {
+    if (!parentOrder.includes(parentLabel)) {
+      result.push(groupedItems[parentLabel]);
+    }
   });
   
   return result;

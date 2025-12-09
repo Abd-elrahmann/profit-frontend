@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
-  Button,
   Box,
   List,
   ListItem,
@@ -10,17 +9,14 @@ import {
   Collapse
 } from '@mui/material';
 import {
-  MdExitToApp as ExitToApp,
   MdExpandMore as ExpandMoreIcon,
   MdExpandLess as ExpandLessIcon
 } from 'react-icons/md';
 import { RadioButtonUnchecked } from '@mui/icons-material';
 import { getSidebarMenuItems } from '../../routes';
 import { usePermissions } from '../Contexts/PermissionsContext';
-import Api from '../../config/Api';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const [openGroup, setOpenGroup] = useState(null);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
@@ -38,7 +34,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  // Update filtered menu items when permissions change
+  
   useEffect(() => {
     const menuItems = getSidebarMenuItems();
     
@@ -57,23 +53,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   const singleItems = filteredMenuItems.filter(item => !item.children);
   const groupItems = filteredMenuItems.filter(item => item.children);
 
-  const handleLogout = async () => {
-    try {
-      // Call the backend logout endpoint
-      await Api.post('/api/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Continue with frontend logout even if backend call fails
-    } finally {
-      // Clear localStorage and navigate to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('profile');
-      localStorage.removeItem('rememberedEmail');
-      navigate('/login', { replace: true });
-    }
-  };
-
   const toggleGroup = (groupLabel) => {
     setOpenGroup(prev => prev === groupLabel ? null : groupLabel);
   };
@@ -90,7 +69,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           justifyContent: 'space-between',
           borderRadius: 2,
           mb: 1,
-          mt: index === 0 ? 2 : 0,
+          mt: index === 0 ? 1 : 0,
           textDecoration: 'none',
           color: 'text.primary',
           opacity: isOpen ? 1 : 0,
@@ -147,7 +126,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   const renderGroupMenuItem = (item, index) => {
     const isGroupOpen = openGroup === item.label;
     
-    // Filter children based on permissions - this will be recalculated when permissions change
     const filteredChildren = item.children.filter(child => 
       !child.requiresPermissions || permissions.includes(`${child.module}_View`)
     );
@@ -164,7 +142,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             justifyContent: 'space-between',
             borderRadius: 2,
             mb: 1,
-            mt: index === 0 && singleItems.length === 0 ? 2 : 0,
+            mt: index === 0 && singleItems.length === 0 ? 1 : 0,
             textDecoration: 'none',
             color: 'text.primary',
             opacity: isOpen ? 1 : 0,
@@ -213,7 +191,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   justifyContent: 'space-between',
                   borderRadius: 2,
                   mb: 1,
-                  pr: 3, // Move children to the right when parent is open
+                  pr: 3, 
                   textDecoration: 'none',
                   color: 'text.primary',
                   opacity: isOpen ? 1 : 0,
@@ -308,39 +286,24 @@ const Sidebar = ({ isOpen, onClose }) => {
           px: 1, 
           py: 2, 
           overflowY: 'auto', 
+          scrollbarWidth: 'thin',
+          '&::-webkit-scrollbar': {
+            width: '6px'
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#c5cae9',
+            borderRadius: '8px'
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: '#9fa8da'
+          },
         }}>
           {singleItems.map((item, index) => renderSingleMenuItem(item, index))}
           {groupItems.map((item, index) => renderGroupMenuItem(item, index))}
         </List>
-          
-        <Box sx={{ 
-          p: 2, 
-          borderTop: '1px solid #e0e0e0',
-          opacity: isOpen ? 1 : 0,
-          transform: isOpen ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.03s ease-out 0.1s'
-        }}>
-          <Button
-            fullWidth
-            variant="contained"
-            color="error"
-            onClick={handleLogout}
-            startIcon={<ExitToApp style={{ marginLeft: '10px' }} />}
-            sx={{
-              fontWeight: 500,
-              py: 1,
-              direction: 'rtl',
-              borderRadius: 2,
-              transition: 'all 0.01s ease-out',
-              '&:hover': {
-                transform: 'scale(1.02)',
-                boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)'
-              }
-            }}
-          >
-            تسجيل الخروج
-          </Button>
-        </Box>
       </Box>
     </Box>
   );

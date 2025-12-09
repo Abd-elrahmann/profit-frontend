@@ -78,7 +78,8 @@ const Loans = () => {
     debtAck: "",
     promissoryNote: "",
   });
-  const [isCreatingLoan, setIsCreatingLoan] = useState(false);
+  const [_isCreatingLoan, setIsCreatingLoan] = useState(false);
+  const [isSavingContracts, setIsSavingContracts] = useState(false);
   const [isAdditionalLoan, setIsAdditionalLoan] = useState(false);
   const [bankBalance, setBankBalance] = useState(null);
   const [isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
@@ -297,6 +298,8 @@ const Loans = () => {
 
   const handleSaveContracts = async (contractType) => {
     try {
+      setIsSavingContracts(true);
+      
       if (!savedLoanData) {
         notifyError("لم يتم إنشاء السلفة بعد. يرجى إنشاء السلفة أولاً");
         return;
@@ -317,6 +320,8 @@ const Loans = () => {
       }
 
       notifySuccess("تم حفظ العقود بنجاح");
+      
+      // Reset loan data and contracts
       setSavedLoanData(null);
       setContractsGenerated(0);
       setPreviewContracts({
@@ -324,6 +329,26 @@ const Loans = () => {
         promissoryNote: "",
       });
       setPreviewOpen(false);
+      
+      // Reset form fields
+      setLoanForm({
+        amount: "",
+        totalInterest: "",
+        interestRate: "",
+        paymentAmount: "",
+        type: "",
+        startDate: new Date().toISOString().split("T")[0],
+        repaymentDay: "",
+      });
+      
+      // Reset selections
+      setSelectedClient(null);
+      setSelectedKafeel(null);
+      setSelectedBank(null);
+      setSelectedPartner(null);
+      setSelectedLoan(null);
+      
+      // Reset states
       setInstallments([]);
       setIsEditMode(false);
       setIsViewMode(false);
@@ -331,6 +356,8 @@ const Loans = () => {
     } catch (error) {
       handleApiError(error);
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ العقود");
+    } finally {
+      setIsSavingContracts(false);
     }
   };
 
@@ -2094,7 +2121,7 @@ const Loans = () => {
             debtAckHtml={previewContracts.debtAck}
             promissoryNoteHtml={previewContracts.promissoryNote}
             onSaveContracts={handleSaveContracts}
-            loading={isCreatingLoan}
+            loading={isSavingContracts}
             clientName={selectedClient?.client?.name}
             loanAmount={parseFloat(loanForm.amount.replace(/,/g, "")) || 0}
           />

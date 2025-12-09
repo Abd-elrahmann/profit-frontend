@@ -6,7 +6,7 @@ return `
 <style>
   .contract-wrapper {
     background: #f8f9fc;
-    padding: 30px;
+    padding: 15px;
     font-family: "Manrope","Noto Sans Arabic",sans-serif;
     direction: rtl;
   }
@@ -17,60 +17,60 @@ return `
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 12px;
-    padding: 30px;
+    padding: 20px;
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
   }
   .header-left {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
   }
    .icon {
-    font-size: 28px;
+    font-size: 24px;
     color: #d4af37;
   }
   .title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
     color: #111;
   }
   .sub-text {
     color: #555;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .grid-wrapper {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     flex-wrap: wrap;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
   }
 
   .details-box {
     flex: 1;
-    min-width: 300px;
+    min-width: 280px;
     background: #f9fafb;
-    padding: 15px;
+    padding: 12px;
     border-radius: 8px;
   }
   .details-box h2 {
     font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 18px;
+    margin-bottom: 8px;
+    font-size: 16px;
   }
   .row {
     display: grid;
     grid-template-columns: auto 1fr;
     border-top: 1px solid #ddd;
-    padding: 8px 0;
-    font-size: 14px;
+    padding: 6px 0;
+    font-size: 13px;
   }
   .row span {
     font-weight: bold;
@@ -78,8 +78,8 @@ return `
   }
 
   .content-box {
-    flex: 2;
-    min-width: 300px;
+    flex: 1.5;
+    min-width: 280px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -88,67 +88,81 @@ return `
   .amount-box {
     text-align: center;
     border: 1px solid #eee;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
   }
   .amount-box h3 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
   }
   .amount-box h1 {
-    font-size: 34px;
+    font-size: 28px;
     font-weight: 800;
     color: #1e40af;
+    margin: 8px 0;
   }
   .amount-box p {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
     text-align: center;
   }
 
   .section-title {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: bold;
-    margin: 25px 0 10px;
+    margin: 12px 0 8px;
     color: #222;
   }
 
   .info-box {
     background: #f9fafb;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  
+  .parties-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 15px;
   }
 
   .text-box {
     background: #f3f4f6;
-    padding: 15px;
+    padding: 12px;
     border-radius: 8px;
+    margin-top: 12px;
   }
   .text-box p {
-    font-size: 14px;
+    font-size: 13px;
     color: #444;
-    line-height: 2;
+    line-height: 1.8;
+    margin: 4px 0;
   }
 
   .strong {
     font-weight: bold;
-    margin-top: 6px;
+    margin-top: 4px;
   }
 
   .signatures {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     text-align: center;
-    margin-top: 30px;
-    padding-top: 20px;
+    margin-top: 20px;
+    padding-top: 15px;
     border-top: 1px solid #ddd;
   }
   .sign-line {
-    width: 160px;
-    height: 40px;
+    width: 140px;
+    height: 35px;
     margin: auto;
     border-bottom: 2px solid #666;
+  }
+  .signatures p {
+    font-size: 13px;
+    margin: 5px 0;
   }
 
   @media print {
@@ -180,8 +194,8 @@ return `
         <h2>تفاصيل السند</h2>
         <div class="row"><p>تاريخ الإنشاء:</p> <span>{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</span></div>
         <div class="row"><p>تاريخ الاستحقاق:</p> <span>لدى الاطلاع</span></div>
-        <div class="row"><p>مدينة الإصدار:</p> <span>شرورة - المملكة العربية السعودية</span></div>
-        <div class="row"><p>مدينة الوفاء:</p> <span>الرياض - المملكة العربية السعودية</span></div>
+        <div class="row"><p>مدينة الإصدار:</p> <span>شرورة - السعودية</span></div>
+        <div class="row"><p>مدينة الوفاء:</p> <span>الرياض - السعودية</span></div>
         <div class="row"><p>سبب الإنشاء:</p> <span>سلفة</span></div>
       </div>
 
@@ -195,22 +209,25 @@ return `
 
     </div>
 
-    <div class="section-title">تفاصيل الدائن</div>
-    <div class="info-box">
-      <div class="row"><p>الاسم:</p> <span>{{اسم_الدائن}}</span></div>
-      <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الدائن}}</span></div>
-    </div>
-
-    <div class="section-title">تفاصيل المدين</div>
-    <div class="info-box">
-      <div class="row"><p>الاسم:</p> <span>{{اسم_المدين}}</span></div>
-      <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_المدين}}</span></div>
-    </div>
-
-    <div class="section-title">تفاصيل الكفيل</div>
-    <div class="info-box">
-      <div class="row"><p>الاسم:</p> <span>{{اسم_الكفيل}}</span></div>
-      <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الكفيل}}</span></div>
+    <div class="section-title">أطراف السند</div>
+    <div class="parties-grid">
+      <div class="info-box">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">الدائن</h3>
+        <div class="row"><p>الاسم:</p> <span>{{اسم_الدائن}}</span></div>
+        <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الدائن}}</span></div>
+      </div>
+      
+      <div class="info-box">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">المدين</h3>
+        <div class="row"><p>الاسم:</p> <span>{{اسم_المدين}}</span></div>
+        <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_المدين}}</span></div>
+      </div>
+      
+      <div class="info-box">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">الكفيل</h3>
+        <div class="row"><p>الاسم:</p> <span>{{اسم_الكفيل}}</span></div>
+        <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الكفيل}}</span></div>
+      </div>
     </div>
 
     <div class="text-box">
