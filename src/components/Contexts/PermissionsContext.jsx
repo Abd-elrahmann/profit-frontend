@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Api from "../../config/Api";
 
 const PermissionContext = createContext();
@@ -7,7 +7,7 @@ export const PermissionProvider = ({ children }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
     try {
       // Check if user is logged in before fetching
       const token = localStorage.getItem('token');
@@ -72,7 +72,7 @@ export const PermissionProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Function to refresh permissions manually
   const refreshPermissions = async () => {
@@ -97,8 +97,42 @@ export const PermissionProvider = ({ children }) => {
       fetchPermissions();
     } else {
       setLoading(false); // Stop loading if no token
+      setPermissions([]); // Clear permissions when logged out
     }
-  }, []);
+
+    // Listen for storage changes (when user logs in/out in another tab or same tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'token') {
+        const newToken = localStorage.getItem('token');
+        if (newToken) {
+          fetchPermissions();
+        } else {
+          setPermissions([]);
+          setLoading(false);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom event when token changes in same tab
+    const handleTokenChange = () => {
+      const newToken = localStorage.getItem('token');
+      if (newToken) {
+        fetchPermissions();
+      } else {
+        setPermissions([]);
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('tokenChanged', handleTokenChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('tokenChanged', handleTokenChange);
+    };
+  }, [fetchPermissions]);
 
   return (
     <PermissionContext.Provider value={{ permissions, loading, fetchPermissions, refreshPermissions }}>

@@ -18,6 +18,7 @@ import {
   exportClientCollectionsToPDF,
   exportClientCollectionsToExcel,
 } from "../../utilities/clientCollectionsExporter";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
 
 const ClientCollections = () => {
   const [clientsTab, setClientsTab] = useState(0); 
@@ -26,6 +27,7 @@ const ClientCollections = () => {
 
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
   const queryClient = useQueryClient();
+  const { permissions } = usePermissions();
 
   const { data: activeClientsData, isLoading: isActiveClientsLoading } = useQuery({
     queryKey: ["clients-collections", page, "ACTIVE"],
@@ -139,32 +141,34 @@ const ClientCollections = () => {
                   />
                 </Tabs>
 
-                <Stack
-                  direction={isSmallScreen ? "column" : "row"}
-                  spacing={1}
-                  sx={{ width: isSmallScreen ? "100%" : "auto",gap:2 }}
-                >
-                  <Button
-                    variant="contained"
-                    color="error"
-                    startIcon={<FileDownloadIcon sx={{marginLeft:"8px"}} />}
-                    onClick={handleExportPDF}
-                    disabled={isClientsLoading || !clientsData?.data?.length}
-                    fullWidth={isSmallScreen}
+                {permissions.includes("client-report_Export") && (
+                  <Stack
+                    direction={isSmallScreen ? "column" : "row"}
+                    spacing={1}
+                    sx={{ width: isSmallScreen ? "100%" : "auto",gap:2 }}
                   >
-                    تصدير PDF
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    startIcon={<FileDownloadIcon sx={{marginLeft:"8px"}} />}
-                    onClick={handleExportExcel}
-                    disabled={isClientsLoading || !clientsData?.data?.length}
-                    fullWidth={isSmallScreen}
-                  >
-                    تصدير Excel
-                  </Button>
-                </Stack>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<FileDownloadIcon sx={{marginLeft:"8px"}} />}
+                      onClick={handleExportPDF}
+                      disabled={isClientsLoading || !clientsData?.data?.length}
+                      fullWidth={isSmallScreen}
+                    >
+                      تصدير PDF
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      startIcon={<FileDownloadIcon sx={{marginLeft:"8px"}} />}
+                      onClick={handleExportExcel}
+                      disabled={isClientsLoading || !clientsData?.data?.length}
+                      fullWidth={isSmallScreen}
+                    >
+                      تصدير Excel
+                    </Button>
+                  </Stack>
+                )}
               </Box>
             </Box>
 

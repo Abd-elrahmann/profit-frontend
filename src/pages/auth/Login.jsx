@@ -65,6 +65,9 @@ const Login = () => {
 
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
+      
+      // Dispatch custom event to notify PermissionsContext about token change
+      window.dispatchEvent(new Event('tokenChanged'));
 
       // Clear old cached permissions format (for backward compatibility)
       localStorage.removeItem('cached_permissions');

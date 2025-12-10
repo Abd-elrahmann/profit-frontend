@@ -37,7 +37,6 @@ const Expenses = () => {
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
 
-  // eslint-disable-next-line no-unused-vars
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
@@ -275,7 +274,7 @@ const Expenses = () => {
       <Helmet>
         <title>المصروفات - نظام إدارة السلف</title>
       </Helmet>
-      <Box sx={{ p: isMobile ? 1 : 3 }}>
+      <Box sx={{ p: isMobile ? 1 : 3,mt:3 }}>
         {/* Header */}
         <Box
           sx={{
@@ -290,6 +289,7 @@ const Expenses = () => {
           <Typography variant="h5" fontWeight="bold" color="primary.main">
             المصروفات
           </Typography>
+          {permissions.includes("expenses_Add") && (
           <Button
             variant="contained"
             startIcon={<Add />}
@@ -299,8 +299,9 @@ const Expenses = () => {
               "&:hover": { bgcolor: "primary.dark" },
             }}
           >
-            إضافة مصروف
-          </Button>
+              إضافة مصروف
+            </Button>
+          )}
         </Box>
 
         {/* Table or Cards */}

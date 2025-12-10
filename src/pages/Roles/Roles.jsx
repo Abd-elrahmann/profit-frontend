@@ -123,14 +123,6 @@ export default function Roles() {
     setIsDeleteModalOpen(true);
   };
 
-  const getPermissionCount = (permissions) => {
-    if (!permissions) return 0;
-    return permissions.reduce((count, perm) => {
-      const hasPermissions = perm.canView || perm.canAdd || perm.canUpdate || perm.canDelete;
-      return count + (hasPermissions ? 1 : 0);
-    }, 0);
-  };
-
   // Render table for large screens
   const renderTable = () => (
     <TableContainer  sx={{ borderRadius: 2 }}>
@@ -139,15 +131,16 @@ export default function Roles() {
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>اسم الدور</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الوصف</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>عدد الصلاحيات</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الإنشاء</StyledTableCell>
+            {(permissions.includes("roles_Update") || permissions.includes("roles_Delete")) && (
               <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={5} align="center">
+              <StyledTableCell colSpan={4} align="center">
                 <CircularProgress />
               </StyledTableCell>
             </StyledTableRow>
@@ -159,30 +152,22 @@ export default function Roles() {
               <StyledTableCell align="center" sx={{ color: "gray" }}>
                 {role.description}
               </StyledTableCell>
-              <StyledTableCell align="center">
-                <Chip
-                  label={`${getPermissionCount(role.permissions)} صلاحية`}
-                  sx={{
-                    bgcolor: "rgba(16,185,129,0.1)",
-                    color: "#10B981",
-                    fontWeight:"bold",
-                  }}
-                />
-              </StyledTableCell>
               <StyledTableCell align="center" sx={{ color: "gray" }}>
                 {dayjs(role.createdAt).format("DD/MM/YYYY")}
               </StyledTableCell>
+              {(permissions.includes("roles_Update") || permissions.includes("roles_Delete")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                <IconButton color="primary" onClick={() => handleEdit(role)}>
+                <IconButton color="primary" onClick={() => handleEdit(role)} title="تعديل الدور">
                   <Edit />
                 </IconButton>
                 <IconButton color="info" onClick={() => handleDashboardPermissions(role)} title="صلاحيات الداشبورد">
                   <Dashboard />
                 </IconButton> 
-                <IconButton color="error" onClick={() => openDeleteModal(role.id)}>
+                <IconButton color="error" onClick={() => openDeleteModal(role.id)} title="حذف الدور">
                   <Delete />
                 </IconButton>
-              </StyledTableCell>
+                </StyledTableCell>
+              )}
             </StyledTableRow>
           ))}
         </TableBody>
@@ -240,6 +225,7 @@ export default function Roles() {
                             color="primary"
                             onClick={() => handleEdit(role)}
                             size="small"
+                            title="تعديل الدور"
                           >
                             <Edit fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
@@ -259,6 +245,7 @@ export default function Roles() {
                             color="error"
                             onClick={() => openDeleteModal(role.id)}
                             size="small"
+                            title="حذف الدور"
                           >
                             <Delete fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
@@ -278,26 +265,13 @@ export default function Roles() {
                       </Typography>
                     </Box>
 
-                    {/* Permissions and Date Row */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'flex-start',
-                      flexDirection: isMobile ? 'column' : 'row',
-                      gap: 1,
-                      width: '100%'
-                    }}>
-                      <Chip
-                        label={`${getPermissionCount(role.permissions)} صلاحية`}
-                        sx={{
-                          bgcolor: "rgba(16,185,129,0.1)",
-                          color: "#10B981",
-                          fontWeight: "bold",
-                          fontSize: isMobile ? '0.75rem' : '0.875rem'
-                        }}
-                      />
+                    {/* Date */}
+                    <Box>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                        تاريخ الإنشاء:
+                      </Typography>
                       <Typography 
                         variant="body2" 
-                        color="textSecondary"
                         sx={{ 
                           fontSize: isMobile ? '0.75rem' : '0.875rem',
                         }}

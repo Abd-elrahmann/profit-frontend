@@ -95,7 +95,7 @@ const LastActions = () => {
   }
 
   return (
-    <Card sx={{ maxWidth: 1200, mx: 'auto', boxShadow: 3 }}>
+    <Card sx={{ width: '100%', mx: 'auto', boxShadow: 3 }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <History sx={{ mr: 2, color: theme.palette.primary.main }} />

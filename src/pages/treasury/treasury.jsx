@@ -65,9 +65,10 @@ import {
   ComposedChart,
 } from "recharts";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
-import { exportJournalsToPDF, exportJournalsToExcel } from '../../utilities/treasuryJournalsExporter';
+import { exportJournalsToPDF, exportJournalsToExcel, exportStatisticsToPDF, exportStatisticsToExcel } from '../../utilities/treasuryJournalsExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
+import { useCountUp } from '../../hooks/useCountUp';
 
 
 const getBankAccountData = async (month = null) => {
@@ -142,16 +143,55 @@ export default function Treasury() {
     }
   };
 
+  const handleExportStatisticsPDF = async () => {
+    if (!bankData) return;
+    
+    setIsExporting(true);
+    try {
+      await exportStatisticsToPDF(bankData, 'النقد في الصندوق');
+      notifySuccess('تم تصدير إحصائيات PDF بنجاح');
+    } catch (error) {
+      console.error('Statistics PDF Export Error:', error);
+      notifyError('حدث خطأ أثناء تصدير إحصائيات PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportStatisticsExcel = async () => {
+    if (!bankData) return;
+
+    setIsExporting(true);
+    try {
+      await exportStatisticsToExcel(bankData, 'النقد في الصندوق');
+      notifySuccess('تم تصدير إحصائيات Excel بنجاح');
+    } catch (error) {
+      console.error('Statistics Excel Export Error:', error);
+      notifyError('حدث خطأ أثناء تصدير إحصائيات Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
   const availableBalance = bankData?.account?.balance || 0;
   const totalDebit = bankData?.account?.debit || 0;
   const totalCredit = bankData?.account?.credit || 0;
   const totalTransactions = bankData?.totalJournalEntries || 0;
+  const loansBalance = bankData?.loansBalance || 0;
+  const total = bankData?.total || 0;
   
   // Repayments data
   const totalRepaymentsAmount = bankData?.repayments?.totalAmount || 0;
   const paidRepaymentsUntilNow = bankData?.repayments?.paidUntilNow || 0;
   const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
+
+  // Animated counters for the 5 boxes
+  const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
+  const animatedTotalDebit = useCountUp(totalDebit, 600, !isLoading);
+  const animatedTotalCredit = useCountUp(totalCredit, 600, !isLoading);
+  const animatedLoansBalance = useCountUp(loansBalance, 600, !isLoading);
+  const animatedTotal = useCountUp(total, 600, !isLoading);
 
   const lowBalanceThreshold = 10000;
   const highCreditThreshold = 50000;
@@ -166,13 +206,13 @@ export default function Treasury() {
         monthKey: month,
         الرصيد: data.totalBalance,
         الوارد: data.totalDebit,
-        المقرض: data.totalCredit,
+        الصادر: data.totalCredit,
       }))
       .sort((a, b) => a.monthKey.localeCompare(b.monthKey)) : [];
 
   const transactionTypeData = [
     { name: 'الوارد', value: totalDebit, color: '#00C49F' },
-    { name: 'المقرض', value: totalCredit, color: '#FF8042' },
+    { name: 'الصادر', value: totalCredit, color: '#FF8042' },
   ];
 
   const currentJournals = selectedMonth && bankData?.journalsByMonth?.[selectedMonth] ? 
@@ -431,31 +471,111 @@ export default function Treasury() {
       </Helmet>
 
       <Box sx={{ p: isSmallScreen ? 2 : 3, mb: 3 }}>
-        <Tabs
-          value={tab}
-          onChange={handleTabChange}
-          textColor="primary"
-          sx={{
-            px: isSmallScreen ? 1 : 2,
-            '& .MuiTab-root': {
-              fontWeight: '600',
-              fontSize: isSmallScreen ? '0.8rem' : '0.95rem',
-              py: isSmallScreen ? 1 : 2,
-              minHeight: isSmallScreen ? '48px' : '60px'
-            }
-          }}
-        >
-          <Tab
-            label="إحصائيات الصندوق"
-            icon={<TrendingUp />}
-            iconPosition="start"
-          />
-          <Tab
-            label="سجل القيود"
-            icon={<AccountBalance />}
-            iconPosition="start"
-          />
-        </Tabs>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: isSmallScreen ? 'column' : 'row',
+          alignItems: isSmallScreen ? 'stretch' : 'center',
+          justifyContent: 'space-between',
+          gap: isSmallScreen ? 2 : 0,
+          mb: 2
+        }}>
+          <Tabs
+            value={tab}
+            onChange={handleTabChange}
+            textColor="primary"
+            sx={{
+              flex: 1,
+              px: isSmallScreen ? 1 : 2,
+              '& .MuiTab-root': {
+                fontWeight: '600',
+                fontSize: isSmallScreen ? '0.8rem' : '0.95rem',
+                py: isSmallScreen ? 1 : 2,
+                minHeight: isSmallScreen ? '48px' : '60px'
+              }
+            }}
+          >
+            <Tab
+              label="إحصائيات الصندوق"
+              icon={<TrendingUp />}
+              iconPosition="start"
+            />
+            <Tab
+              label="سجل القيود"
+              icon={<AccountBalance />}
+              iconPosition="start"
+            />
+          </Tabs>
+
+          {permissions.includes("treasury_Export") && (
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1,
+              alignItems: 'center',
+              justifyContent: isSmallScreen ? 'center' : 'flex-end',
+              flexShrink: 0
+            }}>
+              {tab === 0 ? (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{marginLeft: '5px'}} />}
+                    onClick={handleExportStatisticsPDF}
+                    disabled={isExporting || !bankData}
+                    size={isSmallScreen ? "small" : "medium"}
+                    sx={{
+                      color: 'error.main',
+                      borderColor: 'error.main',
+                    }}
+                  >
+                    {isSmallScreen ? 'PDF' : 'تصدير إحصائيات PDF'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <TableChart sx={{marginLeft: '5px'}} />}
+                    onClick={handleExportStatisticsExcel}
+                    disabled={isExporting || !bankData}
+                    size={isSmallScreen ? "small" : "medium"}
+                    sx={{
+                      color: 'success.main',
+                      borderColor: 'success.main',
+                    }}
+                  >
+                    {isSmallScreen ? 'Excel' : 'تصدير إحصائيات Excel'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{marginLeft: '5px'}} />}
+                    onClick={handleExportPDF}
+                    disabled={isExporting || currentJournals.length === 0}
+                    size={isSmallScreen ? "small" : "medium"}
+                    sx={{
+                      color: 'error.main',
+                      borderColor: 'error.main',
+                    }}
+                  >
+                    {isSmallScreen ? 'PDF' : 'تصدير PDF'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <TableChart sx={{marginLeft: '5px'}} />}
+                    onClick={handleExportExcel}
+                    disabled={isExporting || currentJournals.length === 0}
+                    size={isSmallScreen ? "small" : "medium"}
+                    sx={{
+                      color: 'success.main',
+                      borderColor: 'success.main',
+                    }}
+                  >
+                    {isSmallScreen ? 'Excel' : 'تصدير Excel'}
+                  </Button>
+                </>
+              )}
+            </Box>
+          )}
+        </Box>
 
         <Box sx={{ mt: isSmallScreen ? 2 : 4 }}>
           {isLoading ? (
@@ -487,7 +607,7 @@ export default function Treasury() {
                             </Box>
                             <Box>
                               <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="primary">
-                                {availableBalance.toLocaleString('en-US')}
+                                {animatedAvailableBalance.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 الرصيد المتاح
@@ -517,7 +637,7 @@ export default function Treasury() {
                             </Box>
                             <Box>
                               <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
-                                {totalDebit.toLocaleString('en-US')}
+                                {animatedTotalDebit.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 إجمالي الوارد
@@ -543,21 +663,21 @@ export default function Treasury() {
                               borderRadius: 2, 
                               mr: 2 
                             }}>
-                              <AccountBalance sx={{ color: "#ef6c00", fontSize: 24 }} />
+                              <TrendingDown sx={{ color: "#d32f2f", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="warning.main">
-                                {currentTotalTransactions}
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="error.main">
+                                {animatedTotalCredit.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                إجمالي المعاملات
+                                إجمالي الصادر
                               </Typography>
                             </Box>
                           </Box>
                           <Chip 
-                            label="قيود" 
+                            label="صادر" 
                             size="small" 
-                            color="warning"
+                            color="error"
                             variant="outlined"
                           />
                         </CardContent>
@@ -573,19 +693,49 @@ export default function Treasury() {
                               borderRadius: 2, 
                               mr: 2 
                             }}>
-                              <TrendingUp sx={{ color: "#9c27b0", fontSize: 24 }} />
+                              <AccountBalance sx={{ color: "#1976d2", fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" sx={{ color: "#9c27b0" }}>
-                                {totalRepaymentsAmount.toLocaleString('en-US')}
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="primary">
+                                {animatedLoansBalance.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                              إجمالي المطلوب تحصيله
+                                الرصيد في السوق
                               </Typography>
                             </Box>
                           </Box>
                           <Chip 
-                            label="مطلوب تحصيله" 
+                            label="في السوق" 
+                            size="small" 
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Box>
+
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{ 
+                              p: 1, 
+                              borderRadius: 2, 
+                              mr: 2 
+                            }}>
+                              <AccountBalance sx={{ color: "#9c27b0", fontSize: 24 }} />
+                            </Box>
+                            <Box>
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" sx={{ color: "#9c27b0" }}>
+                                {animatedTotal.toLocaleString('en-US')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                الإجمالي (المتاح + في السوق)
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip 
+                            label="إجمالي" 
                             size="small" 
                             sx={{ 
                               bgcolor: "#9c27b0", 
@@ -593,36 +743,6 @@ export default function Treasury() {
                               '&:hover': { bgcolor: "#7b1fa2" }
                             }}
                             variant="filled"
-                          />
-                        </CardContent>
-                      </Card>
-                    </Box>
-
-                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
-                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
-                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2, 
-                              mr: 2 
-                            }}>
-                              <CheckCircle sx={{ color: "#00C49F", fontSize: 24 }} />
-                            </Box>
-                            <Box>
-                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
-                                {paidRepaymentsUntilNow.toLocaleString('en-US')}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                الواصل من المطلوب تحصيله حتى الآن
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Chip 
-                            label="واصل" 
-                            size="small" 
-                            color="success"
-                            variant="outlined"
                           />
                         </CardContent>
                       </Card>
@@ -879,7 +999,7 @@ export default function Treasury() {
                           width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                         }}>
                           <Typography variant="h6" fontWeight="bold" mb={3}>
-                            تطور الوارد والمقرض والرصيد
+                            تطور الوارد والصادر والرصيد
                           </Typography>
                           <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
                             <ComposedChart data={monthlyBalanceData}>
@@ -912,11 +1032,11 @@ export default function Treasury() {
                               />
                               <Area 
                                 type="monotone" 
-                                dataKey="المقرض" 
+                                dataKey="الصادر" 
                                 stackId="1"
                                 stroke="#FF8042" 
                                 fill="url(#colorCredit)" 
-                                name="المقرض"
+                                name="الصادر"
                                 strokeWidth={2}
                               />
                               <Line 
@@ -1130,38 +1250,6 @@ export default function Treasury() {
                         <Typography variant="body2" color="text.secondary" sx={{ alignSelf: isSmallScreen ? 'center' : 'auto' }}>
                           إجمالي {currentTotalTransactions} قيد
                         </Typography>
-                        
-                        {permissions.includes("treasury_Export") && (
-                          <Box sx={{ display: 'flex', gap: 1, justifyContent: isSmallScreen ? 'center' : 'flex-start' }}>
-                            <IconButton
-                              onClick={handleExportPDF}
-                              disabled={isExporting || currentJournals.length === 0}
-                              size="small"
-                              title="تصدير PDF"
-                              sx={{
-                                color: 'error.main',
-                                '&:hover': { bgcolor: 'error.main', color: 'white' },
-                                '&:disabled': { bgcolor: 'grey.200', color: 'grey.400' }
-                              }}
-                            >
-                              {isExporting ? <CircularProgress size={16} /> : <PictureAsPdf fontSize="small" />}
-                            </IconButton>
-
-                            <IconButton
-                              onClick={handleExportExcel}
-                              disabled={isExporting || currentJournals.length === 0}
-                              size="small"
-                              title="تصدير Excel"
-                              sx={{
-                                color: 'success.main',
-                                '&:hover': { bgcolor: 'success.main', color: 'white' },
-                                '&:disabled': { bgcolor: 'grey.200', color: 'grey.400' }
-                              }}
-                            >
-                              {isExporting ? <CircularProgress size={16} /> : <TableChart fontSize="small" />}
-                            </IconButton>
-                          </Box>
-                        )}
                       </Box>
                     </Box>
 

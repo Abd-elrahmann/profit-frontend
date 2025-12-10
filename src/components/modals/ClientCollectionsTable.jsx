@@ -28,7 +28,7 @@ import {
   StyledTableRow,
   ScrollableTableContainer
 } from '../../components/layouts/tableLayout';
-
+import { usePermissions } from '../Contexts/PermissionsContext';
 const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -36,7 +36,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [noteText, setNoteText] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
-
+  const { permissions } = usePermissions();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleChangePage = (event, newPage) => {
@@ -132,9 +132,11 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
               ملاحظات
             </StyledTableCell>
+            {(permissions.includes("client-report_Add") || permissions.includes("client-report_Update")) && (
             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
               الإجراءات
             </StyledTableCell>
+            )}
           </StyledTableRow>
         </TableHead>
         <TableBody>
@@ -242,6 +244,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
+                    {(permissions.includes("client-report_Add") || permissions.includes("client-report_Update")) && (
                     <IconButton
                       title="إضافة ملاحظة"
                       size="small"
@@ -251,6 +254,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
                     >
                       <AddIcon sx={{ fontSize: '20px' }} />
                     </IconButton>
+                    )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))

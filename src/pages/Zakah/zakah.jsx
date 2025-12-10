@@ -351,14 +351,16 @@ const Zakah = () => {
             {accountReport?.totalJournalEntries || 0}
           </Typography>
         </Box>
+        {permissions.includes("zakah_Add") && (
         <Button
           variant="contained"
           onClick={() => setWithdrawDialogOpen(true)}
           disabled={!accountReport?.account?.balance || accountReport?.account?.balance <= 0}
           startIcon={<PaidIcon sx={{marginLeft:"10px"}} />}
         >
-          سحب الزكاة
-        </Button>
+            سحب الزكاة
+          </Button>
+        )}
       </Stack>
     </Box>
   );

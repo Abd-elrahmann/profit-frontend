@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -9,7 +9,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import Api from '../../config/Api';
 
@@ -39,10 +39,11 @@ const Dashboard = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { permissions } = usePermissions();
+  const queryClient = useQueryClient();
 
-  // Fetch dashboard permissions
+  // Fetch dashboard permissions - تحديث تلقائي عند تغيير المستخدم
   const { data: dashboardPermissions } = useQuery({
-    queryKey: ['dashboard-permissions'],
+    queryKey: ['dashboard-permissions', permissions?.length || 0],
     queryFn: async () => {
       try {
         const response = await Api.get('/api/roles/permissions');
@@ -60,8 +61,20 @@ const Dashboard = () => {
         return [];
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // تحديث فوري عند تغيير الصلاحيات
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
+
+  // تحديث تلقائي عند تغيير الصلاحيات
+  const prevPermissionsLength = useRef(permissions?.length || 0);
+  useEffect(() => {
+    const currentLength = permissions?.length || 0;
+    if (currentLength !== prevPermissionsLength.current && currentLength > 0) {
+      prevPermissionsLength.current = currentLength;
+      queryClient.invalidateQueries({ queryKey: ['dashboard-permissions'] });
+    }
+  }, [permissions, queryClient]);
 
   // Define all available tabs with their permissions
   const allTabs = [
@@ -200,7 +213,7 @@ const Dashboard = () => {
               },
             }}
           >
-            {availableTabs.map((tab, index) => (
+            {availableTabs.map((tab) => (
               <Tab key={tab.permission} label={tab.label} />
             ))}
           </Tabs>
