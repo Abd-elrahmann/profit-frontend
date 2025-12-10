@@ -86,10 +86,16 @@ export const getLoans = async (page = 1, search = '') => {
   }
 };
 
-// Get loan by ID
-export const getLoanById = async (loanId) => {
+// Get loan by ID (supports optional pagination for repayments)
+export const getLoanById = async (loanId, page, limit) => {
   try {
-    const response = await Api.get(`/api/loans/${loanId}`);
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+    const query = params.toString();
+    const url = query ? `/api/loans/${loanId}?${query}` : `/api/loans/${loanId}`;
+
+    const response = await Api.get(url);
     return response.data;
   } catch (error) {
     handleApiError(error);

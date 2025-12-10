@@ -244,10 +244,10 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       {/* Permissions List */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 400, overflow: 'auto' }}>
         {values.permissions.map((permission, index) => {
-          const moduleConfig = availableModules.find(m => m.value === permission.module);
+          const moduleConfig = availableModules[index]; // use index to keep labels even if module values repeat
           return (
             <Box
-              key={permission.module}
+              key={`${permission.module}-${index}`}
               sx={{
                 display: 'grid',
                 gridTemplateColumns: 'auto 1fr repeat(6, auto)',
@@ -316,9 +316,9 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       
       <Stack spacing={2}>
         {values.permissions.map((permission, index) => {
-          const moduleConfig = availableModules.find(m => m.value === permission.module);
+          const moduleConfig = availableModules[index]; // preserve label when values repeat
           return (
-            <Accordion key={permission.module} sx={{ boxShadow: 1 }}>
+            <Accordion key={`${permission.module}-${index}`} sx={{ boxShadow: 1 }}>
               <AccordionSummary expandIcon={<ExpandMore />}>
                 <Typography variant="body2" sx={{ fontWeight: '500' }}>
                   {moduleConfig?.label || permission.module}

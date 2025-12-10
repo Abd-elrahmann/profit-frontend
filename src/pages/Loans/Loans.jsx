@@ -231,8 +231,13 @@ const Loans = () => {
   };
 
   const formatAmount = (amount) => {
-    if (!amount) return "";
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (!amount && amount !== 0) return "";
+    // Convert to number first, then round to 2 decimal places to avoid precision issues
+    const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, "")) : amount;
+    if (isNaN(numAmount)) return "";
+    // Round to 2 decimal places using toFixed to avoid floating point precision issues
+    const rounded = parseFloat(numAmount.toFixed(2));
+    return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   const handleOpenPreview = async () => {
@@ -372,14 +377,16 @@ const Loans = () => {
       const profit = totalInterest;
       const total = amount + profit;
 
+      // Calculate full installments and remainder (matching backend logic)
       const fullMonths = Math.floor(total / paymentAmount);
       const lastPayment = total - paymentAmount * fullMonths;
-      let months = fullMonths;
-      if (lastPayment > 0) months += 1;
+      const months = fullMonths; // Don't add 1, remainder will be added to last installment
+      const hasRemainder = lastPayment > 0;
 
       const calculatedInstallments = [];
       let remainingPrincipal = amount;
       let remainingInterest = profit;
+      let totalPaidSoFar = 0;
 
       for (let i = 1; i <= months; i++) {
         const dueDate = new Date(loanForm.startDate);
@@ -394,18 +401,21 @@ const Loans = () => {
           }
         }
 
+        // Calculate installment amount (add remainder to last installment if exists)
         let currentAmount = paymentAmount;
-        if (i === months && lastPayment > 0) {
-          currentAmount = lastPayment;
+        if (i === months && hasRemainder) {
+          currentAmount = paymentAmount + lastPayment;
         }
 
         let principalAmount;
         let interestAmount;
 
-        if (i === months && lastPayment > 0) {
+        // If last installment and has remainder, use remaining amounts
+        if (i === months && hasRemainder) {
           principalAmount = remainingPrincipal;
           interestAmount = remainingInterest;
         } else {
+          // Calculate proportionally based on interest ratio
           const interestRatio =
             remainingInterest / (remainingPrincipal + remainingInterest);
           interestAmount = parseFloat(
@@ -423,21 +433,17 @@ const Loans = () => {
           (remainingInterest - interestAmount).toFixed(2)
         );
 
+        // Calculate remaining balance (total minus sum of installments up to current)
+        totalPaidSoFar += currentAmount;
+        const remainingBalance = Math.max(0, parseFloat((total - totalPaidSoFar).toFixed(2)));
+
         calculatedInstallments.push({
           installmentNumber: i,
           dueDate: dueDate,
           principal: principalAmount,
           interest: interestAmount,
           installment: currentAmount,
-          remainingBalance: parseFloat(
-            (
-              total -
-              i * paymentAmount +
-              (lastPayment > 0 && i === months
-                ? paymentAmount - lastPayment
-                : 0)
-            ).toFixed(2)
-          ),
+          remainingBalance: remainingBalance,
           status: "PENDING",
           paidAmount: 0,
         });
@@ -533,7 +539,7 @@ const Loans = () => {
         repaymentDay: parseInt(loanForm.repaymentDay),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
-        kafeelId: selectedKafeel?.id || null,
+        kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
       };
 
       const response = await createLoan(loanData);
@@ -610,7 +616,7 @@ const Loans = () => {
         repaymentDay: parseInt(loanForm.repaymentDay),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
-        kafeelId: selectedKafeel?.id || null,
+        kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
       };
 
       const oldAmount = selectedLoan.amount;
@@ -743,11 +749,15 @@ const Loans = () => {
 
       setInstallments(formattedRepayments);
 
-      const totalInterestAmount = loan.totalInterest || (loan.amount * (loan.interestRate / 100));
+      // Use interestAmount from backend (not totalInterest) and ensure proper formatting
+      // Round to 2 decimal places to avoid floating point precision issues
+      const totalInterestAmount = loan.interestAmount || 0;
+      // Use toFixed(2) then parseFloat to remove trailing zeros and avoid precision issues
+      const formattedTotalInterest = parseFloat(totalInterestAmount.toFixed(2));
 
       setLoanForm({
         amount: loan.amount.toString(),
-        totalInterest: totalInterestAmount.toString(),
+        totalInterest: formattedTotalInterest.toString(),
         interestRate: loan.interestRate.toString(),
         paymentAmount: loan.paymentAmount?.toString() || "",
         type: loan.type,

@@ -143,16 +143,24 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
 
       // Define headers in logical order (will be reversed for RTL display)
       const repaymentsHeaders = [['رقم القسط', 'تاريخ الاستحقاق', 'المبلغ الأساسي', 'الفائدة', 'إجمالي القسط', 'الحالة', 'المبلغ المدفوع', 'حالة الدفع']];
-      const repaymentsTableData = repaymentsData.map(repayment => [
-        repayment.count || repayment.installmentNumber || '-',
-        repayment.dueDate ? dayjs(repayment.dueDate).format('DD/MM/YYYY') : '-',
-        repayment.principalAmount ? repayment.principalAmount.toLocaleString('en-US') : '0',
-        repayment.interestAmount ? repayment.interestAmount.toLocaleString('en-US') : '0',
-        repayment.amount ? repayment.amount.toLocaleString('en-US') : '0',
-        getStatusText(repayment.status),
-        repayment.paidAmount ? repayment.paidAmount.toLocaleString('en-US') : '0',
-        getPaymentStatusText(repayment.status)
-      ]);
+      const repaymentsTableData = repaymentsData.map(repayment => {
+        // Format date with Hijri date below
+        let dateText = repayment.dueDate ? dayjs(repayment.dueDate).format('DD/MM/YYYY') : '-';
+        if (repayment.dueDateHijri) {
+          dateText += '\n' + repayment.dueDateHijri;
+        }
+        
+        return [
+          repayment.count || repayment.installmentNumber || '-',
+          dateText,
+          repayment.principalAmount ? repayment.principalAmount.toLocaleString('en-US') : '0',
+          repayment.interestAmount ? repayment.interestAmount.toLocaleString('en-US') : '0',
+          repayment.amount ? repayment.amount.toLocaleString('en-US') : '0',
+          getStatusText(repayment.status),
+          repayment.paidAmount ? repayment.paidAmount.toLocaleString('en-US') : '0',
+          getPaymentStatusText(repayment.status)
+        ];
+      });
 
       autoTable(doc, {
         startY: yPosition,
@@ -198,10 +206,10 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
           3: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // إجمالي القسط
           4: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }, // الفائدة
           5: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // المبلغ الأساسي
-          6: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // تاريخ الاستحقاق
+          6: { cellWidth: 'auto', minCellWidth: 30, halign: 'right', valign: 'middle', cellPadding: { top: 6, bottom: 6, left: 4, right: 4 } }, // تاريخ الاستحقاق (مع التاريخ الهجري)
           7: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }  // رقم القسط (الأخير من اليمين)
         },
-        margin: { top: yPosition, left: 15, right: 15 },
+        margin: { top: 20, left: 15, right: 15 },
         tableWidth: 'auto',
         horizontalPageBreak: false,
         pageBreak: 'auto',

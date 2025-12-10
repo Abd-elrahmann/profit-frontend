@@ -65,13 +65,13 @@ const CollectionStats = () => {
 
   return (
     <Box sx={{ width: '100vw', maxWidth: '100%', p: { xs: 1.5, sm: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Summary Cards */}
+      {/* Summary Cards - Row 1: ملخص التحصيل */}
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
         {/* ملخص التحصيل */}
-        <Grid item xs={12} sm={12} md={8}>
+        <Grid item xs={12} sm={12} md={12}>
           <Card sx={{
             height: { xs: '300px', sm: '250px', md: '250px' },
-            width: { xs: '250px', sm: '100%', md: '700px' },
+            width: { xs: '100%', sm: '100%', md: '100%' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
@@ -159,12 +159,15 @@ const CollectionStats = () => {
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
 
+      {/* Summary Cards - Row 2: نسبة التحصيل + المبلغ المتاح */}
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
         {/* نسبة التحصيل + المبلغ المتاح */}
         <Grid item xs={12} sm={12} md={4}>
           <Card sx={{
             height: { xs: '250px', sm: '250px', md: '250px' },
-            width: { xs: '250px', sm: '100%', md: '300px' },
+            width: { xs: '100%', sm: '100%', md: '300px' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',

@@ -249,6 +249,14 @@ const Installments = () => {
     enabled: !!loanId,
   });
 
+  const totalPages =
+    loanData?.pagination?.totalPages
+      ?? (loanData?.pagination?.totalRepayments && limit
+        ? Math.max(1, Math.ceil(loanData.pagination.totalRepayments / limit))
+        : loanData?.repayments?.length && limit
+          ? Math.max(1, Math.ceil(loanData.repayments.length / limit))
+          : 1);
+
   const steps = [
     "بإنتظار رفع الإيصال",
     "مراجعة الإيصال المرفوع",
@@ -611,11 +619,56 @@ const Installments = () => {
     }
   };
 
-  // Export functions
+  // Export functions - Fetch all repayments from all pages
+  const fetchAllRepayments = async () => {
+    const allRepayments = [];
+    let currentPage = 1;
+    let hasMorePages = true;
+    let loanInfo = null;
+
+    while (hasMorePages) {
+      const pageData = await getLoanById(loanId, currentPage, limit);
+      
+      // Store loan info from first page
+      if (currentPage === 1) {
+        loanInfo = pageData;
+      }
+      
+      if (Array.isArray(pageData?.repayments) && pageData.repayments.length > 0) {
+        allRepayments.push(...pageData.repayments);
+        
+        // Check if there are more pages
+        const totalPages = pageData?.pagination?.totalPages || 
+          (pageData?.pagination?.totalRepayments && limit
+            ? Math.ceil(pageData.pagination.totalRepayments / limit)
+            : 1);
+        
+        hasMorePages = currentPage < totalPages;
+        currentPage++;
+      } else {
+        hasMorePages = false;
+      }
+    }
+
+    return {
+      repayments: allRepayments,
+      loanData: loanInfo || loanData
+    };
+  };
+
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
-      await exportRepaymentsToPDF(sortedInstallments, loanData);
+      notifySuccess("جاري جلب جميع البيانات...");
+      
+      // Fetch all repayments from all pages
+      const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
+      
+      const sortedAllRepayments = [...allRepayments].sort((a, b) => {
+        return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
+      });
+      
+      await exportRepaymentsToPDF(sortedAllRepayments, allLoanData);
       notifySuccess("تم تصدير تقرير PDF بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير PDF");
@@ -628,7 +681,16 @@ const Installments = () => {
   const handleExportExcel = async () => {
     try {
       setIsExporting(true);
-      await exportRepaymentsToExcel(sortedInstallments, loanData);
+      notifySuccess("جاري جلب جميع البيانات...");
+      
+      // Fetch all repayments from all pages
+      const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
+      
+      const sortedAllRepayments = [...allRepayments].sort((a, b) => {
+        return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
+      });
+      
+      await exportRepaymentsToExcel(sortedAllRepayments, allLoanData);
       notifySuccess("تم تصدير تقرير Excel بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير Excel");
@@ -2491,7 +2553,7 @@ const Installments = () => {
       />
 
       {/* Pagination */}
-      {loanData?.totalPages > 1 && (
+      {totalPages > 1 && (
         <Box sx={{
           display: 'flex',
           justifyContent: 'center',
@@ -2499,7 +2561,7 @@ const Installments = () => {
           mb: 2
         }}>
           <Pagination
-            count={loanData.totalPages}
+            count={totalPages}
             page={page}
             onChange={handleChangePage}
             color="primary"

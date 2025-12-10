@@ -142,7 +142,7 @@ const ClientStats = () => {
         </FormControl>
       </Box>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Row 1: إجمالي العملاء + حالة العملاء */}
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
         {/* إجمالي العملاء + عملاء جدد */}
         <Grid item xs={6} sm={12} md={3}>
@@ -261,12 +261,15 @@ const ClientStats = () => {
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
 
+      {/* Summary Cards - Row 2: المديونية والمدفوعات */}
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
         {/* المديونية والمدفوعات */}
-        <Grid item xs={12} sm={12} md={6}>
+        <Grid item xs={12} sm={12} md={12}>
           <Card sx={{
             height: { xs: '450px', sm: '100%', md: '230px' },
-            width: { xs: '100%', sm: '100%', md: '550px' },
+            width: { xs: '100%', sm: '100%', md: '100%' },
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',

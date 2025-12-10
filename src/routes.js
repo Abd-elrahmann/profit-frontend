@@ -389,7 +389,7 @@ export const getSidebarMenuItems = () => {
 
 export const getAvailableModules = () => {
   return routes
-    .filter(route => route.protected && route.module && route.requiresPermissions)
+    .filter(route => route.protected && route.requiresPermissions && route.label && route.showInSidebar)
     .map(route => ({
       value: route.module,
       label: route.label

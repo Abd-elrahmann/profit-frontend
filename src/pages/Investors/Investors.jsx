@@ -257,7 +257,8 @@ export default function Investors() {
       const dataToSend = {
         ...editFormData,
         capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
-        orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined
+        orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined,
+        createdAt: editFormData.createdAt || undefined,
       };
       
       await Api.patch(`/api/partners/${selectedInvestor.id}`, dataToSend);
@@ -570,6 +571,7 @@ export default function Investors() {
         orgProfitPercent: investorDetails.orgProfitPercent || '',
         capitalAmount: investorDetails.capitalAmount || '',
         isActive: investorDetails.isActive,
+        createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
       });
     }
   }, [investorDetails]);
@@ -1043,13 +1045,19 @@ export default function Investors() {
                       <Grid item xs={12} md={6}>
                         <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام</Typography>
                         <TextField
-                          value={investorDetails.createdAt ? new Date(investorDetails.createdAt).toLocaleDateString('en-US') : ''}
+                          type="date"
+                          value={editMode ? editFormData.createdAt : (investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '')}
+                          onChange={(e) => handleInputChange('createdAt', e.target.value)}
                           fullWidth
-                          disabled
+                          disabled={!editMode}
+                          InputLabelProps={{ shrink: true }}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#f9fafb',
+                              backgroundColor: editMode ? '#fff' : '#f9fafb',
                               borderRadius: '6px',
+                              '&:hover fieldset': {
+                                borderColor: editMode ? '#0d40a5' : undefined,
+                              },
                             },
                           }}
                         />
@@ -1260,6 +1268,7 @@ export default function Investors() {
                             orgProfitPercent: investorDetails.orgProfitPercent || '',
                             capitalAmount: investorDetails.capitalAmount || '',
                             isActive: investorDetails.isActive,
+                            createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
                           });
                           setHasDataChanged(false);
                         }

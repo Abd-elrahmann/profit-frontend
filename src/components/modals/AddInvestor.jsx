@@ -27,6 +27,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     email: "",
     orgProfitPercent: "",
     capitalAmount: "",
+    createdAt: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -97,6 +98,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
         ...formData,
         orgProfitPercent: parseInt(formData.orgProfitPercent),
         capitalAmount: parseInt(formData.capitalAmount),
+        createdAt: formData.createdAt || undefined,
       });
       
       const newInvestorData = {
@@ -143,6 +145,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       email: "",
       orgProfitPercent: "",
       capitalAmount: "",
+      createdAt: "",
     });
     setErrors({});
     setSavedInvestorData(null);
@@ -243,6 +246,18 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
                 rows={1}
                 size="medium"
                 sx={{width: '520px'}}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="تاريخ الانضمام (اختياري)"
+                type="date"
+                value={formData.createdAt}
+                onChange={handleChange('createdAt')}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                size="medium"
+                sx={{width: '250px'}}
               />
             </Grid>
           </Grid>
