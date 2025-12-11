@@ -72,12 +72,14 @@ export const deactivateLoan = async (loanId) => {
   }
 };
 
-// Get all loans with pagination
-export const getLoans = async (page = 1, search = '') => {
+// Get all loans with pagination and limit
+export const getLoans = async (page = 1, search = '', limit = 15) => {
   try {
-    const url = search 
-      ? `/api/loans/all/${page}?search=${encodeURIComponent(search)}`
-      : `/api/loans/all/${page}`;
+    const params = new URLSearchParams();
+    params.append('limit', limit);
+    if (search) params.append('search', encodeURIComponent(search));
+    const query = params.toString();
+    const url = `/api/loans/all/${page}${query ? `?${query}` : ''}`;
     const response = await Api.get(url);
     return response.data;
   } catch (error) {

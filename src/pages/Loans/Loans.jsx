@@ -27,7 +27,7 @@ import {
   getPartners,
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
-import { notifySuccess, notifyError } from "../../utilities/toastify";
+import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
 import LoansTable from "../../components/modals/LoansTable";
 import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
@@ -86,6 +86,15 @@ const Loans = () => {
   const { permissions } = usePermissions();
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
+  const interestWarningTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (interestWarningTimeoutRef.current) {
+        clearTimeout(interestWarningTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -824,6 +833,15 @@ const Loans = () => {
         if (amount > 0 && totalInterest > 0) {
           const percentage = (totalInterest / amount) * 100;
           updatedForm.interestRate = percentage.toFixed(2);
+          // Debounced warning when total interest exceeds capital
+          if (interestWarningTimeoutRef.current) {
+            clearTimeout(interestWarningTimeoutRef.current);
+          }
+          interestWarningTimeoutRef.current = setTimeout(() => {
+            if (totalInterest > amount) {
+              notifyWarning("مبلغ الفائدة أكبر من مبلغ رأس المال المدخل");
+            }
+          }, 600);
         } else if (amount > 0) {
           updatedForm.interestRate = "";
         }

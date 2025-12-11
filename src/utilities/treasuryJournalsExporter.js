@@ -411,8 +411,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
         styles: {
           font: 'Amiri',
           fontStyle: 'bold',
-          fontSize: 12,
-          cellPadding: 8,
+          fontSize: 10, // smaller font for readability
+          cellPadding: 6,
           lineColor: [200, 200, 200],
           lineWidth: 0.1,
           halign: 'center',
@@ -422,17 +422,17 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           fillColor: [13, 64, 165],
           textColor: 255,
           fontStyle: 'bold',
-          fontSize: 13,
+          fontSize: 11, // smaller header font
           halign: 'center',
           valign: 'middle',
-          cellPadding: 8,
+          cellPadding: 6,
           lineColor: [13, 64, 165],
           lineWidth: 0.1
         },
         bodyStyles: {
           halign: 'center',
           valign: 'middle',
-          cellPadding: 8,
+          cellPadding: 6,
           lineColor: [220, 220, 220],
           lineWidth: 0.1
         },
@@ -475,11 +475,11 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           head: repaymentsHeaders,
           body: repaymentsTable,
           theme: 'striped',
-          styles: {
-            font: 'Amiri',
-            fontStyle: 'bold',
-            fontSize: 12,
-            cellPadding: 8,
+        styles: {
+          font: 'Amiri',
+          fontStyle: 'bold',
+          fontSize: 10, // smaller font for readability
+          cellPadding: 6,
             lineColor: [200, 200, 200],
             lineWidth: 0.1,
             halign: 'center',
@@ -489,17 +489,17 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             fillColor: [46, 125, 50],
             textColor: 255,
             fontStyle: 'bold',
-            fontSize: 13,
+          fontSize: 11, // smaller header font
             halign: 'center',
             valign: 'middle',
-            cellPadding: 8,
+          cellPadding: 6,
             lineColor: [46, 125, 50],
             lineWidth: 0.1
           },
           bodyStyles: {
             halign: 'center',
             valign: 'middle',
-            cellPadding: 8,
+          cellPadding: 6,
             lineColor: [220, 220, 220],
             lineWidth: 0.1
           },
@@ -529,7 +529,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
         doc.setFillColor(46, 125, 50);
         const filledWidth = (Math.max(0, Math.min(100, repaymentsProgress)) / 100) * barWidth;
         doc.roundedRect(barX, barStartY, filledWidth, barHeight, 2, 2, 'F');
-        doc.setFontSize(10);
+        doc.setFontSize(9); // smaller caption font
         doc.setFont('Amiri', 'bold');
         doc.text(
           `نسبة التحصيل: ${repaymentsProgress.toFixed(1)}%`,

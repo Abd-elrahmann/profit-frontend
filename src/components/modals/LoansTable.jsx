@@ -79,11 +79,24 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
     setSelectedLoanForMenu(null);
   };
 
+  const PAGE_SIZE = 15;
+
   const { data: loansData, isLoading } = useQuery({
-    queryKey: ["loans", page, searchQuery],
-    queryFn: () => getLoans(page, searchQuery),
+    queryKey: ["loans", page, searchQuery, PAGE_SIZE],
+    queryFn: () => getLoans(page, searchQuery, PAGE_SIZE),
     retry: 1,
   });
+
+  const totals = React.useMemo(() => {
+    const list = loansData?.data || [];
+    return list.reduce(
+      (acc, loan) => ({
+        amount: acc.amount + Number(loan.amount || 0),
+        paymentAmount: acc.paymentAmount + Number(loan.paymentAmount || 0),
+      }),
+      { amount: 0, paymentAmount: 0 }
+    );
+  }, [loansData?.data]);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -421,18 +434,17 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
   );
 
   // Render desktop table
+  const hasActions = permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete");
+
   const renderDesktopTable = () => (
     <ScrollableTableContainer maxHeight="100%" minWidth={1200}>
       <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              رقم السلفة
+              مسلسل السلفة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               العميل
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              الكفيل
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               {" "}
@@ -451,11 +463,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               الفائدة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              النوع
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              {" "}
-              يوم الاستحقاق
+              النوع / يوم الاستحقاق
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               الحالة
@@ -466,7 +474,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               تاريخ التفعيل
             </StyledTableCell>
-            {(permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete")) && (
+            {hasActions && (
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                 الإجراءات
               </StyledTableCell>
@@ -476,31 +484,34 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={13} align="center">
+              <StyledTableCell colSpan={hasActions ? 13 : 12} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : loansData?.data?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={13} align="center">
+              <StyledTableCell colSpan={hasActions ? 13 : 12} align="center">
                 <Typography>لا توجد سلف</Typography>
               </StyledTableCell>
             </StyledTableRow>
           ) : (
             loansData?.data?.map((loan) => (
               <StyledTableRow key={loan.id} hover>
-                <StyledTableCell>{loan.code}</StyledTableCell>
+                <StyledTableCell align="center">{loan.id}</StyledTableCell>
                 <StyledTableCell
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
                 >
-                  {loan.client?.name}
-                </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ whiteSpace: "nowrap" }}
-                >
-                  {loan.kafeel?.name || "-"}
+                  <Stack spacing={0.25} sx={{ whiteSpace: "nowrap" }}>
+                    <Typography variant="body2" fontWeight="bold">
+                      {loan.client?.name}
+                    </Typography>
+                    {loan.kafeel?.name && (
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '14px' }}>
+                        الكفيل: {loan.kafeel.name}
+                      </Typography>
+                    )}
+                  </Stack>
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"
@@ -536,13 +547,14 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
                 >
-                  {getTypeText(loan.type)}
-                </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ whiteSpace: "nowrap" }}
-                >
-                  {loan.repaymentDay}
+                  <Stack spacing={0.25} sx={{ whiteSpace: "nowrap" }}>
+                    <Typography variant="body2">
+                      {getTypeText(loan.type)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '14px' }}>
+                      يوم الاستحقاق: {loan.repaymentDay}
+                    </Typography>
+                  </Stack>
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"
@@ -584,7 +596,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
                     )}
                   </Box>
                 </StyledTableCell>
-                {(permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete")) && (
+                {hasActions && (
                 <StyledTableCell
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}
@@ -600,9 +612,27 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               </StyledTableRow>
             ))
           )}
+          {/* Totals row */}
+          {!isLoading && loansData?.data?.length > 0 && (
+            <StyledTableRow>
+              <StyledTableCell colSpan={4} />
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                الإجمالي
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                {totals.amount.toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                {totals.paymentAmount.toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell colSpan={hasActions ? 7 : 6} />
+            </StyledTableRow>
+          )}
         </TableBody>
       </ScrollableTableContainer>
   );
+
+  const showPagination = loansData && loansData.total > PAGE_SIZE;
 
   return (
     <Box
@@ -657,7 +687,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
       </Paper>
 
       {/* Pagination */}
-      {loansData && loansData.total > 0 && (
+      {showPagination && (
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -666,7 +696,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
         }}>
           {isSmallScreen ? (
             <Pagination
-              count={Math.ceil(loansData.total / 10)}
+              count={Math.ceil(loansData.total / PAGE_SIZE)}
               page={page}
               onChange={handlePageChange}
               color="primary"
@@ -680,8 +710,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
               count={loansData.total || 0}
               page={page - 1}
               onPageChange={handleChangePage}
-              rowsPerPage={10}
-              rowsPerPageOptions={[10]}
+              rowsPerPage={PAGE_SIZE}
+              rowsPerPageOptions={[PAGE_SIZE]}
               labelDisplayedRows={({ from, to, count }) =>
                 `عرض ${from}-${to} من ${count}`
               }
