@@ -370,6 +370,16 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
       const totalCredit = statisticsData.account?.credit || 0;
       const loansBalance = statisticsData.loansBalance || 0;
       const total = statisticsData.total || 0;
+      const totalRepaymentsAmount = statisticsData.repayments?.totalAmount || 0;
+      const paidRepaymentsUntilNow = statisticsData.repayments?.paidUntilNow || 0;
+      const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
+      const repaymentsProgress =
+        totalRepaymentsAmount > 0
+          ? Math.min(
+              100,
+              Math.max(0, (paidRepaymentsUntilNow / totalRepaymentsAmount) * 100)
+            )
+          : 0;
       
       const pageWidth = doc.internal.pageSize.width;
       const headerHeight = 45;
@@ -441,6 +451,93 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
         },
         tableWidth: totalColumnWidth
       });
+
+      // ملخص التحصيلات + مؤشر التقدم
+      if (totalRepaymentsAmount > 0) {
+        const repaymentsHeaders = [['القيمة', 'ملخص التحصيلات']];
+        const repaymentsTable = [
+          [totalRepaymentsAmount.toLocaleString('en-US'), 'إجمالي التحصيلات'],
+          [paidRepaymentsUntilNow.toLocaleString('en-US'), 'واصل حتى الآن'],
+          [remainingRepayments.toLocaleString('en-US'), 'متبقي'],
+          [`${repaymentsProgress.toFixed(1)}%`, 'نسبة التحصيل']
+        ];
+
+        const repaymentsColumnWidths = {
+          0: 70,
+          1: 100
+        };
+
+        const repaymentsTotalWidth = Object.values(repaymentsColumnWidths).reduce((sum, width) => sum + width, 0);
+        const repaymentsLeftMargin = (pageWidth - repaymentsTotalWidth) / 2;
+
+        autoTable(doc, {
+          startY: doc.lastAutoTable.finalY + 12,
+          head: repaymentsHeaders,
+          body: repaymentsTable,
+          theme: 'striped',
+          styles: {
+            font: 'Amiri',
+            fontStyle: 'bold',
+            fontSize: 12,
+            cellPadding: 8,
+            lineColor: [200, 200, 200],
+            lineWidth: 0.1,
+            halign: 'center',
+            valign: 'middle'
+          },
+          headStyles: {
+            fillColor: [46, 125, 50],
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 13,
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 8,
+            lineColor: [46, 125, 50],
+            lineWidth: 0.1
+          },
+          bodyStyles: {
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 8,
+            lineColor: [220, 220, 220],
+            lineWidth: 0.1
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250]
+          },
+          columnStyles: {
+            0: { cellWidth: repaymentsColumnWidths[0], halign: 'center' },
+            1: { cellWidth: repaymentsColumnWidths[1], halign: 'right' }
+          },
+          margin: { 
+            top: doc.lastAutoTable.finalY + 12, 
+            bottom: 20,
+            left: repaymentsLeftMargin,
+            right: repaymentsLeftMargin
+          },
+          tableWidth: repaymentsTotalWidth
+        });
+
+        // شريط تقدم بصري مبسط لنسبة التحصيل
+        const barStartY = doc.lastAutoTable.finalY + 8;
+        const barWidth = 120;
+        const barHeight = 8;
+        const barX = (pageWidth - barWidth) / 2;
+        doc.setFillColor(224, 224, 224);
+        doc.roundedRect(barX, barStartY, barWidth, barHeight, 2, 2, 'F');
+        doc.setFillColor(46, 125, 50);
+        const filledWidth = (Math.max(0, Math.min(100, repaymentsProgress)) / 100) * barWidth;
+        doc.roundedRect(barX, barStartY, filledWidth, barHeight, 2, 2, 'F');
+        doc.setFontSize(10);
+        doc.setFont('Amiri', 'bold');
+        doc.text(
+          `نسبة التحصيل: ${repaymentsProgress.toFixed(1)}%`,
+          pageWidth / 2,
+          barStartY + barHeight + 6,
+          { align: 'center' }
+        );
+      }
       
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
@@ -499,6 +596,16 @@ export const exportStatisticsToExcel = async (statisticsData, accountName) => {
     const totalCredit = statisticsData.account?.credit || 0;
     const loansBalance = statisticsData.loansBalance || 0;
     const total = statisticsData.total || 0;
+    const totalRepaymentsAmount = statisticsData.repayments?.totalAmount || 0;
+    const paidRepaymentsUntilNow = statisticsData.repayments?.paidUntilNow || 0;
+    const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
+    const repaymentsProgress =
+      totalRepaymentsAmount > 0
+        ? Math.min(
+            100,
+            Math.max(0, (paidRepaymentsUntilNow / totalRepaymentsAmount) * 100)
+          )
+        : 0;
 
     const workbook = XLSX.utils.book_new();
     
@@ -513,6 +620,17 @@ export const exportStatisticsToExcel = async (statisticsData, accountName) => {
       [loansBalance, 'الرصيد في السوق'],
       [total, 'الإجمالي (المتاح + في السوق)']
     ];
+
+    if (totalRepaymentsAmount > 0) {
+      statisticsDataArray.push(
+        [''],
+        ['القيمة', 'ملخص التحصيلات'],
+        [totalRepaymentsAmount, 'إجمالي التحصيلات'],
+        [paidRepaymentsUntilNow, 'واصل حتى الآن'],
+        [remainingRepayments, 'متبقي'],
+        [`${repaymentsProgress.toFixed(1)}%`, 'نسبة التحصيل']
+      );
+    }
     
     const statisticsSheet = XLSX.utils.aoa_to_sheet(statisticsDataArray);
     

@@ -83,27 +83,37 @@ const DashboardPermissions = ({
     }))
   });
 
-  // Fetch current dashboard permissions for this role
+  // Fetch current dashboard permissions for this role (prefer dedicated endpoint; fallback to /roles?id=)
   useEffect(() => {
     if (open && roleId) {
       const fetchCurrentPermissions = async () => {
         try {
-          const response = await Api.get(`/api/roles?id=${roleId}`);
-          const role = response.data.roles[0];
+          // 1) Try dedicated dashboard-permissions endpoint (persists sections separately)
+          let permissionsPayload = null;
 
-          if (role && role.permissions) {
-            const formattedPermissions = dashboardSections.map(section => {
-              const existingPermission = role.permissions.find(p => p.module === section.module);
-              return {
-                module: section.module,
-                canView: existingPermission?.canView || false,
-              };
-            });
-
-            setInitialValues({
-              permissions: formattedPermissions
-            });
+          try {
+            const dashRes = await Api.get(`/api/roles/${roleId}/dashboard-permissions`);
+            if (dashRes?.data) {
+              permissionsPayload = dashRes.data;
+            }
+          } catch (err) {
+            console.warn('Dashboard permissions endpoint not available, falling back to role payload', err);
           }
+          if (!permissionsPayload) permissionsPayload = [];
+
+          const formattedPermissions = dashboardSections.map((section) => {
+            const found = permissionsPayload.find(
+              (p) => p.module?.toLowerCase() === section.module.toLowerCase()
+            );
+            return {
+              module: section.module,
+              canView: found?.canView || false,
+            };
+          });
+
+          setInitialValues({
+            permissions: formattedPermissions,
+          });
         } catch (error) {
           console.error('Error fetching current permissions:', error);
         }
