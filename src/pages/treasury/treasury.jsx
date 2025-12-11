@@ -34,7 +34,6 @@ import {
   AccountBalance,
   TrendingUp,
   TrendingDown,
-  Warning,
   Download,
   Print,
   Share,
@@ -192,12 +191,6 @@ export default function Treasury() {
   const animatedTotalCredit = useCountUp(totalCredit, 600, !isLoading);
   const animatedLoansBalance = useCountUp(loansBalance, 600, !isLoading);
   const animatedTotal = useCountUp(total, 600, !isLoading);
-
-  const lowBalanceThreshold = 10000;
-  const highCreditThreshold = 50000;
-
-  const hasLowBalance = availableBalance < lowBalanceThreshold;
-  const hasHighCredit = totalCredit > highCreditThreshold;
 
   const monthlyBalanceData = bankData?.journalsByMonth ? 
     Object.entries(bankData.journalsByMonth)
@@ -778,38 +771,6 @@ export default function Treasury() {
                         </Grid>
                       </Grid>
                     </Paper>
-                  )}
-
-                  {(hasLowBalance || hasHighCredit) && (
-                    <Box sx={{ mb: 3 }}>
-                      {hasLowBalance && (
-                        <Alert 
-                          severity="warning" 
-                          icon={<Warning />}
-                          sx={{ mb: 1, borderRadius: 2 }}
-                        >
-                          <Typography variant="body1" fontWeight="bold">
-                            تنبيه: رصيد الصندوق منخفض
-                          </Typography>
-                          <Typography variant="body2">
-                            الرصيد الحالي ({availableBalance.toLocaleString('en-US')}) أقل من الحد الأدنى المطلوب ({lowBalanceThreshold.toLocaleString('en-US')})
-                          </Typography>
-                        </Alert>
-                      )}
-                      {hasHighCredit && (
-                        <Alert 
-                          severity="info"
-                          sx={{ mb: 1, borderRadius: 2 }}
-                        >
-                          <Typography variant="body1" fontWeight="bold">
-                            ملاحظة: المبالغ المقترضة مرتفعة
-                          </Typography>
-                          <Typography variant="body2">
-                            إجمالي المقر ض ({totalCredit.toLocaleString('en-US')}) تجاوز الحد المسموح ({highCreditThreshold.toLocaleString('en-US')})
-                          </Typography>
-                        </Alert>
-                      )}
-                    </Box>
                   )}
 
                   {/* رسمة رصيد الصندوق الدائرية */}
