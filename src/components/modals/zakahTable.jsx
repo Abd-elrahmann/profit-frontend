@@ -18,17 +18,20 @@ import {
   Autocomplete,
   Alert,
   TablePagination,
+  Button,
 } from '@mui/material';
 import { Visibility } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getZakahByYear } from '../../pages/Zakah/zakahApi';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { usePermissions } from '../Contexts/PermissionsContext';
+import { exportZakahToPDF, exportZakahToExcel } from '../../utilities/zakahExporter';
 
 const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [isExporting, setIsExporting] = useState(false);
   const { permissions } = usePermissions();
 
   const currentYear = new Date().getFullYear();
@@ -65,6 +68,42 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     setPage(0);
   };
 
+  const fetchAllZakahByYear = async () => {
+    const totalPages = zakahResponse?.pagination?.totalPages || 1;
+    const limit = rowsPerPage || 10;
+    const all = [];
+    let pageIndex = 1;
+    while (pageIndex <= totalPages) {
+      const res = await getZakahByYear(selectedYear, pageIndex, limit);
+      if (Array.isArray(res?.data)) {
+        all.push(...res.data);
+      }
+      pageIndex += 1;
+    }
+    return all;
+  };
+
+  const handleExport = async (type) => {
+    if (!zakahData || zakahData.length === 0) return;
+    setIsExporting(true);
+    try {
+      const totalPartners = zakahResponse?.pagination?.totalPartners || zakahData.length;
+      const allData =
+        zakahData.length < totalPartners ? await fetchAllZakahByYear() : zakahData;
+
+      const filters = { year: selectedYear };
+      if (type === 'pdf') {
+        await exportZakahToPDF(allData, filters);
+        return;
+      }
+      await exportZakahToExcel(allData, filters);
+    } catch {
+      // exporter already logs errors
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const totals = zakahData?.reduce((acc, item) => ({
     capitalAmount: acc.capitalAmount + (item.capitalAmount || 0),
     annualZakat: acc.annualZakat + (item.annualZakat || 0),
@@ -75,8 +114,38 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0
   };
 
+  const formatInt = (value) => {
+    const num = Number(value ?? 0);
+    if (!Number.isFinite(num)) return '0';
+    return Math.round(num).toLocaleString();
+  };
+
   const renderTable = () => (
     <Box>
+      {permissions.includes("zakat_Export") && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            disabled={isExporting || zakahData.length === 0}
+            onClick={() => handleExport('pdf')}
+            sx={{fontWeight: 'bold'}}
+          >
+            {isExporting ? 'جاري التصدير...' : 'تصدير PDF للسنة'}
+          </Button>
+          <Button
+            variant="outlined"
+            color="success"
+            size="small"
+            disabled={isExporting || zakahData.length === 0}
+            onClick={() => handleExport('excel')}
+            sx={{fontWeight: 'bold'}}
+          >
+            {isExporting ? 'جاري التصدير...' : 'تصدير Excel للسنة'}
+          </Button>
+        </Box>
+      )}
       <TableContainer sx={{ height: "100%", width: "100%" }}>
         <Table stickyHeader sx={{ width: "100%" }}>
           <TableHead>
@@ -134,19 +203,19 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     {zakah.partnerName}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                    {zakah.capitalAmount?.toLocaleString() || 0}
+                    {formatInt(zakah.capitalAmount)}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                     <Typography fontWeight="bold" color="primary.main">
-                      {zakah.annualZakat?.toLocaleString() || 0}
+                      {formatInt(zakah.annualZakat)}
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                    {zakah.monthlyZakat?.toLocaleString() || 0}
+                    {formatInt(zakah.monthlyZakat)}
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                     <Typography fontWeight="bold" color="success.main">
-                      {zakah.totalPaid?.toLocaleString() || 0}
+                      {formatInt(zakah.totalPaid)}
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -154,7 +223,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                       fontWeight="bold" 
                       color={zakah.remaining > 0 ? "error" : "success.main"}
                     >
-                      {zakah.remaining?.toLocaleString() || 0}
+                      {formatInt(zakah.remaining)}
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -185,22 +254,22 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography fontWeight="bold">
-                    {totals.capitalAmount.toLocaleString()}
+                    {formatInt(totals.capitalAmount)}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography fontWeight="bold" color="primary.main">
-                    {totals.annualZakat.toLocaleString()}
+                    {formatInt(totals.annualZakat)}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography fontWeight="bold" color="info.main">
-                    {totals.monthlyZakat.toLocaleString()}
+                    {formatInt(totals.monthlyZakat)}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography fontWeight="bold" color="success.main">
-                    {totals.totalPaid.toLocaleString()}
+                    {formatInt(totals.totalPaid)}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
@@ -208,7 +277,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     fontWeight="bold" 
                     color={totals.remaining > 0 ? "error" : "success.main"}
                   >
-                    {totals.remaining.toLocaleString()}
+                    {formatInt(totals.remaining)}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">-</StyledTableCell>
@@ -246,12 +315,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={30} />
-        </Box>
-      ) : error ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Alert severity="error">
-            حدث خطأ في تحميل البيانات. يرجى المحاولة مرة أخرى.
-          </Alert>
         </Box>
       ) : zakahData?.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -296,7 +359,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                           رأس المال:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
-                          {zakah.capitalAmount?.toLocaleString() || 0}
+                          {formatInt(zakah.capitalAmount)}
                         </Typography>
                       </Box>
                       
@@ -305,7 +368,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                           الزكاة السنوية:
                         </Typography>
                         <Typography variant="body2" fontWeight="bold" color="primary.main">
-                          {zakah.annualZakat?.toLocaleString() || 0}
+                          {formatInt(zakah.annualZakat)}
                         </Typography>
                       </Box>
                     </Box>
@@ -316,7 +379,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                           الزكاة الشهرية:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
-                          {zakah.monthlyZakat?.toLocaleString() || 0}
+                          {formatInt(zakah.monthlyZakat)}
                         </Typography>
                       </Box>
                       
@@ -325,7 +388,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                           المدفوع:
                         </Typography>
                         <Typography variant="body2" fontWeight="bold" color="success.main">
-                          {zakah.totalPaid?.toLocaleString() || 0}
+                          {formatInt(zakah.totalPaid)}
                         </Typography>
                       </Box>
                     </Box>
@@ -339,7 +402,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                         fontWeight="bold"
                         color={zakah.remaining > 0 ? "error" : "success.main"}
                       >
-                        {zakah.remaining?.toLocaleString() || 0}
+                        {formatInt(zakah.remaining)}
                       </Typography>
                     </Box>
 

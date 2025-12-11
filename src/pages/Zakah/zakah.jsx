@@ -210,6 +210,20 @@ const Zakah = () => {
     return amount?.toLocaleString() || "0";
   };
 
+  // Helpers to control export buttons availability
+  const hasAccountExportData = (() => {
+    if (!accountReport?.journalsByMonth) return false;
+    return Object.values(accountReport.journalsByMonth).some(
+      (month) => Array.isArray(month.entries) && month.entries.length > 0
+    );
+  })();
+
+  const hasPartnerExportData = (() => {
+    if (Array.isArray(partnerZakahData)) return partnerZakahData.length > 0;
+    if (partnerZakahData && typeof partnerZakahData === "object") return true;
+    return false;
+  })();
+
   // Get month name in Arabic
   const getMonthName = (month) => {
     const months = [
@@ -351,7 +365,7 @@ const Zakah = () => {
             {accountReport?.totalJournalEntries || 0}
           </Typography>
         </Box>
-        {permissions.includes("zakah_Add") && (
+        {permissions.includes("zakat_Add") && (
         <Button
           variant="contained"
           onClick={() => setWithdrawDialogOpen(true)}
@@ -719,7 +733,7 @@ const Zakah = () => {
               sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
               startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
               onClick={() => handleExportPDF()}
-              disabled={isExporting}
+              disabled={isExporting || !hasAccountExportData}
             >
               {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
             </Button>
@@ -728,7 +742,7 @@ const Zakah = () => {
               sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
               startIcon={<TableChart sx={{marginLeft: "10px"}} />}
               onClick={() => handleExportExcel()}
-              disabled={isExporting}
+              disabled={isExporting || !hasAccountExportData}
             >
               {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
             </Button>
@@ -1019,7 +1033,7 @@ const Zakah = () => {
                           sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
                           startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
                           onClick={() => handleExportPDF()}
-                          disabled={isExporting}
+                          disabled={isExporting || !hasPartnerExportData}
                         >
                           {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
                         </Button>
@@ -1028,7 +1042,7 @@ const Zakah = () => {
                           sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
                           startIcon={<TableChart sx={{marginLeft: "10px"}} />}
                           onClick={() => handleExportExcel()}
-                          disabled={isExporting}
+                          disabled={isExporting || !hasPartnerExportData}
                         >
                           {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
                         </Button>

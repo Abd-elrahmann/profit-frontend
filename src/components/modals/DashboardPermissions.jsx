@@ -113,15 +113,15 @@ const DashboardPermissions = ({
             const found = permissionsPayload.find(
               (p) => p.module?.toLowerCase() === section.module.toLowerCase()
             );
-            return {
-              module: section.module,
+              return {
+                module: section.module,
               canView: found?.canView || false,
-            };
-          });
+              };
+            });
 
-          setInitialValues({
+            setInitialValues({
             permissions: formattedPermissions,
-          });
+            });
         } catch (error) {
           console.error('Error fetching current permissions:', error);
         }

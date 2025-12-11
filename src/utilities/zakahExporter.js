@@ -5,6 +5,12 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
+const formatInt = (value) => {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return '0';
+  return Math.round(num).toLocaleString();
+};
+
 const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
@@ -17,13 +23,11 @@ const registerArabicFonts = (doc) => {
 export const exportZakahToPDF = async (zakahData, filters = {}) => {
   return new Promise((resolve, reject) => {
     try {
-      // Create new PDF document
+    
       const doc = new jsPDF();
 
-      // Register Arabic fonts
       registerArabicFonts(doc);
 
-      // Set document properties
       doc.setProperties({
         title: 'تقرير الزكاة',
         subject: 'تقرير الزكاة والعمليات المالية',
@@ -32,22 +36,18 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
       doc.setFont('Amiri', 'bold');
 
-      // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
       const logoHeight = 10;
       const logoX = doc.internal.pageSize.width - logoWidth - 5;
       const logoY = 5;
       doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
-      // Title section - start after logo
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
       doc.text('تقرير الزكاة', doc.internal.pageSize.width / 2, 25, { align: 'center' });
 
-      // Filters info if exists
       let yPosition = 35;
       if (filters.month && filters.year) {
         doc.setFontSize(11);
@@ -61,30 +61,36 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
         yPosition += 8;
       }
 
-      // Summary section
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
 
-      // Check if this is account data (صندوق الزكاة) or partner data (زكاة محددة)
-      if (zakahData.account) {
-        // صندوق الزكاة - account data
+      const isArrayData = Array.isArray(zakahData);
+      const isAccountData = !isArrayData && !!zakahData?.account;
+      // اعتبر الشريك المحدد سواء كان Array أو كائن مفرد يحوي monthlyBreakdown
+      const isPartnerArray = (isArrayData && !!filters.partner) || (!isArrayData && !!zakahData?.monthlyBreakdown);
+      const isPartnersList = isArrayData && !filters.partner;   
+
+      if (isAccountData) {
         const summaryText = `رصيد الحساب: ${zakahData.account.balance?.toLocaleString() || 0} | المدفوع: ${zakahData.account.credit?.toLocaleString() || 0} | المتبقي: ${zakahData.account.debit?.toLocaleString() || 0} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
         doc.text(summaryText, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
         yPosition += 12;
-      } else if (Array.isArray(zakahData)) {
-        // زكاة محددة - partner data (array of years)
-        const partnerData = zakahData.find(item => item.year === filters.year) || zakahData[0];
+      } else if (isPartnerArray) {
+        const partnerData = isArrayData
+          ? zakahData.find(item => item.year === filters.year) || zakahData[0]
+          : zakahData;
         if (partnerData) {
           const summaryText = `اسم الشريك: ${partnerData.partnerName || '-'} | رأس المال: ${partnerData.capitalAmount?.toLocaleString() || 0} | الزكاة السنوية: ${partnerData.annualZakat?.toLocaleString() || 0} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
           doc.text(summaryText, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
           yPosition += 12;
         }
+      } else if (isPartnersList) {
+        const summaryText = `عدد الشركاء: ${zakahData.length} | السنة: ${filters.year || ''} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+        doc.text(summaryText, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+        yPosition += 12;
       }
 
-      // Prepare table data based on data type
       let allEntries = [];
       if (zakahData.journalsByMonth) {
-        // صندوق الزكاة - account data with journalsByMonth
         Object.entries(zakahData.journalsByMonth).forEach(([month, data]) => {
           if (data.entries && data.entries.length > 0) {
             data.entries.forEach(entry => {
@@ -96,17 +102,19 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             });
           }
         });
-      } else if (Array.isArray(zakahData)) {
-        // زكاة محددة - partner data
-        const partnerData = zakahData.find(item => item.year === filters.year) || zakahData[0];
-        if (partnerData && partnerData.monthlyBreakdown) {
+      } else if (isPartnerArray) {
+        const partnerData = isArrayData
+          ? zakahData.find(item => item.year === filters.year) || zakahData[0]
+          : zakahData;
+        const partnerYear = partnerData?.year || filters.year;
+        if (partnerData?.monthlyBreakdown) {
           partnerData.monthlyBreakdown.forEach(month => {
             allEntries.push({
               ...month,
               month: month.month.toString().padStart(2, '0'),
               description: `زكاة شهر ${month.month}`,
-              date: `${filters.year}-${month.month.toString().padStart(2, '0')}-01`,
-              reference: `ZAKAH-${partnerData.partnerName || 'UNKNOWN'}-${filters.year}-${month.month.toString().padStart(2, '0')}`,
+              date: `${partnerYear}-${month.month.toString().padStart(2, '0')}-01`,
+              reference: `ZAKAH-${partnerData.partnerName || 'UNKNOWN'}-${partnerYear}-${month.month.toString().padStart(2, '0')}`,
               postedBy: 'النظام',
               type: 'GENERAL',
               status: 'POSTED',
@@ -116,19 +124,25 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             });
           });
         }
+      } else if (isPartnersList) {
+        zakahData.forEach((item) => {
+          allEntries.push({
+            ...item,
+            month: filters.month ? filters.month.toString().padStart(2, '0') : '',
+            date: `${item.year || filters.year || dayjs().year()}-01-01`,
+            partnerName: item.partnerName || '-',
+          });
+        });
       }
 
       if (allEntries.length > 0) {
-        // Sort by date descending
         allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Table data and headers based on data type
         let tableData, headers;
 
-        if (zakahData.account) {
-          // صندوق الزكاة - account data: show detailed financial entries
+        if (isAccountData) {
           tableData = allEntries.map(entry => [
-            entry.month, // الشهر أولاً من اليمين
+            entry.month, 
             dayjs(entry.date).format('DD/MM/YYYY'),
             entry.reference || '-',
             entry.description || '-',
@@ -142,42 +156,82 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           headers = [
             ['الشهر', 'التاريخ', 'المرجع', 'الوصف', 'مدين', 'دائن', 'الرصيد', 'المرسل', 'النوع']
           ];
-        } else {
-          // زكاة محددة - partner data: show monthly breakdown summary
+        } else if (isPartnerArray) {
           tableData = allEntries.map(entry => [
-            entry.month, // الشهر أولاً من اليمين
+            entry.month, 
             dayjs(entry.date).format('DD/MM/YYYY'),
             entry.description || '-',
-            entry.credit?.toLocaleString() || '0'
+            formatInt(entry.credit)
           ]);
 
           headers = [
             ['الشهر', 'التاريخ', 'الوصف', 'المبلغ']
           ];
+        } else {
+          tableData = allEntries.map(entry => [
+            formatInt(entry.remaining),
+            formatInt(entry.totalPaid),
+            formatInt(entry.monthlyZakat),
+            formatInt(entry.annualZakat),
+            formatInt(entry.capitalAmount),
+            entry.year || filters.year || '-',
+            entry.partnerName || '-',
+          ]);
+
+          const totals = allEntries.reduce((acc, entry) => ({
+            capitalAmount: acc.capitalAmount + Number(entry.capitalAmount || 0),
+            annualZakat: acc.annualZakat + Number(entry.annualZakat || 0),
+            monthlyZakat: acc.monthlyZakat + Number(entry.monthlyZakat || 0),
+            totalPaid: acc.totalPaid + Number(entry.totalPaid || 0),
+            remaining: acc.remaining + Number(entry.remaining || 0),
+          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 });
+
+          tableData.push([
+            formatInt(totals.remaining),
+            formatInt(totals.totalPaid),
+            formatInt(totals.monthlyZakat),
+            formatInt(totals.annualZakat),
+            formatInt(totals.capitalAmount),
+            filters.year || allEntries[0]?.year || '-',
+            'الإجمالي',
+          ]);
+
+          headers = [
+            ['المتبقي', 'المدفوع', 'الزكاة الشهرية', 'الزكاة السنوية', 'رأس المال', 'السنة', 'اسم الشريك']
+          ];
         }
 
     
         let columnWidths;
-        if (zakahData.account) {
-          // صندوق الزكاة - more columns
+        if (isAccountData) {
+            columnWidths = {
+            0: 15, 
+            1: 18, 
+            2: 20, 
+            3: 35, 
+            4: 15, 
+            5: 15, 
+            6: 18, 
+            7: 20, 
+            8: 12  
+          };
+        } else if (isPartnerArray) {
+          // إجمالي عرض يقارب 150مم داخل الهوامش لتجنب القص
           columnWidths = {
-            0: 15, // الشهر
-            1: 18, // التاريخ
-            2: 20, // المرجع
-            3: 35, // الوصف
-            4: 15, // مدين
-            5: 15, // دائن
-            6: 18, // الرصيد
-            7: 20, // المرسل
-            8: 12  // النوع
+            0: 18,  // الشهر
+            1: 32,  // التاريخ
+            2: 70,  // الوصف
+            3: 28   // المبلغ
           };
         } else {
-          // زكاة محددة - fewer columns with wider layout
           columnWidths = {
-            0: 30, // الشهر
-            1: 40, // التاريخ
-            2: 80, // الوصف
-            3: 40  // المبلغ
+            0: 26, 
+            1: 26, 
+            2: 26, 
+            3: 26, 
+            4: 26, 
+            5: 16, 
+            6: 36, 
           };
         }
 
@@ -189,8 +243,8 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           theme: 'striped',
           styles: {
             font: 'Amiri',
-              fontStyle: 'bold',
-            fontSize: 7,
+            fontStyle: 'bold',
+            fontSize: 9, 
             cellPadding: 2,
             lineColor: [200, 200, 200],
             lineWidth: 0.1,
@@ -201,7 +255,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             fillColor: [13, 64, 165],
             textColor: 255,
             fontStyle: 'bold',
-            fontSize: 8,
+            fontSize: 10, 
             halign: 'center',
             valign: 'middle',
             cellPadding: 3
@@ -215,7 +269,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             fillColor: [250, 250, 250]
           },
           columnStyles: Object.keys(columnWidths).reduce((styles, key, index) => {
-            styles[index] = { cellWidth: columnWidths[key], fontSize: 7 };
+            styles[index] = { cellWidth: columnWidths[key], fontSize: 9 };
             return styles;
           }, {}),
           margin: { top: yPosition, bottom: 20, left: 20, right: 20 },
@@ -224,19 +278,16 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           showHead: 'everyPage'
         });
       } else {
-        // No data message
         doc.setFontSize(14);
         doc.setFont('Amiri', 'bold');
         doc.text('لا توجد عمليات مالية في الفترة المحددة', doc.internal.pageSize.width / 2, yPosition + 20, { align: 'center' });
       }
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
 
-        // Draw footer line
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.5);
         doc.line(
@@ -246,12 +297,10 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           doc.internal.pageSize.height - 15
         );
 
-        // Footer text
         doc.setFontSize(9);
         doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
 
-        // Page number - centered
         doc.text(
           `صفحة ${i} من ${pageCount}`,
           doc.internal.pageSize.width / 2,
@@ -259,7 +308,6 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           { align: 'center' }
         );
 
-        // Creation date - right aligned
         const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
         doc.text(
           `تم الإنشاء في: ${creationDate}`,
@@ -268,11 +316,9 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           { align: 'right' }
         );
 
-        // Reset text color
         doc.setTextColor(0, 0, 0);
       }
 
-      // Save PDF
       const fileName = `تقرير_الزكاة_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
@@ -285,10 +331,8 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
 
 export const exportZakahToExcel = async (zakahData, filters = {}) => {
   try {
-    // Create workbook
     const workbook = XLSX.utils.book_new();
 
-    // Summary data
     const summaryData = [
       ['تقرير الزكاة'],
       ['']
@@ -302,18 +346,23 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
       summaryData.push(['']);
     }
 
-    // Summary based on data type
-    if (zakahData.account) {
-      // صندوق الزكاة - account data
+    const isArrayData = Array.isArray(zakahData);
+    const isAccountData = !isArrayData && !!zakahData?.account;
+    // دعم حالة الشريك المفرد بكائن monthlyBreakdown أيضاً
+    const isPartnerArray = (isArrayData && !!filters.partner) || (!isArrayData && !!zakahData?.monthlyBreakdown);
+    const isPartnersList = isArrayData && !filters.partner;   
+
+    if (isAccountData) {
       summaryData.push(['إحصائيات الحساب']);
       summaryData.push(['رصيد الحساب', zakahData.account.balance || 0]);
       summaryData.push(['المدفوع', zakahData.account.credit || 0]);
       summaryData.push(['المتبقي', zakahData.account.debit || 0]);
       summaryData.push(['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')]);
       summaryData.push(['']);
-    } else if (Array.isArray(zakahData)) {
-      // زكاة محددة - partner data
-      const partnerData = zakahData.find(item => item.year === filters.year) || zakahData[0];
+    } else if (isPartnerArray) {
+      const partnerData = isArrayData
+        ? zakahData.find(item => item.year === filters.year) || zakahData[0]
+        : zakahData;
       if (partnerData) {
         summaryData.push(['إحصائيات الزكاة']);
         summaryData.push(['اسم الشريك', partnerData.partnerName || '-']);
@@ -325,12 +374,16 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
         summaryData.push(['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')]);
         summaryData.push(['']);
       }
+    } else if (isPartnersList) {
+      summaryData.push(['إحصائيات الشركاء']);
+      summaryData.push(['عدد الشركاء', zakahData.length]);
+      summaryData.push(['السنة', filters.year || '-']);
+      summaryData.push(['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')]);
+      summaryData.push(['']);
     }
 
-    // Prepare entries data based on data type
     let allEntries = [];
     if (zakahData.journalsByMonth) {
-      // صندوق الزكاة - account data with journalsByMonth
       Object.entries(zakahData.journalsByMonth).forEach(([month, data]) => {
         if (data.entries && data.entries.length > 0) {
           data.entries.forEach(entry => {
@@ -342,16 +395,18 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
           });
         }
       });
-    } else if (Array.isArray(zakahData)) {
-      // زكاة محددة - partner data
-      const partnerData = zakahData.find(item => item.year === filters.year) || zakahData[0];
-      if (partnerData && partnerData.monthlyBreakdown) {
+    } else if (isPartnerArray) {
+      const partnerData = isArrayData
+        ? zakahData.find(item => item.year === filters.year) || zakahData[0]
+        : zakahData;
+      const partnerYear = partnerData?.year || filters.year;
+      if (partnerData?.monthlyBreakdown) {
         partnerData.monthlyBreakdown.forEach(month => {
           allEntries.push({
             month: month.month.toString().padStart(2, '0'),
-            date: `${filters.year}-${month.month.toString().padStart(2, '0')}-01`,
-            reference: `ZAKAH-${partnerData.partnerName || 'UNKNOWN'}-${filters.year}-${month.month.toString().padStart(2, '0')}`,
-            description: `زكة شهر ${month.month}`,
+            date: `${partnerYear}-${month.month.toString().padStart(2, '0')}-01`,
+            reference: `ZAKAH-${partnerData.partnerName || 'UNKNOWN'}-${partnerYear}-${month.month.toString().padStart(2, '0')}`,
+            description: `زكاة شهر ${month.month}`,
             postedBy: 'النظام',
             type: 'GENERAL',
             status: month.status || 'PENDING',
@@ -361,15 +416,21 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
           });
         });
       }
+    } else if (isPartnersList) {
+      zakahData.forEach((item) => {
+        allEntries.push({
+          ...item,
+          month: filters.month ? filters.month.toString().padStart(2, '0') : '',
+          date: `${item.year || filters.year || dayjs().year()}-01-01`,
+          partnerName: item.partnerName || '-',
+        });
+      });
     }
 
-    // Sort by date descending
     allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Excel data based on data type
     let excelData;
-    if (zakahData.account) {
-      // صندوق الزكاة - detailed financial entries
+    if (isAccountData) {
       excelData = allEntries.map(entry => ({
         'الشهر': entry.month,
         'التاريخ': dayjs(entry.date).format('DD/MM/YYYY'),
@@ -381,53 +442,83 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
         'المرسل': entry.postedBy || '-',
         'النوع': entry.type === 'GENERAL' ? 'عام' : entry.type || '-'
       }));
-    } else {
-      // زكاة محددة - monthly breakdown
+    } else if (isPartnerArray) {
       excelData = allEntries.map(entry => ({
         'الشهر': entry.month,
         'التاريخ': dayjs(entry.date).format('DD/MM/YYYY'),
         'الوصف': entry.description || '-',
-        'المبلغ': entry.credit || 0
+        'المبلغ': Math.round(entry.credit || 0)
       }));
-    }
+    } else {
+          excelData = allEntries.map(entry => ({
+            'المتبقي': Math.round(Number(entry.remaining) || 0),
+            'المدفوع': Math.round(Number(entry.totalPaid) || 0),
+            'الزكاة الشهرية': Math.round(Number(entry.monthlyZakat) || 0),
+            'الزكاة السنوية': Math.round(Number(entry.annualZakat) || 0),
+            'رأس المال': Math.round(Number(entry.capitalAmount) || 0),
+            'السنة': entry.year || filters.year || '-',
+            'اسم الشريك': entry.partnerName || '-',
+          }));
 
-    // Create summary sheet
+          const totals = allEntries.reduce((acc, entry) => ({
+            capitalAmount: acc.capitalAmount + Number(entry.capitalAmount || 0),
+            annualZakat: acc.annualZakat + Number(entry.annualZakat || 0),
+            monthlyZakat: acc.monthlyZakat + Number(entry.monthlyZakat || 0),
+            totalPaid: acc.totalPaid + Number(entry.totalPaid || 0),
+            remaining: acc.remaining + Number(entry.remaining || 0),
+          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 });
+
+          excelData.push({
+            'المتبقي': Math.round(totals.remaining),
+            'المدفوع': Math.round(totals.totalPaid),
+            'الزكاة الشهرية': Math.round(totals.monthlyZakat),
+            'الزكاة السنوية': Math.round(totals.annualZakat),
+            'رأس المال': Math.round(totals.capitalAmount),
+            'السنة': filters.year || allEntries[0]?.year || '-',
+            'اسم الشريك': 'الإجمالي',
+          });
+        }
+
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
 
-    // Create data sheet
     const dataSheet = XLSX.utils.json_to_sheet(excelData);
 
-    // Auto-size columns based on data type
     let wscols;
-    if (zakahData.account) {
-      // صندوق الزكاة - detailed financial entries
+    if (isAccountData) {
+      wscols = [
+        { wch: 12 }, 
+        { wch: 15 }, 
+        { wch: 20 },  
+        { wch: 35 }, 
+        { wch: 12 }, 
+        { wch: 12 }, 
+        { wch: 15 }, 
+        { wch: 18 }, 
+        { wch: 12 } 
+      ];
+    } else if (isPartnerArray) {
       wscols = [
         { wch: 12 }, // الشهر
-        { wch: 15 }, // التاريخ
-        { wch: 20 }, // المرجع
-        { wch: 35 }, // الوصف
-        { wch: 12 }, // مدين
-        { wch: 12 }, // دائن
-        { wch: 15 }, // الرصيد
-        { wch: 18 }, // المرسل
-        { wch: 12 }  // النوع
+        { wch: 18 }, // التاريخ
+        { wch: 40 }, // الوصف
+        { wch: 14 }  // المبلغ
       ];
     } else {
-      // زكاة محددة - monthly breakdown
       wscols = [
-        { wch: 15 }, // الشهر
-        { wch: 20 }, // التاريخ
-        { wch: 55 }, // الوصف
-        { wch: 20 }  // المبلغ
+        { wch: 20 }, 
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 14 },
+        { wch: 30 },
       ];
     }
     dataSheet['!cols'] = wscols;
 
-    // Add sheets to workbook
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص');
     XLSX.utils.book_append_sheet(workbook, dataSheet, 'العمليات المالية');
 
-    // Generate Excel file
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array',
