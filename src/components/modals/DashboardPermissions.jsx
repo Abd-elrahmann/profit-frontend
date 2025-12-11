@@ -94,7 +94,15 @@ const DashboardPermissions = ({
           try {
             const dashRes = await Api.get(`/api/roles/${roleId}/dashboard-permissions`);
             if (dashRes?.data) {
-              permissionsPayload = dashRes.data;
+              const data = dashRes.data;
+              // accept both { permissions: [...] } or [...] directly
+              if (Array.isArray(data?.permissions)) {
+                permissionsPayload = data.permissions;
+              } else if (Array.isArray(data)) {
+                permissionsPayload = data;
+              } else {
+                permissionsPayload = [];
+              }
             }
           } catch (err) {
             console.warn('Dashboard permissions endpoint not available, falling back to role payload', err);
