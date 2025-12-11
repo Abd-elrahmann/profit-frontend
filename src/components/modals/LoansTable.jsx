@@ -615,17 +615,26 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
           {/* Totals row */}
           {!isLoading && loansData?.data?.length > 0 && (
             <StyledTableRow>
-              <StyledTableCell colSpan={4} />
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+              <StyledTableCell
+                colSpan={4}
+                align="center"
+                sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
+              >
                 الإجمالي
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+              <StyledTableCell
+                align="center"
+                sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
+              >
                 {totals.amount.toLocaleString()}
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+              <StyledTableCell
+                align="center"
+                sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
+              >
                 {totals.paymentAmount.toLocaleString()}
               </StyledTableCell>
-              <StyledTableCell colSpan={hasActions ? 7 : 6} />
+              <StyledTableCell colSpan={hasActions ? 6 : 5} />
             </StyledTableRow>
           )}
         </TableBody>
