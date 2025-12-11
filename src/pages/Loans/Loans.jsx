@@ -113,7 +113,7 @@ const Loans = () => {
   });
 
   useEffect(() => {
-    fetchContractTemplates(); // Load templates when component mounts
+    fetchContractTemplates(); 
     if (activeTab === 1) {
       calculateInstallments();
       fetchBankBalance();
@@ -180,7 +180,6 @@ const Loans = () => {
 
   const handleClientSelect = (event, newValue) => {
     setSelectedClient(newValue);
-    // Reset kafeel when client changes
     setSelectedKafeel(null);
   };
 
@@ -208,7 +207,6 @@ const Loans = () => {
 
   const handleBankSelect = async (event, newValue) => {
     setSelectedBank(newValue);
-    // Keep fetching balance even when bank is cleared to show current balance
     await fetchBankBalance();
   };
 
@@ -232,17 +230,14 @@ const Loans = () => {
 
   const formatAmount = (amount) => {
     if (!amount && amount !== 0) return "";
-    // Convert to number first, then round to 2 decimal places to avoid precision issues
     const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, "")) : amount;
     if (isNaN(numAmount)) return "";
-    // Round to 2 decimal places using toFixed to avoid floating point precision issues
     const rounded = parseFloat(numAmount.toFixed(2));
     return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   const handleOpenPreview = async () => {
     try {
-      // Use saved loan data if available (after loan creation), otherwise use form data
       const loanDataToUse = savedLoanData || {
         id: `preview-${Date.now()}`,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
@@ -257,7 +252,6 @@ const Loans = () => {
         return;
       }
 
-      // Ensure templates are loaded before generating preview
       if (!debtAckTemplate || !promissoryNoteTemplate) {
         notifyError("جاري تحميل قوالب العقود، يرجى المحاولة مرة أخرى");
         return;
@@ -270,7 +264,6 @@ const Loans = () => {
         kafeel: loanDataToUse.kafeel || selectedKafeel,
       };
 
-      // التأكد من وجود المراجع قبل الاستخدام
       if (!debtAckGeneratorRef.current || !promissoryNoteGeneratorRef.current) {
         notifyError("مولدات العقود غير جاهزة بعد، يرجى المحاولة مرة أخرى");
         return;
@@ -311,22 +304,17 @@ const Loans = () => {
       }
 
       if (contractType === "both" || contractType === "debt-acknowledgment") {
-        // Generate HTML content first
         const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, savedLoanData, savedLoanData?.kafeel, true);
-        // Then generate PDF with the HTML content
         await debtAckGeneratorRef.current?.generatePDF(debtAckHtml);
       }
 
       if (contractType === "both" || contractType === "promissory-note") {
-        // Generate HTML content first
         const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, savedLoanData, savedLoanData?.kafeel, true);
-        // Then generate PDF with the HTML content
         await promissoryNoteGeneratorRef.current?.generatePDF(promissoryNoteHtml);
       }
 
       notifySuccess("تم حفظ العقود بنجاح");
       
-      // Reset loan data and contracts
       setSavedLoanData(null);
       setContractsGenerated(0);
       setPreviewContracts({
@@ -335,7 +323,6 @@ const Loans = () => {
       });
       setPreviewOpen(false);
       
-      // Reset form fields
       setLoanForm({
         amount: "",
         totalInterest: "",
@@ -346,14 +333,12 @@ const Loans = () => {
         repaymentDay: "",
       });
       
-      // Reset selections
       setSelectedClient(null);
       setSelectedKafeel(null);
       setSelectedBank(null);
       setSelectedPartner(null);
       setSelectedLoan(null);
       
-      // Reset states
       setInstallments([]);
       setIsEditMode(false);
       setIsViewMode(false);
@@ -377,10 +362,9 @@ const Loans = () => {
       const profit = totalInterest;
       const total = amount + profit;
 
-      // Calculate full installments and remainder (matching backend logic)
       const fullMonths = Math.floor(total / paymentAmount);
       const lastPayment = total - paymentAmount * fullMonths;
-      const months = fullMonths; // Don't add 1, remainder will be added to last installment
+      const months = fullMonths;
       const hasRemainder = lastPayment > 0;
 
       const calculatedInstallments = [];
@@ -401,7 +385,6 @@ const Loans = () => {
           }
         }
 
-        // Calculate installment amount (add remainder to last installment if exists)
         let currentAmount = paymentAmount;
         if (i === months && hasRemainder) {
           currentAmount = paymentAmount + lastPayment;
@@ -410,12 +393,10 @@ const Loans = () => {
         let principalAmount;
         let interestAmount;
 
-        // If last installment and has remainder, use remaining amounts
         if (i === months && hasRemainder) {
           principalAmount = remainingPrincipal;
           interestAmount = remainingInterest;
         } else {
-          // Calculate proportionally based on interest ratio
           const interestRatio =
             remainingInterest / (remainingPrincipal + remainingInterest);
           interestAmount = parseFloat(
@@ -433,7 +414,6 @@ const Loans = () => {
           (remainingInterest - interestAmount).toFixed(2)
         );
 
-        // Calculate remaining balance (total minus sum of installments up to current)
         totalPaidSoFar += currentAmount;
         const remainingBalance = Math.max(0, parseFloat((total - totalPaidSoFar).toFixed(2)));
 
@@ -749,10 +729,7 @@ const Loans = () => {
 
       setInstallments(formattedRepayments);
 
-      // Use interestAmount from backend (not totalInterest) and ensure proper formatting
-      // Round to 2 decimal places to avoid floating point precision issues
       const totalInterestAmount = loan.interestAmount || 0;
-      // Use toFixed(2) then parseFloat to remove trailing zeros and avoid precision issues
       const formattedTotalInterest = parseFloat(totalInterestAmount.toFixed(2));
 
       setLoanForm({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -98,6 +98,8 @@ const Journals = () => {
 
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const navigate = useNavigate();
+  const fromPeriod = location.state?.fromPeriod;
 
   // Helper function to flatten nested tree structure
   const flattenAccountsTree = (accounts) => {
@@ -227,6 +229,10 @@ const Journals = () => {
       date: new Date().toISOString().split("T")[0],
       type: "GENERAL",
     });
+  };
+
+  const handleBackToPeriodClosing = () => {
+    navigate("/period-closing");
   };
 
   const handleEditClick = () => {
@@ -1821,13 +1827,29 @@ const Journals = () => {
                     )}
                   </Box>
                 )}
+                {activeTab === 1 && fromPeriod && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleBackToPeriodClosing}
+                    sx={{
+                      borderColor: "#0d40a5",
+                      color: "#0d40a5",
+                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                    }}
+                  >
+                    رجوع لتقفيل الفترات
+                  </Button>
+                )}
               </Box>
             ) : (
               <Box sx={{ mb: 3 }}>
                 {activeTab === 1 ? (
-                
                   <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <IconButton onClick={handleBackToList} size="small">
+                    <IconButton
+                      onClick={fromPeriod ? handleBackToPeriodClosing : handleBackToList}
+                      size="small"
+                    >
                       <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" fontWeight="bold" sx={{ ml: 1 }}>

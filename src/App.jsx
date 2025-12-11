@@ -14,6 +14,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { notifyError } from './utilities/toastify';
 import { Box, CircularProgress } from '@mui/material';
+const CheckConnection = React.lazy(() => import('./pages/CheckConnection'));
 
 const getFirstAccessiblePage = (permissions) => {
   const convertModuleToPermission = (module) => {
@@ -75,9 +76,43 @@ const LoadingFallback = () => (
   </Box>
 );
 
+const ConnectionWatcher = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleOffline = () => {
+      const lastVisited = `${location.pathname}${location.search}`;
+      if (location.pathname !== '/check-connection') {
+        sessionStorage.setItem('lastOnlinePath', lastVisited);
+      }
+      navigate('/check-connection', { replace: true });
+    };
+
+    if (!navigator.onLine) {
+      handleOffline();
+    }
+
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    if (navigator.onLine && location.pathname !== '/check-connection') {
+      sessionStorage.setItem('lastOnlinePath', `${location.pathname}${location.search}`);
+    }
+  }, [location.pathname, location.search]);
+
+  return null;
+};
+
 const AppLayout = () => {
   return (
     <Layout>
+      <ConnectionWatcher />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
         {routes
@@ -109,6 +144,11 @@ const AppLayout = () => {
               <ResetPassword />
             </PublicRoute>
           } 
+        />
+        
+        <Route 
+          path="/check-connection" 
+          element={<CheckConnection />} 
         />
         
         

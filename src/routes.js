@@ -50,7 +50,7 @@ const routes = [
     showInSidebar: false
   },
  
-  // 1. لوحة التحكم
+  
   {
     path: '/dashboard',
     element: Dashboard,
@@ -62,7 +62,6 @@ const routes = [
     requiresPermissions: true
   },
 
-  // 2. السجلات
   {
     path: '/logs',
     element: Logs,
@@ -74,7 +73,6 @@ const routes = [
     icon: HistoryIcon,
   },
 
-  // 3. ادارة الموظفين
   {
     path: '/employees',
     element: Employees,
@@ -98,7 +96,6 @@ const routes = [
     parent: 'إدارة الموظفين'
   },
 
-  // 4. ادارة العملاء
   {
     path: '/clients',
     element: Clients,
@@ -122,7 +119,6 @@ const routes = [
     parent: 'إدارة العملاء'
   },
 
-  // 5. ادارة المستثمرين
   {
     path: '/investors',
     element: Investors,
@@ -135,7 +131,6 @@ const routes = [
     parent: 'إدارة المستثمرين'
   },
 
-  // 6. ادارة المصروفات
   {
     path: '/expenses',
     element: Expenses,
@@ -148,7 +143,6 @@ const routes = [
     parent: 'ادارة المصروفات'
   },
 
-  // 7. المحاسبة المالية
   {
     path: '/chart-of-accounts',
     element: ChartOfAccounts,
@@ -194,7 +188,6 @@ const routes = [
     parent: 'المحاسبة المالية'
   },
 
-  // 8. العمليات المالية
   {
     path: '/loans',
     element: Loans,
@@ -248,7 +241,6 @@ const routes = [
     parent: 'العمليات المالية'
   },
 
-  // 9. الأرباح والتقارير
   {
     path: '/company-profit',
     element: CompanyProfit,
@@ -272,7 +264,6 @@ const routes = [
     parent: 'الأرباح والتقارير'
   },
 
-  // 10. الزكاة والادخار
   {
     path: '/zakah',
     element: Zakah,
@@ -296,7 +287,6 @@ const routes = [
     parent: 'الزكاة والادخار'
   },
 
-  // 11. القوالب
   {
     path: '/contract-templates',
     element: ContractTemplates,
@@ -331,7 +321,6 @@ const routes = [
 export const getSidebarMenuItems = () => {
   const routesWithParent = routes.filter(route => route.showInSidebar && route.protected);
   
-  // ترتيب المجموعات المحدد
   const parentOrder = [
     'إدارة الموظفين',
     'إدارة العملاء',
@@ -344,7 +333,6 @@ export const getSidebarMenuItems = () => {
     'القوالب'
   ];
   
-  // تجميع العناصر حسب الأب
   const groupedItems = {};
   const singleItems = [];
   
@@ -362,22 +350,18 @@ export const getSidebarMenuItems = () => {
     }
   });
   
-  // تحويل الكائن إلى مصفوفة مع الحفاظ على الترتيب المحدد
   const result = [];
   
-  // إضافة العناصر الفردية أولاً (لوحة التحكم، السجلات)
   singleItems.forEach(item => {
     result.push(item);
   });
   
-  // إضافة المجموعات بالترتيب المحدد
   parentOrder.forEach(parentLabel => {
     if (groupedItems[parentLabel]) {
       result.push(groupedItems[parentLabel]);
     }
   });
   
-  // إضافة أي مجموعات أخرى لم يتم تحديدها في الترتيب
   Object.keys(groupedItems).forEach(parentLabel => {
     if (!parentOrder.includes(parentLabel)) {
       result.push(groupedItems[parentLabel]);

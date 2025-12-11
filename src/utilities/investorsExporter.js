@@ -201,17 +201,17 @@ export const exportInvestorsToPDF = async (investorsData) => {
         doc.text('التفاصيل الشخصية', pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 8;
 
-        // Tab 1: Personal Details Table - Professional layout
-        const personalHeaders = [['الاسم الكامل', 'رقم الهوية', 'البريد الإلكتروني', 'رقم الجوال', 'العنوان', 'تاريخ الانضمام', 'الحالة']];
-        const personalData = [[
-          investor.name || '-',
-          investor.nationalId || '-',
-          investor.email || 'لا يوجد',
-          investor.phone || '-',
-          investor.address || '-',
-          investor.createdAt ? dayjs(investor.createdAt).format('DD/MM/YYYY') : '-',
-          investor.isActive ? 'نشط' : 'غير نشط'
-        ]];
+        // Tab 1: Personal Details Table - Vertical layout (like summary table)
+        const personalHeaders = [['القيمة', 'المعلومة']];
+        const personalData = [
+          [investor.name || '-', 'الاسم الكامل'],
+          [investor.nationalId || '-', 'رقم الهوية الوطنية'],
+          [investor.phone || '-', 'رقم الجوال'],
+          [investor.email || 'لا يوجد', 'البريد الإلكتروني'],
+          [investor.address || '-', 'العنوان'],
+          [investor.createdAt ? dayjs(investor.createdAt).format('DD/MM/YYYY') : '-', 'تاريخ الانضمام'],
+          [investor.isActive ? 'نشط' : 'غير نشط', 'الحالة']
+        ];
 
         autoTable(doc, {
           startY: yPosition,
@@ -249,16 +249,11 @@ export const exportInvestorsToPDF = async (investorsData) => {
             direction: 'rtl'
           },
           columnStyles: {
-            0: { cellWidth: 28, halign: 'right' },
-            1: { cellWidth: 26, halign: 'right' },
-            2: { cellWidth: 33, halign: 'right' },
-            3: { cellWidth: 26, halign: 'right' },
-            4: { cellWidth: 36, halign: 'right' },
-            5: { cellWidth: 26, halign: 'right' },
-            6: { cellWidth: 23, halign: 'right' }
+            0: { cellWidth: 'auto', halign: 'right' },
+            1: { cellWidth: 'auto', halign: 'right' }
           },
-          margin: { top: yPosition, left: 2, right: 2 },
-          tableWidth: 100,
+          margin: { top: yPosition, left: 15, right: 15 },
+          tableWidth: 'auto',
           horizontalPageBreak: false
         });
 
@@ -272,13 +267,11 @@ export const exportInvestorsToPDF = async (investorsData) => {
         yPosition += 8;
 
         // Tab 2: Financial Information Table - Professional layout
-        const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر', 'حساب رأس المال', 'حساب المستحقات']];
+        const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر']];
         const financialData = [[
           investor.capitalAmount ? investor.capitalAmount.toLocaleString('en-US') : '-',
           investor.orgProfitPercent ? investor.orgProfitPercent + '%' : '-',
-          investor.partnerProfitPercent ? investor.partnerProfitPercent + '%' : '-',
-          investor.AccountEquity?.name || '-',
-          investor.AccountPayable?.name || '-'
+          investor.partnerProfitPercent ? investor.partnerProfitPercent + '%' : '-'
         ]];
 
         autoTable(doc, {
@@ -335,17 +328,19 @@ export const exportInvestorsToPDF = async (investorsData) => {
           // Check if we need a new page
           if (yPosition > pageHeight - 120) {
             doc.addPage();
-            yPosition = 55;
-            doc.setFontSize(16);
+            // ابدأ من أعلى الصفحة للملخص عند الانتقال
+            yPosition = 20;
+            // إعادة رسم عنوان المستثمر للتسلسل
+            doc.setFontSize(14);
             doc.setFont('Amiri', 'bold');
             doc.setTextColor(13, 64, 165);
             doc.text(`المستثمر: ${investor.name}`, pageWidth / 2, yPosition, { align: 'center' });
             yPosition += 8;
-            doc.setFontSize(11);
+            doc.setFontSize(10);
             doc.setFont('Amiri', 'bold');
             doc.setTextColor(100, 100, 100);
             doc.text(`رقم الهوية الوطنية: ${investor.nationalId}`, pageWidth / 2, yPosition, { align: 'center' });
-            yPosition += 12;
+            yPosition += 10;
           }
 
           // Add section title
@@ -380,6 +375,9 @@ export const exportInvestorsToPDF = async (investorsData) => {
             ['الزكاة المدفوعة', investor.yearlyZakatPaid ? investor.yearlyZakatPaid.toLocaleString('en-US') : (investor.summary?.zakat?.totalZakatPaid ? investor.summary.zakat.totalZakatPaid.toLocaleString('en-US') : '0')],
             ['رصيد الزكاة', investor.yearlyZakatBalance ? investor.yearlyZakatBalance.toLocaleString('en-US') : (investor.summary?.zakat?.zakatBalance ? investor.summary.zakat.zakatBalance.toLocaleString('en-US') : '0')],
           ];
+
+          // Track initial page for summary table
+          const initialPage = doc.internal.getCurrentPageInfo().pageNumber;
 
           autoTable(doc, {
             startY: yPosition,
@@ -422,7 +420,17 @@ export const exportInvestorsToPDF = async (investorsData) => {
             },
             margin: { top: yPosition, left: 15, right: 15 },
             tableWidth: 'auto',
-            horizontalPageBreak: false
+            horizontalPageBreak: false,
+            pageBreak: 'auto',
+            showHead: 'everyPage',
+            didDrawPage: (data) => {
+              // If table moved to a new page, adjust startY to start from top (20 instead of large margin)
+              if (data.pageNumber > initialPage) {
+                // Set startY to small value for continuation pages
+                data.table.startY = 20;
+                data.table.margin.top = 20;
+              }
+            }
           });
 
           yPosition = doc.lastAutoTable.finalY + 12;
@@ -591,8 +599,8 @@ export const exportInvestorsToExcel = async (investorsData) => {
         [''],
         ['الاسم الكامل', investor.name || '-'],
         ['رقم الهوية الوطنية', investor.nationalId || '-'],
-        ['البريد الإلكتروني', investor.email || 'لا يوجد'],
         ['رقم الجوال', investor.phone || '-'],
+        ['البريد الإلكتروني', investor.email || 'لا يوجد'],
         ['العنوان', investor.address || '-'],
         ['تاريخ الانضمام', investor.createdAt ? dayjs(investor.createdAt).format('DD/MM/YYYY') : '-'],
         ['الحالة', investor.isActive ? 'نشط' : 'غير نشط'],
@@ -602,8 +610,6 @@ export const exportInvestorsToExcel = async (investorsData) => {
         ['رأس المال', investor.capitalAmount || 0],
         ['نسبة أرباح المنشأة', investor.orgProfitPercent || 0],
         ['نسبة أرباح المستثمر', investor.partnerProfitPercent || 0],
-        ['حساب رأس المال', investor.AccountEquity?.name || '-'],
-        ['حساب المستحقات', investor.AccountPayable?.name || '-'],
       ];
 
       // Add summary data (for new format or detailed endpoint)

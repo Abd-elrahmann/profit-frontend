@@ -1304,6 +1304,7 @@ export default function Investors() {
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: editMode ? '#fff' : '#f9fafb',
                             borderRadius: '6px',
+                            width: '280px',
                             '&:hover fieldset': {
                               borderColor: '#0d40a5',
                             },
@@ -1322,6 +1323,7 @@ export default function Investors() {
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: editMode ? '#fff' : '#f9fafb',
                             borderRadius: '6px',
+                            width: '280px',
                             '&:hover fieldset': {
                               borderColor: '#0d40a5',
                             },
@@ -1353,6 +1355,7 @@ export default function Investors() {
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#f9fafb',
                             borderRadius: '6px',
+                            width: '280px',
                           },
                         }}
                       />
@@ -1367,6 +1370,7 @@ export default function Investors() {
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#f9fafb',
                             borderRadius: '6px',
+                            width: '280px',
                           },
                         }}
                       />

@@ -86,14 +86,14 @@ const getCurrentDates = () => {
     day: 'numeric', 
     month: 'numeric', 
     year: 'numeric' 
-  }) + ' م';
+  });
 
   // التاريخ الهجري  
   const hijriDate = now.toLocaleDateString('ar-SA-u-ca-islamic-umalqura', {
     day: 'numeric',
     month: 'numeric', 
     year: 'numeric'
-  }).replace(/م/g, 'هـ'); // استبدال م بـ هـ
+  });
 
   return { gregorianDate, hijriDate };
 };

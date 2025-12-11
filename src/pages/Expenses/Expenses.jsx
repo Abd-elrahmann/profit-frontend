@@ -15,8 +15,9 @@ import {
   CardContent,
   Grid,
   Divider,
+  Stack,
 } from "@mui/material";
-import { Add } from "@mui/icons-material";
+import { Add, PictureAsPdf, FileDownload } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getExpenses } from "./expensesApi";
 import { Helmet } from "react-helmet-async";
@@ -28,6 +29,11 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import AddExpense from "../../components/modals/AddExpense";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
+import {
+  exportExpensesToExcel,
+  exportExpensesToPDF,
+} from "../../utilities/expensesExporter";
+import { notifyError } from "../../utilities/toastify";
 
 const Expenses = () => {
   const [page, setPage] = useState(1);
@@ -39,6 +45,8 @@ const Expenses = () => {
 
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
+  const canExport =
+    permissions.includes("expenses_Export");
 
   const { data: expensesData, isLoading } = useQuery({
     queryKey: ["expenses", page],
@@ -60,6 +68,24 @@ const Expenses = () => {
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
+  };
+
+  const handleExportPDF = async () => {
+    const rows = expensesData?.journals || [];
+    if (!rows.length) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    await exportExpensesToPDF(rows);
+  };
+
+  const handleExportExcel = async () => {
+    const rows = expensesData?.journals || [];
+    if (!rows.length) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    await exportExpensesToExcel(rows);
   };
 
   // Render table for large screens
@@ -154,7 +180,7 @@ const Expenses = () => {
 
   // Render cards for mobile screens
   const renderCards = () => (
-    <Box sx={{ p: isMobile ? 1 : 2 }}>
+    <Box sx={{ p: isMobile ? 1 : 2}}>
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress size={30} />
@@ -166,7 +192,7 @@ const Expenses = () => {
       ) : (
         <Grid container spacing={2}>
           {expensesData?.journals?.map((journal, index) => (
-            <Grid item xs={12} key={journal.id}>
+            <Grid item xs={12} key={journal.id} sx={{width: "500px"}}>
               <Card
                 sx={{
                   border: "1px solid #e0e0e0",
@@ -279,28 +305,49 @@ const Expenses = () => {
         <Box
           sx={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: isMobile ? "center" : "space-between",
             alignItems: "center",
             mb: 3,
             flexDirection: isMobile ? "column" : "row",
             gap: 2,
+            width: "100%",
           }}
         >
-          <Typography variant="h5" fontWeight="bold" color="primary.main">
-            المصروفات
-          </Typography>
-          {permissions.includes("expenses_Add") && (
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAddExpense}
-            sx={{
-              bgcolor: "primary.main",
-              "&:hover": { bgcolor: "primary.dark" },
-            }}
-          >
-              إضافة مصروف
-            </Button>
+          <Stack direction="row" spacing={1}>
+            {permissions.includes("expenses_Add") && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAddExpense}
+                sx={{
+                  bgcolor: "primary.main",
+                  "&:hover": { bgcolor: "primary.dark" },
+                }}
+              >
+                إضافة مصروف
+              </Button>
+            )}
+          </Stack>
+
+          {canExport && (
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<PictureAsPdf sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportPDF}
+              >
+                تصدير PDF
+              </Button>
+              <Button
+                variant="outlined"
+                color="success"
+                startIcon={<FileDownload sx={{ marginLeft: "10px" }} />}
+                onClick={handleExportExcel}
+              >
+                تصدير Excel
+              </Button>
+            </Stack>
           )}
         </Box>
 

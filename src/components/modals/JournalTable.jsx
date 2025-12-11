@@ -19,13 +19,14 @@ import {
   Button,
   Alert,
 } from "@mui/material";
-import { Visibility, CheckCircle, Cancel } from "@mui/icons-material";
+import { Visibility, CheckCircle, Cancel, PictureAsPdf, TableChart } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getJournals, postMultipleJournals, unpostMultipleJournals } from "../../pages/Journals/journalsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import { exportJournalsTableToPDF, exportJournalsTableToExcel } from "../../utilities/journalsExporter";
 
 const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) => {
   const [page, setPage] = useState(1);
@@ -189,6 +190,36 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         return "ملغي";
       default:
         return status;
+    }
+  };
+
+  const canExport = permissions.includes("journals_Export");
+
+  const handleExportAllPDF = async () => {
+    const rows = journalsData?.journals || [];
+    if (!rows.length) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    try {
+      await exportJournalsTableToPDF(rows);
+      notifySuccess("تم تصدير القيود إلى PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+    }
+  };
+
+  const handleExportAllExcel = async () => {
+    const rows = journalsData?.journals || [];
+    if (!rows.length) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    try {
+      await exportJournalsTableToExcel(rows);
+      notifySuccess("تم تصدير القيود إلى Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
     }
   };
 
@@ -479,6 +510,37 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         height: "100%",
       }}
     >
+      {canExport && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            mb: 2,
+            gap: 1,
+          }}
+        >
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            startIcon={<PictureAsPdf sx={{ marginLeft: "6px" }} />}
+            onClick={handleExportAllPDF}
+          >
+            تصدير PDF
+          </Button>
+          <Button
+            variant="outlined"
+            color="success"
+            size="small"
+            startIcon={<TableChart sx={{ marginLeft: "6px" }} />}
+            onClick={handleExportAllExcel}
+          >
+            تصدير Excel
+          </Button>
+        </Box>
+      )}
+
       {/* Bulk Actions */}
       {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
         <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: "#f5f5f5" }}>

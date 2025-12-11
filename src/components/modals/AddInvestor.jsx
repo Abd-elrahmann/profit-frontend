@@ -11,8 +11,6 @@ import {
   Typography,
   CircularProgress,
   Divider,
-  Checkbox,
-  FormControlLabel,
 } from "@mui/material";
 import Api, { handleApiError } from "../../config/Api";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
@@ -31,7 +29,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [generateContract, setGenerateContract] = useState(true);
   const [savedInvestorData, setSavedInvestorData] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
   
@@ -57,7 +54,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     if (!formData.nationalId.trim()) newErrors.nationalId = 'رقم الهوية مطلوب';
     if (!formData.address.trim()) newErrors.address = 'العنوان مطلوب';
     if (!formData.phone.trim()) newErrors.phone = 'رقم الجوال مطلوب';
-    if (!formData.orgProfitPercent) newErrors.orgProfitPercent = 'نسبة أرباح المنشأة مطلوبة';
+    if (!formData.orgProfitPercent) newErrors.orgProfitPercent = 'نسبة أرباح الشركة مطلوبة';
     if (!formData.capitalAmount) newErrors.capitalAmount = 'رأس المال مطلوب';
     
     
@@ -75,10 +72,10 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
   };
 
   React.useEffect(() => {
-    if (open && generateContract) {
+    if (open) {
       fetchMudarabahTemplate();
     }
-  }, [open, generateContract]);
+  }, [open]);
 
   const fetchMudarabahTemplate = async () => {
     try {
@@ -108,18 +105,20 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       
       notifySuccess('تم إضافة المستثمر بنجاح');
       
-      if (generateContract && mudarabahTemplate) {
-        
-        setSavedInvestorData(newInvestorData);
+      setSavedInvestorData(newInvestorData);
 
+      if (mudarabahTemplate) {
         setTimeout(() => {
           if (contractGeneratorRef.current) {
             contractGeneratorRef.current.generateContract();
           } else {
             console.error('Contract generator ref not available');
+            onSuccess();
+            handleClose();
           }
         }, 500);
       } else {
+        notifyError('قالب عقد المضاربة غير متوفر حالياً');
         onSuccess();
         handleClose();
       }
@@ -233,6 +232,19 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
               />
             </Grid>
             
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="تاريخ الانضمام (اختياري)"
+                type="date"
+                value={formData.createdAt}
+                onChange={handleChange('createdAt')}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                size="medium"
+                sx={{width: '520px'}}
+              />
+            </Grid>
+            
             <Grid item xs={12}>
               <TextField
                 label="العنوان"
@@ -246,18 +258,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
                 rows={1}
                 size="medium"
                 sx={{width: '520px'}}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="تاريخ الانضمام (اختياري)"
-                type="date"
-                value={formData.createdAt}
-                onChange={handleChange('createdAt')}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                size="medium"
-                sx={{width: '250px'}}
               />
             </Grid>
           </Grid>
@@ -285,7 +285,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
             
             <Grid item xs={12}>
               <TextField
-                label="نسبة أرباح المنشأة (%)"
+                label="نسبة أرباح الشركة (%)"
                 type="number"
                 value={formData.orgProfitPercent}
                 onChange={handleChange('orgProfitPercent')}
@@ -300,21 +300,6 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
             </Grid>
           </Grid>
 
-          <Typography variant="subtitle1" fontWeight="bold" mt={4} mb={2}>
-            خيارات إضافية
-          </Typography>
-          
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={generateContract}
-                onChange={(e) => setGenerateContract(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="توليد عقد المضاربة تلقائياً بعد الحفظ"
-            sx={{ mb: 2 }}
-          />
         </Box>
       </DialogContent>
 

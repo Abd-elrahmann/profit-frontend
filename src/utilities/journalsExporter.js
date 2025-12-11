@@ -427,3 +427,208 @@ const getJournalSourceTypeText = (sourceType) => {
       return sourceType || "-";
   }
 };
+
+// ---------- Bulk Journals Export (list) ----------
+const normalizeJournalRow = (journal) => ({
+  reference: journal.reference || "-",
+  type: getJournalTypeArabic(journal.type),
+  status: getJournalStatusArabic(journal.status),
+  source: getJournalSourceTypeText(journal.sourceType),
+  postedBy: journal.postedBy?.name || "لم يتم الاعتماد",
+  createdAt: journal.createdAt ? dayjs(journal.createdAt).format('DD/MM/YYYY') : '-',
+});
+
+export const exportJournalsTableToPDF = async (journals) => {
+  return new Promise((resolve, reject) => {
+    try {
+      if (!Array.isArray(journals) || journals.length === 0) {
+        throw new Error('لا توجد بيانات للتصدير');
+      }
+
+      const doc = new jsPDF();
+      registerArabicFonts(doc);
+
+      doc.setProperties({
+        title: 'تقرير القيود المحاسبية',
+        subject: 'جميع القيود',
+        author: 'نظام إدارة السلف',
+        keywords: 'قيود, محاسبة',
+        creator: 'نظام إدارة السلف'
+      });
+
+      doc.setFont('Amiri', 'bold');
+
+      // Logo
+      const logoWidth = 10;
+      const logoHeight = 10;
+      const logoX = doc.internal.pageSize.width - logoWidth - 5;
+      const logoY = 5;
+      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+
+      // Title
+      doc.setFontSize(18);
+      doc.text('تقرير القيود المحاسبية', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+
+      doc.setFontSize(11);
+      const summaryText = `إجمالي القيود: ${journals.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      doc.text(summaryText, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+
+      // Table data
+      const headers = [['رقم القيد', 'النوع', 'الحالة', 'المصدر', 'المعتمد بواسطة', 'تاريخ الإنشاء']];
+      const body = journals.map((journal) => {
+        const normalized = normalizeJournalRow(journal);
+        return [
+          normalized.reference,
+          normalized.type,
+          normalized.status,
+          normalized.source,
+          normalized.postedBy,
+          normalized.createdAt,
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 45,
+        head: headers,
+        body,
+        theme: 'striped',
+        styles: {
+          font: 'Amiri',
+          fontStyle: 'bold',
+          fontSize: 9,
+          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+          lineColor: [220, 220, 220],
+          lineWidth: 0.2,
+          halign: 'right',
+          valign: 'middle',
+          overflow: 'linebreak',
+          direction: 'rtl'
+        },
+        headStyles: {
+          fillColor: [13, 64, 165],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 10,
+          halign: 'right',
+          valign: 'middle',
+          cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
+          overflow: 'linebreak',
+          minCellHeight: 10,
+          direction: 'rtl'
+        },
+        bodyStyles: {
+          halign: 'right',
+          valign: 'middle',
+          cellPadding: 4,
+          direction: 'rtl'
+        },
+        margin: { top: 45, left: 10, right: 10 },
+        tableWidth: 'auto',
+        horizontalPageBreak: false,
+        pageBreak: 'auto',
+        showHead: 'everyPage',
+        columnStyles: {
+          0: { cellWidth: 22 }, // رقم القيد (أضيق)
+          1: { cellWidth: 32 }, // النوع (أعرض)
+          2: { cellWidth: 'auto' },
+          3: { cellWidth: 'auto' },
+          4: { cellWidth: 'auto' },
+          5: { cellWidth: 'auto' },
+        },
+      });
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      const footerMargin = 10;
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(
+          footerMargin,
+          doc.internal.pageSize.height - 15,
+          doc.internal.pageSize.width - footerMargin,
+          doc.internal.pageSize.height - 15
+        );
+
+        doc.setFontSize(9);
+        doc.setFont('Amiri', 'bold');
+        doc.setTextColor(100, 100, 100);
+        doc.text(
+          `صفحة ${i} من ${pageCount}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 8,
+          { align: 'center' }
+        );
+
+        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
+        doc.text(
+          `تم الإنشاء في: ${creationDate}`,
+          doc.internal.pageSize.width - footerMargin,
+          doc.internal.pageSize.height - 8,
+          { align: 'right' }
+        );
+        doc.setTextColor(0, 0, 0);
+      }
+
+      const fileName = `تقرير_القيود_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      doc.save(fileName);
+      resolve();
+    } catch (error) {
+      console.error('PDF export error:', error.message);
+      reject(error);
+    }
+  });
+};
+
+export const exportJournalsTableToExcel = async (journals) => {
+  try {
+    if (!Array.isArray(journals) || journals.length === 0) {
+      throw new Error('لا توجد بيانات للتصدير');
+    }
+
+    const workbook = XLSX.utils.book_new();
+    const sheetData = [
+      ['رقم القيد', 'النوع', 'الحالة', 'المصدر', 'المعتمد بواسطة', 'تاريخ الإنشاء'],
+      ...journals.map((journal) => {
+        const normalized = normalizeJournalRow(journal);
+        return [
+          normalized.reference,
+          normalized.type,
+          normalized.status,
+          normalized.source,
+          normalized.postedBy,
+          normalized.createdAt,
+        ];
+      }),
+    ];
+
+    const sheet = XLSX.utils.aoa_to_sheet(sheetData);
+    sheet['!cols'] = [
+      { wch: 12 }, // رقم القيد أضيق
+      { wch: 18 }, // النوع أعرض
+      { wch: 10 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 15 },
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, sheet, 'القيود');
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+      bookSST: false
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    const fileName = `تقرير_القيود_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    saveAs(blob, fileName);
+  } catch (error) {
+    console.error('Excel export error:', error.message);
+    throw error;
+  }
+};

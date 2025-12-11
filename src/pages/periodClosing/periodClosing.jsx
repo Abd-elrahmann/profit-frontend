@@ -58,8 +58,8 @@ const PeriodClosing = () => {
 
   // Handle view journal details
   const handleViewJournal = (journalId) => {
-    // Navigate to journal entries page with details tab and selected journal
-    navigate('/journal-entries', { state: { journalId: journalId, activeTab: 1 } });
+    // Navigate to journal entries page with details tab and selected journal, mark origin as period
+    navigate('/journal-entries', { state: { journalId: journalId, activeTab: 1, fromPeriod: true } });
   };
 
   const queryClient = useQueryClient();
@@ -94,11 +94,6 @@ const PeriodClosing = () => {
   };
 
   const handleClosePeriod = async () => {
-    // Don't allow closing if there are draft entries
-    if (showDraftAlert) {
-      return;
-    }
-
     try {
       await closePeriod(selectedPeriod);
       notifySuccess("تم تقفيل الفترة بنجاح");

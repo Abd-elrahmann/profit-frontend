@@ -5,6 +5,16 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
+// Format numbers with commas and no decimals (truncate fractional part)
+const formatAmount = (value) => {
+  const numeric = Number(value || 0);
+  const truncated = Number.isFinite(numeric) ? Math.trunc(numeric) : 0;
+  return truncated.toLocaleString('en-US', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  });
+};
+
 // Register Arabic fonts (make sure these font files exist in your public/assets/fonts directory)
 const registerArabicFonts = (doc) => {
   try {
@@ -58,16 +68,16 @@ export const exportStatementToPDF = async (statementData, clientName) => {
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 55;
-      const summaryText = `الرصيد الافتتاحي: ${statementData.openingBalance.toLocaleString('en-US')}  |  الرصيد الختامي: ${statementData.closingBalance.toLocaleString('en-US')}  |  إجمالي المدين: ${statementData.client.debit.toLocaleString('en-US')}  |  إجمالي الدائن: ${statementData.client.credit.toLocaleString('en-US')}`;
+      const summaryText = `الرصيد الافتتاحي: ${formatAmount(statementData.openingBalance)}  |  الرصيد الختامي: ${formatAmount(statementData.closingBalance)}  |  إجمالي المدين: ${formatAmount(statementData.client.debit)}  |  إجمالي الدائن: ${formatAmount(statementData.client.credit)}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
       let yPosition = summaryY + 12;
       
       // Prepare table data (RTL order - reversed columns)
       const tableData = statementData.transactions.map(transaction => [
-        transaction.balance.toLocaleString('en-US'),
-        transaction.credit > 0 ? transaction.credit.toLocaleString('en-US') : '0',
-        transaction.debit > 0 ? transaction.debit.toLocaleString('en-US') : '0',
+        formatAmount(transaction.balance),
+        transaction.credit > 0 ? formatAmount(transaction.credit) : '0',
+        transaction.debit > 0 ? formatAmount(transaction.debit) : '0',
         transaction.description,
         getTransactionTypeArabic(transaction.type),
         dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
@@ -80,10 +90,10 @@ export const exportStatementToPDF = async (statementData, clientName) => {
       
       // Optimize column widths to fit on one page
       const columnWidths = {
-        0: 26, // الرصيد
-        1: 22, // دائن
-        2: 22, // مدين
-        3: 45, // الوصف
+        0: 38, // الرصيد (أعرض للأرقام الكبيرة)
+        1: 32, // دائن
+        2: 32, // مدين
+        3: 35, // الوصف (أضيق لإتاحة مساحة للأرقام)
         4: 25, // نوع المعاملة
         5: 26  // التاريخ
       };
@@ -147,7 +157,7 @@ export const exportStatementToPDF = async (statementData, clientName) => {
         didParseCell: function (data) {
           // Prevent cell content from being too wide
           if (data.cell.text && data.cell.text.length > 0) {
-            const maxLength = data.column.index === 3 ? 40 : 20; // Longer for description
+            const maxLength = data.column.index === 3 ? 32 : 20; // Tighter description width
             if (data.cell.text[0].length > maxLength) {
               data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
             }
@@ -221,16 +231,16 @@ export const exportStatementToExcel = async (statementData, clientName) => {
       [''],
       ['الرصيد الافتتاحي', statementData.openingBalance],
       ['الرصيد الختامي', statementData.closingBalance],
-      ['إجمالي المدين', statementData.client.debit],
-      ['إجمالي الدائن', statementData.client.credit],
+      ['إجمالي المدين', formatAmount(statementData.client.debit)],
+      ['إجمالي الدائن', formatAmount(statementData.client.credit)],
       ['']
     ];
     
     // Transactions data (RTL order - matching PDF)
     const transactionsData = statementData.transactions.map(transaction => ({
-      'الرصيد': transaction.balance,
-      'دائن': transaction.credit > 0 ? transaction.credit : '-',
-      'مدين': transaction.debit > 0 ? transaction.debit : '-',
+      'الرصيد': formatAmount(transaction.balance),
+      'دائن': transaction.credit > 0 ? formatAmount(transaction.credit) : '-',
+      'مدين': transaction.debit > 0 ? formatAmount(transaction.debit) : '-',
       'الوصف': transaction.description,
       'نوع المعاملة': getTransactionTypeArabic(transaction.type),
       'التاريخ': dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
@@ -266,7 +276,8 @@ const getTransactionTypeArabic = (type) => {
     'LOAN_DISBURSEMENT': 'صرف سلفة',
     'REPAYMENT': 'سداد',
     'ADJUSTMENT': 'تعديل',
-    'INTEREST': 'فائدة'
+    'INTEREST': 'فائدة',
+    'EARLY_PAYMENT': 'سداد مبكر'
   };
   return types[type] || type;
 };

@@ -50,6 +50,7 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import {
   StyledTableCell,
   StyledTableRow,
+  ScrollableTableContainer,
 } from "../../components/layouts/tableLayout";
 import {
   exportStatementToPDF,
@@ -198,7 +199,10 @@ export default function Clients() {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    if (!status) return "default";
+
+    const normalized = status.toString().trim();
+    switch (normalized.toUpperCase()) {
       case "PENDING":
         return "warning";
       case "ACTIVE":
@@ -208,7 +212,19 @@ export default function Clients() {
       case "DEFAULTED":
         return "error";
       default:
-        return "default";
+        // Arabic labels fallback
+        switch (normalized) {
+          case "نشط":
+            return "success";
+          case "منتهي":
+            return "warning";
+          case "متعثر":
+            return "error";
+          case "قيد المراجعة":
+            return "warning";
+          default:
+            return "default";
+        }
     }
   };
 
@@ -573,6 +589,7 @@ export default function Clients() {
       REPAYMENT: "سداد",
       ADJUSTMENT: "تعديل",
       INTEREST: "فائدة",
+      EARLY_PAYMENT: "سداد مبكر",
     };
     return types[type] || type;
   };
@@ -958,6 +975,7 @@ export default function Clients() {
                           "& .MuiOutlinedInput-root": {
                             backgroundColor: "#f9fafb",
                             borderRadius: "6px",
+                            width: "280px",
                           },
                         }}
                       />
@@ -1210,7 +1228,7 @@ export default function Clients() {
                   المعلومات المالية
                 </Typography>
                 <Grid container spacing={3} justifyContent="center" alignItems="center">
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={4} sx={{ width: "280px" }}>
                     <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>
                         الراتب
@@ -1224,7 +1242,7 @@ export default function Clients() {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={4} sx={{ width: "280px" }}>
                     <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>
                         الالتزامات
@@ -1234,7 +1252,7 @@ export default function Clients() {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={4} sx={{ width: "280px" }}>
                     <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>
                         الحالة
@@ -1432,6 +1450,7 @@ export default function Clients() {
                                       ? "#fff"
                                       : "#f9fafb",
                                     borderRadius: "6px",
+                                    width: "280px",
                                   },
                                 }}
                               />
@@ -1464,6 +1483,7 @@ export default function Clients() {
                                       ? "#fff"
                                       : "#f9fafb",
                                     borderRadius: "6px",
+                                    width: "280px",
                                   },
                                 }}
                               />
@@ -1534,6 +1554,7 @@ export default function Clients() {
                                       ? "#fff"
                                       : "#f9fafb",
                                     borderRadius: "6px",
+                                    width: "280px",
                                   },
                                 }}
                               />
@@ -1630,6 +1651,7 @@ export default function Clients() {
                                       ? "#fff"
                                       : "#f9fafb",
                                     borderRadius: "6px",
+                                    width: "280px",
                                   },
                                 }}
                               />
@@ -2743,7 +2765,7 @@ export default function Clients() {
                   clientLoans.data &&
                   clientLoans.data.length > 0 ? (
                     <Box>
-                      <TableContainer>
+                      <ScrollableTableContainer>
                         <Table>
                           <TableHead>
                             <TableRow>
@@ -2865,7 +2887,7 @@ export default function Clients() {
                             })}
                           </TableBody>
                         </Table>
-                      </TableContainer>
+                      </ScrollableTableContainer>
 
                       {/* Pagination for Loans */}
                       {clientLoans && clientLoans.totalPages > 1 && (
