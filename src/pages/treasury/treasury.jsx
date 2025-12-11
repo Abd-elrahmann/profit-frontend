@@ -184,6 +184,16 @@ export default function Treasury() {
   const totalRepaymentsAmount = bankData?.repayments?.totalAmount || 0;
   const paidRepaymentsUntilNow = bankData?.repayments?.paidUntilNow || 0;
   const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
+  const repaymentsProgress =
+    totalRepaymentsAmount > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (paidRepaymentsUntilNow / totalRepaymentsAmount) * 100
+          )
+        )
+      : 0;
 
   // Animated counters for the 5 boxes
   const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
@@ -740,6 +750,89 @@ export default function Treasury() {
                         </CardContent>
                       </Card>
                     </Box>
+
+                    {totalRepaymentsAmount > 0 && (
+                      <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
+                        <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                          <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                              <Box sx={{ 
+                                p: 1, 
+                                borderRadius: 2, 
+                                mr: 2 
+                              }}>
+                                <CheckCircle sx={{ color: "#2e7d32", fontSize: 24 }} />
+                              </Box>
+                              <Box>
+                                <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
+                                  {totalRepaymentsAmount.toLocaleString('en-US')}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  إجمالي التحصيلات
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Stack spacing={1}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  واصل حتى الآن
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="success.main">
+                                  {paidRepaymentsUntilNow.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  متبقي
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="warning.main">
+                                  {remainingRepayments.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                  <Typography variant="caption" color="text.secondary">
+                                    نسبة التحصيل
+                                  </Typography>
+                                  <Typography variant="caption" fontWeight="bold" color="success.main">
+                                    {repaymentsProgress.toFixed(1)}%
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ 
+                                  position: 'relative', 
+                                  height: 10, 
+                                  borderRadius: 999, 
+                                  bgcolor: '#e0e0e0' 
+                                }}>
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      height: '100%',
+                                      width: `${repaymentsProgress}%`,
+                                      borderRadius: 999,
+                                      bgcolor: 'success.main',
+                                      transition: 'width 0.4s ease'
+                                    }}
+                                  />
+                                </Box>
+                              </Box>
+                            </Stack>
+
+                            <Chip 
+                              label="تحصيلات" 
+                              size="small" 
+                              color="success"
+                              variant="outlined"
+                              sx={{ mt: 2 }}
+                            />
+                          </CardContent>
+                        </Card>
+                      </Box>
+                    )}
                   </Box>
 
                   {/* التصفية والملاحظات */}
