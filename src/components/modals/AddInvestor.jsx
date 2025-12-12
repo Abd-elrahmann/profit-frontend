@@ -327,8 +327,8 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
           onClick={handleSubmit}
           disabled={loading}
           sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "#0b3589" },
+            bgcolor: "primary.main",
+            "&:hover": { bgcolor: "primary.dark" },
             minWidth: '100px'
           }}
         >

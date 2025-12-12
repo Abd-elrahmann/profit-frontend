@@ -34,6 +34,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import dayjs from "dayjs";
+import 'dayjs/locale/ar';
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { getCompanyProfitReport, withdrawCompanyProfit } from './CompanyProfitApi';
@@ -50,6 +51,12 @@ export default function CompanyProfit() {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
+
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [عام] YYYY");
+  };
 
   const { data: profitData, isLoading: profitLoading, error: profitError, refetch: refetchProfit } = useQuery({
     queryKey: ["company-profit", profitPage],
@@ -74,7 +81,7 @@ export default function CompanyProfit() {
     if (value && profitData?.availableAmount) {
       const amount = parseFloat(value);
       if (amount > profitData.availableAmount) {
-        setWithdrawError(`المبلغ المدخل (${amount.toLocaleString('en-US')}) يتجاوز الرصيد المتاح (${profitData.availableAmount.toLocaleString('en-US')})`);
+        setWithdrawError(`المبلغ المدخل (${Math.round(amount).toLocaleString('en-US')}) يتجاوز الرصيد المتاح (${Math.round(profitData.availableAmount).toLocaleString('en-US')})`);
       } else if (amount <= 0) {
         setWithdrawError('يجب أن يكون المبلغ أكبر من صفر');
       } else {
@@ -180,10 +187,15 @@ export default function CompanyProfit() {
                 {permissions.includes('company_Add') && (
                 <Button
                   variant="contained"
-                  color="primary"
                   onClick={handleWithdrawModalOpen}
                   disabled={!profitData || profitData.availableAmount <= 0}
-                  sx={{ minWidth: isSmallScreen ? '100%' : 'auto', fontWeight: "bold" }}
+                  sx={{ minWidth: isSmallScreen ? '100%' : 'auto', fontWeight: "bold",
+                    '&:hover': {
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      borderColor: 'primary.main'
+                    },
+                   }}
                 >
                   سحب أرباح
                 </Button>
@@ -269,7 +281,7 @@ export default function CompanyProfit() {
                           </Box>
                           <Box>
                             <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="primary">
-                              {profitData?.availableAmount?.toLocaleString('en-US') || 0}
+                              {Math.round(profitData?.availableAmount || 0).toLocaleString('en-US')}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               الرصيد المتاح للسحب
@@ -343,9 +355,6 @@ export default function CompanyProfit() {
                                 التاريخ
                               </StyledTableCell>
                               <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                المرجع
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
                                 الوصف
                               </StyledTableCell>
                               <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
@@ -358,12 +367,7 @@ export default function CompanyProfit() {
                               <StyledTableRow key={withdrawal.id} hover>
                                 <StyledTableCell align="center">
                                   <Typography variant="body2">
-                                    {dayjs(withdrawal.date).format('DD/MM/YYYY')}
-                                  </Typography>
-                                </StyledTableCell>
-                                <StyledTableCell align="center">
-                                  <Typography variant="body2" fontWeight="500" color="primary">
-                                    {withdrawal.reference}
+                                    {formatArabicDate(withdrawal.date)}
                                   </Typography>
                                 </StyledTableCell>
                                 <StyledTableCell align="center">
@@ -373,7 +377,7 @@ export default function CompanyProfit() {
                                 </StyledTableCell>
                                 <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
                                   <Typography variant="body2" fontWeight="bold" color="error.main">
-                                    {withdrawal.amount.toLocaleString('en-US')}
+                                    {Math.round(withdrawal.amount).toLocaleString('en-US')}
                                   </Typography>
                                 </StyledTableCell>
                               </StyledTableRow>
@@ -417,8 +421,8 @@ export default function CompanyProfit() {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-              الرصيد المتاح: {profitData?.availableAmount?.toLocaleString('en-US') || 0}
+            <Typography variant="body1" color="text.secondary" mb={2} fontWeight="bold">
+              الرصيد المتاح: {Math.round(profitData?.availableAmount || 0).toLocaleString('en-US')}
             </Typography>
             <TextField
               fullWidth
@@ -441,6 +445,13 @@ export default function CompanyProfit() {
             variant="contained"
             color="primary"
             disabled={isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || !!withdrawError}
+            sx={{
+              '&:hover': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                borderColor: 'primary.main'
+              },
+            }}
           >
             {isWithdrawing ? <CircularProgress size={20} /> : 'سحب'}
           </Button>

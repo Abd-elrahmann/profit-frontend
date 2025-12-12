@@ -15,11 +15,11 @@ const registerArabicFonts = (doc) => {
   }
 };
 
-export const exportCompanyProfitToPDF = async (profitData) => {
+export const exportSavingsToPDF = async (savingData) => {
   return new Promise((resolve, reject) => {
     try {
       // Validate data
-      if (!profitData) {
+      if (!savingData || !savingData.data) {
         throw new Error('لا توجد بيانات للتصدير');
       }
 
@@ -31,10 +31,10 @@ export const exportCompanyProfitToPDF = async (profitData) => {
 
       // Set document properties
       doc.setProperties({
-        title: 'تقرير أرباح الشركة',
-        subject: 'تقرير أرباح الشركة وسجل السحوبات',
+        title: 'كشف المدخرات العام',
+        subject: 'كشف مدخرات الشركاء',
         author: 'نظام إدارة السلف',
-        keywords: 'أرباح, شركة, سحوبات, محاسبة',
+        keywords: 'مدخرات, شركاء, محاسبة',
         creator: 'نظام إدارة السلف'
       });
 
@@ -51,62 +51,71 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       // Title section - start after logo
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
-      doc.text('تقرير أرباح الشركة', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      doc.text('كشف المدخرات العام', doc.internal.pageSize.width / 2, 25, { align: 'center' });
 
       // Summary section
       doc.setFontSize(13);
       doc.setFont('Amiri', 'bold');
-      doc.text('ملخص أرباح الشركة', doc.internal.pageSize.width / 2, 40, { align: 'center' });
+      doc.text('ملخص المدخرات', doc.internal.pageSize.width / 2, 40, { align: 'center' });
 
-      // Profit summary data
-      const availableAmount = profitData.availableAmount || 0;
-      const totalWithdrawals = profitData.totalWithdrawals || 0;
-      const withdrawals = profitData.withdrawals || [];
+      // Calculate totals
+      const partners = savingData.data || [];
+      const totalPartners = partners.length;
+      const partnersWithSavings = partners.filter(partner => partner.periods && partner.periods.length > 0);
+      const totalPeriods = partners.reduce((sum, partner) => sum + (partner.periods?.length || 0), 0);
+      const totalSavingsAmount = partners.reduce((sum, partner) => {
+        const lastPeriod = partner.periods?.[0];
+        return sum + (lastPeriod?.total || 0);
+      }, 0);
 
-      // Summary cards data
+      // Summary data
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 50;
-      const summaryText = `الرصيد المتاح للسحب: ${availableAmount.toLocaleString('en-US')}  |  إجمالي عمليات السحب: ${totalWithdrawals}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
+      const summaryText1 = `إجمالي الشركاء: ${totalPartners}  |  شركاء لديهم مدخرات: ${partnersWithSavings.length}`;
+      doc.text(summaryText1, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
 
-      // Total withdrawn amount
-      const totalWithdrawnAmount = withdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
-      doc.setFontSize(11);
-      const totalWithdrawnText = `إجمالي المبالغ المسحوبة: ${totalWithdrawnAmount.toLocaleString('en-US')}`;
-      doc.text(totalWithdrawnText, doc.internal.pageSize.width / 2, summaryY + 8, { align: 'center' });
+      const summaryText2 = `إجمالي فترات الادخار: ${totalPeriods}  |  إجمالي مبلغ المدخرات: ${totalSavingsAmount.toLocaleString('en-US')}`;
+      doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 8, { align: 'center' });
 
       let yPosition = summaryY + 20;
 
-      // Check if there are withdrawals to display
-      if (withdrawals.length === 0) {
+      // Check if there are partners to display
+      if (partners.length === 0) {
         doc.setFontSize(14);
         doc.setFont('Amiri', 'bold');
-        doc.text('لا توجد عمليات سحب حتى الآن', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+        doc.text('لا توجد بيانات مدخرات للشركاء', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
       } else {
         // Prepare table data (RTL order)
         const tableData = [];
-        withdrawals.forEach(withdrawal => {
+        partners.forEach(partner => {
+          const lastPeriod = partner.periods?.[0];
+          const hasSavings = partner.periods && partner.periods.length > 0;
+
           tableData.push([
-            withdrawal.amount.toLocaleString('en-US'),
-            withdrawal.description || '-',
-            dayjs(withdrawal.date).format('DD/MM/YYYY')
+            hasSavings ? 'لديه مدخرات' : 'لا يوجد مدخرات',
+            lastPeriod ? lastPeriod.total.toLocaleString('en-US') : '0',
+            lastPeriod ? lastPeriod.period.name : '-',
+            partner.periods?.length || 0,
+            partner.partnerName
           ]);
         });
 
         // Table headers (RTL order)
         const headers = [
-          ['المبلغ المسحوب', 'الوصف', 'التاريخ']
+          ['حالة الادخار', 'مبلغ المدخرات', 'آخر فترة', 'عدد فترات الادخار', 'اسم الشريك']
         ];
 
         // Create table with RTL support - centered and larger, no extra borders
         const pageWidth = doc.internal.pageSize.width;
 
-        // Optimize column widths to fit on one page - expanded for better readability
+        // Optimize column widths to fit on one page
         const columnWidths = {
-          0: 40, // المبلغ المسحوب
-          1: 90, // الوصف
-          2: 40  // التاريخ
+          0: 35, // حالة الادخار
+          1: 35, // مبلغ المدخرات
+          2: 40, // آخر فترة
+          3: 30, // عدد فترات الادخار
+          4: 40  // اسم الشريك
         };
 
         // Calculate table width to center it properly
@@ -122,8 +131,8 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           styles: {
             font: 'Amiri',
             fontStyle: 'bold',
-            fontSize: 9,
-            cellPadding: 4,
+            fontSize: 8,
+            cellPadding: 3,
             lineColor: [200, 200, 200], // Lighter borders
             lineWidth: 0.1,
             halign: 'center',
@@ -133,17 +142,17 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             fillColor: [46, 139, 69],
             textColor: 255,
             fontStyle: 'bold',
-            fontSize: 10,
+            fontSize: 9,
             halign: 'center',
             valign: 'middle',
-            cellPadding: 5,
+            cellPadding: 4,
             lineColor: [13, 64, 165],
             lineWidth: 0.1
           },
           bodyStyles: {
             halign: 'center',
             valign: 'middle',
-            cellPadding: 3,
+            cellPadding: 2,
             lineColor: [220, 220, 220],
             lineWidth: 0.1
           },
@@ -151,9 +160,11 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             fillColor: [250, 250, 250]
           },
           columnStyles: {
-            0: { cellWidth: columnWidths[0], fontSize: 10 }, // المبلغ المسحوب
-            1: { cellWidth: columnWidths[1], fontSize: 9, halign: 'right' }, // الوصف
-            2: { cellWidth: columnWidths[2], fontSize: 9 }  // التاريخ
+            0: { cellWidth: columnWidths[0], fontSize: 8, halign: 'right' }, // حالة الادخار
+            1: { cellWidth: columnWidths[1], fontSize: 8 }, // مبلغ المدخرات
+            2: { cellWidth: columnWidths[2], fontSize: 8, halign: 'right' }, // آخر فترة
+            3: { cellWidth: columnWidths[3], fontSize: 8 }, // عدد فترات الادخار
+            4: { cellWidth: columnWidths[4], fontSize: 9, halign: 'right' } // اسم الشريك
           },
           margin: { top: yPosition, bottom: 20 },
           tableWidth: totalColumnWidth,
@@ -163,7 +174,9 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           didParseCell: function (data) {
             // Prevent cell content from being too wide
             if (data.cell.text && data.cell.text.length > 0) {
-              const maxLength = data.column.index === 1 ? 60 : 25; // Longer for description (index 1)
+              const maxLength = data.column.index === 0 ? 20 :
+                               data.column.index === 2 ? 25 :
+                               data.column.index === 4 ? 15 : 25;
               if (data.cell.text[0].length > maxLength) {
                 data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
               }
@@ -215,7 +228,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       }
 
       // Save PDF
-      const fileName = `تقرير_أرباح_الشركة_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      const fileName = `كشف_المدخرات_العام_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
     } catch (error) {
@@ -225,66 +238,72 @@ export const exportCompanyProfitToPDF = async (profitData) => {
   });
 };
 
-export const exportCompanyProfitToExcel = async (profitData) => {
+export const exportSavingsToExcel = async (savingData) => {
   try {
     // Validate data
-    if (!profitData) {
+    if (!savingData || !savingData.data) {
       throw new Error('لا توجد بيانات للتصدير');
     }
 
     // Create workbook
     const workbook = XLSX.utils.book_new();
 
-    // Summary data
-    const availableAmount = profitData.availableAmount || 0;
-    const totalWithdrawals = profitData.totalWithdrawals || 0;
-    const withdrawals = profitData.withdrawals || [];
-    const totalWithdrawnAmount = withdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
+    // Calculate totals
+    const partners = savingData.data || [];
+    const totalPartners = partners.length;
+    const partnersWithSavings = partners.filter(partner => partner.periods && partner.periods.length > 0);
+    const totalPeriods = partners.reduce((sum, partner) => sum + (partner.periods?.length || 0), 0);
+    const totalSavingsAmount = partners.reduce((sum, partner) => {
+      const lastPeriod = partner.periods?.[0];
+      return sum + (lastPeriod?.total || 0);
+    }, 0);
 
     const summaryData = [
-      ['تقرير أرباح الشركة'],
+      ['كشف المدخرات العام'],
       [''],
-      ['ملخص الأرباح'],
-      ['الرصيد المتاح للسحب', availableAmount],
-      ['إجمالي عمليات السحب', totalWithdrawals],
-      ['إجمالي المبالغ المسحوبة', totalWithdrawnAmount],
+      ['ملخص المدخرات'],
+      ['إجمالي الشركاء', totalPartners],
+      ['شركاء لديهم مدخرات', partnersWithSavings.length],
+      ['إجمالي فترات الادخار', totalPeriods],
+      ['إجمالي مبلغ المدخرات', totalSavingsAmount],
       [''],
-      ['تفاصيل السحوبات']
+      ['تفاصيل المدخرات']
     ];
 
-    // Withdrawals data
-    const withdrawalsData = [];
-    withdrawals.forEach(withdrawal => {
-      withdrawalsData.push({
-        'التاريخ': dayjs(withdrawal.date).format('DD/MM/YYYY'),
-        'الوصف': withdrawal.description || '-',
-        'المبلغ المسحوب': withdrawal.amount || 0
+    // Partners data
+    const partnersData = [];
+    partners.forEach(partner => {
+      const lastPeriod = partner.periods?.[0];
+      const hasSavings = partner.periods && partner.periods.length > 0;
+
+      partnersData.push({
+        'حالة الادخار': hasSavings ? 'لديه مدخرات' : 'لا يوجد مدخرات',
+        'مبلغ المدخرات': lastPeriod ? lastPeriod.total : 0,
+        'آخر فترة ادخار': lastPeriod ? lastPeriod.period.name : '-',
+        'عدد فترات الادخار': partner.periods?.length || 0,
+        'اسم الشريك': partner.partnerName
       });
     });
 
     // Create summary sheet
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
 
-    // Create withdrawals sheet (if there are withdrawals)
-    let withdrawalsSheet;
-    if (withdrawalsData.length > 0) {
-      withdrawalsSheet = XLSX.utils.json_to_sheet(withdrawalsData);
+    // Create partners sheet
+    const partnersSheet = XLSX.utils.json_to_sheet(partnersData);
 
-      // Auto-size columns for better Excel display
-      const wscols = [
-        { wch: 15 }, // التاريخ
-        { wch: 60 }, // الوصف
-        { wch: 25 }  // المبلغ المسحوب
-      ];
-      withdrawalsSheet['!cols'] = wscols;
-    }
+    // Auto-size columns for better Excel display
+    const wscols = [
+      { wch: 20 }, // حالة الادخار
+      { wch: 20 }, // مبلغ المدخرات
+      { wch: 30 }, // آخر فترة ادخار
+      { wch: 20 }, // عدد فترات الادخار
+      { wch: 25 }  // اسم الشريك
+    ];
+    partnersSheet['!cols'] = wscols;
 
     // Add sheets to workbook
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص الأرباح');
-
-    if (withdrawalsSheet) {
-      XLSX.utils.book_append_sheet(workbook, withdrawalsSheet, 'سجل السحوبات');
-    }
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص المدخرات');
+    XLSX.utils.book_append_sheet(workbook, partnersSheet, 'تفاصيل المدخرات');
 
     // Generate Excel file
     const excelBuffer = XLSX.write(workbook, {
@@ -297,7 +316,7 @@ export const exportCompanyProfitToExcel = async (profitData) => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
 
-    const fileName = `تقرير_أرباح_الشركة_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    const fileName = `كشف_المدخرات_العام_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
 
   } catch (error) {

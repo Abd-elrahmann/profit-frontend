@@ -176,7 +176,7 @@ const PartnerStats = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                 إجمالي الشركاء
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
                 {animatedPartnersCount}
               </Typography>
             </CardContent>

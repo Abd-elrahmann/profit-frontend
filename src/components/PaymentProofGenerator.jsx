@@ -228,8 +228,8 @@ const PaymentProofGenerator = React.forwardRef(({
         .replace(/{{رقم_الايصال}}/g, `PAY-${dataToUse.installmentData.id}-${Date.now()}`)
 
         // Amount data
-        .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'} ريال سعودي`)
-        .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال سعودي`)
+        .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'}`)
+        .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
 
         // Dates
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)

@@ -143,7 +143,6 @@ const ResetPassword = () => {
         }}
       >
         <CardContent sx={{ p: 4 }}>
-          {/* Back to Login */}
           <Box sx={{ mb: 2 }}>
             <Link 
               to="/login" 
@@ -151,7 +150,7 @@ const ResetPassword = () => {
                 textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                color: '#1976d2',
+                color: '#2E8B45',
                 fontWeight: 500,
                 fontSize: '0.95rem'
               }}
@@ -165,7 +164,7 @@ const ResetPassword = () => {
             <AccountBalance
               style={{
                 fontSize: 40,
-                color: "#1976d2",
+                color: "#2E8B45",
                 marginBottom: 10,
               }}
             />
@@ -174,7 +173,7 @@ const ResetPassword = () => {
               sx={{
                 fontSize: 24,
                 fontWeight: 600,
-                color: "#1976d2",
+                color: "#2E8B45",
               }}
             >
               إعادة تعيين كلمة المرور
@@ -208,7 +207,6 @@ const ResetPassword = () => {
             }) => (
               <Form onSubmit={handleSubmit}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  {/* كلمة المرور الجديدة */}
                   <TextField
                     fullWidth
                     label="كلمة المرور الجديدة"
@@ -238,7 +236,6 @@ const ResetPassword = () => {
                     }}
                   />
 
-                  {/* تأكيد كلمة المرور */}
                   <TextField
                     fullWidth
                     label="تأكيد كلمة المرور"
@@ -277,6 +274,12 @@ const ResetPassword = () => {
                       py: 1.5,
                       fontWeight: 500,
                       fontSize: "1rem",
+                      backgroundImage: "linear-gradient(135deg, #1e5a2e, #2E8B45)",
+                      boxShadow: "0 10px 25px rgba(46, 139, 69, 0.35)",
+                      color: "#fff",
+                      "&:hover": {
+                        backgroundImage: "linear-gradient(135deg, #266a39, #3da35a)",
+                      },
                     }}
                   >
                     {isLoading ? (

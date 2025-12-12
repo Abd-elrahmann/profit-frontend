@@ -516,8 +516,8 @@ export default function Employees() {
                 startIcon={<Add />}
                 onClick={handleAdd}
                 sx={{
-                  bgcolor: "#1E40AF",
-                  "&:hover": { bgcolor: "#1E3A8A" },
+                  bgcolor: "#2E8B45",
+                  "&:hover": { bgcolor: "#2E8B45" },
                   fontWeight: "bold",
                   minWidth: isSmallScreen ? '100%' : 'auto',
                   py: isSmallScreen ? 1.5 : 1,

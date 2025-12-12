@@ -7,8 +7,13 @@ return `
   .contract-wrapper {
     background: #f8f9fc;
     padding: 30px;
-    font-family: "Manrope","Noto Sans Arabic",sans-serif;
+    font-family: "Cairo", "Tajawal", "Noto Sans Arabic", sans-serif;
     direction: rtl;
+    text-align: right;
+  }
+  * {
+    word-spacing: normal;
+    letter-spacing: normal;
   }
 
   .contract-container {
@@ -23,7 +28,7 @@ return `
   .header {
     display: flex;
     justify-content: space-between;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid rgba(46, 139, 69, 0.2);
     padding-bottom: 10px;
     margin-bottom: 20px;
   }
@@ -39,24 +44,23 @@ return `
   .title {
     font-size: 22px;
     font-weight: bold;
-    color: #111;
+    color: #2E8B45;
   }
   .sub-text {
     color: #555;
-    font-size: 13px;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .grid-wrapper {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
-    flex-wrap: wrap;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
   }
 
   .details-box {
-    flex: 1;
-    min-width: 300px;
-    background: #f9fafb;
+    background: rgba(46, 139, 69, 0.05);
     padding: 15px;
     border-radius: 8px;
   }
@@ -64,22 +68,25 @@ return `
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 18px;
+    color: #2E8B45;
   }
   .row {
     display: grid;
     grid-template-columns: auto 1fr;
     border-top: 1px solid #ddd;
-    padding: 8px 0;
+    padding: 5px 0;
     font-size: 14px;
+    word-spacing: normal;
+    letter-spacing: normal;
   }
   .row span {
     font-weight: bold;
     color: #111;
+    word-spacing: normal;
+    letter-spacing: normal;
   }
 
   .content-box {
-    flex: 2;
-    min-width: 300px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -87,18 +94,26 @@ return `
 
   .amount-box {
     text-align: center;
-    border: 1px solid #eee;
-    padding: 20px;
+    border: 1px solid rgba(46, 139, 69, 0.2);
+    padding: 15px;
     border-radius: 8px;
+    background: rgba(46, 139, 69, 0.02);
   }
   .amount-box h3 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
+    color: #2E8B45;
+    background: #e5e7eb;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-top: 0;
+    margin-bottom: 10px;
   }
   .amount-box h1 {
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 800;
-    color: #1e40af;
+    color: #2E8B45;
+    margin: 6px 0;
   }
   .amount-box p {
     font-size: 15px;
@@ -109,26 +124,32 @@ return `
   .section-title {
     font-size: 18px;
     font-weight: bold;
-    margin: 25px 0 10px;
-    color: #222;
+    margin: 15px 0 10px;
+    color: #2E8B45;
+    background: rgba(46, 139, 69, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
   }
 
   .info-box {
-    background: #f9fafb;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
   }
 
   .text-box {
-    background: #f3f4f6;
-    padding: 15px;
+    background: rgba(46, 139, 69, 0.03);
+    padding: 12px 15px;
     border-radius: 8px;
+    border: 1px solid rgba(46, 139, 69, 0.1);
   }
   .text-box p {
     font-size: 14px;
     color: #444;
-    line-height: 2;
+    line-height: 1.6;
+    word-spacing: normal;
+    letter-spacing: normal;
+    text-align: justify;
   }
 
   .strong {
@@ -140,9 +161,9 @@ return `
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     text-align: center;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid rgba(46, 139, 69, 0.2);
     gap: 20px;
   }
   .sign-line {
@@ -150,6 +171,15 @@ return `
     height: 40px;
     margin: auto;
     border-bottom: 2px solid #666;
+  }
+
+  @media (max-width: 768px) {
+    .grid-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .signatures {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media print {
@@ -198,7 +228,7 @@ return `
     <div class="section-title">تفاصيل السداد</div>
     <div class="text-box">
       <p>
-        نشهد نحن شركة التمويل بأنه قد تم استلام مبلغ وقدره {{المبلغ_رقما}} ريال سعودي 
+        نشهد نحن شركة التمويل بأنه قد تم استلام مبلغ وقدره {{المبلغ_رقما}} 
         من العميل المذكور أعلاه كدفعة سداد للدفعة رقم {{رقم_الدفعة}} .
         وقد تم استلام المبلغ نقداً/تحويلاً بنكياً وتعهد العميل بصحة المعلومات المذكورة أعلاه.
       </p>

@@ -4,9 +4,9 @@ const theme = createTheme({
   direction: 'rtl',
   palette: {
     primary: {
-      main: '#1E40AF',       // blue
-      light: '#2563EB',    // blue light
-      dark: '#1E3A8A',     // blue dark
+      main: '#2E8B45',       // green
+      light: '#63947F',    // green light
+      dark: '#2E8B45',     // green dark
       contrastText: '#ffffff'
     },
     secondary: {

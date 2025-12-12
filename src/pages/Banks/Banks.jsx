@@ -158,50 +158,50 @@ const Banks = () => {
           <StyledTableRow>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               #
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               اسم الحساب
             </StyledTableCell>  
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               اسم المالك
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               رقم الحساب
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               رقم الايبان
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               السلف المسموح بها
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               الحالة
             </StyledTableCell>
             {(permissions.includes("banks_Update") || permissions.includes("banks_Delete") || permissions.includes("banks_Add")) && (
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
             >
               الإجراءات
             </StyledTableCell>
@@ -311,8 +311,9 @@ const Banks = () => {
           {banksData?.data?.map((bank) => (
             <Grid item xs={12} key={bank.id}>
               <Card 
-                sx={{ 
-                  border: '1px solid #e0e0e0',
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'grey.300',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   '&:hover': {
@@ -448,7 +449,7 @@ const Banks = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh", p: isMobile ? 2 : 4 }}>
+    <Box sx={{ bgcolor: "background.default", minHeight: "100vh", p: isMobile ? 2 : 4 }}>
       <Helmet>
         <title>الحسابات البنكية</title>
         <meta name="description" content="الحسابات البنكية" />
@@ -465,7 +466,7 @@ const Banks = () => {
           gap: 2,
         }}
       >
-        <Typography variant="h5" fontWeight="bold" color="#333">
+        <Typography variant="h5" fontWeight="bold" color="text.primary">
           الحسابات البنكية
         </Typography>
         
@@ -484,8 +485,8 @@ const Banks = () => {
               onClick={handleExportPDF}
               disabled={!banksData?.data || banksData.data.length === 0}
               sx={{
-                borderColor: "#d32f2f",
-                color: "#d32f2f",
+                borderColor: "error.main",
+                color: "error.main",
                 "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
                 borderRadius: 2,
                 px: 2,
@@ -502,8 +503,8 @@ const Banks = () => {
               onClick={handleExportExcel}
               disabled={!banksData?.data || banksData.data.length === 0}
               sx={{
-                borderColor: "#2e7d32",
-                color: "#2e7d32",
+                borderColor: "success.main",
+                color: "success.main",
                 "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
                 borderRadius: 2,
                 px: 2,
@@ -521,8 +522,8 @@ const Banks = () => {
               startIcon={<Add />}
               onClick={handleAddBank}
               sx={{
-                bgcolor: "#0d40a5",
-                "&:hover": { bgcolor: "#0b3589" },
+                bgcolor: "primary.main",
+                "&:hover": { bgcolor: "primary.dark" },
                 borderRadius: 2,
                 px: 3,
                 py: 1,
@@ -560,7 +561,7 @@ const Banks = () => {
           }}
           sx={{
             width: isSmallScreen ? '100%' : "300px",
-            backgroundColor: "#f9fafb",
+            backgroundColor: "grey.50",
             borderRadius: "6px",
             p: 1,
           }}

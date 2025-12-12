@@ -187,7 +187,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 variant="h6"
                 component="div"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: "primary.main",
                   display: { xs: "none", sm: "flex" },
                   alignItems: "center",
@@ -209,6 +209,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                   sx={{
                     color: "primary.main",
                     fontSize: "0.85rem",
+                    fontWeight: 600,
                   }}
                 >
                   مرحباً
@@ -216,7 +217,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 <Typography
                   variant="body1"
                   sx={{
-                    fontWeight: 600,
+                    fontWeight: 700,
                     color: "primary.main",
                   }}
                 >

@@ -441,9 +441,6 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
       <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              مسلسل السلفة
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               العميل
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -497,7 +494,6 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
           ) : (
             loansData?.data?.map((loan) => (
               <StyledTableRow key={loan.id} hover>
-                <StyledTableCell align="center">{loan.id}</StyledTableCell>
                 <StyledTableCell
                   align="center"
                   sx={{ whiteSpace: "nowrap" }}

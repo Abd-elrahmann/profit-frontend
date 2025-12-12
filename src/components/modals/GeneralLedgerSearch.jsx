@@ -299,13 +299,13 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
             <Stack 
               direction={isSmallScreen ? "column" : "row"} 
               gap={2}
-              sx={{ mt: 2 }}
+              sx={{ mt: 2,flexDirection: "row-reverse", justifyContent: "space-between" }}
             >
               <Button 
                 variant="outlined" 
                 fullWidth 
                 onClick={handleReset}
-                startIcon={<RestartAlt />}
+                startIcon={<RestartAlt sx={{marginLeft: "10px"}} />}
                 size={isSmallScreen ? "medium" : "large"}
                 sx={{
                   color: 'text.secondary',
@@ -324,7 +324,7 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                 fullWidth 
                 type="submit" 
                 disabled={!formik.values.account}
-                startIcon={<Search />}
+                startIcon={<Search sx={{marginLeft: "10px"}} />}
                 size={isSmallScreen ? "medium" : "large"}
                 sx={{
                   bgcolor: 'primary.main',
@@ -368,7 +368,7 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
 
         {/* Footer Help Text */}
         <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #f0f0f0' }}>
-          <Typography variant="caption" color="text.secondary" align="center" display="block">
+          <Typography variant="caption" color="black" align="center" display="block">
             اختر الحساب وتاريخ البداية والنهاية لعرض القيود المحاسبية
           </Typography>
         </Box>

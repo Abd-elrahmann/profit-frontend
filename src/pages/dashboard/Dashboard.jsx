@@ -210,6 +210,10 @@ const Dashboard = () => {
                 fontWeight: 600,
                 minHeight: { xs: 48, sm: 56, md: 64 },
                 px: { xs: 1.5, sm: 2, md: 3 },
+                color: 'text.primary',
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                },
               },
             }}
           >

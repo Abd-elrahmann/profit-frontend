@@ -29,7 +29,7 @@ const UpcomingRepayments = () => {
   });
 
   const formatCurrency = (amount) => {
-    return amount?.toLocaleString() || '0';
+    return Math.round(amount || 0).toLocaleString();
   };
 
   const formatDate = (date) => {
@@ -96,10 +96,7 @@ const UpcomingRepayments = () => {
                     >
                       <StyledTableCell align="center" sx={{ minWidth: { md: 250, lg: 300 }, width: { md: '25%', lg: '30%' } }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Person sx={{ mr: 1, color: theme.palette.text.secondary, fontSize: '1rem' }} />
-                          <Typography variant="body2">
                             {repayment.loan?.client?.name || 'غير محدد'}
-                          </Typography>
                         </Box>
                       </StyledTableCell>
                       <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>

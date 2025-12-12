@@ -162,10 +162,10 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
                 >
                   <StyledTableCell align="center">
                     <Typography fontWeight="medium">{client.name}</Typography>
-                    <Typography variant="body2" color="textSecondary">{client.phone}</Typography>
+                    <Typography variant="body2" color="primary.main" fontWeight="bold">{client.phone}</Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant="body2" color="primary.main" fontWeight="bold">
                       {client.address || '-'}
                     </Typography>
                   </StyledTableCell>
@@ -196,7 +196,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
                     />
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="primary">
+                    <Typography fontWeight="bold" color="black">
                       {formatCurrency(client.financials.totalDebit)}
                     </Typography>
                   </StyledTableCell>

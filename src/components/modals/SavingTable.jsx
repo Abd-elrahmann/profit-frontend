@@ -14,15 +14,13 @@ import {
   Card,
   CardContent,
   Stack,
-  IconButton,
 } from '@mui/material';
 import {
   StyledTableCell,
   StyledTableRow,
 } from '../../components/layouts/tableLayout';
-import { Visibility as VisibilityIcon } from '@mui/icons-material';
 
-const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
+const SavingTable = ({ isLoading, savingData }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -63,15 +61,12 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
               حالة الادخار
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              الإجراءات
-            </StyledTableCell>
           </StyledTableRow>
         </TableHead>
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={7} align="center">
+              <StyledTableCell colSpan={6} align="center">
                 <CircularProgress size={30} />
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   جاري تحميل البيانات...
@@ -80,7 +75,7 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
             </StyledTableRow>
           ) : !savingData?.data || savingData?.data?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={7} align="center">
+              <StyledTableCell colSpan={6} align="center">
                 <Typography variant="body1" color="primary.main">
                   لا توجد مدخرات للشركاء
                 </Typography>
@@ -136,19 +131,6 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
                         color={hasSavings ? "success" : "default"}
                         size="small"
                       />
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      <IconButton
-                        title="عرض التفاصيل"
-                        size="small"
-                        color="primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onViewDetails(partner.partnerId);
-                        }}
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
                     </StyledTableCell>
                   </StyledTableRow>
                 );
@@ -256,21 +238,6 @@ const SavingTable = ({ onViewDetails, isLoading, savingData }) => {
                           </Typography>
                         </Box>
                       )}
-
-                      {/* Action */}
-                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <IconButton
-                          title="عرض التفاصيل"
-                          size="small"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewDetails(partner.partnerId);
-                          }}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
                     </Stack>
                   </CardContent>
                 </Card>

@@ -7,8 +7,13 @@ return `
   .contract-wrapper {
     background: #f8f9fc;
     padding: 15px;
-    font-family: "Manrope","Noto Sans Arabic",sans-serif;
+    font-family: "Cairo", "Tajawal", "Noto Sans Arabic", sans-serif;
     direction: rtl;
+    text-align: right;
+  }
+  * {
+    word-spacing: normal;
+    letter-spacing: normal;
   }
 
   .contract-container {
@@ -23,7 +28,7 @@ return `
   .header {
     display: flex;
     justify-content: space-between;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid rgba(46, 139, 69, 0.2);
     padding-bottom: 8px;
     margin-bottom: 15px;
   }
@@ -39,47 +44,60 @@ return `
   .title {
     font-size: 20px;
     font-weight: bold;
-    color: #111;
+    color: #2E8B45;
   }
   .sub-text {
     color: #555;
-    font-size: 12px;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .grid-wrapper {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin-bottom: 15px;
   }
 
   .details-box {
-    flex: 1;
-    min-width: 280px;
-    background: #f9fafb;
-    padding: 12px;
+    background: rgba(46, 139, 69, 0.05);
+    padding: 15px;
     border-radius: 8px;
   }
   .details-box h2 {
     font-weight: bold;
     margin-bottom: 8px;
     font-size: 16px;
+    color: #2E8B45;
   }
   .row {
     display: grid;
     grid-template-columns: auto 1fr;
+    gap: 8px;
     border-top: 1px solid #ddd;
-    padding: 6px 0;
+    padding: 5px 0;
     font-size: 13px;
+    word-spacing: normal;
+    letter-spacing: normal;
+  }
+  .row:first-child {
+    border-top: none;
+  }
+  .row p {
+    margin: 0;
+    color: #666;
+    word-spacing: normal;
+    letter-spacing: normal;
   }
   .row span {
     font-weight: bold;
     color: #111;
+    text-align: right;
+    word-spacing: normal;
+    letter-spacing: normal;
   }
 
   .content-box {
-    flex: 1.5;
-    min-width: 280px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -87,72 +105,100 @@ return `
 
   .amount-box {
     text-align: center;
-    border: 1px solid #eee;
+    border: 1px solid rgba(46, 139, 69, 0.2);
     padding: 15px;
     border-radius: 8px;
+    background: rgba(46, 139, 69, 0.02);
   }
   .amount-box h3 {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
+    color: #2E8B45;
+    margin-top: 0;
+    margin-bottom: 10px;
+    background: #e5e7eb;
+    padding: 6px 10px;
+    border-radius: 6px;
   }
   .amount-box h1 {
     font-size: 28px;
     font-weight: 800;
-    color: #1e40af;
-    margin: 8px 0;
+    color: #2E8B45;
+    margin: 6px 0;
   }
   .amount-box p {
     font-size: 14px;
     font-weight: bold;
     text-align: center;
+    margin-bottom: 0;
   }
 
   .section-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: bold;
     margin: 12px 0 8px;
-    color: #222;
+    color: #2E8B45;
   }
 
   .info-box {
-    background: #f9fafb;
-    padding: 10px 12px;
+    padding: 8px;
     border-radius: 6px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
+  }
+  .info-box h3 {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2E8B45;
+    margin-top: 0;
+    background: rgba(46, 139, 69, 0.1);
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .info-box .row {
+    border-top: 1px solid rgba(46, 139, 69, 0.2);
+  }
+  .info-box .row:first-of-type {
+    border-top: none;
   }
   
   .parties-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 15px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .text-box {
-    background: #f3f4f6;
-    padding: 12px;
+    background: rgba(46, 139, 69, 0.03);
+    padding: 10px 15px;
     border-radius: 8px;
     margin-top: 12px;
+    border: 1px solid rgba(46, 139, 69, 0.1);
   }
   .text-box p {
     font-size: 13px;
     color: #444;
-    line-height: 1.8;
-    margin: 4px 0;
+    line-height: 1.4;
+    margin: 3px 0;
+    word-spacing: normal;
+    letter-spacing: normal;
+    text-align: justify;
   }
 
   .strong {
     font-weight: bold;
-    margin-top: 4px;
+    margin-top: 6px;
   }
 
   .signatures {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
     text-align: center;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #ddd;
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 2px solid rgba(46, 139, 69, 0.2);
   }
   .sign-line {
     width: 140px;
@@ -163,6 +209,15 @@ return `
   .signatures p {
     font-size: 13px;
     margin: 5px 0;
+  }
+
+  @media (max-width: 768px) {
+    .grid-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .signatures {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media print {
@@ -212,19 +267,19 @@ return `
     <div class="section-title">أطراف السند</div>
     <div class="parties-grid">
       <div class="info-box">
-        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">الدائن</h3>
+        <h3>تفاصيل الدائن</h3>
         <div class="row"><p>الاسم:</p> <span>{{اسم_الدائن}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الدائن}}</span></div>
       </div>
       
       <div class="info-box">
-        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">المدين</h3>
+        <h3>تفاصيل المدين</h3>
         <div class="row"><p>الاسم:</p> <span>{{اسم_المدين}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_المدين}}</span></div>
       </div>
       
       <div class="info-box">
-        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">الكفيل</h3>
+        <h3>تفاصيل الكفيل</h3>
         <div class="row"><p>الاسم:</p> <span>{{اسم_الكفيل}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الكفيل}}</span></div>
       </div>
@@ -232,7 +287,7 @@ return `
 
     <div class="text-box">
       <p>
-        أتعهد بأن أدفع لأمر {{اسم_الدائن}} دون قيد أو شرط مبلغاً قدره {{المبلغ_رقما}} ريال سعودي وفق البيانات المذكورة أعلاه.  
+        أتعهد بأن أدفع لأمر {{اسم_الدائن}} دون قيد أو شرط مبلغاً قدره {{المبلغ_رقما}} وفق البيانات المذكورة أعلاه.  
         ولحامل هذا السند حق الرجوع دون أي مصاريف أو احتجاج بعدم الوفاء.
       </p>
       <p class="strong">اسم المدين: {{اسم_المدين}}</p>

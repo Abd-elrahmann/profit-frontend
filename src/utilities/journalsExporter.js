@@ -85,7 +85,7 @@ export const exportJournalToPDF = async (journalData) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [13, 64, 165],
+          fillColor: [46, 139, 69],
           textColor: 255,
           fontStyle: 'bold',
           fontSize: 10,
@@ -184,7 +184,7 @@ export const exportJournalToPDF = async (journalData) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [13, 64, 165],
+          fillColor: [46, 139, 69],
           textColor: 255,
           fontStyle: 'bold',
           fontSize: 9,
@@ -505,7 +505,7 @@ export const exportJournalsTableToPDF = async (journals) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [13, 64, 165],
+          fillColor: [46, 139, 69],
           textColor: 255,
           fontStyle: 'bold',
           fontSize: 10,

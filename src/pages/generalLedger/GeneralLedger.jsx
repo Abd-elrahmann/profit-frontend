@@ -7,10 +7,7 @@ import {
   TableContainer,
   TableHead,
   TableBody,
-  TableRow,
-  TableCell,
   Chip,
-  IconButton,
   CircularProgress,
   Button,
   Grid,
@@ -25,9 +22,6 @@ import {
   PictureAsPdf,
   TableChart,
   Search,
-  Download,
-  Print,
-  Share,
   RestartAlt,
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
@@ -484,8 +478,9 @@ export default function GeneralLedger() {
               textAlign: 'center',
               p: 6
             }}>
-              <Search sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
+              <Search sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+              <Typography variant="body2" color="black">
+                لا توجد قيود في الفترة المحددة
               </Typography>
             </Paper>
           ) : isLoadingLedger ? (

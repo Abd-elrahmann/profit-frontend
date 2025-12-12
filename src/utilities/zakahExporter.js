@@ -252,7 +252,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [13, 64, 165],
+            fillColor: [46, 139, 69],
             textColor: 255,
             fontStyle: 'bold',
             fontSize: 10, 

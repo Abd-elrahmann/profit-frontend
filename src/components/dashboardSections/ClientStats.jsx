@@ -314,7 +314,7 @@ const ClientStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       إجمالي المديونية
                     </Typography>
-                    <Typography variant="h3" fontWeight="700" color="primary.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedDebit)}
                     </Typography>
                   </Box>
@@ -348,7 +348,7 @@ const ClientStats = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
                       المتبقي للتحصيل
                     </Typography>
-                    <Typography variant="h3" fontWeight="700" color="info.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
+                    <Typography variant="h3" fontWeight="700" color="error.main" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
                       {formatCurrency(animatedRemaining)}
                     </Typography>
                   </Box>

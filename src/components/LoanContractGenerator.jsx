@@ -313,14 +313,14 @@ const LoanContractGenerator = React.forwardRef(
 
             .replace(
               /{{المبلغ_رقما}}/g,
-              `${amount?.toLocaleString("en-US") || "0"} ريال سعودي`
+              `${amount?.toLocaleString("en-US") || "0"}`
             )
-            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال سعودي`)
+            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
             .replace(
               /{{قيمة_السند_رقما}}/g,
-              `${amount?.toLocaleString("ar-SA") || "0"} ريال سعودي`
+              `${amount?.toLocaleString("ar-SA") || "0"}`
             )
-            .replace(/{{قيمة_السند_كتابة}}/g, `${amountInWords} ريال سعودي`)
+            .replace(/{{قيمة_السند_كتابة}}/g, `${amountInWords}`)
 
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)

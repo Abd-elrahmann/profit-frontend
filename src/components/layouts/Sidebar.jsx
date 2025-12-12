@@ -75,14 +75,21 @@ const Sidebar = ({ isOpen, onClose }) => {
           opacity: isOpen ? 1 : 0,
           transition: `all 0.1s ease-out ${index * 0.02}s`,
           '&:hover': {
-            backgroundColor: '#C7D2FE',
+            backgroundColor: 'rgba(46, 139, 69, 0.1)',
             transform: isOpen ? 'translateX(-4px) scale(1.02)' : 'translateX(30px)',
-            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.2)'
+            boxShadow: '0 2px 8px rgba(46, 139, 69, 0.2)',
+            '& .MuiListItemText-primary': {
+              color: '#2E8B45',
+              fontWeight: 600
+            },
+            '& .MuiListItemIcon-root': {
+              color: '#2E8B45'
+            }
           },
           '&.active': {
-            backgroundColor: '#C7D2FE',
+            backgroundColor: 'rgba(46, 139, 69, 0.15)',
             borderRight: '4px solid',
-            borderRightColor: '#3B82F6',
+            borderRightColor: '#2E8B45',
             '& .MuiListItemIcon-root': {
               color: 'primary.main'
             },
@@ -98,7 +105,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           sx={{
             '& .MuiListItemText-primary': {
               fontSize: '0.95rem',
-              fontWeight: 500,
+              fontWeight: 600,
               color: 'text.primary',
               textAlign: 'right'
             }
@@ -148,10 +155,17 @@ const Sidebar = ({ isOpen, onClose }) => {
             opacity: isOpen ? 1 : 0,
             transition: `all 0.1s ease-out ${index * 0.02}s`,
             '&:hover': {
-              backgroundColor: '#C7D2FE',
+              backgroundColor: 'rgba(46, 139, 69, 0.1)',
               cursor: 'pointer',
               transform: isOpen ? 'translateX(-4px) scale(1.02)' : 'translateX(30px)',
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.2)'
+              boxShadow: '0 2px 8px rgba(46, 139, 69, 0.2)',
+              '& .MuiListItemText-primary': {
+                color: '#2E8B45',
+                fontWeight: 700
+              },
+              '& .MuiListItemIcon-root': {
+                color: '#2E8B45'
+              }
             }
           }}
         >
@@ -197,14 +211,21 @@ const Sidebar = ({ isOpen, onClose }) => {
                   opacity: isOpen ? 1 : 0,
                   transition: `all 0.1s ease-out ${childIndex * 0.02}s`,
                   '&:hover': {
-                    backgroundColor: '#C7D2FE',
+                    backgroundColor: 'rgba(46, 139, 69, 0.1)',
                     transform: isOpen ? 'translateX(-4px) scale(1.02)' : 'translateX(30px)',
-                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.2)'
+                    boxShadow: '0 2px 8px rgba(46, 139, 69, 0.2)',
+                    '& .MuiListItemText-primary': {
+                      color: '#2E8B45',
+                      fontWeight: 600
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: '#2E8B45'
+                    }
                   },
                   '&.active': {
-                    backgroundColor: '#C7D2FE',
+                    backgroundColor: 'rgba(46, 139, 69, 0.15)',
                     borderRight: '4px solid',
-                    borderRightColor: '#3B82F6',
+                    borderRightColor: '#2E8B45',
                     '& .MuiListItemIcon-root': {
                       color: 'primary.main'
                     },
@@ -220,7 +241,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   sx={{
                     '& .MuiListItemText-primary': {
                       fontSize: '0.95rem',
-                      fontWeight: 400,
+                      fontWeight: 600,
                       color: 'text.primary',
                       textAlign: 'right'
                     }

@@ -99,7 +99,7 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [13, 64, 165],
+          fillColor: [46, 139, 69],
           textColor: 255,
           fontStyle: 'bold',
           fontSize: 10,
@@ -180,7 +180,7 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [13, 64, 165],
+          fillColor: [46, 139, 69],
           textColor: 255,
           fontStyle: 'bold',
           fontSize: 9,

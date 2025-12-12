@@ -201,7 +201,7 @@ const AddClient = ({ open, onClose }) => {
           </Box>
         ) : (
           <Box>
-            <CloudUpload sx={{ fontSize: 40, color: '#9e9e9e', mb: 1 }} />
+            <CloudUpload sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
             <Typography variant="body2">{label}</Typography>
             <Typography variant="caption" color="text.secondary" display="block" mt={1}>
               اسحب وأفلت الملف هنا أو انقر للاختيار
@@ -831,8 +831,8 @@ const AddClient = ({ open, onClose }) => {
                           !values.obligations || !values.creationReason))
                       }
                       sx={{
-                        bgcolor: "#0d40a5",
-                        "&:hover": { bgcolor: "#0b3589" },
+                        bgcolor: "primary.main",
+                        "&:hover": { bgcolor: "primary.dark" },
                       }}
                     >
                       التالي
@@ -843,8 +843,8 @@ const AddClient = ({ open, onClose }) => {
                       variant="contained"
                       disabled={isSubmitting}
                       sx={{
-                        bgcolor: "#0d40a5",
-                        "&:hover": { bgcolor: "#0b3589" },
+                        bgcolor: "primary.main",
+                        "&:hover": { bgcolor: "primary.dark" },
                         minWidth: 120
                       }}
                     >

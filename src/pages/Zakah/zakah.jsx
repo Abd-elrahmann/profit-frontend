@@ -961,7 +961,7 @@ const Zakah = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 0 ? "#0d40a5" : "black",
                     }}
                   />
                   <Tab
@@ -969,7 +969,7 @@ const Zakah = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 1 ? "#0d40a5" : "black",
                     }}
                   />
                   <Tab
@@ -977,7 +977,7 @@ const Zakah = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: activeTab === 2 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 2 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 2 ? "#0d40a5" : "black",
                     }}
                   />
                 </Tabs>

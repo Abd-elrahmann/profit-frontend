@@ -833,7 +833,7 @@ const Loans = () => {
         if (amount > 0 && totalInterest > 0) {
           const percentage = (totalInterest / amount) * 100;
           updatedForm.interestRate = percentage.toFixed(2);
-          // Debounced warning when total interest exceeds capital
+
           if (interestWarningTimeoutRef.current) {
             clearTimeout(interestWarningTimeoutRef.current);
           }
@@ -940,7 +940,7 @@ const Loans = () => {
                         : "عدد الأشهر"}
                     </Typography>
                     <Typography
-                      color="#0d40a5"
+                      color="primary.main"
                       fontWeight="bold"
                       fontSize="20px"
                     >
@@ -1049,11 +1049,11 @@ const Loans = () => {
                     onClick={handleSaveLoan}
                     disabled={!isFormValid()}
                     sx={{
-                      bgcolor: "#0d40a5",
+                      bgcolor: "primary.main",
                       height: isTablet ? "44px" : "48px",
                       fontSize: isTablet ? "14px" : "16px",
                       fontWeight: "bold",
-                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.9)" },
+                      "&:hover": { bgcolor: "primary.dark" },
                     }}
                   >
                     {isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
@@ -1081,12 +1081,12 @@ const Loans = () => {
                   onClick={handleOpenPreview}
                   disabled={!savedLoanData}
                   sx={{
-                    borderColor: "#0d40a5",
-                    color: "#0d40a5",
+                    borderColor: "primary.main",
+                    color: "primary.main",
                     height: isTablet ? "44px" : "48px",
                     fontSize: isTablet ? "14px" : "16px",
                     fontWeight: "bold",
-                    "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                    "&:hover": { bgcolor: "rgba(25, 118, 210, 0.1)" },
                   }}
                 >
                   معاينة العقود
@@ -1156,8 +1156,9 @@ const Loans = () => {
                   sx={{
                     fontWeight: "bold",
                     borderBottom:
-                      activeTab === 0 ? "3px solid #0d40a5" : "none",
-                    color: activeTab === 0 ? "#0d40a5" : "text.secondary",
+                      activeTab === 0 ? "3px solid" : "none",
+                    borderBottomColor: activeTab === 0 ? "primary.main" : "transparent",
+                    color: activeTab === 0 ? "primary.main" : "black",
                   }}
                 />
                 {permissions.includes("loans_Add") && (
@@ -1174,8 +1175,9 @@ const Loans = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom:
-                        activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "text.secondary",
+                        activeTab === 1 ? "3px solid" : "none",
+                      borderBottomColor: activeTab === 1 ? "primary.main" : "transparent",
+                      color: activeTab === 1 ? "primary.main" : "black",
                     }}
                   />
                 )}
@@ -1260,7 +1262,7 @@ const Loans = () => {
                                       ? "#f5f5f5"
                                       : "#f9fafb",
                                   "&:hover fieldset": {
-                                    borderColor: "#0d40a5",
+                                    borderColor: "primary.main",
                                   },
                                 },
                               }}
@@ -1289,8 +1291,8 @@ const Loans = () => {
                           <Button
                             variant="outlined"
                             sx={{
-                              color: "#0d40a5",
-                              borderColor: "#0d40a5",
+                              color: "primary.main",
+                              borderColor: "primary.main",
                               fontWeight: "bold",
                               fontSize: isSmallScreen ? "12px" : "14px",
                               whiteSpace: "nowrap",
@@ -1308,8 +1310,8 @@ const Loans = () => {
                               variant="outlined"
                               onClick={() => setIsAddKafeelOpen(true)}
                               sx={{
-                                color: "#0d40a5",
-                                borderColor: "#0d40a5",
+                                color: "primary.main",
+                                borderColor: "primary.main",
                                 fontWeight: "bold",
                                 fontSize: isSmallScreen ? "12px" : "14px",
                                 whiteSpace: "nowrap",
@@ -1343,7 +1345,7 @@ const Loans = () => {
                                         ? "#f5f5f5"
                                         : "#f9fafb",
                                       "&:hover fieldset": {
-                                        borderColor: "#0d40a5",
+                                        borderColor: "primary.main",
                                       },
                                     },
                                   }}
@@ -1554,8 +1556,8 @@ const Loans = () => {
                                         parseFloat(
                                           loanForm.amount.replace(/,/g, "") || 0
                                         ) > bankBalance
-                                          ? "#d32f2f"
-                                          : "#0d40a5",
+                                          ? "error.main"
+                                          : "primary.main",
                                     }}
                                   >
                                     {formatAmount(
@@ -1853,7 +1855,7 @@ const Loans = () => {
                               : "الدفعة الشهرية"}
                           </Typography>
                           <Typography
-                            color="#0d40a5"
+                            color="primary.main"
                             fontWeight="bold"
                             fontSize="18px"
                           >
@@ -1874,7 +1876,7 @@ const Loans = () => {
                             {simulationSummary.durationLabel}
                           </Typography>
                           <Typography
-                            color="#0d40a5"
+                            color="primary.main"
                             fontWeight="bold"
                             fontSize="16px"
                           >
@@ -2003,11 +2005,11 @@ const Loans = () => {
                           disabled={!isFormValid()}
                           fullWidth
                           sx={{
-                            bgcolor: "#0d40a5",
+                            bgcolor: "primary.main",
                             height: "44px",
                             fontSize: "14px",
                             fontWeight: "bold",
-                            "&:hover": { bgcolor: "rgba(13, 64, 165, 0.9)" },
+                            "&:hover": { bgcolor: "primary.dark" },
                           }}
                         >
                           {isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
@@ -2037,12 +2039,12 @@ const Loans = () => {
                         disabled={!savedLoanData}
                         fullWidth
                         sx={{
-                          borderColor: "#0d40a5",
-                          color: "#0d40a5",
+                          borderColor: "primary.main",
+                          color: "primary.main",
                           height: "44px",
                           fontSize: "14px",
                           fontWeight: "bold",
-                          "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                          "&:hover": { bgcolor: "rgba(25, 118, 210, 0.1)" },
                         }}
                       >
                         معاينة العقود

@@ -183,7 +183,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                       backgroundColor: '#f9fafb',
                       borderRadius: '6px',
                       '&:hover fieldset': {
-                        borderColor: '#0d40a5',
+                        borderColor: '#2E8B45',
                       },
                     },
                   }}
@@ -205,7 +205,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                       backgroundColor: '#f9fafb',
                       borderRadius: '6px',
                       '&:hover fieldset': {
-                        borderColor: '#0d40a5',
+                        borderColor: '#2E8B45',
                       },
                     },
                   }}
@@ -227,7 +227,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                         backgroundColor: '#f9fafb',
                         borderRadius: '6px',
                         '&:hover fieldset': {
-                          borderColor: '#0d40a5',
+                          borderColor: '#2E8B45',
                         },
                       },
                     }}
@@ -259,7 +259,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                       backgroundColor: '#f9fafb',
                       borderRadius: '6px',
                       '&:hover fieldset': {
-                        borderColor: '#0d40a5',
+                        borderColor: '#2E8B45',
                       },
                     },
                   }}
@@ -309,7 +309,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                     backgroundColor: '#f9fafb',
                                     borderRadius: '6px',
                                     '&:hover fieldset': {
-                                      borderColor: '#0d40a5',
+                                      borderColor: '#2E8B45',
                                     },
                                   },
                                 }}
@@ -341,7 +341,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                     backgroundColor: '#f9fafb',
                                     borderRadius: '6px',
                                     '&:hover fieldset': {
-                                      borderColor: '#0d40a5',
+                                      borderColor: '#2E8B45',
                                     },
                                   },
                                 }}
@@ -373,7 +373,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                     backgroundColor: '#f9fafb',
                                     borderRadius: '6px',
                                     '&:hover fieldset': {
-                                      borderColor: '#0d40a5',
+                                      borderColor: '#2E8B45',
                                     },
                                   },
                                 }}
@@ -445,8 +445,8 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                 disabled={isSubmitting}
                 fullWidth={isMobile}
                 sx={{
-                  bgcolor: "#1E40AF",
-                  "&:hover": { bgcolor: "#1E3A8A" },
+                  bgcolor: "#2E8B45",
+                  "&:hover": { bgcolor: "#2E8B45" },
                   minWidth: isMobile ? 'auto' : 120
                 }}
               >

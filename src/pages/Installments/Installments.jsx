@@ -834,25 +834,31 @@ const Installments = () => {
                 borderRadius: 2,
                 border:
                   hasPendingDocuments(installment)
-                    ? "2px solid #1E40AF"
-                    : "1px solid #e0e0e0",
+                    ? "2px solid"
+                    : "1px solid",
+                borderColor: hasPendingDocuments(installment)
+                  ? "primary.main"
+                  : "grey.300",
                 borderLeft: hasPendingDocuments(installment)
-                  ? "4px solid #1E40AF"
+                  ? "4px solid"
                   : "none",
+                borderLeftColor: hasPendingDocuments(installment)
+                  ? "primary.main"
+                  : "transparent",
                 backgroundColor:
                   activeInstallmentId === installment.id
-                    ? "#e6f0ff"
+                    ? "primary.50"
                     : hasPendingDocuments(installment)
-                    ? "#f0f4ff"
+                    ? "primary.25"
                     : "inherit",
                 cursor: "pointer",
                 "&:hover": {
                   backgroundColor:
                     activeInstallmentId === installment.id
-                      ? "#d4e4ff"
+                      ? "primary.100"
                       : hasPendingDocuments(installment)
-                      ? "#e6f0ff"
-                      : "#f5f5f5",
+                      ? "primary.50"
+                      : "grey.100",
                 },
               }}
               onClick={() => handleRowClick(installment)}
@@ -992,8 +998,9 @@ const Installments = () => {
             variant="outlined"
             sx={{
               borderRadius: 2,
-              backgroundColor: "#f5f5f5",
-              border: "2px solid #ddd",
+              backgroundColor: "grey.100",
+              border: "2px solid",
+              borderColor: "divider",
             }}
           >
             <CardContent sx={{ p: 2 }}>
@@ -1097,24 +1104,30 @@ const Installments = () => {
               sx={{
                 cursor: "pointer",
                 border: hasPendingDocuments(installment)
-                  ? "2px solid #1E40AF"
+                  ? "2px solid"
                   : "none",
+                borderColor: hasPendingDocuments(installment)
+                  ? "primary.main"
+                  : "transparent",
                 borderLeft: hasPendingDocuments(installment)
-                  ? "4px solid #1E40AF"
+                  ? "4px solid"
                   : "none",
+                borderLeftColor: hasPendingDocuments(installment)
+                  ? "primary.main"
+                  : "transparent",
                 backgroundColor:
                   activeInstallmentId === installment.id
-                    ? "#e6f0ff"
+                    ? "primary.50"
                     : hasPendingDocuments(installment)
-                    ? "#f0f4ff"
+                    ? "primary.25"
                     : "inherit",
                 "&:hover": {
                   backgroundColor:
                     activeInstallmentId === installment.id
-                      ? "#d4e4ff"
+                      ? "primary.100"
                       : hasPendingDocuments(installment)
-                      ? "#e6f0ff"
-                      : "#f5f5f5",
+                      ? "primary.50"
+                      : "grey.100",
                 },
               }}
             >
@@ -1246,11 +1259,12 @@ const Installments = () => {
             return (
               <StyledTableRow
                 sx={{
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "grey.100",
                   "& td": {
                     fontWeight: "bold",
                     fontSize: "1rem",
-                    borderTop: "2px solid #ddd",
+                    borderTop: "2px solid",
+                    borderTopColor: "divider",
                   },
                 }}
               >
@@ -1308,7 +1322,7 @@ const Installments = () => {
     return (
       <Box
         sx={{
-          bgcolor: "#f6f6f8",
+          bgcolor: "background.default",
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
@@ -1337,8 +1351,8 @@ const Installments = () => {
             size="large"
             onClick={() => (window.location.href = "/loans")}
             sx={{
-              bgcolor: "#1E40AF",
-              "&:hover": { bgcolor: "#153482" },
+              bgcolor: "primary.main",
+              "&:hover": { bgcolor: "primary.dark" },
               borderRadius: 2,
               px: 4,
               py: 1.5,
@@ -1375,7 +1389,7 @@ const Installments = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: "background.default",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -1398,7 +1412,7 @@ const Installments = () => {
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 4,
-            bgcolor: "#fff",
+            bgcolor: "background.paper",
             overflowY: "auto",
           }}
         >
@@ -1430,8 +1444,8 @@ const Installments = () => {
                   variant="contained"
                   onClick={() => setEarlyPaymentModalOpen(true)}
                   sx={{
-                    bgcolor: "#16a34a",
-                    "&:hover": { bgcolor: "#15803d" },
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
                     fontWeight: "bold",
                     borderRadius: 2,
                     width: "120px",
@@ -1474,7 +1488,7 @@ const Installments = () => {
 
           {/* Bulk Actions */}
           {selectedInstallments.length > 0 && permissions.includes("repayments_Post") && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#f5f5f5" }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.100" }}>
               <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
                 <Typography variant="body2" color="text.secondary">
                   تم اختيار {selectedInstallments.length} دفعة
@@ -1539,8 +1553,8 @@ const Installments = () => {
               onClick={handleExportPDF}
               disabled={isExporting}
               sx={{
-                bgcolor: "#d32f2f",
-                "&:hover": { bgcolor: "#b71c1c" },
+                bgcolor: "error.main",
+                "&:hover": { bgcolor: "error.dark" },
               }}
             >
               تصدير PDF
@@ -1552,8 +1566,8 @@ const Installments = () => {
               onClick={handleExportExcel}
               disabled={isExporting}
               sx={{
-                bgcolor: "#2e7d32",
-                "&:hover": { bgcolor: "#1b5e20" },
+                bgcolor: "success.main",
+                "&:hover": { bgcolor: "success.dark" },
               }}
             >
               تصدير Excel
@@ -1562,7 +1576,7 @@ const Installments = () => {
 
           {/* خطوات المراجعة للشاشات الصغيرة */}
           {isSmallScreen && !isSettlementCompleted() && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#fafafa" }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.50" }}>
               <Typography variant="h6" fontWeight="bold" mb={2}>
                 خطوات المراجعة
               </Typography>
@@ -1741,7 +1755,7 @@ const Installments = () => {
 
           {/* رسالة التسوية المكتملة للشاشات الصغيرة */}
           {isSmallScreen && isSettlementCompleted() && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#f0f9ff" }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.50" }}>
               <Box sx={{ textAlign: "center", py: 2 }}>
                 <Typography variant="h6" fontWeight="bold" color="success.main" mb={2}>
                   🎉 تم تسوية السلفة بالكامل
@@ -1761,8 +1775,8 @@ const Installments = () => {
                   variant="contained"
                   onClick={handleSettlement}
                   sx={{
-                    bgcolor: "#16a34a",
-                    "&:hover": { bgcolor: "#15803d" },
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
                     fontWeight: "bold",
                     borderRadius: 2,
                     px: 4,
@@ -1795,8 +1809,9 @@ const Installments = () => {
           <Box
             sx={{
               width: "270px",
-              borderRight: "1px solid #ddd",
-              bgcolor: "#fafafa",
+              borderRight: "1px solid",
+              borderRightColor: "divider",
+              bgcolor: "grey.50",
               height: "100%",
               overflowY: "auto",
               flexShrink: 0,
@@ -1985,8 +2000,9 @@ const Installments = () => {
           <Box
             sx={{
               width: "270px",
-              borderRight: "1px solid #ddd",
-              bgcolor: "#f0f9ff",
+              borderRight: "1px solid",
+              borderRightColor: "divider",
+              bgcolor: "grey.50",
               height: "100%",
               overflowY: "auto",
               flexShrink: 0,
@@ -2295,8 +2311,8 @@ const Installments = () => {
                 .length === 0
             }
             sx={{
-              bgcolor: "#16a34a",
-              "&:hover": { bgcolor: "#15803d" },
+              bgcolor: "success.main",
+              "&:hover": { bgcolor: "success.dark" },
               "&:disabled": {
                 bgcolor: "action.disabled",
                 color: "text.disabled",

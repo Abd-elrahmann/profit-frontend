@@ -124,6 +124,10 @@ const PeriodClosing = () => {
     navigate("/journal-entries");
   };
 
+  const handleNavigateToProfitDistribution = () => {
+    navigate(`/profit-distribution?periodId=${selectedPeriod}&from=period-closing`);
+  };
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
@@ -207,17 +211,17 @@ const PeriodClosing = () => {
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي المدين:</Typography>
             <Typography fontWeight="bold" color="success.main">
-              {periodData?.journals
-                ?.reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
-                .toLocaleString() || 0}
+              {Math.round(periodData?.journals
+                ?.reduce((sum, journal) => sum + (journal.totalDebit || 0), 0) || 0)
+                .toLocaleString()}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي الدائن:</Typography>
             <Typography fontWeight="bold" color="error.main">
-              {periodData?.journals
-                ?.reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
-                .toLocaleString() || 0}
+              {Math.round(periodData?.journals
+                ?.reduce((sum, journal) => sum + (journal.totalCredit || 0), 0) || 0)
+                .toLocaleString()}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -233,12 +237,12 @@ const PeriodClosing = () => {
                   : "error.main"
               }
             >
-              {periodData?.journals
+              {Math.round(periodData?.journals
                 ?.reduce(
                   (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
                   0
-                )
-                .toLocaleString() || 0}
+                ) || 0)
+                .toLocaleString()}
             </Typography>
           </Box>
 
@@ -247,19 +251,19 @@ const PeriodClosing = () => {
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركاء:</Typography>
             <Typography fontWeight="bold" color="success.main">
-              {periodData?.totalPartnerProfit?.toLocaleString() || 0}
+              {Math.round(periodData?.totalPartnerProfit || 0).toLocaleString()}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color="primary.main">
-              {periodData?.companyProfit?.toLocaleString() || 0}
+              {Math.round(periodData?.companyProfit || 0).toLocaleString()}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>الإجمالي:</Typography>
             <Typography fontWeight="bold">
-              {((periodData?.totalPartnerProfit || 0) + (periodData?.companyProfit || 0)).toLocaleString()}
+              {Math.round((periodData?.totalPartnerProfit || 0) + (periodData?.companyProfit || 0)).toLocaleString()}
             </Typography>
           </Box>
         </Stack>
@@ -383,9 +387,9 @@ const PeriodClosing = () => {
                 إجمالي المدين
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="success.main">
-                {periodData?.journals
-                  ?.reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
-                  .toLocaleString() || 0}
+                {Math.round(periodData?.journals
+                  ?.reduce((sum, journal) => sum + (journal.totalDebit || 0), 0) || 0)
+                  .toLocaleString()}
               </Typography>
             </CardContent>
           </Card>
@@ -397,9 +401,9 @@ const PeriodClosing = () => {
                 إجمالي الدائن
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="error.main">
-                {periodData?.journals
-                  ?.reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
-                  .toLocaleString() || 0}
+                {Math.round(periodData?.journals
+                  ?.reduce((sum, journal) => sum + (journal.totalCredit || 0), 0) || 0)
+                  .toLocaleString()}
               </Typography>
             </CardContent>
           </Card>
@@ -432,13 +436,13 @@ const PeriodClosing = () => {
                 ) >= 0
                   ? "success.main"
                   : "error.main"
-              }>
-                {periodData?.journals
+              }              >
+                {Math.round(periodData?.journals
                   ?.reduce(
                     (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
                     0
-                  )
-                  .toLocaleString() || 0}
+                  ) || 0)
+                  .toLocaleString()}
               </Typography>
             </CardContent>
           </Card>
@@ -450,7 +454,7 @@ const PeriodClosing = () => {
                 أرباح الشركاء
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="success.main">
-                {periodData?.totalPartnerProfit?.toLocaleString() || 0}
+                {Math.round(periodData?.totalPartnerProfit || 0).toLocaleString()}
               </Typography>
             </CardContent>
           </Card>
@@ -503,6 +507,36 @@ const PeriodClosing = () => {
         </Stack>
       </Paper>
 
+      {/* Profit Distribution Link */}
+      {periodData?.isClosed && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Alert
+            severity={periodData?.totalPartnerProfit || periodData?.companyProfit ? "success" : "info"}
+            sx={{ flex: 1 }}
+          >
+            {periodData?.totalPartnerProfit || periodData?.companyProfit
+              ? "تم إغلاق الفترة وتوزيعها"
+              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها" 
+            }
+          </Alert>
+          <Button
+            variant="outlined"
+            color={periodData?.totalPartnerProfit || periodData?.companyProfit ? "success" : "warning"}
+            onClick={handleNavigateToProfitDistribution}
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              borderRadius: 1,
+              minHeight: 'auto',
+              py: 0.75,
+              px: 2,
+            }}
+          >
+            الذهاب للتوزيع
+          </Button>
+        </Box>
+      )}
+
       {/* Partner Profits */}
       {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
         <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
@@ -523,7 +557,7 @@ const PeriodClosing = () => {
                         الربح:
                       </Typography>
                       <Typography variant="body2" fontWeight="bold" color="success.main">
-                        {partner.totalProfit.toLocaleString()}
+                        {Math.round(partner.totalProfit).toLocaleString()}
                       </Typography>
                     </Box>
                   </Stack>
@@ -571,10 +605,10 @@ const PeriodClosing = () => {
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2">
-                      مدين: {journal.totalDebit?.toLocaleString() || 0}
+                      مدين: {Math.round(journal.totalDebit || 0).toLocaleString()}
                     </Typography>
                     <Typography variant="body2">
-                      دائن: {journal.totalCredit?.toLocaleString() || 0}
+                      دائن: {Math.round(journal.totalCredit || 0).toLocaleString()}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
@@ -592,7 +626,7 @@ const PeriodClosing = () => {
                           : "text.primary"
                       }
                     >
-                      {((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
+                      {Math.round((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
                     </Typography>
                   </Box>
                 </Stack>
@@ -608,13 +642,13 @@ const PeriodClosing = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body1" fontWeight="bold">
-                    مدين: {periodData.journals
-                      .reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
+                    مدين: {Math.round(periodData.journals
+                      .reduce((sum, journal) => sum + (journal.totalDebit || 0), 0))
                       .toLocaleString()}
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    دائن: {periodData.journals
-                      .reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
+                    دائن: {Math.round(periodData.journals
+                      .reduce((sum, journal) => sum + (journal.totalCredit || 0), 0))
                       .toLocaleString()}
                   </Typography>
                 </Box>
@@ -639,11 +673,11 @@ const PeriodClosing = () => {
                         : "text.primary"
                     }
                   >
-                    {periodData.journals
+                    {Math.round(periodData.journals
                       .reduce(
                         (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
                         0
-                      )
+                      ))
                       .toLocaleString()}
                   </Typography>
                 </Box>
@@ -719,6 +753,36 @@ const PeriodClosing = () => {
         </Grid>
       </Grid>
 
+      {/* Profit Distribution Link */}
+      {periodData?.isClosed && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 3 }}>
+          <Alert
+            severity={periodData?.totalPartnerProfit || periodData?.companyProfit ? "success" : "info"}
+            sx={{ flex: 1 }}
+          >
+            {periodData?.totalPartnerProfit || periodData?.companyProfit
+              ? "تم إغلاق الفترة وتوزيعها"
+              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها" 
+            }
+          </Alert>
+          <Button
+            variant="outlined"
+            color={periodData?.totalPartnerProfit || periodData?.companyProfit ? "success" : "warning"}
+            onClick={handleNavigateToProfitDistribution}
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              borderRadius: 1,
+              minHeight: 'auto',
+              py: 0.75,
+              px: 2,
+            }}
+          >
+            الذهاب للتوزيع
+          </Button>
+        </Box>
+      )}
+
       <Divider sx={{ my: 3 }} />
 
       {/* Partner Profits */}
@@ -742,7 +806,7 @@ const PeriodClosing = () => {
                       {partner.partnerName}
                     </StyledTableCell>
                     <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                      {partner.totalProfit.toLocaleString()}
+                      {Math.round(partner.totalProfit).toLocaleString()}
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
@@ -751,7 +815,7 @@ const PeriodClosing = () => {
                     إجمالي أرباح الشركاء
                   </StyledTableCell>
                   <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                    {periodData.totalPartnerProfit.toLocaleString()}
+                    {Math.round(periodData.totalPartnerProfit).toLocaleString()}
                   </StyledTableCell>
                 </StyledTableRow>
               </TableBody>
@@ -802,10 +866,10 @@ const PeriodClosing = () => {
                     {formatDate(journal.date)}
                   </StyledTableCell>
                   <StyledTableCell align="center" style={{ color: '#d32f2f', fontWeight: 'bold' }}>
-                    {journal.totalDebit?.toLocaleString() || 0}
+                    {Math.round(journal.totalDebit || 0).toLocaleString()}
                   </StyledTableCell>
                   <StyledTableCell align="center" style={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                    {journal.totalCredit?.toLocaleString() || 0}
+                    {Math.round(journal.totalCredit || 0).toLocaleString()}
                   </StyledTableCell>
                   <StyledTableCell
                     align="center"
@@ -819,7 +883,7 @@ const PeriodClosing = () => {
                           : 'inherit'
                     }}
                   >
-                    {((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
+                    {Math.round((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <IconButton
@@ -833,17 +897,17 @@ const PeriodClosing = () => {
                 </StyledTableRow>
               ))}
               <StyledTableRow style={{ backgroundColor: "#f5f5f5" }}>
-                <StyledTableCell align="center" colSpan={5} style={{ fontWeight: 'bold' }}>
+                <StyledTableCell align="center" colSpan={4} style={{ fontWeight: 'bold' }}>
                   الإجمالي
                 </StyledTableCell>
                 <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
-                  {periodData.journals
-                    .reduce((sum, journal) => sum + (journal.totalDebit || 0), 0)
+                  {Math.round(periodData.journals
+                    .reduce((sum, journal) => sum + (journal.totalDebit || 0), 0))
                     .toLocaleString()}
                 </StyledTableCell>
                 <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
-                  {periodData.journals
-                    .reduce((sum, journal) => sum + (journal.totalCredit || 0), 0)
+                  {Math.round(periodData.journals
+                    .reduce((sum, journal) => sum + (journal.totalCredit || 0), 0))
                     .toLocaleString()}
                 </StyledTableCell>
                 <StyledTableCell
@@ -864,11 +928,11 @@ const PeriodClosing = () => {
                         : 'inherit'
                   }}
                 >
-                  {periodData.journals
+                  {Math.round(periodData.journals
                     .reduce(
                       (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
                       0
-                    )
+                    ))
                     .toLocaleString()}
                 </StyledTableCell>
               </StyledTableRow>
@@ -935,7 +999,7 @@ const PeriodClosing = () => {
                       fontWeight: "bold",
                       borderBottom:
                         activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 0 ? "#0d40a5" : "black",
                     }}
                   />
                   <Tab
@@ -944,7 +1008,7 @@ const PeriodClosing = () => {
                       fontWeight: "bold",
                       borderBottom:
                         activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 1 ? "#0d40a5" : "black",
                     }}
                   />
                 </Tabs>

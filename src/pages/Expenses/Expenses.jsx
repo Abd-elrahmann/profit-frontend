@@ -186,7 +186,7 @@ const Expenses = () => {
           <CircularProgress size={30} />
         </Box>
       ) : expensesData?.journals?.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>
+        <Typography variant="body2" color="black" sx={{ py: 3, textAlign: "center" }}>
           لا توجد مصروفات
         </Typography>
       ) : (

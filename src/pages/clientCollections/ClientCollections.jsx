@@ -128,7 +128,7 @@ const ClientCollections = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: clientsTab === 0 ? "3px solid #d32f2f" : "none",
-                      color: clientsTab === 0 ? "#d32f2f" : "text.secondary",
+                      color: clientsTab === 0 ? "#d32f2f" : "black",
                     }}
                   />
                   <Tab
@@ -136,7 +136,7 @@ const ClientCollections = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: clientsTab === 1 ? "3px solid #2e7d32" : "none",
-                      color: clientsTab === 1 ? "#2e7d32" : "text.secondary",
+                      color: clientsTab === 1 ? "#2e7d32" : "black",
                     }}
                   />
                 </Tabs>

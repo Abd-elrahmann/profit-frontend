@@ -155,6 +155,8 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         return "إقفال فترة";
       case "PARTNER_TRANSACTION_WITHDRAWAL":
         return "سحب مالي لشريك";
+      case "COMPANY_PROFIT_WITHDRAWAL":
+        return "سحب ربح شركة";
       case "PARTNER_TRANSACTION_DEPOSIT":
         return "إيداع مالي لشريك";
       case "EXPENSES":
@@ -205,6 +207,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       await exportJournalsTableToPDF(rows);
       notifySuccess("تم تصدير القيود إلى PDF بنجاح");
     } catch (error) {
+      console.log(error);
       notifyError("حدث خطأ أثناء تصدير PDF");
     }
   };
@@ -219,6 +222,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       await exportJournalsTableToExcel(rows);
       notifySuccess("تم تصدير القيود إلى Excel بنجاح");
     } catch (error) {
+      console.log(error);
       notifyError("حدث خطأ أثناء تصدير Excel");
     }
   };
@@ -356,7 +360,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         </Box>
       ) : journalsData?.journals?.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Typography variant="h6" color="textSecondary">
+          <Typography variant="h6" color="black">
             لا توجد قيود
           </Typography>
         </Box>
@@ -380,7 +384,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                   }
                 }}
               />
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="black">
                 اختيار الكل
               </Typography>
             </Box>

@@ -643,8 +643,8 @@ export default function Investors() {
             startIcon={<Add sx={{marginLeft: '10px'}} />}
             onClick={handleAddInvestor}
             sx={{
-              bgcolor: "#0d40a5",
-              "&:hover": { bgcolor: "#0b3589" },
+              bgcolor: "primary.main",
+              "&:hover": { bgcolor: "primary.dark" },
               fontWeight: "bold",
               borderRadius: 2,
               px: 2.5,
@@ -762,10 +762,11 @@ export default function Investors() {
                         mt: 2,
                         cursor: "pointer",
                         height: '100px',
-                        border: isSelected ? "2px solid #1E40AF" : "1px solid #E5E7EB",
-                        bgcolor: isSelected ? "#EEF2FF" : "background.paper",
+                        border: isSelected ? "2px solid" : "1px solid #E5E7EB",
+                        borderColor: isSelected ? "primary.main" : "#E5E7EB",
+                        bgcolor: isSelected ? "primary.50" : "background.paper",
                         transition: "0.2s",
-                        "&:hover": { bgcolor: "#F3F4F6" },
+                        "&:hover": { bgcolor: "action.hover" },
                       }}
                     >
                       <CardContent sx={{ p: 2 }}>
@@ -914,7 +915,15 @@ export default function Investors() {
                 onChange={handleTabChange}
                 textColor="primary"
                 indicatorColor="primary"
-                sx={{ mb: 3 }}
+                sx={{
+                  mb: 3,
+                  '& .MuiTab-root': {
+                    color: 'text.primary',
+                    '&.Mui-selected': {
+                      color: 'primary.main',
+                    },
+                  },
+                }}
               >
                 <Tab label="التفاصيل الشخصية" />
                 <Tab label="المعلومات المالية" />
@@ -945,7 +954,7 @@ export default function Investors() {
                         <Button
                           variant="contained"
                           startIcon={<Save sx={{marginLeft: '10px'}} />}
-                          sx={{ bgcolor: "#0d40a5", "&:hover": { bgcolor: "#0b3589" } }}
+                          sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                           disabled={!editMode}
                           onClick={handleSaveChanges}
                           size="small"
@@ -968,7 +977,7 @@ export default function Investors() {
                               backgroundColor: editMode ? '#fff' : '#f9fafb',
                               borderRadius: '6px',
                               '&:hover fieldset': {
-                                borderColor: '#0d40a5',
+                                borderColor: 'primary.main',
                               },
                             },
                           }}
@@ -986,7 +995,7 @@ export default function Investors() {
                               backgroundColor: editMode ? '#fff' : '#f9fafb',
                               borderRadius: '6px',
                               '&:hover fieldset': {
-                                borderColor: '#0d40a5',
+                                borderColor: 'primary.main',
                               },
                             },
                           }}
@@ -1018,7 +1027,7 @@ export default function Investors() {
                               backgroundColor: editMode ? '#fff' : '#f9fafb',
                               borderRadius: '6px',
                               '&:hover fieldset': {
-                                borderColor: '#0d40a5',
+                                borderColor: 'primary.main',
                               },
                             },
                           }}
@@ -1036,7 +1045,7 @@ export default function Investors() {
                               backgroundColor: editMode ? '#fff' : '#f9fafb',
                               borderRadius: '6px',
                               '&:hover fieldset': {
-                                borderColor: '#0d40a5',
+                                borderColor: 'primary.main',
                               },
                             },
                           }}
@@ -1056,7 +1065,7 @@ export default function Investors() {
                               backgroundColor: editMode ? '#fff' : '#f9fafb',
                               borderRadius: '6px',
                               '&:hover fieldset': {
-                                borderColor: editMode ? '#0d40a5' : undefined,
+                                borderColor: editMode ? 'primary.main' : undefined,
                               },
                             },
                           }}
@@ -1282,7 +1291,7 @@ export default function Investors() {
                     <Button
                       variant="contained"
                       startIcon={<Save sx={{marginLeft: '10px'}} />}
-                      sx={{ bgcolor: "#0d40a5", "&:hover": { bgcolor: "#0b3589" } }}
+                      sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                       disabled={!editMode}
                       onClick={handleSaveChanges}
                       size="small"
@@ -1306,7 +1315,7 @@ export default function Investors() {
                             borderRadius: '6px',
                             width: '280px',
                             '&:hover fieldset': {
-                              borderColor: '#0d40a5',
+                              borderColor: 'primary.main',
                             },
                           },
                         }}
@@ -1325,7 +1334,7 @@ export default function Investors() {
                             borderRadius: '6px',
                             width: '280px',
                             '&:hover fieldset': {
-                              borderColor: '#0d40a5',
+                              borderColor: 'primary.main',
                             },
                           },
                         }}
@@ -1412,8 +1421,8 @@ export default function Investors() {
                       startIcon={<Add sx={{ marginLeft: '10px' }} />}
                       onClick={handleAddTransaction}
                       sx={{
-                        bgcolor: "#0d40a5",
-                        "&:hover": { bgcolor: "#0b3589" },
+                        bgcolor: "primary.main",
+                        "&:hover": { bgcolor: "primary.dark" },
                         fontWeight: "bold",
                       }}
                     >
@@ -1426,7 +1435,7 @@ export default function Investors() {
                   <Paper sx={{ width: '100%', overflow: 'hidden' }}>
                     <TableContainer>
                       <Table stickyHeader>
-                        <TableHead sx={{ bgcolor: "#F3F4F6" }}>
+                        <TableHead sx={{ bgcolor: "grey.50" }}>
                           <StyledTableRow>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>رقم المرجع</StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>نوع العملية</StyledTableCell>
@@ -1656,8 +1665,8 @@ export default function Investors() {
             onClick={handleSaveTransaction}
             variant="contained"
             sx={{
-              bgcolor: "#0d40a5",
-              "&:hover": { bgcolor: "#0b3589" },
+              bgcolor: "primary.main",
+              "&:hover": { bgcolor: "primary.dark" },
             }}
           >
             حفظ

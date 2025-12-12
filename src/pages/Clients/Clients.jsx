@@ -619,8 +619,8 @@ export default function Clients() {
             startIcon={<Add sx={{ marginLeft: "10px" }} />}
             onClick={handleAddClient}
             sx={{
-              bgcolor: "#0d40a5",
-              "&:hover": { bgcolor: "#0b3589" },
+              bgcolor: "primary.main",
+              "&:hover": { bgcolor: "primary.dark" },
               fontWeight: "bold",
               borderRadius: 2,
               px: 2.5,
@@ -737,10 +737,19 @@ export default function Clients() {
                   key={client.id}
                   sx={{
                     p: 2,
-                    borderBottom: "1px solid #eee",
+                    mb: 1,
+                    mx: 2,
+                    mt: 2,
                     cursor: "pointer",
-                    bgcolor: isSelected ? "#e8efff" : "inherit",
-                    "&:hover": { bgcolor: "#f1f1f1" },
+                    border: isSelected ? "2px solid" : "1px solid #E5E7EB",
+                    borderColor: isSelected ? "primary.main" : "#E5E7EB",
+                    borderRadius: "12px",
+                    bgcolor: isSelected ? "primary.50" : "background.paper",
+                    boxShadow: isSelected
+                      ? "0 6px 16px rgba(46, 139, 69, 0.15)"
+                      : "0 3px 12px rgba(15, 23, 42, 0.06)",
+                    transition: "0.2s",
+                    "&:hover": { bgcolor: "#F3F4F6" },
                   }}
                   onClick={() => handleClientSelect(client)}
                 >
@@ -894,8 +903,8 @@ export default function Clients() {
                         variant="contained"
                         startIcon={<Save sx={{ marginLeft: "10px" }} />}
                         sx={{
-                          bgcolor: "#0d40a5",
-                          "&:hover": { bgcolor: "#0b3589" },
+                          bgcolor: "primary.main",
+                          "&:hover": { bgcolor: "primary.dark" },
                         }}
                         disabled={!editMode}
                         onClick={handleSaveChanges}
@@ -911,7 +920,15 @@ export default function Clients() {
               onChange={handleTabChange}
               textColor="primary"
               indicatorColor="primary"
-              sx={{ mb: 3 }}
+              sx={{
+                mb: 3,
+                '& .MuiTab-root': {
+                  color: 'text.primary',
+                  '&.Mui-selected': {
+                    color: 'primary.main',
+                  },
+                },
+              }}
             >
               <Tab label="الملف الشخصي" />
               <Tab label="المعلومات المالية" />
@@ -949,7 +966,7 @@ export default function Clients() {
                             borderRadius: "6px",
                             width: "280px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1016,7 +1033,7 @@ export default function Clients() {
                             backgroundColor: editMode ? "#fff" : "#f9fafb",
                             borderRadius: "6px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1047,7 +1064,7 @@ export default function Clients() {
                             backgroundColor: editMode ? "#fff" : "#f9fafb",
                             borderRadius: "6px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1073,7 +1090,7 @@ export default function Clients() {
                             backgroundColor: editMode ? "#fff" : "#f9fafb",
                             borderRadius: "6px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1100,7 +1117,7 @@ export default function Clients() {
                             borderRadius: "6px",
                             width: "280px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1127,7 +1144,7 @@ export default function Clients() {
                             borderRadius: "6px",
                             width: "350px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1153,7 +1170,7 @@ export default function Clients() {
                             backgroundColor: editMode ? "#fff" : "#f9fafb",
                             borderRadius: "6px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1182,7 +1199,7 @@ export default function Clients() {
                             backgroundColor: editMode ? "#fff" : "#f9fafb",
                             borderRadius: "6px",
                             "&:hover fieldset": {
-                              borderColor: "#0d40a5",
+                              borderColor: "primary.main",
                             },
                           },
                         }}
@@ -1214,7 +1231,7 @@ export default function Clients() {
                         backgroundColor: editMode ? "#fff" : "#f9fafb",
                         borderRadius: "6px",
                         "&:hover fieldset": {
-                          borderColor: "#0d40a5",
+                          borderColor: "primary.main",
                         },
                       },
                     }}
@@ -1286,9 +1303,9 @@ export default function Clients() {
                       startIcon={<Add />}
                       onClick={() => setIsAddKafeelModalOpen(true)}
                       sx={{
-                        bgcolor: "#0d40a5",
+                        bgcolor: "primary.main",
                         fontWeight: "bold",
-                        "&:hover": { bgcolor: "#0b3589" },
+                        "&:hover": { bgcolor: "primary.dark" },
                       }}
                     >
                       إضافة كفيل آخر
@@ -1392,8 +1409,8 @@ export default function Clients() {
                                           handleSaveChanges(kafeel.id);
                                         }}
                                         sx={{
-                                          bgcolor: "#0d40a5",
-                                          "&:hover": { bgcolor: "#0b3589" },
+                        bgcolor: "primary.main",
+                        "&:hover": { bgcolor: "primary.dark" },
                                         }}
                                       >
                                         حفظ
@@ -2030,6 +2047,14 @@ export default function Clients() {
                     onChange={(e, newValue) => setDocumentsTab(newValue)}
                     textColor="primary"
                     indicatorColor="primary"
+                    sx={{
+                      '& .MuiTab-root': {
+                        color: 'text.primary',
+                        '&.Mui-selected': {
+                          color: 'primary.main',
+                        },
+                      },
+                    }}
                   >
                     <Tab label="مرفقات العميل" />
                     {(clientDetails.kafeels &&
@@ -2871,7 +2896,7 @@ export default function Clients() {
                                         size="small"
                                         onClick={() => handleViewLoanDetails(loan.id)}
                                         sx={{
-                                          color: '#0d40a5',
+                                          color: 'primary.main',
                                           '&:hover': {
                                             backgroundColor: 'rgba(13, 64, 165, 0.1)',
                                           }

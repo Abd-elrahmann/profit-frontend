@@ -242,17 +242,6 @@ const routes = [
   },
 
   {
-    path: '/company-profit',
-    element: CompanyProfit,
-    protected: true,
-    showInSidebar: true,
-    label: 'أرباح الشركة',
-    module: 'company',
-    requiresPermissions: true,
-    icon: AccountBalance,
-    parent: 'الأرباح والتقارير'
-  },
-  {
     path: '/profit-distribution',
     element: ProfitDistribution,
     protected: true,
@@ -261,6 +250,17 @@ const routes = [
     module: 'distribution',
     icon: AccountBalance,
     requiresPermissions: true,
+    parent: 'الأرباح والتقارير'
+  },
+  {
+    path: '/company-profit',
+    element: CompanyProfit,
+    protected: true,
+    showInSidebar: true,
+    label: 'أرباح الشركة',
+    module: 'company',
+    requiresPermissions: true,
+    icon: AccountBalance,
     parent: 'الأرباح والتقارير'
   },
 

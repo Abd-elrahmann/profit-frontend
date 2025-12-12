@@ -217,7 +217,7 @@ const Profile = () => {
           }}
         >
           {/* Profile Image Section */}
-          <Grid item xs={12} sm={12} md={4}>
+          <Grid item xs={12} sm={12} md={6} sx={{width: '1000px'}}>
             <Card 
               sx={{ 
                 height: 'fit-content',
@@ -351,7 +351,7 @@ const Profile = () => {
           </Grid>
 
           {/* Profile Information Section */}
-          <Grid item xs={12} sm={12} md={8}>
+          <Grid item xs={12} sm={12} md={6}>
             <Card
               sx={{
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)',

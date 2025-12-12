@@ -230,11 +230,17 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                 checked={allSelected}
                 indeterminate={someSelected && !allSelected}
                 onChange={(e) => handleSelectAll(
-                  values, 
-                  setFieldValue, 
-                  field, 
+                  values,
+                  setFieldValue,
+                  field,
                   e.target.checked
                 )}
+                sx={{
+                  color: "#2E8B45",
+                  "&.Mui-checked": {
+                    color: "#2E8B45",
+                  },
+                }}
               />
             </Box>
           );
@@ -261,7 +267,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
               <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666',fontSize: '0.875rem' }}>
                 {index + 1}-
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: '500' }}>
+              <Typography variant="body2" sx={{ fontWeight: '600' }}>
                 {moduleConfig?.label || permission.module}
               </Typography>
               
@@ -273,12 +279,18 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                         size="small"
                         checked={permission[field]}
                         onChange={(e) => handlePermissionChange(
-                          values, 
-                          setFieldValue, 
-                          index, 
-                          field, 
+                          values,
+                          setFieldValue,
+                          index,
+                          field,
                           e.target.checked
                         )}
+                        sx={{
+                          color: "#2E8B45",
+                          "&.Mui-checked": {
+                            color: "#2E8B45",
+                          },
+                        }}
                       />
                     }
                     label=""
@@ -320,7 +332,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           return (
             <Accordion key={`${permission.module}-${index}`} sx={{ boxShadow: 1 }}>
               <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                <Typography variant="body2" sx={{ fontWeight: '600' }}>
                   {moduleConfig?.label || permission.module}
                 </Typography>
               </AccordionSummary>
@@ -337,16 +349,22 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                     <FormControlLabel
                       key={field}
                       control={
-                        <Checkbox
-                          checked={permission[field]}
-                          onChange={(e) => handlePermissionChange(
-                            values, 
-                            setFieldValue, 
-                            index, 
-                            field, 
-                            e.target.checked
-                          )}
-                        />
+                      <Checkbox
+                        checked={permission[field]}
+                        onChange={(e) => handlePermissionChange(
+                          values,
+                          setFieldValue,
+                          index,
+                          field,
+                          e.target.checked
+                        )}
+                        sx={{
+                          color: "#2E8B45",
+                          "&.Mui-checked": {
+                            color: "#2E8B45",
+                          },
+                        }}
+                      />
                       }
                       label={label}
                     />
@@ -384,7 +402,9 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         bgcolor: 'background.paper',
         zIndex: 1
       }}>
-        {mode === 'add' ? 'إضافة دور جديد' : 'تعديل الدور'}
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          {mode === 'add' ? 'إضافة دور جديد' : 'تعديل الدور'}
+        </Typography>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -417,7 +437,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                         backgroundColor: '#f9fafb',
                         borderRadius: '6px',
                         '&:hover fieldset': {
-                          borderColor: '#0d40a5',
+                          borderColor: '#2E8B45',
                         },
                       },
                     }}
@@ -438,7 +458,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                         backgroundColor: '#f9fafb',
                         borderRadius: '6px',
                         '&:hover fieldset': {
-                          borderColor: '#0d40a5',
+                          borderColor: '#2E8B45',
                         },
                       },
                     }}
@@ -481,8 +501,8 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                 disabled={isSubmitting}
                 fullWidth={isMobile}
                 sx={{
-                  bgcolor: "#1E40AF",
-                  "&:hover": { bgcolor: "#1E3A8A" },
+                  bgcolor: "#2E8B45",
+                  "&:hover": { bgcolor: "#1e5a2e" },
                   minWidth: isMobile ? 'auto' : 120
                 }}
               >

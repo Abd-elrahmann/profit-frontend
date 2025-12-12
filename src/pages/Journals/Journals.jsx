@@ -25,6 +25,7 @@ import {
   Chip as MuiChip,
   Autocomplete,
   InputBase,
+  Chip,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -100,6 +101,7 @@ const Journals = () => {
   const { permissions } = usePermissions();
   const navigate = useNavigate();
   const fromPeriod = location.state?.fromPeriod;
+  const fromProfitDistribution = location.state?.fromProfitDistribution;
 
   // Helper function to flatten nested tree structure
   const flattenAccountsTree = (accounts) => {
@@ -148,6 +150,7 @@ const Journals = () => {
             account: line.account,
             debit: line.debit || 0,
             credit: line.credit || 0,
+            balance: line.balance || 0,
             description: line.description || "",
           }))
         );
@@ -235,6 +238,10 @@ const Journals = () => {
     navigate("/period-closing");
   };
 
+  const handleBackToProfitDistribution = () => {
+    navigate("/profit-distribution");
+  };
+
   const handleEditClick = () => {
     setIsEditMode(true);
   };
@@ -254,6 +261,7 @@ const Journals = () => {
           account: line.account,
           debit: line.debit || 0,
           credit: line.credit || 0,
+          balance: line.balance || 0,
           description: line.description || "",
         })) || []
       );
@@ -293,6 +301,7 @@ const Journals = () => {
           ? journalLines[editingLineIndex]?.id
           : Date.now(),
       account: selectedAccount,
+      balance: (currentLine.debit || 0) - (currentLine.credit || 0),
     };
 
     if (editingLineIndex !== null) {
@@ -366,7 +375,7 @@ const Journals = () => {
 
     if (!isJournalBalanced(totalDebit, totalCredit)) {
       notifyError(
-        `القيد غير متوازن! إجمالي المدين: ${totalDebit.toFixed(2)} ≠ إجمالي الدائن: ${totalCredit.toFixed(2)}`
+        `القيد غير متوازن! إجمالي المدين: ${Math.round(totalDebit).toLocaleString()} ≠ إجمالي الدائن: ${Math.round(totalCredit).toLocaleString()}`
       );
       return;
     }
@@ -412,7 +421,7 @@ const Journals = () => {
 
     if (!isJournalBalanced(totalDebit, totalCredit)) {
       notifyError(
-        `القيد غير متوازن! إجمالي المدين: ${totalDebit.toFixed(2)} ≠ إجمالي الدائن: ${totalCredit.toFixed(2)}`
+        `القيد غير متوازن! إجمالي المدين: ${Math.round(totalDebit).toLocaleString()} ≠ إجمالي الدائن: ${Math.round(totalCredit).toLocaleString()}`
       );
       return;
     }
@@ -544,6 +553,8 @@ const Journals = () => {
         return "إقفال فترة";
       case "PARTNER_TRANSACTION_WITHDRAWAL":
         return "سحب مالي لشريك";
+      case "COMPANY_PROFIT_WITHDRAWAL":
+        return "سحب ربح شركة";
       case "PARTNER_TRANSACTION_DEPOSIT":
         return "إيداع مالي لشريك";
       case "EXPENSES":
@@ -569,12 +580,17 @@ const Journals = () => {
   };
 
   const calculateTotalsForTable = () => {
+    if (journalData?.totals) {
+      return journalData.totals;
+    }
+
+    // Fallback calculation if totals not provided
     const totalDebit = journalLines.reduce(
-      (sum, line) => sum + parseFloat(line.debit || 0),
+      (sum, line) => sum + (line.debit || 0),
       0
     );
     const totalCredit = journalLines.reduce(
-      (sum, line) => sum + parseFloat(line.credit || 0),
+      (sum, line) => sum + (line.credit || 0),
       0
     );
     const totalBalance = totalDebit - totalCredit;
@@ -583,38 +599,43 @@ const Journals = () => {
   };
 
   const calculateTotals = () => {
+    if (journalData?.totals) {
+      return journalData.totals;
+    }
+
+    // Fallback calculation for editing mode
     let totalDebit = 0;
     let totalCredit = 0;
 
     if (editingLineIndex !== null && journalLines[editingLineIndex]) {
       journalLines.forEach((line, index) => {
         if (index !== editingLineIndex) {
-          totalDebit += parseFloat(line.debit || 0);
-          totalCredit += parseFloat(line.credit || 0);
+          totalDebit += (line.debit || 0);
+          totalCredit += (line.credit || 0);
         }
       });
 
       if (currentLine) {
-        totalDebit += parseFloat(currentLine.debit || 0);
-        totalCredit += parseFloat(currentLine.credit || 0);
+        totalDebit += (currentLine.debit || 0);
+        totalCredit += (currentLine.credit || 0);
       }
     } else {
       totalDebit = journalLines.reduce(
-        (sum, line) => sum + parseFloat(line.debit || 0),
+        (sum, line) => sum + (line.debit || 0),
         0
       );
       totalCredit = journalLines.reduce(
-        (sum, line) => sum + parseFloat(line.credit || 0),
+        (sum, line) => sum + (line.credit || 0),
         0
       );
 
       if (
         currentLine &&
-        (parseFloat(currentLine.debit || 0) > 0 ||
-          parseFloat(currentLine.credit || 0) > 0)
+        ((currentLine.debit || 0) > 0 ||
+          (currentLine.credit || 0) > 0)
       ) {
-        totalDebit += parseFloat(currentLine.debit || 0);
-        totalCredit += parseFloat(currentLine.credit || 0);
+        totalDebit += (currentLine.debit || 0);
+        totalCredit += (currentLine.credit || 0);
       }
     }
 
@@ -630,8 +651,6 @@ const Journals = () => {
   const renderMobileLinesCards = () => (
     <Stack spacing={2}>
       {journalLines.map((line, index) => {
-        const lineBalance =
-          parseFloat(line.debit || 0) - parseFloat(line.credit || 0);
         return (
           <Card key={line.id || index} variant="outlined" sx={{ borderRadius: 2 }}>
             <CardContent sx={{ p: 2 }}>
@@ -674,14 +693,26 @@ const Journals = () => {
                   )}
                 </Box>
 
-                {/* Line Details */}
+                  {/* Line Details */}
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      نوع الحساب
+                    </Typography>
+                    <Chip
+                      label={parseFloat(line.debit || 0) > 0 ? "مدين" : "دائن"}
+                      color={parseFloat(line.debit || 0) > 0 ? "error" : "success"}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </Box>
+
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="caption" color="text.secondary">
                       مدين
                     </Typography>
                     <Typography variant="body2" fontWeight="bold" color="error">
-                      {parseFloat(line.debit || 0).toLocaleString()}
+                      {line.debit ? Math.round(line.debit).toLocaleString() : '0'}
                     </Typography>
                   </Box>
 
@@ -690,7 +721,7 @@ const Journals = () => {
                       دائن
                     </Typography>
                     <Typography variant="body2" fontWeight="bold" color="success.main">
-                      {parseFloat(line.credit || 0).toLocaleString()}
+                      {line.credit ? Math.round(line.credit).toLocaleString() : '0'}
                     </Typography>
                   </Box>
 
@@ -702,14 +733,14 @@ const Journals = () => {
                       variant="body2"
                       fontWeight="bold"
                       color={
-                        lineBalance === 0
+                        (line.balance || 0) === 0
                           ? "text.primary"
-                          : lineBalance > 0
+                          : (line.balance || 0) > 0
                           ? "error"
                           : "success.main"
                       }
                     >
-                      {lineBalance.toLocaleString()}
+                      {typeof line.balance === 'number' ? Math.round(line.balance).toLocaleString() : '0'}
                     </Typography>
                   </Box>
                 </Box>
@@ -724,8 +755,9 @@ const Journals = () => {
         variant="outlined"
         sx={{
           borderRadius: 2,
-          backgroundColor: "#f5f5f5",
-          border: "2px solid #ddd",
+          backgroundColor: "grey.100",
+          border: "2px solid",
+          borderColor: "divider",
         }}
       >
         <CardContent sx={{ p: 2 }}>
@@ -738,7 +770,7 @@ const Journals = () => {
                 إجمالي المدين
               </Typography>
               <Typography variant="body2" fontWeight="bold" color="error">
-                {totalsForTable.totalDebit.toLocaleString()}
+                {totalsForTable.totalDebit ? Math.round(totalsForTable.totalDebit).toLocaleString() : '0'}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -746,7 +778,7 @@ const Journals = () => {
                 إجمالي الدائن
               </Typography>
               <Typography variant="body2" fontWeight="bold" color="success.main">
-                {totalsForTable.totalCredit.toLocaleString()}
+                {totalsForTable.totalCredit ? Math.round(totalsForTable.totalCredit).toLocaleString() : '0'}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -754,7 +786,7 @@ const Journals = () => {
                 الفرق
               </Typography>
               <Typography variant="body2" fontWeight="bold">
-                {totalsForTable.totalBalance.toLocaleString()}
+                {totalsForTable.totalBalance ? Math.round(totalsForTable.totalBalance).toLocaleString() : '0'}
               </Typography>
             </Box>
           </Stack>
@@ -763,7 +795,7 @@ const Journals = () => {
 
       {!isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
         <Alert severity="error">
-          القيد غير متوازن! إجمالي المدين: {totalsForTable.totalDebit.toFixed(2)} ≠ إجمالي الدائن: {totalsForTable.totalCredit.toFixed(2)} (الفرق: {Math.abs(totalsForTable.totalBalance).toFixed(2)})
+          القيد غير متوازن! إجمالي المدين: {Math.round(totalsForTable.totalDebit).toLocaleString()} ≠ إجمالي الدائن: {Math.round(totalsForTable.totalCredit).toLocaleString()} (الفرق: {Math.round(Math.abs(totalsForTable.totalBalance)).toLocaleString()})
         </Alert>
       )}
     </Stack>
@@ -777,6 +809,7 @@ const Journals = () => {
           <StyledTableRow>
             <StyledTableCell align="center">الحساب</StyledTableCell>
             <StyledTableCell align="center">الوصف</StyledTableCell>
+            <StyledTableCell align="center">نوع الحساب</StyledTableCell>
             <StyledTableCell align="center">مدين</StyledTableCell>
             <StyledTableCell align="center">دائن</StyledTableCell>
             <StyledTableCell align="center">الإجمالي</StyledTableCell>
@@ -789,8 +822,6 @@ const Journals = () => {
         </TableHead>
         <TableBody>
           {journalLines.map((line, index) => {
-            const lineBalance =
-              parseFloat(line.debit || 0) - parseFloat(line.credit || 0);
             return (
               <StyledTableRow key={line.id || index}>
                 <StyledTableCell align="center">
@@ -800,23 +831,31 @@ const Journals = () => {
                   {line.description || "-"}
                 </StyledTableCell>
                 <StyledTableCell align="center">
-                  {parseFloat(line.debit || 0).toLocaleString()}
+                  <Chip
+                    label={(line.debit || 0) > 0 ? "مدين" : "دائن"}
+                    color={(line.debit || 0) > 0 ? "error" : "success"}
+                    size="small"
+                    variant="outlined"
+                  />
                 </StyledTableCell>
                 <StyledTableCell align="center">
-                  {parseFloat(line.credit || 0).toLocaleString()}
+                  {line.debit ? Math.round(line.debit).toLocaleString() : '0'}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  {line.credit ? Math.round(line.credit).toLocaleString() : '0'}
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography
                     fontWeight="medium"
                     color={
-                      lineBalance === 0
+                      (line.balance || 0) === 0
                         ? "text.primary"
-                        : lineBalance > 0
+                        : (line.balance || 0) > 0
                         ? "error"
                         : "success.main"
                     }
                   >
-                    {lineBalance.toLocaleString()}
+                    {line.balance ? Math.round(line.balance).toLocaleString() : '0'}
                   </Typography>
                 </StyledTableCell>
                 {(isEditMode || isAddMode) && (
@@ -841,22 +880,22 @@ const Journals = () => {
             );
           })}
           <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-            <StyledTableCell colSpan={2} align="center">
+            <StyledTableCell colSpan={3} align="center">
               <Typography fontWeight="bold">الإجمالي</Typography>
             </StyledTableCell>
             <StyledTableCell align="center">
               <Typography fontWeight="bold" color="error">
-                {totalsForTable.totalDebit.toLocaleString()}
+                {totalsForTable.totalDebit ? Math.round(totalsForTable.totalDebit).toLocaleString() : '0'}
               </Typography>
             </StyledTableCell>
             <StyledTableCell align="center">
               <Typography fontWeight="bold" color="success.main">
-                {totalsForTable.totalCredit.toLocaleString()}
+                {totalsForTable.totalCredit ? Math.round(totalsForTable.totalCredit).toLocaleString() : '0'}
               </Typography>
             </StyledTableCell>
             <StyledTableCell align="center">
               <Typography fontWeight="bold">
-                {totalsForTable.totalBalance.toLocaleString()}
+                {totalsForTable.totalBalance ? Math.round(totalsForTable.totalBalance).toLocaleString() : '0'}
               </Typography>
             </StyledTableCell>
             {(isEditMode || isAddMode) && (
@@ -979,7 +1018,7 @@ const Journals = () => {
 
   const renderLinesList = () => (
     <Paper sx={{ p: isSmallScreen ? 2 : 3, borderRadius: 2 }}>
-      <Typography variant="h6" fontWeight="bold" mb={3}>
+      <Typography variant="h6" fontWeight="bold" mb={3} color="primary.main" textAlign="center">
         بنود القيد
       </Typography>
 
@@ -991,7 +1030,7 @@ const Journals = () => {
 
           {!isSmallScreen && !isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              القيد غير متوازن! إجمالي المدين: {totalsForTable.totalDebit.toFixed(2)} ≠ إجمالي الدائن: {totalsForTable.totalCredit.toFixed(2)} (الفرق: {Math.abs(totalsForTable.totalBalance).toFixed(2)})
+              القيد غير متوازن! إجمالي المدين: {Math.round(totalsForTable.totalDebit).toLocaleString()} ≠ إجمالي الدائن: {Math.round(totalsForTable.totalCredit).toLocaleString()} (الفرق: {Math.round(Math.abs(totalsForTable.totalBalance)).toLocaleString()})
             </Alert>
           )}
         </>
@@ -1018,22 +1057,22 @@ const Journals = () => {
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography color="error">إجمالي المدين:</Typography>
             <Typography fontWeight="bold" color="error">
-              {totals.totalDebit.toLocaleString()}
+              {totals.totalDebit ? Math.round(totals.totalDebit).toLocaleString() : '0'}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography color="success.main">إجمالي الدائن:</Typography>
             <Typography fontWeight="bold" color="success.main">
-              {totals.totalCredit.toLocaleString()}
+              {totals.totalCredit ? Math.round(totals.totalCredit).toLocaleString() : '0'}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography color="black">الفرق:</Typography>
             <Typography
               fontWeight="bold"
-              color={totals.totalBalance === 0 ? "success.main" : "error"}
+              color={(totals.totalBalance || 0) === 0 ? "success.main" : "error"}
             >
-              {totals.totalBalance.toLocaleString()}
+              {totals.totalBalance ? Math.round(totals.totalBalance).toLocaleString() : '0'}
             </Typography>
           </Box>
         </Stack>
@@ -1341,7 +1380,7 @@ const Journals = () => {
                 المدين
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="error">
-                {totals.totalDebit.toLocaleString()}
+                {totals.totalDebit ? Math.round(totals.totalDebit).toLocaleString() : '0'}
               </Typography>
             </CardContent>
           </Card>
@@ -1353,7 +1392,7 @@ const Journals = () => {
                 الدائن
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="success.main">
-                {totals.totalCredit.toLocaleString()}
+                {totals.totalCredit ? Math.round(totals.totalCredit).toLocaleString() : '0'}
               </Typography>
             </CardContent>
           </Card>
@@ -1365,9 +1404,9 @@ const Journals = () => {
               <Typography
                 variant="h6"
                 fontWeight="bold"
-                color={totals.totalBalance === 0 ? "success.main" : "error"}
+                color={(totals.totalBalance || 0) === 0 ? "success.main" : "error"}
               >
-                {totals.totalBalance.toLocaleString()}
+                {totals.totalBalance ? Math.round(totals.totalBalance).toLocaleString() : '0'}
               </Typography>
             </CardContent>
           </Card>
@@ -1748,7 +1787,7 @@ const Journals = () => {
                       fontWeight: "bold",
                       borderBottom:
                         activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 0 ? "#0d40a5" : "black",
                     }}
                   />
                   <Tab
@@ -1763,7 +1802,7 @@ const Journals = () => {
                       fontWeight: "bold",
                       borderBottom:
                         activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "text.secondary",
+                      color: activeTab === 1 ? "#0d40a5" : "black",
                     }}
                   />
                 </Tabs>
@@ -1841,13 +1880,33 @@ const Journals = () => {
                     رجوع لتقفيل الفترات
                   </Button>
                 )}
+                {activeTab === 1 && fromProfitDistribution && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleBackToProfitDistribution}
+                    sx={{
+                      borderColor: "#0d40a5",
+                      color: "#0d40a5",
+                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                    }}
+                  >
+                    رجوع لتوزيع الأرباح
+                  </Button>
+                )}
               </Box>
             ) : (
               <Box sx={{ mb: 3 }}>
                 {activeTab === 1 ? (
                   <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                     <IconButton
-                      onClick={fromPeriod ? handleBackToPeriodClosing : handleBackToList}
+                      onClick={
+                        fromProfitDistribution
+                          ? handleBackToProfitDistribution
+                          : fromPeriod
+                          ? handleBackToPeriodClosing
+                          : handleBackToList
+                      }
                       size="small"
                     >
                       <ArrowBackIcon />

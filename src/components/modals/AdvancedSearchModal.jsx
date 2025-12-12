@@ -110,7 +110,11 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     { value: "LOAN", label: "سلفة" },
     { value: "REPAYMENT", label: "سداد" },
     { value: "PARTNER", label: "شريك" },
+    { value: "PARTNER_TRANSACTION_WITHDRAWAL", label: "سحب مالي لشريك" },
+    { value: "PARTNER_TRANSACTION_DEPOSIT", label: "إيداع مالي لشريك" },
     { value: "PERIOD_CLOSING", label: "إقفال فترة" },
+    { value: "COMPANY_PROFIT_WITHDRAWAL", label: "سحب ربح شركة" },
+    { value: "EXPENSES", label: "مصروف" },
     { value: "OTHER", label: "أخرى" },
   ];
 
@@ -289,8 +293,8 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           variant="contained"
           startIcon={<SearchIcon sx={{marginLeft: "10px"}} />}
           sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "rgba(13, 64, 165, 0.9)" },
+            bgcolor: "primary.main",
+            "&:hover": { bgcolor: "primary.dark" },
           }}
         >
           بحث

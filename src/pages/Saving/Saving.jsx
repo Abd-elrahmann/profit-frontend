@@ -19,17 +19,17 @@ import {
   TableBody,
   TableContainer,
   TableHead,
+  Button,
 } from "@mui/material";
 import {
-  ArrowBack as ArrowBackIcon,
   AccountBalance as BalanceIcon,
   Savings as SavingsIcon,
   CalendarMonth as CalendarIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { getAllPartnerSavings, getPartnerSavingDetails, getSavingAccountReport } from "./savingApi";
+import { getAllPartnerSavings, getSavingAccountReport } from "./savingApi";
 import SavingTable from "../../components/modals/SavingTable";
+import { exportSavingsToPDF, exportSavingsToExcel } from "../../utilities/savingExporter";
 import {
   StyledTableCell,
   StyledTableRow,
@@ -57,10 +57,8 @@ import dayjs from "dayjs";
 import "dayjs/locale/ar";
 const Saving = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedPartner, setSelectedPartner] = useState(null);
   const [page] = useState(1);
   const [limit] = useState(10);
-  const navigate = useNavigate();
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -73,31 +71,14 @@ const Saving = () => {
     queryFn: () => getAllPartnerSavings(page, limit),
   });
 
-  // Query for partner saving details when selected
-  const { data: partnerSavingDetails, isLoading: isPartnerLoading } = useQuery({
-    queryKey: ["partner-saving-details", selectedPartner],
-    retry: 1,
-    queryFn: () => getPartnerSavingDetails(selectedPartner),
-    enabled: !!selectedPartner && activeTab === 1,
-  });
-
   // Query for saving account report
   const { data: accountReport, isLoading: isAccountLoading } = useQuery({
     queryKey: ["saving-account"],
     retry: 1,
     queryFn: () => getSavingAccountReport(),
-    enabled: activeTab === 2,
+    enabled: activeTab === 1,
   });
 
-  const handleViewDetails = (partnerId) => {
-    setSelectedPartner(partnerId);
-    setActiveTab(1);
-  };
-
-  const handleBackToList = () => {
-    setActiveTab(0);
-    setSelectedPartner(null);
-  };
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -108,13 +89,8 @@ const Saving = () => {
     return dayjs(date)
       .locale("ar")
       .format("D [من] MMMM [الساعة] h:mm") // format without A
-      + " " 
+      + " "
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
-  };
-  // Calculate total savings for partner
-  const calculateTotalPartnerSavings = () => {
-    if (!partnerSavingDetails) return 0;
-    return partnerSavingDetails.reduce((total, period) => total + (period.totalSaving || 0), 0);
   };
 
   // Render saving account summary
@@ -135,7 +111,7 @@ const Saving = () => {
         <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
           <SavingsIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="success.main">
-            {formatCurrency(accountReport?.account?.credit)}
+            {formatCurrency(accountReport?.account?.debit)}
           </Typography>
           <Typography variant="body2" color="success.main">
             إجمالي الإيداعات
@@ -146,7 +122,7 @@ const Saving = () => {
         <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2,width: "350px" }}>
           <SavingsIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="warning.main">
-            {formatCurrency(accountReport?.account?.debit)}
+            {formatCurrency(accountReport?.account?.credit)}
           </Typography>
           <Typography variant="body2" color="warning.main">
             إجمالي السحوبات
@@ -167,135 +143,7 @@ const Saving = () => {
     </Grid>
   );
 
-  // Render partner saving summary
-  const renderPartnerSavingSummary = () => {
-    const totalSavings = calculateTotalPartnerSavings();
-    
-    return (
-      <Grid container spacing={3} sx={{ mb: 4, justifyContent: "center" }}>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2,width: "350px" }}>
-            <SavingsIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h5" fontWeight="bold" color="primary.main">
-              {formatCurrency(totalSavings)}
-            </Typography>
-            <Typography variant="body2" color="primary.main">
-              إجمالي المدخرات
-            </Typography>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
-            <CalendarIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h5" fontWeight="bold" color="success.main">
-              {partnerSavingDetails?.length || 0}
-            </Typography>
-            <Typography variant="body2" color="success.main">
-              عدد فترات الادخار
-            </Typography>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2,width: "350px" }}>
-            <BalanceIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h5" fontWeight="bold" color="warning.main">
-              {partnerSavingDetails?.reduce((total, period) => total + (period.accruals?.length || 0), 0) || 0}
-            </Typography>
-            <Typography variant="body2" color="warning.main">
-              عدد عمليات الادخار
-            </Typography>
-          </Card>
-        </Grid>
-      </Grid>
-    );
-  };
 
-  // Render combined saving periods and accruals table
-  const renderSavingPeriodsTable = () => (
-    <Card sx={{ p: 3 }}>
-      <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mb: 3, textAlign: "center" }}>
-        فترات الادخار وعملياتها
-      </Typography>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <StyledTableRow>
-              <StyledTableCell align="center">اسم الفترة</StyledTableCell>
-              <StyledTableCell align="center">رقم العملية</StyledTableCell>
-              <StyledTableCell align="center">المبلغ</StyledTableCell>
-              <StyledTableCell align="center">التاريخ</StyledTableCell>
-              <StyledTableCell align="center">التفاصيل</StyledTableCell>
-            </StyledTableRow>
-          </TableHead>
-          <TableBody>
-            {partnerSavingDetails?.map((period) => {
-              const accruals = period.accruals || [];
-              const hasAccruals = accruals.length > 0;
-              
-              // If no accruals, show period summary row
-              if (!hasAccruals) {
-                return (
-                  <StyledTableRow key={period.periodId}>
-                    <StyledTableCell align="center">
-                      {period.periodName}
-                    </StyledTableCell>
-                    <StyledTableCell align="center" colSpan={2}>
-                      <Typography variant="body2" color="text.secondary">
-                        لا توجد عمليات
-                      </Typography>
-                    </StyledTableCell>
-                    <StyledTableCell align="center">-</StyledTableCell>
-                    <StyledTableCell align="center">
-                      <Chip
-                        label="عرض التفاصيل"
-                        color="info"
-                        variant="outlined"
-                        size="small"
-                        onClick={() => navigate(`/profit-distribution?periodId=${period.periodId}`)}
-                        sx={{ cursor: 'pointer' }}
-                      />
-                    </StyledTableCell>
-                  </StyledTableRow>
-                );
-              }
-              
-              // Render rows with accruals
-              return accruals.map((accrual, index) => (
-                <StyledTableRow key={`${period.periodId}-${accrual.savingId}`}>
-                  {index === 0 && (
-                    <StyledTableCell align="center" rowSpan={accruals.length}>
-                      {period.periodName}
-                    </StyledTableCell>
-                  )}
-                  <StyledTableCell align="center">
-                    #{accrual.savingId}
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    {formatCurrency(accrual.savingAmount)}
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    {formatArabicDate(accrual.date)}
-                  </StyledTableCell>
-                  {index === 0 && (
-                    <StyledTableCell align="center" rowSpan={accruals.length}>
-                      <Chip
-                        label="عرض التفاصيل"
-                        color="info"
-                        variant="outlined"
-                        size="small"
-                        onClick={() => navigate(`/profit-distribution?periodId=${period.periodId}`)}
-                        sx={{ cursor: 'pointer' }}
-                      />
-                    </StyledTableCell>
-                  )}
-                </StyledTableRow>
-              ));
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Card>
-  );
 
   // Render account journal entries
   const renderAccountJournals = () => {
@@ -358,67 +206,6 @@ const Saving = () => {
     );
   };
 
-  // Render mobile partner details
-  const renderMobilePartnerDetails = () => (
-    <Box sx={{ textAlign: "center" }}>
-      {/* Partner Summary */}
-      {renderPartnerSavingSummary()}
-
-      {/* Saving Periods */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mb: 2, textAlign: "center" }}>
-          فترات الادخار
-        </Typography>
-        <Stack spacing={2}>
-          {partnerSavingDetails?.map((period) => (
-            <Card key={period.periodId} variant="outlined">
-              <CardContent>
-                <Stack spacing={1} sx={{ alignItems: "center" }}>
-                  <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                    {period.periodName}
-                  </Typography>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, width: "100%" }}>
-                    <Box>
-                      <Typography variant="body2" color="textSecondary">المدخرات</Typography>
-                      <Typography variant="body2" fontWeight="bold" color="success.main">
-                        {formatCurrency(period.totalSaving)}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="textSecondary">العمليات</Typography>
-                      <Chip
-                        label={period.accruals?.length || 0}
-                        color="primary"
-                        size="small"
-                      />
-                    </Box>
-                  </Box>
-                  <Box sx={{ mt: 1, width: "100%" }}>
-                    <Chip
-                      label="عرض التفاصيل"
-                      color="info"
-                      variant="outlined"
-                      size="small"
-                      onClick={() => navigate(`/profit-distribution?periodId=${period.periodId}`)}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-      </Card>
-    </Box>
-  );
-
-  // Render desktop partner details
-  const renderDesktopPartnerDetails = () => (
-    <Box sx={{ textAlign: "center" }}>
-      {renderPartnerSavingSummary()}
-      {renderSavingPeriodsTable()}
-    </Box>
-  );
 
   // Helper function to get month name
   const getMonthName = (monthKey) => {
@@ -442,16 +229,16 @@ const Saving = () => {
             name: getMonthName(month),
             monthKey: month,
             الرصيد: data.totalBalance || 0,
-            الإيداعات: data.totalCredit || 0,
-            السحوبات: data.totalDebit || 0,
+            الإيداعات: data.totalDebit || 0,
+            السحوبات: data.totalCredit || 0,
           }))
           .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
       : [];
 
     // Transaction type distribution
     const transactionData = [
-      { name: 'الإيداعات', value: accountReport.account?.credit || 0, color: '#00C49F' },
-      { name: 'السحوبات', value: accountReport.account?.debit || 0, color: '#FF8042' },
+      { name: 'الإيداعات', value: accountReport.account?.debit || 0, color: '#00C49F' },
+      { name: 'السحوبات', value: accountReport.account?.credit || 0, color: '#FF8042' },
     ];
 
     return { monthlyData, transactionData };
@@ -654,9 +441,6 @@ const Saving = () => {
                 value={activeTab}
                 onChange={(e, newValue) => {
                   setActiveTab(newValue);
-                  if (newValue === 0) {
-                    setSelectedPartner(null);
-                  }
                 }}
               >
                 <Tab
@@ -664,23 +448,15 @@ const Saving = () => {
                   sx={{
                     fontWeight: "bold",
                     borderBottom: activeTab === 0 ? "3px solid #0d40a5" : "none",
-                    color: activeTab === 0 ? "#0d40a5" : "text.secondary",
-                  }}
-                />
-                <Tab
-                  label={selectedPartner ? "كشف مدخرات محدد" : "مدخرات محددة"}
-                  sx={{
-                    fontWeight: "bold",
-                    borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
-                    color: activeTab === 1 ? "#0d40a5" : "text.secondary",
+                    color: activeTab === 0 ? "#0d40a5" : "black",
                   }}
                 />
                 <Tab
                   label="صندوق الادخار"
                   sx={{
                     fontWeight: "bold",
-                    borderBottom: activeTab === 2 ? "3px solid #0d40a5" : "none",
-                    color: activeTab === 2 ? "#0d40a5" : "text.secondary",
+                    borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
+                    color: activeTab === 1 ? "#0d40a5" : "black",
                   }}
                 />
               </Tabs>
@@ -689,16 +465,6 @@ const Saving = () => {
             // Mobile header
             <Box sx={{ mb: 3 }}>
               {activeTab === 1 ? (
-                // Back button for mobile details view
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <IconButton onClick={handleBackToList} size="small">
-                    <ArrowBackIcon />
-                  </IconButton>
-                  <Typography variant="h6" fontWeight="bold" sx={{ ml: 1 }}>
-                    مدخرات الشريك
-                  </Typography>
-                </Box>
-              ) : activeTab === 2 ? (
                 <Typography variant="h6" fontWeight="bold" mb={2}>
                   صندوق الادخار
                 </Typography>
@@ -711,7 +477,7 @@ const Saving = () => {
             </Box>
           )}
 
-          {activeTab === 0 || (isSmallScreen && !selectedPartner && activeTab !== 2) ? (
+          {activeTab === 0 ? (
             <Paper
               sx={{
                 flex: 1,
@@ -720,40 +486,33 @@ const Saving = () => {
                 borderRadius: 2,
               }}
             >
+              {/* Export Buttons */}
+              <Box sx={{ p: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => exportSavingsToPDF(savingData)}
+                  disabled={isSavingLoading || !savingData?.data?.length}
+                  sx={{ minWidth: 120,fontWeight: 'bold' }}
+                >
+                  تصدير PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={() => exportSavingsToExcel(savingData)}
+                  disabled={isSavingLoading || !savingData?.data?.length}
+                  sx={{ minWidth: 120,fontWeight: 'bold' }}
+                >
+                  تصدير Excel
+                </Button>
+              </Box>
+
               <SavingTable
-                onViewDetails={handleViewDetails}
                 isLoading={isSavingLoading}
                 savingData={savingData}
               />
             </Paper>
-          ) : activeTab === 1 ? (
-            <Box sx={{ textAlign: "center" }}>
-              {!selectedPartner ? (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  يرجى اختيار شريك لعرض تفاصيل مدخراته
-                </Alert>
-              ) : isPartnerLoading ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100%",
-                    py: 4,
-                  }}
-                >
-                  <CircularProgress size={40} />
-                </Box>
-              ) : partnerSavingDetails ? (
-                isSmallScreen ? (
-                  renderMobilePartnerDetails()
-                ) : (
-                  renderDesktopPartnerDetails()
-                )
-              ) : (
-                <Alert severity="error">حدث خطأ في تحميل بيانات المدخرات</Alert>
-              )}
-            </Box>
           ) : (
             // Saving Account Tab
             renderSavingAccountTab()

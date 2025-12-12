@@ -493,7 +493,7 @@ export default function Treasury() {
                 fontWeight: '600',
                 fontSize: isSmallScreen ? '0.8rem' : '0.95rem',
                 py: isSmallScreen ? 1 : 2,
-                minHeight: isSmallScreen ? '48px' : '60px'
+                minHeight: isSmallScreen ? '48px' : '60px',
               }
             }}
           >
@@ -501,11 +501,17 @@ export default function Treasury() {
               label="إحصائيات الصندوق"
               icon={<TrendingUp />}
               iconPosition="start"
+              sx={{
+                  color: tab === 0 ? 'primary.main' : 'black',
+              }}
             />
             <Tab
               label="سجل القيود"
               icon={<AccountBalance />}
               iconPosition="start"
+              sx={{
+                  color: tab === 1 ? 'primary.main' : 'black',
+              }}
             />
           </Tabs>
 
