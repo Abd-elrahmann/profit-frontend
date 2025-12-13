@@ -102,6 +102,8 @@ const Journals = () => {
   const navigate = useNavigate();
   const fromPeriod = location.state?.fromPeriod;
   const fromProfitDistribution = location.state?.fromProfitDistribution;
+  const fromInvestorsWithdrawal = location.state?.fromInvestorsWithdrawal;
+  const investorId = location.state?.investorId;
 
   // Helper function to flatten nested tree structure
   const flattenAccountsTree = (accounts) => {
@@ -240,6 +242,15 @@ const Journals = () => {
 
   const handleBackToProfitDistribution = () => {
     navigate("/profit-distribution");
+  };
+
+  const handleBackToInvestorsWithdrawal = () => {
+    navigate("/investors-withdraw", {
+      state: {
+        investorId: investorId,
+        activeTab: 1,
+      },
+    });
   };
 
   const handleEditClick = () => {
@@ -559,6 +570,8 @@ const Journals = () => {
         return "إيداع مالي لشريك";
       case "EXPENSES":
         return "مصروف";
+      case "PARTNER_WITHDRAWING":
+        return "انسحاب مالي لشريك";
       case "OTHER":
         return "أخرى";
       default:
@@ -1144,12 +1157,14 @@ const Journals = () => {
             permissions.includes("journals_Update") ? (
             <>
               <Button
-                variant="contained"
+                variant="outlined"
                 startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
                 onClick={handleEditClick}
                 sx={{
-                  bgcolor: "primary.main",
-                  "&:hover": { bgcolor: "primary.dark" },
+                  borderColor: "warning.main",
+                  color: "warning.main",
+                  fontWeight: "bold",
+                  "&:hover": { bgcolor: "warning.dark" },
                 }}
               >
                 تعديل القيد
@@ -1161,6 +1176,7 @@ const Journals = () => {
                   onClick={handlePostJournal}
                   sx={{
                     bgcolor: "success.main",
+                    fontWeight: "bold",
                     "&:hover": { bgcolor: "success.dark" },
                   }}
                 >
@@ -1178,6 +1194,7 @@ const Journals = () => {
                   sx={{
                     borderColor: "error.main",
                     color: "error.main",
+                    fontWeight: "bold",
                     "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
                   }}
                 >
@@ -1190,12 +1207,14 @@ const Journals = () => {
             permissions.includes("journals_Update") ? (
             <>
               <Button
-                variant="contained"
+                variant="outlined"
                 startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
                 onClick={handleUpdateJournal}
                 disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
                 sx={{
-                  bgcolor: "success.main",
+                  borderColor: "success.main",
+                  color: "success.main",
+                  fontWeight: "bold",
                   "&:hover": { bgcolor: "success.dark" },
                 }}
               >
@@ -1894,6 +1913,20 @@ const Journals = () => {
                     رجوع لتوزيع الأرباح
                   </Button>
                 )}
+                {activeTab === 1 && fromInvestorsWithdrawal && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleBackToInvestorsWithdrawal}
+                    sx={{
+                      borderColor: "#0d40a5",
+                      color: "#0d40a5",
+                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
+                    }}
+                  >
+                    رجوع لانسحابات المستثمرين
+                  </Button>
+                )}
               </Box>
             ) : (
               <Box sx={{ mb: 3 }}>
@@ -1901,7 +1934,9 @@ const Journals = () => {
                   <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                     <IconButton
                       onClick={
-                        fromProfitDistribution
+                        fromInvestorsWithdrawal
+                          ? handleBackToInvestorsWithdrawal
+                          : fromProfitDistribution
                           ? handleBackToProfitDistribution
                           : fromPeriod
                           ? handleBackToPeriodClosing

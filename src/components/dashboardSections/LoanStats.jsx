@@ -172,35 +172,66 @@ const LoanStats = () => {
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
+            border: `1px solid ${theme.palette.primary.main}20`,
+            boxShadow: `
+              0 2px 8px ${theme.palette.primary.main}10,
+              0 8px 24px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5)
+            `,
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+            },
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
+              transform: 'translateY(-8px) scale(1.02)',
+              boxShadow: `
+                0 4px 16px ${theme.palette.primary.main}20,
+                0 16px 48px rgba(0,0,0,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.6)
+              `,
+              borderColor: `${theme.palette.primary.main}40`,
             }
           }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'primary.50',
-                mb: 2
+                width: 64,
+                height: 64,
+                borderRadius: '16px',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.primary.dark}10 100%)`,
+                border: `2px solid ${theme.palette.primary.main}30`,
+                mb: 2.5,
+                boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: `0 6px 20px ${theme.palette.primary.main}30`,
+                }
               }}>
-                <Assessment sx={{ fontSize: '1.75rem', color: 'primary.main' }} />
+                <Assessment sx={{ fontSize: '2rem', color: theme.palette.primary.main }} />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 إجمالي السلف
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="800" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 {animatedLoansCount}
               </Typography>
             </CardContent>
@@ -212,35 +243,66 @@ const LoanStats = () => {
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.warning.main}15 0%, ${theme.palette.warning.dark}08 100%)`,
+            border: `1px solid ${theme.palette.warning.main}20`,
+            boxShadow: `
+              0 2px 8px ${theme.palette.warning.main}10,
+              0 8px 24px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5)
+            `,
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+            },
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
+              transform: 'translateY(-8px) scale(1.02)',
+              boxShadow: `
+                0 4px 16px ${theme.palette.warning.main}20,
+                0 16px 48px rgba(0,0,0,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.6)
+              `,
+              borderColor: `${theme.palette.warning.main}40`,
             }
           }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'warning.50',
-                mb: 2
+                width: 64,
+                height: 64,
+                borderRadius: '16px',
+                background: `linear-gradient(135deg, ${theme.palette.warning.main}20 0%, ${theme.palette.warning.dark}10 100%)`,
+                border: `2px solid ${theme.palette.warning.main}30`,
+                mb: 2.5,
+                boxShadow: `0 4px 12px ${theme.palette.warning.main}20`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: `0 6px 20px ${theme.palette.warning.main}30`,
+                }
               }}>
-                <Bolt sx={{ fontSize: '1.75rem', color: 'warning.main' }} />
+                <Bolt sx={{ fontSize: '2rem', color: theme.palette.warning.main }} />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 سلف نشطة
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="warning.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="800" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 {animatedActiveLoans}
               </Typography>
             </CardContent>
@@ -252,35 +314,66 @@ const LoanStats = () => {
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
+            border: `1px solid ${theme.palette.success.main}20`,
+            boxShadow: `
+              0 2px 8px ${theme.palette.success.main}10,
+              0 8px 24px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5)
+            `,
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+            },
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
+              transform: 'translateY(-8px) scale(1.02)',
+              boxShadow: `
+                0 4px 16px ${theme.palette.success.main}20,
+                0 16px 48px rgba(0,0,0,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.6)
+              `,
+              borderColor: `${theme.palette.success.main}40`,
             }
           }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'success.50',
-                mb: 2
+                width: 64,
+                height: 64,
+                borderRadius: '16px',
+                background: `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.dark}10 100%)`,
+                border: `2px solid ${theme.palette.success.main}30`,
+                mb: 2.5,
+                boxShadow: `0 4px 12px ${theme.palette.success.main}20`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: `0 6px 20px ${theme.palette.success.main}30`,
+                }
               }}>
-                <CheckCircle sx={{ fontSize: '1.75rem', color: 'success.main' }} />
+                <CheckCircle sx={{ fontSize: '2rem', color: theme.palette.success.main }} />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 سلف مكتملة
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="800" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 {animatedCompletedLoans}
               </Typography>
             </CardContent>
@@ -292,35 +385,66 @@ const LoanStats = () => {
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.error.main}15 0%, ${theme.palette.error.dark}08 100%)`,
+            border: `1px solid ${theme.palette.error.main}20`,
+            boxShadow: `
+              0 2px 8px ${theme.palette.error.main}10,
+              0 8px 24px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5)
+            `,
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
+            },
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
+              transform: 'translateY(-8px) scale(1.02)',
+              boxShadow: `
+                0 4px 16px ${theme.palette.error.main}20,
+                0 16px 48px rgba(0,0,0,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.6)
+              `,
+              borderColor: `${theme.palette.error.main}40`,
             }
           }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'error.50',
-                mb: 2
+                width: 64,
+                height: 64,
+                borderRadius: '16px',
+                background: `linear-gradient(135deg, ${theme.palette.error.main}20 0%, ${theme.palette.error.dark}10 100%)`,
+                border: `2px solid ${theme.palette.error.main}30`,
+                mb: 2.5,
+                boxShadow: `0 4px 12px ${theme.palette.error.main}20`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: `0 6px 20px ${theme.palette.error.main}30`,
+                }
               }}>
-                <ErrorOutline sx={{ fontSize: '1.75rem', color: 'error.main' }} />
+                <ErrorOutline sx={{ fontSize: '2rem', color: theme.palette.error.main }} />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 سلف متأخرة
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="error.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="800" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 {animatedOverdueLoans}
               </Typography>
             </CardContent>
@@ -332,35 +456,66 @@ const LoanStats = () => {
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
+            border: `1px solid ${theme.palette.info.main}20`,
+            boxShadow: `
+              0 2px 8px ${theme.palette.info.main}10,
+              0 8px 24px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5)
+            `,
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+            },
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
+              transform: 'translateY(-8px) scale(1.02)',
+              boxShadow: `
+                0 4px 16px ${theme.palette.info.main}20,
+                0 16px 48px rgba(0,0,0,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.6)
+              `,
+              borderColor: `${theme.palette.info.main}40`,
             }
           }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'success.50',
-                mb: 2
+                width: 64,
+                height: 64,
+                borderRadius: '16px',
+                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
+                border: `2px solid ${theme.palette.info.main}30`,
+                mb: 2.5,
+                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
+                }
               }}>
-                <AttachMoney sx={{ fontSize: '1.75rem', color: 'success.main' }} />
+                <AttachMoney sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 إجمالي مبلغ السلف
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="800" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 {formatCurrency(animatedTotalAmount)}
               </Typography>
             </CardContent>
@@ -372,35 +527,66 @@ const LoanStats = () => {
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-            transition: 'all 0.3s ease-in-out',
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
+            border: `1px solid ${theme.palette.info.main}20`,
+            boxShadow: `
+              0 2px 8px ${theme.palette.info.main}10,
+              0 8px 24px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5)
+            `,
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+            },
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 30px 0 rgba(0,0,0,0.15)',
-              transform: 'translateY(-2px)'
+              transform: 'translateY(-8px) scale(1.02)',
+              boxShadow: `
+                0 4px 16px ${theme.palette.info.main}20,
+                0 16px 48px rgba(0,0,0,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.6)
+              `,
+              borderColor: `${theme.palette.info.main}40`,
             }
           }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'info.50',
-                mb: 2
+                width: 64,
+                height: 64,
+                borderRadius: '16px',
+                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
+                border: `2px solid ${theme.palette.info.main}30`,
+                mb: 2.5,
+                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
+                }
               }}>
-                <AccountBalance sx={{ fontSize: '1.75rem', color: 'info.main' }} />
+                <AccountBalance sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 500 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 رصيد البنك
               </Typography>
-              <Typography variant="h4" fontWeight="700" color="info.main" sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' } }}>
+              <Typography variant="h4" fontWeight="800" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 {formatCurrency(animatedBankBalance)}
               </Typography>
             </CardContent>

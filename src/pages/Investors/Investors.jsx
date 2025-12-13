@@ -45,6 +45,8 @@ import {
   PictureAsPdf,
   TableChart,
   Info,
+  AccountBalanceWallet,
+  Visibility,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,6 +61,7 @@ import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLay
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportInvestorsToPDF, exportInvestorsToExcel } from "../../utilities/investorsExporter";
+import { useNavigate } from "react-router-dom";
 
 const getInvestors = async (page = 1, searchQuery = '', status = '') => {
   let queryParams = new URLSearchParams();
@@ -118,6 +121,7 @@ const deletePartnerTransaction = async (transactionId) => {
 };
 
 export default function Investors() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -149,6 +153,12 @@ export default function Investors() {
   const [contractInvestorData, setContractInvestorData] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
   const contractGeneratorRef = useRef(null);
+
+  // Withdraw states
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawnInvestors, setWithdrawnInvestors] = useState(new Set());
 
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
@@ -419,6 +429,57 @@ export default function Investors() {
     }
   };
 
+  // Withdraw handler
+  const handleOpenWithdrawModal = () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر");
+      return;
+    }
+    setWithdrawAmount("");
+    setIsWithdrawModalOpen(true);
+  };
+
+  const handleWithdraw = async () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر");
+      return;
+    }
+
+    // Check if investor is active
+    if (investorDetails?.isActive) {
+      notifyError("هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط");
+      return;
+    }
+
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      notifyError("يرجى إدخال مبلغ صحيح");
+      return;
+    }
+
+    try {
+      setIsWithdrawing(true);
+      await Api.post(`/api/partner-withdraw/${selectedInvestor.id}`, {
+        amount: parseFloat(withdrawAmount)
+      });
+
+      // Mark investor as withdrawn
+      setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      
+      notifySuccess(`تم إنسحاب المستثمر ${selectedInvestor.name} من توزيعات الأرباح بنجاح`);
+      setIsWithdrawModalOpen(false);
+      setWithdrawAmount("");
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء إنسحاب المستثمر');
+      handleApiError(error);
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   // New transaction handlers
   const handleAddTransaction = () => {
     setTransactionForm({
@@ -631,10 +692,29 @@ export default function Investors() {
           borderBottom: "1px solid #ddd",
         }}
       >
-        <Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">
             إدارة المستثمرين
           </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<Visibility sx={{marginLeft: '10px'}} />}
+            onClick={() => navigate('/investors-withdraw')}
+            sx={{
+              borderColor: "primary.main",
+              color: "primary.main",
+              "&:hover": { 
+                bgcolor: "primary.50",
+                borderColor: "primary.dark",
+              },
+              fontWeight: "bold",
+              borderRadius: 2,
+              px: 2,
+              py: 0.75,
+            }}
+          >
+            عرض المستثمرين المنسحبين
+          </Button>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           {permissions.includes("partners_Add") && (
@@ -903,11 +983,41 @@ export default function Investors() {
                   تصدير Excel
                 </Button>
                 )}
+                {permissions.includes("partners_Add") && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AccountBalanceWallet sx={{marginLeft: '10px'}} />}
+                  onClick={handleOpenWithdrawModal}
+                  disabled={isWithdrawing}
+                  sx={{
+                    borderColor: "#d32f2f",
+                    color: "#d32f2f",
+                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: "bold",
+                  }}
+                >
+                  انسحاب المستثمر
+                </Button>
+                )}
               </Box>
             </Box>
 
             {/* Main Content Area */}
             <Box sx={{ p: 3 }}>
+              {/* Withdrawal Notice */}
+              {withdrawnInvestors.has(selectedInvestor?.id) && (
+                <Alert 
+                  severity="warning" 
+                  sx={{ mb: 3 }}
+                  icon={<Info />}
+                >
+                  <Typography variant="body2" fontWeight="bold">
+                    تم إنسحاب هذا المستثمر من توزيعات الأرباح
+                  </Typography>
+                </Alert>
+              )}
 
               {/* Tabs */}
               <Tabs
@@ -1691,6 +1801,78 @@ export default function Investors() {
         message={`هل أنت متأكد من حذف العملية المالية برقم المرجع ${transactionToDelete?.reference}؟`}
         ButtonText="حذف"
       />
+
+      {/* Withdraw Modal */}
+      <Dialog 
+        open={isWithdrawModalOpen} 
+        onClose={() => {
+          setIsWithdrawModalOpen(false);
+          setWithdrawAmount("");
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" fontWeight="bold">
+            إنسحاب المستثمر من توزيعات الأرباح
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            {investorDetails?.isActive ? (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                <Typography variant="body2" fontWeight="bold">
+                  هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط
+                </Typography>
+              </Alert>
+            ) : (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  سيتم إنسحاب المستثمر {selectedInvestor?.name} من توزيعات الأرباح بعد إدخال المبلغ المحدد
+                </Typography>
+              </Alert>
+            )}
+            
+            <TextField
+              label="المبلغ"
+              type="number"
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              fullWidth
+              disabled={investorDetails?.isActive}
+              InputProps={{
+                inputProps: { min: 0, step: 0.01 }
+              }}
+              helperText={investorDetails?.isActive ? "لا يمكن تنفيذ الإنسحاب لأن المستثمر نشط" : "أدخل المبلغ المراد سحبه من المستثمر"}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
+          <Button 
+            onClick={() => {
+              setIsWithdrawModalOpen(false);
+              setWithdrawAmount("");
+            }}
+            color="inherit"
+            disabled={isWithdrawing}
+          >
+            إلغاء
+          </Button>
+          {permissions.includes("partners_Add") && (
+          <Button 
+            onClick={handleWithdraw}
+            variant="contained"
+            disabled={isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || investorDetails?.isActive}
+            sx={{
+              bgcolor: "#d32f2f",
+              "&:hover": { bgcolor: "#b71c1c" },
+            }}
+          >
+            {isWithdrawing ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'تأكيد الإنسحاب'}
+          </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

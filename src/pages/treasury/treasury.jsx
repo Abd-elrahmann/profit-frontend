@@ -70,14 +70,15 @@ import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { useCountUp } from '../../hooks/useCountUp';
 
 
-const getBankAccountData = async (month = null) => {
+const getBankAccountData = async (month = null, page = 1, limit = 20) => {
   const params = new URLSearchParams();
   if (month) {
     params.append('month', month);
   }
+  params.append('limit', limit.toString());
 
   const queryString = params.toString();
-  const response = await Api.get(`/api/accounts/bank${queryString ? `?${queryString}` : ''}`);
+  const response = await Api.get(`/api/accounts/bank/${page}${queryString ? `?${queryString}` : ''}`);
   return response.data;
 };
 
@@ -89,6 +90,8 @@ export default function Treasury() {
   const [tab, setTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
 
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -98,8 +101,8 @@ export default function Treasury() {
   const { permissions } = usePermissions();
 
   const { data: bankData, isLoading, error } = useQuery({
-    queryKey: ["bank-account", selectedMonth],
-    queryFn: () => getBankAccountData(selectedMonth),
+    queryKey: ["bank-account", selectedMonth, page, limit],
+    queryFn: () => getBankAccountData(selectedMonth, page, limit),
     retry: 1,
   });
 
@@ -110,6 +113,11 @@ export default function Treasury() {
 
   const handleMonthChange = (event) => {
     setSelectedMonth(event.target.value);
+    setPage(1); // Reset to first page when month changes
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
   };
 
   const handleExportPDF = async () => {
@@ -218,6 +226,8 @@ export default function Treasury() {
     { name: 'الصادر', value: totalCredit, color: '#FF8042' },
   ];
 
+  // Get current journals from paginated response
+  // The backend returns journals grouped by month, but we need the current page entries
   const currentJournals = selectedMonth && bankData?.journalsByMonth?.[selectedMonth] ? 
     bankData.journalsByMonth[selectedMonth].entries : 
     (bankData?.journalsByMonth ? 
@@ -229,12 +239,18 @@ export default function Treasury() {
     { name: 'مسودة', value: currentJournals.filter(j => j.status === 'DRAFT').length || 0 },
   ];
 
+  // Pagination data from backend
+  const pagination = bankData?.pagination || {
+    page: 1,
+    limit: limit,
+    totalJournals: 0,
+    totalPages: 1,
+  };
+
   const availableMonths = bankData?.journalsByMonth ? 
     Object.keys(bankData.journalsByMonth).sort().reverse() : [];
 
-  const currentTotalTransactions = selectedMonth && bankData?.journalsByMonth?.[selectedMonth] ? 
-    bankData.journalsByMonth[selectedMonth].entries.length : 
-    totalTransactions;
+  const currentTotalTransactions = pagination.totalJournals || totalTransactions;
 
   // حساب النسبة المئوية للرصيد المتاح
   const totalBalance = availableBalance + totalCredit;
@@ -1326,6 +1342,32 @@ export default function Treasury() {
                     ) : (
                       <>
                         {isSmallScreen ? renderMobileJournalCards() : renderDesktopJournalTable()}
+                        
+                        {/* Pagination */}
+                        {pagination.totalPages > 1 && (
+                          <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            mt: 3,
+                            mb: 2
+                          }}>
+                            <Pagination
+                              count={pagination.totalPages}
+                              page={pagination.page}
+                              onChange={handlePageChange}
+                              color="primary"
+                              size={isSmallScreen ? "small" : "medium"}
+                              showFirstButton
+                              showLastButton
+                              sx={{
+                                '& .MuiPaginationItem-root': {
+                                  fontSize: isSmallScreen ? '0.875rem' : '1rem',
+                                }
+                              }}
+                            />
+                          </Box>
+                        )}
                       </>
                     )}
                   </Paper>

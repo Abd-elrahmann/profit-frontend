@@ -22,3 +22,25 @@ export const createExpense = async (expenseData) => {
   }
 };
 
+// Update expense
+export const updateExpense = async (journalId, expenseData) => {
+  try {
+    const response = await Api.patch(`/api/expenses/${journalId}`, expenseData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Delete expense
+export const deleteExpense = async (journalId) => {
+  try {
+    const response = await Api.delete(`/api/expenses/${journalId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+

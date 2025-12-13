@@ -16,10 +16,11 @@ import {
   Grid,
   Divider,
   Stack,
+  IconButton,
 } from "@mui/material";
-import { Add, PictureAsPdf, FileDownload } from "@mui/icons-material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getExpenses } from "./expensesApi";
+import { Add, PictureAsPdf, FileDownload, Edit, Delete, MoreVert } from "@mui/icons-material";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { getExpenses, deleteExpense } from "./expensesApi";
 import { Helmet } from "react-helmet-async";
 import {
   StyledTableCell,
@@ -27,17 +28,23 @@ import {
 } from "../../components/layouts/tableLayout";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import AddExpense from "../../components/modals/AddExpense";
+import EditExpense from "../../components/modals/EditExpense";
+import DeleteModal from "../../components/modals/DeleteModal";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
 import {
   exportExpensesToExcel,
   exportExpensesToPDF,
 } from "../../utilities/expensesExporter";
-import { notifyError } from "../../utilities/toastify";
+import { notifySuccess, notifyError } from "../../utilities/toastify";
 
 const Expenses = () => {
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -54,8 +61,47 @@ const Expenses = () => {
     retry: 1,
   });
 
+  const deleteExpenseMutation = useMutation({
+    mutationFn: deleteExpense,
+    onSuccess: () => {
+      notifySuccess("تم حذف المصروف بنجاح");
+      queryClient.invalidateQueries(["expenses"]);
+    },
+    onError: (error) => {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء حذف المصروف");
+    },
+  });
+
   const handleAddExpense = () => {
     setIsAddModalOpen(true);
+  };
+
+  const handleEditExpense = (expense) => {
+    setSelectedExpense(expense);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedExpense(null);
+  };
+
+  const handleDeleteExpense = (journalId) => {
+    setExpenseToDelete(journalId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (expenseToDelete) {
+      deleteExpenseMutation.mutate(expenseToDelete);
+      setIsDeleteModalOpen(false);
+      setExpenseToDelete(null);
+    }
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setExpenseToDelete(null);
   };
 
   const handleCloseModal = () => {
@@ -124,18 +170,24 @@ const Expenses = () => {
             >
               الحالة
             </StyledTableCell>
+            <StyledTableCell
+              align="center"
+              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
+            >
+              الإجراءات
+            </StyledTableCell>
           </StyledTableRow>
         </TableHead>
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={5} align="center">
+              <StyledTableCell colSpan={6} align="center">
                 <CircularProgress size={30} />
               </StyledTableCell>
             </StyledTableRow>
           ) : expensesData?.journals?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={5} align="center">
+              <StyledTableCell colSpan={6} align="center">
                 <Typography variant="body2" color="text.secondary" sx={{ py: 3 }}>
                   لا توجد مصروفات
                 </Typography>
@@ -169,6 +221,29 @@ const Expenses = () => {
                     color={journal.status === "POSTED" ? "success" : "default"}
                     size="small"
                   />
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  <Stack direction="row" spacing={1} justifyContent="center">
+                    {permissions.includes("expenses_Update") && (
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleEditExpense(journal)}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    )}
+                    {permissions.includes("expenses_Delete") && (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteExpense(journal.journalId)}
+                        disabled={deleteExpenseMutation.isLoading}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Stack>
                 </StyledTableCell>
               </StyledTableRow>
             ))
@@ -384,6 +459,26 @@ const Expenses = () => {
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
         isMobile={isMobile}
+      />
+
+      {/* Edit Expense Modal */}
+      <EditExpense
+        open={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSuccess={handleSuccess}
+        expense={selectedExpense}
+        isMobile={isMobile}
+      />
+
+      {/* Delete Expense Modal */}
+      <DeleteModal
+        open={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="حذف المصروف"
+        message="هل أنت متأكد من حذف هذا المصروف؟ لا يمكن التراجع عن هذا الإجراء."
+        isLoading={deleteExpenseMutation.isLoading}
+        ButtonText="حذف المصروف"
       />
     </>
   );

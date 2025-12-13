@@ -42,6 +42,7 @@ const Saving = React.lazy(() => import('./pages/Saving/Saving'));
 const ClientCollections = React.lazy(() => import('./pages/clientCollections/ClientCollections'));
 const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProfit'));
 const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
+const InvestorsWithdrawal = React.lazy(() => import('./pages/investorsWithdrawal/investorsWithdrawal'));
 const routes = [
   {
     path: '/login',
@@ -127,6 +128,17 @@ const routes = [
     label: 'المستثمرين',
     icon: TrendingUp,
     module: 'partners',
+    requiresPermissions: true,
+    parent: 'إدارة المستثمرين'
+  },
+  {
+    path: '/investors-withdraw',
+    element: InvestorsWithdrawal,
+    protected: true,
+    showInSidebar: true,
+    module: 'partners-withdraw',
+    label: 'الانسحابات',
+    icon: AccountBalance,
     requiresPermissions: true,
     parent: 'إدارة المستثمرين'
   },

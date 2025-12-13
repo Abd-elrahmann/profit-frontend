@@ -1,0 +1,739 @@
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Paper,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import { Helmet } from "react-helmet-async";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { handleApiError } from "../../config/Api";
+import InvestorsWithdrawalTable from "../../components/modals/investorsWithdrawalTable";
+import { notifySuccess, notifyError } from "../../utilities/toastify";
+import dayjs from "dayjs";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  getWithdrawingInvestors,
+  getWithdrawalDetails,
+  approveWithdrawal,
+  rejectWithdrawal,
+  partialPayWithdrawal,
+} from "./withdrawal";
+import {
+  Grid,
+  Card,
+  CardContent,
+  Button,
+  Chip,
+  Table,
+  TableBody,
+  TableContainer,
+  TableHead,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+} from "@mui/material";
+import {
+  CheckCircle,
+  Cancel,
+  AttachMoney,
+  Visibility,
+} from "@mui/icons-material";
+import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
+import { usePermissions } from "../../components/Contexts/PermissionsContext";
+
+export default function InvestorsWithdrawal() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedInvestorId, setSelectedInvestorId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [partialPayDialogOpen, setPartialPayDialogOpen] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [partialAmount, setPartialAmount] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const queryClient = useQueryClient();
+  const { permissions } = usePermissions();
+
+  // Handle navigation state when returning from journal details
+  useEffect(() => {
+    if (location.state) {
+      const { investorId: stateInvestorId, activeTab: targetTab } = location.state;
+      if (stateInvestorId) {
+        setSelectedInvestorId(stateInvestorId);
+        setActiveTab(targetTab || 1);
+      }
+    }
+  }, [location.state]);
+
+  const { data: withdrawingInvestorsData, isLoading: isWithdrawingLoading } = useQuery({
+    queryKey: ["withdrawing-investors", currentPage],
+    queryFn: () => getWithdrawingInvestors(currentPage),
+    enabled: activeTab === 0,
+  });
+
+  const { data: withdrawalDetails, isLoading: isDetailsLoading } = useQuery({
+    queryKey: ["withdrawal-details", selectedInvestorId],
+    queryFn: () => getWithdrawalDetails(selectedInvestorId),
+    enabled: !!selectedInvestorId && activeTab === 1,
+  });
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    if (newValue === 0) {
+      setSelectedInvestorId(null);
+    }
+  };
+
+  const handleViewDetails = (investorId) => {
+    setSelectedInvestorId(investorId);
+    setActiveTab(1);
+  };
+
+  const handleApprove = async (scheduleId) => {
+    if (!permissions.includes("partners-withdraw_Post")) {
+      notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      await approveWithdrawal(scheduleId);
+      notifySuccess("تم الموافقة على الدفعة بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
+      queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء الموافقة على الدفعة");
+      handleApiError(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReject = async (scheduleId) => {
+    if (!permissions.includes("partners-withdraw_Post")) {
+      notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
+      return;
+    }
+
+    if (!window.confirm("هل أنت متأكد من رفض هذه الدفعة؟")) {
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      await rejectWithdrawal(scheduleId);
+      notifySuccess("تم رفض الدفعة بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
+      queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض الدفعة");
+      handleApiError(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleOpenPartialPayDialog = (scheduleId) => {
+    setSelectedScheduleId(scheduleId);
+    setPartialAmount("");
+    setPartialPayDialogOpen(true);
+  };
+
+  const handlePartialPay = async () => {
+    if (!permissions.includes("partners-withdraw_Post")) {
+      notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
+      return;
+    }
+
+    if (!partialAmount || parseFloat(partialAmount) <= 0) {
+      notifyError("يرجى إدخال مبلغ صحيح");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      await partialPayWithdrawal(selectedScheduleId, parseFloat(partialAmount));
+      notifySuccess("تم تسجيل السداد الجزئي بنجاح");
+      setPartialPayDialogOpen(false);
+      setPartialAmount("");
+      setSelectedScheduleId(null);
+      queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
+      queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء تسجيل السداد الجزئي");
+      handleApiError(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "PAID":
+        return "success";
+      case "PARTIAL_PAID":
+        return "warning";
+      case "PENDING":
+        return "default";
+      default:
+        return "default";
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "PAID":
+        return "مدفوع";
+      case "PARTIAL_PAID":
+        return "مدفوع جزئياً";
+      case "PENDING":
+        return "قيد الانتظار";
+      default:
+        return status;
+    }
+  };
+
+  const getWithdrawingStatusColor = (status) => {
+    switch (status) {
+      case "WITHDRAWING":
+        return "warning";
+      case "WITHDRAWN":
+        return "success";
+      default:
+        return "default";
+    }
+  };
+
+  const getWithdrawingStatusText = (status) => {
+    switch (status) {
+      case "WITHDRAWING":
+        return "قيد السحب";
+      case "WITHDRAWN":
+        return "تم السحب";
+      default:
+        return status;
+    }
+  };
+
+  return (
+    <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+      <Helmet>
+        <title>انسحابات المستثمرين</title>
+        <meta name="description" content="انسحابات المستثمرين" />
+      </Helmet>
+
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+          bgcolor: "#fff",
+          borderBottom: "1px solid #ddd",
+        }}
+      >
+        <Typography variant="h5" fontWeight="bold">
+          انسحابات المستثمرين
+        </Typography>
+      </Box>
+
+      {/* Tabs */}
+      <Box sx={{ bgcolor: "#fff", borderBottom: "1px solid #ddd" }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{
+            px: 2,
+            "& .MuiTab-root": {
+              color: "text.primary",
+              "&.Mui-selected": {
+                color: "primary.main",
+              },
+            },
+          }}
+        >
+          <Tab label="جدول السحب" />
+          <Tab label="التفاصيل" disabled={!selectedInvestorId} />
+        </Tabs>
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ p: 3 }}>
+        {activeTab === 0 && (
+          <InvestorsWithdrawalTable
+            data={withdrawingInvestorsData}
+            isLoading={isWithdrawingLoading}
+            onViewDetails={handleViewDetails}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
+        )}
+
+        {activeTab === 1 && (
+          <Box>
+            {isDetailsLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : !withdrawalDetails ? (
+              <Alert severity="info">يرجى اختيار مستثمر لعرض التفاصيل</Alert>
+            ) : (
+              <Box>
+                {/* Partner Info */}
+                <Paper sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
+                    معلومات المستثمر
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>
+                        الاسم
+                      </Typography>
+                      <TextField
+                        value={withdrawalDetails.partner?.name || ""}
+                        fullWidth
+                            readOnly
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#f9fafb",
+                            borderRadius: "6px",
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>
+                        رأس المال الإجمالي
+                      </Typography>
+                      <TextField
+                        value={withdrawalDetails.partner?.totalCapital?.toLocaleString() || "0"}
+                        fullWidth
+                        readOnly
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#f9fafb",
+                            borderRadius: "6px",
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>
+                        الادخار
+                      </Typography>
+                      <TextField
+                        value={withdrawalDetails.partner?.savings?.toLocaleString() || "0"}
+                        fullWidth
+                        readOnly
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#f9fafb",
+                            borderRadius: "6px",
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>
+                        حالة السحب
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <TextField
+                          value={getWithdrawingStatusText(withdrawalDetails.partner?.withdrawingStatus)}
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                        <Chip
+                          label={getWithdrawingStatusText(withdrawalDetails.partner?.withdrawingStatus)}
+                          color={getWithdrawingStatusColor(withdrawalDetails.partner?.withdrawingStatus)}
+                          size="small"
+                        />
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" mb={1} fontWeight={500}>
+                        الحالة
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <TextField
+                          value={withdrawalDetails.partner?.isFrozen ? "مجمّد" : "نشط"}
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                        <Chip
+                          label={withdrawalDetails.partner?.isFrozen ? "مجمّد" : "نشط"}
+                          color={withdrawalDetails.partner?.isFrozen ? "error" : "success"}
+                          size="small"
+                        />
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+
+                {/* Withdrawal Request Info */}
+                {withdrawalDetails.withdrawal && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
+                      معلومات طلب الانسحاب
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
+                          رأس المال الإجمالي
+                        </Typography>
+                        <TextField
+                          value={withdrawalDetails.withdrawal.totalCapital?.toLocaleString() || "0"}
+                          fullWidth
+                            readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
+                          النصيب الافتراضي
+                        </Typography>
+                        <TextField
+                          value={withdrawalDetails.withdrawal.defaultShare?.toLocaleString() || "0"}
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
+                          رأس المال المتبقي
+                        </Typography>
+                        <TextField
+                          value={withdrawalDetails.withdrawal.remainingCapital?.toLocaleString() || "0"}
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
+                          مبلغ الادخار
+                        </Typography>
+                        <TextField
+                          value={withdrawalDetails.withdrawal.savingAmount?.toLocaleString() || "0"}
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
+                          تاريخ الطلب
+                        </Typography>
+                        <TextField
+                          value={
+                            withdrawalDetails.withdrawal.createdAt
+                              ? dayjs(withdrawalDetails.withdrawal.createdAt).format("DD/MM/YYYY")
+                              : "-"
+                          }
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: "#f9fafb",
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                )}
+
+                {/* Schedule Table */}
+                {withdrawalDetails.schedule && withdrawalDetails.schedule.length > 0 && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
+                      جدول السحب
+                    </Typography>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <StyledTableRow>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              السنة
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              الشهر
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              المبلغ
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              المدفوع
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              المتبقي
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              الحالة
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              الإجراءات
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        </TableHead>
+                        <TableBody>
+                          {withdrawalDetails.schedule.map((schedule) => (
+                            <StyledTableRow key={schedule.id} hover>
+                              <StyledTableCell align="center">
+                                {schedule.year}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {schedule.month}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {schedule.amount?.toLocaleString()}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {schedule.paidAmount?.toLocaleString() || 0}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {schedule.remaining?.toLocaleString() || 0}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Chip
+                                  label={getStatusText(schedule.status)}
+                                  color={getStatusColor(schedule.status)}
+                                  size="small"
+                                />
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                                  {!schedule.isPaid && permissions.includes("partners-withdraw_Post") && (
+                                    <>
+                                      <Button
+                                        size="small"
+                                        variant="contained"
+                                        color="success"
+                                        onClick={() => handleApprove(schedule.id)}
+                                        disabled={isProcessing}
+                                        sx={{
+                                            fontWeight: "bold",
+                                        }}
+                                      >
+                                        <CheckCircle sx={{marginLeft: "5px"}} />
+                                        موافقة
+                                      </Button>
+                                      <Button
+                                        size="small"
+                                        variant="contained"
+                                        color="error"
+                                        onClick={() => handleReject(schedule.id)}
+                                        disabled={isProcessing}
+                                        sx={{
+                                            fontWeight: "bold",
+                                        }}
+                                      >
+                                        <Cancel sx={{marginLeft: "5px"}} />
+                                        رفض
+                                      </Button>
+                                      <Button
+                                        size="small"
+                                        variant="contained"
+                                        color="warning"
+                                        onClick={() => handleOpenPartialPayDialog(schedule.id)}
+                                        disabled={isProcessing}
+                                        sx={{
+                                            fontWeight: "bold",
+                                        }}
+                                      >
+                                        <AttachMoney sx={{marginLeft: "5px"}} />
+                                        دفع جزئي
+                                      </Button>
+                                    </>
+                                  )}
+                                </Box>
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
+
+                {/* Journals */}
+                {withdrawalDetails.journals && withdrawalDetails.journals.length > 0 && (
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
+                      القيود المحاسبية
+                    </Typography>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <StyledTableRow>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              المرجع
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              الوصف
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              التاريخ
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              الإجراءات
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        </TableHead>
+                        <TableBody>
+                          {withdrawalDetails.journals.map((journal) => (
+                            <StyledTableRow key={journal.id} hover>
+                              <StyledTableCell align="center">
+                                {journal.reference}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {journal.description}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {journal.createdAt
+                                  ? dayjs(journal.createdAt).format("DD/MM/YYYY")
+                                  : "-"}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<Visibility sx={{marginLeft: "5px"}} />}
+                                  onClick={() => {
+                                    navigate("/journal-entries", {
+                                      state: {
+                                        journalId: journal.id,
+                                        activeTab: 1,
+                                        fromInvestorsWithdrawal: true,
+                                        investorId: selectedInvestorId,
+                                      },
+                                    });
+                                  }}
+                                  sx={{
+                                    borderColor: "primary.main",
+                                    color: "primary.main",
+                                    "&:hover": {
+                                      bgcolor: "primary.50",
+                                      borderColor: "primary.dark",
+                                    },
+                                  }}
+                                >
+                                  عرض التفاصيل
+                                </Button>
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+
+      {/* Partial Pay Dialog */}
+      <Dialog
+        open={partialPayDialogOpen}
+        onClose={() => {
+          setPartialPayDialogOpen(false);
+          setPartialAmount("");
+          setSelectedScheduleId(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" fontWeight="bold">
+            دفع جزئي
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <TextField
+              label="المبلغ المدفوع"
+              type="number"
+              value={partialAmount}
+              onChange={(e) => setPartialAmount(e.target.value)}
+              fullWidth
+              InputProps={{
+                inputProps: { min: 0, step: 0.01 },
+              }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, flexDirection: "row-reverse" }}>
+          <Button
+            onClick={() => {
+              setPartialPayDialogOpen(false);
+              setPartialAmount("");
+              setSelectedScheduleId(null);
+            }}
+            color="inherit"
+            disabled={isProcessing}
+          >
+            إلغاء
+          </Button>
+          <Button
+            onClick={handlePartialPay}
+            variant="contained"
+            disabled={isProcessing || !partialAmount || parseFloat(partialAmount) <= 0}
+            sx={{
+              bgcolor: "warning.main",
+              "&:hover": { bgcolor: "warning.dark" },
+            }}
+          >
+            {isProcessing ? <CircularProgress size={20} sx={{ color: "white" }} /> : "تأكيد"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
