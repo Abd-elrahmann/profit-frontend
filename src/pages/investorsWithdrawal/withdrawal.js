@@ -56,3 +56,22 @@ export const partialPayWithdrawal = async (scheduleId, paidAmount) => {
     throw error;
   }
 };
+
+// Upload withdrawal receipt
+export const uploadWithdrawalReceipt = async (withdrawalId, formData) => {
+  try {
+    const response = await Api.post(
+      `/api/partner-withdraw/upload-receipt/${withdrawalId}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

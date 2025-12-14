@@ -42,6 +42,7 @@ import DebtAcknowledgment from "../../components/Contracts/DebtAcknowledgment";
 import PaymentVoucher from "../../components/Contracts/PaymentVoucher";
 import InstallmentPaymentReceipt from "../../components/Contracts/InstallmentPaymentReceipt";
 import InstallmentSettlementReceipt from "../../components/Contracts/InstallmentSettlementReceipt";
+import WithdrawReceipt from "../../components/Contracts/WithdrawReceipt";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -55,6 +56,7 @@ export default function ContractTemplates() {
     paymentVoucher: "",
     paymentProof: "",
     settlement: "",
+    withdrawalReceipt: "",
   });
   const [templateStyles, setTemplateStyles] = useState({
     mudarabah: "",
@@ -63,6 +65,7 @@ export default function ContractTemplates() {
     paymentVoucher: "",
     paymentProof: "",
     settlement: "",
+    withdrawalReceipt: "",
   });
   const [dynamicVariables, setDynamicVariables] = useState({
     mudarabah: [],
@@ -71,6 +74,7 @@ export default function ContractTemplates() {
     paymentVoucher: [],
     paymentProof: [],
     settlement: [],
+    withdrawalReceipt: [],
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -88,6 +92,7 @@ export default function ContractTemplates() {
     "payment-voucher": "PAYMENT_VOUCHER",
     "payment-proof": "PAYMENT_PROOF",
     "settlement": "SETTLEMENT",
+    "withdrawal-receipt": "WITHDRAWAL_RECEIPT",
   }), []);
 
   const defaultContractVariables = React.useMemo(() => ({
@@ -168,6 +173,27 @@ export default function ContractTemplates() {
       { key: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري", group: "التواريخ" },
       { key: "{{التاريخ_الميلادي}}", description: "التاريخ بالتقويم الميلادي", group: "التواريخ" },
       { key: "{{اسم_الموظف}}", description: "اسم الموظف المختص", group: "بيانات الأطراف" }
+    ],
+    "withdrawal-receipt": [
+      { key: "{{رقم_المرجع}}", description: "رقم المرجع", group: "بيانات المخالصة" },
+      { key: "{{اسم_المضارب}}", description: "اسم المضارب", group: "بيانات الأطراف" },
+      { key: "{{رقم_هوية_المضارب}}", description: "رقم هوية المضارب", group: "بيانات الأطراف" },
+      { key: "{{اسم_المساهم}}", description: "اسم المساهم", group: "بيانات الأطراف" },
+      { key: "{{رقم_هوية_المساهم}}", description: "رقم هوية المساهم", group: "بيانات الأطراف" },
+      { key: "{{تاريخ_الخروج}}", description: "تاريخ الخروج", group: "التواريخ" },
+      { key: "{{التاريخ_الكامل}}", description: "التاريخ الكامل (ميلادي - هجري)", group: "التواريخ" },
+      { key: "{{التاريخ_الهجري}}", description: "التاريخ بالتقويم الهجري", group: "التواريخ" },
+      { key: "{{تاريخ_الإنشاء}}", description: "تاريخ الإنشاء", group: "التواريخ" },
+      { key: "{{رأس_مال_المساهم}}", description: "رأس مال المساهم", group: "البيانات المالية" },
+      { key: "{{نصيب_المساهم_من_الأرباح}}", description: "نصيب المساهم من الأرباح", group: "البيانات المالية" },
+      { key: "{{المستحقات_المسلمة}}", description: "المستحقات المسلمة للمساهم", group: "البيانات المالية" },
+      { key: "{{صافي_المبلغ_المستحق}}", description: "صافي المبلغ المستحق للمساهم", group: "البيانات المالية" },
+      { key: "{{رأس_مال_المساهم_كتابة}}", description: "رأس مال المساهم كتابة", group: "البيانات المالية" },
+      { key: "{{صافي_المبلغ_المستحق_كتابة}}", description: "صافي المبلغ المستحق كتابة", group: "البيانات المالية" },
+      { key: "{{طريقة_السداد}}", description: "طريقة السداد", group: "شروط السداد" },
+      { key: "{{الحد_الأقصى_للدفعة}}", description: "الحد الأقصى للدفعة", group: "شروط السداد" },
+      { key: "{{مدة_السداد}}", description: "مدة السداد (بالأشهر)", group: "شروط السداد" },
+      { key: "{{تاريخ_بدء_السداد}}", description: "تاريخ بدء السداد", group: "شروط السداد" }
     ]
   }), []);
 
@@ -266,7 +292,8 @@ export default function ContractTemplates() {
            tab === "debt-acknowledgment" ? "debtAcknowledgment" :
            tab === "payment-voucher" ? "paymentVoucher" :
            tab === "payment-proof" ? "paymentProof" :
-           tab === "settlement" ? "settlement" : tab;
+           tab === "settlement" ? "settlement" :
+           tab === "withdrawal-receipt" ? "withdrawalReceipt" : tab;
   };
 
   const ensureVariableBrackets = (content) => {
@@ -336,6 +363,8 @@ export default function ContractTemplates() {
         return InstallmentPaymentReceipt();
       case "SETTLEMENT":
         return InstallmentSettlementReceipt();
+      case "WITHDRAWAL_RECEIPT":
+        return WithdrawReceipt();
       default:
         return "";
     }
@@ -578,6 +607,7 @@ export default function ContractTemplates() {
               <Tab label="سند الصرف" value="payment-voucher" />
               <Tab label="سند قبض دفعة" value="payment-proof" />
               <Tab label="تسوية سلفة وخلو طرف" value="settlement" />
+              <Tab label="مخالصة مالية نهائية" value="withdrawal-receipt" />
             </Tabs>
 
             <Box sx={{ mt: 3 }}>
@@ -596,6 +626,7 @@ export default function ContractTemplates() {
                       {activeTab === "payment-voucher" && "سند الصرف"}
                       {activeTab === "payment-proof" && "سند قبض دفعة"}
                       {activeTab === "settlement" && "إيصال تسوية دفعة"}
+                      {activeTab === "withdrawal-receipt" && "مخالصة مالية نهائية"}
                     </Typography>
                     
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -664,6 +695,11 @@ export default function ContractTemplates() {
                     viewMode === "preview" 
                       ? renderTemplateContent("settlement", "settlement")
                       : renderTemplateEditor("settlement")
+                  )}
+                  {activeTab === "withdrawal-receipt" && (
+                    viewMode === "preview" 
+                      ? renderTemplateContent("withdrawalReceipt", "withdrawalReceipt")
+                      : renderTemplateEditor("withdrawalReceipt")
                   )}
                 </>
               )}

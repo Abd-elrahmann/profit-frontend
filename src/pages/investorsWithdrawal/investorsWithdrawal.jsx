@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -7,11 +7,15 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  Button,
 } from "@mui/material";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { handleApiError } from "../../config/Api";
+import Api, { handleApiError } from "../../config/Api";
 import InvestorsWithdrawalTable from "../../components/modals/investorsWithdrawalTable";
+import DeleteModal from "../../components/modals/DeleteModal";
+import WithdrawReceiptGenerator from "../../components/WithdrawReceiptGenerator";
+import WithdrawReceiptPreview from "../../components/WithdrawReceiptPreview";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -21,12 +25,12 @@ import {
   approveWithdrawal,
   rejectWithdrawal,
   partialPayWithdrawal,
+  uploadWithdrawalReceipt,
 } from "./withdrawal";
 import {
   Grid,
   Card,
   CardContent,
-  Button,
   Chip,
   Table,
   TableBody,
@@ -44,6 +48,7 @@ import {
   Cancel,
   AttachMoney,
   Visibility,
+  Description,
 } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -58,9 +63,17 @@ export default function InvestorsWithdrawal() {
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
   const [partialAmount, setPartialAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isSavingReceipt, setIsSavingReceipt] = useState(false);
+  const [withdrawReceiptTemplate, setWithdrawReceiptTemplate] = useState("");
+  const [previewReceiptHtml, setPreviewReceiptHtml] = useState("");
+  const [allSchedulesPaid, setAllSchedulesPaid] = useState(false);
+  const [hasAutoOpenedPreview, setHasAutoOpenedPreview] = useState(false);
 
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const withdrawReceiptGeneratorRef = useRef(null);
 
   // Handle navigation state when returning from journal details
   useEffect(() => {
@@ -79,11 +92,87 @@ export default function InvestorsWithdrawal() {
     enabled: activeTab === 0,
   });
 
-  const { data: withdrawalDetails, isLoading: isDetailsLoading } = useQuery({
+  const { data: withdrawalDetails, isLoading: isDetailsLoading, refetch: refetchDetails } = useQuery({
     queryKey: ["withdrawal-details", selectedInvestorId],
     queryFn: () => getWithdrawalDetails(selectedInvestorId),
     enabled: !!selectedInvestorId && activeTab === 1,
   });
+
+  const fetchWithdrawReceiptTemplate = async () => {
+    try {
+      const response = await Api.get("/api/templates/WITHDRAWAL_RECEIPT");
+      setWithdrawReceiptTemplate(response.data.content || "");
+    } catch (error) {
+      console.error("Error fetching withdrawal receipt template:", error);
+      handleApiError(error);
+    }
+  };
+
+  const handleOpenPreview = useCallback(async () => {
+    if (!withdrawalDetails) {
+      notifyError("لا توجد بيانات للعرض");
+      return;
+    }
+
+    if (!withdrawReceiptTemplate) {
+      notifyError("لم يتم تحميل قالب المخالصة بعد، يرجى الانتظار");
+      return;
+    }
+
+    if (!withdrawReceiptGeneratorRef.current) {
+      notifyError("مولد المخالصة غير جاهز، يرجى المحاولة مرة أخرى");
+      return;
+    }
+
+    try {
+      const receiptHtml = await withdrawReceiptGeneratorRef.current.generateContract(
+        false,
+        withdrawalDetails
+      );
+      setPreviewReceiptHtml(receiptHtml);
+      setIsPreviewOpen(true);
+    } catch (error) {
+      notifyError("حدث خطأ أثناء توليد المخالصة");
+      console.error(error);
+      handleApiError(error);
+    }
+  }, [withdrawalDetails, withdrawReceiptTemplate]);
+
+  useEffect(() => {
+    if (withdrawalDetails?.schedule) {
+      const allPaid = withdrawalDetails.schedule.every(s => s.status === "PAID");
+      setAllSchedulesPaid(allPaid);
+      // Reset auto-open flag when schedules change
+      if (!allPaid) {
+        setHasAutoOpenedPreview(false);
+      }
+    }
+  }, [withdrawalDetails]);
+
+  // Automatically open preview when all schedules are PAID
+  useEffect(() => {
+    if (
+      allSchedulesPaid && 
+      withdrawalDetails && 
+      !isPreviewOpen && 
+      !hasAutoOpenedPreview &&
+      withdrawReceiptTemplate &&
+      withdrawReceiptGeneratorRef.current
+    ) {
+      // Small delay to ensure component is ready
+      const timer = setTimeout(() => {
+        if (withdrawReceiptGeneratorRef.current && withdrawReceiptTemplate) {
+          handleOpenPreview();
+          setHasAutoOpenedPreview(true);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [allSchedulesPaid, withdrawalDetails, isPreviewOpen, hasAutoOpenedPreview, withdrawReceiptTemplate, handleOpenPreview]);
+
+  useEffect(() => {
+    fetchWithdrawReceiptTemplate();
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -95,6 +184,8 @@ export default function InvestorsWithdrawal() {
   const handleViewDetails = (investorId) => {
     setSelectedInvestorId(investorId);
     setActiveTab(1);
+    // Reset auto-open flag when viewing new investor details
+    setHasAutoOpenedPreview(false);
   };
 
   const handleApprove = async (scheduleId) => {
@@ -106,9 +197,15 @@ export default function InvestorsWithdrawal() {
     try {
       setIsProcessing(true);
       await approveWithdrawal(scheduleId);
-      notifySuccess("تم الموافقة على الدفعة بنجاح");
+      
+      // Find schedule to get month information
+      const schedule = withdrawalDetails?.schedule?.find(s => s.id === scheduleId);
+      const monthName = schedule?.month || "الدفعة";
+      
+      notifySuccess(`تم الموافقة على دفعة شهر ${monthName} بنجاح`);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+      refetchDetails();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء الموافقة على الدفعة");
       handleApiError(error);
@@ -117,28 +214,41 @@ export default function InvestorsWithdrawal() {
     }
   };
 
-  const handleReject = async (scheduleId) => {
+  const handleOpenRejectModal = (scheduleId) => {
     if (!permissions.includes("partners-withdraw_Post")) {
       notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
       return;
     }
+    setSelectedScheduleId(scheduleId);
+    setIsDeleteModalOpen(true);
+  };
 
-    if (!window.confirm("هل أنت متأكد من رفض هذه الدفعة؟")) {
-      return;
-    }
-
+  const handleConfirmReject = async () => {
     try {
       setIsProcessing(true);
-      await rejectWithdrawal(scheduleId);
-      notifySuccess("تم رفض الدفعة بنجاح");
+      await rejectWithdrawal(selectedScheduleId);
+      
+      // Find schedule to get month information
+      const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
+      const monthName = schedule?.month || "الدفعة";
+      
+      notifySuccess(`تم رفض دفعة شهر ${monthName} بنجاح`);
+      setIsDeleteModalOpen(false);
+      setSelectedScheduleId(null);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+      refetchDetails();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض الدفعة");
       handleApiError(error);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleCloseRejectModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedScheduleId(null);
   };
 
   const handleOpenPartialPayDialog = (scheduleId) => {
@@ -161,12 +271,18 @@ export default function InvestorsWithdrawal() {
     try {
       setIsProcessing(true);
       await partialPayWithdrawal(selectedScheduleId, parseFloat(partialAmount));
-      notifySuccess("تم تسجيل السداد الجزئي بنجاح");
+      
+      // Find schedule to get month information
+      const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
+      const monthName = schedule?.month || "الدفعة";
+      
+      notifySuccess(`تم تسجيل السداد الجزئي لدفعة شهر ${monthName} بنجاح`);
       setPartialPayDialogOpen(false);
       setPartialAmount("");
       setSelectedScheduleId(null);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+      refetchDetails();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تسجيل السداد الجزئي");
       handleApiError(error);
@@ -175,12 +291,45 @@ export default function InvestorsWithdrawal() {
     }
   };
 
+  const handleSaveReceipt = async () => {
+    if (!withdrawalDetails?.partner?.id) {
+      notifyError("لا يوجد معرف للمساهم");
+      return;
+    }
+
+    try {
+      setIsSavingReceipt(true);
+      const receiptHtml = await withdrawReceiptGeneratorRef.current.generateContract(
+        false,
+        withdrawalDetails
+      );
+      const pdfBlob = await withdrawReceiptGeneratorRef.current.generatePDF(receiptHtml);
+      
+      const formData = new FormData();
+      const filename = `مخالصة_${withdrawalDetails.partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_')}_${Date.now()}.pdf`;
+      formData.append("file", pdfBlob, filename);
+      
+      await uploadWithdrawalReceipt(withdrawalDetails.partner.id, formData);
+
+      notifySuccess("تم حفظ المخالصة بنجاح");
+
+      // Refresh the partner details to show the updated withdrawal receipt
+      queryClient.invalidateQueries({ queryKey: ['investor-details', withdrawalDetails.partner.id] });
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
+
+      setIsPreviewOpen(false);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ المخالصة");
+      handleApiError(error);
+    } finally {
+      setIsSavingReceipt(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "PAID":
         return "success";
-      case "PARTIAL_PAID":
-        return "warning";
       case "PENDING":
         return "default";
       default:
@@ -192,8 +341,6 @@ export default function InvestorsWithdrawal() {
     switch (status) {
       case "PAID":
         return "مدفوع";
-      case "PARTIAL_PAID":
-        return "مدفوع جزئياً";
       case "PENDING":
         return "قيد الانتظار";
       default:
@@ -314,26 +461,10 @@ export default function InvestorsWithdrawal() {
                     </Grid>
                     <Grid item xs={12} md={4}>
                       <Typography variant="body2" mb={1} fontWeight={500}>
-                        رأس المال الإجمالي
+                        رقم الهوية الوطنية
                       </Typography>
                       <TextField
-                        value={withdrawalDetails.partner?.totalCapital?.toLocaleString() || "0"}
-                        fullWidth
-                        readOnly
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            backgroundColor: "#f9fafb",
-                            borderRadius: "6px",
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>
-                        الادخار
-                      </Typography>
-                      <TextField
-                        value={withdrawalDetails.partner?.savings?.toLocaleString() || "0"}
+                        value={withdrawalDetails.partner?.nationalId || ""}
                         fullWidth
                         readOnly
                         sx={{
@@ -491,9 +622,25 @@ export default function InvestorsWithdrawal() {
                 {/* Schedule Table */}
                 {withdrawalDetails.schedule && withdrawalDetails.schedule.length > 0 && (
                   <Paper sx={{ p: 3, mb: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
-                      جدول السحب
-                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                      <Typography variant="h6" sx={{ fontWeight: "bold" ,color: "primary.main"}}>
+                        جدول السحب
+                      </Typography>
+                      {allSchedulesPaid && (
+                        <Button
+                          variant="contained"
+                          startIcon={<Description />}
+                          onClick={handleOpenPreview}
+                          sx={{
+                            bgcolor: "#2e7d32",
+                            "&:hover": { bgcolor: "#1b5e20" },
+                            fontWeight: "bold",
+                          }}
+                        >
+                          معاينة المخالصة
+                        </Button>
+                      )}
+                    </Box>
                     <TableContainer>
                       <Table>
                         <TableHead>
@@ -508,13 +655,19 @@ export default function InvestorsWithdrawal() {
                               المبلغ
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              المبلغ المرحل
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              إجمالي المبلغ
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                               المدفوع
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                              المتبقي
+                              الحالة
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                              الحالة
+                              تاريخ الدفع
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                               الإجراءات
@@ -534,10 +687,13 @@ export default function InvestorsWithdrawal() {
                                 {schedule.amount?.toLocaleString()}
                               </StyledTableCell>
                               <StyledTableCell align="center">
-                                {schedule.paidAmount?.toLocaleString() || 0}
+                                {schedule.carryAmount?.toLocaleString() || 0}
                               </StyledTableCell>
                               <StyledTableCell align="center">
-                                {schedule.remaining?.toLocaleString() || 0}
+                                {(schedule.amount + (schedule.carryAmount || 0))?.toLocaleString()}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {schedule.paidAmount?.toLocaleString() || 0}
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 <Chip
@@ -547,48 +703,72 @@ export default function InvestorsWithdrawal() {
                                 />
                               </StyledTableCell>
                               <StyledTableCell align="center">
+                                {schedule.paidAt
+                                  ? dayjs(schedule.paidAt).format("DD/MM/YYYY")
+                                  : "-"}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
                                 <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                                  {!schedule.isPaid && permissions.includes("partners-withdraw_Post") && (
+                                  {permissions.includes("partners-withdraw_Post") && (
                                     <>
-                                      <Button
-                                        size="small"
-                                        variant="contained"
-                                        color="success"
-                                        onClick={() => handleApprove(schedule.id)}
-                                        disabled={isProcessing}
-                                        sx={{
-                                            fontWeight: "bold",
-                                        }}
-                                      >
-                                        <CheckCircle sx={{marginLeft: "5px"}} />
-                                        موافقة
-                                      </Button>
-                                      <Button
-                                        size="small"
-                                        variant="contained"
-                                        color="error"
-                                        onClick={() => handleReject(schedule.id)}
-                                        disabled={isProcessing}
-                                        sx={{
-                                            fontWeight: "bold",
-                                        }}
-                                      >
-                                        <Cancel sx={{marginLeft: "5px"}} />
-                                        رفض
-                                      </Button>
-                                      <Button
-                                        size="small"
-                                        variant="contained"
-                                        color="warning"
-                                        onClick={() => handleOpenPartialPayDialog(schedule.id)}
-                                        disabled={isProcessing}
-                                        sx={{
-                                            fontWeight: "bold",
-                                        }}
-                                      >
-                                        <AttachMoney sx={{marginLeft: "5px"}} />
-                                        دفع جزئي
-                                      </Button>
+                                      {schedule.status !== "PAID" && !schedule.isPaid && (
+                                        <>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="success"
+                                            onClick={() => handleApprove(schedule.id)}
+                                            disabled={isProcessing}
+                                            sx={{
+                                                fontWeight: "bold",
+                                            }}
+                                          >
+                                            <CheckCircle sx={{marginLeft: "5px"}} />
+                                            موافقة
+                                          </Button>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="error"
+                                            onClick={() => handleOpenRejectModal(schedule.id)}
+                                            disabled={isProcessing}
+                                            sx={{
+                                                fontWeight: "bold",
+                                            }}
+                                          >
+                                            <Cancel sx={{marginLeft: "5px"}} />
+                                            رفض
+                                          </Button>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="warning"
+                                            onClick={() => handleOpenPartialPayDialog(schedule.id)}
+                                            disabled={isProcessing}
+                                            sx={{
+                                                fontWeight: "bold",
+                                            }}
+                                          >
+                                            <AttachMoney sx={{marginLeft: "5px"}} />
+                                            دفع جزئي
+                                          </Button>
+                                        </>
+                                      )}
+                                      {schedule.status === "PAID" && (
+                                        <Button
+                                          size="small"
+                                          variant="contained"
+                                          color="error"
+                                          onClick={() => handleOpenRejectModal(schedule.id)}
+                                          disabled={isProcessing}
+                                          sx={{
+                                              fontWeight: "bold",
+                                          }}
+                                        >
+                                          <Cancel sx={{marginLeft: "5px"}} />
+                                          رفض
+                                        </Button>
+                                      )}
                                     </>
                                   )}
                                 </Box>
@@ -707,6 +887,25 @@ export default function InvestorsWithdrawal() {
                 inputProps: { min: 0, step: 0.01 },
               }}
             />
+            {partialAmount && parseFloat(partialAmount) > 0 && withdrawalDetails?.schedule && selectedScheduleId && (
+              <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
+                {(() => {
+                  const currentSchedule = withdrawalDetails.schedule.find(s => s.id === selectedScheduleId);
+                  const totalAmount = currentSchedule ? (currentSchedule.amount + (currentSchedule.carryAmount || 0)) : 0;
+                  const remainingAmount = currentSchedule ? (totalAmount - parseFloat(partialAmount)) : 0;
+                  return (
+                    <>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        سيتم دفع مبلغ <strong>{parseFloat(partialAmount).toLocaleString()}</strong>
+                      </Typography>
+                      <Typography variant="body2">
+                        وترحيل مبلغ <strong>{remainingAmount.toLocaleString()}</strong> إلى الدفعة المقبلة
+                      </Typography>
+                    </>
+                  );
+                })()}
+              </Box>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 3, flexDirection: "row-reverse" }}>
@@ -734,6 +933,40 @@ export default function InvestorsWithdrawal() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Reject Modal */}
+      <DeleteModal
+        open={isDeleteModalOpen}
+        onClose={handleCloseRejectModal}
+        onConfirm={handleConfirmReject}
+        title="رفض الدفعة"
+        message="هل أنت متأكد من رفض هذه الدفعة؟"
+        isLoading={isProcessing}
+        ButtonText="رفض"
+      />
+
+      {/* Withdraw Receipt Generator */}
+      {withdrawReceiptTemplate && (
+        <WithdrawReceiptGenerator
+          ref={withdrawReceiptGeneratorRef}
+          withdrawalData={withdrawalDetails}
+          templateContent={withdrawReceiptTemplate}
+        />
+      )}
+
+      {/* Withdraw Receipt Preview */}
+      <WithdrawReceiptPreview
+        open={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          // Don't reset hasAutoOpenedPreview here - user can manually reopen if needed
+        }}
+        receiptHtml={previewReceiptHtml}
+        onSaveReceipt={handleSaveReceipt}
+        loading={isSavingReceipt}
+        investorName={withdrawalDetails?.partner?.name}
+        totalAmount={withdrawalDetails?.withdrawal?.totalCapital || 0}
+      />
     </Box>
   );
 }
