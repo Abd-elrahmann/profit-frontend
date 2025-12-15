@@ -188,6 +188,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
           throw error;
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [withdrawalData?.partner?.id]
     );
 

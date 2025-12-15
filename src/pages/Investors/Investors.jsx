@@ -155,6 +155,10 @@ export default function Investors() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawnInvestors, setWithdrawnInvestors] = useState(new Set());
+  
+  const [isEditWithdrawModalOpen, setIsEditWithdrawModalOpen] = useState(false);
+  const [editWithdrawAmount, setEditWithdrawAmount] = useState("");
+  const [isEditingWithdraw, setIsEditingWithdraw] = useState(false);
 
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
@@ -522,6 +526,48 @@ export default function Investors() {
       handleApiError(error);
     } finally {
       setIsWithdrawing(false);
+    }
+  };
+
+  const handleOpenEditWithdrawModal = () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر");
+      return;
+    }
+    // Pre-fill with current withdrawal amount if available
+    setEditWithdrawAmount(investorDetails?.withdrawalInfo?.monthlyAmount || "");
+    setIsEditWithdrawModalOpen(true);
+  };
+
+  const handleEditWithdraw = async () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر");
+      return;
+    }
+
+    if (!editWithdrawAmount || parseFloat(editWithdrawAmount) <= 0) {
+      notifyError("يرجى إدخال مبلغ صحيح");
+      return;
+    }
+
+    try {
+      setIsEditingWithdraw(true);
+      await Api.patch(`/api/partner-withdraw/${selectedInvestor.id}`, {
+        amount: parseFloat(editWithdrawAmount)
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
+      
+      notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
+      setIsEditWithdrawModalOpen(false);
+      setEditWithdrawAmount("");
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء تعديل مبلغ الانسحاب');
+      handleApiError(error);
+    } finally {
+      setIsEditingWithdraw(false);
     }
   };
 
@@ -1026,22 +1072,43 @@ export default function Investors() {
                 </Button>
                 )}
                 {permissions.includes("partners_Add") && (
-                <Button
-                  variant="outlined"
-                  startIcon={<AccountBalanceWallet sx={{marginLeft: '10px'}} />}
-                  onClick={handleOpenWithdrawModal}
-                  disabled={isWithdrawing}
-                  sx={{
-                    borderColor: "#d32f2f",
-                    color: "#d32f2f",
-                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                    borderRadius: 2,
-                    px: 2,
-                    fontWeight: "bold",
-                  }}
-                >
-                  انسحاب المستثمر
-                </Button>
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AccountBalanceWallet sx={{marginLeft: '10px'}} />}
+                    onClick={handleOpenWithdrawModal}
+                    disabled={isWithdrawing || investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN'}
+                    sx={{
+                      borderColor: "#d32f2f",
+                      color: "#d32f2f",
+                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                      borderRadius: 2,
+                      px: 2,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    انسحاب المستثمر
+                  </Button>
+                  
+                  {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<Edit sx={{marginLeft: '10px'}} />}
+                      onClick={handleOpenEditWithdrawModal}
+                      disabled={isEditingWithdraw}
+                      sx={{
+                        borderColor: "#ed6c02",
+                        color: "#ed6c02",
+                        "&:hover": { bgcolor: "rgba(237, 108, 2, 0.1)" },
+                        borderRadius: 2,
+                        px: 2,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      تعديل مبلغ الانسحاب
+                    </Button>
+                  )}
+                </>
                 )}
               </Box>
             </Box>
@@ -2185,6 +2252,177 @@ export default function Investors() {
             }}
           >
             {isWithdrawing ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'تأكيد الإنسحاب'}
+          </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Withdraw Amount Modal */}
+      <Dialog 
+        open={isEditWithdrawModalOpen} 
+        onClose={() => {
+          setIsEditWithdrawModalOpen(false);
+          setEditWithdrawAmount("");
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" fontWeight="bold">
+            تعديل مبلغ الانسحاب الشهري
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                🔔 يمكنك تعديل المبلغ الشهري للانسحاب. سيتم إعادة حساب جدول السداد تلقائياً
+              </Typography>
+            </Alert>
+            
+            {/* Current Information */}
+            <Paper sx={{ p: 2.5, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary" mb={0.5}>رأس المال الأصلي</Typography>
+                  <Typography variant="h6" fontWeight="bold" color="primary">
+                    {investorDetails?.capitalAmount?.toLocaleString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary" mb={0.5}>المبلغ الشهري الحالي</Typography>
+                  <Typography variant="h6" fontWeight="bold" color="warning.main">
+                    {investorDetails?.withdrawalInfo?.monthlyAmount?.toLocaleString() || "غير محدد"}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary" mb={0.5}>المدخرات</Typography>
+                  <Typography variant="h6" fontWeight="bold" color="success.main">
+                    {investorDetails?.totalSaving?.toLocaleString() || 0}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary" mb={0.5}>إجمالي الأرباح</Typography>
+                  <Typography variant="h6" fontWeight="bold" color="info.main">
+                    {investorDetails?.totalProfit?.toLocaleString() || 0}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <TextField
+              label="المبلغ الشهري الجديد للسحب"
+              type="number"
+              value={editWithdrawAmount}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value) {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue)) {
+                    setEditWithdrawAmount(numValue.toFixed(2) === 'NaN' ? value : numValue);
+                  }
+                } else {
+                  setEditWithdrawAmount(value);
+                }
+              }}
+              fullWidth
+              InputProps={{
+                inputProps: { min: 0, step: 0.01 }
+              }}
+              helperText="أدخل المبلغ الشهري الجديد الذي يتم سحبه"
+            />
+
+            {editWithdrawAmount && parseFloat(editWithdrawAmount) > 0 && (() => {
+              const numAmount = parseFloat(Number(editWithdrawAmount).toFixed(2));
+              const preview = calculateWithdrawalPreview(numAmount);
+              return preview ? (
+                <>
+                  <Divider sx={{ my: 1 }} />
+                  
+                  {/* Calculation Summary */}
+                  <Paper sx={{ p: 2.5, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
+                    <Typography variant="subtitle2" fontWeight="bold" mb={2} color="success.main">
+                      📊 معاينة الجدول الجديد :
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
+                          <Typography variant="body2" color="text.secondary" mb={0.5}>
+                            رأس المال للجدول
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="primary">
+                            {preview.remainingCapital.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                          <Typography variant="body2" color="text.secondary" mb={0.5}>
+                            📅 عدد الدفعات الجديد
+                          </Typography>
+                          <Typography variant="subtitle1" fontWeight="bold" color="info">
+                            {preview.totalMonths} دفعة
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {(() => {
+                              const years = Math.floor(preview.totalMonths / 12);
+                              const months = preview.totalMonths % 12;
+                              if (years > 0 && months > 0) {
+                                return `${years} سنة و ${months} شهر`;
+                              } else if (years > 0) {
+                                return `${years} سنة`;
+                              } else {
+                                return `${months} شهر`;
+                              }
+                            })()}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+
+                  <Alert severity="warning" icon={<Info />}>
+                    <Typography variant="body2" fontWeight="bold">
+                      ⚠️ ملاحظة هامة
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      • سيتم إعادة حساب جدول السداد بالكامل بناءً على المبلغ الجديد<br/>
+                      • الدفعات التي لم يتم دفعها بعد سيتم تحديثها تلقائياً<br/>
+                      • الدفعات المدفوعة لن تتأثر بالتعديل
+                    </Typography>
+                  </Alert>
+                </>
+              ) : null;
+            })()}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
+          <Button 
+            onClick={() => {
+              setIsEditWithdrawModalOpen(false);
+              setEditWithdrawAmount("");
+            }}
+            color="inherit"
+            disabled={isEditingWithdraw}
+          >
+            إلغاء
+          </Button>
+          {permissions.includes("partners_Add") && (
+          <Button 
+            onClick={handleEditWithdraw}
+            variant="contained"
+            disabled={
+              isEditingWithdraw || 
+              !editWithdrawAmount || 
+              parseFloat(editWithdrawAmount) <= 0
+            }
+            sx={{
+              bgcolor: "#ed6c02",
+              "&:hover": { bgcolor: "#e65100" },
+            }}
+          >
+            {isEditingWithdraw ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'تأكيد التعديل'}
           </Button>
           )}
         </DialogActions>

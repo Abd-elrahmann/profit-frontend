@@ -99,7 +99,10 @@ const WithdrawReceipt = () => {
     font-size: 16px;
     font-weight: bold;
     margin: 12px 0 8px;
-    color: #2E8B45;
+    color: #4a4a4a;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 4px;
   }
 
   .financial-table {
@@ -108,8 +111,8 @@ const WithdrawReceipt = () => {
     margin-bottom: 20px;
   }
   .financial-table th {
-    background: #2E8B45;
-    color: white;
+    background: rgba(46, 139, 69, 0.1);
+    color: #2E8B45;
     font-weight: bold;
     padding: 12px 15px;
     text-align: right;
@@ -120,12 +123,12 @@ const WithdrawReceipt = () => {
     text-align: right;
     border-bottom: 1px solid #e5e7eb;
     font-size: 14px;
+    background: white;
   }
   .financial-table tr:hover {
-    background: #f9fafb;
+    background: white;
   }
   .financial-table .total-row {
-    background: rgba(46, 139, 69, 0.05);
     font-weight: bold;
   }
   .financial-table .total-row td {
@@ -134,15 +137,16 @@ const WithdrawReceipt = () => {
   }
 
   .terms-section {
-    background: rgba(46, 139, 69, 0.05);
+    background: white;
     padding: 20px;
     border-radius: 8px;
     border: 1px solid rgba(46, 139, 69, 0.2);
     margin-bottom: 30px;
+    page-break-inside: avoid;
   }
 
   .exit-impact-section {
-    background: rgba(46, 139, 69, 0.05);
+    background: white;
     padding: 20px;
     border-radius: 8px;
     border: 1px solid rgba(46, 139, 69, 0.2);
@@ -156,8 +160,8 @@ const WithdrawReceipt = () => {
     margin-bottom: 20px;
   }
   .impact-table th {
-    background: #2E8B45;
-    color: white;
+    background: rgba(46, 139, 69, 0.1);
+    color: #2E8B45;
     font-weight: bold;
     padding: 12px 15px;
     text-align: right;
@@ -169,18 +173,19 @@ const WithdrawReceipt = () => {
     border-bottom: 1px solid #e5e7eb;
     font-size: 14px;
     line-height: 1.5;
+    background: white;
   }
   .impact-table tr:hover {
-    background: #f9fafb;
+    background: white;
   }
   .terms-title {
     font-size: 16px;
     font-weight: bold;
-    color: #2E8B45;
+    color: #4a4a4a;
     margin-bottom: 15px;
-    background: rgba(46, 139, 69, 0.1);
-    padding: 6px 10px;
-    border-radius: 6px;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 4px;
   }
   .terms-grid {
     display: grid;
@@ -209,12 +214,16 @@ const WithdrawReceipt = () => {
     border-radius: 8px;
     border: 1px solid #dee2e6;
     margin-bottom: 30px;
+    page-break-inside: avoid;
   }
   .declaration-title {
     font-size: 16px;
     font-weight: bold;
-    color: #495057;
+    color: #4a4a4a;
     margin-bottom: 10px;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 4px;
   }
   .declaration-text {
     font-size: 14px;
@@ -226,11 +235,21 @@ const WithdrawReceipt = () => {
   .signatures-section {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     margin-top: 30px;
-    padding-top: 20px;
+    padding: 20px 0;
     border-top: 2px solid rgba(46, 139, 69, 0.2);
     page-break-inside: avoid;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .signatures-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 30px;
+    margin-bottom: 20px;
+    padding: 0 20px;
+    max-width: 100%;
   }
   .signature-title-main {
     font-size: 18px;
@@ -241,11 +260,33 @@ const WithdrawReceipt = () => {
   }
   .signature-box {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 3px;
     font-size: 16px;
     color: #2E8B45;
     font-weight: bold;
+    flex: 1;
+    max-width: 45%;
+    min-width: 0;
+  }
+  .signature-title {
+    text-align: center;
+    margin-bottom: 35px;
+  }
+  .signature-line {
+    width: 100%;
+    max-width: 300px;
+    height: 2px;
+    background: #222;
+    margin: 5px 0;
+  }
+  .signature-name {
+    text-align: center;
+    color: #111;
+    font-weight: normal;
+    word-wrap: break-word;
+    max-width: 100%;
   }
   .signature-label {
     min-width: 80px;
@@ -254,14 +295,35 @@ const WithdrawReceipt = () => {
     color: #111;
     font-weight: normal;
   }
+  .date-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: #2E8B45;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  .date-box .signature-label {
+    color: #2E8B45;
+  }
+  .date-box .signature-value {
+    color: #111;
+  }
 
   .footer {
     text-align: center;
-    margin-top: 30px;
+    margin-top: 20px;
     padding-top: 15px;
     border-top: 1px solid #e5e7eb;
     font-size: 12px;
     color: #777;
+    page-break-inside: avoid;
+  }
+  
+  .signatures-footer-wrapper {
+    page-break-inside: avoid;
   }
 
   @media (max-width: 768px) {
@@ -274,9 +336,13 @@ const WithdrawReceipt = () => {
     .signatures-section {
       gap: 15px;
     }
+    .signatures-row {
+      flex-direction: column;
+      gap: 20px;
+    }
     .signature-box {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: 8px;
     }
     .signature-label {
@@ -292,6 +358,10 @@ const WithdrawReceipt = () => {
   }
 
   @media print {
+    @page {
+      margin: 10mm;
+    }
+    
     .receipt-wrapper {
       background: #fff;
       padding: 0;
@@ -299,7 +369,79 @@ const WithdrawReceipt = () => {
     .receipt-container {
       border: none;
       box-shadow: none;
-      padding: 15mm;
+      padding: 10mm;
+      max-width: 100%;
+    }
+    
+    /* تقليل المسافات بين الأقسام */
+    .parties-section {
+      margin-bottom: 15px;
+    }
+    .details-section {
+      margin-bottom: 15px;
+    }
+    .terms-section {
+      margin-bottom: 15px;
+      padding: 15px;
+    }
+    .exit-impact-section {
+      margin-bottom: 15px;
+      padding: 15px;
+    }
+    .declaration-section {
+      margin-bottom: 15px;
+      padding: 15px;
+    }
+    
+    /* تقليل مسافات الجداول */
+    .financial-table,
+    .impact-table {
+      margin-bottom: 10px;
+    }
+    .financial-table th,
+    .financial-table td,
+    .impact-table th,
+    .impact-table td {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    
+    /* تقليل مسافات العناوين */
+    .section-title,
+    .terms-title,
+    .declaration-title {
+      margin: 8px 0 6px;
+      padding: 6px 10px;
+      font-size: 15px;
+    }
+    
+    /* التوقيعات والفوتر */
+    .signatures-section {
+      padding: 15px 10px 10px;
+      margin-top: 15px;
+    }
+    .signatures-row {
+      gap: 20px;
+      padding: 0 10px;
+      margin-bottom: 15px;
+    }
+    .signature-box {
+      max-width: 45%;
+    }
+    .signature-title {
+      margin-bottom: 25px;
+    }
+    .signature-line {
+      max-width: 250px;
+      width: 100%;
+    }
+    .date-box {
+      margin-top: 5px;
+    }
+    .footer {
+      margin-top: 15px;
+      padding-top: 10px;
+      font-size: 11px;
     }
   }
 </style>
@@ -367,7 +509,7 @@ const WithdrawReceipt = () => {
             <td>{{رأس_مال_المساهم}} ريال سعودي</td>
           </tr>
           <tr>
-            <td>خصم نصيب المساهم من الخسائر حتى تاريخ الخروج</td>
+            <td>خصم نصيب المساهم من التعثرات حتي تاريخ الخروج</td>
             <td>{{خصم_نصيب_المساهم_من_الخسائر}} ريال سعودي</td>
           </tr>
           <tr>
@@ -448,30 +590,36 @@ const WithdrawReceipt = () => {
       </div>
     </div>
 
-    <!-- Signatures -->
-    <div class="signatures-section">
-      <div class="signature-title-main">توقيعات الأطراف</div>
+    <!-- Signatures and Footer Wrapper -->
+    <div class="signatures-footer-wrapper">
+      <!-- Signatures -->
+      <div class="signatures-section">
+        <div class="signature-title-main">توقيعات الأطراف</div>
 
-      <div class="signature-box">
-        <span class="signature-label">المضارب:</span>
-        <span class="signature-value">{{اسم_المضارب}}</span>
+        <div class="signatures-row">
+          <div class="signature-box">
+            <div class="signature-title">المضارب</div>
+            <div class="signature-line"></div>
+            <div class="signature-name">{{اسم_المضارب}}</div>
+          </div>
+
+          <div class="signature-box">
+            <div class="signature-title">المساهم</div>
+            <div class="signature-line"></div>
+            <div class="signature-name">{{اسم_المساهم}}</div>
+          </div>
+        </div>
+
+        <div class="date-box">
+          <span class="signature-label">التاريخ:</span>
+          <span class="signature-value">{{التاريخ_الكامل}}</span>
+        </div>
       </div>
 
-      <div class="signature-box">
-        <span class="signature-label">المساهم:</span>
-        <span class="signature-value">{{اسم_المساهم}}</span>
+      <!-- Footer -->
+      <div class="footer">
+        <p>هذه المخالصة صادرة من النظام الآلي - جميع الحقوق محفوظة</p>
       </div>
-
-      <div class="signature-box">
-        <span class="signature-label">التاريخ:</span>
-        <span class="signature-value">{{التاريخ_الكامل}}</span>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <p>هذه المخالصة صادرة من النظام الآلي - جميع الحقوق محفوظة</p>
-      <p>تاريخ الإنشاء: {{تاريخ_الإنشاء}}</p>
     </div>
 
   </div>

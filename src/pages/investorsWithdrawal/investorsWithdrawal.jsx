@@ -149,15 +149,16 @@ export default function InvestorsWithdrawal() {
     }
   }, [withdrawalDetails]);
 
-  // Automatically open preview when all schedules are PAID
+  // Automatically open preview when all schedules are PAID but no receipt exists
   useEffect(() => {
     if (
-      allSchedulesPaid && 
-      withdrawalDetails && 
-      !isPreviewOpen && 
+      allSchedulesPaid &&
+      withdrawalDetails &&
+      !isPreviewOpen &&
       !hasAutoOpenedPreview &&
       withdrawReceiptTemplate &&
-      withdrawReceiptGeneratorRef.current
+      withdrawReceiptGeneratorRef.current &&
+      !withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT
     ) {
       // Small delay to ensure component is ready
       const timer = setTimeout(() => {
@@ -316,6 +317,9 @@ export default function InvestorsWithdrawal() {
       // Refresh the partner details to show the updated withdrawal receipt
       queryClient.invalidateQueries({ queryKey: ['investor-details', withdrawalDetails.partner.id] });
       queryClient.invalidateQueries({ queryKey: ['investors'] });
+      // Immediately refetch withdrawal details to update the UI
+      queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestorId] });
+      await refetchDetails();
 
       setIsPreviewOpen(false);
     } catch (error) {
@@ -429,6 +433,36 @@ export default function InvestorsWithdrawal() {
 
         {activeTab === 1 && (
           <Box>
+            {/* Success notification when withdrawal receipt exists */}
+            {withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+                <Alert
+                  severity="success"
+                  sx={{
+                    flex: 1,
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    textAlign: "center"
+                  }}
+                >
+                  تم سداد دفعات المساهم وإنشاء المخالصة بنجاح
+                </Alert>
+                <Button
+                  variant="contained"
+                  startIcon={<Visibility sx={{marginLeft: "5px"}} />}
+                  onClick={() => window.open(withdrawalDetails.withdrawal.WITHDRAWAL_RECEIPT, '_blank')}
+                  sx={{
+                    bgcolor: "#2e7d32",
+                    "&:hover": { bgcolor: "#1b5e20" },
+                    fontWeight: "bold",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  عرض المخالصة
+                </Button>
+              </Box>
+            )}
+
             {isDetailsLoading ? (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
                 <CircularProgress />
@@ -626,7 +660,7 @@ export default function InvestorsWithdrawal() {
                       <Typography variant="h6" sx={{ fontWeight: "bold" ,color: "primary.main"}}>
                         جدول السحب
                       </Typography>
-                      {allSchedulesPaid && (
+                      {allSchedulesPaid && !withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
                         <Button
                           variant="contained"
                           startIcon={<Description />}
