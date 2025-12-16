@@ -525,6 +525,8 @@ export default function Clients() {
   useEffect(() => {
     if (clientsData?.clients?.length > 0 && !selectedClient) {
       setSelectedClient(clientsData.clients[0].client);
+    } else if (clientsData?.clients?.length === 0 && selectedClient) {
+      setSelectedClient(null);
     }
   }, [clientsData, selectedClient]);
 

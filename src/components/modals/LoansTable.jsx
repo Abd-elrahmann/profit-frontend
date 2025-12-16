@@ -612,7 +612,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
           {!isLoading && loansData?.data?.length > 0 && (
             <StyledTableRow>
               <StyledTableCell
-                colSpan={4}
+                colSpan={3}
                 align="center"
                 sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
               >

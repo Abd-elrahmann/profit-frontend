@@ -222,7 +222,10 @@ const Loans = () => {
   const fetchBankBalance = async () => {
     try {
       setIsLoadingBankBalance(true);
-      const response = await Api.get("/api/accounts/bank");
+      const params = new URLSearchParams();
+      params.append('limit', '1');
+      const queryString = params.toString();
+      const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
       const balance = response?.data?.account?.balance || 0;
       setBankBalance(balance);
     } catch (error) {

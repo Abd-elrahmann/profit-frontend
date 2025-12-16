@@ -198,6 +198,7 @@ const Logs = () => {
       "Logs": "السجلات",
       "Company Profit": "أرباح الشركة",
       "Distribution": "توزيع الأرباح",
+      "PartnerWithdrawals": "سحب الشركاء",
     };
     return screenTranslations[screen] || screen;
   };

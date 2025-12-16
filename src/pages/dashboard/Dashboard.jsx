@@ -91,7 +91,7 @@ const Dashboard = () => {
       index: 1
     },
     {
-      label: "إحصائيات السلف والقروض",
+      label: "إحصائيات السلف",
       component: <LoanStats />,
       permission: 'loan-stats',
       index: 2
