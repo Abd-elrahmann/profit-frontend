@@ -74,6 +74,26 @@ import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportRepaymentsToPDF, exportRepaymentsToExcel } from "../../utilities/repaymentsExporter";
+
+// Helper function to download files properly
+const downloadFile = async (url, filename) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Download error:', error);
+    notifyError('حدث خطأ أثناء تحميل الملف');
+  }
+};
+
 const Installments = () => {
   const { loanId } = useParams();
   const navigate = useNavigate();
@@ -1675,12 +1695,7 @@ const Installments = () => {
                                     size="small"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const link = document.createElement("a");
-                                      link.href = attachment;
-                                      link.download = extractFileName(attachment);
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
+                                      downloadFile(attachment, extractFileName(attachment));
                                     }}
                                   >
                                     <Download />
@@ -1725,14 +1740,10 @@ const Installments = () => {
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const link = document.createElement("a");
-                                link.href = selectedInstallment.PaymentProof;
-                                link.download = extractFileName(
-                                  selectedInstallment.PaymentProof
+                                downloadFile(
+                                  selectedInstallment.PaymentProof,
+                                  extractFileName(selectedInstallment.PaymentProof)
                                 );
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
                               }}
                             >
                               <Download />
@@ -1808,7 +1819,7 @@ const Installments = () => {
         {!isSmallScreen && !isSettlementCompleted() && (
           <Box
             sx={{
-              width: "270px",
+              width: "300px",
               borderRight: "1px solid",
               borderRightColor: "divider",
               bgcolor: "grey.50",
@@ -1916,12 +1927,7 @@ const Installments = () => {
                                   size="small"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    const link = document.createElement("a");
-                                    link.href = attachment;
-                                    link.download = extractFileName(attachment);
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
+                                    downloadFile(attachment, extractFileName(attachment));
                                   }}
                                 >
                                   <Download />
@@ -1966,14 +1972,10 @@ const Installments = () => {
                             size="small"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const link = document.createElement("a");
-                              link.href = selectedInstallment.PaymentProof;
-                              link.download = extractFileName(
-                                selectedInstallment.PaymentProof
+                              downloadFile(
+                                selectedInstallment.PaymentProof,
+                                extractFileName(selectedInstallment.PaymentProof)
                               );
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
                             }}
                           >
                             <Download />
@@ -2442,12 +2444,7 @@ const Installments = () => {
                           size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const link = document.createElement("a");
-                            link.href = attachment;
-                            link.download = extractFileName(attachment);
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            downloadFile(attachment, extractFileName(attachment));
                           }}
                           title="تحميل"
                         >
@@ -2522,14 +2519,10 @@ const Installments = () => {
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      const link = document.createElement("a");
-                      link.href = selectedDocumentsInstallment.PaymentProof;
-                      link.download = extractFileName(
-                        selectedDocumentsInstallment.PaymentProof
+                      downloadFile(
+                        selectedDocumentsInstallment.PaymentProof,
+                        extractFileName(selectedDocumentsInstallment.PaymentProof)
                       );
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
                     }}
                     title="تحميل"
                   >

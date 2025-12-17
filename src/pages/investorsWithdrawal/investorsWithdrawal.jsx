@@ -49,9 +49,12 @@ import {
   AttachMoney,
   Visibility,
   Description,
+  PictureAsPdf,
+  TableChart,
 } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { exportWithdrawalDetailsToPDF, exportWithdrawalDetailsToExcel } from "../../utilities/InvestorsWithdrawalExporter";
 
 export default function InvestorsWithdrawal() {
   const navigate = useNavigate();
@@ -70,6 +73,7 @@ export default function InvestorsWithdrawal() {
   const [previewReceiptHtml, setPreviewReceiptHtml] = useState("");
   const [allSchedulesPaid, setAllSchedulesPaid] = useState(false);
   const [hasAutoOpenedPreview, setHasAutoOpenedPreview] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
@@ -363,6 +367,42 @@ export default function InvestorsWithdrawal() {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!withdrawalDetails) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      await exportWithdrawalDetailsToPDF(withdrawalDetails);
+      notifySuccess("تم تصدير التقرير بصيغة PDF بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير PDF");
+      console.error('PDF export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!withdrawalDetails) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      await exportWithdrawalDetailsToExcel(withdrawalDetails);
+      notifySuccess("تم تصدير التقرير بصيغة Excel بنجاح");
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تصدير Excel");
+      console.error('Excel export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getWithdrawingStatusText = (status) => {
     switch (status) {
       case "WITHDRAWING":
@@ -471,6 +511,40 @@ export default function InvestorsWithdrawal() {
               <Alert severity="info">يرجى اختيار مستثمر لعرض التفاصيل</Alert>
             ) : (
               <Box>
+                {/* Export Buttons */}
+                {permissions.includes("partners-withdraw_Export") && (
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PictureAsPdf sx={{ marginLeft: "5px" }} />}
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                    sx={{
+                      borderColor: "#d32f2f",
+                      color: "#d32f2f",
+                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)", borderColor: "#b71c1c" },
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {isExporting ? <CircularProgress size={20} /> : "تصدير PDF"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<TableChart sx={{ marginLeft: "5px" }} />}
+                    onClick={handleExportExcel}
+                    disabled={isExporting}
+                    sx={{
+                      borderColor: "#2e7d32",
+                      color: "#2e7d32",
+                      "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)", borderColor: "#1b5e20" },
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {isExporting ? <CircularProgress size={20} /> : "تصدير Excel"}
+                  </Button>
+                </Box>
+                )}
+
                 {/* Partner Info */}
                 <Paper sx={{ p: 3, mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
@@ -583,7 +657,7 @@ export default function InvestorsWithdrawal() {
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography variant="body2" mb={1} fontWeight={500}>
-                          النصيب الافتراضي
+                          مبلغ التعثرات
                         </Typography>
                         <TextField
                           value={withdrawalDetails.withdrawal.defaultShare?.toLocaleString() || "0"}
@@ -742,8 +816,8 @@ export default function InvestorsWithdrawal() {
                                   : "-"}
                               </StyledTableCell>
                               <StyledTableCell align="center">
+                                {permissions.includes("partners-withdraw_Post") && (
                                 <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                                  {permissions.includes("partners-withdraw_Post") && (
                                     <>
                                       {schedule.status !== "PAID" && !schedule.isPaid && (
                                         <>
@@ -804,8 +878,8 @@ export default function InvestorsWithdrawal() {
                                         </Button>
                                       )}
                                     </>
-                                  )}
                                 </Box>
+                                )}
                               </StyledTableCell>
                             </StyledTableRow>
                           ))}

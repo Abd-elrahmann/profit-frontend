@@ -88,7 +88,7 @@ const Layout = ({ children }) => {
     || location.pathname === '/reset-password';
 
   // Check if current page is a payment receipt page
-  const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt/');
+  const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt');
   const isCheckConnectionPage = location.pathname === '/check-connection';
 
   // For auth pages and payment receipt pages, render children without layout

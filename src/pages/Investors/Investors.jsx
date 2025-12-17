@@ -74,8 +74,14 @@ const getInvestors = async (page = 1, searchQuery = '', status = '') => {
     }
   }
   
+  // استخدام status بدلاً من isActive
   if (status.trim()) {
-    queryParams.append('isActive', status.trim() === 'نشط' ? 'true' : 'false');
+    const statusMap = {
+      'نشط': 'ACTIVE',
+      'غير نشط': 'INACTIVE',
+      'منسحب': 'FROZEN'
+    };
+    queryParams.append('status', statusMap[status.trim()] || status.trim());
   }
 
   queryParams.append('limit', '10');
@@ -156,9 +162,9 @@ export default function Investors() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawnInvestors, setWithdrawnInvestors] = useState(new Set());
   
-  const [isEditWithdrawModalOpen, setIsEditWithdrawModalOpen] = useState(false);
-  const [editWithdrawAmount, setEditWithdrawAmount] = useState("");
-  const [isEditingWithdraw, setIsEditingWithdraw] = useState(false);
+  const [isWithdrawEditMode, setIsWithdrawEditMode] = useState(false);
+  const [withdrawPreviewData, setWithdrawPreviewData] = useState(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
@@ -259,8 +265,25 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
+      // تحويل status إلى isActive و isFrozen
+      let isActive = false;
+      let isFrozen = false;
+      if (editFormData.status === 'ACTIVE') {
+        isActive = true;
+        isFrozen = false;
+      } else if (editFormData.status === 'INACTIVE') {
+        isActive = false;
+        isFrozen = false;
+      } else if (editFormData.status === 'FROZEN') {
+        isActive = false;
+        isFrozen = true;
+      }
+
+      const { status: _status, ...restFormData } = editFormData;
       const dataToSend = {
-        ...editFormData,
+        ...restFormData,
+        isActive,
+        isFrozen,
         capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
         orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined,
         createdAt: editFormData.createdAt || undefined,
@@ -318,39 +341,17 @@ export default function Investors() {
       // Refetch data
       const refetchedData = await refetch();
       
-      // Make next investor active if exists
-      if (nextInvestorId) {
-        try {
-          // Find the investor in the refetched data
+      // اختيار المستثمر التالي للعرض فقط (بدون تغيير حالته في قاعدة البيانات)
+      if (selectedInvestor?.id === investorId) {
+        if (nextInvestorId) {
           const nextInvestor = refetchedData.data?.partners?.find(inv => inv.id === nextInvestorId);
-          if (nextInvestor) {
-            await Api.patch(`/api/partners/${nextInvestorId}`, { isActive: true });
-            queryClient.invalidateQueries({ queryKey: ['investors'] });
-            notifySuccess(`تم حذف المستثمر بنجاح وتم تفعيل المستثمر التالي: ${nextInvestor.name}`);
-            
-            // Update selected investor
-            if (selectedInvestor?.id === investorId) {
-              setSelectedInvestor(nextInvestor);
-            }
-          } else {
-            notifySuccess('تم حذف المستثمر بنجاح');
-            if (selectedInvestor?.id === investorId) {
-              setSelectedInvestor(refetchedData.data?.partners?.[0] || null);
-            }
-          }
-        } catch (error) {
-          console.error('Error activating next investor:', error);
-          notifySuccess('تم حذف المستثمر بنجاح');
-          if (selectedInvestor?.id === investorId) {
-            setSelectedInvestor(refetchedData.data?.partners?.[0] || null);
-          }
-        }
-      } else {
-        notifySuccess('تم حذف المستثمر بنجاح');
-        if (selectedInvestor?.id === investorId) {
+          setSelectedInvestor(nextInvestor || refetchedData.data?.partners?.[0] || null);
+        } else {
           setSelectedInvestor(refetchedData.data?.partners?.[0] || null);
         }
       }
+      
+      notifySuccess('تم حذف المستثمر بنجاح');
     } catch (error) { 
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف المستثمر');
       handleApiError(error);
@@ -436,7 +437,8 @@ export default function Investors() {
       return `${day} من ${month} ${year}`;
     };
 
-    let partnerDefaultShare = 0;
+    // استخدام قيمة التعثرات من الـ API
+    let partnerDefaultShare = withdrawPreviewData?.partnerDefaultShare || 0;
     
     if (partnerDefaultShare < 0) partnerDefaultShare = 0;
     partnerDefaultShare = normalizeDecimal(partnerDefaultShare);
@@ -482,13 +484,32 @@ export default function Investors() {
     };
   };
 
-  const handleOpenWithdrawModal = () => {
+  const handleOpenWithdrawModal = async (isEditMode = false) => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
       return;
     }
-    setWithdrawAmount("");
+    
+    setIsWithdrawEditMode(isEditMode);
+    setIsLoadingPreview(true);
     setIsWithdrawModalOpen(true);
+    
+    // Pre-fill amount if editing
+    if (isEditMode) {
+      setWithdrawAmount(investorDetails?.withdrawalInfo?.monthlyAmount || "");
+    } else {
+      setWithdrawAmount("");
+    }
+    
+    try {
+      const response = await Api.get(`/api/partner-withdraw/preview/${selectedInvestor.id}`);
+      setWithdrawPreviewData(response.data);
+    } catch (error) {
+      console.error('Error fetching preview data:', error);
+      notifyError('حدث خطأ أثناء جلب بيانات التعثرات');
+    } finally {
+      setIsLoadingPreview(false);
+    }
   };
 
   const handleWithdraw = async () => {
@@ -497,7 +518,7 @@ export default function Investors() {
       return;
     }
 
-    if (investorDetails?.isActive) {
+    if (investorDetails?.isActive && !investorDetails?.isFrozen) {
       notifyError("هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط");
       return;
     }
@@ -509,20 +530,38 @@ export default function Investors() {
 
     try {
       setIsWithdrawing(true);
-      await Api.post(`/api/partner-withdraw/${selectedInvestor.id}`, {
-        amount: parseFloat(withdrawAmount)
-      });
+      
+      if (isWithdrawEditMode) {
+        // تعديل مبلغ الانسحاب
+        await Api.patch(`/api/partner-withdraw/${selectedInvestor.id}`, {
+          amount: parseFloat(withdrawAmount)
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+        queryClient.invalidateQueries({ queryKey: ['investors'] });
+        queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
+        
+        notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
+      } else {
+        // إنشاء انسحاب جديد
+        await Api.post(`/api/partner-withdraw/${selectedInvestor.id}`, {
+          amount: parseFloat(withdrawAmount)
+        });
 
-      setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
+        setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
+        
+        queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+        queryClient.invalidateQueries({ queryKey: ['investors'] });
+        
+        notifySuccess(`تم إنسحاب المستثمر ${selectedInvestor.name} من توزيعات الأرباح بنجاح`);
+      }
       
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investors'] });
-      
-      notifySuccess(`تم إنسحاب المستثمر ${selectedInvestor.name} من توزيعات الأرباح بنجاح`);
       setIsWithdrawModalOpen(false);
       setWithdrawAmount("");
+      setWithdrawPreviewData(null);
+      setIsWithdrawEditMode(false);
     } catch (error) {
-      notifyError(error.response?.data?.message || 'حدث خطأ أثناء إنسحاب المستثمر');
+      notifyError(error.response?.data?.message || (isWithdrawEditMode ? 'حدث خطأ أثناء تعديل مبلغ الانسحاب' : 'حدث خطأ أثناء إنسحاب المستثمر'));
       handleApiError(error);
     } finally {
       setIsWithdrawing(false);
@@ -530,45 +569,7 @@ export default function Investors() {
   };
 
   const handleOpenEditWithdrawModal = () => {
-    if (!selectedInvestor) {
-      notifyError("يرجى اختيار مستثمر");
-      return;
-    }
-    // Pre-fill with current withdrawal amount if available
-    setEditWithdrawAmount(investorDetails?.withdrawalInfo?.monthlyAmount || "");
-    setIsEditWithdrawModalOpen(true);
-  };
-
-  const handleEditWithdraw = async () => {
-    if (!selectedInvestor) {
-      notifyError("يرجى اختيار مستثمر");
-      return;
-    }
-
-    if (!editWithdrawAmount || parseFloat(editWithdrawAmount) <= 0) {
-      notifyError("يرجى إدخال مبلغ صحيح");
-      return;
-    }
-
-    try {
-      setIsEditingWithdraw(true);
-      await Api.patch(`/api/partner-withdraw/${selectedInvestor.id}`, {
-        amount: parseFloat(editWithdrawAmount)
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investors'] });
-      queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
-      
-      notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
-      setIsEditWithdrawModalOpen(false);
-      setEditWithdrawAmount("");
-    } catch (error) {
-      notifyError(error.response?.data?.message || 'حدث خطأ أثناء تعديل مبلغ الانسحاب');
-      handleApiError(error);
-    } finally {
-      setIsEditingWithdraw(false);
-    }
+    handleOpenWithdrawModal(true);
   };
 
   const handleAddTransaction = () => {
@@ -716,18 +717,45 @@ export default function Investors() {
         email: investorDetails.email || '',
         orgProfitPercent: investorDetails.orgProfitPercent || '',
         capitalAmount: investorDetails.capitalAmount || '',
-        isActive: investorDetails.isActive,
+        status: getInvestorStatus(investorDetails),
         createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
       });
     }
   }, [investorDetails]);
 
-  const getStatusColor = (isActive) => {
-    return isActive ? 'success' : 'error';
+  // دالة لتحديد الحالة من isActive و isFrozen
+  const getInvestorStatus = (investor) => {
+    if (investor?.isFrozen) return 'FROZEN';
+    if (investor?.isActive) return 'ACTIVE';
+    return 'INACTIVE';
   };
 
-  const getStatusText = (isActive) => {
-    return isActive ? 'نشط' : 'غير نشط';
+  const getStatusColor = (investor) => {
+    const status = typeof investor === 'object' ? getInvestorStatus(investor) : investor;
+    switch (status) {
+      case 'ACTIVE':
+        return 'success';
+      case 'INACTIVE':
+        return 'error';
+      case 'FROZEN':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusText = (investor) => {
+    const status = typeof investor === 'object' ? getInvestorStatus(investor) : investor;
+    switch (status) {
+      case 'ACTIVE':
+        return 'نشط';
+      case 'INACTIVE':
+        return 'غير نشط';
+      case 'FROZEN':
+        return 'منسحب';
+      default:
+        return 'غير معروف';
+    }
   };
 
   const getTransactionTypeText = (type) => {
@@ -859,7 +887,7 @@ export default function Investors() {
               />
               <Chip 
                 label="نشط" 
-                color={selectedStatus === "نشط" ? "primary" : "default"} 
+                color={selectedStatus === "نشط" ? "success" : "default"} 
                 variant="outlined" 
                 onClick={() => {
                   setSelectedStatus(prev => prev === "نشط" ? "" : "نشط");
@@ -868,10 +896,19 @@ export default function Investors() {
               />
               <Chip 
                 label="غير نشط" 
-                color={selectedStatus === "غير نشط" ? "primary" : "default"} 
+                color={selectedStatus === "غير نشط" ? "error" : "default"} 
                 variant="outlined" 
                 onClick={() => {
                   setSelectedStatus(prev => prev === "غير نشط" ? "" : "غير نشط");
+                  setCurrentPage(1);
+                }}
+              />
+              <Chip 
+                label="منسحب" 
+                color={selectedStatus === "منسحب" ? "warning" : "default"} 
+                variant="outlined" 
+                onClick={() => {
+                  setSelectedStatus(prev => prev === "منسحب" ? "" : "منسحب");
                   setCurrentPage(1);
                 }}
               />
@@ -937,11 +974,21 @@ export default function Investors() {
                             alignItems: "center",
                           }}
                         >
-                          <Typography fontWeight="bold">{investor.name}</Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography fontWeight="bold">{investor.name}</Typography>
+                            {(investor.WithdrawingStatus === 'WITHDRAWING' || investor.WithdrawingStatus === 'WITHDRAWN') && (
+                              <Chip
+                                label={investor.WithdrawingStatus === 'WITHDRAWING' ? 'جاري السحب' : 'تم السحب'}
+                                size="small"
+                                color={investor.WithdrawingStatus === 'WITHDRAWING' ? 'warning' : 'info'}
+                                sx={{ fontSize: '0.65rem', height: '20px' }}
+                              />
+                            )}
+                          </Box>
                           <Chip
-                            label={getStatusText(investor.isActive)}
+                            label={getStatusText(investor)}
                             size="small"
-                            color={getStatusColor(investor.isActive)}
+                            color={getStatusColor(investor)}
                           />
                         </Box>
                         <Typography variant="body2" color="text.secondary">
@@ -1095,7 +1142,7 @@ export default function Investors() {
                       variant="outlined"
                       startIcon={<Edit sx={{marginLeft: '10px'}} />}
                       onClick={handleOpenEditWithdrawModal}
-                      disabled={isEditingWithdraw}
+                      disabled={isWithdrawing}
                       sx={{
                         borderColor: "#ed6c02",
                         color: "#ed6c02",
@@ -1291,8 +1338,8 @@ export default function Investors() {
                           <Box>
                             <TextField
                               select
-                              value={editFormData.isActive !== undefined ? editFormData.isActive : investorDetails.isActive}
-                              onChange={(e) => handleInputChange('isActive', e.target.value)}
+                              value={editFormData.status !== undefined ? editFormData.status : getInvestorStatus(investorDetails)}
+                              onChange={(e) => handleInputChange('status', e.target.value)}
                               fullWidth
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -1301,20 +1348,23 @@ export default function Investors() {
                                 },
                               }}
                             >
-                              <MenuItem value={true}>نشط</MenuItem>
-                              <MenuItem value={false}>غير نشط</MenuItem>
+                              <MenuItem value="ACTIVE">نشط</MenuItem>
+                              <MenuItem value="INACTIVE">غير نشط</MenuItem>
+                              <MenuItem value="FROZEN">منسحب</MenuItem>
                             </TextField>
-                            {editFormData.isActive !== investorDetails.isActive && (
+                            {editFormData.status !== getInvestorStatus(investorDetails) && (
                               <Alert severity="info" sx={{ mt: 1, fontSize: '0.85rem' }}>
-                                {editFormData.isActive ? 
+                                {editFormData.status === 'ACTIVE' ? 
                                   'سيتم تفعيل المستثمر وسيدخل في توزيع الأرباح' : 
-                                  'سيتم إيقاف المستثمر وسيخرج من توزيع الأرباح'}
+                                  editFormData.status === 'INACTIVE' ?
+                                  'سيتم إيقاف المستثمر وسيخرج من توزيع الأرباح' :
+                                  'سيتم انسحاب المستثمر'}
                               </Alert>
                             )}
                           </Box>
                         ) : (
                           <TextField
-                            value={getStatusText(investorDetails.isActive)}
+                            value={getStatusText(investorDetails)}
                             fullWidth
                             disabled
                             sx={{
@@ -1486,7 +1536,7 @@ export default function Investors() {
                             email: investorDetails.email || '',
                             orgProfitPercent: investorDetails.orgProfitPercent || '',
                             capitalAmount: investorDetails.capitalAmount || '',
-                            isActive: investorDetails.isActive,
+                            status: getInvestorStatus(investorDetails),
                             createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
                           });
                           setHasDataChanged(false);
@@ -1945,18 +1995,30 @@ export default function Investors() {
         onClose={() => {
           setIsWithdrawModalOpen(false);
           setWithdrawAmount("");
+          setWithdrawPreviewData(null);
+          setIsWithdrawEditMode(false);
         }}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>
           <Typography variant="h6" fontWeight="bold">
-            إنسحاب المستثمر من توزيعات الأرباح
+            {isWithdrawEditMode ? 'تعديل مبلغ الانسحاب الشهري' : 'إنسحاب المستثمر من توزيعات الأرباح'}
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
-            {investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' ? (
+            {isLoadingPreview ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : isWithdrawEditMode ? (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  🔔 يمكنك تعديل المبلغ الشهري للانسحاب. سيتم إعادة حساب جدول السداد تلقائياً
+                </Typography>
+              </Alert>
+            ) : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN') && !isWithdrawEditMode ? (
               <Alert severity="warning" sx={{ mb: 2 }}>
                 <Typography variant="body2" fontWeight="bold">
                   ⚠️ هذا المستثمر في حالة انسحاب بالفعل (الحالة: {
@@ -1967,7 +2029,7 @@ export default function Investors() {
                   لا يمكن إنشاء طلب انسحاب جديد لمستثمر منسحب. يرجى مراجعة صفحة المستثمرين المنسحبين.
                 </Typography>
               </Alert>
-            ) : investorDetails?.isActive ? (
+            ) : (investorDetails?.isActive && !investorDetails?.isFrozen) ? (
               <Alert severity="error" sx={{ mb: 2 }}>
                 <Typography variant="body2" fontWeight="bold">
                   هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط
@@ -2011,43 +2073,51 @@ export default function Investors() {
               </Grid>
             </Paper>
 
+            {isWithdrawEditMode && investorDetails?.withdrawalInfo?.monthlyAmount && (
+              <Paper sx={{ p: 2, bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
+                <Typography variant="body2" color="text.secondary" mb={0.5}>المبلغ الشهري الحالي</Typography>
+                <Typography variant="h6" fontWeight="bold" color="warning.main">
+                  {investorDetails?.withdrawalInfo?.monthlyAmount?.toLocaleString() || "غير محدد"}
+                </Typography>
+              </Paper>
+            )}
+
             <TextField
-              label="المبلغ الشهري للسحب"
+              label={isWithdrawEditMode ? "المبلغ الشهري الجديد للسحب" : "المبلغ الشهري للسحب"}
               type="number"
               value={withdrawAmount}
               onChange={(e) => {
                 const value = e.target.value;
-                // Ensure proper decimal formatting
-                if (value) {
-                  const numValue = parseFloat(value);
-                  if (!isNaN(numValue)) {
-                    setWithdrawAmount(numValue.toFixed(2) === 'NaN' ? value : numValue);
-                  }
-                } else {
+                // السماح فقط بالأرقام والنقطة العشرية
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
                   setWithdrawAmount(value);
                 }
               }}
               fullWidth
               disabled={
-                investorDetails?.isActive || 
-                investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
-                investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+                !isWithdrawEditMode && (
+                  (investorDetails?.isActive && !investorDetails?.isFrozen) || 
+                  investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
+                  investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+                )
               }
               InputProps={{
                 inputProps: { min: 0, step: 0.01 }
               }}
               helperText={
-                investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN'
-                  ? "المستثمر منسحب بالفعل"
-                  : investorDetails?.isActive 
-                    ? "لا يمكن تنفيذ الإنسحاب لأن المستثمر نشط" 
-                    : "أدخل المبلغ الشهري الذي يتم سحبه"
+                isWithdrawEditMode
+                  ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه"
+                  : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')
+                    ? "المستثمر منسحب بالفعل"
+                    : (investorDetails?.isActive && !investorDetails?.isFrozen) 
+                      ? "لا يمكن تنفيذ الإنسحاب لأن المستثمر نشط" 
+                      : "أدخل المبلغ الشهري الذي يتم سحبه"
               }
             />
 
-            {withdrawAmount && parseFloat(withdrawAmount) > 0 && !investorDetails?.isActive && 
+            {withdrawAmount && parseFloat(withdrawAmount) > 0 && (isWithdrawEditMode || (!(investorDetails?.isActive && !investorDetails?.isFrozen) && 
              investorDetails?.WithdrawingStatus !== 'WITHDRAWING' && 
-             investorDetails?.WithdrawingStatus !== 'WITHDRAWN' && (() => {
+             investorDetails?.WithdrawingStatus !== 'WITHDRAWN')) && (() => {
               const numAmount = parseFloat(Number(withdrawAmount).toFixed(2));
               const preview = calculateWithdrawalPreview(numAmount);
               return preview ? (
@@ -2228,6 +2298,8 @@ export default function Investors() {
             onClick={() => {
               setIsWithdrawModalOpen(false);
               setWithdrawAmount("");
+              setWithdrawPreviewData(null);
+              setIsWithdrawEditMode(false);
             }}
             color="inherit"
             disabled={isWithdrawing}
@@ -2242,191 +2314,23 @@ export default function Investors() {
               isWithdrawing || 
               !withdrawAmount || 
               parseFloat(withdrawAmount) <= 0 || 
-              investorDetails?.isActive ||
-              investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
-              investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+              (!isWithdrawEditMode && (
+                (investorDetails?.isActive && !investorDetails?.isFrozen) ||
+                investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
+                investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+              ))
             }
             sx={{
-              bgcolor: "#d32f2f",
-              "&:hover": { bgcolor: "#b71c1c" },
+              bgcolor: isWithdrawEditMode ? "primary.main" : "#d32f2f",
+              "&:hover": { bgcolor: isWithdrawEditMode ? "primary.dark" : "#b71c1c" },
             }}
           >
-            {isWithdrawing ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'تأكيد الإنسحاب'}
+            {isWithdrawing ? <CircularProgress size={20} sx={{ color: 'white' }} /> : (isWithdrawEditMode ? 'تأكيد التعديل' : 'تأكيد الإنسحاب')}
           </Button>
           )}
         </DialogActions>
       </Dialog>
 
-      {/* Edit Withdraw Amount Modal */}
-      <Dialog 
-        open={isEditWithdrawModalOpen} 
-        onClose={() => {
-          setIsEditWithdrawModalOpen(false);
-          setEditWithdrawAmount("");
-        }}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            تعديل مبلغ الانسحاب الشهري
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                🔔 يمكنك تعديل المبلغ الشهري للانسحاب. سيتم إعادة حساب جدول السداد تلقائياً
-              </Typography>
-            </Alert>
-            
-            {/* Current Information */}
-            <Paper sx={{ p: 2.5, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>رأس المال الأصلي</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="primary">
-                    {investorDetails?.capitalAmount?.toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>المبلغ الشهري الحالي</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="warning.main">
-                    {investorDetails?.withdrawalInfo?.monthlyAmount?.toLocaleString() || "غير محدد"}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>المدخرات</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="success.main">
-                    {investorDetails?.totalSaving?.toLocaleString() || 0}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>إجمالي الأرباح</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="info.main">
-                    {investorDetails?.totalProfit?.toLocaleString() || 0}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-
-            <TextField
-              label="المبلغ الشهري الجديد للسحب"
-              type="number"
-              value={editWithdrawAmount}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value) {
-                  const numValue = parseFloat(value);
-                  if (!isNaN(numValue)) {
-                    setEditWithdrawAmount(numValue.toFixed(2) === 'NaN' ? value : numValue);
-                  }
-                } else {
-                  setEditWithdrawAmount(value);
-                }
-              }}
-              fullWidth
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 }
-              }}
-              helperText="أدخل المبلغ الشهري الجديد الذي يتم سحبه"
-            />
-
-            {editWithdrawAmount && parseFloat(editWithdrawAmount) > 0 && (() => {
-              const numAmount = parseFloat(Number(editWithdrawAmount).toFixed(2));
-              const preview = calculateWithdrawalPreview(numAmount);
-              return preview ? (
-                <>
-                  <Divider sx={{ my: 1 }} />
-                  
-                  {/* Calculation Summary */}
-                  <Paper sx={{ p: 2.5, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
-                    <Typography variant="subtitle2" fontWeight="bold" mb={2} color="success.main">
-                      📊 معاينة الجدول الجديد :
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            رأس المال للجدول
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="primary">
-                            {preview.remainingCapital.toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            📅 عدد الدفعات الجديد
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold" color="info">
-                            {preview.totalMonths} دفعة
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {(() => {
-                              const years = Math.floor(preview.totalMonths / 12);
-                              const months = preview.totalMonths % 12;
-                              if (years > 0 && months > 0) {
-                                return `${years} سنة و ${months} شهر`;
-                              } else if (years > 0) {
-                                return `${years} سنة`;
-                              } else {
-                                return `${months} شهر`;
-                              }
-                            })()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-
-                  <Alert severity="warning" icon={<Info />}>
-                    <Typography variant="body2" fontWeight="bold">
-                      ⚠️ ملاحظة هامة
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      • سيتم إعادة حساب جدول السداد بالكامل بناءً على المبلغ الجديد<br/>
-                      • الدفعات التي لم يتم دفعها بعد سيتم تحديثها تلقائياً<br/>
-                      • الدفعات المدفوعة لن تتأثر بالتعديل
-                    </Typography>
-                  </Alert>
-                </>
-              ) : null;
-            })()}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
-          <Button 
-            onClick={() => {
-              setIsEditWithdrawModalOpen(false);
-              setEditWithdrawAmount("");
-            }}
-            color="inherit"
-            disabled={isEditingWithdraw}
-          >
-            إلغاء
-          </Button>
-          {permissions.includes("partners_Add") && (
-          <Button 
-            onClick={handleEditWithdraw}
-            variant="contained"
-            disabled={
-              isEditingWithdraw || 
-              !editWithdrawAmount || 
-              parseFloat(editWithdrawAmount) <= 0
-            }
-            sx={{
-              bgcolor: "#ed6c02",
-              "&:hover": { bgcolor: "#e65100" },
-            }}
-          >
-            {isEditingWithdraw ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'تأكيد التعديل'}
-          </Button>
-          )}
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

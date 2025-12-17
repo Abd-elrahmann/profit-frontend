@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -16,7 +16,7 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDropzone } from "react-dropzone";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { uploadAttachment, getRepaymentById, decodePaymentToken } from "../../pages/Installments/InstallmentsApi";
 import dayjs from "dayjs";
@@ -24,14 +24,107 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const PaymentReceipt = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const token = searchParams.get('token');
   const queryClient = useQueryClient();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const initialPathRef = useRef(location.pathname + location.search);
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
+
+  // Prevent route changes - block all navigation attempts
+  useEffect(() => {
+    const currentPath = location.pathname + location.search;
+    
+    // Always prevent navigation away from payment receipt page
+    if (currentPath !== initialPathRef.current) {
+      // Prevent navigation by replacing with current route
+      navigate(initialPathRef.current, { replace: true });
+      notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
+    }
+  }, [location.pathname, location.search, navigate]);
+
+  // Prevent browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = (event) => {
+      event.preventDefault();
+      window.history.pushState(null, '', initialPathRef.current);
+      notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
+    };
+
+    // Push current state to prevent back navigation
+    window.history.pushState(null, '', initialPathRef.current);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  // Prevent page unload/close
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = 'هل أنت متأكد من مغادرة الصفحة؟ قد تفقد بيانات الدفع.';
+      return event.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  // Prevent keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Prevent Alt+Arrow (browser navigation)
+      if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        event.preventDefault();
+        notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
+      }
+      // Prevent Ctrl/Cmd + R (refresh)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+        event.preventDefault();
+        notifyError("يرجى عدم تحديث الصفحة أثناء عملية الدفع");
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Prevent link clicks that would navigate away
+  useEffect(() => {
+    const handleClick = (event) => {
+      const target = event.target.closest('a');
+      if (target && target.href) {
+        const currentOrigin = window.location.origin;
+        const linkOrigin = new URL(target.href).origin;
+        
+        // Always prevent navigation away from payment receipt page
+        if (linkOrigin === currentOrigin && !target.href.includes('/payment-receipt')) {
+          event.preventDefault();
+          event.stopPropagation();
+          notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, []);
 
   // Decode the token to get the actual data
   const { data: decodedData, isLoading: isDecoding, error: decodeError } = useQuery({
@@ -111,18 +204,21 @@ const PaymentReceipt = () => {
     alignItems: isSmallScreen ? "flex-start" : "center",
     justifyContent: "center",
     direction: "rtl",
-    fontFamily: "Tajawal",
-    py: isSmallScreen ? 2 : 0,
-    overflow: "auto"
+    py: isSmallScreen ? 3 : 4,
+    px: isSmallScreen ? 2 : 3,
+    overflow: "auto",
+    background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.light}15 100%)`
   };
 
   // Paper styles with responsive padding
   const paperStyles = {
-    p: isSmallScreen ? 2 : 4,
-    borderRadius: 3,
+    p: isSmallScreen ? 3 : 5,
+    borderRadius: 4,
     width: "100%",
-    maxWidth: "500px",
-    my: isSmallScreen ? 2 : 0
+    maxWidth: "550px",
+    my: isSmallScreen ? 2 : 0,
+    boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
+    border: `1px solid ${theme.palette.primary.light}30`
   };
 
   // Check if there are server-side attachments (not local blob URLs)
@@ -133,57 +229,96 @@ const PaymentReceipt = () => {
   if (hasServerAttachments) {
     return (
       <Container maxWidth="sm" sx={containerStyles}>
-        <Paper elevation={4} sx={paperStyles}>
-          <Box textAlign="center" mb={3}>
+        <Paper elevation={0} sx={paperStyles}>
+          <Box 
+            textAlign="center" 
+            mb={4}
+            sx={{
+              pb: 3,
+              borderBottom: `2px solid ${theme.palette.primary.light}40`
+            }}
+          >
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                bgcolor: `${theme.palette.primary.main}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2
+              }}
+            >
+              <Typography 
+                variant="h4"
+                sx={{ 
+                  color: theme.palette.primary.main,
+                  fontWeight: 'bold'
+                }}
+              >
+                ✓
+              </Typography>
+            </Box>
             <Typography 
               variant={isSmallScreen ? "h6" : "h5"} 
               fontWeight="bold" 
-              color="success.main"
+              color={theme.palette.primary.main}
+              mb={1}
             >
-              ✓ تم رفع الإيصال بنجاح
+              تم رفع الإيصال بنجاح
             </Typography>
-            <Typography variant="body2" color="gray" mt={2}>
+            <Typography variant="body2" color="text.secondary" mt={1}>
               تم رفع إيصال الدفع مسبقاً وجاري مراجعته من قبل الإدارة
             </Typography>
           </Box>
 
           <Paper sx={{ 
-            p: isSmallScreen ? 2 : 3, 
-            bgcolor: "#f5f5f5", 
-            borderRadius: 2, 
-            mb: 3 
+            p: isSmallScreen ? 2.5 : 3.5, 
+            bgcolor: theme.palette.background.default, 
+            borderRadius: 3, 
+            mb: 3,
+            border: `1px solid ${theme.palette.primary.light}20`,
+            boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)'
           }}>
-            <Stack spacing={2}>
-              <Box display="flex" justifyContent="space-between">
-                <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+            <Stack spacing={2.5}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography color="text.secondary" variant={isSmallScreen ? "body2" : "body1"} fontWeight={500}>
                   اسم العميل:
                 </Typography>
-                <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
+                <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.95rem" : "1.1rem"} color={theme.palette.primary.main}>
                   {repaymentData?.loan?.client?.name || clientName}
                 </Typography>
               </Box>
 
-              <Divider />
+              <Divider sx={{ borderColor: theme.palette.primary.light + '30' }} />
 
-              <Box display="flex" justifyContent="space-between">
-                <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography color="text.secondary" variant={isSmallScreen ? "body2" : "body1"} fontWeight={500}>
                   المبلغ المستحق:
                 </Typography>
-                <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
-                  {repaymentData?.amount?.toFixed(2)}
+                <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.95rem" : "1.1rem"} color={theme.palette.primary.main}>
+                  {repaymentData?.amount?.toFixed(2)} ر.س
                 </Typography>
               </Box>
 
-              <Divider />
+              <Divider sx={{ borderColor: theme.palette.primary.light + '30' }} />
 
-              <Box display="flex" justifyContent="space-between">
-                <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography color="text.secondary" variant={isSmallScreen ? "body2" : "body1"} fontWeight={500}>
                   حالة المراجعة:
                 </Typography>
                 <Typography 
                   fontWeight="bold" 
-                  fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}
-                  color="warning.main"
+                  fontSize={isSmallScreen ? "0.95rem" : "1.1rem"}
+                  sx={{
+                    color: theme.palette.warning.main,
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 2,
+                    bgcolor: theme.palette.warning.main + '15'
+                  }}
                 >
                   قيد المراجعة
                 </Typography>
@@ -191,21 +326,15 @@ const PaymentReceipt = () => {
             </Stack>
           </Paper>
 
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => window.open(repaymentData.attachments, '_blank')}
+          <Alert 
+            severity="info" 
             sx={{ 
-              py: isSmallScreen ? 1 : 1.2, 
-              borderRadius: 2, 
-              mb: 2,
-              fontSize: isSmallScreen ? "0.8rem" : "0.9rem"
+              fontSize: isSmallScreen ? "0.85rem" : "0.9rem",
+              borderRadius: 2,
+              bgcolor: theme.palette.info.main + '10',
+              border: `1px solid ${theme.palette.info.main}30`
             }}
           >
-            عرض الإيصال المرفوع
-          </Button>
-
-          <Alert severity="info" sx={{ fontSize: isSmallScreen ? "0.8rem" : "0.9rem" }}>
             سيتم إشعارك بنتيجة المراجعة قريباً
           </Alert>
         </Paper>
@@ -216,7 +345,9 @@ const PaymentReceipt = () => {
   if (isDecoding) {
     return (
       <Container maxWidth="sm" sx={containerStyles}>
-        <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress sx={{ color: theme.palette.primary.main }} size={48} />
+        </Box>
       </Container>
     );
   }
@@ -240,7 +371,9 @@ const PaymentReceipt = () => {
   if (isLoading) {
     return (
       <Container maxWidth="sm" sx={containerStyles}>
-        <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress sx={{ color: theme.palette.primary.main }} size={48} />
+        </Box>
       </Container>
     );
   }
@@ -263,50 +396,87 @@ const PaymentReceipt = () => {
 
   return (
     <Container maxWidth="sm" sx={containerStyles}>
-      <Paper elevation={4} sx={paperStyles}>
-        <Box textAlign="center" mb={3}>
-          <Typography variant={isSmallScreen ? "h6" : "h5"} fontWeight="bold">
+      <Paper elevation={0} sx={paperStyles}>
+        <Box 
+          textAlign="center" 
+          mb={4}
+          sx={{
+            pb: 3,
+            borderBottom: `2px solid ${theme.palette.primary.light}40`
+          }}
+        >
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              bgcolor: `${theme.palette.primary.main}15`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 2
+            }}
+          >
+            <Typography 
+              variant="h4"
+              sx={{ 
+                color: theme.palette.primary.main,
+                fontWeight: 'bold'
+              }}
+            >
+              💳
+            </Typography>
+          </Box>
+          <Typography 
+            variant={isSmallScreen ? "h6" : "h5"} 
+            fontWeight="bold"
+            color={theme.palette.primary.main}
+            mb={1}
+          >
             دفع الدفعة
           </Typography>
-          <Typography variant="body2" color="gray">
+          <Typography variant="body2" color="text.secondary">
             يرجى إرفاق إيصال التحويل البنكي لإتمام عملية الدفع.
           </Typography>
         </Box>
 
         <Paper sx={{ 
-          p: isSmallScreen ? 2 : 3, 
-          bgcolor: "#f5f5f5", 
-          borderRadius: 2, 
-          mb: 3 
+          p: isSmallScreen ? 2.5 : 3.5, 
+          bgcolor: theme.palette.background.default, 
+          borderRadius: 3, 
+          mb: 3,
+          border: `1px solid ${theme.palette.primary.light}20`,
+          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)'
         }}>
-          <Stack spacing={2}>
-            <Box display="flex" justifyContent="space-between">
-              <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+          <Stack spacing={2.5}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography color="text.secondary" variant={isSmallScreen ? "body2" : "body1"} fontWeight={500}>
                 اسم العميل:
               </Typography>
-              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
+              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.95rem" : "1.1rem"} color={theme.palette.primary.main}>
                 {repaymentData?.loan?.client?.name || clientName}
               </Typography>
             </Box>
 
-            <Divider />
+            <Divider sx={{ borderColor: theme.palette.primary.light + '30' }} />
 
-            <Box display="flex" justifyContent="space-between">
-              <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography color="text.secondary" variant={isSmallScreen ? "body2" : "body1"} fontWeight={500}>
                 المبلغ المستحق:
               </Typography>
-              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
-                {repaymentData?.amount?.toFixed(2)}
+              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.95rem" : "1.1rem"} color={theme.palette.primary.main}>
+                {repaymentData?.amount?.toFixed(2)} ر.س
               </Typography>
             </Box>
 
-            <Divider />
+            <Divider sx={{ borderColor: theme.palette.primary.light + '30' }} />
 
-            <Box display="flex" justifyContent="space-between">
-              <Typography color="gray" variant={isSmallScreen ? "body2" : "body1"}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography color="text.secondary" variant={isSmallScreen ? "body2" : "body1"} fontWeight={500}>
                 تاريخ الاستحقاق:
               </Typography>
-              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.9rem" : "1.1rem"}>
+              <Typography fontWeight="bold" fontSize={isSmallScreen ? "0.95rem" : "1.1rem"} color={theme.palette.primary.main}>
                 {dayjs(repaymentData?.dueDate).format("DD/MM/YYYY")}
               </Typography>
             </Box>
@@ -316,27 +486,31 @@ const PaymentReceipt = () => {
         <Box
           {...getRootProps()}
           sx={{
-            border: '2px dashed',
-            borderColor: isDragActive ? '#1E40AF' : '#bdbdbd',
-            backgroundColor: isDragActive ? '#f0f4ff' : 'transparent',
-            p: isSmallScreen ? 2 : 4,
-            borderRadius: 2,
+            border: `2px dashed ${isDragActive ? theme.palette.primary.main : theme.palette.primary.light}60`,
+            backgroundColor: isDragActive ? `${theme.palette.primary.main}08` : 'transparent',
+            p: isSmallScreen ? 3 : 4,
+            borderRadius: 3,
             mb: 2,
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            minHeight: isSmallScreen ? '120px' : '200px',
+            minHeight: isSmallScreen ? '140px' : '220px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'center'
+            alignItems: 'center',
+            '&:hover': {
+              borderColor: theme.palette.primary.main,
+              backgroundColor: `${theme.palette.primary.main}05`
+            }
           }}
         >
           <input {...getInputProps()} />
           <CloudUploadIcon sx={{ 
-            fontSize: isSmallScreen ? 40 : 60, 
-            color: "gray", 
-            mb: 1 
+            fontSize: isSmallScreen ? 48 : 72, 
+            color: isDragActive ? theme.palette.primary.main : theme.palette.text.secondary, 
+            mb: 2,
+            transition: 'all 0.3s ease'
           }} />
 
           {files.length > 0 ? (
@@ -346,14 +520,14 @@ const PaymentReceipt = () => {
                   <Box display="flex" alignItems="center" flex={1}>
                     <Typography 
                       fontWeight="bold" 
-                      color="#1E40AF" 
-                      fontSize={isSmallScreen ? "0.8rem" : "0.9rem"}
+                      color={theme.palette.primary.main} 
+                      fontSize={isSmallScreen ? "0.85rem" : "0.95rem"}
                       noWrap
                       sx={{ maxWidth: '150px' }}
                     >
                       {file.name}
                     </Typography>
-                    <Typography variant="caption" color="gray" sx={{ ml: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1.5 }}>
                       {Math.round(file.size / 1024)} KB
                     </Typography>
                   </Box>
@@ -363,7 +537,12 @@ const PaymentReceipt = () => {
                       handleRemoveFile(index);
                     }}
                     size="small"
-                    sx={{ color: "#ff4444" }}
+                    sx={{ 
+                      color: theme.palette.error.main,
+                      '&:hover': {
+                        bgcolor: theme.palette.error.main + '15'
+                      }
+                    }}
                   >
                     <DeleteIcon fontSize={isSmallScreen ? "small" : "medium"} />
                   </IconButton>
@@ -373,23 +552,30 @@ const PaymentReceipt = () => {
           ) : (
             <>
               <Typography 
-                fontSize={isSmallScreen ? "0.8rem" : "0.9rem"} 
+                fontSize={isSmallScreen ? "0.9rem" : "1rem"} 
                 mt={1} 
-                color="gray"
+                color={isDragActive ? theme.palette.primary.main : "text.secondary"}
+                fontWeight={500}
               >
                 {isDragActive ? 'أفلت الملفات هنا' : 'اسحب وأفلت الملفات هنا'}
               </Typography>
 
-              <Typography fontSize={isSmallScreen ? "0.7rem" : "0.8rem"} color="gray" mb={1}>
+              <Typography fontSize={isSmallScreen ? "0.75rem" : "0.85rem"} color="text.secondary" mb={1.5}>
                 أو
               </Typography>
 
               <Button
                 variant="outlined"
                 sx={{ 
-                  mb: 1, 
+                  mb: 1.5, 
                   borderRadius: 2,
-                  fontSize: isSmallScreen ? "0.7rem" : "0.8rem"
+                  fontSize: isSmallScreen ? "0.8rem" : "0.9rem",
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    borderColor: theme.palette.primary.dark,
+                    bgcolor: theme.palette.primary.main + '10'
+                  }
                 }}
               >
                 تصفح الملفات
@@ -397,8 +583,8 @@ const PaymentReceipt = () => {
 
               <Typography 
                 variant="caption" 
-                color="gray"
-                fontSize={isSmallScreen ? "0.6rem" : "0.7rem"}
+                color="text.secondary"
+                fontSize={isSmallScreen ? "0.7rem" : "0.8rem"}
               >
                 PNG, JPG, PDF حتى 10MB
               </Typography>
@@ -407,8 +593,17 @@ const PaymentReceipt = () => {
         </Box>
 
         {files.length > 0 && (
-          <Alert severity="info" sx={{ mb: 2, fontSize: isSmallScreen ? "0.8rem" : "0.9rem" }}>
-            تم اختيار {files.length} ملفات
+          <Alert 
+            severity="info" 
+            sx={{ 
+              mb: 2.5, 
+              fontSize: isSmallScreen ? "0.85rem" : "0.9rem",
+              borderRadius: 2,
+              bgcolor: theme.palette.info.main + '10',
+              border: `1px solid ${theme.palette.info.main}30`
+            }}
+          >
+            تم اختيار {files.length} ملف{files.length > 1 ? 'ات' : ''}
           </Alert>
         )}
 
@@ -418,27 +613,43 @@ const PaymentReceipt = () => {
           onClick={handleSubmit}
           disabled={!files.length || uploading}
           sx={{
-            py: isSmallScreen ? 1 : 1.2,
-            borderRadius: 2,
+            py: isSmallScreen ? 1.2 : 1.5,
+            borderRadius: 3,
             fontWeight: "bold",
-            background: "#1E40AF",
-            "&:hover": { background: "#153482" },
-            fontSize: isSmallScreen ? "0.8rem" : "0.9rem"
+            bgcolor: theme.palette.primary.main,
+            fontSize: isSmallScreen ? "0.9rem" : "1rem",
+            textTransform: 'none',
+            boxShadow: `0px 4px 12px ${theme.palette.primary.main}40`,
+            "&:hover": { 
+              bgcolor: theme.palette.primary.dark,
+              boxShadow: `0px 6px 16px ${theme.palette.primary.main}50`
+            },
+            "&:disabled": {
+              bgcolor: theme.palette.action.disabledBackground,
+              color: theme.palette.action.disabled
+            }
           }}
         >
-          {uploading ? <CircularProgress size={24} /> : 'تأكيد وإرسال الإيصال'}
+          {uploading ? (
+            <CircularProgress size={24} sx={{ color: theme.palette.primary.contrastText }} />
+          ) : (
+            'تأكيد وإرسال الإيصال'
+          )}
         </Button>
 
         <Typography
           textAlign="center"
-          mt={2}
+          mt={3}
           variant="caption"
-          color="gray"
+          color="text.secondary"
           display="flex"
           justifyContent="center"
           alignItems="center"
           gap={0.5}
-          fontSize={isSmallScreen ? "0.6rem" : "0.7rem"}
+          fontSize={isSmallScreen ? "0.7rem" : "0.8rem"}
+          sx={{
+            opacity: 0.8
+          }}
         >
           🔒 اتصال آمن ومشفّر
         </Typography>
