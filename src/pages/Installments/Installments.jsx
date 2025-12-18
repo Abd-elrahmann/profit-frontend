@@ -1488,29 +1488,68 @@ const Installments = () => {
               )}
           </Box>
           <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-            <Grid container spacing={3} justifyContent="center">
-              <Grid item xs={12} md={4} textAlign="center">
-                <Typography variant="body2" color="text.secondary">
+            {/* الصف الأول - معلومات السلفة الأساسية */}
+            <Grid container spacing={3} justifyContent="center" sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={4} textAlign="center">
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                   مبلغ السلفة
                 </Typography>
-                <Typography variant="h6" fontWeight="bold" color="warning.main">
+                <Typography variant="h5" fontWeight="bold" color="warning.main">
                   {loanData?.amount?.toLocaleString()}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4} textAlign="center">
-                <Typography variant="body2" color="text.secondary">
+              <Grid item xs={12} sm={4} textAlign="center">
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                   إجمالي الفائدة
                 </Typography>
-                <Typography variant="h6" fontWeight="bold" color="error.main">
+                <Typography variant="h5" fontWeight="bold" color="error.main">
                   {loanData?.interestAmount?.toLocaleString()}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4} textAlign="center">
-                <Typography variant="body2" color="text.secondary">
+              <Grid item xs={12} sm={4} textAlign="center">
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                   المبلغ الإجمالي
                 </Typography>
-                <Typography variant="h6" fontWeight="bold" color="success.main">
+                <Typography variant="h5" fontWeight="bold" color="success.main">
                   {loanData?.totalAmount?.toLocaleString()}
+                </Typography>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* الصف الثاني - تفاصيل الدفعات */}
+            <Grid container spacing={3} justifyContent="center">
+              <Grid item xs={6} sm={3} textAlign="center">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  المبلغ المدفوع
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="success.dark">
+                  {(loanData?.pagination?.totalPaidAmount || 0).toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3} textAlign="center">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  المبلغ المتبقي
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="error.dark">
+                  {(loanData?.pagination?.totalRemainingAmount || 0).toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3} textAlign="center">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  الدفعات المدفوعة
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="primary.main">
+                  {loanData?.pagination?.paidRepayments || 0} / {loanData?.pagination?.totalRepayments || 0}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3} textAlign="center">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  الدفعات المتبقية
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="info.main">
+                  {(loanData?.pagination?.totalRepayments || 0) - (loanData?.pagination?.paidRepayments || 0)}
                 </Typography>
               </Grid>
             </Grid>
