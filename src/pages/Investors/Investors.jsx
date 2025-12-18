@@ -958,7 +958,7 @@ export default function Investors() {
                         mx: 2,
                         mt: 2,
                         cursor: "pointer",
-                        height: '100px',
+                        height: '130px',
                         border: isSelected ? "2px solid" : "1px solid #E5E7EB",
                         borderColor: isSelected ? "primary.main" : "#E5E7EB",
                         bgcolor: isSelected ? "primary.50" : "background.paper",
@@ -991,8 +991,11 @@ export default function Investors() {
                             color={getStatusColor(investor)}
                           />
                         </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          رأس المال: {investor.capitalAmount?.toLocaleString()}
+                        <Typography variant="body2" color="text.secondary" fontWeight={"bold"}>
+                          رأس المال: {investor.totalAmount?.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="black" sx={{ fontSize: '0.75rem' }}>
+                          {investor.capitalAmount?.toLocaleString()} رأس مال صافي + {investor.totalProfit?.toLocaleString()} أرباح
                         </Typography>
                         <Box display="flex" justifyContent="flex-end" mt={1}>
                           {permissions.includes("partners_Delete") && (

@@ -128,6 +128,7 @@ const Installments = () => {
   const [settlementHtml, setSettlementHtml] = useState("");
   const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
   const [settlementJustSaved, setSettlementJustSaved] = useState(false);
+  const [settlementDismissed, setSettlementDismissed] = useState(false);
   const [settlementTemplate, setSettlementTemplate] = useState("");
   const { permissions } = usePermissions();
   const settlementReceiptRef = useRef(null);
@@ -321,9 +322,10 @@ const Installments = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
 
-  // Reset settlement flag when loan changes
+  // Reset settlement flags when loan changes
   useEffect(() => {
     setSettlementJustSaved(false);
+    setSettlementDismissed(false);
   }, [loanId]);
 
   // Auto-open settlement preview when all installments are paid
@@ -334,12 +336,13 @@ const Installments = () => {
       !isSettlementCompleted() &&
       !settlementModalOpen &&
       settlementTemplate &&
-      !settlementJustSaved
+      !settlementJustSaved &&
+      !settlementDismissed
     ) {
       handleSettlement();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedInstallments, settlementTemplate, settlementJustSaved]);
+  }, [sortedInstallments, settlementTemplate, settlementJustSaved, settlementDismissed]);
 
   const handleApprove = async (installment) => {
     try {
@@ -619,7 +622,7 @@ const Installments = () => {
 
       // إظهار رسالة النجاح الثانية بعد إغلاق الموديل
       setTimeout(() => {
-        notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
+        notifySuccess("تم تسوية السلفة وإغلاقها بنجاح");
       }, 300);
 
       queryClient.invalidateQueries(["loan", loanId]);
@@ -1780,7 +1783,10 @@ const Installments = () => {
 
           {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
           {allInstallmentsPaid() && !isSettlementCompleted() && (
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3, gap: 2 }}>
+              <Alert severity="warning" sx={{ maxWidth: 500 }}>
+                تم انتهاء السلفة ولكنها تحتاج إلى حفظ سند التسوية الخاص بها
+              </Alert>
               {permissions.includes("repayments_Post") && (
                 <Button
                   variant="contained"
@@ -1794,7 +1800,7 @@ const Installments = () => {
                     py: 1.5,
                   }}
                 >
-                  تسوية الدفعة النهائي
+                  تسوية السلفة
                 </Button>
               )}
             </Box>
@@ -1803,7 +1809,7 @@ const Installments = () => {
           {/* Show message if settlement is already completed */}
           {isSettlementCompleted() && (
             <Alert severity="success" sx={{ mb: 3 }}>
-              تم تسوية الدفعة النهائي بنجاح
+              تم تسوية السلفة بنجاح
             </Alert>
           )}
 
@@ -2363,6 +2369,7 @@ const Installments = () => {
   open={settlementModalOpen}
   onClose={() => {
     setSettlementModalOpen(false);
+    setSettlementDismissed(true);
   }}
   settlementHtml={settlementHtml}
   onSaveSettlement={handleSaveSettlement}
