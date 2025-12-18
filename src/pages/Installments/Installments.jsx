@@ -128,7 +128,6 @@ const Installments = () => {
   const [settlementHtml, setSettlementHtml] = useState("");
   const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
   const [settlementJustSaved, setSettlementJustSaved] = useState(false);
-  const [settlementDismissed, setSettlementDismissed] = useState(false);
   const [settlementTemplate, setSettlementTemplate] = useState("");
   const { permissions } = usePermissions();
   const settlementReceiptRef = useRef(null);
@@ -322,10 +321,9 @@ const Installments = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
 
-  // Reset settlement flags when loan changes
+  // Reset settlement flag when loan changes
   useEffect(() => {
     setSettlementJustSaved(false);
-    setSettlementDismissed(false);
   }, [loanId]);
 
   // Auto-open settlement preview when all installments are paid
@@ -336,13 +334,12 @@ const Installments = () => {
       !isSettlementCompleted() &&
       !settlementModalOpen &&
       settlementTemplate &&
-      !settlementJustSaved &&
-      !settlementDismissed
+      !settlementJustSaved
     ) {
       handleSettlement();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedInstallments, settlementTemplate, settlementJustSaved, settlementDismissed]);
+  }, [sortedInstallments, settlementTemplate, settlementJustSaved]);
 
   const handleApprove = async (installment) => {
     try {
@@ -547,6 +544,16 @@ const Installments = () => {
   };
 
   const allInstallmentsPaid = () => {
+    // Check using pagination data from API to ensure ALL repayments across ALL pages are paid
+    const totalRepayments = loanData?.pagination?.totalRepayments || 0;
+    const paidRepayments = loanData?.pagination?.paidRepayments || 0;
+    
+    // If we have pagination data, use it to check if all repayments are paid
+    if (totalRepayments > 0) {
+      return paidRepayments === totalRepayments;
+    }
+    
+    // Fallback to checking current page only (for backward compatibility)
     return sortedInstallments.every(
       (installment) => installment.status === "PAID" || installment.status === "EARLY_PAID"
     );
@@ -622,7 +629,7 @@ const Installments = () => {
 
       // إظهار رسالة النجاح الثانية بعد إغلاق الموديل
       setTimeout(() => {
-        notifySuccess("تم تسوية السلفة وإغلاقها بنجاح");
+        notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
       }, 300);
 
       queryClient.invalidateQueries(["loan", loanId]);
@@ -1783,10 +1790,7 @@ const Installments = () => {
 
           {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
           {allInstallmentsPaid() && !isSettlementCompleted() && (
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3, gap: 2 }}>
-              <Alert severity="warning" sx={{ maxWidth: 500 }}>
-                تم انتهاء السلفة ولكنها تحتاج إلى حفظ سند التسوية الخاص بها
-              </Alert>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               {permissions.includes("repayments_Post") && (
                 <Button
                   variant="contained"
@@ -1800,7 +1804,7 @@ const Installments = () => {
                     py: 1.5,
                   }}
                 >
-                  تسوية السلفة
+                  تسوية الدفعة النهائي
                 </Button>
               )}
             </Box>
@@ -1809,7 +1813,7 @@ const Installments = () => {
           {/* Show message if settlement is already completed */}
           {isSettlementCompleted() && (
             <Alert severity="success" sx={{ mb: 3 }}>
-              تم تسوية السلفة بنجاح
+              تم تسوية الدفعة النهائي بنجاح
             </Alert>
           )}
 
@@ -2369,7 +2373,6 @@ const Installments = () => {
   open={settlementModalOpen}
   onClose={() => {
     setSettlementModalOpen(false);
-    setSettlementDismissed(true);
   }}
   settlementHtml={settlementHtml}
   onSaveSettlement={handleSaveSettlement}
