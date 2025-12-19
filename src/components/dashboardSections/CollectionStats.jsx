@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Grid,
   Card,
   CardContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   CircularProgress,
   useMediaQuery,
 } from '@mui/material';
@@ -16,12 +20,13 @@ import { useTheme } from '@mui/material';
 import { useCountUp } from '../../hooks/useCountUp';
 
 const CollectionStats = () => {
+  const [filter, setFilter] = useState('all');
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['monthly-collection'],
-    queryFn: getMonthlyCollection,
+    queryKey: ['monthly-collection', filter],
+    queryFn: () => getMonthlyCollection(filter),
   });
 
   // Animated counters
@@ -107,10 +112,45 @@ const CollectionStats = () => {
 
   return (
     <Box sx={{ width: '100vw', maxWidth: '100%', p: { xs: 1.5, sm: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Header and Filter */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 15,
+        mb: { xs: 3, sm: 4, md: 5 },
+        width: '100%',
+        maxWidth: '1200px'
+      }}>
+        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
+          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
+          <Select
+            value={filter}
+            label="الفترة"
+            onChange={(e) => setFilter(e.target.value)}
+            size="small"
+            sx={{
+              borderRadius: 2,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'divider',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.main',
+              },
+            }}
+          >
+            <MenuItem value="all">الكل</MenuItem>
+            <MenuItem value="daily">يومي</MenuItem>
+            <MenuItem value="monthly">شهري</MenuItem>
+            <MenuItem value="yearly">سنوي</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
       {/* Summary Cards - Row 1: حساب البنك */}
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
         {/* الوارد */}
-        <Grid item xs={6} sm={6} md={3}>
+        <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '100%', sm: '100%', md: '250px' },
@@ -181,7 +221,7 @@ const CollectionStats = () => {
         </Grid>
 
         {/* الصادر */}
-        <Grid item xs={6} sm={6} md={3}>
+        <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '100%', sm: '100%', md: '250px' },
@@ -252,7 +292,7 @@ const CollectionStats = () => {
         </Grid>
 
         {/* الرصيد */}
-        <Grid item xs={6} sm={6} md={3}>
+        <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '100%', sm: '100%', md: '250px' },
@@ -323,7 +363,7 @@ const CollectionStats = () => {
         </Grid>
 
         {/* رصيد السلف */}
-        <Grid item xs={6} sm={6} md={3}>
+        <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '100%', sm: '100%', md: '250px' },
@@ -392,12 +432,9 @@ const CollectionStats = () => {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
 
-      {/* Summary Cards - Row 2: الإجمالي + ملخص التحصيلات + نسبة التحصيل + المبلغ المتاح */}
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
         {/* الإجمالي */}
-        <Grid item xs={6} sm={6} md={3}>
+        <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '100%', sm: '100%', md: '250px' },
@@ -454,7 +491,7 @@ const CollectionStats = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                 الإجمالي
               </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
+              <Typography variant="h4" fontWeight="800" sx={{
                 fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
                 background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
                 WebkitBackgroundClip: 'text',
@@ -466,6 +503,10 @@ const CollectionStats = () => {
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
+
+      {/* Summary Cards - Row 2: ملخص التحصيلات + نسبة التحصيل + المبلغ المتاح */}
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
 
         {/* ملخص التحصيلات */}
         {stats?.repaymentsSummary && (

@@ -96,26 +96,15 @@ const PartnerStats = () => {
       alignItems: 'center',
       backgroundColor: 'background.default'
     }}>
-      {/* Header and Filter */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        gap: 15,
-        alignItems: 'center', 
-        mb: { xs: 3, sm: 4, md: 5 }, 
-        width: '100%', 
+      {/* Filter */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        mb: { xs: 3, sm: 4, md: 5 },
+        width: '100%',
         maxWidth: '1200px'
       }}>
-        <Typography 
-          variant="h5" 
-          fontWeight="600" 
-          sx={{ 
-            color: 'text.primary',
-            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
-          }}
-        >
-          إحصائيات الشركاء
-        </Typography>
         <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
           <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
           <Select
@@ -144,7 +133,7 @@ const PartnerStats = () => {
       {/* Summary Cards */}
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
         {/* إجمالي الشركاء */}
-        <Grid item xs={6} sm={12} md={3}>
+        <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '200px' },
@@ -215,7 +204,7 @@ const PartnerStats = () => {
         </Grid>
 
         {/* شركاء نشطين */}
-        <Grid item xs={6} sm={12} md={3}>
+        <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
@@ -286,7 +275,7 @@ const PartnerStats = () => {
         </Grid>
 
         {/* إجمالي رأس المال */}
-        <Grid item xs={6} sm={12} md={3}>
+        <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },
@@ -357,7 +346,7 @@ const PartnerStats = () => {
         </Grid>
 
         {/* إجمالي الأرباح */}
-        <Grid item xs={6} sm={12} md={3}>
+        <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
             width: { xs: '250px', sm: '100%', md: '250px' },

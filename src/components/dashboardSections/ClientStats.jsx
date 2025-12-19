@@ -12,7 +12,7 @@ import {
   CircularProgress,
   useMediaQuery,
 } from '@mui/material';
-import { People, CheckCircle, AttachMoney } from '@mui/icons-material';
+import { People, CheckCircle } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getClientStats } from '../../pages/dashboard/dashboardApi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
@@ -34,14 +34,6 @@ const ClientStats = () => {
   const animatedNewClients = useCountUp(stats?.newClientsToday || 0, 600, !isLoading);
   const animatedActive = useCountUp(stats?.activeCount || 0, 600, !isLoading);
   const animatedOverdue = useCountUp(stats?.overdueCount || 0, 600, !isLoading);
-  const animatedDebit = useCountUp(stats?.totalDebit || 0, 600, !isLoading);
-  const animatedPaid = useCountUp(stats?.totalPaid || 0, 600, !isLoading);
-  const animatedRemaining = useCountUp(stats?.remaining || 0, 600, !isLoading);
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return amount?.toLocaleString() || '0';
-  };
 
   // Prepare data for bar chart
   const clientBarData = [
@@ -62,23 +54,6 @@ const ClientStats = () => {
     },
   ];
 
-  const financialBarData = [
-    {
-      name: 'إجمالي المديونية',
-      value: stats?.totalDebit || 0,
-      color: theme.palette.primary.main,
-    },
-    {
-      name: 'المدفوع',
-      value: stats?.totalPaid || 0,
-      color: theme.palette.success.main,
-    },
-    {
-      name: 'المتبقي',
-      value: stats?.remaining || 0,
-      color: theme.palette.error.main,
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -97,26 +72,15 @@ const ClientStats = () => {
       alignItems: 'center',
       backgroundColor: 'background.default'
     }}>
-      {/* Header and Filter */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        gap: 15,
-        mb: { xs: 3, sm: 4, md: 5 }, 
-        width: '100%', 
+      {/* Filter */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        mb: { xs: 3, sm: 4, md: 5 },
+        width: '100%',
         maxWidth: '1200px'
       }}>
-        <Typography 
-          variant="h5" 
-          fontWeight="600" 
-          sx={{ 
-            color: 'text.primary',
-            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
-          }}
-        >
-          إحصائيات العملاء
-        </Typography>
         <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
           <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
           <Select
@@ -329,160 +293,6 @@ const ClientStats = () => {
         </Grid>
       </Grid>
 
-      {/* Summary Cards - Row 2: المديونية والمدفوعات */}
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
-        {/* المديونية والمدفوعات */}
-        <Grid item xs={12} sm={12} md={12}>
-          <Card sx={{
-            height: { xs: '450px', sm: '100%', md: '230px' },
-            width: { xs: '100%', sm: '100%', md: '850px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.warning.main}10 0%, ${theme.palette.warning.dark}05 100%)`,
-            border: `1px solid ${theme.palette.warning.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.warning.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.warning.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.warning.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, position: 'relative', zIndex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
-                <Box sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 48,
-                  height: 48,
-                  borderRadius: '16px',
-                  mr: 1.5,
-                }}>
-                  <AttachMoney sx={{ fontSize: '1.75rem', color: theme.palette.warning.main }} />
-                </Box>
-                <Typography variant="h6" fontWeight="700" sx={{ 
-                  textAlign: 'center',
-                  background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>
-                  المديونية والمدفوعات
-                </Typography>
-              </Box>
-              
-              <Grid container spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: { xs: 'center', sm: 'space-between' } }}>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ 
-                    textAlign: 'center', 
-                    p: 2.5,
-                    borderRadius: 3,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
-                    border: `1px solid ${theme.palette.primary.main}30`,
-                    height: '100%',
-                    boxShadow: `0 2px 8px ${theme.palette.primary.main}10`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: `0 4px 16px ${theme.palette.primary.main}20`,
-                    }
-                  }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                      إجمالي المديونية
-                    </Typography>
-                    <Typography variant="h3" fontWeight="800" sx={{ 
-                      fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}>
-                      {formatCurrency(animatedDebit)}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ 
-                    textAlign: 'center', 
-                    p: 2.5,
-                    borderRadius: 3,
-                    background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-                    border: `1px solid ${theme.palette.success.main}30`,
-                    height: '100%',
-                    boxShadow: `0 2px 8px ${theme.palette.success.main}10`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: `0 4px 16px ${theme.palette.success.main}20`,
-                    }
-                  }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                      المبلغ المدفوع
-                    </Typography>
-                    <Typography variant="h3" fontWeight="800" sx={{ 
-                      fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                      background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}>
-                      {formatCurrency(animatedPaid)}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ 
-                    textAlign: 'center', 
-                    p: 2.5,
-                    borderRadius: 3,
-                    background: `linear-gradient(135deg, ${theme.palette.error.main}15 0%, ${theme.palette.error.dark}08 100%)`,
-                    border: `1px solid ${theme.palette.error.main}30`,
-                    height: '100%',
-                    boxShadow: `0 2px 8px ${theme.palette.error.main}10`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: `0 4px 16px ${theme.palette.error.main}20`,
-                    }
-                  }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                      المتبقي للتحصيل
-                    </Typography>
-                    <Typography variant="h3" fontWeight="800" sx={{ 
-                      fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                      background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}>
-                      {formatCurrency(animatedRemaining)}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
 
       {/* Bar Charts */}
       <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
@@ -534,40 +344,6 @@ const ClientStats = () => {
         </Card>
       </Box>
 
-      <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
-        }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            المديونية والمدفوعات
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%">
-            <BarChart data={financialBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip formatter={(value) => [value.toLocaleString(), '']} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {financialBarData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </Box>
 
     </Box>
   );

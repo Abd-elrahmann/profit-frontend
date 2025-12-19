@@ -139,7 +139,7 @@ const Dashboard = () => {
         sx={{
           bgcolor: '#f6f6f8',
           minHeight: '100vh',
-          py: 3,
+          py: 1,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
@@ -159,7 +159,7 @@ const Dashboard = () => {
         sx={{
           bgcolor: '#f6f6f8',
           minHeight: '100vh',
-          py: 3,
+          py: 1,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
@@ -185,7 +185,7 @@ const Dashboard = () => {
       sx={{
         bgcolor: '#f6f6f8',
         minHeight: '100vh',
-        py: 3,
+        py: 0,
       }}
     >
       <Helmet>

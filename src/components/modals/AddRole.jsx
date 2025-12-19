@@ -27,13 +27,17 @@ import { getAvailableModules } from '../../routes';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../Contexts/PermissionsContext';
 
+// تعريف ثابت لحقول الصلاحيات (مصدر واحد للحقيقة)
+const PERMISSION_FIELDS = [
+  { field: 'canView', label: 'عرض' },
+  { field: 'canAdd', label: 'إضافة' },
+  { field: 'canUpdate', label: 'تعديل' },
+  { field: 'canDelete', label: 'حذف' },
+  { field: 'canPost', label: 'اعتماد' },
+  { field: 'canExport', label: 'تصدير' },
+];
+
 const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .required('اسم الدور مطلوب')
-    .min(2, 'اسم الدور يجب أن يكون حرفين على الأقل'),
-  description: Yup.string()
-    .required('وصف الدور مطلوب')
-    .min(5, 'الوصف يجب أن يكون 5 أحرف على الأقل'),
   permissions: Yup.array().of(
     Yup.object().shape({
       module: Yup.string().required(),
@@ -56,30 +60,21 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
   const [initialValues, setInitialValues] = useState({
     name: '',
     description: '',
-    permissions: availableModules.map(module => ({
-      module: module.value,
-      canView: false,
-      canAdd: false,
-      canUpdate: false,
-      canDelete: false,
-      canPost: false,
-      canExport: false
-    }))
+    permissions: []
   });
 
   useEffect(() => {
     if (mode === 'edit' && editData) {
       const formattedPermissions = availableModules.map(module => {
         const existingPermission = editData.permissions?.find(p => p.module === module.value);
-        return {
-          module: module.value,
-          canView: existingPermission?.canView || false,
-          canAdd: existingPermission?.canAdd || false,
-          canUpdate: existingPermission?.canUpdate || false,
-          canDelete: existingPermission?.canDelete || false,
-          canPost: existingPermission?.canPost || false,
-          canExport: existingPermission?.canExport || false
-        };
+        
+        // إنشاء كائن الإذن مع جميع الحقول المطلوبة
+        const permissionObj = { module: module.value };
+        PERMISSION_FIELDS.forEach(({ field }) => {
+          permissionObj[field] = existingPermission?.[field] || false;
+        });
+        
+        return permissionObj;
       });
 
       setInitialValues({
@@ -88,17 +83,18 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         permissions: formattedPermissions
       });
     } else {
+      const defaultPermissions = availableModules.map(module => {
+        const permissionObj = { module: module.value };
+        PERMISSION_FIELDS.forEach(({ field }) => {
+          permissionObj[field] = false;
+        });
+        return permissionObj;
+      });
+
       setInitialValues({
         name: '',
         description: '',
-        permissions: availableModules.map(module => ({
-          module: module.value,
-          canView: false,
-          canAdd: false,
-          canUpdate: false,
-          canDelete: false,
-          canPost: false
-        }))
+        permissions: defaultPermissions
       });
     }
   }, [mode, editData, open]);
@@ -155,33 +151,41 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
   };
 
   const handleSelectAllPermissions = (values, setFieldValue, checked) => {
-    const updatedPermissions = values.permissions.map(permission => ({
-      ...permission,
-      canView: checked,
-      canAdd: checked,
-      canUpdate: checked,
-      canDelete: checked,
-      canPost: checked,
-      canExport: checked
-    }));
+    const updatedPermissions = values.permissions.map(permission => {
+      const updatedPermission = { ...permission };
+      PERMISSION_FIELDS.forEach(({ field }) => {
+        updatedPermission[field] = checked;
+      });
+      return updatedPermission;
+    });
+    
     setFieldValue('permissions', updatedPermissions);
   };
 
   const isAllSelected = (values, field) => {
-    return values.permissions.every(permission => permission[field] === true);
+    if (!values.permissions || values.permissions.length === 0) return false;
+    return values.permissions.every(permission => Boolean(permission[field]) === true);
   };
 
   const isAnySelected = (values, field) => {
-    return values.permissions.some(permission => permission[field] === true);
+    if (!values.permissions || values.permissions.length === 0) return false;
+    return values.permissions.some(permission => Boolean(permission[field]) === true);
   };
 
   const isAllPermissionsSelected = (values) => {
-    const allFields = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost', 'canExport'];
-    return allFields.every(field => isAllSelected(values, field));
+    if (!values.permissions || values.permissions.length === 0) return false;
+    return PERMISSION_FIELDS.every(({ field }) =>
+      values.permissions.every(permission => Boolean(permission[field]) === true)
+    );
+  };
+
+  const getModuleLabel = (moduleValue) => {
+    const module = availableModules.find(m => m.value === moduleValue);
+    return module?.label || moduleValue;
   };
 
   // Render permissions section for desktop
-  const renderDesktopPermissions = (values, errors, touched, handleChange, handleBlur, setFieldValue) => (
+  const renderDesktopPermissions = (values, setFieldValue) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -216,14 +220,13 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
           الصلاحيات
         </Typography>
-        {['عرض', 'إضافة', 'تعديل', 'حذف', 'اعتماد', 'تصدير'].map((action, index) => {
-          const field = ['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost', 'canExport'][index];
+        {PERMISSION_FIELDS.map(({ field, label }) => {
           const allSelected = isAllSelected(values, field);
           const someSelected = isAnySelected(values, field);
           return (
-            <Box key={action} sx={{ textAlign: 'center' }}>
+            <Box key={field} sx={{ textAlign: 'center' }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
-                {action}
+                {label}
               </Typography>
               <Checkbox
                 size="small"
@@ -249,57 +252,49 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
 
       {/* Permissions List */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 400, overflow: 'auto' }}>
-        {values.permissions.map((permission, index) => {
-          const moduleConfig = availableModules[index]; // use index to keep labels even if module values repeat
-          return (
-            <Box
-              key={`${permission.module}-${index}`}
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'auto 1fr repeat(6, auto)',
-                gap: 1,
-                alignItems: 'center',
-                p: 1,
-                borderRadius: 1,
-                bgcolor: index % 2 === 0 ? 'transparent' : '#f9f9f9'
-              }}
-            >
-              <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666',fontSize: '0.875rem' }}>
-                {index + 1}-
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: '600' }}>
-                {moduleConfig?.label || permission.module}
-              </Typography>
-              
-              {['canView', 'canAdd', 'canUpdate', 'canDelete', 'canPost', 'canExport'].map((field) => (
-                <Box key={field} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        size="small"
-                        checked={permission[field]}
-                        onChange={(e) => handlePermissionChange(
-                          values,
-                          setFieldValue,
-                          index,
-                          field,
-                          e.target.checked
-                        )}
-                        sx={{
-                          color: "#2E8B45",
-                          "&.Mui-checked": {
-                            color: "#2E8B45",
-                          },
-                        }}
-                      />
-                    }
-                    label=""
-                  />
-                </Box>
-              ))}
-            </Box>
-          );
-        })}
+        {values.permissions?.map((permission, index) => (
+          <Box
+            key={`${permission.module}-${index}`}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr repeat(6, auto)',
+              gap: 1,
+              alignItems: 'center',
+              p: 1,
+              borderRadius: 1,
+              bgcolor: index % 2 === 0 ? 'transparent' : '#f9f9f9'
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666',fontSize: '0.875rem' }}>
+              {index + 1}-
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: '600' }}>
+              {getModuleLabel(permission.module)}
+            </Typography>
+            
+            {PERMISSION_FIELDS.map(({ field }) => (
+              <Box key={field} sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Checkbox
+                  size="small"
+                  checked={Boolean(permission[field])}
+                  onChange={(e) => handlePermissionChange(
+                    values,
+                    setFieldValue,
+                    index,
+                    field,
+                    e.target.checked
+                  )}
+                  sx={{
+                    color: "#2E8B45",
+                    "&.Mui-checked": {
+                      color: "#2E8B45",
+                    },
+                  }}
+                />
+              </Box>
+            ))}
+          </Box>
+        ))}
       </Box>
     </Box>
   );
@@ -327,30 +322,21 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       </Box>
       
       <Stack spacing={2}>
-        {values.permissions.map((permission, index) => {
-          const moduleConfig = availableModules[index]; // preserve label when values repeat
-          return (
-            <Accordion key={`${permission.module}-${index}`} sx={{ boxShadow: 1 }}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="body2" sx={{ fontWeight: '600' }}>
-                  {moduleConfig?.label || permission.module}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={1}>
-                  {[
-                    { field: 'canView', label: 'عرض' },
-                    { field: 'canAdd', label: 'إضافة' },
-                    { field: 'canUpdate', label: 'تعديل' },
-                    { field: 'canDelete', label: 'حذف' },
-                    { field: 'canPost', label: 'اعتماد' },
-                    { field: 'canExport', label: 'تصدير' }
-                  ].map(({ field, label }) => (
-                    <FormControlLabel
-                      key={field}
-                      control={
+        {values.permissions?.map((permission, index) => (
+          <Accordion key={`${permission.module}-${index}`} sx={{ boxShadow: 1 }}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography variant="body2" sx={{ fontWeight: '600' }}>
+                {getModuleLabel(permission.module)}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={1}>
+                {PERMISSION_FIELDS.map(({ field, label }) => (
+                  <FormControlLabel
+                    key={field}
+                    control={
                       <Checkbox
-                        checked={permission[field]}
+                        checked={Boolean(permission[field])}
                         onChange={(e) => handlePermissionChange(
                           values,
                           setFieldValue,
@@ -365,15 +351,14 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                           },
                         }}
                       />
-                      }
-                      label={label}
-                    />
-                  ))}
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-          );
-        })}
+                    }
+                    label={label}
+                  />
+                ))}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        ))}
       </Stack>
     </Box>
   );
@@ -468,7 +453,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                 <Divider />
 
                 {/* Permissions Section */}
-                {isMobile ? renderMobilePermissions(values, setFieldValue) : renderDesktopPermissions(values, errors, touched, handleChange, handleBlur, setFieldValue)}
+                {isMobile ? renderMobilePermissions(values, setFieldValue) : renderDesktopPermissions(values, setFieldValue)}
               </Stack>
             </DialogContent>
 
