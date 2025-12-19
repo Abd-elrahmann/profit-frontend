@@ -90,18 +90,57 @@ const ContractPreview = ({
                   fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
                   lineHeight: 1.8
                 },
-                '& h1, & h2, & h3': {
+                '& h1': {
                   textAlign: 'center',
-                  color: '#1976d2',
+                  color: '#2e7d32',
+                  marginBottom: '20px',
+                  fontSize: '24px',
+                  fontWeight: 'bold'
+                },
+                '& h2, & h3': {
+                  textAlign: 'center',
+                  color: '#000',
                   marginBottom: '20px'
+                },
+                '& .section-title, & .party-title, & .preamble-title': {
+                  color: '#000 !important',
+                  fontWeight: 'bold'
+                },
+                '& .clause-title': {
+                  color: '#2e7d32 !important',
+                  fontWeight: 'bold',
+                  background: 'rgba(0, 0, 0, 0.05) !important',
+                  padding: '8px 12px !important',
+                  borderRadius: '4px !important',
+                  marginBottom: '15px !important'
+                },
+                '& .signatures-title': {
+                  color: '#2e7d32 !important',
+                  fontSize: '18px',
+                  fontWeight: 'bold'
                 },
                 '& p': {
                   marginBottom: '15px',
-                  textAlign: 'justify'
+                  textAlign: 'justify',
+                  color: '#333'
                 },
                 '& strong': {
-                  color: '#1976d2',
+                  color: '#2E8B45',
                   fontWeight: 'bold'
+                },
+                '& .placeholder': {
+                  color: '#2E8B45',
+                  fontWeight: 600,
+                  background: 'rgba(46, 139, 69, 0.1)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(46, 139, 69, 0.3)'
+                },
+                '& .clause-list li:before': {
+                  content: '"•"',
+                  color: '#2E8B45',
+                  fontWeight: 'bold',
+                  fontSize: '20px'
                 }
               }}
             />
@@ -180,8 +219,8 @@ const ContractPreview = ({
           onClick={onGeneratePDF}
           disabled={loading || !contractHtml}
           sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "#0b3589" },
+            bgcolor: "#2e7d32",
+            "&:hover": { bgcolor: "#1b5e20" },
             minWidth: '140px'
           }}
         >

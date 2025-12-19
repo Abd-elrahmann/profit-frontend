@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
   TableContainer,
   TableHead,
+  TableFooter,
   Paper,
   Typography,
   Box,
@@ -14,29 +15,16 @@ import {
   Card,
   CardContent,
   Stack,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
 import {
   StyledTableCell,
   StyledTableRow,
   ScrollableTableContainer
 } from '../../components/layouts/tableLayout';
-import { usePermissions } from '../Contexts/PermissionsContext';
-const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
+
+const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [openNoteDialog, setOpenNoteDialog] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [noteText, setNoteText] = useState('');
-  const [isSavingNote, setIsSavingNote] = useState(false);
-  const { permissions } = usePermissions();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleChangePage = (event, newPage) => {
@@ -48,219 +36,180 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
     setPage(0);
   };
 
-  const handleOpenNoteDialog = (client) => {
-    setSelectedClient(client);
-    setNoteText(client.note || '');
-    setOpenNoteDialog(true);
-  };
-
-  const handleCloseNoteDialog = () => {
-    setOpenNoteDialog(false);
-    setSelectedClient(null);
-    setNoteText('');
-  };
-
-  const handleSaveNote = async () => {
-    if (!selectedClient) return;
-    
-    setIsSavingNote(true);
-    try {
-      await onUpdateNote(selectedClient.id, noteText);
-      handleCloseNoteDialog();
-    } catch (error) {
-      console.error('Error saving note:', error);
-    } finally {
-      setIsSavingNote(false);
-    }
-  };
-
-
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || '0';
   };
 
-  const getStatusColor = (remaining) => {
-    if (remaining > 0) return 'error';
-    if (remaining === 0) return 'success';
-    return 'info';
+  // حساب الإجماليات
+  const totals = useMemo(() => {
+    if (!clientsData?.data || clientsData.data.length === 0) {
+      return { totalDebit: 0, totalPaid: 0, remaining: 0 };
+    }
+    return {
+      totalDebit: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0),
+      totalPaid: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0),
+      remaining: clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0),
+    };
+  }, [clientsData]);
+
+  // دالة لاستخراج قيمة العمود بناءً على عمود الزبون
+  const getColumnValue = (client, columnId, index) => {
+    switch(columnId) {
+      case 'id':
+        return index + 1 + (page * rowsPerPage);
+      case 'client':
+        return `${client.name}\n${client.phone}`;
+      case 'address':
+        return client.address || '-';
+      case 'loansCount':
+        return client.loansSummary.loansCount;
+      case 'paidRepayments':
+        return client.repaymentSummary.paidRepayments;
+      case 'remainingRepayments':
+        return client.repaymentSummary.remainingRepayments;
+      case 'totalDebit':
+        return formatCurrency(client.financials.totalDebit);
+      case 'totalPaid':
+        return formatCurrency(client.financials.totalPaid);
+      case 'totalInterest':
+        return formatCurrency(client.financials.totalInterestPaid || 0);
+      case 'totalDiscounts':
+        return formatCurrency(client.financials.totalDiscounts || 0);
+      case 'remaining':
+        return formatCurrency(Math.abs(client.financials.remaining));
+      case 'note':
+        return '-'; // ملاحظات فارغة دائماً
+      default:
+        return '';
+    }
   };
 
-  const getStatusText = (remaining) => {
-    if (remaining > 0) return 'مديون';
-    if (remaining === 0) return 'مدفوع بالكامل';
-    return 'لديه رصيد';
+  // دالة لعرض عدد السلف مع الـ Chips
+  const renderLoansCountWithChips = (client) => {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+        <Chip 
+          label={`${client.loansSummary.loansCount} سلفة`} 
+          size="small" 
+          color="primary" 
+          variant="outlined" 
+        />
+        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Chip 
+            label={`${client.loansSummary.activeLoans} نشط`} 
+            size="small" 
+            color="success" 
+            sx={{ fontSize: '0.7rem' }} 
+          />
+          <Chip 
+            label={`${client.loansSummary.completedLoans} مكتمل`} 
+            size="small" 
+            color="info" 
+            sx={{ fontSize: '0.7rem' }} 
+          />
+          {client.loansSummary.overdueLoans > 0 && (
+            <Chip 
+              label={`${client.loansSummary.overdueLoans} متأخر`} 
+              size="small" 
+              color="error" 
+              sx={{ fontSize: '0.7rem' }} 
+            />
+          )}
+        </Box>
+      </Box>
+    );
   };
 
   const renderDesktopTable = () => (
     <>
       <ScrollableTableContainer maxHeight={650} minWidth={2000}>
-        <TableHead>
-          <StyledTableRow>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              اسم العميل
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              العنوان
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              عدد السلف
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              الدفعات المدفوعة
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              الدفعات المتبقية
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              إجمالي المديونية
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              إجمالي المدفوع
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              إجمالي الفوائد
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              الخصومات
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              المتبقي
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              الحالة
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              ملاحظات
-            </StyledTableCell>
-            {(permissions.includes("client-report_Add") || permissions.includes("client-report_Update")) && (
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-              الإجراءات
-            </StyledTableCell>
-            )}
-          </StyledTableRow>
-        </TableHead>
-        <TableBody>
-          {isLoading ? (
+        <Table>
+          <TableHead>
             <StyledTableRow>
-              <StyledTableCell colSpan={13} align="center">
-                <CircularProgress size={30} />
-                  جاري تحميل البيانات...
-              </StyledTableCell>
-            </StyledTableRow>
-          ) : clientsData?.data?.length === 0 ? (
-            <StyledTableRow>
-              <StyledTableCell colSpan={13} align="center">
-                  لا توجد عملاء
-              </StyledTableCell>
-            </StyledTableRow>
-          ) : (
-            clientsData?.data
-              ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((client) => (
-                <StyledTableRow
-                  key={client.id}
+              {visibleColumns.map((column) => (
+                <StyledTableCell 
+                  key={column.id} 
+                  align="center" 
+                  sx={{ fontWeight: 'bold', minWidth: 100 }}
                 >
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="medium">{client.name}</Typography>
-                    <Typography variant="body2" color="primary.main" fontWeight="bold">{client.phone}</Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography variant="body2" color="primary.main" fontWeight="bold">
-                      {client.address || '-'}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                      <Chip label={`${client.loansSummary.loansCount} سلفة`} size="small" color="primary" variant="outlined" />
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <Chip label={`${client.loansSummary.activeLoans} نشط`} size="small" color="success" sx={{ fontSize: '0.7rem' }} />
-                        <Chip label={`${client.loansSummary.completedLoans} مكتمل`} size="small" color="info" sx={{ fontSize: '0.7rem' }} />
-                        {client.loansSummary.overdueLoans > 0 && (
-                          <Chip label={`${client.loansSummary.overdueLoans} متأخر`} size="small" color="error" sx={{ fontSize: '0.7rem' }} />
+                  {column.label}
+                </StyledTableCell>
+              ))}
+            </StyledTableRow>
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
+              <StyledTableRow>
+                <StyledTableCell colSpan={visibleColumns.length} align="center">
+                  <CircularProgress size={30} />
+                  جاري تحميل البيانات...
+                </StyledTableCell>
+              </StyledTableRow>
+            ) : clientsData?.data?.length === 0 ? (
+              <StyledTableRow>
+                <StyledTableCell colSpan={visibleColumns.length} align="center">
+                  لا توجد عملاء
+                </StyledTableCell>
+              </StyledTableRow>
+            ) : (
+              clientsData?.data
+                ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((client, index) => (
+                  <StyledTableRow key={client.id}>
+                    {visibleColumns.map((column) => (
+                      <StyledTableCell key={column.id} align="center">
+                        {column.id === 'loansCount' ? (
+                          renderLoansCountWithChips(client)
+                        ) : column.id === 'client' ? (
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                              {getColumnValue(client, column.id, index)}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2">
+                            {getColumnValue(client, column.id, index)}
+                          </Typography>
                         )}
-                      </Box>
-                    </Box>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Chip 
-                      label={client.repaymentSummary.paidRepayments} 
-                      color="success" 
-                      size="small"
-                    />
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Chip 
-                      label={client.repaymentSummary.remainingRepayments} 
-                      color="warning" 
-                      size="small"
-                    />
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="black">
-                      {formatCurrency(client.financials.totalDebit)}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="success.main">
-                      {formatCurrency(client.financials.totalPaid)}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="info.main">
-                      {formatCurrency(client.financials.totalInterestPaid || 0)}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="warning.main">
-                      {formatCurrency(client.financials.totalDiscounts || 0)}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography 
-                      fontWeight="bold" 
-                      color={client.financials.remaining > 0 ? "error" : "success.main"}
-                    >
-                      {formatCurrency(Math.abs(client.financials.remaining))}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Chip
-                      label={getStatusText(client.financials.remaining)}
-                      color={getStatusColor(client.financials.remaining)}
-                      size="small"
-                    />
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        maxWidth: '200px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {client.note || '-'}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    {(permissions.includes("client-report_Add") || permissions.includes("client-report_Update")) && (
-                    <IconButton
-                      title="إضافة ملاحظة"
-                      size="small"
-                      color="primary"
-                      onClick={() => handleOpenNoteDialog(client)}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <AddIcon sx={{ fontSize: '20px' }} />
-                    </IconButton>
+                      </StyledTableCell>
+                    ))}
+                  </StyledTableRow>
+                ))
+            )}
+            {/* صف الإجمالي */}
+            {!isLoading && clientsData?.data?.length > 0 && (
+              <StyledTableRow sx={{ backgroundColor: '#e8f5e9' }}>
+                {visibleColumns.map((column) => (
+                  <StyledTableCell 
+                    key={`total-${column.id}`} 
+                    align="center"
+                    sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}
+                  >
+                    {column.id === 'id' ? (
+                      <Typography variant="body2" fontWeight="bold">الإجمالي</Typography>
+                    ) : column.id === 'totalDebit' ? (
+                      <Typography variant="body2" fontWeight="bold" color="error.main">
+                        {formatCurrency(totals.totalDebit)}
+                      </Typography>
+                    ) : column.id === 'totalPaid' ? (
+                      <Typography variant="body2" fontWeight="bold" color="success.main">
+                        {formatCurrency(totals.totalPaid)}
+                      </Typography>
+                    ) : column.id === 'remaining' ? (
+                      <Typography variant="body2" fontWeight="bold" color="warning.main">
+                        {formatCurrency(totals.remaining)}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2">-</Typography>
                     )}
                   </StyledTableCell>
-                </StyledTableRow>
-              ))
+                ))}
+              </StyledTableRow>
             )}
           </TableBody>
-        </ScrollableTableContainer>
+        </Table>
+      </ScrollableTableContainer>
+      
       {clientsData?.data?.length > 0 && (
         <TablePagination
           rowsPerPageOptions={[5, 10, 20]}
@@ -295,7 +244,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
         <Stack spacing={2}>
           {clientsData?.data
             ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            .map((client) => (
+            .map((client, index) => (
               <Card
                 key={client.id}
                 sx={{
@@ -306,138 +255,93 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={2}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography variant="h6" fontWeight="bold" color="primary.main">
-                          {client.name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {client.phone}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={getStatusText(client.financials.remaining)}
-                        color={getStatusColor(client.financials.remaining)}
-                        size="small"
-                      />
-                    </Box>
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
-                          إجمالي السلف
-                        </Typography>
-                        <Chip
-                          label={client.loansSummary.loansCount}
-                          color="primary"
-                          variant="outlined"
-                          size="small"
-                        />
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
-                          النشطة
-                        </Typography>
-                        <Chip
-                          label={client.loansSummary.activeLoans}
-                          color="success"
-                          size="small"
-                        />
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
-                          المكتملة
-                        </Typography>
-                        <Chip
-                          label={client.loansSummary.completedLoans}
-                          color="info"
-                          size="small"
-                        />
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
-                          إجمالي الدفعات
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold">
-                          {client.repaymentSummary.totalRepayments}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
-                          المدفوعة
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold" color="success.main">
-                          {client.repaymentSummary.paidRepayments}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="textSecondary">
-                          المتبقية
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold" color="warning.main">
-                          {client.repaymentSummary.remainingRepayments}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, pt: 1, borderTop: '1px solid #e0e0e0' }}>
-                      <Box>
-                        <Typography variant="body2" color="textSecondary">
-                          المديونية
-                        </Typography>
-                        <Typography variant="body1" fontWeight="bold" color="primary">
-                          {formatCurrency(client.financials.totalDebit)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="body2" color="textSecondary">
-                          المدفوع
-                        </Typography>
-                        <Typography variant="body1" fontWeight="bold" color="success.main">
-                          {formatCurrency(client.financials.totalPaid)}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ textAlign: 'center', pt: 1, borderTop: '1px solid #e0e0e0' }}>
+                    {/* عرض ID */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="body2" color="textSecondary">
-                        المتبقي
-                      </Typography>
-                      <Typography 
-                        variant="h6" 
-                        fontWeight="bold" 
-                        color={client.financials.remaining > 0 ? "error" : "success.main"}
-                      >
-                        {formatCurrency(Math.abs(client.financials.remaining))}
+                        رقم: {index + 1 + (page * rowsPerPage)}
                       </Typography>
                     </Box>
 
-                    {/* Notes Section */}
-                    {client.note && (
-                      <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0', textAlign: 'right' }}>
-                        <Typography variant="body2" color="textSecondary" gutterBottom>
-                          ملاحظات:
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                          {client.note}
-                        </Typography>
-                      </Box>
-                    )}
+                    {/* الاسم والهاتف */}
+                    <Box>
+                      <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ whiteSpace: 'pre-line' }}>
+                        {client.name}\n📞 {client.phone}
+                      </Typography>
+                    </Box>
 
-                    {/* Add Note Button */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1, borderTop: '1px solid #e0e0e0' }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<AddIcon />}
-                        onClick={() => handleOpenNoteDialog(client)}
-                        fullWidth
-                      >
-                        {client.note ? 'تعديل الملاحظة' : 'إضافة ملاحظة'}
-                      </Button>
+                    {/* العناوين الأخرى بناءً على الأعمدة المرئية */}
+                    {visibleColumns.map(column => {
+                      if (['id', 'client'].includes(column.id)) return null;
+                      
+                      if (column.id === 'loansCount') {
+                        return (
+                          <Box key={column.id} sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2" color="textSecondary" gutterBottom>
+                              عدد السلف:
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="body2" color="textSecondary">
+                                  إجمالي
+                                </Typography>
+                                <Chip
+                                  label={client.loansSummary.loansCount}
+                                  color="primary"
+                                  variant="outlined"
+                                  size="small"
+                                />
+                              </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="body2" color="textSecondary">
+                                  النشطة
+                                </Typography>
+                                <Chip
+                                  label={client.loansSummary.activeLoans}
+                                  color="success"
+                                  size="small"
+                                />
+                              </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="body2" color="textSecondary">
+                                  المكتملة
+                                </Typography>
+                                <Chip
+                                  label={client.loansSummary.completedLoans}
+                                  color="info"
+                                  size="small"
+                                />
+                              </Box>
+                            </Box>
+                            {client.loansSummary.overdueLoans > 0 && (
+                              <Box sx={{ mt: 1, textAlign: 'center' }}>
+                                <Chip
+                                  label={`${client.loansSummary.overdueLoans} متأخر`}
+                                  color="error"
+                                  size="small"
+                                />
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      }
+                      
+                      return (
+                        <Box key={column.id} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="body2" color="textSecondary">
+                            {column.label}:
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {getColumnValue(client, column.id, index)}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+
+                    {/* ملاحظات فارغة */}
+                    <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0', textAlign: 'right' }}>
+                      <Typography variant="body2" color="textSecondary">
+                        ملاحظات: -
+                      </Typography>
                     </Box>
                   </Stack>
                 </CardContent>
@@ -470,52 +374,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, onUpdateNote }) => {
   return (
     <>
       {isMobile ? renderMobileCards() : renderDesktopTable()}
-      
-      {/* Note Dialog */}
-      <Dialog 
-        open={openNoteDialog} 
-        onClose={handleCloseNoteDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ textAlign: 'right', fontWeight: 'bold' }}>
-          إضافة / تعديل ملاحظة
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={6}
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder="اكتب ملاحظاتك هنا..."
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  textAlign: 'right',
-                },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
-          <Button 
-            onClick={handleCloseNoteDialog}
-            variant="outlined"
-            disabled={isSavingNote}
-          >
-            إلغاء
-          </Button>
-          <Button 
-            onClick={handleSaveNote}
-            variant="contained"
-            disabled={isSavingNote}
-            sx={{ minWidth: '100px' }}
-          >
-            {isSavingNote ? 'جاري الحفظ...' : 'حفظ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

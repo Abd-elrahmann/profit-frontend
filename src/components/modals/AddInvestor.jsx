@@ -1,4 +1,13 @@
 import React, { useState, useRef } from "react";
+
+// Utility function to format numbers with commas
+const formatNumberWithCommas = (value) => {
+  if (!value) return '';
+  // Remove any existing commas and format
+  const numValue = value.toString().replace(/,/g, '');
+  if (isNaN(numValue) || numValue === '') return value;
+  return Number(numValue).toLocaleString('en-US');
+};
 import {
   Dialog,
   DialogTitle,
@@ -15,7 +24,7 @@ import {
 import Api, { handleApiError } from "../../config/Api";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import ContractGenerator from "../ContractGenerator";
-
+import { useQueryClient } from "@tanstack/react-query";
 const AddInvestor = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -31,8 +40,10 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
   const [errors, setErrors] = useState({});
   const [savedInvestorData, setSavedInvestorData] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
-  
+
   const contractGeneratorRef = useRef(null);
+
+  const queryClient = useQueryClient();
 
   const handleChange = (field) => (event) => {
     setFormData(prev => ({
@@ -43,6 +54,23 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       setErrors(prev => ({
         ...prev,
         [field]: ''
+      }));
+    }
+  };
+
+  // Special handler for capitalAmount with number formatting
+  const handleCapitalAmountChange = (event) => {
+    const value = event.target.value;
+    // Allow typing with commas, but clean the value for storage
+    const cleanValue = value.replace(/,/g, '').replace(/[^0-9]/g, '');
+    setFormData(prev => ({
+      ...prev,
+      capitalAmount: cleanValue
+    }));
+    if (errors.capitalAmount) {
+      setErrors(prev => ({
+        ...prev,
+        capitalAmount: ''
       }));
     }
   };
@@ -104,8 +132,10 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       };
       
       notifySuccess('تم إضافة المستثمر بنجاح');
-      
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      queryClient.invalidateQueries({ queryKey: ['investor-details'] });
       setSavedInvestorData(newInvestorData);
+      
 
       if (mudarabahTemplate) {
         setTimeout(() => {
@@ -270,14 +300,14 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
             <Grid item xs={12}>
               <TextField
                 label="رأس المال (ريال)"
-                type="number"
-                value={formData.capitalAmount}
-                onChange={handleChange('capitalAmount')}
+                type="text"
+                value={formatNumberWithCommas(formData.capitalAmount)}
+                onChange={handleCapitalAmountChange}
                 fullWidth
                 error={!!errors.capitalAmount}
                 helperText={errors.capitalAmount}
                 required
-                InputProps={{ inputProps: { min: 0 } }}
+                placeholder="مثال: 100,000"
                 size="medium"
                 sx={{width: '250px'}}
               />

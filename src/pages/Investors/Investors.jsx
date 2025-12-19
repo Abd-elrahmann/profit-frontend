@@ -39,7 +39,6 @@ import {
   Search,
   Download,
   CheckCircle,
-  Print,
   Delete,
   Share,
   PictureAsPdf,
@@ -47,6 +46,9 @@ import {
   Info,
   AccountBalanceWallet,
   Visibility,
+  InsertDriveFile,
+  Warning,
+  Description,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -317,6 +319,12 @@ export default function Investors() {
     setIsContractModalOpen(false);
     setContractInvestorData(null);
     setEditMode(false);
+
+    // إعادة تحميل بيانات المستثمر لإظهار المستند الجديد
+    if (selectedInvestor) {
+      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+    }
+
     notifySuccess('تم توليد العقد الجديد بنجاح');
   };
 
@@ -489,8 +497,16 @@ export default function Investors() {
       notifyError("يرجى اختيار مستثمر");
       return;
     }
-    
-    setIsWithdrawEditMode(isEditMode);
+
+    // Reset all modal state first
+    setWithdrawAmount("");
+    setWithdrawPreviewData(null);
+    setIsWithdrawEditMode(false);
+
+    // Then set the correct mode if it's edit mode
+    if (isEditMode) {
+      setIsWithdrawEditMode(true);
+    }
     setIsLoadingPreview(true);
     setIsWithdrawModalOpen(true);
     
@@ -572,6 +588,41 @@ export default function Investors() {
     handleOpenWithdrawModal(true);
   };
 
+  // Handle opening contract preview for missing mudarabah contract
+  const handleOpenContractPreview = async () => {
+    if (!selectedInvestor) {
+      notifyError("يرجى اختيار مستثمر");
+      return;
+    }
+
+    try {
+      // Fetch mudarabah template
+      const templateResponse = await Api.get('/api/templates/mudarabah');
+      setMudarabahTemplate(templateResponse.data.content || '');
+
+      // Prepare investor data for contract generation
+      const investorData = {
+        ...investorDetails,
+        investorProfitPercent: investorDetails.orgProfitPercent ? (100 - investorDetails.orgProfitPercent) : 0
+      };
+
+      setContractInvestorData(investorData);
+      setIsContractModalOpen(true);
+
+      // Generate contract after a short delay
+      setTimeout(() => {
+        if (contractGeneratorRef.current) {
+          contractGeneratorRef.current.generateContract();
+        }
+      }, 500);
+
+    } catch (error) {
+      console.error('Error opening contract preview:', error);
+      notifyError('حدث خطأ أثناء فتح معاينة العقد');
+      handleApiError(error);
+    }
+  };
+
   const handleAddTransaction = () => {
     setTransactionForm({
       type: "DEPOSIT",
@@ -644,23 +695,65 @@ export default function Investors() {
     }
   };
 
-  const handlePrintFile = async (fileUrl) => {
-    try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const printWindow = window.open(blobUrl, '_blank');
-      
-      printWindow?.addEventListener('load', () => {
-        printWindow.print();
-        printWindow.addEventListener('afterprint', () => {
-          URL.revokeObjectURL(blobUrl);
-        });
-      }, { once: true });
-      
-    } catch (error) {
-      notifyError(error.response?.data?.message || 'حدث خطأ أثناء محاولة الطباعة');
-      handleApiError(error);
+  // دالة للتحقق إذا كان الملف صورة
+  const isImageFile = (url) => {
+    if (!url) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+    const lowerUrl = url.toLowerCase();
+    return imageExtensions.some(ext => lowerUrl.includes(ext));
+  };
+
+  // دالة لعرض المعاينة المصغرة
+  const renderFileThumbnail = (fileUrl, label) => {
+    if (!fileUrl) return null;
+
+    if (isImageFile(fileUrl)) {
+      return (
+        <Box
+          component="img"
+          src={fileUrl}
+          alt={label}
+          sx={{
+            width: '100%',
+            height: 180,
+            objectFit: 'cover',
+            borderRadius: 1,
+            cursor: 'pointer',
+            transition: 'transform 0.2s',
+            '&:hover': {
+              transform: 'scale(1.02)',
+            },
+          }}
+          onClick={() => window.open(fileUrl, '_blank')}
+        />
+      );
+    } else {
+      // عرض أيقونة للملفات غير الصور (PDF, etc.)
+      return (
+        <Box
+          sx={{
+            width: '100%',
+            height: 180,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f5f5f5',
+            borderRadius: 1,
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: '#e0e0e0',
+            },
+          }}
+          onClick={() => window.open(fileUrl, '_blank')}
+        >
+          <InsertDriveFile sx={{ fontSize: 60, color: '#757575' }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+            اضغط للعرض
+          </Typography>
+        </Box>
+      );
     }
   };
 
@@ -1126,7 +1219,7 @@ export default function Investors() {
                   <Button
                     variant="outlined"
                     startIcon={<AccountBalanceWallet sx={{marginLeft: '10px'}} />}
-                    onClick={handleOpenWithdrawModal}
+                    onClick={() => handleOpenWithdrawModal(false)}
                     disabled={isWithdrawing || investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN'}
                     sx={{
                       borderColor: "#d32f2f",
@@ -1783,72 +1876,170 @@ export default function Investors() {
                   {/* Existing Documents */}
                   <Box sx={{ mb: 4 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>المستندات المرفوعة</Typography>
+
+                    {/* Alert for missing Mudarabah Contract */}
+                    {!investorDetails.mudarabahFileUrl && (
+                      <Alert severity="warning" sx={{ mb: 3, alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                          <Warning fontSize="small" />
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" fontWeight="bold">
+                              هذا المستثمر لم يتم حفظ عقد المضاربة الخاص به
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              يرجى فتح معاينة العقد وحفظه لضمان اكتمال المستندات
+                            </Typography>
+                          </Box>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Description />}
+                            onClick={handleOpenContractPreview}
+                            sx={{
+                              borderColor: 'warning.main',
+                              color: 'warning.main',
+                              '&:hover': {
+                                borderColor: 'warning.dark',
+                                bgcolor: 'warning.50'
+                              }
+                            }}
+                          >
+                            فتح معاينة العقد
+                          </Button>
+                        </Box>
+                      </Alert>
+                    )}
+
                     <Grid container spacing={2}>
                       {/* Mudarabah Contract */}
                       {investorDetails.mudarabahFileUrl && (
-                        <Grid item xs={12}>
-                          <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <CheckCircle color="success" fontSize="small" />
-                              <Box>
-                                <Typography fontWeight="500">عقد المضاربة</Typography>
+                        <Grid item xs={12} sm={6} md={4} lg={3}>
+                          <Paper
+                            sx={{
+                              p: 2,
+                              height: '100%',
+                              display: "flex",
+                              flexDirection: "column",
+                              borderRadius: 2,
+                              overflow: 'hidden',
+                            }}
+                            elevation={2}
+                          >
+                            {/* معاينة الملف */}
+                            {renderFileThumbnail(investorDetails.mudarabahFileUrl, "عقد المضاربة")}
+
+                            {/* اسم المستند وأزرار العمليات */}
+                            <Box sx={{ mt: 2 }}>
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={1}
+                                mb={1}
+                              >
+                                <CheckCircle
+                                  color="success"
+                                  fontSize="small"
+                                />
+                                <Typography fontWeight="500" variant="body2">
+                                  عقد المضاربة
+                                </Typography>
                               </Box>
+
+                              {/* أزرار العمليات */}
+                              {permissions.includes("partners_Export") && (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
+                                    title="تحميل"
+                                  >
+                                    <Download fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
+                                    title="مشاركة"
+                                  >
+                                    <Share fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => window.open(investorDetails.mudarabahFileUrl, '_blank')}
+                                    title="عرض"
+                                  >
+                                    <Visibility fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              )}
                             </Box>
-                            {permissions.includes("partners_Export") && (
-                              <Box>
-                                <IconButton onClick={() => handlePrintFile(investorDetails.mudarabahFileUrl)}>
-                                  <Print />
-                                </IconButton>
-                                <IconButton
-                                  onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
-                                  title="تحميل"
-                                >
-                                  <Download />
-                                </IconButton>
-                                <IconButton
-                                  onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
-                                  title="مشاركة"
-                                >
-                                  <Share />
-                                </IconButton>
-                              </Box>
-                            )}
                           </Paper>
                         </Grid>
                       )}
 
                       {/* Withdrawal Receipt */}
                       {investorDetails.withdrawalReceipt && (
-                        <Grid item xs={12}>
-                          <Paper sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <PictureAsPdf color="error" fontSize="small" />
-                              <Box>
-                                <Typography fontWeight="500">مخالصة مالية نهائية</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  عقد انسحاب المساهم
+                        <Grid item xs={12} sm={6} md={4} lg={3}>
+                          <Paper
+                            sx={{
+                              p: 2,
+                              height: '100%',
+                              display: "flex",
+                              flexDirection: "column",
+                              borderRadius: 2,
+                              overflow: 'hidden',
+                            }}
+                            elevation={2}
+                          >
+                            {/* معاينة الملف */}
+                            {renderFileThumbnail(investorDetails.withdrawalReceipt, "مخالصة مالية نهائية")}
+
+                            {/* اسم المستند وأزرار العمليات */}
+                            <Box sx={{ mt: 2 }}>
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={1}
+                                mb={1}
+                              >
+                                <PictureAsPdf
+                                  color="error"
+                                  fontSize="small"
+                                />
+                                <Typography fontWeight="500" variant="body2">
+                                  مخالصة مالية نهائية
                                 </Typography>
                               </Box>
+                              <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                                عقد انسحاب المساهم
+                              </Typography>
+
+                              {/* أزرار العمليات */}
+                              {permissions.includes("partners_Export") && (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDownloadFile(investorDetails.withdrawalReceipt)}
+                                    title="تحميل"
+                                  >
+                                    <Download fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleShareFile(investorDetails.withdrawalReceipt)}
+                                    title="مشاركة"
+                                  >
+                                    <Share fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => window.open(investorDetails.withdrawalReceipt, '_blank')}
+                                    title="عرض"
+                                  >
+                                    <Visibility fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              )}
                             </Box>
-                            {permissions.includes("partners_Export") && (
-                              <Box>
-                                <IconButton onClick={() => handlePrintFile(investorDetails.withdrawalReceipt)}>
-                                  <Print />
-                                </IconButton>
-                                <IconButton
-                                  onClick={() => handleDownloadFile(investorDetails.withdrawalReceipt)}
-                                  title="تحميل"
-                                >
-                                  <Download />
-                                </IconButton>
-                                <IconButton
-                                  onClick={() => handleShareFile(investorDetails.withdrawalReceipt)}
-                                  title="مشاركة"
-                                >
-                                  <Share />
-                                </IconButton>
-                              </Box>
-                            )}
                           </Paper>
                         </Grid>
                       )}

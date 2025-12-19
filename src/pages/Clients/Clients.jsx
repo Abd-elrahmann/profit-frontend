@@ -26,7 +26,6 @@ import {
   Search,
   Download,
   CheckCircle,
-  Print,
   Delete,
   ChevronLeft,
   ChevronRight,
@@ -34,6 +33,7 @@ import {
   PictureAsPdf,
   TableChart,
   Visibility,
+  InsertDriveFile,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -445,28 +445,65 @@ export default function Clients() {
     }
   };
 
-  const handlePrintFile = async (fileUrl) => {
-    try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const printWindow = window.open(blobUrl, "_blank");
+  // دالة للتحقق إذا كان الملف صورة
+  const isImageFile = (url) => {
+    if (!url) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+    const lowerUrl = url.toLowerCase();
+    return imageExtensions.some(ext => lowerUrl.includes(ext));
+  };
 
-      printWindow?.addEventListener(
-        "load",
-        () => {
-          printWindow.print();
-          printWindow.addEventListener("afterprint", () => {
-            URL.revokeObjectURL(blobUrl);
-          });
-        },
-        { once: true }
+  // دالة لعرض المعاينة المصغرة
+  const renderFileThumbnail = (fileUrl, label) => {
+    if (!fileUrl) return null;
+    
+    if (isImageFile(fileUrl)) {
+      return (
+        <Box
+          component="img"
+          src={fileUrl}
+          alt={label}
+          sx={{
+            width: '100%',
+            height: 180,
+            objectFit: 'cover',
+            borderRadius: 1,
+            cursor: 'pointer',
+            transition: 'transform 0.2s',
+            '&:hover': {
+              transform: 'scale(1.02)',
+            },
+          }}
+          onClick={() => window.open(fileUrl, '_blank')}
+        />
       );
-    } catch (error) {
-      notifyError(
-        error.response?.data?.message || "حدث خطأ أثناء محاولة الطباعة"
+    } else {
+      // عرض أيقونة للملفات غير الصور (PDF, etc.)
+      return (
+        <Box
+          sx={{
+            width: '100%',
+            height: 180,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f5f5f5',
+            borderRadius: 1,
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: '#e0e0e0',
+            },
+          }}
+          onClick={() => window.open(fileUrl, '_blank')}
+        >
+          <InsertDriveFile sx={{ fontSize: 60, color: '#757575' }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+            اضغط للعرض
+          </Typography>
+        </Box>
       );
-      handleApiError(error);
     }
   };
 
@@ -2098,66 +2135,79 @@ export default function Clients() {
                             // تأكد إن القيمة موجودة ومفتاحها من ضمن الأنواع اللي بنعرضها
                             if (value && clientDocumentTypes[key]) {
                               return (
-                                <Grid item xs={12} key={`${key}-${docIndex}`}>
+                                <Grid item xs={12} sm={6} md={4} lg={3} key={`${key}-${docIndex}`}>
                                   <Paper
                                     sx={{
                                       p: 2,
-                                      width: "330px",
+                                      height: '100%',
                                       display: "flex",
-                                      justifyContent: "space-between",
-                                      alignItems: "center",
+                                      flexDirection: "column",
+                                      borderRadius: 2,
+                                      overflow: 'hidden',
                                     }}
+                                    elevation={2}
                                   >
-                                    {/* اسم المستند */}
-                                    <Box
-                                      display="flex"
-                                      alignItems="center"
-                                      gap={1}
-                                    >
-                                      <CheckCircle
-                                        color="success"
-                                        fontSize="small"
-                                      />
-                                      <Typography fontWeight="500">
-                                        {clientDocumentTypes[key]}
-                                      </Typography>
-                                    </Box>
-
-                                    {/* أزرار العمليات */}
-                                    {permissions.includes("clients_Export") && (
-                                      <Box>
-                                        <IconButton
-                                          onClick={() => handlePrintFile(value)}
-                                        >
-                                          <Print />
-                                        </IconButton>
-                                        <IconButton
-                                          onClick={() =>
-                                            handleDownloadFile(
-                                              value,
-                                              "",
-                                              clientDocumentTypes[key],
-                                              clientDetails.client.name
-                                            )
-                                          }
-                                        >
-                                          <Download />
-                                        </IconButton>
-                                        <IconButton
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleShareFile(
-                                              value,
-                                              clientDocumentTypes[key],
-                                              clientDetails.client.name
-                                            );
-                                          }}
-                                          title="مشاركة"
-                                        >
-                                          <Share />
-                                        </IconButton>
+                                    {/* معاينة الملف */}
+                                    {renderFileThumbnail(value, clientDocumentTypes[key])}
+                                    
+                                    {/* اسم المستند وأزرار العمليات */}
+                                    <Box sx={{ mt: 2 }}>
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                        mb={1}
+                                      >
+                                        <CheckCircle
+                                          color="success"
+                                          fontSize="small"
+                                        />
+                                        <Typography fontWeight="500" variant="body2">
+                                          {clientDocumentTypes[key]}
+                                        </Typography>
                                       </Box>
-                                    )}
+
+                                      {/* أزرار العمليات */}
+                                      {permissions.includes("clients_Export") && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleDownloadFile(
+                                                value,
+                                                "",
+                                                clientDocumentTypes[key],
+                                                clientDetails.client.name
+                                              )
+                                            }
+                                            title="تحميل"
+                                          >
+                                            <Download fontSize="small" />
+                                          </IconButton>
+                                          <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleShareFile(
+                                                value,
+                                                clientDocumentTypes[key],
+                                                clientDetails.client.name
+                                              );
+                                            }}
+                                            title="مشاركة"
+                                          >
+                                            <Share fontSize="small" />
+                                          </IconButton>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => window.open(value, '_blank')}
+                                            title="عرض"
+                                          >
+                                            <Visibility fontSize="small" />
+                                          </IconButton>
+                                        </Box>
+                                      )}
+                                    </Box>
                                   </Paper>
                                 </Grid>
                               );
@@ -2235,63 +2285,76 @@ export default function Clients() {
                               {kafeelDocuments.length > 0 ? (
                                 <Grid container spacing={2}>
                                   {kafeelDocuments.map((doc) => (
-                                    <Grid item xs={12} key={doc.key}>
+                                    <Grid item xs={12} sm={6} md={4} lg={3} key={doc.key}>
                                       <Paper
                                         sx={{
                                           p: 2,
+                                          height: '100%',
                                           display: "flex",
-                                          justifyContent: "space-between",
-                                          alignItems: "center",
+                                          flexDirection: "column",
+                                          borderRadius: 2,
+                                          overflow: 'hidden',
                                         }}
+                                        elevation={2}
                                       >
-                                        <Box
-                                          display="flex"
-                                          alignItems="center"
-                                          gap={1}
-                                        >
-                                          <CheckCircle
-                                            color="success"
-                                            fontSize="small"
-                                          />
-                                          <Box>
-                                            <Typography fontWeight="500">
+                                        {/* معاينة الملف */}
+                                        {renderFileThumbnail(doc.value, doc.label)}
+                                        
+                                        {/* اسم المستند وأزرار العمليات */}
+                                        <Box sx={{ mt: 2 }}>
+                                          <Box
+                                            display="flex"
+                                            alignItems="center"
+                                            gap={1}
+                                            mb={1}
+                                          >
+                                            <CheckCircle
+                                              color="success"
+                                              fontSize="small"
+                                            />
+                                            <Typography fontWeight="500" variant="body2">
                                               {doc.label}
                                             </Typography>
                                           </Box>
-                                        </Box>
-                                        <Box>
-                                          <IconButton
-                                            onClick={() =>
-                                              handlePrintFile(doc.value)
-                                            }
-                                          >
-                                            <Print />
-                                          </IconButton>
-                                          <IconButton
-                                            onClick={() =>
-                                              handleDownloadFile(
-                                                doc.value,
-                                                "",
-                                                doc.label,
-                                                clientDetails.client.name
-                                              )
-                                            }
-                                          >
-                                            <Download />
-                                          </IconButton>
-                                          <IconButton
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleShareFile(
-                                                doc.value,
-                                                doc.label,
-                                                clientDetails.client.name
-                                              );
-                                            }}
-                                            title="مشاركة"
-                                          >
-                                            <Share />
-                                          </IconButton>
+
+                                          {/* أزرار العمليات */}
+                                          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() =>
+                                                handleDownloadFile(
+                                                  doc.value,
+                                                  "",
+                                                  doc.label,
+                                                  clientDetails.client.name
+                                                )
+                                              }
+                                              title="تحميل"
+                                            >
+                                              <Download fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                              size="small"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleShareFile(
+                                                  doc.value,
+                                                  doc.label,
+                                                  clientDetails.client.name
+                                                );
+                                              }}
+                                              title="مشاركة"
+                                            >
+                                              <Share fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() => window.open(doc.value, '_blank')}
+                                              title="عرض"
+                                            >
+                                              <Visibility fontSize="small" />
+                                            </IconButton>
+                                          </Box>
                                         </Box>
                                       </Paper>
                                     </Grid>
@@ -2357,63 +2420,76 @@ export default function Clients() {
 
                                 if (value && kafeelDocumentTypes[key]) {
                                   return (
-                                    <Grid item xs={12} key={key}>
+                                    <Grid item xs={12} sm={6} md={4} lg={3} key={key}>
                                       <Paper
                                         sx={{
                                           p: 2,
+                                          height: '100%',
                                           display: "flex",
-                                          justifyContent: "space-between",
-                                          alignItems: "center",
+                                          flexDirection: "column",
+                                          borderRadius: 2,
+                                          overflow: 'hidden',
                                         }}
+                                        elevation={2}
                                       >
-                                        <Box
-                                          display="flex"
-                                          alignItems="center"
-                                          gap={1}
-                                        >
-                                          <CheckCircle
-                                            color="success"
-                                            fontSize="small"
-                                          />
-                                          <Box>
-                                            <Typography fontWeight="500">
+                                        {/* معاينة الملف */}
+                                        {renderFileThumbnail(value, kafeelDocumentTypes[key])}
+                                        
+                                        {/* اسم المستند وأزرار العمليات */}
+                                        <Box sx={{ mt: 2 }}>
+                                          <Box
+                                            display="flex"
+                                            alignItems="center"
+                                            gap={1}
+                                            mb={1}
+                                          >
+                                            <CheckCircle
+                                              color="success"
+                                              fontSize="small"
+                                            />
+                                            <Typography fontWeight="500" variant="body2">
                                               {kafeelDocumentTypes[key]}
                                             </Typography>
                                           </Box>
-                                        </Box>
-                                        <Box>
-                                          <IconButton
-                                            onClick={() =>
-                                              handlePrintFile(value)
-                                            }
-                                          >
-                                            <Print />
-                                          </IconButton>
-                                          <IconButton
-                                            onClick={() =>
-                                              handleDownloadFile(
-                                                value,
-                                                "",
-                                                kafeelDocumentTypes[key],
-                                                clientDetails.client.name
-                                              )
-                                            }
-                                          >
-                                            <Download />
-                                          </IconButton>
-                                          <IconButton
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleShareFile(
-                                                value,
-                                                kafeelDocumentTypes[key],
-                                                clientDetails.client.name
-                                              );
-                                            }}
-                                            title="مشاركة"
-                                          >
-                                            <Share />
-                                          </IconButton>
+
+                                          {/* أزرار العمليات */}
+                                          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() =>
+                                                handleDownloadFile(
+                                                  value,
+                                                  "",
+                                                  kafeelDocumentTypes[key],
+                                                  clientDetails.client.name
+                                                )
+                                              }
+                                              title="تحميل"
+                                            >
+                                              <Download fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                              size="small"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleShareFile(
+                                                  value,
+                                                  kafeelDocumentTypes[key],
+                                                  clientDetails.client.name
+                                                );
+                                              }}
+                                              title="مشاركة"
+                                            >
+                                              <Share fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() => window.open(value, '_blank')}
+                                              title="عرض"
+                                            >
+                                              <Visibility fontSize="small" />
+                                            </IconButton>
+                                          </Box>
                                         </Box>
                                       </Paper>
                                     </Grid>

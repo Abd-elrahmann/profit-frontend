@@ -448,15 +448,12 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
                   <Button
                     onClick={handleNext}
                     variant="contained"
+                    color="primary"
                     disabled={
-                      activeStep === 0 && (!values.name || !values.nationalId || !values.phone || 
+                      activeStep === 0 && (!values.name || !values.nationalId || !values.phone ||
                         !values.employer || !values.salary || !values.obligations ||
                         !values.birthDate || !values.city || !values.district)
                     }
-                    sx={{
-                      bgcolor: "#0d40a5",
-                      "&:hover": { bgcolor: "#0b3589" },
-                    }}
                   >
                     التالي
                   </Button>
@@ -464,10 +461,9 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
                   <Button
                     onClick={submitForm}
                     variant="contained"
+                    color="primary"
                     disabled={isSubmitting}
                     sx={{
-                      bgcolor: "#0d40a5",
-                      "&:hover": { bgcolor: "#0b3589" },
                       minWidth: 120
                     }}
                   >

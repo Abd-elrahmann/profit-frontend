@@ -121,6 +121,18 @@ const Loans = () => {
     retry: 1,
   });
 
+  // Get all loans for the selected client to filter out used kafeels
+  const { data: clientLoansData } = useQuery({
+    queryKey: ["client-loans", selectedClient?.client?.id],
+    queryFn: async () => {
+      if (!selectedClient?.client?.id) return [];
+      const response = await Api.get(`/api/loans/all/1?clientId=${selectedClient.client.id}&limit=1000`);
+      return response.data?.data || [];
+    },
+    enabled: !!selectedClient?.client?.id && activeTab === 1,
+    retry: 1,
+  });
+
   useEffect(() => {
     fetchContractTemplates(); 
     if (activeTab === 1) {
@@ -498,6 +510,11 @@ const Loans = () => {
       return;
     }
 
+    if (!selectedKafeel) {
+      notifyError("يرجى اختيار الكفيل");
+      return;
+    }
+
     if (!selectedPartner) {
       notifyError("يرجى اختيار المستثمر");
       return;
@@ -867,6 +884,7 @@ const Loans = () => {
   const isFormValid = () => {
     return (
       selectedClient &&
+      selectedKafeel &&
       loanForm.amount &&
       loanForm.totalInterest &&
       loanForm.interestRate &&
@@ -878,6 +896,30 @@ const Loans = () => {
 
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
   const isReadOnlyMode = isViewMode;
+
+  // Get available kafeels (excluding those used in other loans for the same client)
+  const getAvailableKafeels = () => {
+    if (!selectedClient?.kafeels) return [];
+
+    // Get used kafeel IDs from existing loans (excluding current loan being edited)
+    const usedKafeelIds = new Set();
+    if (clientLoansData) {
+      clientLoansData.forEach(loan => {
+        // Skip current loan being edited to allow keeping the same kafeel
+        if (isEditMode && loan.id === selectedLoan?.id) return;
+
+        if (loan.kafeelId) {
+          usedKafeelIds.add(loan.kafeelId);
+        }
+      });
+    }
+
+    // Filter out used kafeels, but always include currently selected kafeel (for edit mode)
+    return selectedClient.kafeels.filter(kafeel =>
+      !usedKafeelIds.has(kafeel.id) ||
+      (isEditMode && selectedKafeel && kafeel.id === selectedKafeel.id)
+    );
+  };
 
   return (
     <Box
@@ -1306,9 +1348,8 @@ const Loans = () => {
                           </Button>
                         )}
                         {selectedClient &&
-                          (!selectedClient.kafeels ||
-                            selectedClient.kafeels.length === 0) &&
-                          !isViewMode && (
+                          !isViewMode &&
+                          !isEditMode && (
                             <Button
                               variant="outlined"
                               onClick={() => setIsAddKafeelOpen(true)}
@@ -1324,39 +1365,60 @@ const Loans = () => {
                             </Button>
                           )}
                       </Grid>
-                      {selectedClient?.kafeels &&
+                      {selectedClient && (
+                        <Grid item xs={12} sm={10} md={8}>
+                          <Autocomplete
+                            options={getAvailableKafeels()}
+                            getOptionLabel={(option) =>
+                              `${option.name} - ${option.nationalId}`
+                            }
+                            value={selectedKafeel}
+                            onChange={handleKafeelSelect}
+                            disabled={isViewMode}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label="اختر الكفيل"
+                                placeholder="ابحث بالاسم أو رقم الهوية"
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    height: "56px",
+                                    width: isSmallScreen ? "250px" : "350px",
+                                    backgroundColor: isViewMode
+                                      ? "#f5f5f5"
+                                      : "#f9fafb",
+                                    "&:hover fieldset": {
+                                      borderColor: "primary.main",
+                                    },
+                                  },
+                                }}
+                              />
+                            )}
+                            noOptionsText={
+                              !clientLoansData
+                                ? "جاري تحميل البيانات..."
+                                : selectedClient.kafeels?.length === 0
+                                ? "لا يوجد كفلاء متاحين لهذا العميل"
+                                : "جميع الكفلاء مستخدمون في سلف أخرى"
+                            }
+                          />
+                        </Grid>
+                      )}
+                      {selectedClient &&
+                        getAvailableKafeels().length === 0 &&
+                        selectedClient.kafeels &&
                         selectedClient.kafeels.length > 0 && (
                           <Grid item xs={12} sm={10} md={8}>
-                            <Autocomplete
-                              options={selectedClient.kafeels || []}
-                              getOptionLabel={(option) =>
-                                `${option.name} - ${option.nationalId}`
-                              }
-                              value={selectedKafeel}
-                              onChange={handleKafeelSelect}
-                              disabled={isViewMode}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label="اختر الكفيل"
-                                  placeholder="ابحث بالاسم أو رقم الهوية"
-                                  sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                      height: "56px",
-                                      width: isSmallScreen ? "250px" : "350px",
-                                      backgroundColor: isViewMode
-                                        ? "#f5f5f5"
-                                        : "#f9fafb",
-                                      "&:hover fieldset": {
-                                        borderColor: "primary.main",
-                                      },
-                                    },
-                                  }}
-                                />
-                              )}
-                            />
+                            <Typography
+                              variant="body2"
+                              color="error"
+                              sx={{ fontWeight: "bold", mt: 1 }}
+                            >
+                              جميع كفلاء هذا العميل مستخدمون في سلف أخرى. يرجى إضافة كفيل جديد.
+                            </Typography>
                           </Grid>
                         )}
+
                       {selectedClient &&
                         (!selectedClient.kafeels ||
                           selectedClient.kafeels.length === 0) && (
@@ -1550,17 +1612,19 @@ const Loans = () => {
                                 "جاري تحميل رصيد الصندوق..."
                               ) : bankBalance !== null ? (
                                 <>
-                                  رصيد الصندوق المتاح:{" "}
+                                  <span
+                                    style={{
+                                      color: "black",
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    رصيد الصندوق المتاح:{" "}
+                                  </span>
                                   <span
                                     style={{
                                       fontWeight: "bold",
                                       fontSize: "16px",
-                                      color:
-                                        parseFloat(
-                                          loanForm.amount.replace(/,/g, "") || 0
-                                        ) > bankBalance
-                                          ? "error.main"
-                                          : "primary.main",
+                                      color: "green",
                                     }}
                                   >
                                     {formatAmount(
