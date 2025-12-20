@@ -43,21 +43,22 @@ const numberToArabicWords = (num) => {
   ];
   const hundreds = [
     "",
-    "مائة",
-    "مائتان",
-    "ثلاثمائة",
-    "أربعمائة",
-    "خمسمائة",
-    "ستمائة",
-    "سبعمائة",
-    "ثمانمائة",
-    "تسعمائة",
+    "مئة",
+    "مئتان",
+    "ثلاث مئة",
+    "أربع مئة",
+    "خمس مئة",
+    "ست مئة",
+    "سبع مئة",
+    "ثمان مئة",
+    "تسع مئة",
   ];
 
   if (num === 0) return "صفر";
   if (num < 0) return "سالب " + numberToArabicWords(-num);
 
   let result = "";
+  let hasThousands = false;
 
   // Handle millions
   if (num >= 1000000) {
@@ -85,7 +86,7 @@ const numberToArabicWords = (num) => {
       if (thousandsPart === 10) {
         result += "عشرة آلاف ";
       } else {
-        result += teens[thousandsPart - 10] + " ألف ";
+        result += teens[thousandsPart - 10] + " ألفاً ";
       }
     } else if (thousandsPart < 11) {
       result += ones[thousandsPart] + " آلاف ";
@@ -93,12 +94,17 @@ const numberToArabicWords = (num) => {
       result += numberToArabicWords(thousandsPart) + " ألف ";
     }
     num %= 1000;
+    hasThousands = true;
   }
 
   // Handle hundreds
   if (num >= 100) {
     const hundredsPart = Math.floor(num / 100);
-    result += hundreds[hundredsPart] + " ";
+    if (hasThousands) {
+      result += "و" + hundreds[hundredsPart] + " ";
+    } else {
+      result += hundreds[hundredsPart] + " ";
+    }
     num %= 100;
   }
 
@@ -136,7 +142,8 @@ const getCurrentDates = () => {
 
   hijriDate = hijriDate.replace(/\s+/g, " ").trim();
   hijriDate = hijriDate.replace(" ", " من ");
-  if (!hijriDate.includes("هـ")) hijriDate = `${hijriDate} هـ`;
+  // Remove هـ if it exists to avoid duplication
+  hijriDate = hijriDate.replace(" هـ", "").trim();
 
   const gregorianFormatter = new Intl.DateTimeFormat("ar-SA-u-ca-gregory", {
     day: "numeric",
@@ -148,7 +155,7 @@ const getCurrentDates = () => {
   const gregorianDate = gregorianFormatter.format(now);
 
   return {
-    gregorianDate: `الموافق ${gregorianDate}`,
+    gregorianDate,
     hijriDate,
   };
 };
@@ -301,7 +308,9 @@ const LoanContractGenerator = React.forwardRef(
           const finalDate = `${hijriDate}\n${gregorianDate}`;
 
           const amount = loanDataToUse.amount || 0;
-          const amountInWords = numberToArabicWords(amount);
+          const interestAmount = loanDataToUse.interestAmount || 0;
+          const totalAmount = amount + interestAmount;
+          const amountInWords = numberToArabicWords(totalAmount);
 
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, clientData.name || "")
@@ -313,12 +322,12 @@ const LoanContractGenerator = React.forwardRef(
 
             .replace(
               /{{المبلغ_رقما}}/g,
-              `${amount?.toLocaleString("en-US") || "0"}`
+              `${totalAmount?.toLocaleString("en-US") || "0"}`
             )
             .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
             .replace(
               /{{قيمة_السند_رقما}}/g,
-              `${amount?.toLocaleString("ar-SA") || "0"}`
+              `${totalAmount?.toLocaleString("ar-SA") || "0"}`
             )
             .replace(/{{قيمة_السند_كتابة}}/g, `${amountInWords}`)
 
@@ -329,8 +338,8 @@ const LoanContractGenerator = React.forwardRef(
 
             .replace(/{{اسم_الدائن}}/g, loanDataToUse?.partner?.name || "لا يوجد كفيل")
             .replace(/{{اسم_المدين}}/g, clientData.name || "")
-            .replace(/{{رقم_السند}}/g, `LOAN-${Date.now()}`)
-            .replace(/{{رقم_الإقرار}}/g, `ACK-${Date.now()}`)
+            .replace(/{{رقم_السند}}/g, `NOTE-${loanDataToUse.id}`)
+            .replace(/{{رقم_الإقرار}}/g, `ACK-${loanDataToUse.id}`)
             .replace(/{{مدينة_الاصدار}}/g, "شروة - المملكة العربية السعودية")
             .replace(/{{مدينة_الوفاء}}/g, "الرياض - المملكة العربية السعودية")
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")

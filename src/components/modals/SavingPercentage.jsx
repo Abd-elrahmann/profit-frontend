@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,32 +13,71 @@ import {
 } from '@mui/material';
 import { Savings as SavingsIcon } from '@mui/icons-material';
 
-const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "" }) => {
-  const [percentage, setPercentage] = useState(currentPercentage);
+const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", totalProfit = 0 }) => {
+  const [savingAmount, setSavingAmount] = useState('');
+  const [calculatedPercentage, setCalculatedPercentage] = useState(0);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (open && currentPercentage && totalProfit > 0) {
+      const amount = (currentPercentage / 100) * totalProfit;
+      setSavingAmount(amount.toString());
+      setCalculatedPercentage(currentPercentage);
+    } else if (open) {
+      setSavingAmount('');
+      setCalculatedPercentage(0);
+    }
+  }, [open, currentPercentage, totalProfit]);
+
   const handleSubmit = () => {
-    // لو فاضي
-    if (percentage === "") {
-      setError("من فضلك ادخل نسبة صحيحة");
+    if (savingAmount === "") {
+      setError("من فضلك ادخل مبلغ الادخار");
       return;
     }
 
-    const numericValue = Number(percentage);
+    const numericAmount = Number(savingAmount);
 
-    if (numericValue < 0 || numericValue > 100) {
-      setError('يجب أن تكون النسبة بين 0% و 100%');
+    if (numericAmount < 0) {
+      setError('يجب أن يكون مبلغ الادخار أكبر من أو يساوي صفر');
       return;
     }
 
-    onApply(numericValue);
+    if (totalProfit > 0 && numericAmount > totalProfit) {
+      setError('لا يمكن أن يكون مبلغ الادخار أكبر من إجمالي الأرباح');
+      return;
+    }
+
+    // حساب النسبة من المبلغ
+    const percentage = totalProfit > 0 ? (numericAmount / totalProfit) * 100 : 0;
+
+    onApply(percentage);
     onClose();
   };
 
   const handleClose = () => {
-    setPercentage(currentPercentage);
+    setSavingAmount('');
+    setCalculatedPercentage(0);
     setError('');
     onClose();
+  };
+
+  const handleAmountChange = (value) => {
+    setSavingAmount(value);
+
+    if (value === "") {
+      setCalculatedPercentage(0);
+      setError('');
+      return;
+    }
+
+    const numericAmount = Number(value);
+
+    if (totalProfit > 0) {
+      const percentage = (numericAmount / totalProfit) * 100;
+      setCalculatedPercentage(Math.min(100, Math.max(0, percentage)));
+    }
+
+    setError('');
   };
 
   return (
@@ -47,7 +86,7 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "" }) =>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
           <SavingsIcon color="primary" />
           <Typography variant="h6" fontWeight="bold" textAlign="center">
-            نسبة ادخار الأرباح
+            مبلغ الادخار
           </Typography>
         </Box>
       </DialogTitle>
@@ -56,28 +95,32 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "" }) =>
         <Grid container spacing={3} justifyContent="center" alignItems="center" mt={2}>
           <Grid item xs={12}>
             <TextField
-              label="نسبة الادخار %"
+              label="مبلغ الادخار"
               type="number"
-              value={percentage}
-              onChange={(e) => {
-                let value = e.target.value;
-
-                // لو فاضي
-                if (value === "") {
-                  setPercentage("");
-                  return;
-                }
-
-                // تحويل لرقم + منع ادخال اكتر من 100
-                const numeric = Math.min(100, Math.max(0, Number(value)));
-
-                setPercentage(numeric);
-                setError('');
-              }}
-              inputProps={{ min: 0, max: 100, step: 1 }}
+              value={savingAmount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              inputProps={{ min: 0, step: 0.01 }}
               sx={{ width: "300px" }}
+              placeholder="أدخل مبلغ الادخار"
             />
           </Grid>
+          {calculatedPercentage > 0 && (
+            <Grid item xs={12}>
+              <Box sx={{
+                p: 2,
+                bgcolor: 'primary.50',
+                borderRadius: 1,
+                textAlign: 'center'
+              }}>
+                <Typography variant="body2" color="primary.main">
+                  النسبة المحسوبة: <strong>{calculatedPercentage.toFixed(2)}%</strong>
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  من إجمالي الأرباح: {totalProfit?.toLocaleString() || 0}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
         </Grid>
 
         {error && (
@@ -88,7 +131,7 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "" }) =>
 
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="body2">
-            <strong>ملاحظة:</strong> سيتم خصم {percentage || 0}% من إجمالي الأرباح قبل توزيعها على الشركاء
+            <strong>ملاحظة:</strong> سيتم خصم {calculatedPercentage.toFixed(2)}% ({savingAmount || 0} ريال) من إجمالي الأرباح قبل توزيعها على الشركاء
           </Typography>
         </Alert>
       </DialogContent>
@@ -103,7 +146,7 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "" }) =>
           color="primary"
           startIcon={<SavingsIcon sx={{marginLeft:"10px"}} />}
         >
-          تطبيق النسبة
+          تطبيق المبلغ
         </Button>
       </DialogActions>
     </Dialog>

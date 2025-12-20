@@ -12,9 +12,9 @@ export const getExpenses = async (page = 1) => {
 };
 
 // Create new expense
-export const createExpense = async (expenseData) => {
+export const createExpense = async (expensesData) => {
   try {
-    const response = await Api.post('/api/expenses', expenseData);
+    const response = await Api.post('/api/expenses', expensesData);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -23,9 +23,9 @@ export const createExpense = async (expenseData) => {
 };
 
 // Update expense
-export const updateExpense = async (journalId, expenseData) => {
+export const updateExpense = async (journalId, expensesData) => {
   try {
-    const response = await Api.patch(`/api/expenses/${journalId}`, expenseData);
+    const response = await Api.patch(`/api/expenses/${journalId}`, expensesData);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -43,4 +43,3 @@ export const deleteExpense = async (journalId) => {
     throw error;
   }
 };
-

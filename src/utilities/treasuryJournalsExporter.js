@@ -380,6 +380,18 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
               Math.max(0, (paidRepaymentsUntilNow / totalRepaymentsAmount) * 100)
             )
           : 0;
+
+      // Current month collection data
+      const currentMonthTotalAmount = statisticsData.currentMonth?.totalAmount || 0;
+      const currentMonthPaidUntilNow = statisticsData.currentMonth?.paidUntilNow || 0;
+      const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
+      const currentMonthProgress =
+        currentMonthTotalAmount > 0
+          ? Math.min(
+              100,
+              Math.max(0, (currentMonthPaidUntilNow / currentMonthTotalAmount) * 100)
+            )
+          : 0;
       
       const pageWidth = doc.internal.pageSize.width;
       const headerHeight = 45;
@@ -538,6 +550,93 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           { align: 'center' }
         );
       }
+
+      // جدول تحصيل هذا الشهر
+      if (currentMonthTotalAmount > 0) {
+        const currentMonthHeaders = [['القيمة', 'تحصيل هذا الشهر']];
+        const currentMonthTable = [
+          [currentMonthTotalAmount.toLocaleString('en-US'), 'إجمالي التحصيلات'],
+          [currentMonthPaidUntilNow.toLocaleString('en-US'), 'تم تحصيله'],
+          [currentMonthRemaining.toLocaleString('en-US'), 'متبقي'],
+          [`${currentMonthProgress.toFixed(1)}%`, 'نسبة التحصيل']
+        ];
+
+        const currentMonthColumnWidths = {
+          0: 70,
+          1: 100
+        };
+
+        const currentMonthTotalWidth = Object.values(currentMonthColumnWidths).reduce((sum, width) => sum + width, 0);
+        const currentMonthLeftMargin = (pageWidth - currentMonthTotalWidth) / 2;
+
+        autoTable(doc, {
+          startY: doc.lastAutoTable.finalY + 15,
+          head: currentMonthHeaders,
+          body: currentMonthTable,
+          theme: 'striped',
+          styles: {
+            font: 'Amiri',
+            fontStyle: 'bold',
+            fontSize: 10,
+            cellPadding: 6,
+            lineColor: [200, 200, 200],
+            lineWidth: 0.1,
+            halign: 'center',
+            valign: 'middle'
+          },
+          headStyles: {
+            fillColor: [46, 125, 50], // Green color matching other tables
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 11,
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 6,
+            lineColor: [46, 125, 50],
+            lineWidth: 0.1
+          },
+          bodyStyles: {
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 6,
+            lineColor: [220, 220, 220],
+            lineWidth: 0.1
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250]
+          },
+          columnStyles: {
+            0: { cellWidth: currentMonthColumnWidths[0], halign: 'center' },
+            1: { cellWidth: currentMonthColumnWidths[1], halign: 'right' }
+          },
+          margin: {
+            top: doc.lastAutoTable.finalY + 15,
+            bottom: 20,
+            left: currentMonthLeftMargin,
+            right: currentMonthLeftMargin
+          },
+          tableWidth: currentMonthTotalWidth
+        });
+
+        // شريط تقدم بصري لتحصيل هذا الشهر
+        const currentMonthBarStartY = doc.lastAutoTable.finalY + 8;
+        const currentMonthBarWidth = 120;
+        const currentMonthBarHeight = 8;
+        const currentMonthBarX = (pageWidth - currentMonthBarWidth) / 2;
+        doc.setFillColor(224, 224, 224);
+        doc.roundedRect(currentMonthBarX, currentMonthBarStartY, currentMonthBarWidth, currentMonthBarHeight, 2, 2, 'F');
+        doc.setFillColor(46, 125, 50); // Green color matching other tables
+        const currentMonthFilledWidth = (Math.max(0, Math.min(100, currentMonthProgress)) / 100) * currentMonthBarWidth;
+        doc.roundedRect(currentMonthBarX, currentMonthBarStartY, currentMonthFilledWidth, currentMonthBarHeight, 2, 2, 'F');
+        doc.setFontSize(9);
+        doc.setFont('Amiri', 'bold');
+        doc.text(
+          `نسبة تحصيل هذا الشهر: ${currentMonthProgress.toFixed(1)}%`,
+          pageWidth / 2,
+          currentMonthBarStartY + currentMonthBarHeight + 6,
+          { align: 'center' }
+        );
+      }
       
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
@@ -607,6 +706,18 @@ export const exportStatisticsToExcel = async (statisticsData, accountName) => {
           )
         : 0;
 
+    // Current month collection data
+    const currentMonthTotalAmount = statisticsData.currentMonth?.totalAmount || 0;
+    const currentMonthPaidUntilNow = statisticsData.currentMonth?.paidUntilNow || 0;
+    const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
+    const currentMonthProgress =
+      currentMonthTotalAmount > 0
+        ? Math.min(
+            100,
+            Math.max(0, (currentMonthPaidUntilNow / currentMonthTotalAmount) * 100)
+          )
+        : 0;
+
     const workbook = XLSX.utils.book_new();
     
     const statisticsDataArray = [
@@ -629,6 +740,17 @@ export const exportStatisticsToExcel = async (statisticsData, accountName) => {
         [paidRepaymentsUntilNow, 'واصل حتى الآن'],
         [remainingRepayments, 'متبقي'],
         [`${repaymentsProgress.toFixed(1)}%`, 'نسبة التحصيل']
+      );
+    }
+
+    if (currentMonthTotalAmount > 0) {
+      statisticsDataArray.push(
+        [''],
+        ['القيمة', 'تحصيل هذا الشهر'],
+        [currentMonthTotalAmount, 'إجمالي التحصيلات'],
+        [currentMonthPaidUntilNow, 'تم تحصيله'],
+        [currentMonthRemaining, 'متبقي'],
+        [`${currentMonthProgress.toFixed(1)}%`, 'نسبة التحصيل']
       );
     }
     

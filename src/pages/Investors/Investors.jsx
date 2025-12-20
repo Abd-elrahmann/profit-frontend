@@ -512,14 +512,19 @@ export default function Investors() {
     
     // Pre-fill amount if editing
     if (isEditMode) {
-      setWithdrawAmount(investorDetails?.withdrawalInfo?.monthlyAmount || "");
+      setWithdrawAmount("");
     } else {
       setWithdrawAmount("");
     }
-    
+
     try {
       const response = await Api.get(`/api/partner-withdraw/preview/${selectedInvestor.id}`);
       setWithdrawPreviewData(response.data);
+
+      // Set the monthly amount from API response for edit mode
+      if (isEditMode && response.data?.monthlyAmount) {
+        setWithdrawAmount(response.data.monthlyAmount.toString());
+      }
     } catch (error) {
       console.error('Error fetching preview data:', error);
       notifyError('حدث خطأ أثناء جلب بيانات التعثرات');

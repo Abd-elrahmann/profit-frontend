@@ -54,7 +54,7 @@ import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import { saveAs } from 'file-saver';
 import { handleApiError } from "../../config/Api";
-const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan }) => {
+const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan, statusFilter }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [loanToDelete, setLoanToDelete] = useState(null);
@@ -82,8 +82,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan 
   const PAGE_SIZE = 15;
 
   const { data: loansData, isLoading } = useQuery({
-    queryKey: ["loans", page, searchQuery, PAGE_SIZE],
-    queryFn: () => getLoans(page, searchQuery, PAGE_SIZE),
+    queryKey: ["loans", page, searchQuery, PAGE_SIZE, statusFilter],
+    queryFn: () => getLoans(page, searchQuery, PAGE_SIZE, statusFilter),
     retry: 1,
   });
 

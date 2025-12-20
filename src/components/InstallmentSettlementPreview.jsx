@@ -13,11 +13,11 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 
-const InstallmentSettlementPreview = ({ 
-  open, 
-  onClose, 
-  settlementHtml, 
-  onSaveSettlement, 
+const InstallmentSettlementPreview = ({
+  open,
+  onClose,
+  settlementHtml,
+  onSaveSettlement,
   loading = false,
   clientName = "",
   installmentAmount = 0,
@@ -91,7 +91,7 @@ const InstallmentSettlementPreview = ({
   return (
     <Dialog
       open={open}
-      onClose={handleClose} // استخدام الدالة المعدلة
+      onClose={handleClose}
       maxWidth="lg"
       fullWidth
       dir="rtl"
@@ -140,8 +140,8 @@ const InstallmentSettlementPreview = ({
         <Paper 
           id="settlement-receipt-content"
           sx={{ 
-            m: 3, 
-            p: 4, 
+            m: 1, 
+            p: 1, 
             minHeight: '500px',
             bgcolor: 'white',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -253,8 +253,8 @@ const InstallmentSettlementPreview = ({
           onClick={handleSaveAndClose} // استخدام الدالة المعدلة
           disabled={loading || !settlementHtml}
           sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "#0b3589" },
+            bgcolor: "#2E8B45",
+            "&:hover": { bgcolor: "#2563EB" },
             minWidth: '140px'
           }}
         >

@@ -438,11 +438,6 @@ const WithdrawReceipt = () => {
     .date-box {
       margin-top: 5px;
     }
-    .footer {
-      margin-top: 15px;
-      padding-top: 10px;
-      font-size: 11px;
-    }
   }
 </style>
 
@@ -616,10 +611,6 @@ const WithdrawReceipt = () => {
         </div>
       </div>
 
-      <!-- Footer -->
-      <div class="footer">
-        <p>هذه المخالصة صادرة من النظام الآلي - جميع الحقوق محفوظة</p>
-      </div>
     </div>
 
   </div>

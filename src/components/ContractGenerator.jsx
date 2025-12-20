@@ -8,7 +8,7 @@ const numberToArabicWords = (num) => {
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
   const tens = ['', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
   const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
-  const hundreds = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+  const hundreds = ['', 'مئة', 'مئتان', 'ثلاث مئة', 'أربع مئة', 'خمس مئة', 'ست مئة', 'سبع مئة', 'ثمان مئة', 'تسع مئة'];
 
   if (num === 0) return 'صفر';
   if (num < 0) return 'سالب ' + numberToArabicWords(-num);
@@ -200,14 +200,6 @@ const generateContract = useCallback(async () => {
         throw new Error('عنصر معاينة العقد غير موجود');
       }
 
-      // Extract text to check for dynamic percentages
-      const textContent = element.textContent || '';
-      console.log('Contract contains dynamic percentages:', {
-        hasPartnerPercent: textContent.includes('{{نسبة_أرباح_المستثمر}}%') || textContent.includes(`${100 - (investorData?.orgProfitPercent || 0)}%`),
-        hasOrgPercent: textContent.includes('{{نسبة_أرباح_المنشأة}}%') || textContent.includes(`${investorData?.orgProfitPercent || 0}%`),
-        partnerPercent: 100 - (investorData?.orgProfitPercent || 0),
-        orgPercent: investorData?.orgProfitPercent || 0
-      });
 
       // PDF generation options
       const options = {

@@ -128,6 +128,7 @@ const Installments = () => {
   const [settlementHtml, setSettlementHtml] = useState("");
   const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
   const [settlementJustSaved, setSettlementJustSaved] = useState(false);
+  const [settlementManuallyClosed, setSettlementManuallyClosed] = useState(false);
   const [settlementTemplate, setSettlementTemplate] = useState("");
   const { permissions } = usePermissions();
   const settlementReceiptRef = useRef(null);
@@ -334,12 +335,13 @@ const Installments = () => {
       !isSettlementCompleted() &&
       !settlementModalOpen &&
       settlementTemplate &&
-      !settlementJustSaved
+      !settlementJustSaved &&
+      !settlementManuallyClosed
     ) {
       handleSettlement();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedInstallments, settlementTemplate, settlementJustSaved]);
+  }, [sortedInstallments, settlementTemplate, settlementJustSaved, settlementManuallyClosed]);
 
   const handleApprove = async (installment) => {
     try {
@@ -593,6 +595,8 @@ const Installments = () => {
 
       setSettlementHtml(settlementHtml);
       setSettlementModalOpen(true);
+      // إعادة تعيين علامة الإغلاق اليدوي عند فتح المودال تلقائياً
+      setSettlementManuallyClosed(false);
 
       setIsGeneratingSettlement(false);
     } catch (error) {
@@ -2412,6 +2416,8 @@ const Installments = () => {
   open={settlementModalOpen}
   onClose={() => {
     setSettlementModalOpen(false);
+    // تعيين علامة الإغلاق اليدوي لمنع إعادة فتح المودال تلقائياً
+    setSettlementManuallyClosed(true);
   }}
   settlementHtml={settlementHtml}
   onSaveSettlement={handleSaveSettlement}

@@ -78,6 +78,7 @@ const PaymentVoucher = () => {
     font-size: 14px;
     word-spacing: normal;
     letter-spacing: normal;
+    gap: 25px;
   }
   .row span {
     font-weight: bold;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,61 +8,167 @@ import {
   TextField,
   CircularProgress,
   Stack,
+  Box,
+  IconButton,
+  Typography,
+  Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Autocomplete,
 } from "@mui/material";
+import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { createExpense } from "../../pages/Expenses/expensesApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import Api from "../../config/Api";
+
+const EXPENSE_TYPES = [
+  "مصروف رواتب",
+  "مصروف بنزين",
+  "مصروفات انترنت",
+  "مصروفات ورقية",
+  "مصروفات كهرباء",
+  "مصروفات تشغيلية",
+  "مصروفات اخرى"
+];
 
 const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
-  const [formData, setFormData] = useState({
-    amount: "",
-    description: "",
-  });
+  const [expenses, setExpenses] = useState([
+    { type: "", amount: "", description: "", userId: null }
+  ]);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setFormData({
-        amount: "",
-        description: "",
-      });
-      setErrors({});
+      setExpenses([{ type: "", amount: "", description: "", userId: null }]);
+      setErrors([]);
     }
   }, [open]);
 
-  const handleChange = (field) => (event) => {
-    const value = event.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // Debounced user search function
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedUserSearch = useCallback(
+    debounce(async (searchTerm) => {
+      try {
+        setUsersLoading(true);
+        const params = searchTerm ? { name: searchTerm } : {};
+        const response = await Api.get('/api/users/1', { params });
+        setUsers(response.data.users || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        notifyError('فشل في تحميل قائمة الموظفين');
+      } finally {
+        setUsersLoading(false);
+      }
+    }, 300),
+    []
+  );
 
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
+  useEffect(() => {
+    if (open) {
+      debouncedUserSearch('');
+    }
+  }, [open, debouncedUserSearch]);
+
+  // Debounce utility function
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  const handleAddExpense = () => {
+    setExpenses([...expenses, { type: "", amount: "", description: "", userId: null }]);
+  };
+
+  const handleRemoveExpense = (index) => {
+    if (expenses.length > 1) {
+      const newExpenses = expenses.filter((_, i) => i !== index);
+      setExpenses(newExpenses);
+      
+      // Remove corresponding error if exists
+      const newErrors = [...errors];
+      newErrors.splice(index, 1);
+      setErrors(newErrors);
+    }
+  };
+
+  const handleChange = (index, field) => (event) => {
+    const value = event.target.value;
+    const newExpenses = [...expenses];
+    newExpenses[index][field] = value;
+
+    // If changing type and it's not salary expense, clear userId
+    if (field === 'type' && value !== 'مصروف رواتب') {
+      newExpenses[index].userId = null;
+    }
+
+    setExpenses(newExpenses);
+
+    // Clear error for this field
+    if (errors[index]?.[field]) {
+      const newErrors = [...errors];
+      if (newErrors[index]) {
+        newErrors[index][field] = "";
+        if (Object.values(newErrors[index]).every(val => !val)) {
+          newErrors.splice(index, 1);
+        }
+        setErrors(newErrors);
+      }
     }
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = [];
+    let isValid = true;
 
-    if (!formData.amount || formData.amount.trim() === "") {
-      newErrors.amount = "المبلغ مطلوب";
-    } else {
-      const amount = parseFloat(formData.amount);
-      if (isNaN(amount) || amount <= 0) {
-        newErrors.amount = "يرجى إدخال مبلغ صحيح";
+    expenses.forEach((expense, index) => {
+      const expenseErrors = {};
+
+      if (!expense.type || expense.type.trim() === "") {
+        expenseErrors.type = "نوع المصروف مطلوب";
+        isValid = false;
       }
-    }
 
-    if (!formData.description || formData.description.trim() === "") {
-      newErrors.description = "الوصف مطلوب";
-    }
+      if (!expense.amount || expense.amount.trim() === "") {
+        expenseErrors.amount = "المبلغ مطلوب";
+        isValid = false;
+      } else {
+        const amount = parseFloat(expense.amount);
+        if (isNaN(amount) || amount <= 0) {
+          expenseErrors.amount = "يرجى إدخال مبلغ صحيح";
+          isValid = false;
+        }
+      }
+
+      if (!expense.description || expense.description.trim() === "") {
+        expenseErrors.description = "الوصف مطلوب";
+        isValid = false;
+      }
+
+      // Validate user selection for salary expenses
+      if (expense.type === 'مصروف رواتب' && !expense.userId) {
+        expenseErrors.userId = "يجب اختيار الموظف عند إضافة مصروف رواتب";
+        isValid = false;
+      }
+
+      if (Object.keys(expenseErrors).length > 0) {
+        newErrors[index] = expenseErrors;
+      }
+    });
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   const handleSubmit = async () => {
@@ -72,16 +178,20 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
 
     setLoading(true);
     try {
-      await createExpense({
-        amount: parseFloat(formData.amount),
-        description: formData.description.trim(),
-      });
-      notifySuccess("تم إضافة المصروف بنجاح");
+      const formattedExpenses = expenses.map(expense => ({
+        type: expense.type.trim(),
+        amount: parseFloat(expense.amount),
+        description: expense.description.trim(),
+        ...(expense.userId && { userId: expense.userId })
+      }));
+
+      await createExpense({ expenses: formattedExpenses });
+      notifySuccess("تم إضافة المصروفات بنجاح");
       onSuccess();
       onClose();
     } catch (error) {
       notifyError(
-        error.response?.data?.message || "حدث خطأ أثناء إضافة المصروف"
+        error.response?.data?.message || "حدث خطأ أثناء إضافة المصروفات"
       );
     } finally {
       setLoading(false);
@@ -98,37 +208,136 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
       fullScreen={isMobile}
     >
       <DialogTitle sx={{ fontWeight: "bold", color: "primary.main" }}>
-        إضافة مصروف جديد
+        إضافة مصروفات جديدة
       </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          <TextField
-            name="amount"
-            label="المبلغ"
-            type="number"
-            value={formData.amount}
-            onChange={handleChange("amount")}
-            fullWidth
-            required
-            error={!!errors.amount}
-            helperText={errors.amount}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-          <TextField
-            name="description"
-            label="الوصف"
-            value={formData.description}
-            onChange={handleChange("description")}
-            fullWidth
-            required
-            error={!!errors.description}
-            helperText={errors.description}
-            multiline
-            rows={3}
-          />
+          {expenses.map((expense, index) => (
+            <Box key={index} sx={{ position: "relative" }}>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: "black" }}>
+                مصروف #{index + 1}
+              </Typography>
+              
+              <Stack spacing={2}>
+                <FormControl fullWidth required error={!!errors[index]?.type}>
+                  <InputLabel>نوع المصروف</InputLabel>
+                  <Select
+                    name="type"
+                    value={expense.type}
+                    onChange={handleChange(index, "type")}
+                    label="نوع المصروف"
+                  >
+                    {EXPENSE_TYPES.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors[index]?.type && (
+                    <Typography variant="caption" color="error" sx={{ mt: 1, mr: 2 }}>
+                      {errors[index]?.type}
+                    </Typography>
+                  )}
+                </FormControl>
+
+                {expense.type === 'مصروف رواتب' && (
+                  <Autocomplete
+                    options={users}
+                    getOptionLabel={(option) => option.name || ''}
+                    value={users.find(user => user.id === expense.userId) || null}
+                    onChange={(event, newValue) => {
+                      const value = newValue ? newValue.id : null;
+                      const newExpenses = [...expenses];
+                      newExpenses[index].userId = value;
+                      setExpenses(newExpenses);
+
+                      // Clear error for this field
+                      if (errors[index]?.userId) {
+                        const newErrors = [...errors];
+                        if (newErrors[index]) {
+                          newErrors[index].userId = "";
+                          if (Object.values(newErrors[index]).every(val => !val)) {
+                            newErrors.splice(index, 1);
+                          }
+                          setErrors(newErrors);
+                        }
+                      }
+                    }}
+                    onInputChange={(event, newInputValue) => {
+                      debouncedUserSearch(newInputValue);
+                    }}
+                    loading={usersLoading}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="اختر الموظف"
+                        required
+                        error={!!errors[index]?.userId}
+                        helperText={errors[index]?.userId}
+                      />
+                    )}
+                    noOptionsText="لا توجد نتائج"
+                    loadingText="جاري البحث..."
+                  />
+                )}
+
+                <TextField
+                  name="amount"
+                  label="المبلغ"
+                  type="number"
+                  value={expense.amount}
+                  onChange={handleChange(index, "amount")}
+                  fullWidth
+                  required
+                  error={!!errors[index]?.amount}
+                  helperText={errors[index]?.amount}
+                  inputProps={{ min: 0, step: 0.01 }}
+                />
+
+                <TextField
+                  name="description"
+                  label="الوصف"
+                  value={expense.description}
+                  onChange={handleChange(index, "description")}
+                  fullWidth
+                  required
+                  error={!!errors[index]?.description}
+                  helperText={errors[index]?.description}
+                  multiline
+                  rows={2}
+                />
+              </Stack>
+
+              {expenses.length > 1 && (
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleRemoveExpense(index)}
+                  sx={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              )}
+
+              {index < expenses.length - 1 && <Divider sx={{ my: 2 }} />}
+            </Box>
+          ))}
+
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddExpense}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            إضافة مصروف آخر
+          </Button>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ p: 2, gap: 1 }}>
+      <DialogActions sx={{ p: 2, gap: 1,flexDirection: "row-reverse",justifyContent: "space-between" }}>
         <Button onClick={onClose} variant="outlined" disabled={loading}>
           إلغاء
         </Button>
@@ -136,9 +345,11 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
           onClick={handleSubmit}
           variant="contained"
           disabled={loading}
-          sx={{ bgcolor: "primary.main" }}
+          sx={{ bgcolor: "primary.main",
+            "&:hover": { bgcolor: "#2E8B41" },
+           }}
         >
-          {loading ? <CircularProgress size={20} /> : "حفظ"}
+          {loading ? <CircularProgress size={20} /> : "حفظ المصروفات"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -146,4 +357,3 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
 };
 
 export default AddExpense;
-

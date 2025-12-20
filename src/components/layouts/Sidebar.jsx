@@ -82,7 +82,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               color: '#2E8B45',
               fontWeight: 600
             },
-            '& .MuiListItemIcon-root': {
+            '& .MuiListItemIcon-root:not(.single-icon):not(.parent-icon)': {
               color: '#2E8B45'
             }
           },
@@ -112,17 +112,20 @@ const Sidebar = ({ isOpen, onClose }) => {
           }}
         />
         {item.icon && (
-          <ListItemIcon sx={{ 
-            minWidth: 0,
-            marginLeft: '10px',
-            justifyContent: 'center',
-            color: 'text.primary',
-            transition: 'transform 0.03s ease',
-            transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
-            '& > *': {
-              fontSize: '1.3rem !important'
-            }
-          }}>
+          <ListItemIcon
+            className="single-icon"
+            sx={{
+              minWidth: 0,
+              marginLeft: '10px',
+              justifyContent: 'center',
+              color: item.color || 'text.primary',
+              transition: 'transform 0.03s ease',
+              transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
+              '& > *': {
+                fontSize: '1.3rem !important'
+              }
+            }}
+          >
             <item.icon />
           </ListItemIcon>
         )}
@@ -163,7 +166,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 color: '#2E8B45',
                 fontWeight: 700
               },
-              '& .MuiListItemIcon-root': {
+              '& .MuiListItemIcon-root:not(.parent-icon)': {
                 color: '#2E8B45'
               }
             }
@@ -180,16 +183,39 @@ const Sidebar = ({ isOpen, onClose }) => {
               }
             }}
           />
-          <ListItemIcon sx={{ 
-            minWidth: 0,
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
             marginLeft: '10px',
-            justifyContent: 'center',
-            color: 'text.primary',
-            transition: 'transform 0.03s ease',
-            transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
           }}>
-            {isGroupOpen ? <ExpandLessIcon size={20} /> : <ExpandMoreIcon size={20} />}
-          </ListItemIcon>
+            {item.icon && (
+              <ListItemIcon
+                className="parent-icon"
+                sx={{
+                  minWidth: 0,
+                  justifyContent: 'center',
+                  color: item.color || 'text.primary',
+                  transition: 'transform 0.03s ease',
+                  transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
+                  '& > *': {
+                    fontSize: '1.3rem !important'
+                  }
+                }}
+              >
+                <item.icon />
+              </ListItemIcon>
+            )}
+            <ListItemIcon sx={{
+              minWidth: 0,
+              justifyContent: 'center',
+              color: 'text.primary',
+              transition: 'transform 0.03s ease',
+              transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
+            }}>
+              {isGroupOpen ? <ExpandLessIcon size={20} /> : <ExpandMoreIcon size={20} />}
+            </ListItemIcon>
+          </Box>
         </ListItem>
         
         <Collapse in={isGroupOpen && isOpen} timeout="auto">

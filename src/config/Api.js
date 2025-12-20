@@ -2,10 +2,9 @@ import axios from 'axios'
 import {toast} from 'react-toastify'
 import i18next from 'i18next'
 
-// Get base URL from environment or use default
 const getBaseURL = () => {
-  //return "http://localhost:3000";
-  return "http://72.61.101.53:3003";
+  return "http://localhost:3000";
+  //return "http://72.61.101.53:3003";
 };
 
 const Api = axios.create({

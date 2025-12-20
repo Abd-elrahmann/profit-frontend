@@ -45,15 +45,15 @@ const numberToArabicWords = (num) => {
   ];
   const hundreds = [
     "",
-    "مائة",
-    "مائتان",
-    "ثلاثمائة",
-    "أربعمائة",
-    "خمسمائة",
-    "ستمائة",
-    "سبعمائة",
-    "ثمانمائة",
-    "تسعمائة",
+    "مئة",
+    "مئتان",
+    "ثلاث مئة",
+    "أربع مئة",
+    "خمس مئة",
+    "ست مئة",
+    "سبع مئة",
+    "ثمان مئة",
+    "تسع مئة",
   ];
 
   const scale = [
@@ -286,11 +286,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
           clientData,
           employeeName,
         };
-
-        // Debug: طباعة البيانات للتأكد من وجود الأرقام
-        console.log('Loan Data:', loanData);
-        console.log('Debt Acknowledgment Number:', loanData?.debtAcknowledgmentNumber);
-        console.log('Promissory Note Number:', loanData?.promissoryNoteNumber);
 
         if (
           !dataToUse.installmentData ||

@@ -29,6 +29,8 @@ import {
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
 import LoansTable from "../../components/modals/LoansTable";
+import SmallLoanForm from "../../components/modals/SmallLoanForm";
+import SmallLoansTable from "../../components/modals/SmallLoansTable";
 import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import LoanContractGenerator from "../../components/LoanContractGenerator";
@@ -40,6 +42,7 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Loans = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
+  const [subTab, setSubTab] = useState(0); // 0: pending, 1: active, 2: completed
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedKafeel, setSelectedKafeel] = useState(null);
   const [selectedBank, setSelectedBank] = useState(null);
@@ -86,15 +89,7 @@ const Loans = () => {
   const { permissions } = usePermissions();
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
-  const interestWarningTimeoutRef = useRef(null);
 
-  useEffect(() => {
-    return () => {
-      if (interestWarningTimeoutRef.current) {
-        clearTimeout(interestWarningTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -103,21 +98,21 @@ const Loans = () => {
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
-    enabled: activeTab === 1,
+    enabled: activeTab === 3,
     retry: 1,
   });
 
   const { data: banksData, isLoading: isBanksLoading } = useQuery({
     queryKey: ["banks", banksPage, banksSearchQuery],
     queryFn: () => getBanks(banksPage, banksSearchQuery),
-    enabled: activeTab === 1,
+    enabled: activeTab === 3,
     retry: 1,
   });
 
   const { data: partnersData, isLoading: isPartnersLoading } = useQuery({
     queryKey: ["partners", partnersPage, partnersSearchQuery],
     queryFn: () => getPartners(partnersPage, partnersSearchQuery),
-    enabled: activeTab === 1,
+    enabled: activeTab === 3,
     retry: 1,
   });
 
@@ -129,15 +124,25 @@ const Loans = () => {
       const response = await Api.get(`/api/loans/all/1?clientId=${selectedClient.client.id}&limit=1000`);
       return response.data?.data || [];
     },
-    enabled: !!selectedClient?.client?.id && activeTab === 1,
+    enabled: !!selectedClient?.client?.id && activeTab === 6,
     retry: 1,
   });
 
   useEffect(() => {
-    fetchContractTemplates(); 
-    if (activeTab === 1) {
+    // Only fetch templates when not in tab 2 or 3
+    if (activeTab !== 2 && activeTab !== 3) {
+      fetchContractTemplates();
+    }
+    if (activeTab === 1 || activeTab === 6) {
       calculateInstallments();
       fetchBankBalance();
+      // Clear search queries to ensure all options are shown
+      setBanksSearchQuery("");
+      setPartnersSearchQuery("");
+      setSearchQuery("");
+      setBanksPage(1);
+      setPartnersPage(1);
+      setClientsPage(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -160,7 +165,7 @@ const Loans = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 1) {
+    if (activeTab === 6) {
       calculateInstallments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,6 +233,8 @@ const Loans = () => {
 
   const handleBankSelect = async (event, newValue) => {
     setSelectedBank(newValue);
+    setBanksSearchQuery(""); // Clear search query to show all banks
+    setBanksPage(1); // Reset to first page
     await fetchBankBalance();
   };
 
@@ -260,21 +267,16 @@ const Loans = () => {
     return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  const handleOpenPreview = async () => {
+  const handleOpenPreview = async (loanData = null) => {
     try {
-      const loanDataToUse = savedLoanData || {
-        id: `preview-${Date.now()}`,
-        amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
-        startDate: loanForm.startDate,
-      };
+      const loanDataToUse = loanData || savedLoanData;
 
-      const clientDataToUse = savedLoanData?.client || selectedClient?.client;
-
-      if (!clientDataToUse || !loanDataToUse.amount) {
-        notifyError("يرجى ملء بيانات العميل والسلفة أولاً");
+      if (!loanDataToUse) {
+        notifyError("يرجى حفظ السلفة أولاً قبل عرض معاينة العقود");
         return;
       }
+
+      const clientDataToUse = loanDataToUse.client;
 
       if (!debtAckTemplate || !promissoryNoteTemplate) {
         notifyError("جاري تحميل قوالب العقود، يرجى المحاولة مرة أخرى");
@@ -298,6 +300,7 @@ const Loans = () => {
         previewLoanData,
         selectedKafeel || savedLoanData?.kafeel
       );
+
       const promissoryNoteHtml =
         await promissoryNoteGeneratorRef.current.generateContract(
           false,
@@ -321,19 +324,19 @@ const Loans = () => {
   const handleSaveContracts = async (contractType) => {
     try {
       setIsSavingContracts(true);
-      
+
       if (!savedLoanData) {
         notifyError("لم يتم إنشاء السلفة بعد. يرجى إنشاء السلفة أولاً");
         return;
       }
 
       if (contractType === "both" || contractType === "debt-acknowledgment") {
-        const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, savedLoanData, savedLoanData?.kafeel, true);
+        const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, savedLoanData, selectedKafeel || savedLoanData?.kafeel, true);
         await debtAckGeneratorRef.current?.generatePDF(debtAckHtml);
       }
 
       if (contractType === "both" || contractType === "promissory-note") {
-        const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, savedLoanData, savedLoanData?.kafeel, true);
+        const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, savedLoanData, selectedKafeel || savedLoanData?.kafeel, true);
         await promissoryNoteGeneratorRef.current?.generatePDF(promissoryNoteHtml);
       }
 
@@ -558,16 +561,26 @@ const Loans = () => {
 
       const finalPartner = selectedPartner || newLoan.partner;
 
-      setSavedLoanData({
+      const loanDataForPreview = {
         ...newLoan,
         partner: finalPartner,
         client: selectedClient.client,
         kafeel: selectedKafeel || null,
-      });
+      };
+
+      setSavedLoanData(loanDataForPreview);
 
       queryClient.invalidateQueries(["loans"]);
-      
-      await handleOpenPreview();
+
+      // Open preview immediately with the loan data
+      setTimeout(async () => {
+        try {
+          await handleOpenPreview(loanDataForPreview);
+        } catch (previewError) {
+          console.error("Error opening preview:", previewError);
+          notifyWarning("يرجى فتح معاينة العقود يدوياً من الزر المخصص");
+        }
+      }, 100);
     } catch (error) {
       handleApiError(error);
       notifyError(
@@ -771,7 +784,7 @@ const Loans = () => {
         repaymentDay: loan.repaymentDay?.toString() || "10",
       });
 
-      setActiveTab(1);
+      setActiveTab(3);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تحميل بيانات السلفة"
@@ -807,7 +820,7 @@ const Loans = () => {
 
     setIsAdditionalLoan(true);
 
-    setActiveTab(1);
+    setActiveTab(4);
   };
 
   const handleEditLoan = () => {
@@ -854,14 +867,6 @@ const Loans = () => {
           const percentage = (totalInterest / amount) * 100;
           updatedForm.interestRate = percentage.toFixed(2);
 
-          if (interestWarningTimeoutRef.current) {
-            clearTimeout(interestWarningTimeoutRef.current);
-          }
-          interestWarningTimeoutRef.current = setTimeout(() => {
-            if (totalInterest > amount) {
-              notifyWarning("مبلغ الفائدة أكبر من مبلغ رأس المال المدخل");
-            }
-          }, 600);
         } else if (amount > 0) {
           updatedForm.interestRate = "";
         }
@@ -897,28 +902,10 @@ const Loans = () => {
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
   const isReadOnlyMode = isViewMode;
 
-  // Get available kafeels (excluding those used in other loans for the same client)
+  // Get all kafeels for the selected client
   const getAvailableKafeels = () => {
     if (!selectedClient?.kafeels) return [];
-
-    // Get used kafeel IDs from existing loans (excluding current loan being edited)
-    const usedKafeelIds = new Set();
-    if (clientLoansData) {
-      clientLoansData.forEach(loan => {
-        // Skip current loan being edited to allow keeping the same kafeel
-        if (isEditMode && loan.id === selectedLoan?.id) return;
-
-        if (loan.kafeelId) {
-          usedKafeelIds.add(loan.kafeelId);
-        }
-      });
-    }
-
-    // Filter out used kafeels, but always include currently selected kafeel (for edit mode)
-    return selectedClient.kafeels.filter(kafeel =>
-      !usedKafeelIds.has(kafeel.id) ||
-      (isEditMode && selectedKafeel && kafeel.id === selectedKafeel.id)
-    );
+    return selectedClient.kafeels;
   };
 
   return (
@@ -946,7 +933,7 @@ const Loans = () => {
         {activeTab === 1 && !isSmallScreen && (
           <Box
             sx={{
-              width: isTablet ? "300px" : "350px",
+              width: isSmallScreen ? "300px" : "350px",
               borderRight: "1px solid #ddd",
               bgcolor: "#fafafa",
               height: "100%",
@@ -1182,22 +1169,26 @@ const Loans = () => {
                 value={activeTab}
                 onChange={(e, newValue) => {
                   setActiveTab(newValue);
-                  if (newValue === 0) {
+                  if (newValue === 0 || newValue === 2 || newValue === 3) {
                     resetLoanForm();
                   }
+                  // Reset subTab when switching to main tab
+                  if (newValue === 0) {
+                    setSubTab(0);
+                  }
                 }}
-                variant={isSmallScreen ? "scrollable" : "standard"}
-                scrollButtons={isSmallScreen ? "auto" : false}
+                variant={"scrollable"}
+                scrollButtons={"auto"}
                 sx={{
                   "& .MuiTab-root": {
-                    fontSize: isSmallScreen ? "0.875rem" : "1rem",
+                    fontSize: isSmallScreen ? "0.875rem" : "0.85rem",
                     minWidth: isSmallScreen ? "auto" : 72,
                     padding: isSmallScreen ? "12px 8px" : "12px 16px",
                   },
                 }}
               >
                 <Tab
-                  label="عرض جميع السلف"
+                  label="جميع السلفات"
                   sx={{
                     fontWeight: "bold",
                     borderBottom:
@@ -1226,6 +1217,26 @@ const Loans = () => {
                     }}
                   />
                 )}
+                <Tab
+                  label="إنشاء سلفة صغيرة"
+                  sx={{
+                    fontWeight: "bold",
+                    borderBottom:
+                      activeTab === 2 ? "3px solid" : "none",
+                    borderBottomColor: activeTab === 2 ? "primary.main" : "transparent",
+                    color: activeTab === 2 ? "primary.main" : "black",
+                  }}
+                />
+                <Tab
+                  label="عرض السلفات الصغيرة"
+                  sx={{
+                    fontWeight: "bold",
+                    borderBottom:
+                      activeTab === 3 ? "3px solid" : "none",
+                    borderBottomColor: activeTab === 3 ? "primary.main" : "transparent",
+                    color: activeTab === 3 ? "primary.main" : "black",
+                  }}
+                />
               </Tabs>
             </Box>
 
@@ -1233,13 +1244,37 @@ const Loans = () => {
               <Box
                 sx={{ width: "100%", display: "flex", flexDirection: "column" }}
               >
+                {/* Sub-tabs for loan status filtering */}
+                <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3, display: "flex", justifyContent: "center" }}>
+                  <Tabs
+                    value={subTab}
+                    onChange={(e, newValue) => setSubTab(newValue)}
+                    sx={{
+                      "& .MuiTab-root": {
+                        fontSize: "0.9rem",
+                        fontWeight: "500",
+                        width: "200px",
+                      },
+                    }}
+                  >
+                    <Tab label="قيد الانتظار" />
+                    <Tab label="نشطة" />
+                    <Tab label="مكتملة" />
+                  </Tabs>
+                </Box>
+
                 <LoansTable
                   onViewDetails={handleViewLoanDetails}
                   onViewInstallments={handleViewInstallments}
                   onCreateAdditionalLoan={handleCreateAdditionalLoan}
+                  statusFilter={
+                    subTab === 0 ? "PENDING" :
+                    subTab === 1 ? "ACTIVE" :
+                    subTab === 2 ? "COMPLETED" : null
+                  }
                 />
               </Box>
-            ) : (
+            ) : activeTab === 1 ? (
               <Box>
                 {permissions.includes("loans_Add") && (
                   <Paper
@@ -1404,20 +1439,6 @@ const Loans = () => {
                           />
                         </Grid>
                       )}
-                      {selectedClient &&
-                        getAvailableKafeels().length === 0 &&
-                        selectedClient.kafeels &&
-                        selectedClient.kafeels.length > 0 && (
-                          <Grid item xs={12} sm={10} md={8}>
-                            <Typography
-                              variant="body2"
-                              color="error"
-                              sx={{ fontWeight: "bold", mt: 1 }}
-                            >
-                              جميع كفلاء هذا العميل مستخدمون في سلف أخرى. يرجى إضافة كفيل جديد.
-                            </Typography>
-                          </Grid>
-                        )}
 
                       {selectedClient &&
                         (!selectedClient.kafeels ||
@@ -1628,7 +1649,7 @@ const Loans = () => {
                                     }}
                                   >
                                     {formatAmount(
-                                      Math.round(bankBalance).toString()
+                                      bankBalance.toString()
                                     )}
                                   </span>
                                 </>
@@ -2141,7 +2162,17 @@ const Loans = () => {
                   </Paper>
                 )}
               </Box>
-            )}
+            ) : activeTab === 2 ? (
+              <Box>
+                <SmallLoanForm />
+              </Box>
+            ) : activeTab === 3 ? (
+              <Box
+                sx={{ width: "100%", display: "flex", flexDirection: "column" }}
+              >
+                <SmallLoansTable />
+              </Box>
+            ) : null}
           </Box>
         </Box>
       </Box>

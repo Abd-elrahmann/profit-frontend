@@ -203,12 +203,28 @@ export default function Treasury() {
         )
       : 0;
 
-  // Animated counters for the 5 boxes
+  // Current month data
+  const currentMonthTotalAmount = bankData?.currentMonth?.totalAmount || 0;
+  const currentMonthPaidUntilNow = bankData?.currentMonth?.paidUntilNow || 0;
+  const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
+  const currentMonthProgress =
+    currentMonthTotalAmount > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (currentMonthPaidUntilNow / currentMonthTotalAmount) * 100
+          )
+        )
+      : 0;
+
+  // Animated counters for the boxes
   const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
   const animatedTotalDebit = useCountUp(totalDebit, 600, !isLoading);
   const animatedTotalCredit = useCountUp(totalCredit, 600, !isLoading);
   const animatedLoansBalance = useCountUp(loansBalance, 600, !isLoading);
   const animatedTotal = useCountUp(total, 600, !isLoading);
+  const animatedCurrentMonthTotal = useCountUp(currentMonthTotalAmount, 600, !isLoading);
 
   const monthlyBalanceData = bankData?.journalsByMonth ? 
     Object.entries(bankData.journalsByMonth)
@@ -855,6 +871,88 @@ export default function Treasury() {
                         </Card>
                       </Box>
                     )}
+
+                    {/* Current Month Collections Box */}
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
+                        <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                          <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                              <Box sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                mr: 2
+                              }}>
+                                <CheckCircle sx={{ color: "#ff9800", fontSize: 24 }} />
+                              </Box>
+                              <Box>
+                                <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="warning.main">
+                                  {animatedCurrentMonthTotal.toLocaleString('en-US')}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  تحصيل لهذا الشهر
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Stack spacing={1}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  واصل حتى الآن
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="success.main">
+                                  {currentMonthPaidUntilNow.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  متبقي
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="warning.main">
+                                  {currentMonthRemaining.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                  <Typography variant="caption" color="text.secondary">
+                                    نسبة التحصيل
+                                  </Typography>
+                                  <Typography variant="caption" fontWeight="bold" color="warning.main">
+                                    {currentMonthProgress.toFixed(1)}%
+                                  </Typography>
+                                </Box>
+                                <Box sx={{
+                                  position: 'relative',
+                                  height: 10,
+                                  borderRadius: 999,
+                                  bgcolor: '#e0e0e0'
+                                }}>
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      height: '100%',
+                                      width: `${currentMonthProgress}%`,
+                                      borderRadius: 999,
+                                      bgcolor: 'warning.main',
+                                      transition: 'width 0.4s ease'
+                                    }}
+                                  />
+                                </Box>
+                              </Box>
+                            </Stack>
+
+                            <Chip
+                              label="تحصيل شهري"
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              sx={{ mt: 2 }}
+                            />
+                          </CardContent>
+                        </Card>
+                      </Box>
                   </Box>
 
                   {/* التصفية والملاحظات */}

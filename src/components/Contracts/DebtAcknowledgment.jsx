@@ -78,12 +78,37 @@ return `
     font-size: 14px;
     word-spacing: normal;
     letter-spacing: normal;
+    gap: 25px;
   }
   .row span {
     font-weight: bold;
     color: #111;
+    gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     word-spacing: normal;
     letter-spacing: normal;
+  }
+
+  .row-vertical {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #ddd;
+    padding: 5px 0;
+    font-size: 14px;
+    word-spacing: normal;
+    letter-spacing: normal;
+  }
+  .row-vertical p {
+    margin: 0 0 10px 0;
+    font-weight: normal;
+    color: #666;
+  }
+  .row-vertical span {
+    font-weight: bold;
+    color: #111;
+    margin-left: 0;
   }
 
   .content-box {
@@ -142,6 +167,16 @@ return `
   .strong {
     font-weight: bold;
     margin-top: 6px;
+    gap: 12px;
+  }
+  .strong {
+    font-weight: bold;
+    margin-top: 6px;
+    gap: 12px;
+  }
+  .spacer {
+    display: inline-block;
+    width: 15px;
   }
 
   .signatures {
@@ -199,7 +234,7 @@ return `
         <div class="row"><p>أقر أنا السيد:</p> <span>{{اسم_العميل}}</span></div>
         <div class="row"><p>حامل هوية رقم:</p> <span>{{رقم_هوية_العميل}}</span></div>
         <div class="row"><p>مكان إقامتي:</p> <span>{{عنوان_العميل}}</span></div>
-        <div class="row"><p>أنني قد استلمت من السيد:</p> <span>{{اسم_الدائن}}</span></div>
+        <div class="row-vertical"><p>أنني قد استلمت من السيد:</p> <span>{{اسم_الدائن}}</span></div>
       </div>
 
       <div class="content-box">
@@ -220,8 +255,8 @@ return `
   وأتعهد بحلف اليمين في حالة التشكيك في الوثيقة. وعلى هذا الاتفاق فإني أوافق وأوقع على الوثيقة.
 </p>
 
-      <p class="strong">اسم المدين: {{اسم_العميل}}</p>
-      <p class="strong">التاريخ الهجري: {{التاريخ_الهجري}} — الميلادي: {{التاريخ_الميلادي}}</p>
+      <p class="strong">اسم المدين:<span class="spacer"></span>{{اسم_العميل}}</p>
+      <p class="strong">التاريخ الهجري:<span class="spacer"></span>{{التاريخ_الهجري}} — الميلادي:<span class="spacer"></span>{{التاريخ_الميلادي}}</p>
     </div>
 
     <div class="signatures">

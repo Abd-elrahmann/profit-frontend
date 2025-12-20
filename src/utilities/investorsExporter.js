@@ -351,7 +351,7 @@ export const exportInvestorsToPDF = async (investorsData) => {
           yPosition += 8;
 
           // Summary Headers
-          const summaryHeaders = [['الملخص', 'القيمة']];
+          const summaryHeaders = [['القيمة', 'الملخص']];
 
           // Calculate loan statistics
           const totalLoans = investor.loans ? investor.loans.length : 0;
@@ -360,20 +360,20 @@ export const exportInvestorsToPDF = async (investorsData) => {
           const totalLoanAmount = investor.loans ? investor.loans.reduce((sum, loan) => sum + (loan.amount || 0), 0) : 0;
 
           const summaryData = [
-            ['إجمالي الأرباح الخام', investor.totalAmount ? investor.totalAmount.toLocaleString('en-US') : '0'],
-            ['حصة الشركة', investor.summary?.profits?.totalCompanyCut ? investor.summary.profits.totalCompanyCut.toLocaleString('en-US') : ((investor.totalAmount || 0) - (investor.totalProfit || 0)).toLocaleString('en-US')],
-            ['إجمالي أرباح المستثمر', investor.totalProfit ? investor.totalProfit.toLocaleString('en-US') : '0'],
-            ['الأرباح الموزعة', investor.summary?.profits?.distributedProfit ? investor.summary.profits.distributedProfit.toLocaleString('en-US') : '0'],
-            ['الأرباح غير الموزعة', investor.summary?.profits?.undistributedProfit ? investor.summary.profits.undistributedProfit.toLocaleString('en-US') : investor.totalProfit ? investor.totalProfit.toLocaleString('en-US') : '0'],
-            ['إجمالي القروض', totalLoans.toString()],
-            ['القروض النشطة', activeLoans.toString()],
-            ['القروض المكتملة', completedLoans.toString()],
-            ['إجمالي مبلغ القروض', totalLoanAmount.toLocaleString('en-US')],
-            ['إجمالي الإيداعات', investor.summary?.transactions?.totalDeposits ? investor.summary.transactions.totalDeposits.toLocaleString('en-US') : '0'],
-            ['إجمالي السحوبات', investor.summary?.transactions?.totalWithdrawals ? investor.summary.transactions.totalWithdrawals.toLocaleString('en-US') : '0'],
-            ['الزكاة المستحقة', investor.yearlyZakatRequired ? investor.yearlyZakatRequired.toLocaleString('en-US') : (investor.summary?.zakat?.totalZakatAccrued ? investor.summary.zakat.totalZakatAccrued.toLocaleString('en-US') : '0')],
-            ['الزكاة المدفوعة', investor.yearlyZakatPaid ? investor.yearlyZakatPaid.toLocaleString('en-US') : (investor.summary?.zakat?.totalZakatPaid ? investor.summary.zakat.totalZakatPaid.toLocaleString('en-US') : '0')],
-            ['رصيد الزكاة', investor.yearlyZakatBalance ? investor.yearlyZakatBalance.toLocaleString('en-US') : (investor.summary?.zakat?.zakatBalance ? investor.summary.zakat.zakatBalance.toLocaleString('en-US') : '0')],
+            [investor.totalAmount ? investor.totalAmount.toLocaleString('en-US') : '0', 'إجمالي الأرباح الخام'],
+            [investor.summary?.profits?.totalCompanyCut ? investor.summary.profits.totalCompanyCut.toLocaleString('en-US') : ((investor.totalAmount || 0) - (investor.totalProfit || 0)).toLocaleString('en-US'), 'حصة الشركة'],
+            [investor.totalProfit ? investor.totalProfit.toLocaleString('en-US') : '0', 'إجمالي أرباح المستثمر'],
+            [investor.summary?.profits?.distributedProfit ? investor.summary.profits.distributedProfit.toLocaleString('en-US') : '0', 'الأرباح الموزعة'],
+            [investor.summary?.profits?.undistributedProfit ? investor.summary.profits.undistributedProfit.toLocaleString('en-US') : investor.totalProfit ? investor.totalProfit.toLocaleString('en-US') : '0', 'الأرباح غير الموزعة'],
+            [totalLoans.toString(), 'إجمالي القروض'],
+            [activeLoans.toString(), 'القروض النشطة'],
+            [completedLoans.toString(), 'القروض المكتملة'],
+            [totalLoanAmount.toLocaleString('en-US'), 'إجمالي مبلغ القروض'],
+            [investor.summary?.transactions?.totalDeposits ? investor.summary.transactions.totalDeposits.toLocaleString('en-US') : '0', 'إجمالي الإيداعات'],
+            [investor.summary?.transactions?.totalWithdrawals ? investor.summary.transactions.totalWithdrawals.toLocaleString('en-US') : '0', 'إجمالي السحوبات'],
+            [investor.yearlyZakatRequired ? investor.yearlyZakatRequired.toLocaleString('en-US') : (investor.summary?.zakat?.totalZakatAccrued ? investor.summary.zakat.totalZakatAccrued.toLocaleString('en-US') : '0'), 'الزكاة المستحقة'],
+            [investor.yearlyZakatPaid ? investor.yearlyZakatPaid.toLocaleString('en-US') : (investor.summary?.zakat?.totalZakatPaid ? investor.summary.zakat.totalZakatPaid.toLocaleString('en-US') : '0'), 'الزكاة المدفوعة'],
+            [investor.yearlyZakatBalance ? investor.yearlyZakatBalance.toLocaleString('en-US') : (investor.summary?.zakat?.zakatBalance ? investor.summary.zakat.zakatBalance.toLocaleString('en-US') : '0'), 'رصيد الزكاة'],
           ];
 
           // Track initial page for summary table
@@ -597,19 +597,19 @@ export const exportInvestorsToExcel = async (investorsData) => {
       const personalData = [
         ['التفاصيل الشخصية'],
         [''],
-        ['الاسم الكامل', investor.name || '-'],
-        ['رقم الهوية الوطنية', investor.nationalId || '-'],
-        ['رقم الجوال', investor.phone || '-'],
-        ['البريد الإلكتروني', investor.email || 'لا يوجد'],
-        ['العنوان', investor.address || '-'],
-        ['تاريخ الانضمام', investor.createdAt ? dayjs(investor.createdAt).format('DD/MM/YYYY') : '-'],
-        ['الحالة', investor.isActive ? 'نشط' : 'غير نشط'],
+        [investor.name || '-', 'الاسم الكامل'],
+        [investor.nationalId || '-', 'رقم الهوية الوطنية'],
+        [investor.phone || '-', 'رقم الجوال'],
+        [investor.email || 'لا يوجد', 'البريد الإلكتروني'],
+        [investor.address || '-', 'العنوان'],
+        [investor.createdAt ? dayjs(investor.createdAt).format('DD/MM/YYYY') : '-', 'تاريخ الانضمام'],
+        [investor.isActive ? 'نشط' : 'غير نشط', 'الحالة'],
         [''],
         ['المعلومات المالية'],
         [''],
-        ['رأس المال', investor.capitalAmount || 0],
-        ['نسبة أرباح المنشأة', investor.orgProfitPercent || 0],
-        ['نسبة أرباح المستثمر', investor.partnerProfitPercent || 0],
+        [investor.capitalAmount || 0, 'رأس المال'],
+        [investor.orgProfitPercent || 0, 'نسبة أرباح المنشأة'],
+        [investor.partnerProfitPercent || 0, 'نسبة أرباح المستثمر'],
       ];
 
       // Add summary data (for new format or detailed endpoint)
@@ -623,41 +623,41 @@ export const exportInvestorsToExcel = async (investorsData) => {
         personalData.push(['']);
         personalData.push(['ملخص الأرباح']);
         personalData.push(['']);
-        personalData.push(['إجمالي الأرباح الخام', investor.totalAmount || 0]);
-        personalData.push(['حصة الشركة', investor.summary?.profits?.totalCompanyCut || ((investor.totalAmount || 0) - (investor.totalProfit || 0))]);
-        personalData.push(['إجمالي أرباح المستثمر', investor.totalProfit || 0]);
-        personalData.push(['الأرباح الموزعة', investor.summary?.profits?.distributedProfit || 0]);
-        personalData.push(['الأرباح غير الموزعة', investor.summary?.profits?.undistributedProfit || investor.totalProfit || 0]);
+        personalData.push([investor.totalAmount || 0, 'إجمالي الأرباح الخام']);
+        personalData.push([investor.summary?.profits?.totalCompanyCut || ((investor.totalAmount || 0) - (investor.totalProfit || 0)), 'حصة الشركة']);
+        personalData.push([investor.totalProfit || 0, 'إجمالي أرباح المستثمر']);
+        personalData.push([investor.summary?.profits?.distributedProfit || 0, 'الأرباح الموزعة']);
+        personalData.push([investor.summary?.profits?.undistributedProfit || investor.totalProfit || 0, 'الأرباح غير الموزعة']);
         personalData.push(['']);
         personalData.push(['ملخص القروض']);
         personalData.push(['']);
-        personalData.push(['إجمالي القروض', totalLoans]);
-        personalData.push(['القروض النشطة', activeLoans]);
-        personalData.push(['القروض المكتملة', completedLoans]);
-        personalData.push(['إجمالي مبلغ القروض', totalLoanAmount]);
+        personalData.push([totalLoans, 'إجمالي القروض']);
+        personalData.push([activeLoans, 'القروض النشطة']);
+        personalData.push([completedLoans, 'القروض المكتملة']);
+        personalData.push([totalLoanAmount, 'إجمالي مبلغ القروض']);
         personalData.push(['']);
         personalData.push(['ملخص المعاملات']);
         personalData.push(['']);
-        personalData.push(['إجمالي الإيداعات', investor.summary?.transactions?.totalDeposits || 0]);
-        personalData.push(['إجمالي السحوبات', investor.summary?.transactions?.totalWithdrawals || 0]);
+        personalData.push([investor.summary?.transactions?.totalDeposits || 0, 'إجمالي الإيداعات']);
+        personalData.push([investor.summary?.transactions?.totalWithdrawals || 0, 'إجمالي السحوبات']);
         personalData.push(['']);
         personalData.push(['ملخص الزكاة']);
         personalData.push(['']);
-        personalData.push(['الزكاة المستحقة', investor.yearlyZakatRequired || investor.summary?.zakat?.totalZakatAccrued || 0]);
-        personalData.push(['الزكاة المدفوعة', investor.yearlyZakatPaid || investor.summary?.zakat?.totalZakatPaid || 0]);
-        personalData.push(['رصيد الزكاة', investor.yearlyZakatBalance || investor.summary?.zakat?.zakatBalance || 0]);
+        personalData.push([investor.yearlyZakatRequired || investor.summary?.zakat?.totalZakatAccrued || 0, 'الزكاة المستحقة']);
+        personalData.push([investor.yearlyZakatPaid || investor.summary?.zakat?.totalZakatPaid || 0, 'الزكاة المدفوعة']);
+        personalData.push([investor.yearlyZakatBalance || investor.summary?.zakat?.zakatBalance || 0, 'رصيد الزكاة']);
       } else {
         // Add summary from basic endpoint
         personalData.push(['']);
-        personalData.push(['إجمالي الإيداعات', investor.totalDeposits || 0]);
-        personalData.push(['إجمالي السحوبات', investor.totalWithdrawals || 0]);
-        personalData.push(['إجمالي الأرباح المستحقة', investor.totalAccruedProfit || 0]);
-        personalData.push(['رصيد الحساب', investor.accountBalance || 0]);
+        personalData.push([investor.totalDeposits || 0, 'إجمالي الإيداعات']);
+        personalData.push([investor.totalWithdrawals || 0, 'إجمالي السحوبات']);
+        personalData.push([investor.totalAccruedProfit || 0, 'إجمالي الأرباح المستحقة']);
+        personalData.push([investor.accountBalance || 0, 'رصيد الحساب']);
         if (investor.zakat) {
           personalData.push(['']);
-          personalData.push(['الزكاة المستحقة', investor.zakat.required || 0]);
-          personalData.push(['الزكاة المدفوعة', investor.zakat.paid || 0]);
-          personalData.push(['رصيد الزكاة', investor.zakat.balance || 0]);
+          personalData.push([investor.zakat.required || 0, 'الزكاة المستحقة']);
+          personalData.push([investor.zakat.paid || 0, 'الزكاة المدفوعة']);
+          personalData.push([investor.zakat.balance || 0, 'رصيد الزكاة']);
         }
       }
       
@@ -684,8 +684,8 @@ export const exportInvestorsToExcel = async (investorsData) => {
       
       // Auto-size columns
       sheet['!cols'] = [
-        { wch: 25 },
-        { wch: 30 }
+        { wch: 30 },
+        { wch: 25 }
       ];
       
       // Add sheet to workbook

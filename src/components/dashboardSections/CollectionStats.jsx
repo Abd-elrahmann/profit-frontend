@@ -31,14 +31,12 @@ const CollectionStats = () => {
 
   // Animated counters
   const animatedPercentage = useCountUp(stats?.collectionPercentage || 0, 600, !isLoading);
-  const animatedAvailableForLending = useCountUp(stats?.availableForLending || 0, 600, !isLoading);
   
-  // New animated counters for bank account and repayments summary
+  // New animated counters for bank account
   const animatedBankDebit = useCountUp(stats?.bankAccount?.debit || 0, 600, !isLoading);
   const animatedBankCredit = useCountUp(stats?.bankAccount?.credit || 0, 600, !isLoading);
   const animatedBankBalance = useCountUp(stats?.bankAccount?.balance || 0, 600, !isLoading);
   const animatedLoansBalance = useCountUp(stats?.loansBalance || 0, 600, !isLoading);
-  const animatedTotal = useCountUp(stats?.total || 0, 600, !isLoading);
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -87,17 +85,17 @@ const CollectionStats = () => {
   const repaymentsBarData = [
     {
       name: 'إجمالي التحصيلات',
-      value: stats?.repaymentsSummary?.totalAmount || 0,
+      value: stats?.currentMonth?.totalAmount || 0,
       color: theme.palette.primary.main,
     },
     {
-      name: 'الواصل',
-      value: stats?.repaymentsSummary?.paidUntilNow || 0,
+      name: 'تم تحصيله',
+      value: stats?.currentMonth?.paidUntilNow || 0,
       color: theme.palette.success.main,
     },
     {
       name: 'المتبقي',
-      value: stats?.repaymentsSummary?.remaining || 0,
+      value: stats?.currentMonth?.remaining || 0,
       color: theme.palette.warning.main,
     },
   ];
@@ -432,87 +430,16 @@ const CollectionStats = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* الإجمالي */}
-        <Grid item xs={2.4} sm={2.4} md={2.4}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '100%', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
-            border: `1px solid ${theme.palette.info.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.info.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.info.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.info.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
-                border: `2px solid ${theme.palette.info.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
-                }
-              }}>
-                <AccountBalance sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                الإجمالي
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedTotal)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
 
       {/* Summary Cards - Row 2: ملخص التحصيلات + نسبة التحصيل + المبلغ المتاح */}
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
 
-        {/* ملخص التحصيلات */}
-        {stats?.repaymentsSummary && (
+        {/* ملخص التحصيلات الشهري */}
+        {stats?.currentMonth && (
           <Grid item xs={12} sm={12} md={5}>
             <Card sx={{
-              height: { xs: '300px', sm: '250px', md: '210px' },
+              height: { xs: '300px', sm: '250px', md: '230px' },
               width: { xs: '100%', sm: '100%', md: '650px' },
               borderRadius: 4,
               background: `linear-gradient(135deg, ${theme.palette.success.main}10 0%, ${theme.palette.success.dark}05 100%)`,
@@ -557,14 +484,14 @@ const CollectionStats = () => {
                   }}>
                     <CheckCircle sx={{ fontSize: '1.75rem', color: theme.palette.success.main }} />
                   </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{ 
+                  <Typography variant="h6" fontWeight="700" sx={{
                     textAlign: 'center',
                     background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                   }}>
-                    ملخص التحصيلات
+                    ملخص التحصيلات الشهري
                   </Typography>
                 </Box>
                 
@@ -587,14 +514,14 @@ const CollectionStats = () => {
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                         إجمالي التحصيلات
                       </Typography>
-                      <Typography variant="h3" fontWeight="800" sx={{ 
+                      <Typography variant="h3" fontWeight="800" sx={{
                         fontSize: { xs: '1.5rem', sm: '1.75rem' },
                         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
                       }}>
-                        {formatCurrency(stats?.repaymentsSummary?.totalAmount || 0)}
+                        {formatCurrency(stats?.currentMonth?.totalAmount || 0)}
                       </Typography>
                     </Box>
                   </Grid>
@@ -614,16 +541,16 @@ const CollectionStats = () => {
                       }
                     }}>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                        الواصل حتى الآن
+                        تم تحصيله
                       </Typography>
-                      <Typography variant="h3" fontWeight="800" sx={{ 
+                      <Typography variant="h3" fontWeight="800" sx={{
                         fontSize: { xs: '1.5rem', sm: '1.75rem' },
                         background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
                       }}>
-                        {formatCurrency(stats?.repaymentsSummary?.paidUntilNow || 0)}
+                        {formatCurrency(stats?.currentMonth?.paidUntilNow || 0)}
                       </Typography>
                     </Box>
                   </Grid>
@@ -645,14 +572,14 @@ const CollectionStats = () => {
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
                         المتبقي
                       </Typography>
-                      <Typography variant="h3" fontWeight="800" sx={{ 
+                      <Typography variant="h3" fontWeight="800" sx={{
                         fontSize: { xs: '1.5rem', sm: '1.75rem' },
                         background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
                       }}>
-                        {formatCurrency(stats?.repaymentsSummary?.remaining || 0)}
+                        {formatCurrency(stats?.currentMonth?.remaining || 0)}
                       </Typography>
                     </Box>
                   </Grid>
@@ -665,8 +592,8 @@ const CollectionStats = () => {
         {/* نسبة التحصيل + المبلغ المتاح */}
         <Grid item xs={12} sm={12} md={4}>
           <Card sx={{
-            height: { xs: '300px', sm: '250px', md: '300px' },
-            width: { xs: '100%', sm: '100%', md: '700px' },
+            height: { xs: '300px', sm: '250px', md: '230px' },
+            width: { xs: '100%', sm: '100%', md: '350px' },
             borderRadius: 4,
             background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
             border: `1px solid ${theme.palette.info.main}20`,
@@ -730,26 +657,6 @@ const CollectionStats = () => {
               }}>
                 {animatedPercentage}%
               </Typography>
-              <Box sx={{ 
-                p: 1.5,
-                borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-                border: `1px solid ${theme.palette.success.main}30`,
-                boxShadow: `0 2px 8px ${theme.palette.success.main}10`
-              }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                  المبلغ المتاح للإقراض
-                </Typography>
-                <Typography variant="h3" fontWeight="800" sx={{ 
-                  fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                  background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>
-                  {formatCurrency(animatedAvailableForLending)}
-                </Typography>
-              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -853,8 +760,8 @@ const CollectionStats = () => {
           </ResponsiveContainer>
         </Card>
 
-        {/* Chart 3: ملخص التحصيلات */}
-        {stats?.repaymentsSummary && (
+        {/* Chart 3: ملخص التحصيلات الشهري */}
+        {stats?.currentMonth && (
           <Card sx={{
             p: { xs: 1.5, sm: 2, md: 3 },
             height: { xs: 300, sm: 350, md: 400 },
@@ -878,7 +785,7 @@ const CollectionStats = () => {
             }
           }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-              ملخص التحصيلات
+              ملخص التحصيلات الشهري
             </Typography>
             <ResponsiveContainer width="100%" height="90%">
               <BarChart data={repaymentsBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>

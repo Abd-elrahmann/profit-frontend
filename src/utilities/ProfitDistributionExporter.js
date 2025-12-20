@@ -81,7 +81,7 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
       doc.text('ملخص الفترة', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 8;
 
-      const summaryHeaders = [['البيان', 'القيمة']];
+      const summaryHeaders = [['القيمة', 'البيان']];
 
       // Calculate profit data
       const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.totalAfterSaving || partner.totalProfit || 0), 0) || 0;
@@ -90,17 +90,17 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
       const partnerProfitAfterSaving = totalPartnerProfit - savedAmount;
 
       const summaryData = [
-        ['أرباح الشركة', companyProfit ? formatNumber(companyProfit) : '0'],
-        ['إجمالي أرباح الشركاء قبل الخصم', formatNumber(totalPartnerProfit)],
-        ['إجمالي أرباح الشركاء بعد الخصم', formatNumber(partnerProfitAfterSaving)],
-        ['المبلغ المدخر', formatNumber(savedAmount)],
-        ['عدد الشركاء', periodData.partners?.length || 0],
-        ['تاريخ البداية', periodData.startDate ? dayjs(periodData.startDate).format('DD/MM/YYYY') : '-'],
-        ['تاريخ النهاية', periodData.endDate ? dayjs(periodData.endDate).format('DD/MM/YYYY') : '-'],
+        [companyProfit ? formatNumber(companyProfit) : '0', 'أرباح الشركة'],
+        [formatNumber(totalPartnerProfit), 'إجمالي أرباح الشركاء قبل الخصم'],
+        [formatNumber(partnerProfitAfterSaving), 'إجمالي أرباح الشركاء بعد الخصم'],
+        [formatNumber(savedAmount), 'المبلغ المدخر'],
+        [periodData.partners?.length || 0, 'عدد الشركاء'],
+        [periodData.startDate ? dayjs(periodData.startDate).format('DD/MM/YYYY') : '-', 'تاريخ البداية'],
+        [periodData.endDate ? dayjs(periodData.endDate).format('DD/MM/YYYY') : '-', 'تاريخ النهاية'],
       ];
 
       if (enableSaving && savingPercentage > 0) {
-        summaryData.splice(3, 0, ['نسبة الادخار', `${savingPercentage}%`]);
+        summaryData.splice(3, 0, [`${savingPercentage}%`, 'نسبة الادخار']);
       }
 
       autoTable(doc, {
@@ -313,27 +313,27 @@ export const exportProfitDistributionToExcel = async (periodData, enableSaving =
     const summaryData = [
       ['ملخص توزيع الأرباح'],
       [''],
-      ['الفترة', periodName],
-      ['تاريخ البداية', periodData.startDate ? dayjs(periodData.startDate).format('DD/MM/YYYY') : ''],
-      ['تاريخ النهاية', periodData.endDate ? dayjs(periodData.endDate).format('DD/MM/YYYY') : ''],
+      [periodName, 'الفترة'],
+      [periodData.startDate ? dayjs(periodData.startDate).format('DD/MM/YYYY') : '', 'تاريخ البداية'],
+      [periodData.endDate ? dayjs(periodData.endDate).format('DD/MM/YYYY') : '', 'تاريخ النهاية'],
       [''],
       ['البيانات المالية'],
       [''],
-      ['أرباح الشركة', companyProfit],
-      ['إجمالي أرباح الشركاء قبل الخصم', totalPartnerProfit],
-      ['إجمالي أرباح الشركاء بعد الخصم', partnerProfitAfterSaving],
-      ['المبلغ المدخر', savedAmount],
-      ['عدد الشركاء', periodData.partners?.length || 0],
+      [companyProfit, 'أرباح الشركة'],
+      [totalPartnerProfit, 'إجمالي أرباح الشركاء قبل الخصم'],
+      [partnerProfitAfterSaving, 'إجمالي أرباح الشركاء بعد الخصم'],
+      [savedAmount, 'المبلغ المدخر'],
+      [periodData.partners?.length || 0, 'عدد الشركاء'],
     ];
 
     if (enableSaving && savingPercentage > 0) {
-      summaryData.splice(10, 0, ['نسبة الادخار', savingPercentage]);
+      summaryData.splice(10, 0, [savingPercentage, 'نسبة الادخار']);
     }
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     summarySheet['!cols'] = [
-      { wch: 35 },
-      { wch: 25 }
+      { wch: 25 },
+      { wch: 35 }
     ];
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص التوزيع');
 

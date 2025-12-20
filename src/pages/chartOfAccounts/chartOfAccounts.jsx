@@ -274,10 +274,11 @@ const ChartOfAccount = () => {
   const accountBasicTypes = [
     { value: 'OTHER', label: 'أخرى' },
     { value: 'BANK', label: 'بنك' },
-    { value: 'LOANS_RECEIVABLE', label: 'قروض للعملاء' },
+    { value: 'LOANS_RECEIVABLE', label: 'سلفات للعملاء' },
+    { value: 'SMALL_LOANS_RECEIVABLE', label: 'سلفات صغيرة للعملاء' },
     { value: 'PARTNER_PAYABLE', label: 'مستحق للشركاء' },
     { value: 'PARTNER_EQUITY', label: 'رأس مال الشريك' },
-    { value: 'LOAN_INCOME', label: 'إيراد القروض' },
+    { value: 'LOAN_INCOME', label: 'إيراد السلفات' },
     { value: 'COMPANY_SHARES', label: 'حصص الشركة' },
     { value: 'PARTNER_SHARES_EXPENSES', label: 'مصروفات توزيع الأرباح' },
   ];

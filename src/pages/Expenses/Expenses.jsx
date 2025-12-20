@@ -122,7 +122,23 @@ const Expenses = () => {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
-    await exportExpensesToPDF(rows);
+    
+    // تحويل البيانات إلى الشكل المتوقع من قبل exporter
+    const formattedData = rows.map(journal => {
+      const totalAmount = journal.lines?.reduce((sum, line) => 
+        sum + (line.debit || line.amount || 0), 0) || 0;
+      
+      return {
+        date: journal.date,
+        amount: totalAmount,
+        description: journal.description || 'صرف مصروفات متعددة الأنواع',
+        status: journal.status,
+        // إضافة تفاصيل المصروفات للمساعدة في التصدير
+        lines: journal.lines?.filter(line => line.debit > 0) || []
+      };
+    });
+    
+    await exportExpensesToPDF(formattedData);
   };
 
   const handleExportExcel = async () => {
@@ -131,7 +147,28 @@ const Expenses = () => {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
-    await exportExpensesToExcel(rows);
+    
+    // تحويل البيانات إلى الشكل المتوقع من قبل exporter
+    const formattedData = rows.map(journal => {
+      const totalAmount = journal.lines?.reduce((sum, line) => 
+        sum + (line.debit || line.amount || 0), 0) || 0;
+      
+      return {
+        date: journal.date,
+        amount: totalAmount,
+        description: journal.description || 'صرف مصروفات متعددة الأنواع',
+        status: journal.status,
+        lines: journal.lines?.filter(line => line.debit > 0) || []
+      };
+    });
+    
+    await exportExpensesToExcel(formattedData);
+  };
+
+  // حساب إجمالي المبلغ من journal lines
+  const calculateTotalAmount = (journal) => {
+    if (!journal.lines) return 0;
+    return journal.lines.reduce((sum, line) => sum + (line.debit || line.amount || 0), 0);
   };
 
   // Render table for large screens
@@ -142,37 +179,31 @@ const Expenses = () => {
           <StyledTableRow>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
               #
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
               التاريخ
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
-              المبلغ
+              المبلغ الإجمالي
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
-              الوصف
+              تفاصيل المصروفات
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
               الحالة
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "#f8f9fa" }}
             >
               الإجراءات
             </StyledTableCell>
@@ -194,59 +225,80 @@ const Expenses = () => {
               </StyledTableCell>
             </StyledTableRow>
           ) : (
-            expensesData?.journals?.map((journal, index) => (
-              <StyledTableRow key={journal.id} hover>
-                <StyledTableCell align="center">
-                  {(page - 1) * (expensesData?.limit || 10) + index + 1}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {journal.date
-                    ? dayjs(journal.date).locale("ar").format("YYYY-MM-DD")
-                    : "-"}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {journal.debit
-                    ? journal.debit.toLocaleString({
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    : "-"}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {journal.description || "-"}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Chip
-                    label={journal.status === "POSTED" ? "مقيد" : "مسودة"}
-                    color={journal.status === "POSTED" ? "success" : "default"}
-                    size="small"
-                  />
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Stack direction="row" spacing={1} justifyContent="center">
-                    {permissions.includes("expenses_Update") && (
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleEditExpense(journal)}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                    )}
-                    {permissions.includes("expenses_Delete") && (
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeleteExpense(journal.journalId)}
-                        disabled={deleteExpenseMutation.isLoading}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    )}
-                  </Stack>
-                </StyledTableCell>
-              </StyledTableRow>
-            ))
+            expensesData?.journals?.map((journal, index) => {
+              const expenseLines = journal.lines?.filter(line => line.debit > 0) || [];
+              const totalAmount = calculateTotalAmount(journal);
+              
+              return (
+                <StyledTableRow key={journal.journalId} hover>
+                  <StyledTableCell align="center">
+                    {(page - 1) * (expensesData?.limit || 10) + index + 1}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {journal.date
+                      ? dayjs(journal.date).format("DD/MM/YYYY")
+                      : "-"}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {totalAmount.toLocaleString('en-US')}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <Box sx={{ textAlign: "center" }}>
+                      {expenseLines.length > 0 ? (
+                        expenseLines.map((line, idx) => (
+                          <Box key={idx} sx={{ mb: 0.5 }}>
+                            <Typography variant="body2">
+                              {line.type || line.description}: 
+                              <Typography 
+                                component="span" 
+                                variant="body2" 
+                                sx={{ fontWeight: "bold", mx: 1 }}
+                              >
+                                {line.debit?.toLocaleString('en-US',)}
+                              </Typography>
+                            </Typography>
+                          </Box>
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          {journal.description || "-"}
+                        </Typography>
+                      )}
+                    </Box>
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <Chip
+                      label={journal.status === "POSTED" ? "مقيد" : "مسودة"}
+                      color={journal.status === "POSTED" ? "success" : "default"}
+                      size="small"
+                    />
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      {permissions.includes("expenses_Update") && (
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleEditExpense(journal)}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      )}
+                      {permissions.includes("expenses_Delete") && (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteExpense(journal.journalId)}
+                          disabled={deleteExpenseMutation.isLoading}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Stack>
+                  </StyledTableCell>
+                </StyledTableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>
@@ -255,7 +307,7 @@ const Expenses = () => {
 
   // Render cards for mobile screens
   const renderCards = () => (
-    <Box sx={{ p: isMobile ? 1 : 2}}>
+    <Box sx={{ p: isMobile ? 1 : 2 }}>
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress size={30} />
@@ -266,105 +318,157 @@ const Expenses = () => {
         </Typography>
       ) : (
         <Grid container spacing={2}>
-          {expensesData?.journals?.map((journal, index) => (
-            <Grid item xs={12} key={journal.id} sx={{width: "500px"}}>
-              <Card
-                sx={{
-                  border: "1px solid #e0e0e0",
-                  borderRadius: 2,
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                }}
-              >
-                <CardContent>
-                  <Stack spacing={1.5}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        #
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {(page - 1) * (expensesData?.limit || 10) + index + 1}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        التاريخ
-                      </Typography>
-                      <Typography variant="body1">
-                        {journal.date
-                          ? dayjs(journal.date).locale("ar").format("YYYY-MM-DD")
-                          : "-"}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        المبلغ
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold" color="primary.main">
-                        {journal.debit
-                          ? journal.debit.toLocaleString({
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })
-                          : "-"}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        الوصف
-                      </Typography>
-                      <Typography variant="body1">
-                        {journal.description || "-"}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        الحالة
-                      </Typography>
-                      <Chip
-                        label={journal.status === "POSTED" ? "مقيد" : "مسودة"}
-                        color={journal.status === "POSTED" ? "success" : "default"}
-                        size="small"
-                      />
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          {expensesData?.journals?.map((journal, index) => {
+            const expenseLines = journal.lines?.filter(line => line.debit > 0) || [];
+            const totalAmount = calculateTotalAmount(journal);
+            
+            return (
+              <Grid item xs={12} key={journal.journalId}>
+                <Card
+                  sx={{
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 2,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <CardContent>
+                    <Stack spacing={1.5}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          #
+                        </Typography>
+                        <Typography variant="body1" fontWeight="bold">
+                          {(page - 1) * (expensesData?.limit || 10) + index + 1}
+                        </Typography>
+                      </Box>
+                      <Divider />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          التاريخ
+                        </Typography>
+                        <Typography variant="body1">
+                          {journal.date
+                            ? dayjs(journal.date).format("DD/MM/YYYY")
+                            : "-"}
+                        </Typography>
+                      </Box>
+                      <Divider />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          المبلغ الإجمالي
+                        </Typography>
+                        <Typography variant="body1" fontWeight="bold" color="primary.main">
+                          {totalAmount.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Typography>
+                      </Box>
+                      <Divider />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          تفاصيل المصروفات
+                        </Typography>
+                        <Box sx={{ textAlign: "center", maxWidth: "60%" }}>
+                          {expenseLines.length > 0 ? (
+                            expenseLines.map((line, idx) => (
+                              <Box key={idx} sx={{ mb: 0.5 }}>
+                                <Typography variant="body2">
+                                  {line.type || line.description}
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="primary.main">
+                                  {line.debit?.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </Typography>
+                              </Box>
+                            ))
+                          ) : (
+                            <Typography variant="body2">
+                              {journal.description || "-"}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Divider />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          الحالة
+                        </Typography>
+                        <Chip
+                          label={journal.status === "POSTED" ? "مقيد" : "مسودة"}
+                          color={journal.status === "POSTED" ? "success" : "default"}
+                          size="small"
+                        />
+                      </Box>
+                      <Divider />
+                      {(permissions.includes("expenses_Update") || permissions.includes("expenses_Delete")) && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            gap: 1,
+                            pt: 1,
+                          }}
+                        >
+                          {permissions.includes("expenses_Update") && (
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleEditExpense(journal)}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          )}
+                          {permissions.includes("expenses_Delete") && (
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteExpense(journal.journalId)}
+                              disabled={deleteExpenseMutation.isLoading}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
     </Box>
@@ -375,7 +479,7 @@ const Expenses = () => {
       <Helmet>
         <title>المصروفات - نظام إدارة السلف</title>
       </Helmet>
-      <Box sx={{ p: isMobile ? 1 : 3,mt:3 }}>
+      <Box sx={{ p: isMobile ? 1 : 3, mt: 3 }}>
         {/* Header */}
         <Box
           sx={{
@@ -396,10 +500,11 @@ const Expenses = () => {
                 onClick={handleAddExpense}
                 sx={{
                   bgcolor: "primary.main",
+                  fontWeight: "bold",
                   "&:hover": { bgcolor: "primary.dark" },
                 }}
               >
-                إضافة مصروف
+                إضافة مصروفات
               </Button>
             )}
           </Stack>
@@ -411,6 +516,7 @@ const Expenses = () => {
                 color="error"
                 startIcon={<PictureAsPdf sx={{ marginLeft: "10px" }} />}
                 onClick={handleExportPDF}
+                disabled={!expensesData?.journals?.length}
               >
                 تصدير PDF
               </Button>
@@ -419,6 +525,7 @@ const Expenses = () => {
                 color="success"
                 startIcon={<FileDownload sx={{ marginLeft: "10px" }} />}
                 onClick={handleExportExcel}
+                disabled={!expensesData?.journals?.length}
               >
                 تصدير Excel
               </Button>
@@ -475,14 +582,13 @@ const Expenses = () => {
         open={isDeleteModalOpen}
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
-        title="حذف المصروف"
-        message="هل أنت متأكد من حذف هذا المصروف؟ لا يمكن التراجع عن هذا الإجراء."
+        title="حذف المصروفات"
+        message="هل أنت متأكد من حذف هذه المصروفات؟ لا يمكن التراجع عن هذا الإجراء."
         isLoading={deleteExpenseMutation.isLoading}
-        ButtonText="حذف المصروف"
+        ButtonText="حذف المصروفات"
       />
     </>
   );
 };
 
 export default Expenses;
-

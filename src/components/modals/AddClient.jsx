@@ -220,6 +220,9 @@ const AddClient = ({ open, onClose }) => {
       Object.keys(values).forEach(key => {
         if (key === 'hasKafeel') {
           formData.append(key, values[key]);
+        } else if (key === 'email' && (!values[key] || values[key].trim() === '')) {
+          // Skip empty email instead of sending empty string
+          return;
         } else if (key !== 'kafeels' && !key.startsWith('kafeel')) {
           formData.append(key, values[key]);
         }
@@ -228,7 +231,10 @@ const AddClient = ({ open, onClose }) => {
       if (values.hasKafeel && values.kafeels && values.kafeels.length > 0) {
         values.kafeels.forEach((kafeel, index) => {
           Object.keys(kafeel).forEach(key => {
-            if (kafeel[key] !== '' && key !== 'kafeelIdImage' && key !== 'kafeelWorkCard') {
+            if (key === 'email' && (!kafeel[key] || kafeel[key].trim() === '')) {
+              // Skip empty email instead of sending empty string
+              return;
+            } else if (kafeel[key] !== '' && key !== 'kafeelIdImage' && key !== 'kafeelWorkCard') {
               formData.append(`kafeel[${index}][${key}]`, kafeel[key]);
             }
           });

@@ -73,11 +73,12 @@ export const deactivateLoan = async (loanId) => {
 };
 
 // Get all loans with pagination and limit
-export const getLoans = async (page = 1, search = '', limit = 15) => {
+export const getLoans = async (page = 1, search = '', limit = 15, status = null) => {
   try {
     const params = new URLSearchParams();
     params.append('limit', limit);
     if (search) params.append('search', encodeURIComponent(search));
+    if (status) params.append('status', status);
     const query = params.toString();
     const url = `/api/loans/all/${page}${query ? `?${query}` : ''}`;
     const response = await Api.get(url);
@@ -109,6 +110,56 @@ export const getLoanById = async (loanId, page, limit) => {
 export const deleteLoan = async (loanId) => {
   try {
     const response = await Api.delete(`/api/loans/${loanId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Small Loans API functions
+
+// Create small loan
+export const createSmallLoan = async (smallLoanData) => {
+  try {
+    const response = await Api.post('/api/small-loans', smallLoanData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Pay small loan
+export const paySmallLoan = async (loanId, paymentData) => {
+  try {
+    const response = await Api.post(`/api/small-loans/pay/${loanId}`, paymentData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Get small loans with pagination
+export const getSmallLoans = async (page = 1, limit = 20) => {
+  try {
+    const params = new URLSearchParams();
+    params.append('limit', limit);
+    const query = params.toString();
+    const url = `/api/small-loans/${page}${query ? `?${query}` : ''}`;
+    const response = await Api.get(url);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Delete small loan
+export const deleteSmallLoan = async (loanId) => {
+  try {
+    const response = await Api.delete(`/api/small-loans/${loanId}`);
     return response.data;
   } catch (error) {
     handleApiError(error);

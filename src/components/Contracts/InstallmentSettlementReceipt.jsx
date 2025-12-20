@@ -78,6 +78,7 @@ return `
     font-size: 14px;
     word-spacing: normal;
     letter-spacing: normal;
+    gap: 25px;
   }
   .row span {
     font-weight: bold;
@@ -158,6 +159,14 @@ return `
     font-weight: bold;
     margin-top: 6px;
   }
+  .highlight-text {
+    font-weight: bold;
+    color: #2E8B45;
+  }
+  .spacer {
+    display: inline-block;
+    width: 15px;
+  }
 
   .signatures {
     display: grid;
@@ -227,8 +236,6 @@ return `
         <h2>معلومات العميل والسلفة</h2>
         <div class="row"><p>اسم العميل:</p> <span>{{اسم_العميل}}</span></div>
         <div class="row"><p>رقم الهوية الوطنية:</p> <span>{{رقم_هوية_العميل}}</span></div>
-        <div class="row"><p>سند أمر رقم:</p> <span>{{رقم_السند}}</span></div>
-        <div class="row"><p>إقرار دين وتعهد بالسداد رقم:</p> <span>{{رقم_الإقرار}}</span></div>
         <div class="row"><p>تاريخ الإشعار:</p> <span>{{التاريخ_الميلادي}}</span></div>
         <div class="row"><p>المكان:</p> <span>الرياض</span></div>
       </div>
@@ -245,19 +252,7 @@ return `
 
     <div class="text-box">
       <p>
-        أُقر أنا الموقع أدناه، بأن السيد <strong>{{اسم_العميل}}</strong><br>
-        رقم الهوية الوطنية: <strong>{{رقم_هوية_العميل}}</strong><br><br>
-
-        قد قام بسداد كامل مبلغ السلفة الممنوحة له بموجب:<br>
-        • سند أمر رقم (<strong>{{رقم_السند}}</strong>)<br>
-        • إقرار دين وتعهد بالسداد رقم (<strong>{{رقم_الإقرار}}</strong>)<br><br>
-
-        وذلك بمبلغ وقدره (<strong>{{المبلغ_كتابة}}</strong>) فقط لا غير.<br><br>
-
-        وبناءً على ذلك، فقد تم استلام المبلغ كاملًا وتُعتبر هذه السلفة مقفلة نهائيًا،<br>
-        ولا يترتب على السيد {{اسم_العميل}} أي التزامات مالية أخرى تخص السلفة أو السند المشار إليهما أعلاه.<br><br>
-
-        ويُعد هذا الإشعار خلو طرف نهائي صادر بناءً على السداد الكامل والمطابقة مع المستندات الرسمية.<br><br>
+        أُقر أنا الموقع أدناه، بأن السيد <span class="highlight-text">{{اسم_العميل}}</span> رقم الهوية الوطنية: <span class="highlight-text">{{رقم_هوية_العميل}}</span> قد قام بسداد كامل مبلغ السلفة الممنوحة له بموجب: • سند أمر رقم (<span class="highlight-text">{{رقم_السند}}</span>) • إقرار دين وتعهد بالسداد رقم (<span class="highlight-text">{{رقم_الإقرار}}</span>) وذلك بمبلغ وقدره (<span class="highlight-text">{{المبلغ_كتابة}}</span>) فقط لا غير. وبناءً على ذلك، فقد تم استلام المبلغ كاملًا وتُعتبر هذه السلفة مقفلة نهائيًا، ولا يترتب على السيد {{اسم_العميل}} أي التزامات مالية أخرى تخص السلفة أو السند المشار إليهما أعلاه. ويُعد هذا الإشعار خلو طرف نهائي صادر بناءً على السداد الكامل والمطابقة مع المستندات الرسمية.
       </p>
     </div>
 
@@ -265,12 +260,12 @@ return `
 
     <div class="signatures">
       <div>
-        <p class="strong">الاسم والتوقيع:</p>
+        <p class="strong">الاسم والتوقيع:<span class="spacer"></span></p>
         <div class="sign-line"></div>
         <p>{{اسم_الموظف}}</p>
       </div>
       <div>
-        <p class="strong">توقيع العميل:</p>
+        <p class="strong">توقيع العميل:<span class="spacer"></span></p>
         <div class="sign-line"></div>
         <p>{{اسم_العميل}}</p>
       </div>

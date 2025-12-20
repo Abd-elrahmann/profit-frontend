@@ -73,7 +73,7 @@ return `
   .row {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 8px;
+    gap: 25px;
     border-top: 1px solid #ddd;
     padding: 5px 0;
     font-size: 13px;
@@ -189,6 +189,11 @@ return `
   .strong {
     font-weight: bold;
     margin-top: 6px;
+    gap: 15px;
+  }
+  .spacer {
+    display: inline-block;
+    width: 15px;
   }
 
   .signatures {
@@ -290,7 +295,7 @@ return `
         أتعهد بأن أدفع لأمر {{اسم_الدائن}} دون قيد أو شرط مبلغاً قدره {{المبلغ_رقما}} وفق البيانات المذكورة أعلاه.  
         ولحامل هذا السند حق الرجوع دون أي مصاريف أو احتجاج بعدم الوفاء.
       </p>
-      <p class="strong">اسم المدين: {{اسم_المدين}}</p>
+      <p class="strong">اسم المدين:<span class="spacer"></span>{{اسم_المدين}}</p>
       <p class="strong">{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</p>
     </div>
 

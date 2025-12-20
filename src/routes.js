@@ -7,6 +7,20 @@ import {
   MdSecurity as Security,
   MdBadge as Badge,
   MdDescription as Contract,
+  MdEngineering as EngineeringIcon,
+  MdBusinessCenter as BusinessCenterIcon,
+  MdReceiptLong as ReceiptLongIcon,
+  MdCalculate as AccountingIcon,
+  MdAccountBalanceWallet as FinancialOpsIcon,
+  MdAnalytics as AnalyticsIcon,
+  MdMosque as ZakatIcon,
+  MdArticle as ArticleIcon,
+  MdAccountBalanceWallet as TreasuryIcon,
+  MdPieChart as ProfitDistributionIcon,
+  MdBusiness as CompanyProfitIcon,
+  MdPersonSearch as InvestorsIcon,
+  MdAdminPanelSettings as AdminPanelIcon,
+  MdPayment as PaymentIcon,
 } from 'react-icons/md';
 import { History as HistoryIcon } from '@mui/icons-material';
 import { MdAttachMoney as LoanIcon } from 'react-icons/md';
@@ -15,7 +29,6 @@ import { MdMessage as Message } from 'react-icons/md';
 import { MdDescription as JournalIcon } from 'react-icons/md';
 import { CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 import { Savings as SavingsIcon } from '@mui/icons-material';
-import { ReceiptLong as ReceiptLongIcon } from '@mui/icons-material';
 import { MdReceipt as ReceiptIcon } from 'react-icons/md';
 
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
@@ -60,7 +73,8 @@ const routes = [
     label: 'لوحة التحكم',
     icon: DashboardIcon,
     module: 'dashboard',
-    requiresPermissions: true
+    requiresPermissions: true,
+    color: '#2196F3' // Blue
   },
 
   {
@@ -72,6 +86,7 @@ const routes = [
     module: 'logs',
     requiresPermissions: true,
     icon: HistoryIcon,
+    color: '#FF9800' // Orange
   },
 
   {
@@ -91,7 +106,7 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'الصلاحيات',
-    icon: Security,
+    icon: AdminPanelIcon,
     module: 'roles',
     requiresPermissions: true,
     parent: 'إدارة الموظفين'
@@ -126,7 +141,7 @@ const routes = [
     protected: true,
     showInSidebar: true,
     label: 'المستثمرين',
-    icon: TrendingUp,
+    icon: InvestorsIcon,
     module: 'partners',
     requiresPermissions: true,
     parent: 'إدارة المستثمرين'
@@ -138,7 +153,7 @@ const routes = [
     showInSidebar: true,
     module: 'partners-withdraw',
     label: 'الانسحابات',
-    icon: AccountBalance,
+    icon: PaymentIcon,
     requiresPermissions: true,
     parent: 'إدارة المستثمرين'
   },
@@ -249,7 +264,7 @@ const routes = [
     label: 'الصندوق',
     module: 'treasury',
     requiresPermissions: true,
-    icon: AccountBalance,
+    icon: TreasuryIcon,
     parent: 'العمليات المالية'
   },
 
@@ -260,7 +275,7 @@ const routes = [
     showInSidebar: true,
     label: 'توزيع الأرباح',
     module: 'distribution',
-    icon: AccountBalance,
+    icon: ProfitDistributionIcon,
     requiresPermissions: true,
     parent: 'الأرباح والتقارير'
   },
@@ -272,7 +287,7 @@ const routes = [
     label: 'أرباح الشركة',
     module: 'company',
     requiresPermissions: true,
-    icon: AccountBalance,
+    icon: CompanyProfitIcon,
     parent: 'الأرباح والتقارير'
   },
 
@@ -344,6 +359,30 @@ export const getSidebarMenuItems = () => {
     'الزكاة والادخار',
     'القوالب'
   ];
+
+  const parentIcons = {
+    'إدارة الموظفين': EngineeringIcon,
+    'إدارة العملاء': People,
+    'إدارة المستثمرين': BusinessCenterIcon,
+    'ادارة المصروفات': ReceiptLongIcon,
+    'المحاسبة المالية': AccountingIcon,
+    'العمليات المالية': FinancialOpsIcon,
+    'الأرباح والتقارير': AnalyticsIcon,
+    'الزكاة والادخار': ZakatIcon,
+    'القوالب': ArticleIcon,
+  };
+
+  const parentColors = {
+    'إدارة الموظفين': '#D84315', // Dark Orange
+    'إدارة العملاء': '#00897B', // Dark Teal
+    'إدارة المستثمرين': '#1565C0', // Dark Blue
+    'ادارة المصروفات': '#F57C00', // Dark Orange-Yellow
+    'المحاسبة المالية': '#7B1FA2', // Dark Purple
+    'العمليات المالية': '#C62828', // Dark Red
+    'الأرباح والتقارير': '#2E7D32', // Dark Green
+    'الزكاة والادخار': '#6A1B9A', // Dark Purple
+    'القوالب': '#424242', // Dark Gray
+  };
   
   const groupedItems = {};
   const singleItems = [];
@@ -353,7 +392,9 @@ export const getSidebarMenuItems = () => {
       if (!groupedItems[route.parent]) {
         groupedItems[route.parent] = {
           label: route.parent,
-          children: []
+          children: [],
+          icon: parentIcons[route.parent],
+          color: parentColors[route.parent]
         };
       }
       groupedItems[route.parent].children.push(route);

@@ -15,16 +15,52 @@ const registerArabicFonts = (doc) => {
   }
 };
 
-// Normalize expense shape (API uses debit; creation uses amount)
-const normalizeExpense = (expense) => ({
-  date: expense.date || expense.createdAt || null,
-  amount:
-    expense.debit ??
-    expense.amount ??
-    (typeof expense.total === 'number' ? expense.total : 0),
-  description: expense.description || '-',
-  status: expense.status || 'DRAFT',
-});
+// دالة جديدة لإنشاء تفاصيل المصروفات كنص
+const generateExpensesDetails = (expense) => {
+  if (!expense.lines || expense.lines.length === 0) {
+    return expense.description || '-';
+  }
+  
+  const details = expense.lines.map((line) => {
+    const amount = line.debit || line.amount || 0;
+    return `${line.type || line.description || 'مصروف'}: ${amount.toLocaleString('en-US')}`;
+  }).join('\n');
+  
+  return details;
+};
+
+// دالة جديدة لإنشاء صفوف Excel مع تفاصيل المصروفات
+const generateExcelRows = (expenses) => {
+  const rows = [];
+  
+  expenses.forEach((expense) => {
+    const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
+    const totalAmount = expenseLines.reduce((sum, line) => 
+      sum + (line.debit || line.amount || 0), 0);
+    
+    if (expenseLines.length > 0) {
+      // إضافة صف لكل نوع مصروف
+      expenseLines.forEach((line) => {
+        rows.push([
+          expense.status === 'POSTED' ? 'مقيد' : 'مسودة',
+          line.type || line.description || '-',
+          line.debit || line.amount || 0,
+          expense.date ? dayjs(expense.date).format('DD/MM/YYYY') : '-',
+        ]);
+      });
+    } else {
+      // إذا لم تكن هناك تفاصيل، نضيف صف واحد
+      rows.push([
+        expense.status === 'POSTED' ? 'مقيد' : 'مسودة',
+        expense.description || '-',
+        totalAmount,
+        expense.date ? dayjs(expense.date).format('DD/MM/YYYY') : '-',
+      ]);
+    }
+  });
+  
+  return rows;
+};
 
 export const exportExpensesToPDF = async (expenses) => {
   return new Promise((resolve, reject) => {
@@ -59,25 +95,31 @@ export const exportExpensesToPDF = async (expenses) => {
         align: 'center',
       });
 
+      // حساب إجمالي المصاريف
+      const totalAmount = expenses.reduce((sum, expense) => {
+        const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
+        return sum + expenseLines.reduce((lineSum, line) => lineSum + (line.debit || line.amount || 0), 0);
+      }, 0);
+
       doc.setFontSize(11);
-      const summaryText = `إجمالي المصروفات: ${expenses.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      const summaryText = `إجمالي المصروفات: ${expenses.length} قيد | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, 45, {
         align: 'center',
       });
 
-      // Table data
-      // Reverse column arrangement as requested (without serial column)
-      const headers = [['الحالة', 'الوصف', 'المبلغ', 'التاريخ']];
-      const body = expenses.map((exp) => {
-        const normalized = normalizeExpense(exp);
+      // Table data بدون عمود رقم القيد
+      const headers = [['الحالة', 'تفاصيل المصروفات', 'المبلغ', 'التاريخ']];
+      const body = expenses.map((expense) => {
+        const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
+        const totalAmount = expenseLines.reduce((sum, line) =>
+          sum + (line.debit || line.amount || 0), 0);
+
         return [
-          normalized.status === 'POSTED' ? 'مقيد' : 'مسودة',
-          normalized.description,
-          typeof normalized.amount === 'number'
-            ? normalized.amount.toLocaleString('en-US')
-            : '-',
-          normalized.date
-            ? dayjs(normalized.date).format('DD/MM/YYYY')
+          expense.status === 'POSTED' ? 'مقيد' : 'مسودة',
+          generateExpensesDetails(expense),
+          totalAmount.toLocaleString('en-US'),
+          expense.date
+            ? dayjs(expense.date).format('DD/MM/YYYY')
             : '-',
         ];
       });
@@ -90,12 +132,12 @@ export const exportExpensesToPDF = async (expenses) => {
         styles: {
           font: 'Amiri',
           fontStyle: 'bold',
-          fontSize: 9,
+          fontSize: 8,
           cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
           lineColor: [220, 220, 220],
           lineWidth: 0.2,
           halign: 'right',
-          valign: 'middle',
+          valign: 'top',
           overflow: 'linebreak',
           direction: 'rtl',
         },
@@ -103,7 +145,7 @@ export const exportExpensesToPDF = async (expenses) => {
           fillColor: [46, 139, 69],
           textColor: 255,
           fontStyle: 'bold',
-          fontSize: 10,
+          fontSize: 9,
           halign: 'right',
           valign: 'middle',
           cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
@@ -113,9 +155,12 @@ export const exportExpensesToPDF = async (expenses) => {
         },
         bodyStyles: {
           halign: 'right',
-          valign: 'middle',
+          valign: 'top',
           cellPadding: 4,
           direction: 'rtl',
+        },
+        columnStyles: {
+          2: { cellWidth: 'auto', minCellWidth: 60 }, // تفاصيل المصروفات
         },
         margin: { top: 60, left: 10, right: 10 },
         tableWidth: 'auto',
@@ -175,28 +220,73 @@ export const exportExpensesToExcel = async (expenses) => {
     }
 
     const workbook = XLSX.utils.book_new();
-    const sheetData = [
-      ['الحالة', 'الوصف', 'المبلغ', 'التاريخ'],
-      ...expenses.map((exp) => {
-        const normalized = normalizeExpense(exp);
-        return [
-          normalized.status === 'POSTED' ? 'مقيد' : 'مسودة',
-          normalized.description,
-          typeof normalized.amount === 'number' ? normalized.amount : 0,
-          normalized.date ? dayjs(normalized.date).format('DD/MM/YYYY') : '-',
-        ];
-      }),
+    
+    // حساب إجمالي المصاريف
+    const totalAmount = expenses.reduce((sum, expense) => {
+      const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
+      return sum + expenseLines.reduce((lineSum, line) => lineSum + (line.debit || line.amount || 0), 0);
+    }, 0);
+
+    // إنشاء صفوف البيانات
+    const rows = generateExcelRows(expenses);
+
+    // إضافة إجمالي المصاريف في الأعلى
+    rows.unshift(['', '', '', '']);
+    rows.unshift(['إجمالي المصاريف:', totalAmount, '', '']);
+    rows.unshift(['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm'), '', '']);
+    rows.unshift(['', '', '', '']);
+
+    // إضافة الهيدر
+    rows.unshift(['الحالة', 'نوع المصروف', 'المبلغ', 'التاريخ']);
+    
+    const sheet = XLSX.utils.aoa_to_sheet(rows);
+    
+    // تعيين أبعاد الأعمدة
+    sheet['!cols'] = [
+      { wch: 12 },  // الحالة
+      { wch: 40 },  // نوع المصروف
+      { wch: 15 },  // المبلغ
+      { wch: 15 },  // التاريخ
     ];
 
-    const sheet = XLSX.utils.aoa_to_sheet(sheetData);
-    sheet['!cols'] = [
-      { wch: 12 },
-      { wch: 40 },
-      { wch: 15 },
-      { wch: 15 },
-    ];
+    // إضافة التنسيق للهيدر
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!sheet[cellAddress]) continue;
+      sheet[cellAddress].s = {
+        font: { bold: true, sz: 12 },
+        fill: { fgColor: { rgb: "2E8B57" } },
+        alignment: { horizontal: "center", vertical: "center" }
+      };
+    }
+
+    // تنسيق خلايا المبالغ (يبدأ من الصف 5 حيث توجد البيانات الفعلية)
+    for (let R = 5; R <= range.e.r; ++R) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 2 }); // عمود المبلغ (العمود 2)
+      if (sheet[cellAddress] && typeof sheet[cellAddress].v === 'number') {
+        sheet[cellAddress].s = {
+          numFmt: '#,##0.00'
+        };
+      }
+    }
 
     XLSX.utils.book_append_sheet(workbook, sheet, 'المصروفات');
+
+    // إضافة ورقة ملخص
+    const summaryData = [
+      ['ملخص المصروفات'],
+      [],
+      ['إجمالي عدد القيود:', expenses.length],
+      ['إجمالي المبالغ:', totalAmount],
+      ['عدد المصروفات المفصلة:', expenses.reduce((sum, exp) =>
+        sum + (exp.lines?.filter(line => line.debit > 0).length || 1), 0)],
+      ['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm')]
+    ];
+
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    summarySheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص');
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
@@ -215,4 +305,3 @@ export const exportExpensesToExcel = async (expenses) => {
     throw error;
   }
 };
-

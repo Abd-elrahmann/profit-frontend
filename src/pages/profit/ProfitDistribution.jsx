@@ -386,20 +386,20 @@ const ProfitDistribution = () => {
               
               {enableSaving && (
                 <Box sx={{ mt: 1, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="body2">نسبة الادخار:</Typography>
-                    <Typography variant="body2" fontWeight="bold">
-                      {savingPercentage}%
-                    </Typography>
-                  </Box>
-                  <Button
-                    size="small"
-                    startIcon={<SavingsIcon sx={{marginLeft:"10px"}} />}
-                    onClick={handleOpenSavingDialog}
-                    sx={{ mt: 1 }}
-                  >
-                    تعديل النسبة
-                  </Button>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body2">نسبة الادخار:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {savingPercentage.toFixed(2)}%
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                startIcon={<SavingsIcon sx={{marginLeft:"10px"}} />}
+                onClick={handleOpenSavingDialog}
+                sx={{ mt: 1 }}
+              >
+                تعديل المبلغ
+              </Button>
                 </Box>
               )}
             </Box>
@@ -426,7 +426,7 @@ const ProfitDistribution = () => {
           {(enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) ? (
             <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: '1px solid #e0e0e0' }}>
               <Typography variant="body2" color="warning.main">
-                المبلغ المدخر {enableSaving && savingPercentage > 0 ? `(${savingPercentage}%)` : ''}:
+                المبلغ المدخر {enableSaving && savingPercentage > 0 ? `(${savingPercentage.toFixed(2)}%)` : ''}:
               </Typography>
               <Typography variant="body2" fontWeight="bold" color="warning.main">
                 {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
@@ -535,7 +535,7 @@ const ProfitDistribution = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <Typography variant="body2">نسبة الادخار:</Typography>
                 <Typography variant="body2" fontWeight="bold">
-                  {savingPercentage}%
+                  {savingPercentage.toFixed(2)}%
                 </Typography>
               </Box>
               <Button
@@ -545,7 +545,7 @@ const ProfitDistribution = () => {
                 fullWidth
                 sx={{ mt: 1 }}
               >
-                تعديل النسبة
+                تعديل المبلغ
               </Button>
             </Box>
           )}
@@ -948,7 +948,7 @@ const ProfitDistribution = () => {
               </Typography>
               {enableSaving && savingPercentage > 0 && (
                 <Typography variant="body2">
-                  نسبة الادخار: {savingPercentage}%
+                  نسبة الادخار: {savingPercentage.toFixed(2)}%
                 </Typography>
               )}
               <Typography variant="body2">
@@ -1277,7 +1277,7 @@ const ProfitDistribution = () => {
             </Typography>
             {enableSaving && (
               <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                (بعد ادخار {savingPercentage}%)
+                (بعد ادخار {savingPercentage.toFixed(2)}%)
               </Typography>
             )}
           </Card>
@@ -1291,7 +1291,7 @@ const ProfitDistribution = () => {
           </Typography>
           {enableSaving && savingPercentage > 0 && (
             <Typography variant="body2">
-              - نسبة الادخار: {savingPercentage}%
+              - نسبة الادخار: {savingPercentage.toFixed(2)}%
             </Typography>
           )}
           <Typography variant="body2">
@@ -1522,10 +1522,10 @@ const ProfitDistribution = () => {
           {enableSaving && savingPercentage > 0 && (
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                <strong>ملاحظة:</strong> سيتم ادخار {savingPercentage}% من الأرباح قبل التوزيع
+                <strong>ملاحظة:</strong> سيتم ادخار {savingPercentage.toFixed(2)}% من الأرباح قبل التوزيع
               </Typography>
               <Typography variant="body2" sx={{ mt: 1 }}>
-                المبلغ المدخر: {formatNumber(profitAfterSaving.savedAmount)}
+                المبلغ المدخر: {formatNumber(profitAfterSaving.savedAmount)} ({savingPercentage.toFixed(2)}%)
               </Typography>
             </Alert>
           )}
@@ -1785,6 +1785,7 @@ const ProfitDistribution = () => {
         onClose={handleCloseSavingDialog}
         onApply={handleApplySavingPercentage}
         currentPercentage={savingPercentage}
+        totalProfit={periodData?.partners?.reduce((sum, p) => sum + (p.finalProfit || p.totalProfit || 0), 0) || 0}
       />
 
       {renderConfirmationDialog()}
