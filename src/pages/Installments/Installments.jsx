@@ -134,6 +134,9 @@ const Installments = () => {
   const settlementReceiptRef = useRef(null);
 
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [bulkPaymentProofModalOpen, setBulkPaymentProofModalOpen] = useState(false);
+  const [bulkPaymentProofHtml, setBulkPaymentProofHtml] = useState("");
+  const [isGeneratingBulkProof, setIsGeneratingBulkProof] = useState(false);
 
   const handleChangePage = (event, value) => {
     setPage(value);
@@ -158,7 +161,7 @@ const Installments = () => {
     }
   };
 
-  // Bulk approve installments
+  // Bulk approve installments - now generates single payment proof
   const handleBulkApprove = async () => {
     if (selectedInstallments.length === 0) {
       notifyError("يرجى اختيار الدفعات المراد اعتمادها");
@@ -176,18 +179,25 @@ const Installments = () => {
       return;
     }
 
-
     try {
-      setIsBulkOperationLoading(true);
-      await approveMultipleRepayments(selectedInstallments, null, "تمت الموافقة على الدفعات ");
-      notifySuccess(`تم اعتماد ${selectedInstallments.length} دفعة بنجاح`);
-      setSelectedInstallments([]);
-      queryClient.invalidateQueries(["loan", loanId]);
-      queryClient.invalidateQueries(["repayments", loanId]);
+      // Generate bulk payment proof HTML first
+      const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+
+      const bulkProofHtml = await paymentProofGeneratorRef.current.generateContract(
+        false,
+        {
+          installmentsData: installmentsToApprove,
+          loanData,
+          clientData: loanData?.client,
+          employeeName: defaultEmployeeName,
+        }
+      );
+
+      setBulkPaymentProofHtml(bulkProofHtml);
+      setBulkPaymentProofModalOpen(true);
     } catch (error) {
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء اعتماد الدفعات");
-    } finally {
-      setIsBulkOperationLoading(false);
+      notifyError("حدث خطأ أثناء توليد إيصال السداد المجمع");
+      handleApiError(error);
     }
   };
 
@@ -410,6 +420,47 @@ const Installments = () => {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال");
     } finally {
       setIsGeneratingProof(false);
+    }
+  };
+
+  const handleSaveBulkPaymentProof = async () => {
+    try {
+      setIsGeneratingBulkProof(true);
+
+      const installmentsToApprove = sortedInstallments.filter(installment =>
+        selectedInstallments.includes(installment.id)
+      );
+
+      const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+
+      const finalBulkProofHtml =
+        await paymentProofGeneratorRef.current.generateContract(false, {
+          installmentsData: installmentsToApprove,
+          loanData,
+          clientData: loanData?.client,
+          employeeName: defaultEmployeeName,
+        });
+
+      await paymentProofGeneratorRef.current.generatePDF(
+        finalBulkProofHtml,
+        true, // isBulkOperation
+        selectedInstallments // installmentIds
+      );
+
+      notifySuccess("تم حفظ إيصال السداد المجمع بنجاح");
+
+      // Now approve all selected installments
+      await approveMultipleRepayments(selectedInstallments, null, "تمت الموافقة على الدفعات المجمعة");
+
+      setBulkPaymentProofModalOpen(false);
+      setSelectedInstallments([]);
+
+      queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["repayments", loanId]);
+    } catch (error) {
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال المجمع");
+    } finally {
+      setIsGeneratingBulkProof(false);
     }
   };
 
@@ -1583,7 +1634,7 @@ const Installments = () => {
                         "&:hover": { bgcolor: "success.dark" },
                       }}
                     >
-                      الموافقة علي الدفعات المحددة
+                      إنشاء إيصال سداد مجمع
                     </Button>
                   )}
                   <Button
@@ -2614,6 +2665,22 @@ const Installments = () => {
         message={`هل أنت متأكد من رفض دفعة رقم ${selectedActionInstallment?.count}؟`}
         isLoading={rejectLoading}
         ButtonText="رفض"
+      />
+
+      <PaymentProofPreview
+        open={bulkPaymentProofModalOpen}
+        onClose={() => {
+          setBulkPaymentProofModalOpen(false);
+          setBulkPaymentProofHtml("");
+        }}
+        paymentProofHtml={bulkPaymentProofHtml}
+        onSaveProof={handleSaveBulkPaymentProof}
+        loading={isGeneratingBulkProof}
+        clientName={loanData?.client?.name}
+        installmentAmount={sortedInstallments
+          .filter(installment => selectedInstallments.includes(installment.id))
+          .reduce((sum, inst) => sum + (inst.amount || 0), 0)}
+        installmentNumber={`مجمع (${selectedInstallments.length} دفعات)`}
       />
 
       {/* Pagination */}

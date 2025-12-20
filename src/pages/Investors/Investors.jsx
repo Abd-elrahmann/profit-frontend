@@ -65,9 +65,9 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportInvestorsToPDF, exportInvestorsToExcel } from "../../utilities/investorsExporter";
 import { useNavigate } from "react-router-dom";
 
-const getInvestors = async (page = 1, searchQuery = '', status = '') => {
+const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdrawnOnly = false) => {
   let queryParams = new URLSearchParams();
-  
+
   if (searchQuery.trim()) {
     if (/^\d+$/.test(searchQuery.trim())) {
       queryParams.append('nationalId', searchQuery.trim());
@@ -75,7 +75,7 @@ const getInvestors = async (page = 1, searchQuery = '', status = '') => {
       queryParams.append('name', searchQuery.trim());
     }
   }
-  
+
   // استخدام status بدلاً من isActive
   if (status.trim()) {
     const statusMap = {
@@ -86,11 +86,16 @@ const getInvestors = async (page = 1, searchQuery = '', status = '') => {
     queryParams.append('status', statusMap[status.trim()] || status.trim());
   }
 
+  // إضافة فلترة للمنسحبين فقط
+  if (showWithdrawnOnly) {
+    queryParams.append('withdrawingStatus', 'WITHDRAWING,WITHDRAWN');
+  }
+
   queryParams.append('limit', '10');
-  
+
   const queryString = queryParams.toString();
   const url = `/api/partners/all/${page}${queryString ? `?${queryString}` : ''}`;
-  
+
   const response = await Api.get(url);
   return response.data;
 };
@@ -168,12 +173,14 @@ export default function Investors() {
   const [withdrawPreviewData, setWithdrawPreviewData] = useState(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
+  const [showWithdrawnOnly, setShowWithdrawnOnly] = useState(false);
+
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
   const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
-    queryKey: ["investors", currentPage, search, selectedStatus],
-    queryFn: () => getInvestors(currentPage, search, selectedStatus),
+    queryKey: ["investors", currentPage, search, selectedStatus, showWithdrawnOnly],
+    queryFn: () => getInvestors(currentPage, search, selectedStatus, showWithdrawnOnly),
     retry: 1,
   });
 
@@ -974,49 +981,77 @@ export default function Investors() {
               }}
             />
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
-              <Chip 
-                label="الكل" 
-                color={selectedStatus === "" ? "primary" : "default"} 
-                variant="outlined" 
+              <Chip
+                label="الكل"
+                color={selectedStatus === "" ? "primary" : "default"}
+                variant="outlined"
                 onClick={() => {
                   setSelectedStatus("");
                   setCurrentPage(1);
                 }}
               />
-              <Chip 
-                label="نشط" 
-                color={selectedStatus === "نشط" ? "success" : "default"} 
-                variant="outlined" 
+              <Chip
+                label="نشط"
+                color={selectedStatus === "نشط" ? "success" : "default"}
+                variant="outlined"
                 onClick={() => {
                   setSelectedStatus(prev => prev === "نشط" ? "" : "نشط");
                   setCurrentPage(1);
                 }}
               />
-              <Chip 
-                label="غير نشط" 
-                color={selectedStatus === "غير نشط" ? "error" : "default"} 
-                variant="outlined" 
+              <Chip
+                label="غير نشط"
+                color={selectedStatus === "غير نشط" ? "error" : "default"}
+                variant="outlined"
                 onClick={() => {
                   setSelectedStatus(prev => prev === "غير نشط" ? "" : "غير نشط");
                   setCurrentPage(1);
                 }}
               />
-              <Chip 
-                label="منسحب" 
-                color={selectedStatus === "منسحب" ? "warning" : "default"} 
-                variant="outlined" 
+              <Chip
+                label="منسحب"
+                color={selectedStatus === "منسحب" ? "warning" : "default"}
+                variant="outlined"
                 onClick={() => {
                   setSelectedStatus(prev => prev === "منسحب" ? "" : "منسحب");
                   setCurrentPage(1);
                 }}
               />
             </Box>
+
+            {/* زر قائمة المنسحبين */}
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => {
+                  setShowWithdrawnOnly(prev => !prev);
+                  setSelectedStatus(""); // إعادة تعيين الفلاتر الأخرى
+                  setSearch(""); // إعادة تعيين البحث
+                  setCurrentPage(1);
+                }}
+                sx={{
+                  bgcolor: showWithdrawnOnly ? "warning.main" : "primary.main",
+                  color: "white",
+                  fontWeight: "bold",
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  "&:hover": {
+                    bgcolor: showWithdrawnOnly ? "warning.dark" : "primary.main",
+                  },
+                  minWidth: '200px'
+                }}
+              >
+                {showWithdrawnOnly ? "عرض المستثمرين الحاليين" : "قائمة المنسحبين"}
+              </Button>
+            </Box>
           </Box>
 
           {investorsData && !isInvestorsLoading && investorsData.partners && investorsData.partners.length > 0 && (
             <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: '#f9f9f9', flexShrink: 0 }}>
               <Typography variant="body2" color="black">
-                صفحة {investorsData.currentPage} من {investorsData.totalPages} - إجمالي {investorsData.totalPartners} مستثمر
+                صفحة {investorsData.currentPage} من {investorsData.totalPages} - إجمالي {investorsData.totalPartners} {showWithdrawnOnly ? 'مستثمر منسحب' : 'مستثمر'}
               </Typography>
             </Box>
           )}
@@ -1027,20 +1062,17 @@ export default function Investors() {
                 <CircularProgress />
               </Box>
             ) : !investorsData || !investorsData.partners || investorsData.partners.length === 0 ? (
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                p: 4, 
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                p: 4,
                 flexDirection: 'column',
                 minHeight: 'calc(100vh - 400px)',
                 height: '100%'
               }}>
-                <Typography variant="h5" color="text.secondary" mb={2} fontWeight="bold">
-                  لا يوجد مستثمرين
-                </Typography>
                 <Typography variant="body1" color="text.secondary" textAlign="center" mb={2}>
-                  {search || selectedStatus ? 'لم يتم العثور على مستثمرين مطابقين للبحث' : 'لا توجد مستثمرين مسجلين في النظام'}
+                  {search || selectedStatus ? 'لم يتم العثور على مستثمرين مطابقين للبحث' : showWithdrawnOnly ? 'لا توجد مستثمرين منسحبين مسجلين في النظام' : 'لا توجد مستثمرين مسجلين في النظام'}
                 </Typography>
               </Box>
             ) : (

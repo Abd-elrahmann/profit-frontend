@@ -28,74 +28,12 @@ const LoanContractsPreview = ({
   loanAmount = 0
 }) => {
   const [activeTab, setActiveTab] = React.useState(0);
-  const [isPrinting, setIsPrinting] = React.useState(false);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const handlePrint = async () => {
-    try {
-      setIsPrinting(true);
-      
-      // Get the current active contract content
-      const currentHtml = activeTab === 0 ? debtAckHtml : promissoryNoteHtml;
-      
-      if (!currentHtml) {
-        console.error('No contract content available for printing');
-        return;
-      }
 
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        alert('يجب السماح بالنوافذ المنبثقة للطباعة');
-        return;
-      }
-
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html dir="rtl" lang="ar">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${activeTab === 0 ? 'إقرار الدين' : 'سند الأمر'}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-          <style>
-            body { 
-              margin: 0; 
-              padding: 0; 
-              background: white;
-              font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            @page { margin: 15mm; }
-          </style>
-        </head>
-        <body>
-          ${currentHtml}
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(() => {
-                window.close();
-              }, 1000);
-            }
-          </script>
-        </body>
-        </html>
-      `);
-
-      printWindow.document.close();
-      
-    } catch (error) {
-      console.error('Error printing contract:', error);
-      alert('حدث خطأ أثناء الطباعة');
-    } finally {
-      setIsPrinting(false);
-    }
-  };
 
   const contracts = [
     { 
@@ -319,29 +257,12 @@ const LoanContractsPreview = ({
         </Button>
         
         <Button
-          variant="outlined"
-          startIcon={<Print sx={{marginLeft: '10px'}} />}
-          onClick={handlePrint}
-          disabled={isPrinting || !debtAckHtml || !promissoryNoteHtml}
-          sx={{
-            borderColor: '#0d40a5',
-            color: '#0d40a5',
-            minWidth: '120px',
-            '&:hover': {
-              bgcolor: 'rgba(13, 64, 165, 0.1)'
-            }
-          }}
-        >
-          {isPrinting ? <CircularProgress size={20} /> : 'طباعة'}
-        </Button>
-        
-        <Button
           variant="contained"
           startIcon={loading ? null : <Download sx={{marginLeft: '10px'}} />}
           onClick={() => onSaveContracts('both')}
           disabled={loading || !debtAckHtml || !promissoryNoteHtml}
           sx={{
-            bgcolor: "#2e7d32",
+            bgcolor: "primary.main",
             "&:hover": { bgcolor: "#1b5e20" },
             minWidth: '180px'
           }}

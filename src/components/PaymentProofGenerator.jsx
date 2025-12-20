@@ -71,7 +71,8 @@ const getCurrentDates = () => {
   let hijriDate = hijriFormatter.format(now);
   hijriDate = hijriDate.replace(/\s+/g, ' ').trim();
   hijriDate = hijriDate.replace(' ', ' من ');
-  if (!hijriDate.includes('هـ')) hijriDate = `${hijriDate} هـ`;
+  // Remove 'هـ' if it exists, since template will add it
+  hijriDate = hijriDate.replace(' هـ', '');
 
   const gregorianFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-gregory', {
     day: 'numeric',
@@ -83,16 +84,17 @@ const getCurrentDates = () => {
   const gregorianDate = gregorianFormatter.format(now);
 
   return {
-    gregorianDate: `الموافق ${gregorianDate}`,
+    gregorianDate: gregorianDate,
     hijriDate
   };
 };
 
-const PaymentProofGenerator = React.forwardRef(({ 
-  installmentData, 
+const PaymentProofGenerator = React.forwardRef(({
+  installmentData,
+  installmentsData = [], // Array of installments for bulk operations
   loanData,
   clientData,
-  templateContent, 
+  templateContent,
   onContractGenerated,
   employeeName = "",
   autoGenerate = false
@@ -100,14 +102,21 @@ const PaymentProofGenerator = React.forwardRef(({
   const [contractHtml, setContractHtml] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const uploadPDFToServer = useCallback(async (pdfBlob) => {
+  const uploadPDFToServer = useCallback(async (pdfBlob, isBulkOperation = false, installmentIds = []) => {
     try {
       const formData = new FormData();
-      const filename = `إيصال_سداد_الدفعة_${installmentData.id}_${Date.now()}.pdf`;
+
+      let filename, endpoint;
+      if (isBulkOperation) {
+        filename = `إيصال_سداد_الدفعات_المجمع_${Date.now()}.pdf`;
+        formData.append('installmentIds', JSON.stringify(installmentIds));
+        endpoint = `/api/repayments/PaymentProof/bulk`;
+      } else {
+        filename = `إيصال_سداد_الدفعة_${installmentData.id}_${Date.now()}.pdf`;
+        endpoint = `/api/repayments/PaymentProof/${installmentData.id}`;
+      }
+
       formData.append('file', pdfBlob, filename);
-
-      const endpoint = `/api/repayments/PaymentProof/${installmentData.id}`;
-
 
       const response = await Api.post(endpoint, formData, {
         headers: {
@@ -122,7 +131,7 @@ const PaymentProofGenerator = React.forwardRef(({
     }
   }, [installmentData?.id]);
 
-  const generatePDF = useCallback(async (htmlContent = contractHtml) => {
+  const generatePDF = useCallback(async (htmlContent = contractHtml, isBulkOperation = false, installmentIds = []) => {
     const contentToUse = htmlContent || contractHtml;
 
     if (!contentToUse) {
@@ -132,7 +141,6 @@ const PaymentProofGenerator = React.forwardRef(({
 
     try {
       setIsGenerating(true);
-
 
       const previewContainer = document.createElement('div');
       previewContainer.id = `payment-proof-preview-${Date.now()}`;
@@ -150,11 +158,15 @@ const PaymentProofGenerator = React.forwardRef(({
       `;
       document.body.appendChild(previewContainer);
 
+      const filename = isBulkOperation
+        ? `payment_proof_bulk_${Date.now()}.pdf`
+        : `payment_proof_${installmentData?.id || 'unknown'}_${Date.now()}.pdf`;
+
       const options = {
         margin: 0,
-        filename: `payment_proof_${installmentData.id}_${Date.now()}.pdf`,
+        filename: filename,
         image: { type: 'jpeg', quality: 1.0 },
-        html2canvas: { 
+        html2canvas: {
           scale: 3,
           useCORS: true,
           letterRendering: true,
@@ -162,9 +174,9 @@ const PaymentProofGenerator = React.forwardRef(({
           logging: true,
           backgroundColor: '#ffffff'
         },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
           orientation: 'portrait',
           compress: false,
           hotfixes: ['px_scaling']
@@ -181,8 +193,7 @@ const PaymentProofGenerator = React.forwardRef(({
 
       document.body.removeChild(previewContainer);
 
-      await uploadPDFToServer(pdfBlob);
-
+      await uploadPDFToServer(pdfBlob, isBulkOperation, installmentIds);
 
       if (onContractGenerated) {
         onContractGenerated(pdfBlob, 'PAYMENT_PROOF');
@@ -200,11 +211,23 @@ const PaymentProofGenerator = React.forwardRef(({
   }, [contractHtml, installmentData?.id, uploadPDFToServer, onContractGenerated]);
 
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
-    const dataToUse = customData || { installmentData, loanData, clientData, employeeName };
+    const dataToUse = customData || { installmentData, installmentsData, loanData, clientData, employeeName };
 
-    if (!dataToUse.installmentData || !dataToUse.clientData || !templateContent) {
-      notifyError('بيانات الدفعة أو العميل أو قالب الإيصال غير متوفر');
-      return;
+    // Check if we have multiple installments or single installment
+    const isBulkOperation = dataToUse.installmentsData && dataToUse.installmentsData.length > 0;
+
+    if (isBulkOperation) {
+      // For bulk operations
+      if (!dataToUse.installmentsData || !dataToUse.clientData || !templateContent) {
+        notifyError('بيانات الدفعات أو العميل أو قالب الإيصال غير متوفر');
+        return;
+      }
+    } else {
+      // For single installment
+      if (!dataToUse.installmentData || !dataToUse.clientData || !templateContent) {
+        notifyError('بيانات الدفعة أو العميل أو قالب الإيصال غير متوفر');
+        return;
+      }
     }
 
     try {
@@ -212,32 +235,95 @@ const PaymentProofGenerator = React.forwardRef(({
       const { gregorianDate, hijriDate } = getCurrentDates();
       const finalDate = `${hijriDate}\n${gregorianDate}`;
 
-      const amount = dataToUse.installmentData.amount || 0;
-      const amountInWords = numberToArabicWords(amount);
+      let filledTemplate = templateContent;
 
+      if (isBulkOperation) {
+        // Bulk operation: multiple installments
+        const totalAmount = dataToUse.installmentsData.reduce((sum, inst) => sum + (inst.amount || 0), 0);
+        const totalAmountInWords = numberToArabicWords(totalAmount);
 
-      let filledTemplate = templateContent
-        // Client data
-        .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
-        .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
-        .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
-        .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
+        // Generate installments table HTML
+        const installmentsTable = `
+          <table style="width: 100%; border-collapse: collapse; margin: 15px 0; border: 1px solid #ddd;">
+            <thead>
+              <tr style="background: rgba(46, 139, 69, 0.1);">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">رقم الدفعة</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">المبلغ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dataToUse.installmentsData.map(inst => `
+                <tr>
+                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${inst.count || 'N/A'}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${inst.amount?.toLocaleString('en-US') || '0'}</td>
+                </tr>
+              `).join('')}
+              <tr style="background: rgba(46, 139, 69, 0.1); font-weight: bold;">
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">المجموع</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${totalAmount?.toLocaleString('en-US') || '0'}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
 
-        // Loan data
-        .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || 'N/A')
-        .replace(/{{رقم_الايصال}}/g, `PAY-${dataToUse.installmentData.id}-${Date.now()}`)
+        filledTemplate = templateContent
+          // Client data
+          .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
+          .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
+          .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
+          .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
 
-        // Amount data
-        .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'}`)
-        .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
+          // Bulk operation data
+          .replace(/{{عرض_جدول_الدفعات}}/g, 'display: block;')
+          .replace(/{{عرض_نص_فردي}}/g, 'display: none;')
+          .replace(/{{عرض_نص_مجمع}}/g, 'display: block;')
+          .replace(/{{رقم_الدفعات}}/g, dataToUse.installmentsData.map(inst => inst.count).join(', '))
+          .replace(/{{رقم_الايصال}}/g, `${Math.floor(Math.random() * 9000) + 1000}`)
+          .replace(/{{جدول_الدفعات}}/g, installmentsTable)
 
-        // Dates
-        .replace(/{{التاريخ_الهجري}}/g, hijriDate)
-        .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
-        .replace(/{{تاريخ_السداد}}/g, finalDate)
+          // Amount data
+          .replace(/{{المبلغ_رقما}}/g, `${totalAmount?.toLocaleString('en-US') || '0'}`)
+          .replace(/{{المبلغ_كتابة}}/g, `${totalAmountInWords}`)
 
-        // Employee data
-        .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
+          // Dates
+          .replace(/{{التاريخ_الهجري}}/g, hijriDate)
+          .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
+          .replace(/{{تاريخ_السداد}}/g, finalDate)
+
+          // Employee data
+          .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
+
+      } else {
+        // Single installment operation
+        const amount = dataToUse.installmentData.amount || 0;
+        const amountInWords = numberToArabicWords(amount);
+
+        filledTemplate = templateContent
+          // Client data
+          .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
+          .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
+          .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
+          .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
+
+          // Single operation data
+          .replace(/{{عرض_جدول_الدفعات}}/g, 'display: none;')
+          .replace(/{{عرض_نص_فردي}}/g, 'display: block;')
+          .replace(/{{عرض_نص_مجمع}}/g, 'display: none;')
+          .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || 'N/A')
+          .replace(/{{رقم_الايصال}}/g, `${Math.floor(Math.random() * 9000) + 1000}`)
+
+          // Amount data
+          .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'}`)
+          .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
+
+          // Dates
+          .replace(/{{التاريخ_الهجري}}/g, hijriDate)
+          .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
+          .replace(/{{تاريخ_السداد}}/g, finalDate)
+
+          // Employee data
+          .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
+      }
 
 
       setContractHtml(filledTemplate);
@@ -263,14 +349,15 @@ const PaymentProofGenerator = React.forwardRef(({
   }, [installmentData, loanData, clientData, employeeName, templateContent, autoGenerate, generatePDF]);
 
   useEffect(() => {
-    if (autoGenerate && installmentData && clientData && templateContent) {
+    if (autoGenerate && ((installmentData && clientData && templateContent) || (installmentsData.length > 0 && clientData && templateContent))) {
       generateContract(true);
     }
-  }, [autoGenerate, installmentData, clientData, templateContent, generateContract]);
+  }, [autoGenerate, installmentData, installmentsData, clientData, templateContent, generateContract]);
 
   React.useImperativeHandle(ref, () => ({
     generateContract,
-    generatePDF: () => generatePDF(contractHtml)
+    generatePDF: (htmlContent, isBulkOperation = false, installmentIds = []) =>
+      generatePDF(htmlContent || contractHtml, isBulkOperation, installmentIds)
   }));
 
   if (autoGenerate) {

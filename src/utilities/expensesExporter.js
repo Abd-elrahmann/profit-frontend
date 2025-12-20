@@ -17,48 +17,23 @@ const registerArabicFonts = (doc) => {
 
 // دالة جديدة لإنشاء تفاصيل المصروفات كنص
 const generateExpensesDetails = (expense) => {
-  if (!expense.lines || expense.lines.length === 0) {
-    return expense.description || '-';
-  }
-  
-  const details = expense.lines.map((line) => {
-    const amount = line.debit || line.amount || 0;
-    return `${line.type || line.description || 'مصروف'}: ${amount.toLocaleString('en-US')}`;
-  }).join('\n');
-  
-  return details;
+  return expense.description || '-';
 };
 
 // دالة جديدة لإنشاء صفوف Excel مع تفاصيل المصروفات
 const generateExcelRows = (expenses) => {
   const rows = [];
-  
+
   expenses.forEach((expense) => {
-    const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
-    const totalAmount = expenseLines.reduce((sum, line) => 
-      sum + (line.debit || line.amount || 0), 0);
-    
-    if (expenseLines.length > 0) {
-      // إضافة صف لكل نوع مصروف
-      expenseLines.forEach((line) => {
-        rows.push([
-          expense.status === 'POSTED' ? 'مقيد' : 'مسودة',
-          line.type || line.description || '-',
-          line.debit || line.amount || 0,
-          expense.date ? dayjs(expense.date).format('DD/MM/YYYY') : '-',
-        ]);
-      });
-    } else {
-      // إذا لم تكن هناك تفاصيل، نضيف صف واحد
-      rows.push([
-        expense.status === 'POSTED' ? 'مقيد' : 'مسودة',
-        expense.description || '-',
-        totalAmount,
-        expense.date ? dayjs(expense.date).format('DD/MM/YYYY') : '-',
-      ]);
-    }
+    rows.push([
+      expense.type || '-',
+      expense.amount || 0,
+      expense.description || '-',
+      expense.employee?.name || '-',
+      dayjs(expense.createdAt).format('DD/MM/YYYY'),
+    ]);
   });
-  
+
   return rows;
 };
 
@@ -96,31 +71,23 @@ export const exportExpensesToPDF = async (expenses) => {
       });
 
       // حساب إجمالي المصاريف
-      const totalAmount = expenses.reduce((sum, expense) => {
-        const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
-        return sum + expenseLines.reduce((lineSum, line) => lineSum + (line.debit || line.amount || 0), 0);
-      }, 0);
+      const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
       doc.setFontSize(11);
-      const summaryText = `إجمالي المصروفات: ${expenses.length} قيد | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      const summaryText = `إجمالي المصروفات: ${expenses.length} مصروف | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, 45, {
         align: 'center',
       });
 
-      // Table data بدون عمود رقم القيد
-      const headers = [['الحالة', 'تفاصيل المصروفات', 'المبلغ', 'التاريخ']];
+      // Table data
+      const headers = [['النوع', 'المبلغ', 'الوصف', 'الموظف', 'التاريخ']];
       const body = expenses.map((expense) => {
-        const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
-        const totalAmount = expenseLines.reduce((sum, line) =>
-          sum + (line.debit || line.amount || 0), 0);
-
         return [
-          expense.status === 'POSTED' ? 'مقيد' : 'مسودة',
-          generateExpensesDetails(expense),
-          totalAmount.toLocaleString('en-US'),
-          expense.date
-            ? dayjs(expense.date).format('DD/MM/YYYY')
-            : '-',
+          expense.type || '-',
+          (expense.amount || 0).toLocaleString('en-US'),
+          expense.description || '-',
+          expense.employee?.name || '-',
+          dayjs(expense.createdAt).format('DD/MM/YYYY'),
         ];
       });
 
@@ -142,25 +109,28 @@ export const exportExpensesToPDF = async (expenses) => {
           direction: 'rtl',
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 9,
           halign: 'right',
           valign: 'middle',
           cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-          overflow: 'linebreak',
-          minCellHeight: 10,
+          overflow: 'visible',
+          minCellHeight: 15,
+          maxCellHeight: 15,
           direction: 'rtl',
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'right',
           valign: 'top',
           cellPadding: 4,
           direction: 'rtl',
         },
         columnStyles: {
-          2: { cellWidth: 'auto', minCellWidth: 60 }, // تفاصيل المصروفات
+          2: { cellWidth: 'auto', minCellWidth: 60 }, // الوصف
+          3: { cellWidth: 'auto', minCellWidth: 40 }, // الموظف
         },
         margin: { top: 60, left: 10, right: 10 },
         tableWidth: 'auto',
@@ -222,30 +192,28 @@ export const exportExpensesToExcel = async (expenses) => {
     const workbook = XLSX.utils.book_new();
     
     // حساب إجمالي المصاريف
-    const totalAmount = expenses.reduce((sum, expense) => {
-      const expenseLines = expense.lines?.filter(line => line.debit > 0) || [];
-      return sum + expenseLines.reduce((lineSum, line) => lineSum + (line.debit || line.amount || 0), 0);
-    }, 0);
+    const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
     // إنشاء صفوف البيانات
     const rows = generateExcelRows(expenses);
 
     // إضافة إجمالي المصاريف في الأعلى
-    rows.unshift(['', '', '', '']);
-    rows.unshift(['إجمالي المصاريف:', totalAmount, '', '']);
-    rows.unshift(['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm'), '', '']);
-    rows.unshift(['', '', '', '']);
+    rows.unshift(['', '', '', '', '']);
+    rows.unshift(['إجمالي المصاريف:', totalAmount, '', '', '']);
+    rows.unshift(['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm'), '', '', '']);
+    rows.unshift(['', '', '', '', '']);
 
     // إضافة الهيدر
-    rows.unshift(['الحالة', 'نوع المصروف', 'المبلغ', 'التاريخ']);
+    rows.unshift(['النوع', 'المبلغ', 'الوصف', 'الموظف', 'التاريخ']);
     
     const sheet = XLSX.utils.aoa_to_sheet(rows);
     
     // تعيين أبعاد الأعمدة
     sheet['!cols'] = [
-      { wch: 12 },  // الحالة
-      { wch: 40 },  // نوع المصروف
+      { wch: 20 },  // النوع
       { wch: 15 },  // المبلغ
+      { wch: 40 },  // الوصف
+      { wch: 20 },  // الموظف
       { wch: 15 },  // التاريخ
     ];
 
@@ -263,7 +231,7 @@ export const exportExpensesToExcel = async (expenses) => {
 
     // تنسيق خلايا المبالغ (يبدأ من الصف 5 حيث توجد البيانات الفعلية)
     for (let R = 5; R <= range.e.r; ++R) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 2 }); // عمود المبلغ (العمود 2)
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 1 }); // عمود المبلغ (العمود 1)
       if (sheet[cellAddress] && typeof sheet[cellAddress].v === 'number') {
         sheet[cellAddress].s = {
           numFmt: '#,##0.00'
@@ -277,10 +245,8 @@ export const exportExpensesToExcel = async (expenses) => {
     const summaryData = [
       ['ملخص المصروفات'],
       [],
-      ['إجمالي عدد القيود:', expenses.length],
+      ['إجمالي عدد المصروفات:', expenses.length],
       ['إجمالي المبالغ:', totalAmount],
-      ['عدد المصروفات المفصلة:', expenses.reduce((sum, exp) =>
-        sum + (exp.lines?.filter(line => line.debit > 0).length || 1), 0)],
       ['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm')]
     ];
 

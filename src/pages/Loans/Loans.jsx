@@ -29,7 +29,7 @@ import {
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
 import LoansTable from "../../components/modals/LoansTable";
-import SmallLoanForm from "../../components/modals/SmallLoanForm";
+import EditSmallLoanForm from "../../components/modals/EditSmallLoanForm";
 import SmallLoansTable from "../../components/modals/SmallLoansTable";
 import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
@@ -65,6 +65,23 @@ const Loans = () => {
     repaymentDay: "",
   });
 
+  // Helper function to convert day number to date string for UI
+  const dayToDateString = (day) => {
+    if (!day || isNaN(day)) return "";
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const dayStr = day.toString().padStart(2, '0');
+    return `${year}-${month}-${dayStr}`;
+  };
+
+  // Helper function to extract day from date string
+  const dateToDay = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.getDate().toString();
+  };
+
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [installments, setInstallments] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -86,6 +103,8 @@ const Loans = () => {
   const [isAdditionalLoan, setIsAdditionalLoan] = useState(false);
   const [bankBalance, setBankBalance] = useState(null);
   const [isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
+  const [selectedLoanForEdit, setSelectedLoanForEdit] = useState(null);
+  const [isSmallLoanEditMode, setIsSmallLoanEditMode] = useState(false);
   const { permissions } = usePermissions();
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
@@ -98,21 +117,21 @@ const Loans = () => {
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
-    enabled: activeTab === 3,
+    enabled: activeTab === 1,
     retry: 1,
   });
 
   const { data: banksData, isLoading: isBanksLoading } = useQuery({
     queryKey: ["banks", banksPage, banksSearchQuery],
     queryFn: () => getBanks(banksPage, banksSearchQuery),
-    enabled: activeTab === 3,
+    enabled: activeTab === 1,
     retry: 1,
   });
 
   const { data: partnersData, isLoading: isPartnersLoading } = useQuery({
     queryKey: ["partners", partnersPage, partnersSearchQuery],
     queryFn: () => getPartners(partnersPage, partnersSearchQuery),
-    enabled: activeTab === 3,
+    enabled: activeTab === 1,
     retry: 1,
   });
 
@@ -133,7 +152,7 @@ const Loans = () => {
     if (activeTab !== 2 && activeTab !== 3) {
       fetchContractTemplates();
     }
-    if (activeTab === 1 || activeTab === 6) {
+    if (activeTab === 1) {
       calculateInstallments();
       fetchBankBalance();
       // Clear search queries to ensure all options are shown
@@ -143,6 +162,11 @@ const Loans = () => {
       setBanksPage(1);
       setPartnersPage(1);
       setClientsPage(1);
+    }
+    // Reset small loan edit mode when not in tab 2
+    if (activeTab !== 2) {
+      setIsSmallLoanEditMode(false);
+      setSelectedLoanForEdit(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -408,7 +432,7 @@ const Loans = () => {
         } else {
           dueDate.setMonth(dueDate.getMonth() + i);
           if (loanForm.repaymentDay) {
-            dueDate.setDate(parseInt(loanForm.repaymentDay));
+            dueDate.setDate(parseInt(dateToDay(loanForm.repaymentDay)));
           }
         }
 
@@ -548,7 +572,7 @@ const Loans = () => {
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
         startDate: loanForm.startDate || undefined,
-        repaymentDay: parseInt(loanForm.repaymentDay),
+        repaymentDay: loanForm.repaymentDay,
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
@@ -610,7 +634,7 @@ const Loans = () => {
       paymentAmount: "",
       type: "",
       startDate: new Date().toISOString().split("T")[0],
-      repaymentDay: "10",
+      repaymentDay: dayToDateString(10),
     });
     setInstallments([]);
     setIsEditMode(false);
@@ -635,7 +659,7 @@ const Loans = () => {
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
         startDate: loanForm.startDate || undefined,
-        repaymentDay: parseInt(loanForm.repaymentDay),
+        repaymentDay: loanForm.repaymentDay,
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
@@ -781,7 +805,7 @@ const Loans = () => {
         paymentAmount: loan.paymentAmount?.toString() || "",
         type: loan.type,
         startDate: loan.startDate.split("T")[0],
-        repaymentDay: loan.repaymentDay?.toString() || "10",
+        repaymentDay: dayToDateString(loan.repaymentDay || 10),
       });
 
       setActiveTab(3);
@@ -794,6 +818,12 @@ const Loans = () => {
 
   const handleViewInstallments = (loan) => {
     navigate(`/installments/${loan.id}`);
+  };
+
+  const handleEditSmallLoan = (loan) => {
+    setSelectedLoanForEdit(loan);
+    setIsSmallLoanEditMode(true);
+    setActiveTab(2); // Switch to edit tab
   };
 
   const handleCreateAdditionalLoan = async (client) => {
@@ -1218,7 +1248,7 @@ const Loans = () => {
                   />
                 )}
                 <Tab
-                  label="إنشاء سلفة صغيرة"
+                  label={isSmallLoanEditMode ? "تعديل السلفة الصغيرة" : "إنشاء سلفة صغيرة"}
                   sx={{
                     fontWeight: "bold",
                     borderBottom:
@@ -1769,17 +1799,15 @@ const Loans = () => {
                       <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
                         <TextField
                           fullWidth
-                          type="number"
-                          label="يوم السداد"
+                          type="date"
+                          label="تاريخ الاستحقاق"
                           value={loanForm.repaymentDay}
                           onChange={(e) =>
                             handleInputChange("repaymentDay", e.target.value)
                           }
-                          inputProps={{ min: 1, max: 31 }}
                           disabled={isReadOnlyMode}
-                          onKeyDown={(e) => {
-                            if (e.key === "-" || e.key === "+")
-                              e.preventDefault();
+                          InputLabelProps={{
+                            shrink: true,
                           }}
                           sx={{
                             "& .MuiOutlinedInput-root": {
@@ -2164,13 +2192,20 @@ const Loans = () => {
               </Box>
             ) : activeTab === 2 ? (
               <Box>
-                <SmallLoanForm />
+                <EditSmallLoanForm
+                  selectedLoan={selectedLoanForEdit}
+                  onLoanUpdated={() => {
+                    setSelectedLoanForEdit(null);
+                    setIsSmallLoanEditMode(false);
+                    setActiveTab(3); // Switch back to view tab
+                  }}
+                />
               </Box>
             ) : activeTab === 3 ? (
               <Box
                 sx={{ width: "100%", display: "flex", flexDirection: "column" }}
               >
-                <SmallLoansTable />
+                <SmallLoansTable onEditLoan={handleEditSmallLoan} />
               </Box>
             ) : null}
           </Box>

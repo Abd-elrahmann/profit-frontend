@@ -30,6 +30,7 @@ import {
   Payment,
   MoreVert,
   Visibility,
+  Edit,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -42,7 +43,7 @@ import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 
-const SmallLoansTable = () => {
+const SmallLoansTable = ({ onEditLoan }) => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [loanToDelete, setLoanToDelete] = useState(null);
@@ -119,6 +120,7 @@ const SmallLoansTable = () => {
     });
   };
 
+
   const handlePaymentSubmit = async () => {
     if (!paymentData.amount) {
       notifyError("يرجى إدخال مبلغ الدفعة");
@@ -175,12 +177,13 @@ const SmallLoansTable = () => {
     }));
   };
 
+
   const getStatusText = (status) => {
     switch (status) {
       case "OPEN":
         return "مفتوحة";
-      case "CLOSED":
-        return "مغلقة";
+      case "PAID":
+        return "مدفوعة";
       default:
         return status;
     }
@@ -190,7 +193,7 @@ const SmallLoansTable = () => {
     switch (status) {
       case "OPEN":
         return "warning";
-      case "CLOSED":
+      case "PAID":
         return "success";
       default:
         return "default";
@@ -596,23 +599,29 @@ const SmallLoansTable = () => {
         </DialogActions>
       </Dialog>
 
+
       {/* Actions Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {/* View Loan Details - First Item */}
-        <MenuItem
-          onClick={() => {
-            // TODO: Add view loan details functionality
-            handleMenuClose();
-          }}
-          sx={{ color: "#1976D2", fontWeight: 'bold', fontSize: '0.875rem' }}
-        >
-          <Visibility fontSize="small" sx={{ mr: 1, color: "#1976D2" }} />
-          عرض السلفة
-        </MenuItem>
+        {/* Edit Loan - Only for OPEN loans */}
+        {selectedLoanForMenu?.status === "OPEN" && (
+          <MenuItem
+            onClick={() => {
+              if (onEditLoan) {
+                onEditLoan(selectedLoanForMenu);
+              }
+              handleMenuClose();
+            }}
+            sx={{ color: "#FF9800", fontWeight: 'bold', fontSize: '0.875rem' }}
+          >
+            <Edit fontSize="small" sx={{ mr: 1, color: "#FF9800" }} />
+            تعديل السلفة
+          </MenuItem>
+        )}
+
 
         {/* Pay Loan - Only for OPEN loans */}
         {selectedLoanForMenu?.status === "OPEN" && (
@@ -629,7 +638,6 @@ const SmallLoansTable = () => {
         )}
 
         {/* Delete Loan - Only for OPEN loans */}
-        {selectedLoanForMenu?.status === "OPEN" && (
           <MenuItem
             onClick={() => {
               setLoanToDelete(selectedLoanForMenu);
@@ -641,7 +649,6 @@ const SmallLoansTable = () => {
             <Delete fontSize="small" sx={{ mr: 1, color: "#D32F2F" }} />
             حذف السلفة
           </MenuItem>
-        )}
       </Menu>
     </Box>
   );

@@ -130,8 +130,8 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [46, 139, 69],
-            textColor: 255,
+            fillColor: [240, 249, 244],
+            textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 10,
             halign: 'center',
@@ -141,6 +141,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             lineWidth: 0.1
           },
           bodyStyles: {
+            fontStyle: 'bold',
             halign: 'center',
             valign: 'middle',
             cellPadding: 3,

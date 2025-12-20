@@ -122,8 +122,8 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+            fillColor: [240, 249, 244],
+            textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'center',
@@ -131,6 +131,7 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
           cellPadding: 4
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
           cellPadding: 2

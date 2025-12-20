@@ -225,7 +225,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 7,
           cellPadding: 2,
           lineColor: [200, 200, 200],
@@ -236,8 +236,8 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [46, 139, 69], // لون أخضر
-          textColor: 255,
+          fillColor: [240, 249, 244], // خلفية فاتحة
+          textColor: [46, 139, 69], // نص أخضر داكن
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'right',
@@ -247,6 +247,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           direction: 'rtl'
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'right',
           valign: 'middle',
           cellPadding: 2,
@@ -570,7 +571,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 7,
           cellPadding: 2,
           lineColor: [200, 200, 200],
@@ -581,8 +582,8 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [46, 139, 69], // لون أخضر
-          textColor: 255,
+          fillColor: [240, 249, 244], // خلفية فاتحة
+          textColor: [46, 139, 69], // نص أخضر داكن
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'right',
@@ -591,6 +592,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           direction: 'rtl'
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'right',
           valign: 'middle',
           cellPadding: 2,

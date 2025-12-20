@@ -85,8 +85,8 @@ export const exportJournalToPDF = async (journalData) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 10,
           halign: 'center',
@@ -94,6 +94,7 @@ export const exportJournalToPDF = async (journalData) => {
           cellPadding: 4
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'right',
           valign: 'middle',
           cellPadding: 3
@@ -184,8 +185,8 @@ export const exportJournalToPDF = async (journalData) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 9,
           halign: 'center',
@@ -193,6 +194,7 @@ export const exportJournalToPDF = async (journalData) => {
           cellPadding: 4
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
           cellPadding: 2
@@ -505,8 +507,8 @@ export const exportJournalsTableToPDF = async (journals) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 10,
           halign: 'right',
@@ -517,6 +519,7 @@ export const exportJournalsTableToPDF = async (journals) => {
           direction: 'rtl'
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'right',
           valign: 'middle',
           cellPadding: 4,

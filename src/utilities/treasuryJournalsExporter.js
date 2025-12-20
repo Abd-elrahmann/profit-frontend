@@ -125,8 +125,8 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'center',
@@ -136,6 +136,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
           lineWidth: 0.1
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
           cellPadding: 2,
@@ -431,8 +432,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 11, // smaller header font
           halign: 'center',
@@ -442,6 +443,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           lineWidth: 0.1
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
           cellPadding: 6,
@@ -498,8 +500,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [46, 125, 50],
-            textColor: 255,
+            fillColor: [240, 249, 244],
+            textColor: [46, 139, 69],
             fontStyle: 'bold',
           fontSize: 11, // smaller header font
             halign: 'center',
@@ -509,6 +511,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             lineWidth: 0.1
           },
           bodyStyles: {
+            fontStyle: 'bold',
             halign: 'center',
             valign: 'middle',
           cellPadding: 6,
@@ -585,8 +588,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [46, 125, 50], // Green color matching other tables
-            textColor: 255,
+            fillColor: [240, 249, 244], // خلفية فاتحة
+            textColor: [46, 139, 69], // نص أخضر داكن
             fontStyle: 'bold',
             fontSize: 11,
             halign: 'center',
@@ -596,6 +599,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             lineWidth: 0.1
           },
           bodyStyles: {
+            fontStyle: 'bold',
             halign: 'center',
             valign: 'middle',
             cellPadding: 6,

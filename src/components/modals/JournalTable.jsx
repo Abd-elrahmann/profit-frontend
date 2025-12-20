@@ -163,6 +163,8 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         return "مصروف";
       case "PARTNER_WITHDRAWING":
         return "انسحاب مالي لشريك";
+        case "SMALL_LOAN":
+          return "سلفة صغيرة";
       case "OTHER":
         return "أخرى";
       default:

@@ -196,30 +196,12 @@ const ContractPreview = ({
         </Button>
 
         <Button
-          variant="outlined"
-          startIcon={<Print sx={{marginLeft: '10px'}} />}
-          onClick={() => window.print()}
-          disabled={loading || !contractHtml}
-          sx={{ 
-            minWidth: '120px',
-            borderColor: '#1976d2',
-            color: '#1976d2',
-            '&:hover': {
-              borderColor: '#1565c0',
-              bgcolor: '#e3f2fd'
-            }
-          }}
-        >
-          طباعة
-        </Button>
-
-        <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
           onClick={onGeneratePDF}
           disabled={loading || !contractHtml}
           sx={{
-            bgcolor: "#2e7d32",
+            bgcolor: "primary.main",
             "&:hover": { bgcolor: "#1b5e20" },
             minWidth: '140px'
           }}

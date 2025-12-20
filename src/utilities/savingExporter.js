@@ -139,8 +139,8 @@ export const exportSavingsToPDF = async (savingData) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [46, 139, 69],
-            textColor: 255,
+            fillColor: [240, 249, 244],
+            textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 9,
             halign: 'center',
@@ -150,6 +150,7 @@ export const exportSavingsToPDF = async (savingData) => {
             lineWidth: 0.1
           },
           bodyStyles: {
+            fontStyle: 'bold',
             halign: 'center',
             valign: 'middle',
             cellPadding: 2,

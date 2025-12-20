@@ -5,6 +5,22 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
+// دالة لتحميل PDF
+const loadPDFFromURL = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`فشل تحميل الملف: ${response.status}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    return new Uint8Array(arrayBuffer);
+  } catch (error) {
+    console.error('خطأ في تحميل ملف PDF:', error);
+    throw error;
+  }
+};
+
 // Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
@@ -49,14 +65,54 @@ const getArabicMonth = (month) => {
   return months[month] || month;
 };
 
+// دالة لدمج ملفين PDF
+const mergePDFs = async (mainPDF, receiptPDF) => {
+  try {
+    const { PDFDocument } = await import('pdf-lib');
+    
+    const mergedPdf = await PDFDocument.create();
+    
+    // دمج المستند الرئيسي
+    const mainDoc = await PDFDocument.load(mainPDF);
+    const mainPages = await mergedPdf.copyPages(mainDoc, mainDoc.getPageIndices());
+    mainPages.forEach(page => mergedPdf.addPage(page));
+    
+    // دمج مستند المخالصة
+    if (receiptPDF) {
+      const receiptDoc = await PDFDocument.load(receiptPDF);
+      const receiptPages = await mergedPdf.copyPages(receiptDoc, receiptDoc.getPageIndices());
+      receiptPages.forEach(page => mergedPdf.addPage(page));
+    }
+    
+    return await mergedPdf.save();
+  } catch (error) {
+    console.error('خطأ في دمج ملفات PDF:', error);
+    throw error;
+  }
+};
+
 export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
-  return new Promise((resolve, reject) => {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async (resolve, reject) => {
     try {
       if (!withdrawalDetails) {
         throw new Error('لا توجد بيانات للتصدير');
       }
 
       const { partner, withdrawal, schedule } = withdrawalDetails;
+      
+      // تحقق إذا كان هناك رابط للمخالصة
+      const hasReceipt = withdrawal?.WITHDRAWAL_RECEIPT;
+      let receiptPDF = null;
+      
+      if (hasReceipt) {
+        try {
+          receiptPDF = await loadPDFFromURL(withdrawal.WITHDRAWAL_RECEIPT);
+          console.log('تم تحميل عقد المخالصة بنجاح');
+        } catch (error) {
+          console.warn('لا يمكن تحميل عقد المخالصة:', error);
+        }
+      }
 
       // Create new PDF document
       const doc = new jsPDF();
@@ -77,6 +133,10 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
       
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
+      
+      // ============================================
+      // الهيدر (شكل كما كان سابقاً)
+      // ============================================
       
       // Logo positioned on the right
       const logoWidth = 10;
@@ -132,8 +192,8 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 11,
           halign: 'right',
@@ -186,8 +246,8 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             direction: 'rtl'
           },
           headStyles: {
-            fillColor: [46, 139, 69],
-            textColor: 255,
+            fillColor: [240, 249, 244],
+            textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 11,
             halign: 'right',
@@ -245,12 +305,11 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             lineColor: [220, 220, 220],
             lineWidth: 0.2,
             halign: 'center',
-            valign: 'middle',
-            direction: 'rtl'
+            valign: 'middle'
           },
           headStyles: {
-            fillColor: [46, 139, 69],
-            textColor: 255,
+            fillColor: [240, 249, 244],
+            textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 9,
             halign: 'center',
@@ -261,13 +320,12 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             1: { cellWidth: 22 },
             2: { cellWidth: 22 },
             3: { cellWidth: 25 },
-            4: { cellWidth: 20 },
+            4: { cellWidth: 22},
             5: { cellWidth: 22 },
             6: { cellWidth: 22 },
-            7: { cellWidth: 18 },
+            7: { cellWidth: 22},
           },
-          margin: { left: 10, right: 10 },
-          tableWidth: 'auto',
+          margin: { left: 15, right: 15 },
           pageBreak: 'auto',
           showHead: 'everyPage',
         });
@@ -308,11 +366,40 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
         
         doc.setTextColor(0, 0, 0);
       }
+
+      // ============================================
+      // دمج ملف المخالصة إذا كان موجوداً
+      // ============================================
+      if (hasReceipt && receiptPDF) {
+        try {
+          
+          // تحويل PDF الرئيسي إلى ArrayBuffer
+          const mainPDF = doc.output('arraybuffer');
+          
+          // دمج الملفين
+          const mergedPDF = await mergePDFs(mainPDF, receiptPDF);
+          
+          // حفظ الملف المدمج
+          const fileName = `تقرير_انسحاب_${partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') || 'مستثمر'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
+          const blob = new Blob([mergedPDF], { type: 'application/pdf' });
+          
+          saveAs(blob, fileName);
+          resolve();
+          
+        } catch (error) {
+          console.error('Error merging PDFs:', error.message);
+          // حفظ التقرير بدون المخالصة
+          const fileName = `تقرير_انسحاب_${partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') || 'مستثمر'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
+          doc.save(fileName);
+          resolve();
+        }
+      } else {
+        // حفظ التقرير بدون المخالصة
+        const fileName = `تقرير_انسحاب_${partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') || 'مستثمر'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
+        doc.save(fileName);
+        resolve();
+      }
       
-      // Save PDF
-      const fileName = `تقرير_انسحاب_${partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') || 'مستثمر'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      doc.save(fileName);
-      resolve();
     } catch (error) {
       console.error('PDF export error:', error.message);
       reject(error);
@@ -362,10 +449,11 @@ export const exportWithdrawalDetailsToExcel = async (withdrawalDetails) => {
         ['مبلغ الادخار', withdrawal.savingAmount || 0],
         ['المبلغ الشهري', withdrawal.monthlyAmount || 0],
         ['تاريخ الطلب', withdrawal.createdAt ? dayjs(withdrawal.createdAt).format('DD/MM/YYYY') : '-'],
+        ['عقد المخالصة', withdrawal.WITHDRAWAL_RECEIPT || 'غير متاح'],
       ];
 
       const withdrawalSheet = XLSX.utils.aoa_to_sheet(withdrawalData);
-      withdrawalSheet['!cols'] = [{ wch: 25 }, { wch: 25 }];
+      withdrawalSheet['!cols'] = [{ wch: 25 }, { wch: 50 }];
       XLSX.utils.book_append_sheet(workbook, withdrawalSheet, 'طلب الانسحاب');
     }
 

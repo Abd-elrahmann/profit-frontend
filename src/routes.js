@@ -21,6 +21,7 @@ import {
   MdPersonSearch as InvestorsIcon,
   MdAdminPanelSettings as AdminPanelIcon,
   MdPayment as PaymentIcon,
+  MdAccountBalance as IncomeStatementIcon,
 } from 'react-icons/md';
 import { History as HistoryIcon } from '@mui/icons-material';
 import { MdAttachMoney as LoanIcon } from 'react-icons/md';
@@ -56,6 +57,7 @@ const ClientCollections = React.lazy(() => import('./pages/clientCollections/Cli
 const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProfit'));
 const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
 const InvestorsWithdrawal = React.lazy(() => import('./pages/investorsWithdrawal/investorsWithdrawal'));
+const IncomeStatement = React.lazy(() => import('./pages/incomeStatement/incomeStatement'));
 const routes = [
   {
     path: '/login',
@@ -171,6 +173,17 @@ const routes = [
   },
 
   {
+    path: '/income-statement',
+    element: IncomeStatement,
+    protected: true,
+    showInSidebar: true,
+    label: 'قائمة الدخل',
+    module: 'income-statement',
+    requiresPermissions: true,
+    icon: IncomeStatementIcon,
+    parent: 'القوائم المالية'
+  },
+  {
     path: '/chart-of-accounts',
     element: ChartOfAccounts,
     protected: true,
@@ -208,11 +221,11 @@ const routes = [
     element: PeriodClosing,
     protected: true,
     showInSidebar: true,
-    label: 'تقفيل الفترات',
+    label: 'إقفال الفترات',
     module: 'period',
     requiresPermissions: true,
     icon: CalendarMonthIcon,
-    parent: 'المحاسبة المالية'
+    parent: 'القوائم المالية'
   },
 
   {
@@ -269,17 +282,6 @@ const routes = [
   },
 
   {
-    path: '/profit-distribution',
-    element: ProfitDistribution,
-    protected: true,
-    showInSidebar: true,
-    label: 'توزيع الأرباح',
-    module: 'distribution',
-    icon: ProfitDistributionIcon,
-    requiresPermissions: true,
-    parent: 'الأرباح والتقارير'
-  },
-  {
     path: '/company-profit',
     element: CompanyProfit,
     protected: true,
@@ -288,7 +290,18 @@ const routes = [
     module: 'company',
     requiresPermissions: true,
     icon: CompanyProfitIcon,
-    parent: 'الأرباح والتقارير'
+    parent: 'القوائم المالية'
+  },
+  {
+    path: '/profit-distribution',
+    element: ProfitDistribution,
+    protected: true,
+    showInSidebar: true,
+    label: 'توزيع الأرباح',
+    module: 'distribution',
+    icon: ProfitDistributionIcon,
+    requiresPermissions: true,
+    parent: 'القوائم المالية'
   },
 
   {
@@ -355,7 +368,7 @@ export const getSidebarMenuItems = () => {
     'ادارة المصروفات',
     'المحاسبة المالية',
     'العمليات المالية',
-    'الأرباح والتقارير',
+    'القوائم المالية',
     'الزكاة والادخار',
     'القوالب'
   ];
@@ -367,7 +380,7 @@ export const getSidebarMenuItems = () => {
     'ادارة المصروفات': ReceiptLongIcon,
     'المحاسبة المالية': AccountingIcon,
     'العمليات المالية': FinancialOpsIcon,
-    'الأرباح والتقارير': AnalyticsIcon,
+    'القوائم المالية': AnalyticsIcon,
     'الزكاة والادخار': ZakatIcon,
     'القوالب': ArticleIcon,
   };
@@ -379,7 +392,7 @@ export const getSidebarMenuItems = () => {
     'ادارة المصروفات': '#F57C00', // Dark Orange-Yellow
     'المحاسبة المالية': '#7B1FA2', // Dark Purple
     'العمليات المالية': '#C62828', // Dark Red
-    'الأرباح والتقارير': '#2E7D32', // Dark Green
+    'القوائم المالية': '#2E7D32', // Dark Green
     'الزكاة والادخار': '#6A1B9A', // Dark Purple
     'القوالب': '#424242', // Dark Gray
   };

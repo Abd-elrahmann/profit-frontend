@@ -24,54 +24,6 @@ const PaymentProofPreview = ({
   installmentAmount = 0,
 }) => {
 
-  const handlePrint = () => {
-    const proofElement = document.getElementById('payment-proof-content');
-    if (proofElement) {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>إيصال سداد الدفعة</title>
-            <style>
-              body { 
-                font-family: "Noto Sans Arabic", "Cairo", sans-serif;
-                margin: 0;
-                padding: 20px;
-                direction: rtl;
-              }
-              .proof-content { 
-                max-width: 900px; 
-                margin: 0 auto; 
-                border: 1px solid #ddd;
-                padding: 30px;
-                border-radius: 12px;
-                background: #fff;
-              }
-              @media print {
-                body { padding: 0; }
-                .proof-content { 
-                  border: none; 
-                  box-shadow: none;
-                  padding: 15px;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="proof-content">
-              ${proofElement.innerHTML}
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    }
-  };
 
   return (
     <Dialog 
@@ -217,32 +169,14 @@ const PaymentProofPreview = ({
         </Button>
 
         <Button
-          variant="outlined"
-          startIcon={<Print sx={{marginLeft: '10px'}} />}
-          onClick={handlePrint}
-          disabled={loading || !paymentProofHtml}
-          sx={{ 
-            minWidth: '120px',
-            borderColor: '#1976d2',
-            color: '#1976d2',
-            '&:hover': {
-              borderColor: '#1565c0',
-              bgcolor: '#e3f2fd'
-            }
-          }}
-        >
-          طباعة
-        </Button>
-        
-        <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
           onClick={onSaveProof}
           disabled={loading || !paymentProofHtml}
           sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "#0b3589" },
-            minWidth: '140px'
+            bgcolor: "primary.main",
+            minWidth: '140px',
+            "&:hover": { bgcolor: "primary.main" },
           }}
         >
           {loading ? 'جاري الحفظ...' : 'حفظ الإيصال'}

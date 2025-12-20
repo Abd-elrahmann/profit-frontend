@@ -110,7 +110,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
         theme: 'striped',
         styles: {
           font: 'Amiri',
-          fontStyle: 'normal',
+          fontStyle: 'bold',
           fontSize: 8,
           cellPadding: 3,
           lineColor: [200, 200, 200],
@@ -119,8 +119,8 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [46, 139, 69],
-          textColor: 255,
+          fillColor: [240, 249, 244],
+          textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 9,
           halign: 'center',
@@ -128,6 +128,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
           cellPadding: 4
         },
         bodyStyles: {
+          fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
           cellPadding: 2

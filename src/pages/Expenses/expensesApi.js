@@ -3,7 +3,7 @@ import Api, { handleApiError } from '../../config/Api';
 // Get expenses with pagination
 export const getExpenses = async (page = 1) => {
   try {
-    const response = await Api.get(`/api/expenses/${page}`);
+    const response = await Api.get(`/api/expenses/records/${page}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -22,7 +22,7 @@ export const createExpense = async (expensesData) => {
   }
 };
 
-// Update expense
+// Update expense - يستخدم journalId كما هو محدد في الـ backend
 export const updateExpense = async (journalId, expensesData) => {
   try {
     const response = await Api.patch(`/api/expenses/${journalId}`, expensesData);
@@ -33,10 +33,22 @@ export const updateExpense = async (journalId, expensesData) => {
   }
 };
 
-// Delete expense
+// Delete expense - يستخدم journalId كما هو محدد في الـ backend
 export const deleteExpense = async (journalId) => {
   try {
     const response = await Api.delete(`/api/expenses/${journalId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Get users list for expenses
+export const getUsersForExpenses = async (searchTerm = '') => {
+  try {
+    const params = searchTerm ? { name: searchTerm } : {};
+    const response = await Api.get('/api/expenses/users/list', { params });
     return response.data;
   } catch (error) {
     handleApiError(error);

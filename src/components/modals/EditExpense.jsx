@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -33,42 +33,6 @@ const EXPENSE_TYPES = [
   "مصروفات اخرى"
 ];
 
-// Function to extract expense type from description
-const extractExpenseType = (description) => {
-  if (!description) return 'مصروفات اخرى';
-  
-  const lowerDesc = description.toLowerCase();
-  
-  if (lowerDesc.includes('بنزين') || lowerDesc.includes('وقود')) {
-    return 'مصروف بنزين';
-  } else if (lowerDesc.includes('انترنت') || lowerDesc.includes('نت')) {
-    return 'مصروفات انترنت';
-  } else if (lowerDesc.includes('ورق')) {
-    return 'مصروفات ورقية';
-  } else if (lowerDesc.includes('كهرباء') || lowerDesc.includes('كهربا')) {
-    return 'مصروفات كهرباء';
-  } else if (lowerDesc.includes('تشغيل') || lowerDesc.includes('تشغيلية')) {
-    return 'مصروفات تشغيلية';
-  } else if (lowerDesc.includes('راتب') || lowerDesc.includes('مرتب')) {
-    return 'مصروف رواتب';
-  } else {
-    return 'مصروفات اخرى';
-  }
-};
-
-
-// Function to extract employee name for salary expenses
-const extractEmployeeName = (description) => {
-  if (!description || !description.includes('-')) return null;
-  
-  const parts = description.split('-');
-  if (parts[0].includes('راتب') || parts[0].includes('صرف راتب')) {
-    return parts[1]?.trim() || null;
-  }
-  
-  return null;
-};
-
 const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) => {
   const [expenses, setExpenses] = useState([
     { type: "", amount: "", description: "", userId: null }
@@ -78,92 +42,40 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
 
-  // Debounced user search function
-  const debouncedUserSearch = useCallback(
-    (searchTerm) => {
-      let timeout;
-      return function executedFunction() {
-        const later = async () => {
-          clearTimeout(timeout);
-          try {
-            setUsersLoading(true);
-            const params = searchTerm ? { name: searchTerm } : {};
-            const response = await Api.get('/api/expenses/users/list', { params });
-            setUsers(response.data || []);
-          } catch (error) {
-            console.error('Error fetching users:', error);
-            notifyError('فشل في تحميل قائمة الموظفين');
-          } finally {
-            setUsersLoading(false);
-          }
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, 300);
-      }();
-    },
-    []
-  );
-
   useEffect(() => {
     if (open) {
-      // Load users when modal opens
-      debouncedUserSearch('');
+      // جلب قائمة المستخدمين
+      const fetchUsers = async () => {
+        try {
+          setUsersLoading(true);
+          const response = await Api.get('/api/expenses/users/list');
+          setUsers(response.data || []);
+        } catch (error) {
+          console.error('Error fetching users:', error);
+          notifyError('فشل في تحميل قائمة الموظفين');
+        } finally {
+          setUsersLoading(false);
+        }
+      };
+      
+      fetchUsers();
     }
-  }, [open, debouncedUserSearch]);
-
-  // Find user by name
-  const findUserByName = (name) => {
-    return users.find(user => user.name === name) || null;
-  };
+  }, [open]);
 
   useEffect(() => {
     if (open && expense) {
-
-      if (expense.lines && expense.lines.length > 0) {
-        // Filter expense lines (exclude bank line which has credit > 0)
-        const expenseLines = expense.lines.filter(line => line.debit > 0);
-
-        const formattedExpenses = expenseLines.map((line) => {
-
-          // Extract information from line.type (the API structure has type directly)
-          const type = line.type || "";
-          const description = type; // Use type as description for display
-
-          // Determine expense type based on the type field
-          let expenseType;
-          if (EXPENSE_TYPES.includes(type)) {
-            expenseType = type;
-          } else {
-            expenseType = extractExpenseType(type);
-          }
-
-          // Extract employee name for salary expenses (from type field)
-          const employeeName = extractEmployeeName(type);
-
-          // Find user for salary expenses
-          let userId = null;
-          if (expenseType === 'مصروف رواتب' && employeeName) {
-            const user = findUserByName(employeeName);
-            userId = user ? user.id : null;
-          }
-
-          return {
-            type: expenseType,
-            amount: line.debit || line.amount || "",
-            description: description,
-            userId: userId
-          };
-        });
-
-        setExpenses(formattedExpenses.length > 0 ? formattedExpenses : [{ type: "", amount: "", description: "", userId: null }]);
-      } else {
-        setExpenses([{ type: "", amount: "", description: "", userId: null }]);
-      }
-
+      // تحويل بيانات المصروف الواحد إلى مصفوفة لتتوافق مع الشكل المطلوب
+      const formattedExpenses = [{
+        type: expense.type,
+        amount: expense.amount.toString(),
+        description: expense.description,
+        userId: expense.employee?.id || null
+      }];
+      
+      setExpenses(formattedExpenses);
       setErrors([]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, expense, users]);
+  }, [open, expense]);
 
   const handleAddExpense = () => {
     setExpenses([...expenses, { type: "", amount: "", description: "", userId: null }]);
@@ -185,19 +97,14 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
     const newExpenses = [...expenses];
     newExpenses[index][field] = value;
 
-    // If changing type and it's not salary expense, clear userId
+    // إذا تم تغيير النوع إلى غير "مصروف رواتب"، مسح userId
     if (field === 'type' && value !== 'مصروف رواتب') {
       newExpenses[index].userId = null;
-      newExpenses[index].description = newExpenses[index].description.replace(/ - .*$/, '');
-    }
-
-    // If clearing userId for salary expense, remove employee name from description
-    if (field === 'userId' && !value && newExpenses[index].type === 'مصروف رواتب') {
-      newExpenses[index].description = newExpenses[index].description.replace(/ - .*$/, '');
     }
 
     setExpenses(newExpenses);
 
+    // مسح الأخطاء
     if (errors[index]?.[field]) {
       const newErrors = [...errors];
       if (newErrors[index]) {
@@ -214,32 +121,27 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
     const newErrors = [];
     let isValid = true;
 
-    expenses.forEach((expense, index) => {
+    expenses.forEach((expenseItem, index) => {
       const expenseErrors = {};
 
-      if (!expense.type || expense.type.trim() === "") {
+      if (!expenseItem.type || expenseItem.type.trim() === "") {
         expenseErrors.type = "نوع المصروف مطلوب";
         isValid = false;
       }
 
-      if (!expense.amount || expense.amount.trim() === "") {
+      if (!expenseItem.amount || expenseItem.amount.trim() === "") {
         expenseErrors.amount = "المبلغ مطلوب";
         isValid = false;
       } else {
-        const amount = parseFloat(expense.amount);
+        const amount = parseFloat(expenseItem.amount);
         if (isNaN(amount) || amount <= 0) {
           expenseErrors.amount = "يرجى إدخال مبلغ صحيح";
           isValid = false;
         }
       }
 
-      if (!expense.description || expense.description.trim() === "") {
-        expenseErrors.description = "الوصف مطلوب";
-        isValid = false;
-      }
 
-      // Validate user selection for salary expenses
-      if (expense.type === 'مصروف رواتب' && !expense.userId) {
+      if (expenseItem.type === 'مصروف رواتب' && !expenseItem.userId) {
         expenseErrors.userId = "يجب اختيار الموظف عند إضافة مصروف رواتب";
         isValid = false;
       }
@@ -260,27 +162,14 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
 
     setLoading(true);
     try {
-      const formattedExpenses = expenses.map(expense => {
-        let description = expense.description.trim();
-        
-        // For salary expenses, add employee name to description
-        if (expense.type === 'مصروف رواتب' && expense.userId) {
-          const employee = users.find(user => user.id === expense.userId);
-          if (employee) {
-            description = `${description} - ${employee.name}`;
-          }
-        }
-        
-        return {
-          type: expense.type.trim(),
-          amount: parseFloat(expense.amount),
-          description: description,
-          ...(expense.userId && { userId: expense.userId })
-        };
-      });
+      const formattedExpenses = expenses.map(expenseItem => ({
+        type: expenseItem.type.trim(),
+        amount: parseFloat(expenseItem.amount),
+        description: expenseItem.description.trim(),
+        ...(expenseItem.userId && { userId: expenseItem.userId })
+      }));
 
-      
-      await updateExpense(expense.journalId, { expenses: formattedExpenses });
+      await updateExpense(expense.id, { expenses: formattedExpenses });
       notifySuccess("تم تعديل المصروفات بنجاح");
       onSuccess();
       onClose();
@@ -303,7 +192,7 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
       fullScreen={isMobile}
     >
       <DialogTitle sx={{ fontWeight: "bold", color: "primary.main" }}>
-        تعديل المصروفات
+        تعديل المصروف
       </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
@@ -344,18 +233,9 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
                       const value = newValue ? newValue.id : null;
                       const newExpenses = [...expenses];
                       newExpenses[index].userId = value;
-                      
-                      // Update description with employee name
-                      if (newValue) {
-                        let description = newExpenses[index].description;
-                        // Remove any existing employee name
-                        description = description.replace(/ - .*$/, '');
-                        newExpenses[index].description = description;
-                      }
-                      
                       setExpenses(newExpenses);
 
-                      // Clear error for this field
+                      // مسح الأخطاء
                       if (errors[index]?.userId) {
                         const newErrors = [...errors];
                         if (newErrors[index]) {
@@ -367,11 +247,6 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
                         }
                       }
                     }}
-                    onInputChange={(event, newInputValue) => {
-                      if (newInputValue) {
-                        debouncedUserSearch(newInputValue);
-                      }
-                    }}
                     loading={usersLoading}
                     renderInput={(params) => (
                       <TextField
@@ -380,6 +255,15 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
                         required
                         error={!!errors[index]?.userId}
                         helperText={errors[index]?.userId}
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <React.Fragment>
+                              {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                              {params.InputProps.endAdornment}
+                            </React.Fragment>
+                          ),
+                        }}
                       />
                     )}
                     noOptionsText="لا توجد نتائج"
@@ -406,12 +290,10 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
                   value={expenseItem.description}
                   onChange={handleChange(index, "description")}
                   fullWidth
-                  required
                   error={!!errors[index]?.description}
                   helperText={errors[index]?.description}
                   multiline
                   rows={2}
-                  placeholder={expenseItem.type === 'مصروف رواتب' ? 'مثال: صرف راتب ديسمبر' : 'مثال: مصروف بنزين السيارة'}
                 />
               </Stack>
 
@@ -444,7 +326,7 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
           </Button>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ p: 2, gap: 1,flexDirection: "row-reverse",justifyContent: "space-between" }}>
+      <DialogActions sx={{ p: 2, gap: 1, flexDirection: "row-reverse", justifyContent: "space-between" }}>
         <Button onClick={onClose} variant="outlined" disabled={loading}>
           إلغاء
         </Button>
@@ -452,11 +334,9 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
           onClick={handleSubmit}
           variant="contained"
           disabled={loading}
-          sx={{ bgcolor: "primary.main",
-            "&:hover": { bgcolor: "#2E8B41" },
-           }}
+          sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "#2E8B41" } }}
         >
-          {loading ? <CircularProgress size={20} /> : "تعديل المصروفات"}
+          {loading ? <CircularProgress size={20} /> : "تعديل المصروف"}
         </Button>
       </DialogActions>
     </Dialog>

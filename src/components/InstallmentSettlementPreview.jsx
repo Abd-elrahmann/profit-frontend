@@ -23,54 +23,7 @@ const InstallmentSettlementPreview = ({
   installmentAmount = 0,
 }) => {
 
-  const handlePrint = () => {
-    const settlementElement = document.getElementById('settlement-receipt-content');
-    if (settlementElement) {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>سند تسوية الدفعة</title>
-            <style>
-              body { 
-                font-family: "Noto Sans Arabic", "Cairo", sans-serif;
-                margin: 0;
-                padding: 20px;
-                direction: rtl;
-              }
-              .settlement-content { 
-                max-width: 900px; 
-                margin: 0 auto; 
-                border: 1px solid #ddd;
-                padding: 30px;
-                border-radius: 12px;
-                background: #fff;
-              }
-              @media print {
-                body { padding: 0; }
-                .settlement-content { 
-                  border: none; 
-                  box-shadow: none;
-                  padding: 15px;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="settlement-content">
-              ${settlementElement.innerHTML}
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    }
-  };
+
 
   // دالة للإغلاق
   const handleClose = () => {
@@ -228,32 +181,14 @@ const InstallmentSettlementPreview = ({
         >
           إغلاق
         </Button>
-
-        <Button
-          variant="outlined"
-          startIcon={<Print sx={{marginLeft: '10px'}} />}
-          onClick={handlePrint}
-          disabled={loading || !settlementHtml}
-          sx={{ 
-            minWidth: '120px',
-            borderColor: '#1976d2',
-            color: '#1976d2',
-            '&:hover': {
-              borderColor: '#1565c0',
-              bgcolor: '#e3f2fd'
-            }
-          }}
-        >
-          طباعة
-        </Button>
-        
+    
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
           onClick={handleSaveAndClose} // استخدام الدالة المعدلة
           disabled={loading || !settlementHtml}
           sx={{
-            bgcolor: "#2E8B45",
+            bgcolor: "primary.main",
             "&:hover": { bgcolor: "#2563EB" },
             minWidth: '140px'
           }}

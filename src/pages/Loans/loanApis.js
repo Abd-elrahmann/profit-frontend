@@ -141,6 +141,17 @@ export const paySmallLoan = async (loanId, paymentData) => {
   }
 };
 
+// Update small loan
+export const updateSmallLoan = async (loanId, updateData) => {
+  try {
+    const response = await Api.patch(`/api/small-loans/${loanId}`, updateData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // Get small loans with pagination
 export const getSmallLoans = async (page = 1, limit = 20) => {
   try {
