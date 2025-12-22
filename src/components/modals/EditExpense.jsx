@@ -168,7 +168,7 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
         ...(expenseItem.userId && { userId: expenseItem.userId })
       }));
 
-      await updateExpense(expense.id, { expenses: formattedExpenses });
+      await updateExpense(expense.journalId, { expenses: formattedExpenses });
       notifySuccess("تم تعديل المصروفات بنجاح");
       onSuccess();
       onClose();

@@ -30,7 +30,7 @@ const CollectionStats = () => {
   });
 
   // Animated counters
-  const animatedPercentage = useCountUp(stats?.collectionPercentage || 0, 600, !isLoading);
+  const animatedPercentage = useCountUp(stats?.currentMonth?.collectionPercentage || 0, 600, !isLoading);
   
   // New animated counters for bank account
   const animatedBankDebit = useCountUp(stats?.bankAccount?.debit || 0, 600, !isLoading);
