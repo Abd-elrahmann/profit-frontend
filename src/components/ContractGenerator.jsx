@@ -76,19 +76,24 @@ const numberToArabicWords = (num) => {
 };
 
 const getCurrentDates = () => {
+  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
+  const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
+
+  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
+  const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   // التاريخ الميلادي
-  const gregorianDate = now.toLocaleDateString('ar-EG', { 
-    day: 'numeric', 
-    month: 'numeric', 
-    year: 'numeric' 
+  const gregorianDate = today.toLocaleDateString('ar-EG', {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric'
   });
 
-  // التاريخ الهجري  
-  const hijriDate = now.toLocaleDateString('ar-SA-u-ca-islamic-umalqura', {
+  // التاريخ الهجري
+  const hijriDate = today.toLocaleDateString('ar-SA-u-ca-islamic-umalqura', {
     day: 'numeric',
-    month: 'numeric', 
+    month: 'numeric',
     year: 'numeric'
   });
 

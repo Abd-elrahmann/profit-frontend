@@ -231,8 +231,8 @@ export const exportInvestorsToPDF = async (investorsData) => {
             direction: 'rtl'
           },
           headStyles: {
-            fillColor: [240, 249, 244],
-            textColor: [46, 139, 69],
+fillColor: [240, 240, 240],
+          textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 10,
             halign: 'right',
@@ -293,8 +293,8 @@ export const exportInvestorsToPDF = async (investorsData) => {
             direction: 'rtl'
           },
           headStyles: {
-            fillColor: [240, 249, 244],
-            textColor: [46, 139, 69],
+fillColor: [240, 240, 240],
+          textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 10,
             halign: 'right',
@@ -399,8 +399,8 @@ export const exportInvestorsToPDF = async (investorsData) => {
               direction: 'rtl'
             },
             headStyles: {
-              fillColor: [240, 249, 244],
-              textColor: [46, 139, 69],
+fillColor: [240, 240, 240],
+          textColor: [46, 139, 69],
               fontStyle: 'bold',
               fontSize: 10,
               halign: 'right',
@@ -492,8 +492,8 @@ export const exportInvestorsToPDF = async (investorsData) => {
               direction: 'rtl'
             },
             headStyles: {
-              fillColor: [240, 249, 244],
-              textColor: [46, 139, 69],
+fillColor: [240, 240, 240],
+          textColor: [46, 139, 69],
               fontStyle: 'bold',
               fontSize: 10,
               halign: 'right',

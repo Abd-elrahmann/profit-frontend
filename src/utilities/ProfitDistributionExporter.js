@@ -121,7 +121,7 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [240, 249, 244],
+          fillColor: [240, 240, 240],
           textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 10,
@@ -199,7 +199,7 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
             direction: 'rtl'
           },
           headStyles: {
-            fillColor: [240, 249, 244],
+            fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 7,

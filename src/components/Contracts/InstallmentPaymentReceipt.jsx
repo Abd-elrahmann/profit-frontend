@@ -74,7 +74,7 @@ return `
     display: grid;
     grid-template-columns: auto 1fr;
     border-top: 1px solid #ddd;
-    padding: 5px 0;
+    padding: 3px 0;
     font-size: 14px;
     word-spacing: normal;
     letter-spacing: normal;

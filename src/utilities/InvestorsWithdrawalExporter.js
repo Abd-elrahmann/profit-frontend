@@ -192,7 +192,7 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [240, 249, 244],
+          fillColor: [240, 240, 240],
           textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 11,
@@ -246,7 +246,7 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             direction: 'rtl'
           },
           headStyles: {
-            fillColor: [240, 249, 244],
+            fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 11,
@@ -308,7 +308,7 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [240, 249, 244],
+            fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 9,

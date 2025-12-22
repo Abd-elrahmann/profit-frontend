@@ -67,7 +67,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
 
   const { data: smallLoansData, isLoading } = useQuery({
     queryKey: ["small-loans", page, searchQuery, PAGE_SIZE],
-    queryFn: () => getSmallLoans(page, PAGE_SIZE),
+    queryFn: () => getSmallLoans(page, searchQuery, PAGE_SIZE),
     retry: 1,
   });
 

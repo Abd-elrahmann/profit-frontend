@@ -120,7 +120,12 @@ const numberToArabicWords = (num) => {
 };
 
 const getCurrentDates = () => {
+  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
+  const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
+
+  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
+  const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat(
     "ar-SA-u-ca-islamic-umalqura",
@@ -132,7 +137,7 @@ const getCurrentDates = () => {
     }
   );
 
-  let hijriDate = hijriFormatter.format(now);
+  let hijriDate = hijriFormatter.format(today);
 
   hijriDate = hijriDate.replace(/\s+/g, " ").trim();
   hijriDate = hijriDate.replace(" ", " من ");

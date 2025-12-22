@@ -1,18 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
-  Grid,
-  TextField,
   Button,
-  Paper,
   Stack,
   Divider,
-  Tabs,
-  Tab,
-  Autocomplete,
-  CircularProgress,
-  MenuItem,
   Alert,
   Chip,
   useMediaQuery,
@@ -25,6 +17,7 @@ import {
   getLoanById,
   updateLoan,
   getPartners,
+  convertLoanClient,
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
@@ -35,6 +28,15 @@ import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import LoanContractGenerator from "../../components/LoanContractGenerator";
 import LoanContractsPreview from "../../components/LoanContractsPreview";
+import LoanTabs from "../../components/loans/LoanTabs";
+import LoanMainTab from "../../components/loans/LoanMainTab";
+import LoanClientSection from "../../components/loans/LoanClientSection";
+import LoanKafeelSection from "../../components/loans/LoanKafeelSection";
+import LoanDetailsSection from "../../components/loans/LoanDetailsSection";
+import LoanSimulation from "../../components/loans/LoanSimulation";
+import LoanActions from "../../components/loans/LoanActions";
+import LoanClientConversion from "../../components/loans/LoanClientConversion";
+import LoanConversionConfirmModal from "../../components/modals/LoanConversionConfirmModal";
 import Api, { handleApiError } from "../../config/Api";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -42,7 +44,7 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 const Loans = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-  const [subTab, setSubTab] = useState(0); // 0: pending, 1: active, 2: completed
+  const [subTab, setSubTab] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedKafeel, setSelectedKafeel] = useState(null);
   const [selectedBank, setSelectedBank] = useState(null);
@@ -50,6 +52,7 @@ const Loans = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [banksSearchQuery, setBanksSearchQuery] = useState("");
   const [partnersSearchQuery, setPartnersSearchQuery] = useState("");
+  const [loansTableSearchQuery, setLoansTableSearchQuery] = useState("");
   const [clientsPage, setClientsPage] = useState(1);
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
@@ -65,7 +68,6 @@ const Loans = () => {
     repaymentDay: "",
   });
 
-  // Helper function to convert day number to date string for UI
   const dayToDateString = (day) => {
     if (!day || isNaN(day)) return "";
     const today = new Date();
@@ -75,7 +77,6 @@ const Loans = () => {
     return `${year}-${month}-${dayStr}`;
   };
 
-  // Helper function to extract day from date string
   const dateToDay = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -101,10 +102,16 @@ const Loans = () => {
   const [_isCreatingLoan, setIsCreatingLoan] = useState(false);
   const [isSavingContracts, setIsSavingContracts] = useState(false);
   const [isAdditionalLoan, setIsAdditionalLoan] = useState(false);
+  const [isClientConversion, setIsClientConversion] = useState(false);
+  const [loanForConversion, setLoanForConversion] = useState(null);
+  const [selectedClientForConversion, setSelectedClientForConversion] = useState(null);
+  const [selectedKafeelForConversion, setSelectedKafeelForConversion] = useState(null);
+  const [showConversionConfirmModal, setShowConversionConfirmModal] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [bankBalance, setBankBalance] = useState(null);
-  const [isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
+  const [_isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
   const [selectedLoanForEdit, setSelectedLoanForEdit] = useState(null);
-  const [isSmallLoanEditMode, setIsSmallLoanEditMode] = useState(false);
+  const [_isSmallLoanEditMode, setIsSmallLoanEditMode] = useState(false);
   const { permissions } = usePermissions();
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
@@ -135,27 +142,81 @@ const Loans = () => {
     retry: 1,
   });
 
-  // Get all loans for the selected client to filter out used kafeels
   const { data: clientLoansData } = useQuery({
     queryKey: ["client-loans", selectedClient?.client?.id],
     queryFn: async () => {
       if (!selectedClient?.client?.id) return [];
-      const response = await Api.get(`/api/loans/all/1?clientId=${selectedClient.client.id}&limit=1000`);
-      return response.data?.data || [];
+      // Get all loans for this client with pagination
+      const allLoans = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await Api.get(`/api/loans/all/${page}?clientId=${selectedClient.client.id}&limit=10`);
+        const pageData = response.data?.data || [];
+        allLoans.push(...pageData);
+
+        if (pageData.length < 10) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+
+      return allLoans;
     },
     enabled: !!selectedClient?.client?.id && activeTab === 6,
     retry: 1,
   });
 
+  const { data: loansNeedingContracts } = useQuery({
+    queryKey: ["loans-needing-contracts"],
+    queryFn: async () => {
+      // Get all loans with pagination to find those needing contracts
+      const allLoans = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await Api.get(`/api/loans/all/${page}?limit=10`);
+        const pageData = response.data?.data || [];
+        allLoans.push(...pageData);
+
+        if (pageData.length < 10) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+
+      return allLoans.filter(loan =>
+        loan.status !== "COMPLETED" &&
+        (loan.DEBT_ACKNOWLEDGMENT === null || loan.PROMISSORY_NOTE === null)
+      );
+    },
+    enabled: activeTab === 0,
+    retry: 1,
+  });
+
   useEffect(() => {
-    // Only fetch templates when not in tab 2 or 3
+    // Reset loan-related states when changing tabs to prevent stale state
+    if (activeTab !== 1) {
+      setIsViewMode(false);
+      setIsEditMode(false);
+      setIsClientConversion(false);
+      setIsAdditionalLoan(false);
+      setLoanForConversion(null);
+      setSelectedClientForConversion(null);
+      setSelectedKafeelForConversion(null);
+      setShowConversionConfirmModal(false);
+    }
+
     if (activeTab !== 2 && activeTab !== 3) {
       fetchContractTemplates();
     }
     if (activeTab === 1) {
       calculateInstallments();
       fetchBankBalance();
-      // Clear search queries to ensure all options are shown
       setBanksSearchQuery("");
       setPartnersSearchQuery("");
       setSearchQuery("");
@@ -163,7 +224,6 @@ const Loans = () => {
       setPartnersPage(1);
       setClientsPage(1);
     }
-    // Reset small loan edit mode when not in tab 2
     if (activeTab !== 2) {
       setIsSmallLoanEditMode(false);
       setSelectedLoanForEdit(null);
@@ -199,6 +259,120 @@ const Loans = () => {
     loanForm.paymentAmount,
     activeTab,
   ]);
+
+  const handleConversionSuccess = useCallback(() => {
+    setIsClientConversion(false);
+    setLoanForConversion(null);
+    setSelectedClientForConversion(null);
+    setSelectedKafeelForConversion(null);
+    setShowConversionConfirmModal(false);
+    setActiveTab(0); // Return to main tab
+    queryClient.invalidateQueries(["loans"]);
+  }, [queryClient]);
+
+  const calculateRemainingAmount = (loan) => {
+    // Use totalRemainingAmount if available, otherwise fallback to remainingBalance
+    if (loan?.totalRemainingAmount !== undefined) {
+      return loan.totalRemainingAmount;
+    }
+    if (loan?.remainingBalance !== undefined) {
+      return loan.remainingBalance;
+    }
+    // Fallback to calculating from repayments if available
+    if (!loan?.repayments) return 0;
+    return loan.repayments
+      .filter(repayment => repayment.status !== "PAID")
+      .reduce((sum, repayment) => {
+        const remaining = repayment.amount - (repayment.paidAmount || 0);
+        return sum + Math.max(0, remaining);
+      }, 0);
+  };
+
+  const handleConfirmConversion = async () => {
+    setIsConverting(true);
+    try {
+      await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id);
+
+      // Get updated loan data after conversion
+      const updatedLoan = await getLoanById(loanForConversion.id);
+
+      // Get full client data for the new client
+      const newClientResponse = await getClients(1, selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name);
+      const fullNewClientData = newClientResponse?.clients?.find(
+        (c) => c.client.id === selectedClientForConversion.client.id
+      );
+
+      // Create loan data for preview with new client information
+      const loanDataForPreview = {
+        ...updatedLoan,
+        client: fullNewClientData?.client || selectedClientForConversion.client,
+        partner: updatedLoan.partner,
+        kafeel: updatedLoan.kafeel || null,
+      };
+
+      // Set the loan data for contracts generation
+      setSavedLoanData(loanDataForPreview);
+
+      notifySuccess("تم نقل المديونية بنجاح");
+
+      // Open preview with new client data
+      setTimeout(async () => {
+        try {
+          await handleOpenPreview(loanDataForPreview);
+        } catch (previewError) {
+          console.error("Error opening preview after conversion:", previewError);
+          notifyWarning("يرجى فتح معاينة العقود يدوياً من الزر المخصص");
+        }
+      }, 100);
+
+      handleConversionSuccess();
+    } catch (error) {
+      handleApiError(error);
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء نقل المديونية");
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleOpenAddKafeelModal = () => {
+      setIsAddKafeelOpen(true);
+    };
+
+    const handleNavigateToInstallments = (event) => {
+      navigate(`/installments/${event.detail}`);
+    };
+
+    const handleConvertLoan = () => {
+      handleOpenConversionConfirm();
+    };
+
+    const handleOpenConversionConfirm = () => {
+      if (!selectedClientForConversion) {
+        notifyError("يرجى اختيار العميل الجديد أولاً");
+        return;
+      }
+
+      if (selectedClientForConversion.client.id === loanForConversion.clientId) {
+        notifyError("لا يمكن نقل المديونية لنفس العميل");
+        return;
+      }
+
+      setShowConversionConfirmModal(true);
+    };
+
+
+    window.addEventListener('open-add-kafeel-modal', handleOpenAddKafeelModal);
+    window.addEventListener('navigate-to-installments', handleNavigateToInstallments);
+    window.addEventListener('convert-loan', handleConvertLoan);
+
+    return () => {
+      window.removeEventListener('open-add-kafeel-modal', handleOpenAddKafeelModal);
+      window.removeEventListener('navigate-to-installments', handleNavigateToInstallments);
+      window.removeEventListener('convert-loan', handleConvertLoan);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, selectedClient, loanForConversion, queryClient, handleConversionSuccess, handleConfirmConversion]);
 
 
   const debouncedSearch = debounce((value) => {
@@ -257,8 +431,8 @@ const Loans = () => {
 
   const handleBankSelect = async (event, newValue) => {
     setSelectedBank(newValue);
-    setBanksSearchQuery(""); // Clear search query to show all banks
-    setBanksPage(1); // Reset to first page
+    setBanksSearchQuery("");
+    setBanksPage(1);
     await fetchBankBalance();
   };
 
@@ -293,7 +467,10 @@ const Loans = () => {
 
   const handleOpenPreview = async (loanData = null) => {
     try {
-      const loanDataToUse = loanData || savedLoanData;
+      const isEvent = loanData && typeof loanData === 'object' && loanData._reactName;
+      const actualLoanData = isEvent ? null : loanData;
+
+      const loanDataToUse = actualLoanData || savedLoanData || selectedLoan;
 
       if (!loanDataToUse) {
         notifyError("يرجى حفظ السلفة أولاً قبل عرض معاينة العقود");
@@ -349,23 +526,25 @@ const Loans = () => {
     try {
       setIsSavingContracts(true);
 
-      if (!savedLoanData) {
-        notifyError("لم يتم إنشاء السلفة بعد. يرجى إنشاء السلفة أولاً");
+      const loanDataToUse = savedLoanData || selectedLoan;
+
+      if (!loanDataToUse) {
+        notifyError("لم يتم تحديد السلفة. يرجى اختيار سلفة أولاً");
         return;
       }
 
       if (contractType === "both" || contractType === "debt-acknowledgment") {
-        const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, savedLoanData, selectedKafeel || savedLoanData?.kafeel, true);
-        await debtAckGeneratorRef.current?.generatePDF(debtAckHtml);
+        const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, loanDataToUse, selectedKafeel || loanDataToUse?.kafeel, true);
+        await debtAckGeneratorRef.current?.generatePDF(debtAckHtml, loanDataToUse);
       }
 
       if (contractType === "both" || contractType === "promissory-note") {
-        const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, savedLoanData, selectedKafeel || savedLoanData?.kafeel, true);
-        await promissoryNoteGeneratorRef.current?.generatePDF(promissoryNoteHtml);
+        const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, loanDataToUse, selectedKafeel || loanDataToUse?.kafeel, true);
+        await promissoryNoteGeneratorRef.current?.generatePDF(promissoryNoteHtml, loanDataToUse);
       }
 
       notifySuccess("تم حفظ العقود بنجاح");
-      
+
       setSavedLoanData(null);
       setContractsGenerated(0);
       setPreviewContracts({
@@ -373,7 +552,7 @@ const Loans = () => {
         promissoryNote: "",
       });
       setPreviewOpen(false);
-      
+
       setLoanForm({
         amount: "",
         totalInterest: "",
@@ -383,13 +562,13 @@ const Loans = () => {
         startDate: new Date().toISOString().split("T")[0],
         repaymentDay: "",
       });
-      
+
       setSelectedClient(null);
       setSelectedKafeel(null);
       setSelectedBank(null);
       setSelectedPartner(null);
       setSelectedLoan(null);
-      
+
       setInstallments([]);
       setIsEditMode(false);
       setIsViewMode(false);
@@ -537,11 +716,6 @@ const Loans = () => {
       return;
     }
 
-    if (!selectedKafeel) {
-      notifyError("يرجى اختيار الكفيل");
-      return;
-    }
-
     if (!selectedPartner) {
       notifyError("يرجى اختيار المستثمر");
       return;
@@ -596,7 +770,6 @@ const Loans = () => {
 
       queryClient.invalidateQueries(["loans"]);
 
-      // Open preview immediately with the loan data
       setTimeout(async () => {
         try {
           await handleOpenPreview(loanDataForPreview);
@@ -685,6 +858,7 @@ const Loans = () => {
           const previewLoanData = {
             id: updatedLoan.id,
             amount: newAmount,
+            TotalInterest: loanData.TotalInterest,
             paymentAmount: loanData.paymentAmount,
             startDate: loanData.startDate,
             client: selectedClient?.client || updatedLoan.client,
@@ -805,10 +979,10 @@ const Loans = () => {
         paymentAmount: loan.paymentAmount?.toString() || "",
         type: loan.type,
         startDate: loan.startDate.split("T")[0],
-        repaymentDay: dayToDateString(loan.repaymentDay || 10),
+        repaymentDay: loan.repaymentDay ? loan.repaymentDay.split("T")[0] : "",
       });
 
-      setActiveTab(3);
+      setActiveTab(1);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تحميل بيانات السلفة"
@@ -824,6 +998,27 @@ const Loans = () => {
     setSelectedLoanForEdit(loan);
     setIsSmallLoanEditMode(true);
     setActiveTab(2); // Switch to edit tab
+  };
+
+  const handleConvertClient = async (loan) => {
+    try {
+      // Get full loan details including repayments for accurate remaining amount calculation
+      const fullLoanData = await getLoanById(loan.id);
+      setLoanForConversion(fullLoanData);
+      setIsClientConversion(true);
+      setActiveTab(1); // Switch to loan creation tab
+    } catch (error) {
+      handleApiError(error);
+      notifyError("حدث خطأ في تحميل بيانات السلفة");
+    }
+  };
+
+  const handleCancelConversion = () => {
+    setIsClientConversion(false);
+    setLoanForConversion(null);
+    setSelectedClientForConversion(null);
+    setSelectedKafeelForConversion(null);
+    setActiveTab(0); // Return to main tab
   };
 
   const handleCreateAdditionalLoan = async (client) => {
@@ -888,7 +1083,7 @@ const Loans = () => {
         ...prev,
         [field]: value,
       };
-      
+
       if (field === "amount" || field === "totalInterest") {
         const amount = parseFloat((field === "amount" ? value : prev.amount).replace(/,/g, "")) || 0;
         const totalInterest = parseFloat((field === "totalInterest" ? value : prev.totalInterest).replace(/,/g, "")) || 0;
@@ -904,6 +1099,12 @@ const Loans = () => {
 
       return updatedForm;
     });
+    
+    if (field === "type" || field === "amount" || field === "paymentAmount" || field === "totalInterest") {
+      setTimeout(() => {
+        calculateInstallments();
+      }, 0);
+    }
   };
 
   const handleSaveLoan = () => {
@@ -919,7 +1120,6 @@ const Loans = () => {
   const isFormValid = () => {
     return (
       selectedClient &&
-      selectedKafeel &&
       loanForm.amount &&
       loanForm.totalInterest &&
       loanForm.interestRate &&
@@ -932,11 +1132,6 @@ const Loans = () => {
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
   const isReadOnlyMode = isViewMode;
 
-  // Get all kafeels for the selected client
-  const getAvailableKafeels = () => {
-    if (!selectedClient?.kafeels) return [];
-    return selectedClient.kafeels;
-  };
 
   return (
     <Box
@@ -971,20 +1166,21 @@ const Loans = () => {
               flexShrink: 0,
             }}
           >
-            <Box
-              sx={{
-                p: isTablet ? 2 : 3,
-                borderBottom: "1px solid #ddd",
-                bgcolor: "#fafafa",
-              }}
-            >
-              <Typography
-                variant={isTablet ? "subtitle1" : "h6"}
-                fontWeight="bold"
-                mb={isTablet ? 2 : 3}
+            {!isClientConversion && (
+              <Box
+                sx={{
+                  p: isTablet ? 2 : 3,
+                  borderBottom: "1px solid #ddd",
+                  bgcolor: "#fafafa",
+                }}
               >
-                محاكاة السلفة
-              </Typography>
+                <Typography
+                  variant={isTablet ? "subtitle1" : "h6"}
+                  fontWeight="bold"
+                  mb={isTablet ? 2 : 3}
+                >
+                  محاكاة السلفة
+                </Typography>
               {simulationSummary && loanForm.type ? (
                 <Stack spacing={3}>
                   <Box
@@ -1075,6 +1271,7 @@ const Loans = () => {
                 <Alert severity="info">أدخل بيانات السلفة لعرض المحاكاة</Alert>
               )}
             </Box>
+            )}
 
             <Box sx={{ p: isTablet ? 2 : 3 }}>
               <Typography
@@ -1085,6 +1282,49 @@ const Loans = () => {
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
+                {/* Client Conversion Actions */}
+                {isClientConversion && (
+                  <>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent('convert-loan'));
+                      }}
+                      disabled={!selectedClientForConversion}
+                      sx={{
+                        bgcolor: selectedClientForConversion ? "primary.main" : "grey.400",
+                        height: isTablet ? "44px" : "48px",
+                        fontSize: isTablet ? "14px" : "16px",
+                        fontWeight: "bold",
+                        "&:hover": {
+                          bgcolor: selectedClientForConversion ? "primary.dark" : "grey.400"
+                        },
+                        "&:disabled": {
+                          bgcolor: "grey.400",
+                          color: "grey.600"
+                        }
+                      }}
+                    >
+                      تأكيد نقل المديونيه
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      onClick={handleCancelConversion}
+                      sx={{
+                        borderColor: "rgba(255, 0, 0, 0.5)",
+                        color: "error.main",
+                        height: isTablet ? "44px" : "48px",
+                        fontSize: isTablet ? "14px" : "16px",
+                        fontWeight: "bold",
+                        "&:hover": { bgcolor: "rgba(255, 0, 0, 0.1)" },
+                      }}
+                    >
+                      إلغاء
+                    </Button>
+                  </>
+                )}
+
                 {/* Alert for active loans that cannot be edited */}
                 {isViewMode && selectedLoan?.status === "ACTIVE" && (
                   <Alert
@@ -1105,7 +1345,7 @@ const Loans = () => {
                   </Alert>
                 )}
 
-                {!isViewMode && (
+                {!isViewMode && !isClientConversion && (
                   <Button
                     variant="contained"
                     onClick={handleSaveLoan}
@@ -1138,21 +1378,23 @@ const Loans = () => {
                   </Button>
                 )}
 
-                <Button
-                  variant="outlined"
-                  onClick={handleOpenPreview}
-                  disabled={!savedLoanData}
-                  sx={{
-                    borderColor: "primary.main",
-                    color: "primary.main",
-                    height: isTablet ? "44px" : "48px",
-                    fontSize: isTablet ? "14px" : "16px",
-                    fontWeight: "bold",
-                    "&:hover": { bgcolor: "rgba(25, 118, 210, 0.1)" },
-                  }}
-                >
-                  معاينة العقود
-                </Button>
+                {!isClientConversion && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleOpenPreview}
+                    disabled={!savedLoanData && (!isViewMode || (selectedLoan?.DEBT_ACKNOWLEDGMENT && selectedLoan?.PROMISSORY_NOTE))}
+                    sx={{
+                      borderColor: "primary.main",
+                      color: "primary.main",
+                      height: isTablet ? "44px" : "48px",
+                      fontSize: isTablet ? "14px" : "16px",
+                      fontWeight: "bold",
+                      "&:hover": { bgcolor: "rgba(25, 118, 210, 0.1)" },
+                    }}
+                  >
+                    معاينة العقود
+                  </Button>
+                )}
 
                 {isEditMode && (
                   <Button
@@ -1188,1006 +1430,147 @@ const Loans = () => {
           }}
         >
           <Box sx={{ width: "100%" }}>
-            <Box
-              sx={{
-                borderBottom: 1,
-                borderColor: "divider",
-                mb: isSmallScreen ? 2 : 4,
-              }}
-            >
-              <Tabs
-                value={activeTab}
-                onChange={(e, newValue) => {
-                  setActiveTab(newValue);
-                  if (newValue === 0 || newValue === 2 || newValue === 3) {
-                    resetLoanForm();
-                  }
-                  // Reset subTab when switching to main tab
-                  if (newValue === 0) {
-                    setSubTab(0);
-                  }
-                }}
-                variant={"scrollable"}
-                scrollButtons={"auto"}
-                sx={{
-                  "& .MuiTab-root": {
-                    fontSize: isSmallScreen ? "0.875rem" : "0.85rem",
-                    minWidth: isSmallScreen ? "auto" : 72,
-                    padding: isSmallScreen ? "12px 8px" : "12px 16px",
-                  },
-                }}
-              >
-                <Tab
-                  label="جميع السلفات"
-                  sx={{
-                    fontWeight: "bold",
-                    borderBottom:
-                      activeTab === 0 ? "3px solid" : "none",
-                    borderBottomColor: activeTab === 0 ? "primary.main" : "transparent",
-                    color: activeTab === 0 ? "primary.main" : "black",
-                  }}
-                />
-                {permissions.includes("loans_Add") && (
-                  <Tab
-                    label={
-                      isViewMode
-                        ? "عرض تفاصيل السلفة"
-                        : isEditMode
-                        ? "تعديل السلفة"
-                        : isAdditionalLoan
-                        ? "إنشاء سلفة إضافية"
-                        : "إنشاء سلفة جديدة"
-                    }
-                    sx={{
-                      fontWeight: "bold",
-                      borderBottom:
-                        activeTab === 1 ? "3px solid" : "none",
-                      borderBottomColor: activeTab === 1 ? "primary.main" : "transparent",
-                      color: activeTab === 1 ? "primary.main" : "black",
-                    }}
-                  />
-                )}
-                <Tab
-                  label={isSmallLoanEditMode ? "تعديل السلفة الصغيرة" : "إنشاء سلفة صغيرة"}
-                  sx={{
-                    fontWeight: "bold",
-                    borderBottom:
-                      activeTab === 2 ? "3px solid" : "none",
-                    borderBottomColor: activeTab === 2 ? "primary.main" : "transparent",
-                    color: activeTab === 2 ? "primary.main" : "black",
-                  }}
-                />
-                <Tab
-                  label="عرض السلفات الصغيرة"
-                  sx={{
-                    fontWeight: "bold",
-                    borderBottom:
-                      activeTab === 3 ? "3px solid" : "none",
-                    borderBottomColor: activeTab === 3 ? "primary.main" : "transparent",
-                    color: activeTab === 3 ? "primary.main" : "black",
-                  }}
-                />
-              </Tabs>
-            </Box>
+            <LoanTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              resetLoanForm={resetLoanForm}
+              isSmallScreen={isSmallScreen}
+              permissions={permissions}
+              isClientConversion={isClientConversion}
+              isViewMode={isViewMode}
+              isEditMode={isEditMode}
+              isAdditionalLoan={isAdditionalLoan}
+              searchQuery={loansTableSearchQuery}
+              onSearchChange={(e) => setLoansTableSearchQuery(e.target.value)}
+            />
 
             {activeTab === 0 ? (
               <Box
                 sx={{ width: "100%", display: "flex", flexDirection: "column" }}
               >
-                {/* Sub-tabs for loan status filtering */}
-                <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3, display: "flex", justifyContent: "center" }}>
-                  <Tabs
-                    value={subTab}
-                    onChange={(e, newValue) => setSubTab(newValue)}
-                    sx={{
-                      "& .MuiTab-root": {
-                        fontSize: "0.9rem",
-                        fontWeight: "500",
-                        width: "200px",
-                      },
-                    }}
-                  >
-                    <Tab label="قيد الانتظار" />
-                    <Tab label="نشطة" />
-                    <Tab label="مكتملة" />
-                  </Tabs>
-                </Box>
+                <LoanMainTab
+                  loansNeedingContracts={loansNeedingContracts}
+                  subTab={subTab}
+                  setSubTab={setSubTab}
+                  handleViewLoanDetails={handleViewLoanDetails}
+                />
 
                 <LoansTable
                   onViewDetails={handleViewLoanDetails}
                   onViewInstallments={handleViewInstallments}
                   onCreateAdditionalLoan={handleCreateAdditionalLoan}
+                  onConvertClient={handleConvertClient}
                   statusFilter={
                     subTab === 0 ? "PENDING" :
                     subTab === 1 ? "ACTIVE" :
                     subTab === 2 ? "COMPLETED" : null
                   }
+                  searchQuery={loansTableSearchQuery}
                 />
               </Box>
             ) : activeTab === 1 ? (
               <Box>
-                {permissions.includes("loans_Add") && (
-                  <Paper
-                    sx={{
-                      p: isSmallScreen ? 2 : 4,
-                      mb: isSmallScreen ? 2 : 3,
-                      borderRadius: 2,
-                      border: "1px solid #e5e7eb",
-                    }}
-                  >
-                    <Typography
-                      variant={isSmallScreen ? "subtitle1" : "h6"}
-                      fontWeight="bold"
-                      color="#333"
-                      mb={isSmallScreen ? 2 : 3}
-                      textAlign="center"
-                    >
-                      {isAdditionalLoan
-                        ? "العميل المحدد للسلفة الإضافية"
-                        : "معلومات العميل"}
-                    </Typography>
-                    <Grid
-                      container
-                      spacing={isSmallScreen ? 2 : 3}
-                      justifyContent="center"
-                    >
-                      <Grid item xs={12} sm={10} md={8}>
-                        <Autocomplete
-                          options={clientsData?.clients || []}
-                          getOptionLabel={(option) =>
-                            `${option.client.name} - ${option.client.nationalId}`
-                          }
-                          value={selectedClient}
-                          onChange={handleClientSelect}
-                          onInputChange={handleSearchChange}
-                          loading={isClientsLoading}
-                          disabled={
-                            isViewMode || isEditMode || isAdditionalLoan
-                          }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="اختر عميل حالي"
-                              placeholder="ابحث بالاسم أو رقم الهوية"
-                              InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                  <>
-                                    {isClientsLoading ? (
-                                      <CircularProgress
-                                        color="inherit"
-                                        size={20}
-                                      />
-                                    ) : null}
-                                    {params.InputProps.endAdornment}
-                                  </>
-                                ),
-                              }}
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  height: "56px",
-                                  width: isSmallScreen ? "250px" : "350px",
-                                  backgroundColor:
-                                    isViewMode || isEditMode || isAdditionalLoan
-                                      ? "#f5f5f5"
-                                      : "#f9fafb",
-                                  "&:hover fieldset": {
-                                    borderColor: "primary.main",
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={10}
-                        md={4}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: isSmallScreen
-                            ? "center"
-                            : "flex-start",
-                          gap: 1.5,
-                        }}
-                      >
-                        {!isViewMode &&
-                          !isEditMode &&
-                          !isAdditionalLoan &&
-                          !selectedClient && (
-                          <Button
-                            variant="outlined"
-                            sx={{
-                              color: "primary.main",
-                              borderColor: "primary.main",
-                              fontWeight: "bold",
-                              fontSize: isSmallScreen ? "12px" : "14px",
-                              whiteSpace: "nowrap",
-                            }}
-                            onClick={() => setIsAddClientOpen(true)}
-                          >
-                            إنشاء عميل جديد
-                          </Button>
-                        )}
-                        {selectedClient &&
-                          !isViewMode &&
-                          !isEditMode && (
-                            <Button
-                              variant="outlined"
-                              onClick={() => setIsAddKafeelOpen(true)}
-                              sx={{
-                                color: "primary.main",
-                                borderColor: "primary.main",
-                                fontWeight: "bold",
-                                fontSize: isSmallScreen ? "12px" : "14px",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              إضافة كفيل جديد
-                            </Button>
-                          )}
-                      </Grid>
-                      {selectedClient && (
-                        <Grid item xs={12} sm={10} md={8}>
-                          <Autocomplete
-                            options={getAvailableKafeels()}
-                            getOptionLabel={(option) =>
-                              `${option.name} - ${option.nationalId}`
-                            }
-                            value={selectedKafeel}
-                            onChange={handleKafeelSelect}
-                            disabled={isViewMode}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                label="اختر الكفيل"
-                                placeholder="ابحث بالاسم أو رقم الهوية"
-                                sx={{
-                                  "& .MuiOutlinedInput-root": {
-                                    height: "56px",
-                                    width: isSmallScreen ? "250px" : "350px",
-                                    backgroundColor: isViewMode
-                                      ? "#f5f5f5"
-                                      : "#f9fafb",
-                                    "&:hover fieldset": {
-                                      borderColor: "primary.main",
-                                    },
-                                  },
-                                }}
-                              />
-                            )}
-                            noOptionsText={
-                              !clientLoansData
-                                ? "جاري تحميل البيانات..."
-                                : selectedClient.kafeels?.length === 0
-                                ? "لا يوجد كفلاء متاحين لهذا العميل"
-                                : "جميع الكفلاء مستخدمون في سلف أخرى"
-                            }
-                          />
-                        </Grid>
-                      )}
-
-                      {selectedClient &&
-                        (!selectedClient.kafeels ||
-                          selectedClient.kafeels.length === 0) && (
-                          <Grid item xs={12} sm={10} md={8}>
-                            <Typography
-                              variant="body2"
-                              color="error"
-                              sx={{ fontWeight: "bold", mt: 1 }}
-                            >
-                              هذا العميل لا يوجد له كفيل.
-                            </Typography>
-                          </Grid>
-                        )}
-                    </Grid>
-                  </Paper>
+                {isClientConversion ? (
+                  <LoanClientConversion
+                    loan={loanForConversion}
+                    onConversionSuccess={handleConversionSuccess}
+                    onCancel={handleCancelConversion}
+                    isSmallScreen={isSmallScreen}
+                    selectedClient={selectedClientForConversion}
+                    onClientSelect={setSelectedClientForConversion}
+                    selectedKafeel={selectedKafeelForConversion}
+                    onKafeelSelect={setSelectedKafeelForConversion}
+                  />
+                ) : permissions.includes("loans_Add") && (
+                  <LoanClientSection
+                    isSmallScreen={isSmallScreen}
+                    clientsData={clientsData}
+                    isClientsLoading={isClientsLoading}
+                    selectedClient={selectedClient}
+                    handleClientSelect={handleClientSelect}
+                    handleSearchChange={handleSearchChange}
+                    isViewMode={isViewMode}
+                    isEditMode={isEditMode}
+                    isAdditionalLoan={isAdditionalLoan}
+                    setIsAddClientOpen={setIsAddClientOpen}
+                    selectedKafeel={selectedKafeel}
+                    handleKafeelSelect={handleKafeelSelect}
+                    clientLoansData={clientLoansData}
+                    isReadOnlyMode={isReadOnlyMode}
+                  />
                 )}
 
                 {/* Kafeel Information Section - Show when kafeel is selected or exists in view mode */}
                 {((!isViewMode && selectedKafeel) ||
                   (isViewMode && selectedLoan?.kafeel)) && (
-                  <Paper
-                    sx={{
-                      p: isSmallScreen ? 2 : 4,
-                      mb: isSmallScreen ? 2 : 3,
-                      borderRadius: 2,
-                      border: "1px solid #e5e7eb",
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <Typography
-                      variant={isSmallScreen ? "subtitle1" : "h6"}
-                      fontWeight="bold"
-                      color="#333"
-                      mb={isSmallScreen ? 2 : 3}
-                      textAlign="center"
-                    >
-                      معلومات الكفيل
-                    </Typography>
-
-                    <Grid
-                      container
-                      spacing={isSmallScreen ? 2 : 3}
-                      justifyContent="center"
-                    >
-                      <Grid item xs={12} sm={6} md={4}>
-                        <TextField
-                          fullWidth
-                          label="اسم الكفيل"
-                          value={
-                            isViewMode
-                              ? selectedLoan?.kafeel?.name || ""
-                              : selectedKafeel?.name || ""
-                          }
-                          disabled
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              backgroundColor: "#f5f5f5",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={6} md={4}>
-                        <TextField
-                          fullWidth
-                          label="رقم الهوية"
-                          value={
-                            isViewMode
-                              ? selectedLoan?.kafeel?.nationalId || ""
-                              : selectedKafeel?.nationalId || ""
-                          }
-                          disabled
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              backgroundColor: "#f5f5f5",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={6} md={4}>
-                        <TextField
-                          fullWidth
-                          label="تاريخ الميلاد"
-                          value={(() => {
-                            const birthDate = isViewMode
-                              ? selectedLoan?.kafeel?.birthDate
-                              : selectedKafeel?.birthDate;
-                            return birthDate
-                              ? new Date(birthDate).toISOString().split("T")[0]
-                              : "";
-                          })()}
-                          disabled
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              backgroundColor: "#f5f5f5",
-                            },
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
+                  <LoanKafeelSection
+                    isSmallScreen={isSmallScreen}
+                    selectedKafeel={selectedKafeel}
+                    selectedLoan={selectedLoan}
+                    isViewMode={isViewMode}
+                  />
                 )}
 
-                {permissions.includes("loans_Add") && (
-                  <Paper
-                    sx={{
-                      p: isSmallScreen ? 2 : 4,
-                      mb: isSmallScreen ? 2 : 3,
-                      borderRadius: 2,
-                      border: "1px solid #e5e7eb",
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <Typography
-                      variant={isSmallScreen ? "subtitle1" : "h6"}
-                      fontWeight="bold"
-                      color="#333"
-                      mb={isSmallScreen ? 2 : 3}
-                      textAlign="center"
-                    >
-                      {isViewMode
-                        ? "تفاصيل السلفة"
-                        : isEditMode
-                        ? "تعديل تفاصيل السلفة"
-                        : "حدد تفاصيل السلفة"}
-                    </Typography>
-
-                    <Grid
-                      container
-                      spacing={isSmallScreen ? 2 : 3}
-                      justifyContent="center"
-                    >
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 1,
-                          }}
-                        >
-                          <TextField
-                            fullWidth
-                            type="text"
-                            label="مبلغ السلفة"
-                            value={formatAmount(loanForm.amount)}
-                            onChange={(e) =>
-                              handleInputChange("amount", e.target.value)
-                            }
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            disabled={isReadOnlyMode}
-                            onKeyDown={(e) => {
-                              if (e.key === "-" || e.key === "+")
-                                e.preventDefault();
-                            }}
-                            sx={{
-                              "& .MuiOutlinedInput-root": {
-                                height: "56px",
-                                width: "200px",
-                                backgroundColor: isReadOnlyMode
-                                  ? "#f5f5f5"
-                                  : "#f9fafb",
-                              },
-                            }}
-                          />
-                          {!isReadOnlyMode && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: "text.secondary",
-                                fontSize: "16px",
-                                mt: -0.5,
-                                ml: 1,
-                              }}
-                            >
-                              {isLoadingBankBalance ? (
-                                "جاري تحميل رصيد الصندوق..."
-                              ) : bankBalance !== null ? (
-                                <>
-                                  <span
-                                    style={{
-                                      color: "black",
-                                      fontSize: "16px",
-                                    }}
-                                  >
-                                    رصيد الصندوق المتاح:{" "}
-                                  </span>
-                                  <span
-                                    style={{
-                                      fontWeight: "bold",
-                                      fontSize: "16px",
-                                      color: "green",
-                                    }}
-                                  >
-                                    {formatAmount(
-                                      bankBalance.toString()
-                                    )}
-                                  </span>
-                                </>
-                              ) : (
-                                "لا يوجد رصيد متاح"
-                              )}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          label="مبلغ الفائدة الإجمالي"
-                          value={formatAmount(loanForm.totalInterest)}
-                          onChange={(e) =>
-                            handleInputChange("totalInterest", e.target.value)
-                          }
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          disabled={isReadOnlyMode}
-                          onKeyDown={(e) => {
-                            if (e.key === "-" || e.key === "+")
-                              e.preventDefault();
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: isReadOnlyMode
-                                ? "#f5f5f5"
-                                : "#f9fafb",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="معدل الفائدة السنوي (%)"
-                          value={loanForm.interestRate}
-                          disabled={true} // Always read-only, calculated automatically
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: "#f5f5f5", // Always disabled appearance
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          label="مبلغ الدفعة الشهرية"
-                          value={formatAmount(loanForm.paymentAmount)}
-                          onChange={(e) =>
-                            handleInputChange("paymentAmount", e.target.value)
-                          }
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          disabled={isReadOnlyMode}
-                          onKeyDown={(e) => {
-                            if (e.key === "-" || e.key === "+")
-                              e.preventDefault();
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: isReadOnlyMode
-                                ? "#f5f5f5"
-                                : "#f9fafb",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          label="نوع السلفة"
-                          select
-                          value={loanForm.type}
-                          onChange={(e) =>
-                            handleInputChange("type", e.target.value)
-                          }
-                          disabled={isReadOnlyMode}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: isReadOnlyMode
-                                ? "#f5f5f5"
-                                : "#f9fafb",
-                            },
-                          }}
-                        >
-                          <MenuItem value="DAILY">يومي</MenuItem>
-                          <MenuItem value="WEEKLY">أسبوعي</MenuItem>
-                          <MenuItem value="MONTHLY">شهري</MenuItem>
-                        </TextField>
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="date"
-                          label="تاريخ الاستحقاق"
-                          value={loanForm.repaymentDay}
-                          onChange={(e) =>
-                            handleInputChange("repaymentDay", e.target.value)
-                          }
-                          disabled={isReadOnlyMode}
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: isReadOnlyMode
-                                ? "#f5f5f5"
-                                : "#f9fafb",
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <TextField
-                          fullWidth
-                          type="date"
-                          label="تاريخ البداية (اختياري)"
-                          value={loanForm.startDate}
-                          onChange={(e) =>
-                            handleInputChange("startDate", e.target.value)
-                          }
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          disabled={isReadOnlyMode}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: "56px",
-                              width: "200px",
-                              backgroundColor: isReadOnlyMode
-                                ? "#f5f5f5"
-                                : "#f9fafb",
-                            },
-                          }}
-                          helperText="إذا تُرك فارغاً، سيتم استخدام التاريخ الحالي"
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <Autocomplete
-                          options={banksData?.data || []}
-                          getOptionLabel={(option) =>
-                            `${option.name} - ${option.accountNumber}`
-                          }
-                          value={selectedBank}
-                          onChange={handleBankSelect}
-                          onInputChange={handleBanksSearchChange}
-                          loading={isBanksLoading}
-                          disabled={isReadOnlyMode}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="اختر الحساب البنكي"
-                              placeholder="ابحث باسم الحساب أو رقم الحساب"
-                              InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                  <>
-                                    {isBanksLoading ? (
-                                      <CircularProgress
-                                        color="inherit"
-                                        size={20}
-                                      />
-                                    ) : null}
-                                    {params.InputProps.endAdornment}
-                                  </>
-                                ),
-                              }}
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  height: "56px",
-                                  width: "200px",
-                                  backgroundColor: isReadOnlyMode
-                                    ? "#f5f5f5"
-                                    : "#f9fafb",
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
-                        <Autocomplete
-                          options={partnersData?.partners || []}
-                          getOptionLabel={(option) =>
-                            option.name +
-                            " - " +
-                            (option.isActive ? "نشط" : "غير نشط")
-                          }
-                          value={selectedPartner}
-                          onChange={handlePartnerSelect}
-                          onInputChange={handlePartnersSearchChange}
-                          loading={isPartnersLoading}
-                          disabled={isReadOnlyMode}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="اختر المستثمر"
-                              placeholder="ابحث باسم المستثمر"
-                              InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                  <>
-                                    {isPartnersLoading ? (
-                                      <CircularProgress
-                                        color="inherit"
-                                        size={20}
-                                      />
-                                    ) : null}
-                                    {params.InputProps.endAdornment}
-                                  </>
-                                ),
-                              }}
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  height: "56px",
-                                  width: "200px",
-                                  backgroundColor: isReadOnlyMode
-                                    ? "#f5f5f5"
-                                    : "#f9fafb",
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
+                {permissions.includes("loans_Add") && !isClientConversion && (
+                  <LoanDetailsSection
+                    isSmallScreen={isSmallScreen}
+                    isMobile={isMobile}
+                    isViewMode={isViewMode}
+                    isEditMode={isEditMode}
+                    isAdditionalLoan={isAdditionalLoan}
+                    loanForm={loanForm}
+                    handleInputChange={handleInputChange}
+                    isReadOnlyMode={isReadOnlyMode}
+                    banksData={banksData}
+                    isBanksLoading={isBanksLoading}
+                    selectedBank={selectedBank}
+                    handleBankSelect={handleBankSelect}
+                    handleBanksSearchChange={handleBanksSearchChange}
+                    partnersData={partnersData}
+                    isPartnersLoading={isPartnersLoading}
+                    selectedPartner={selectedPartner}
+                    handlePartnerSelect={handlePartnerSelect}
+                    handlePartnersSearchChange={handlePartnersSearchChange}
+                    bankBalance={bankBalance}
+                    formatAmount={formatAmount}
+                  />
                 )}
 
                 {/* محاكاة السلفة على الشاشات الصغيرة */}
                 {activeTab === 1 && isSmallScreen && (
-                  <Paper
-                    sx={{
-                      p: 2,
-                      mb: 2,
-                      borderRadius: 2,
-                      border: "1px solid #e5e7eb",
-                      bgcolor: "#fafafa",
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" mb={2}>
-                      محاكاة السلفة
-                    </Typography>
-                    {simulationSummary && loanForm.type ? (
-                      <Stack spacing={2}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography color="text.secondary" variant="body2">
-                            {simulationSummary.loanType === "DAILY"
-                              ? "الدفعة اليومية"
-                              : simulationSummary.loanType === "WEEKLY"
-                              ? "الدفعة الأسبوعية"
-                              : "الدفعة الشهرية"}
-                          </Typography>
-                          <Typography
-                            color="primary.main"
-                            fontWeight="bold"
-                            fontSize="18px"
-                          >
-                            {formatAmount(
-                              simulationSummary.paymentAmount.toString()
-                            )}{" "}
-                          </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography color="text.secondary" variant="body2">
-                            {simulationSummary.durationLabel}
-                          </Typography>
-                          <Typography
-                            color="primary.main"
-                            fontWeight="bold"
-                            fontSize="16px"
-                          >
-                            {simulationSummary.durationText}
-                          </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography color="text.secondary" variant="body2">
-                            إجمالي الفائدة
-                          </Typography>
-                          <Typography color="#333" fontSize="14px">
-                            {formatAmount(
-                              simulationSummary.totalInterest.toFixed(2)
-                            )}{" "}
-                          </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography color="text.secondary" variant="body2">
-                            المبلغ الإجمالي المستحق
-                          </Typography>
-                          <Typography color="#333" fontSize="14px">
-                            {formatAmount(
-                              simulationSummary.totalAmount.toFixed(2)
-                            )}{" "}
-                          </Typography>
-                        </Box>
-
-                        <Divider />
-
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography color="text.secondary" variant="body2">
-                            حالة السلفة
-                          </Typography>
-                          <Chip
-                            label={
-                              isViewMode
-                                ? "عرض"
-                                : isEditMode
-                                ? "تحت التعديل"
-                                : "جديد"
-                            }
-                            size="small"
-                            sx={{
-                              backgroundColor: isViewMode
-                                ? "rgba(100, 100, 100, 0.2)"
-                                : isEditMode
-                                ? "rgba(214, 158, 46, 0.2)"
-                                : "rgba(56, 161, 105, 0.2)",
-                              color: isViewMode
-                                ? "#666"
-                                : isEditMode
-                                ? "#D69E2E"
-                                : "#38A169",
-                              fontWeight: "bold",
-                            }}
-                          />
-                        </Box>
-                      </Stack>
-                    ) : (
-                      <Alert severity="info" sx={{ fontSize: "0.875rem" }}>
-                        أدخل بيانات السلفة لعرض المحاكاة
-                      </Alert>
-                    )}
-                  </Paper>
+                  <LoanSimulation
+                    isSmallScreen={isSmallScreen}
+                    simulationSummary={simulationSummary}
+                    loanForm={loanForm}
+                    isViewMode={isViewMode}
+                    isEditMode={isEditMode}
+                    formatAmount={formatAmount}
+                  />
                 )}
 
                 {/* أزرار الإجراءات على الشاشات الصغيرة */}
                 {activeTab === 1 && isSmallScreen && (
-                  <Paper
-                    sx={{
-                      p: 2,
-                      mb: 2,
-                      borderRadius: 2,
-                      border: "1px solid #e5e7eb",
-                      bgcolor: "#fafafa",
+                  <LoanActions
+                    isSmallScreen={isSmallScreen}
+                    isViewMode={isViewMode}
+                    selectedLoan={selectedLoan}
+                    canEditLoan={canEditLoan}
+                    handleEditLoan={handleEditLoan}
+                    handleSaveLoan={handleSaveLoan}
+                    isFormValid={isFormValid}
+                    isEditMode={isEditMode}
+                    handleOpenPreview={handleOpenPreview}
+                    savedLoanData={savedLoanData}
+                    selectedLoanForPreview={selectedLoan}
+                    onCancelEdit={() => {
+                      setIsEditMode(false);
+                      setIsViewMode(true);
                     }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" mb={2}>
-                      الإجراءات
-                    </Typography>
-                    <Stack spacing={1.5}>
-                      {/* Alert for active loans that cannot be edited */}
-                      {isViewMode && selectedLoan?.status === "ACTIVE" && (
-                        <Alert
-                          severity="warning"
-                          sx={{ mb: 2 }}
-                          action={
-                            <Button
-                              color="inherit"
-                              size="small"
-                              onClick={() => navigate('/installments/' + selectedLoan.id)}
-                              sx={{ fontWeight: "bold" }}
-                            >
-                              عرض الأقساط
-                            </Button>
-                          }
-                        >
-                          لا يمكنك تعديل هذه السلفة لأنها في حالة نشطة. للتعديل يجب إلغاء تفعيل السلفة أولاً.
-                        </Alert>
-                      )}
-
-                      {!isViewMode && (
-                        <Button
-                          variant="contained"
-                          onClick={handleSaveLoan}
-                          disabled={!isFormValid()}
-                          fullWidth
-                          sx={{
-                            bgcolor: "primary.main",
-                            height: "44px",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            "&:hover": { bgcolor: "primary.dark" },
-                          }}
-                        >
-                          {isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
-                        </Button>
-                      )}
-
-                      {isViewMode && canEditLoan && (
-                        <Button
-                          variant="contained"
-                          onClick={handleEditLoan}
-                          fullWidth
-                          sx={{
-                            bgcolor: "primary.main",
-                            height: "44px",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            "&:hover": { bgcolor: "primary.dark" },
-                          }}
-                        >
-                          تعديل السلفة
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="outlined"
-                        onClick={handleOpenPreview}
-                        disabled={!savedLoanData}
-                        fullWidth
-                        sx={{
-                          borderColor: "primary.main",
-                          color: "primary.main",
-                          height: "44px",
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          "&:hover": { bgcolor: "rgba(25, 118, 210, 0.1)" },
-                        }}
-                      >
-                        معاينة العقود
-                      </Button>
-
-                      {isEditMode && (
-                        <Button
-                          variant="outlined"
-                          onClick={() => {
-                            setIsEditMode(false);
-                            setIsViewMode(true);
-                          }}
-                          fullWidth
-                          sx={{
-                            borderColor: "rgba(255, 0, 0, 0.5)",
-                            color: "error.main",
-                            height: "44px",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            "&:hover": { bgcolor: "rgba(255, 0, 0, 0.1)" },
-                          }}
-                        >
-                          إلغاء التعديل
-                        </Button>
-                      )}
-                    </Stack>
-                  </Paper>
+                    isClientConversion={isClientConversion}
+                    selectedClient={isClientConversion ? selectedClientForConversion : selectedClient}
+                    isConverting={false}
+                    onCancelConversion={handleCancelConversion}
+                  />
                 )}
               </Box>
             ) : activeTab === 2 ? (
@@ -2226,9 +1609,28 @@ const Loans = () => {
         onClose={async () => {
           setIsAddKafeelOpen(false);
           queryClient.invalidateQueries(["clients"]);
-          await refreshSelectedClientData();
+
+          // Refresh the appropriate client data based on context
+          if (isClientConversion && selectedClientForConversion?.client?.id) {
+            try {
+              const clientsResponse = await getClients(
+                1,
+                selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name
+              );
+              const updatedClient = clientsResponse?.clients?.find(
+                (c) => c.client.id === selectedClientForConversion.client.id
+              );
+              if (updatedClient) {
+                setSelectedClientForConversion(updatedClient);
+              }
+            } catch (error) {
+              console.error("Error refreshing conversion client data:", error);
+            }
+          } else {
+            await refreshSelectedClientData();
+          }
         }}
-        clientId={selectedClient?.client?.id}
+        clientId={isClientConversion ? selectedClientForConversion?.client?.id : selectedClient?.client?.id}
       />
 
       {generateContracts && debtAckTemplate && promissoryNoteTemplate && (
@@ -2267,6 +1669,17 @@ const Loans = () => {
           />
         </>
       )}
+
+      <LoanConversionConfirmModal
+        open={showConversionConfirmModal}
+        onClose={() => !isConverting && setShowConversionConfirmModal(false)}
+        onConfirm={handleConfirmConversion}
+        fromClient={loanForConversion?.client}
+        toClient={selectedClientForConversion?.client}
+        loan={loanForConversion}
+        remainingAmount={calculateRemainingAmount(loanForConversion)}
+        isLoading={isConverting}
+      />
     </Box>
   );
 };

@@ -180,8 +180,10 @@ const Login = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background:
-          "radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.08), transparent 25%), radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.12), transparent 28%), #f5f7fb",
+        background: {
+          xs: "transparent",
+          md: "radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.08), transparent 25%), radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.12), transparent 28%), #f5f7fb"
+        },
         padding: { xs: 2, md: 4 },
       }}
     >
@@ -192,10 +194,10 @@ const Login = () => {
 
       <Card
         sx={{
-          maxWidth: 1100,
+          maxWidth: { xs: 450, md: 1100 },
           width: "100%",
-          boxShadow: "0 25px 80px rgba(15, 23, 42, 0.12)",
-          borderRadius: 4,
+          boxShadow: { xs: "0 8px 32px rgba(0,0,0,0.1)", md: "0 25px 80px rgba(15, 23, 42, 0.12)" },
+          borderRadius: { xs: 3, md: 4 },
           overflow: "hidden",
         }}
       >
@@ -214,7 +216,7 @@ const Login = () => {
                 "linear-gradient(135deg, #1e5a2e 0%, #2E8B45 50%, #3da35a 100%)",
               color: "#fff",
               overflow: "hidden",
-              display: "flex",
+              display: { xs: "none", md: "flex" },
               flexDirection: "column",
               gap: 4,
             }}

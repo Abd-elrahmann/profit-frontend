@@ -269,9 +269,6 @@ export default function Clients() {
     setCurrentPage(newPage);
   };
 
-  const handleStatementPageChange = (event, newPage) => {
-    setStatementPage(newPage);
-  };
 
   const handleDateFilterChange = (field, value) => {
     if (field === "from") {
@@ -622,16 +619,6 @@ export default function Clients() {
     });
   };
 
-  const getTransactionType = (type) => {
-    const types = {
-      LOAN_DISBURSEMENT: "صرف سلفة",
-      REPAYMENT: "سداد",
-      ADJUSTMENT: "تعديل",
-      INTEREST: "فائدة",
-      EARLY_PAYMENT: "سداد مبكر",
-    };
-    return types[type] || type;
-  };
 
   return (
     <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
@@ -2604,30 +2591,6 @@ export default function Clients() {
                       justifyContent="center"
                       alignItems="center"
                     >
-                      <Grid item xs={12} md={3} alignItems="center">
-                        <Typography variant="body2" color="text.secondary">
-                          الرصيد الافتتاحي
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          fontWeight="bold"
-                          color="primary"
-                        >
-                          {clientStatement.openingBalance}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={3} alignItems="center">
-                        <Typography variant="body2" color="text.secondary">
-                          الرصيد الختامي
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          fontWeight="bold"
-                          color="primary"
-                        >
-                          {clientStatement.closingBalance}
-                        </Typography>
-                      </Grid>
                       <Grid item xs={12} md={3}>
                         <Typography variant="body2" color="text.secondary">
                           إجمالي المدين
@@ -2637,7 +2600,7 @@ export default function Clients() {
                           fontWeight="bold"
                           color="error"
                         >
-                          {clientStatement.totalDebit}
+                          {clientStatement.client?.debit?.toLocaleString() || 0}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={3}>
@@ -2649,7 +2612,31 @@ export default function Clients() {
                           fontWeight="bold"
                           color="success.main"
                         >
-                          {clientStatement.totalCredit}
+                          {clientStatement.client?.credit?.toLocaleString() || 0}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3} alignItems="center">
+                        <Typography variant="body2" color="text.secondary">
+                          الرصيد الحالي
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          fontWeight="bold"
+                          color="primary"
+                        >
+                          {clientStatement.client?.balance?.toLocaleString() || 0}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="body2" color="text.secondary">
+                          عدد المعاملات
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          fontWeight="bold"
+                          color="info.main"
+                        >
+                          {clientStatement.totalTransactions || 0}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -2670,9 +2657,9 @@ export default function Clients() {
                           </StyledTableCell>
                           <StyledTableCell
                             align="center"
-                            sx={{ fontWeight: "bold", minWidth: 120 }}
+                            sx={{ fontWeight: "bold", minWidth: 100 }}
                           >
-                            نوع المعاملة
+                            المرجع
                           </StyledTableCell>
                           <StyledTableCell
                             align="center"
@@ -2705,13 +2692,15 @@ export default function Clients() {
                         clientStatement.transactions &&
                         clientStatement.transactions.length > 0 ? (
                           clientStatement.transactions.map(
-                            (transaction, index) => (
-                              <StyledTableRow key={index} hover>
+                            (transaction) => (
+                              <StyledTableRow key={transaction.id} hover>
                                 <StyledTableCell align="center">
                                   {formatDate(transaction.date)}
                                 </StyledTableCell>
                                 <StyledTableCell align="center">
-                                  {getTransactionType(transaction.type)}
+                                  <Typography variant="body2" fontWeight="500">
+                                    {transaction.reference}
+                                  </Typography>
                                 </StyledTableCell>
                                 <StyledTableCell align="center">
                                   {transaction.description}
@@ -2772,7 +2761,7 @@ export default function Clients() {
                   </TableContainer>
 
                   {/* Table Footer with Pagination */}
-                  {clientStatement && clientStatement.totalPages > 1 && (
+                  {clientStatement && clientStatement.transactions && clientStatement.transactions.length > 0 && (
                     <Box
                       sx={{
                         display: "flex",
@@ -2784,74 +2773,8 @@ export default function Clients() {
                       }}
                     >
                       <Typography variant="body2" color="text.secondary">
-                        عرض {(statementPage - 1) * 10 + 1} -{" "}
-                        {Math.min(
-                          statementPage * 10,
-                          clientStatement.totalTransactions
-                        )}{" "}
-                        من {clientStatement.totalTransactions} معاملة
+                        إجمالي المعاملات: {clientStatement.totalTransactions || clientStatement.transactions.length}
                       </Typography>
-
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<ChevronRight />}
-                          disabled={statementPage === 1}
-                          onClick={() =>
-                            handleStatementPageChange(null, statementPage - 1)
-                          }
-                          sx={{
-                            minWidth: "70px",
-                            fontSize: "0.75rem",
-                            "&:disabled": {
-                              opacity: 0.5,
-                            },
-                          }}
-                        >
-                          السابق
-                        </Button>
-
-                        <Pagination
-                          count={clientStatement.totalPages}
-                          page={statementPage}
-                          onChange={handleStatementPageChange}
-                          color="primary"
-                          size="small"
-                          siblingCount={0}
-                          boundaryCount={1}
-                          sx={{
-                            "& .MuiPaginationItem-root": {
-                              fontSize: "0.75rem",
-                              minWidth: "28px",
-                              height: "28px",
-                            },
-                          }}
-                        />
-
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          endIcon={<ChevronLeft />}
-                          disabled={
-                            statementPage === clientStatement.totalPages
-                          }
-                          onClick={() =>
-                            handleStatementPageChange(null, statementPage + 1)
-                          }
-                          sx={{
-                            minWidth: "70px",
-                            fontSize: "0.75rem",
-                            "&:disabled": {
-                              opacity: 0.5,
-                            },
-                          }}
-                        >
-                          التالي
-                        </Button>
-                      </Box>
                     </Box>
                   )}
                 </Paper>

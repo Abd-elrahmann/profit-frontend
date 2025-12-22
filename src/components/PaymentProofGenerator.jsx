@@ -59,7 +59,12 @@ const numberToArabicWords = (num) => {
 };
 
 const getCurrentDates = () => {
+  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
+  const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
+
+  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
+  const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
     day: 'numeric',
@@ -68,7 +73,7 @@ const getCurrentDates = () => {
     timeZone: 'Asia/Riyadh'
   });
 
-  let hijriDate = hijriFormatter.format(now);
+  let hijriDate = hijriFormatter.format(today);
   hijriDate = hijriDate.replace(/\s+/g, ' ').trim();
   hijriDate = hijriDate.replace(' ', ' من ');
   // Remove 'هـ' if it exists, since template will add it
@@ -81,7 +86,7 @@ const getCurrentDates = () => {
     timeZone: 'Asia/Riyadh'
   });
 
-  const gregorianDate = gregorianFormatter.format(now);
+  const gregorianDate = gregorianFormatter.format(today);
 
   return {
     gregorianDate: gregorianDate,
@@ -102,15 +107,18 @@ const PaymentProofGenerator = React.forwardRef(({
   const [contractHtml, setContractHtml] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const uploadPDFToServer = useCallback(async (pdfBlob, isBulkOperation = false, installmentIds = []) => {
+  const uploadPDFToServer = useCallback(async (pdfBlob, isBulkOperation = false, repaymentIds = []) => {
     try {
       const formData = new FormData();
 
       let filename, endpoint;
       if (isBulkOperation) {
         filename = `إيصال_سداد_الدفعات_المجمع_${Date.now()}.pdf`;
-        formData.append('installmentIds', JSON.stringify(installmentIds));
-        endpoint = `/api/repayments/PaymentProof/bulk`;
+        // Send repaymentIds as array
+        repaymentIds.forEach(id => {
+          formData.append('repaymentIds[]', id);
+        });
+        endpoint = `/api/repayments/payment-proof-bulk`;
       } else {
         filename = `إيصال_سداد_الدفعة_${installmentData.id}_${Date.now()}.pdf`;
         endpoint = `/api/repayments/PaymentProof/${installmentData.id}`;
@@ -131,7 +139,7 @@ const PaymentProofGenerator = React.forwardRef(({
     }
   }, [installmentData?.id]);
 
-  const generatePDF = useCallback(async (htmlContent = contractHtml, isBulkOperation = false, installmentIds = []) => {
+  const generatePDF = useCallback(async (htmlContent = contractHtml, isBulkOperation = false, repaymentIds = []) => {
     const contentToUse = htmlContent || contractHtml;
 
     if (!contentToUse) {
@@ -193,7 +201,7 @@ const PaymentProofGenerator = React.forwardRef(({
 
       document.body.removeChild(previewContainer);
 
-      await uploadPDFToServer(pdfBlob, isBulkOperation, installmentIds);
+      await uploadPDFToServer(pdfBlob, isBulkOperation, repaymentIds);
 
       if (onContractGenerated) {
         onContractGenerated(pdfBlob, 'PAYMENT_PROOF');
@@ -215,6 +223,9 @@ const PaymentProofGenerator = React.forwardRef(({
 
     // Check if we have multiple installments or single installment
     const isBulkOperation = dataToUse.installmentsData && dataToUse.installmentsData.length > 0;
+
+    // Extract repayment IDs for bulk operation
+    const repaymentIds = isBulkOperation ? dataToUse.installmentsData.map(inst => inst.id).filter(id => id) : [];
 
     if (isBulkOperation) {
       // For bulk operations
@@ -267,6 +278,7 @@ const PaymentProofGenerator = React.forwardRef(({
         `;
 
         filledTemplate = templateContent
+
           // Client data
           .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
@@ -277,7 +289,6 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: block;')
           .replace(/{{عرض_نص_فردي}}/g, 'display: none;')
           .replace(/{{عرض_نص_مجمع}}/g, 'display: block;')
-          .replace(/{{رقم_الدفعات}}/g, dataToUse.installmentsData.map(inst => inst.count).join(', '))
           .replace(/{{رقم_الايصال}}/g, `${Math.floor(Math.random() * 9000) + 1000}`)
           .replace(/{{جدول_الدفعات}}/g, installmentsTable)
 
@@ -332,7 +343,7 @@ const PaymentProofGenerator = React.forwardRef(({
 
         setTimeout(async () => {
           try {
-            await generatePDF(filledTemplate);
+            await generatePDF(filledTemplate, isBulkOperation, repaymentIds);
           } catch (error) {
             handleApiError(error);
           }
@@ -346,7 +357,7 @@ const PaymentProofGenerator = React.forwardRef(({
       handleApiError(error);
       throw error;
     }
-  }, [installmentData, loanData, clientData, employeeName, templateContent, autoGenerate, generatePDF]);
+  }, [installmentData, installmentsData, loanData, clientData, employeeName, templateContent, autoGenerate, generatePDF]);
 
   useEffect(() => {
     if (autoGenerate && ((installmentData && clientData && templateContent) || (installmentsData.length > 0 && clientData && templateContent))) {
@@ -356,8 +367,8 @@ const PaymentProofGenerator = React.forwardRef(({
 
   React.useImperativeHandle(ref, () => ({
     generateContract,
-    generatePDF: (htmlContent, isBulkOperation = false, installmentIds = []) =>
-      generatePDF(htmlContent || contractHtml, isBulkOperation, installmentIds)
+    generatePDF: (htmlContent, isBulkOperation = false, repaymentIds = []) =>
+      generatePDF(htmlContent || contractHtml, isBulkOperation, repaymentIds)
   }));
 
   if (autoGenerate) {

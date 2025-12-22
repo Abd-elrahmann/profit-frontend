@@ -126,7 +126,12 @@ const numberToArabicWords = (num) => {
   return result.trim();
 };
 const getCurrentDates = () => {
+  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
+  const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
+
+  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
+  const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat(
     "ar-SA-u-ca-islamic-umalqura",
@@ -138,7 +143,7 @@ const getCurrentDates = () => {
     }
   );
 
-  let hijriDate = hijriFormatter.format(now);
+  let hijriDate = hijriFormatter.format(today);
 
   hijriDate = hijriDate.replace(/\s+/g, " ").trim();
   hijriDate = hijriDate.replace(" ", " من ");
@@ -152,7 +157,7 @@ const getCurrentDates = () => {
     timeZone: "Asia/Riyadh",
   });
 
-  const gregorianDate = gregorianFormatter.format(now);
+  const gregorianDate = gregorianFormatter.format(today);
 
   return {
     gregorianDate,
@@ -177,19 +182,26 @@ const LoanContractGenerator = React.forwardRef(
     const [isGenerating, setIsGenerating] = useState(false);
 
     const uploadPDFToServer = useCallback(
-      async (pdfBlob) => {
+      async (pdfBlob, loanDataParam = null) => {
         try {
+          const loanDataToUse = loanDataParam;
+          console.log("uploadPDFToServer - loanDataToUse:", loanDataToUse);
+
+          if (!loanDataToUse?.id) {
+            throw new Error("Loan data not available for PDF upload");
+          }
+
           const formData = new FormData();
           const filename =
             contractType === "DEBT_ACKNOWLEDGMENT"
-              ? `إقرار الدين_${loanData.id}_${Date.now()}.pdf`
-              : `سند الأمر_${loanData.id}_${Date.now()}.pdf`;
+              ? `إقرار الدين_${loanDataToUse.id}_${Date.now()}.pdf`
+              : `سند الأمر_${loanDataToUse.id}_${Date.now()}.pdf`;
           formData.append("file", pdfBlob, filename);
 
           const endpoint =
             contractType === "DEBT_ACKNOWLEDGMENT"
-              ? `/api/loans/${loanData.id}/upload-debt-acknowledgment`
-              : `/api/loans/${loanData.id}/upload-promissory-note`;
+              ? `/api/loans/${loanDataToUse.id}/upload-debt-acknowledgment`
+              : `/api/loans/${loanDataToUse.id}/upload-promissory-note`;
 
 
           const response = await Api.post(endpoint, formData, {
@@ -204,11 +216,11 @@ const LoanContractGenerator = React.forwardRef(
           throw error;
         }
       },
-      [contractType, loanData?.id]
+      [contractType]
     );
 
     const generatePDF = useCallback(
-      async (htmlContent = contractHtml) => {
+      async (htmlContent = contractHtml, loanDataParam = null) => {
         const contentToUse = htmlContent || contractHtml;
 
         if (!contentToUse) {
@@ -237,10 +249,13 @@ const LoanContractGenerator = React.forwardRef(
       `;
           document.body.appendChild(previewContainer);
 
+          const loanDataToUse = loanDataParam || loanData;
+          const clientDataToUse = loanDataToUse?.client || clientData;
+
           const options = {
             margin: 0,
             filename: `${contractType.toLowerCase()}_${
-              clientData.id
+              clientDataToUse?.id || loanDataToUse.id
             }_${Date.now()}.pdf`,
             image: { type: "jpeg", quality: 1.0 },
             html2canvas: {
@@ -270,7 +285,7 @@ const LoanContractGenerator = React.forwardRef(
 
           document.body.removeChild(previewContainer);
 
-          await uploadPDFToServer(pdfBlob);
+          await uploadPDFToServer(pdfBlob, loanDataParam);
 
           if (onContractGenerated) {
             onContractGenerated(pdfBlob, contractType);
@@ -286,7 +301,7 @@ const LoanContractGenerator = React.forwardRef(
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [contractType, loanData?.id, uploadPDFToServer, onContractGenerated]
+      [contractType, uploadPDFToServer, onContractGenerated, loanData]
     );
 
     const generateContract = useCallback(
@@ -308,16 +323,18 @@ const LoanContractGenerator = React.forwardRef(
           const finalDate = `${hijriDate}\n${gregorianDate}`;
 
           const amount = loanDataToUse.amount || 0;
-          const interestAmount = loanDataToUse.interestAmount || 0;
+          const interestAmount = loanDataToUse.interestAmount || loanDataToUse.TotalInterest || 0;
           const totalAmount = amount + interestAmount;
           const amountInWords = numberToArabicWords(totalAmount);
 
+          const clientDataToUse = loanDataToUse.client || clientData;
+
           let filledTemplate = templateContent
-            .replace(/{{اسم_العميل}}/g, clientData.name || "")
-            .replace(/{{رقم_هوية_العميل}}/g, clientData.nationalId || "")
+            .replace(/{{اسم_العميل}}/g, clientDataToUse?.name || "")
+            .replace(/{{رقم_هوية_العميل}}/g, clientDataToUse?.nationalId || "")
             .replace(
               /{{عنوان_العميل}}/g,
-              clientData.city + " - " + clientData.district || ""
+              (clientDataToUse?.city && clientDataToUse?.district) ? `${clientDataToUse.city} - ${clientDataToUse.district}` : ""
             )
 
             .replace(
@@ -337,7 +354,7 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{تاريخ_الاستحقاق}}/g, "لدي الاطلاع")
 
             .replace(/{{اسم_الدائن}}/g, loanDataToUse?.partner?.name || "لا يوجد كفيل")
-            .replace(/{{اسم_المدين}}/g, clientData.name || "")
+            .replace(/{{اسم_المدين}}/g, clientDataToUse?.name || "")
             .replace(/{{رقم_السند}}/g, `NOTE-${loanDataToUse.id}`)
             .replace(/{{رقم_الإقرار}}/g, `ACK-${loanDataToUse.id}`)
             .replace(/{{مدينة_الاصدار}}/g, "شروة - المملكة العربية السعودية")
@@ -345,10 +362,10 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")
 
             .replace(/{{رقم_هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")
-            .replace(/{{رقم_هوية_المدين}}/g, clientData.nationalId || "")
+            .replace(/{{رقم_هوية_المدين}}/g, clientDataToUse?.nationalId || "")
             .replace(/{{رقم_هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "لا يوجد كفيل")
             .replace(/{{هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")
-            .replace(/{{هوية_المدين}}/g, clientData.nationalId || "")
+            .replace(/{{هوية_المدين}}/g, clientDataToUse?.nationalId || "")
             .replace(/{{اسم_الكفيل}}/g, kafeelDataToUse?.name || "لا يوجد كفيل")
             .replace(/{{هوية_الكفيل}}/g, kafeelDataToUse?.nationalId || "لا يوجد كفيل");
 
@@ -357,7 +374,7 @@ const LoanContractGenerator = React.forwardRef(
           if (generatePdf) {
             setTimeout(async () => {
               try {
-                await generatePDF(filledTemplate);
+                await generatePDF(filledTemplate, loanDataToUse);
               } catch (error) {
                 console.error("Error in auto-generating PDF:", error);
               }
@@ -399,7 +416,7 @@ const LoanContractGenerator = React.forwardRef(
 
     React.useImperativeHandle(ref, () => ({
       generateContract,
-      generatePDF: () => generatePDF(contractHtml),
+      generatePDF: (htmlContent, loanDataParam) => generatePDF(htmlContent || contractHtml, loanDataParam || loanData),
     }));
 
     if (autoGenerate) {

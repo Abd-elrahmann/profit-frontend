@@ -53,7 +53,12 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { incomeStatementApi } from "./incomeStatementApi";
-import { notifyError } from "../../utilities/toastify";
+import { notifyError, notifySuccess } from "../../utilities/toastify";
+import {
+  exportIncomeStatementToPDF,
+  exportIncomeStatementToExcel,
+  printIncomeStatement
+} from "../../utilities/IncomeStatementExporter";
 
 const MONTHS = [
   "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
@@ -98,12 +103,45 @@ const IncomeStatement = () => {
     },
   });
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (!incomeData) {
+      notifyError("لا توجد بيانات للطباعة");
+      return;
+    }
+
+    try {
+      await printIncomeStatement(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
+    } catch (error) {
+      notifyError(error.message || "حدث خطأ أثناء الطباعة");
+    }
   };
 
-  const handleExport = () => {
-    console.log("Export report");
+  const handleExportPDF = async () => {
+    if (!incomeData) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+
+    try {
+      await exportIncomeStatementToPDF(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
+      notifySuccess("تم تصدير التقرير بنجاح");
+    } catch (error) {
+      notifyError(error.message || "حدث خطأ أثناء تصدير PDF");
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!incomeData) {
+      notifyError("لا توجد بيانات للتصدير");
+      return;
+    }
+
+    try {
+      await exportIncomeStatementToExcel(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
+      notifySuccess("تم تصدير التقرير بنجاح");
+    } catch (error) {
+      notifyError(error.message || "حدث خطأ أثناء تصدير Excel");
+    }
   };
 
   const formatNumber = (amount) => {
@@ -500,26 +538,42 @@ const IncomeStatement = () => {
 
         {/* Action Buttons */}
         {!isLoading && !isError && (
-          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 3 }}>
+          <Stack direction="row" justifyContent="space-around" sx={{ mb: 3 }}>
             <Button
               variant="outlined"
-              startIcon={<Print />}
+              startIcon={<Print sx={{marginLeft: '10px'}} />}
               onClick={handlePrint}
               sx={{
-                borderColor: '#eaf1eb',
-                color: '#101812',
+                borderColor: '#F97316',
+                color: '#F97316',
                 fontWeight: 600,
                 '&:hover': {
-                  borderColor: '#dce6de'
+                  borderColor: '#EA580C',
+                  bgcolor: '#FEF3C7',
+                  color: '#EA580C'
                 }
               }}
             >
-              طباعة التقرير
+              طباعة
             </Button>
             <Button
               variant="contained"
-              startIcon={<FileUpload />}
-              onClick={handleExport}
+              startIcon={<TableChart sx={{marginLeft: '10px'}} />}
+              onClick={handleExportExcel}
+              sx={{
+                bgcolor: '#DC2626',
+                fontWeight: 600,
+                '&:hover': {
+                  bgcolor: '#B91C1C'
+                }
+              }}
+            >
+              تصدير Excel
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<FileUpload sx={{marginLeft: '10px'}} />}
+              onClick={handleExportPDF}
               sx={{
                 bgcolor: '#2E8B45',
                 fontWeight: 600,
@@ -528,7 +582,7 @@ const IncomeStatement = () => {
                 }
               }}
             >
-              تصدير التقرير
+              تصدير PDF
             </Button>
           </Stack>
         )}

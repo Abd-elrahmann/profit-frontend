@@ -163,7 +163,7 @@ const Layout = ({ children }) => {
           disabled={isSyncing}
           style={{
             position: 'fixed',
-            bottom: 35,
+            bottom: 3,
             left: 20,
           }}
           sx={{

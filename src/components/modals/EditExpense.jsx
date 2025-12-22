@@ -64,19 +64,18 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
 
   useEffect(() => {
     if (open && expense) {
-      // تحويل بيانات المصروف الواحد إلى مصفوفة لتتوافق مع الشكل المطلوب
-      const formattedExpenses = [{
-        type: expense.type,
-        amount: expense.amount.toString(),
-        description: expense.description,
-        userId: expense.employee?.id || null
-      }];
+      // expense الآن عبارة عن مجموعة مصروفات لها نفس journalId
+      const formattedExpenses = expense.expenses.map(expenseItem => ({
+        type: expenseItem.type,
+        amount: expenseItem.amount.toString(),
+        description: expenseItem.description,
+        userId: expenseItem.employee?.id || null
+      }));
       
       setExpenses(formattedExpenses);
       setErrors([]);
     }
   }, [open, expense]);
-
   const handleAddExpense = () => {
     setExpenses([...expenses, { type: "", amount: "", description: "", userId: null }]);
   };

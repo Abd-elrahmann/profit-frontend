@@ -125,7 +125,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [240, 249, 244],
+          fillColor: [240, 240, 240],
           textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 8,
@@ -432,7 +432,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [240, 249, 244],
+          fillColor: [240, 240, 240],
           textColor: [46, 139, 69],
           fontStyle: 'bold',
           fontSize: 11, // smaller header font
@@ -500,7 +500,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [240, 249, 244],
+            fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
           fontSize: 11, // smaller header font
@@ -588,7 +588,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [240, 249, 244], // خلفية فاتحة
+            fillColor: [240, 240, 240], // خلفية فاتحة
             textColor: [46, 139, 69], // نص أخضر داكن
             fontStyle: 'bold',
             fontSize: 11,

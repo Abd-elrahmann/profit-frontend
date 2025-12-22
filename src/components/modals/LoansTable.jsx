@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -12,7 +12,6 @@ import {
   Stack,
   Typography,
   CircularProgress,
-  InputBase,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -39,6 +38,7 @@ import {
   Print,
   Share,
   Close,
+  SwapHoriz,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -54,9 +54,23 @@ import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import { saveAs } from 'file-saver';
 import { handleApiError } from "../../config/Api";
-const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan, statusFilter }) => {
+const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan, onConvertClient, statusFilter, searchQuery }) => {
   const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  // Debounce search query - wait 500ms after user stops typing before making API call
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset page to 1 when search query or status filter changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter]);
   const [loanToDelete, setLoanToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -82,8 +96,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   const PAGE_SIZE = 15;
 
   const { data: loansData, isLoading } = useQuery({
-    queryKey: ["loans", page, searchQuery, PAGE_SIZE, statusFilter],
-    queryFn: () => getLoans(page, searchQuery, PAGE_SIZE, statusFilter),
+    queryKey: ["loans", page, debouncedSearchQuery, PAGE_SIZE, statusFilter],
+    queryFn: () => getLoans(page, debouncedSearchQuery, PAGE_SIZE, statusFilter),
     retry: 1,
   });
 
@@ -98,10 +112,6 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
     );
   }, [loansData?.data]);
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-    setPage(1);
-  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
@@ -648,26 +658,6 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
         height: "100%",
       }}
     >
-      {/* Search Bar */}
-      <Box
-        sx={{
-          p: isSmallScreen ? 1.5 : 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <InputBase
-          placeholder="ابحث باسم العميل أو رقم السلفة..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          sx={{
-            width: isSmallScreen ? "100%" : "280px",
-            borderRadius: "6px",
-            p: isSmallScreen ? 1 : 0.5,
-          }}
-        />
-      </Box>
 
       {/* Table/Cards */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden" }}>
@@ -923,10 +913,67 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               </Card>
             )}
 
-            {!selectedLoanContracts?.DEBT_ACKNOWLEDGMENT && !selectedLoanContracts?.PROMISSORY_NOTE && !(selectedLoanContracts?.status === "COMPLETED" && selectedLoanContracts?.SETTLEMENT) && (
+            {/* Payment Proofs */}
+            {selectedLoanContracts?.PAYMENT_PROOF && selectedLoanContracts.PAYMENT_PROOF.length > 0 && (
+              <Card variant="outlined" sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Description color="success" />
+                    <Typography variant="h6" fontWeight="bold">
+                      إثباتات الدفع ({selectedLoanContracts.PAYMENT_PROOF.length})
+                    </Typography>
+                  </Box>
+                </Box>
+                <Stack spacing={1}>
+                  {selectedLoanContracts.PAYMENT_PROOF.map((proof, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center', p: 1, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ flex: 1, textAlign: 'right' }}>
+                        إثبات دفع #{index + 1}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<Visibility sx={{marginLeft:'10px'}} />}
+                          onClick={() => handleViewContract(proof)}
+                          size="small"
+                        >
+                          عرض
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<Download sx={{marginLeft:'10px'}} />}
+                          onClick={() => handleDownloadContract(proof, `إثبات_دفع_${index + 1}`)}
+                          size="small"
+                        >
+                          تحميل
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<Print sx={{marginLeft:'10px'}} />}
+                          onClick={() => handlePrintContract(proof)}
+                          size="small"
+                        >
+                          طباعة
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<Share sx={{marginLeft:'10px'}} />}
+                          onClick={() => handleShareContract(proof, `إثبات_دفع_${index + 1}`)}
+                          size="small"
+                        >
+                          مشاركة
+                        </Button>
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              </Card>
+            )}
+
+            {!selectedLoanContracts?.DEBT_ACKNOWLEDGMENT && !selectedLoanContracts?.PROMISSORY_NOTE && !(selectedLoanContracts?.status === "COMPLETED" && selectedLoanContracts?.SETTLEMENT) && (!selectedLoanContracts?.PAYMENT_PROOF || selectedLoanContracts.PAYMENT_PROOF.length === 0) && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body1" color="text.secondary">
-                  لا توجد عقود متاحة لهذه السلفة
+                  لا توجد عقود أو إثباتات دفع متاحة لهذه السلفة
                 </Typography>
               </Box>
             )}
@@ -1025,6 +1072,22 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               <Add fontSize="small" sx={{ color: "black" }} />
             </ListItemIcon>
             سلفة إضافية
+          </MenuItem>
+        )}
+
+        {/* Convert Client (ACTIVE loans with remaining balance) */}
+        {selectedLoanForMenu?.status === "ACTIVE" && selectedLoanForMenu?.remainingBalance > 0 && permissions.includes("loans_Update") && (
+          <MenuItem
+            onClick={() => {
+              onConvertClient(selectedLoanForMenu);
+              handleMenuClose();
+            }}
+            sx={{ color: "#FF9800", fontWeight: 'bold', fontSize: '0.875rem' }}
+          >
+            <ListItemIcon>
+              <SwapHoriz fontSize="small" sx={{ color: "#FF9800" }} />
+            </ListItemIcon>
+            نقل مديونيه
           </MenuItem>
         )}
 

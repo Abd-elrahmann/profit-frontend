@@ -43,12 +43,13 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
   // حساب الإجماليات
   const totals = useMemo(() => {
     if (!clientsData?.data || clientsData.data.length === 0) {
-      return { totalDebit: 0, totalPaid: 0, remaining: 0 };
+      return { totalDebit: 0, totalPaid: 0, remaining: 0, totalInterest: 0 };
     }
     return {
       totalDebit: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0),
       totalPaid: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0),
       remaining: clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0),
+      totalInterest: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalInterestPaid || 0), 0),
     };
   }, [clientsData]);
 
@@ -127,9 +128,9 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
           <TableHead>
             <StyledTableRow>
               {visibleColumns.map((column) => (
-                <StyledTableCell 
-                  key={column.id} 
-                  align="center" 
+                <StyledTableCell
+                  key={column.id}
+                  align="center"
                   sx={{ fontWeight: 'bold', minWidth: 100 }}
                 >
                   {column.label}
@@ -161,7 +162,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
                         {column.id === 'loansCount' ? (
                           renderLoansCountWithChips(client)
                         ) : column.id === 'client' ? (
-                          <Box sx={{ textAlign: 'right' }}>
+                          <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
                               {getColumnValue(client, column.id, index)}
                             </Typography>
@@ -180,8 +181,8 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
             {!isLoading && clientsData?.data?.length > 0 && (
               <StyledTableRow sx={{ backgroundColor: '#e8f5e9' }}>
                 {visibleColumns.map((column) => (
-                  <StyledTableCell 
-                    key={`total-${column.id}`} 
+                  <StyledTableCell
+                    key={`total-${column.id}`}
                     align="center"
                     sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}
                   >
@@ -194,6 +195,10 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
                     ) : column.id === 'totalPaid' ? (
                       <Typography variant="body2" fontWeight="bold" color="success.main">
                         {formatCurrency(totals.totalPaid)}
+                      </Typography>
+                    ) : column.id === 'totalInterest' ? (
+                      <Typography variant="body2" fontWeight="bold" color="primary.main">
+                        {formatCurrency(totals.totalInterest)}
                       </Typography>
                     ) : column.id === 'remaining' ? (
                       <Typography variant="body2" fontWeight="bold" color="warning.main">

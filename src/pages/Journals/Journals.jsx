@@ -557,9 +557,13 @@ const Journals = () => {
       case "LOAN":
         return "سلفة";
       case "REPAYMENT":
-        return "سداد";
+        return "سداد دفعة";
+      case "LOAN_INTEREST":
+        return "فوائد سلفة";
+      case "LOAN_CONVERSION":
+        return "نقل مديونية";
       case "PARTNER":
-        return "شريك";
+        return "انضمام شريك";
       case "PERIOD_CLOSING":
         return "إقفال فترة";
       case "PARTNER_TRANSACTION_WITHDRAWAL":

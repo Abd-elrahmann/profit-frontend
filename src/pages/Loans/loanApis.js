@@ -77,7 +77,7 @@ export const getLoans = async (page = 1, search = '', limit = 15, status = null)
   try {
     const params = new URLSearchParams();
     params.append('limit', limit);
-    if (search) params.append('search', encodeURIComponent(search));
+    if (search) params.append('clientName', search);
     if (status) params.append('status', status);
     const query = params.toString();
     const url = `/api/loans/all/${page}${query ? `?${query}` : ''}`;
@@ -153,10 +153,11 @@ export const updateSmallLoan = async (loanId, updateData) => {
 };
 
 // Get small loans with pagination
-export const getSmallLoans = async (page = 1, limit = 20) => {
+export const getSmallLoans = async (page = 1, search = '', limit = 20) => {
   try {
     const params = new URLSearchParams();
     params.append('limit', limit);
+    if (search) params.append('clientName', search);
     const query = params.toString();
     const url = `/api/small-loans/${page}${query ? `?${query}` : ''}`;
     const response = await Api.get(url);
@@ -171,6 +172,20 @@ export const getSmallLoans = async (page = 1, limit = 20) => {
 export const deleteSmallLoan = async (loanId) => {
   try {
     const response = await Api.delete(`/api/small-loans/${loanId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// Convert loan client
+export const convertLoanClient = async (fromClientId, toClientId, loanId) => {
+  try {
+    const response = await Api.patch(`/api/loans/convert-client/${loanId}`, {
+      fromClientId: String(fromClientId),
+      toClientId: String(toClientId),
+    });
     return response.data;
   } catch (error) {
     handleApiError(error);
