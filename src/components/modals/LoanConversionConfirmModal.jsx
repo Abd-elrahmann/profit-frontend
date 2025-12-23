@@ -20,6 +20,7 @@ const LoanConversionConfirmModal = ({
   onConfirm,
   fromClient,
   toClient,
+  selectedKafeel,
   remainingAmount,
   isLoading,
 }) => {
@@ -136,6 +137,48 @@ const LoanConversionConfirmModal = ({
               </Grid>
             </Grid>
           </Paper>
+
+          {/* Selected Kafeel Info - Show if kafeel is selected */}
+          {selectedKafeel && (
+            <Paper
+              sx={{
+                p: 2,
+                mb: 2,
+                border: "1px solid #e3f2fd",
+                bgcolor: "#f8f9fa",
+                maxWidth: 500,
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                color="text.secondary"
+                mb={2}
+                textAlign="center"
+              >
+                كفيل العميل الجديد
+              </Typography>
+              <Grid container spacing={2} justifyContent="center" alignItems="center">
+                <Grid item xs={12} sm={6} textAlign="center">
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    الاسم:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold" textAlign="center">
+                    {selectedKafeel?.name}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} textAlign="center">
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    رقم الهوية:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold" textAlign="center">
+                    {selectedKafeel?.nationalId}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          )}
 
           {/* Loan and Amount Info */}
           <Paper

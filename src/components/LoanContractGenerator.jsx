@@ -108,18 +108,34 @@ const numberToArabicWords = (num) => {
     num %= 100;
   }
 
-  // Handle tens and ones
+  // Handle tens and ones (add "و" between hundreds and tens if both exist)
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
+    const hasHundredsInResult = result.includes("مئة") || result.includes("مئتان") || result.includes("ثلاث مئة") || result.includes("أربع مئة") || result.includes("خمس مئة") || result.includes("ست مئة") || result.includes("سبع مئة") || result.includes("ثمان مئة") || result.includes("تسع مئة");
+
+    if (hasHundredsInResult && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
+
     if (onesPart > 0) {
       result += ones[onesPart] + " و" + tens[tensPart];
     } else {
       result += tens[tensPart];
     }
   } else if (num >= 10) {
+    const hasHundredsInResult = result.includes("مئة") || result.includes("مئتان") || result.includes("ثلاث مئة") || result.includes("أربع مئة") || result.includes("خمس مئة") || result.includes("ست مئة") || result.includes("سبع مئة") || result.includes("ثمان مئة") || result.includes("تسع مئة");
+
+    if (hasHundredsInResult && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += teens[num - 10];
   } else if (num > 0) {
+    const hasHundredsInResult = result.includes("مئة") || result.includes("مئتان") || result.includes("ثلاث مئة") || result.includes("أربع مئة") || result.includes("خمس مئة") || result.includes("ست مئة") || result.includes("سبع مئة") || result.includes("ثمان مئة") || result.includes("تسع مئة");
+
+    if (hasHundredsInResult && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += ones[num];
   }
 

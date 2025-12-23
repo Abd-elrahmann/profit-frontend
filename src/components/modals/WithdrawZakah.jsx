@@ -82,9 +82,6 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
           </Alert>
         )}
 
-        <Alert severity="info">
-          سيتم خصم المبلغ من حساب الزكاة وإضافته للحساب البنكي
-        </Alert>
       </DialogContent>
 
       <DialogActions sx={{ p: 2.5, gap: 1, flexDirection: 'row-reverse' }}>

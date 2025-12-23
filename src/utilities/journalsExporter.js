@@ -412,17 +412,29 @@ const getJournalSourceTypeText = (sourceType) => {
     case "LOAN":
       return "سلفة";
     case "REPAYMENT":
-      return "سداد";
+      return "سداد دفعة";
+    case "LOAN_INTEREST":
+      return "فوائد سلفة";
+    case "LOAN_CONVERSION":
+      return "نقل مديونية";
     case "PARTNER":
-      return "شريك";
+      return "انضمام شريك";
     case "PERIOD_CLOSING":
       return "إقفال فترة";
     case "PARTNER_TRANSACTION_WITHDRAWAL":
       return "سحب مالي لشريك";
+    case "COMPANY_PROFIT_WITHDRAWAL":
+      return "سحب ربح شركة";
     case "PARTNER_TRANSACTION_DEPOSIT":
       return "إيداع مالي لشريك";
     case "EXPENSES":
       return "مصروف";
+    case "PARTNER_WITHDRAWING":
+      return "انسحاب مالي لشريك";
+    case "ZAKAT":
+      return "سحب زكاة";
+    case "PARTNER_PROFIT_WITHDRAWAL":
+      return "سحب ارباح شريك";
     case "OTHER":
       return "أخرى";
     default:
@@ -476,16 +488,15 @@ export const exportJournalsTableToPDF = async (journals) => {
       doc.text(summaryText, doc.internal.pageSize.width / 2, 35, { align: 'center' });
 
       // Table data
-      const headers = [['رقم القيد', 'النوع', 'الحالة', 'المصدر', 'المعتمد بواسطة', 'تاريخ الإنشاء']];
+      const headers = [['تاريخ الإنشاء', 'المعتمد بواسطة', 'المصدر', 'الحالة', 'النوع']];
       const body = journals.map((journal) => {
         const normalized = normalizeJournalRow(journal);
         return [
-          normalized.reference,
-          normalized.type,
-          normalized.status,
-          normalized.source,
-          normalized.postedBy,
           normalized.createdAt,
+          normalized.postedBy,
+          normalized.source,
+          normalized.status,
+          normalized.type,
         ];
       });
 
@@ -531,12 +542,11 @@ export const exportJournalsTableToPDF = async (journals) => {
         pageBreak: 'auto',
         showHead: 'everyPage',
         columnStyles: {
-          0: { cellWidth: 22 }, // رقم القيد (أضيق)
-          1: { cellWidth: 32 }, // النوع (أعرض)
-          2: { cellWidth: 'auto' },
-          3: { cellWidth: 'auto' },
-          4: { cellWidth: 'auto' },
-          5: { cellWidth: 'auto' },
+          0: { cellWidth: 'auto' }, // تاريخ الإنشاء
+          1: { cellWidth: 'auto' }, // المعتمد بواسطة
+          2: { cellWidth: 'auto' }, // المصدر
+          3: { cellWidth: 'auto' }, // الحالة
+          4: { cellWidth: 32 }, // النوع (أعرض)
         },
       });
 
@@ -592,28 +602,26 @@ export const exportJournalsTableToExcel = async (journals) => {
 
     const workbook = XLSX.utils.book_new();
     const sheetData = [
-      ['رقم القيد', 'النوع', 'الحالة', 'المصدر', 'المعتمد بواسطة', 'تاريخ الإنشاء'],
+      ['تاريخ الإنشاء', 'المعتمد بواسطة', 'المصدر', 'الحالة', 'النوع'],
       ...journals.map((journal) => {
         const normalized = normalizeJournalRow(journal);
         return [
-          normalized.reference,
-          normalized.type,
-          normalized.status,
-          normalized.source,
-          normalized.postedBy,
           normalized.createdAt,
+          normalized.postedBy,
+          normalized.source,
+          normalized.status,
+          normalized.type,
         ];
       }),
     ];
 
     const sheet = XLSX.utils.aoa_to_sheet(sheetData);
     sheet['!cols'] = [
-      { wch: 12 }, // رقم القيد أضيق
+      { wch: 15 }, // تاريخ الإنشاء
+      { wch: 20 }, // المعتمد بواسطة
+      { wch: 18 }, // المصدر
+      { wch: 10 }, // الحالة
       { wch: 18 }, // النوع أعرض
-      { wch: 10 },
-      { wch: 18 },
-      { wch: 20 },
-      { wch: 15 },
     ];
 
     XLSX.utils.book_append_sheet(workbook, sheet, 'القيود');

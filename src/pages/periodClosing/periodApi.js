@@ -50,3 +50,12 @@ export const unpostClosing = async (periodId) => {
   const response = await Api.patch(`/api/periods/reverse-close/${periodId}`);
   return response.data;
 };
+
+// Compare two periods
+export const comparePeriods = async (periodId1, periodId2) => {
+  const response = await Api.post('/api/periods/compare', {
+    periodId1,
+    periodId2,
+  });
+  return response.data;
+};

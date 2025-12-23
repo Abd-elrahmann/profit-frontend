@@ -181,7 +181,7 @@ return `
 
   .signatures {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
     text-align: center;
     margin-top: 20px;
@@ -201,6 +201,7 @@ return `
     }
     .signatures {
       grid-template-columns: 1fr;
+      gap: 15px;
     }
   }
 
@@ -269,6 +270,11 @@ return `
         <p class="strong">توقيع المدين</p>
         <div class="sign-line"></div>
         <p>{{اسم_العميل}}</p>
+      </div>
+      <div>
+        <p class="strong">توقيع الكفيل</p>
+        <div class="sign-line"></div>
+        <p>{{اسم_الكفيل}}</p>
       </div>
     </div>
 

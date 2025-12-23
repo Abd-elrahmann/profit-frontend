@@ -77,6 +77,8 @@ const LogsToolbar = ({
     { value: "Users", label: "المستخدمين" },
     { value: "Company Profit", label: "أرباح الشركة" },
     { value: "Distribution", label: "توزيع الأرباح" },
+    { value: "Small Loans", label: "السلف الصغيرة" },
+    { value: "Expenses", label: "المصروفات" },
   ];
 
   // Action options with Arabic translations

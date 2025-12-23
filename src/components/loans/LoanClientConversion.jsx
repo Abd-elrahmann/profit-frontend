@@ -339,7 +339,7 @@ const LoanClientConversion = ({
                 )}
                 noOptionsText={
                   !selectedClient.kafeels || selectedClient.kafeels.length === 0
-                    ? "لا يوجد كفلاء متاحين لهذا العميل"
+                    ? "لا يوجد كفلاء برجاء اضافه كفيل"
                     : "جميع الكفلاء مستخدمون في سلف أخرى"
                 }
               />
@@ -383,6 +383,79 @@ const LoanClientConversion = ({
                   </Typography>
                 </Grid>
               )}
+          </Grid>
+        </Paper>
+      )}
+
+      {/* Selected New Client Kafeel Info - Show if kafeel is selected */}
+      {selectedKafeel && (
+        <Paper
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 2,
+            border: "1px solid #e5e7eb",
+            backgroundColor: "#f8f9fa",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            fontWeight="bold"
+            color="#666"
+            mb={2}
+            textAlign="center"
+          >
+            كفيل العميل الجديد المختار
+          </Typography>
+          <Grid container spacing={2} justifyContent="center">
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                label="اسم الكفيل"
+                value={selectedKafeel?.name || ""}
+                disabled
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#e9ecef",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                label="رقم الهوية"
+                value={selectedKafeel?.nationalId || ""}
+                disabled
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#e9ecef",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                label="تاريخ الميلاد"
+                value={selectedKafeel?.birthDate ? new Date(selectedKafeel.birthDate).toISOString().split("T")[0] : ""}
+                disabled
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#e9ecef",
+                  },
+                }}
+              />
+            </Grid>
           </Grid>
         </Paper>
       )}

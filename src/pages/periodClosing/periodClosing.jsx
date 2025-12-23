@@ -34,9 +34,11 @@ import {
   getPeriodById,
   closePeriod,
   unpostClosing,
+  comparePeriods,
 } from "./periodApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import PeriodTable from "../../components/modals/periodTable";
+import PeriodComparisonModal from "../../components/modals/PeriodComparisonModal";
 import {
   StyledTableCell,
   StyledTableRow,
@@ -50,6 +52,10 @@ const PeriodClosing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDraftAlert, setShowDraftAlert] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
+  const [selectedPeriods, setSelectedPeriods] = useState([]);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [comparisonData, setComparisonData] = useState(null);
+  const [isComparisonLoading, setIsComparisonLoading] = useState(false);
 
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -126,6 +132,32 @@ const PeriodClosing = () => {
 
   const handleNavigateToProfitDistribution = () => {
     navigate(`/profit-distribution?periodId=${selectedPeriod}&from=period-closing`);
+  };
+
+  const handleComparePeriods = async (periodId1, periodId2) => {
+    setIsComparisonLoading(true);
+    setComparisonData(null); // Clear previous data
+    try {
+      const comparison = await comparePeriods(periodId1, periodId2);
+      setComparisonData(comparison);
+      // Small delay to ensure state is updated before opening modal
+      setTimeout(() => {
+        setShowComparisonModal(true);
+        setIsComparisonLoading(false);
+      }, 100);
+    } catch (error) {
+      setIsComparisonLoading(false);
+      notifyError(error.response?.data?.message || "حدث خطأ في مقارنة الفترات");
+    }
+  };
+
+  const handleCloseComparisonModal = () => {
+    setShowComparisonModal(false);
+    setComparisonData(null);
+  };
+
+  const handleSelectionChange = (newSelectedPeriods) => {
+    setSelectedPeriods(newSelectedPeriods);
   };
 
   // Format date for display
@@ -1052,10 +1084,14 @@ const PeriodClosing = () => {
             )}
 
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
-              <PeriodTable 
-                onViewDetails={handleViewDetails} 
-                isMobile={isMobile} 
+              <PeriodTable
+                onViewDetails={handleViewDetails}
+                isMobile={isMobile}
                 searchQuery={searchQuery}
+                showSelection={true}
+                selectedPeriods={selectedPeriods}
+                onSelectionChange={handleSelectionChange}
+                onComparePeriods={handleComparePeriods}
               />
             ) : (
               <Box>
@@ -1084,6 +1120,14 @@ const PeriodClosing = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Period Comparison Modal */}
+      <PeriodComparisonModal
+        open={showComparisonModal}
+        onClose={handleCloseComparisonModal}
+        comparison={comparisonData}
+        isLoading={isComparisonLoading}
+      />
     </Box>
   );
 };

@@ -220,13 +220,14 @@ const LoanDetailsSection = ({
           <TextField
             fullWidth
             type="date"
-            label="تاريخ الاستحقاق"
+            label="تاريخ الاستحقاق (اختياري)"
             value={loanForm.repaymentDay}
             onChange={(e) => handleInputChange("repaymentDay", e.target.value)}
             disabled={isReadOnlyMode}
             InputLabelProps={{
               shrink: true,
             }}
+            helperText="إذا تُرك فارغاً، سيتم استخدام اليوم العاشر من كل شهر"
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",

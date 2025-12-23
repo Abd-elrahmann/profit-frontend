@@ -72,6 +72,9 @@ const IncomeStatement = () => {
   const [fromDate, setFromDate] = useState(dayjs().startOf('month'));
   const [toDate, setToDate] = useState(dayjs().endOf('month'));
   const [expandedClients, setExpandedClients] = useState({});
+  const [expandedCapital, setExpandedCapital] = useState(false);
+  const [expandedRevenues, setExpandedRevenues] = useState(true);
+  const [expandedExpenses, setExpandedExpenses] = useState(true);
 
   // توليد السنوات من 2020 إلى 2050
   const years = Array.from({ length: 31 }, (_, i) => 2020 + i);
@@ -144,6 +147,7 @@ const IncomeStatement = () => {
     }
   };
 
+
   const formatNumber = (amount) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
@@ -167,6 +171,21 @@ const IncomeStatement = () => {
     }));
   };
 
+  // تبديل تفاصيل رأس المال
+  const toggleCapitalDetails = () => {
+    setExpandedCapital(prev => !prev);
+  };
+
+  // تبديل تفاصيل الإيرادات
+  const toggleRevenueDetails = () => {
+    setExpandedRevenues(prev => !prev);
+  };
+
+  // تبديل تفاصيل المصروفات
+  const toggleExpenseDetails = () => {
+    setExpandedExpenses(prev => !prev);
+  };
+
   // تحويل البيانات الحقيقية إلى هيكل الجدول
   const getTableData = () => {
     if (!incomeData) return [];
@@ -180,11 +199,37 @@ const IncomeStatement = () => {
       code: "CAP-001",
       amount: incomeData.totalCapital || 0,
       type: "capital",
-      icon: <MonetizationOn />
+      icon: <MonetizationOn />,
+      capitalDetails: incomeData.capitalByPartner || []
     });
 
+    // رأس جدول رأس المال
+    if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+      data.push({
+        id: 0.5,
+        name: "اسم المستثمر",
+        code: "المبلغ",
+        type: "capital-table-header"
+      });
+    }
+
+    // تفاصيل رأس المال عند التوسع
+    if (expandedCapital && incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+      incomeData.capitalByPartner.forEach((partner, index) => {
+        data.push({
+          id: `capital-${index}`,
+          name: partner.partnerName,
+          code: `PRT-${partner.partnerId}`,
+          amount: partner.capitalAmount,
+          type: "capital-detail",
+          indent: true,
+          profitPercentage: partner.profitPercentage
+        });
+      });
+    }
+
     // إضافة مسافة
-    data.push({ id: 0.5, type: "spacer" });
+    data.push({ id: 0.75, type: "spacer" });
 
     // عنوان الإيرادات
     data.push({
@@ -194,8 +239,18 @@ const IncomeStatement = () => {
       icon: <TrendingUpIcon />
     });
 
-    // إيرادات العملاء
+    // رأس جدول الإيرادات
     if (incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
+      data.push({
+        id: 1.5,
+        name: "اسم العميل",
+        code: "المبلغ",
+        type: "revenue-table-header"
+      });
+    }
+
+    // إيرادات العملاء
+    if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
       incomeData.revenueByClient.forEach((client, clientIndex) => {
         // إيرادات العميل
         data.push({
@@ -234,7 +289,7 @@ const IncomeStatement = () => {
     });
 
     // إضافة مسافة
-    data.push({ id: 2.7, type: "spacer" });
+    data.push({ id: 2.75, type: "spacer" });
 
     // عنوان المصروفات
     data.push({
@@ -244,8 +299,18 @@ const IncomeStatement = () => {
       icon: <TrendingDown />
     });
 
-    // المصروفات التفصيلية
+    // رأس جدول المصروفات
     if (incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
+      data.push({
+        id: 3.5,
+        name: "وصف المصروف",
+        code: "المبلغ",
+        type: "expense-table-header"
+      });
+    }
+
+    // المصروفات التفصيلية
+    if (expandedExpenses && incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
       incomeData.detailedExpenses.forEach((expense, index) => {
         data.push({
           id: 4 + index,
@@ -270,7 +335,7 @@ const IncomeStatement = () => {
     });
 
     // إضافة مسافة
-    data.push({ id: 100.5, type: "spacer" });
+    data.push({ id: 100.75, type: "spacer" });
 
     // صافي الربح النهائي
     data.push({
@@ -637,15 +702,15 @@ const IncomeStatement = () => {
                     height: '100%'
                   }}
                 >
-                  <MonetizationOn sx={{ 
-                    color: '#2E8B45', 
+                  <MonetizationOn sx={{
+                    color: '#2E8B45',
                     fontSize: 30,
-                    mb: 1 
+                    mb: 1
                   }} />
                   <Typography sx={{ color: '#5c8a67', fontSize: '0.875rem', mb: 1 }}>
                     رأس المال الفعلي
                   </Typography>
-                  <Typography sx={{ 
+                  <Typography sx={{
                     color: '#101812',
                     fontSize: '1.25rem',
                     fontWeight: 700
@@ -751,6 +816,7 @@ const IncomeStatement = () => {
               </Grid>
             </Grid>
 
+
             {/* Detailed Statement */}
             <Paper
               elevation={0}
@@ -843,14 +909,25 @@ const IncomeStatement = () => {
                         return (
                           <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.3)' }}>
                             <TableCell colSpan={3} sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{ 
-                                fontSize: '0.875rem',
-                                fontWeight: 700,
-                                color: '#2E8B45',
-                                textAlign: 'center'
-                              }}>
-                                {row.name}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography sx={{
+                                  fontSize: '0.875rem',
+                                  fontWeight: 700,
+                                  color: '#2E8B45',
+                                  mr: 1
+                                }}>
+                                  {row.name}
+                                </Typography>
+                                {incomeData.revenueByClient && incomeData.revenueByClient.length > 0 && (
+                                  <IconButton
+                                    size="small"
+                                    onClick={toggleRevenueDetails}
+                                    sx={{ color: '#2E8B45' }}
+                                  >
+                                    {expandedRevenues ? <ExpandLess /> : <ExpandMore />}
+                                  </IconButton>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         );
@@ -860,14 +937,25 @@ const IncomeStatement = () => {
                         return (
                           <TableRow key={row.id} sx={{ bgcolor: 'rgba(254, 226, 226, 0.3)' }}>
                             <TableCell colSpan={3} sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{ 
-                                fontSize: '0.875rem',
-                                fontWeight: 700,
-                                color: '#DC2626',
-                                textAlign: 'center'
-                              }}>
-                                {row.name}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography sx={{
+                                  fontSize: '0.875rem',
+                                  fontWeight: 700,
+                                  color: '#DC2626',
+                                  mr: 1
+                                }}>
+                                  {row.name}
+                                </Typography>
+                                {incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0 && (
+                                  <IconButton
+                                    size="small"
+                                    onClick={toggleExpenseDetails}
+                                    sx={{ color: '#DC2626' }}
+                                  >
+                                    {expandedExpenses ? <ExpandLess /> : <ExpandMore />}
+                                  </IconButton>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         );
@@ -879,7 +967,6 @@ const IncomeStatement = () => {
                             <TableRow sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
                               <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
                                 <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                                  <Person sx={{ color: '#5c8a67', fontSize: 20 }} />
                                   <Typography>
                                     {row.name}
                                   </Typography>
@@ -913,6 +1000,22 @@ const IncomeStatement = () => {
                         );
                       }
 
+                      if (row.type === "revenue-table-header") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.2)' }}>
+                            <TableCell sx={{ py: 1, px: 3, textAlign: 'center', fontWeight: 600, color: '#2E8B45' }}>
+                              {row.name}
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3, fontWeight: 600, color: '#2E8B45' }}>
+                              الرمز المرجعي
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3, fontWeight: 600, color: '#2E8B45' }}>
+                              {row.code}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
                       if (row.type === "revenue-detail") {
                         return (
                           <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.1)', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
@@ -927,7 +1030,7 @@ const IncomeStatement = () => {
                               )}
                             </TableCell>
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{ 
+                              <Typography sx={{
                                 fontSize: '0.75rem',
                                 color: '#5c8a67'
                               }}>
@@ -935,9 +1038,55 @@ const IncomeStatement = () => {
                               </Typography>
                             </TableCell>
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{ 
+                              <Typography sx={{
                                 fontWeight: 500,
                                 color: '#101812'
+                              }}>
+                                {formatAmount(row.amount)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "capital-table-header") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(46, 139, 69, 0.1)' }}>
+                            <TableCell sx={{ py: 1, px: 3, textAlign: 'center', fontWeight: 600, color: '#2E8B45' }}>
+                              {row.name}
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3, fontWeight: 600, color: '#2E8B45' }}>
+                              الرمز المرجعي
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3, fontWeight: 600, color: '#2E8B45' }}>
+                              {row.code}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "capital-detail") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(46, 139, 69, 0.05)', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
+                              <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                                <Typography sx={{ fontSize: '0.875rem',fontWeight: 700 }}>
+                                  {row.name}
+                                </Typography>
+                              </Stack>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              <Typography sx={{
+                                fontSize: '0.75rem',
+                                color: '#5c8a67'
+                              }}>
+                                {row.code}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              <Typography sx={{
+                                fontWeight: 500,
+                                color: '#2E8B45'
                               }}>
                                 {formatAmount(row.amount)}
                               </Typography>
@@ -1013,6 +1162,64 @@ const IncomeStatement = () => {
                         );
                       }
 
+                      // صف رأس المال
+                      if (row.type === "capital") {
+                        return (
+                          <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography sx={{ fontWeight: 700 }}>
+                                  {row.name}
+                                </Typography>
+                                {incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0 && (
+                                  <IconButton
+                                    size="small"
+                                    onClick={toggleCapitalDetails}
+                                    sx={{ ml: 1, color: '#5c8a67' }}
+                                  >
+                                    {expandedCapital ? <ExpandLess /> : <ExpandMore />}
+                                  </IconButton>
+                                )}
+                              </Box>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              {row.code && (
+                                <Typography sx={{
+                                  fontSize: '0.75rem',
+                                  color: '#5c8a67'
+                                }}>
+                                  {row.code}
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              <Typography sx={{
+                                fontWeight: 700,
+                                color: row.amount >= 0 ? '#101812' : '#DC2626'
+                              }}>
+                                {formatAmount(row.amount)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "expense-table-header") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(254, 226, 226, 0.2)' }}>
+                            <TableCell sx={{ py: 1, px: 3, textAlign: 'center', fontWeight: 600, color: '#DC2626' }}>
+                              {row.name}
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3, fontWeight: 600, color: '#DC2626' }}>
+                              الرمز المرجعي
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3, fontWeight: 600, color: '#DC2626' }}>
+                              {row.code}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
                       // الصفوف العادية
                       return (
                         <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
@@ -1022,8 +1229,8 @@ const IncomeStatement = () => {
                             </Typography>
                             {row.expenseType && (
                               <Box sx={{ mt: 1 }}>
-                                <Chip 
-                                  label={row.expenseType} 
+                                <Chip
+                                  label={row.expenseType}
                                   size="small"
                                   color={getChipColor(row.expenseType)}
                                   sx={{ fontSize: '0.75rem' }}
@@ -1038,7 +1245,7 @@ const IncomeStatement = () => {
                           </TableCell>
                           <TableCell align="center" sx={{ py: 2, px: 3 }}>
                             {row.code && (
-                              <Typography sx={{ 
+                              <Typography sx={{
                                 fontSize: '0.75rem',
                                 color: '#5c8a67'
                               }}>
@@ -1047,7 +1254,7 @@ const IncomeStatement = () => {
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                            <Typography sx={{ 
+                            <Typography sx={{
                               fontWeight: row.type === "capital" ? 700 : 500,
                               color: row.amount >= 0 ? '#101812' : '#DC2626'
                             }}>

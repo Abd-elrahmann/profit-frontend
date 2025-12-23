@@ -576,6 +576,10 @@ const Journals = () => {
         return "مصروف";
       case "PARTNER_WITHDRAWING":
         return "انسحاب مالي لشريك";
+      case "ZAKAT":
+        return "سحب زكاة";
+      case "PARTNER_PROFIT_WITHDRAWAL":
+        return "سحب ارباح شريك";
       case "OTHER":
         return "أخرى";
       default:

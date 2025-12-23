@@ -253,7 +253,6 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           cellPadding: 2,
           direction: 'rtl',
           fontSize: 7,
-          fontStyle: 'bold' // جعل القيم bold
         },
         columnStyles: columnWidths,
         margin: { left: 8, right: 8, top: yPosition, bottom: 15 },
@@ -598,7 +597,6 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           cellPadding: 2,
           direction: 'rtl',
           fontSize: 7,
-          fontStyle: 'bold' // جعل القيم bold
         },
         columnStyles: columnWidths,
         margin: { left: 8, right: 8, top: yPosition, bottom: 15 },

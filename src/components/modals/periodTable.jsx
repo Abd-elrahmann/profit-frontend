@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -18,12 +18,15 @@ import {
   Button,
   InputBase,
   Tooltip,
+  Checkbox,
+  Alert,
 } from "@mui/material";
 import {
   Visibility,
   FilterList,
   Clear,
   Search as SearchIcon,
+  CompareArrows,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { getPeriods } from "../../pages/periodClosing/periodApi";
@@ -32,17 +35,83 @@ import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import PeriodsAdvancedSearch from "./PeriodsAdvancedSearch";
 
-const PeriodTable = ({ onViewDetails, isMobile = false }) => {
+const PeriodTable = ({
+  onViewDetails,
+  isMobile = false,
+  selectedPeriods = [],
+  onSelectionChange,
+  showSelection = false,
+  onPeriodsDataChange,
+  onComparePeriods, // Prop جديد للمقارنة
+}) => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
   const { permissions } = usePermissions();
 
+  // Handle period selection
+  const handlePeriodSelect = (periodId, checked) => {
+    if (!onSelectionChange) return;
+
+    let newSelected = [...selectedPeriods];
+
+    if (checked) {
+      // Add period if not already selected and we have less than 2
+      if (!newSelected.includes(periodId) && newSelected.length < 2) {
+        newSelected.push(periodId);
+      }
+    } else {
+      // Remove period
+      newSelected = newSelected.filter(id => id !== periodId);
+    }
+
+    onSelectionChange(newSelected);
+  };
+
+  // Handle select all (only if we have exactly 0 or 1 selected periods)
+  const handleSelectAll = (checked) => {
+    if (!onSelectionChange || !checked) return;
+
+    const currentPagePeriods = periodsData?.periods || [];
+    const selectablePeriods = currentPagePeriods.slice(0, 2 - selectedPeriods.length);
+
+    const newSelected = [...selectedPeriods];
+    selectablePeriods.forEach(period => {
+      if (!newSelected.includes(period.id)) {
+        newSelected.push(period.id);
+      }
+    });
+
+    onSelectionChange(newSelected);
+  };
+
+  // Check if all visible periods are selected (considering the 2 period limit)
+  const isAllSelected = () => {
+    if (!periodsData?.periods) return false;
+    const currentPagePeriods = periodsData.periods;
+    const selectableCount = Math.min(currentPagePeriods.length, 2 - selectedPeriods.length);
+
+    return selectableCount > 0 &&
+           currentPagePeriods.slice(0, selectableCount).every(period =>
+             selectedPeriods.includes(period.id)
+           );
+  };
+
+  // Check if a period is selected
+  const isPeriodSelected = (periodId) => selectedPeriods.includes(periodId);
+
   const { data: periodsData, isLoading } = useQuery({
     queryKey: ["periods", page, filters],
     queryFn: () => getPeriods(page, filters),
   });
+
+  // Send periods data to parent when it changes
+  useEffect(() => {
+    if (periodsData?.periods && onPeriodsDataChange) {
+      onPeriodsDataChange(periodsData.periods);
+    }
+  }, [periodsData?.periods, onPeriodsDataChange]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
@@ -120,12 +189,93 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
     );
   };
 
+  // Render compare button
+  const renderCompareButton = () => {
+    if (!showSelection || selectedPeriods.length !== 2 || !onComparePeriods) return null;
+
+    return (
+      <Box sx={{ 
+        mb: 2, 
+        display: 'flex', 
+        justifyContent: 'center',
+        animation: 'fadeIn 0.3s ease-in'
+      }}>
+        <Button
+          variant="contained"
+          startIcon={<CompareArrows />}
+          onClick={() => onComparePeriods(selectedPeriods[0], selectedPeriods[1])}
+          sx={{
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.dark' },
+            px: 4,
+            py: 1.5,
+            borderRadius: 2,
+            fontWeight: 'bold',
+            boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+          }}
+        >
+          مقارنة الفترتين المحددتين
+        </Button>
+      </Box>
+    );
+  };
+
+  // Render selection info
+  const renderSelectionInfo = () => {
+    if (!showSelection || selectedPeriods.length === 0) return null;
+
+    return (
+      <Alert 
+        severity={selectedPeriods.length === 2 ? "success" : "info"}
+        sx={{ 
+          mb: 2,
+          borderRadius: 2,
+          '& .MuiAlert-message': {
+            width: '100%'
+          }
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="body2">
+            {selectedPeriods.length === 2 
+              ? '✓ تم اختيار فترتين - يمكنك إجراء المقارنة'
+              : `✓ تم اختيار فترة واحدة - اختر فترة أخرى للمقارنة (${selectedPeriods.length}/2)`
+            }
+          </Typography>
+          {selectedPeriods.length > 0 && (
+            <Button
+              size="small"
+              onClick={() => onSelectionChange([])}
+              sx={{ minWidth: 'auto', px: 1 }}
+            >
+              إلغاء الاختيار
+            </Button>
+          )}
+        </Box>
+      </Alert>
+    );
+  };
+
   // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
       <Table stickyHeader sx={{ width: "100%" }}>
         <TableHead>
           <StyledTableRow>
+            {showSelection && (
+              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", width: "60px" }}>
+                <Tooltip title="اختيار جميع الفترات في هذه الصفحة">
+                  <Checkbox
+                    checked={isAllSelected()}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    disabled={selectedPeriods.length >= 2 && !isAllSelected()}
+                    size="small"
+                    indeterminate={selectedPeriods.length > 0 && !isAllSelected()}
+                    sx={{ color: 'white' }}
+                  />
+                </Tooltip>
+              </StyledTableCell>
+            )}
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               اسم الفترة
             </StyledTableCell>
@@ -151,13 +301,13 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={6} align="center">
+              <StyledTableCell colSpan={showSelection ? 8 : 7} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : periodsData?.periods?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={6} align="center">
+              <StyledTableCell colSpan={showSelection ? 8 : 7} align="center">
                 <Typography>لا توجد فترات</Typography>
                 {getActiveFilterCount() > 0 && (
                   <Button 
@@ -172,9 +322,39 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
             </StyledTableRow>
           ) : (
             periodsData?.periods?.map((period) => (
-              <StyledTableRow key={period.id}>
+              <StyledTableRow
+                key={period.id}
+                sx={{
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                  }
+                }}
+              >
+                {showSelection && (
+                  <StyledTableCell align="center">
+                    <Tooltip 
+                      title={
+                        !isPeriodSelected(period.id) && selectedPeriods.length >= 2
+                          ? "لقد قمت باختيار فترتين بالفعل"
+                          : "اختيار للمقارنة"
+                      }
+                    >
+                      <Checkbox
+                        checked={isPeriodSelected(period.id)}
+                        onChange={(e) => handlePeriodSelect(period.id, e.target.checked)}
+                        disabled={!isPeriodSelected(period.id) && selectedPeriods.length >= 2}
+                        size="small"
+                        sx={{
+                          color: isPeriodSelected(period.id) ? 'primary.main' : 'default'
+                        }}
+                      />
+                    </Tooltip>
+                  </StyledTableCell>
+                )}
                 <StyledTableCell align="center">
-                  {period.name}
+                  <Typography>
+                    {period.name}
+                  </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   {formatDateWithHijri(period, 'start')}
@@ -196,17 +376,18 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Stack direction="row" spacing={1} justifyContent="center">
                     {permissions.includes("period_View") && (
-                      <IconButton
-                        title="عرض التفاصيل"
-                        size="small"
-                        color="primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onViewDetails(period.id);
-                        }}
-                      >
-                        <Visibility fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="عرض التفاصيل">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetails(period.id);
+                          }}
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     )}
                   </Stack>
                 </StyledTableCell>
@@ -411,25 +592,58 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
         <Grid container spacing={2}>
           {periodsData?.periods?.map((period) => (
             <Grid item xs={12} key={period.id}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   border: '1px solid #e0e0e0',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   '&:hover': {
                     boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
                   },
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
-                onClick={() => onViewDetails(period.id)}
+                onClick={() => {
+                  if (showSelection) {
+                    handlePeriodSelect(period.id, !isPeriodSelected(period.id));
+                  } else {
+                    onViewDetails(period.id);
+                  }
+                }}
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Typography variant="h6" fontWeight="bold" color="primary.main">
-                        {period.name}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {showSelection && (
+                          <Tooltip 
+                            title={
+                              !isPeriodSelected(period.id) && selectedPeriods.length >= 2
+                                ? "لقد قمت باختيار فترتين بالفعل"
+                                : "اختيار للمقارنة"
+                            }
+                          >
+                            <Checkbox
+                              checked={isPeriodSelected(period.id)}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handlePeriodSelect(period.id, e.target.checked);
+                              }}
+                              disabled={!isPeriodSelected(period.id) && selectedPeriods.length >= 2}
+                              size="small"
+                              sx={{
+                                color: isPeriodSelected(period.id) ? 'primary.main' : 'default'
+                              }}
+                            />
+                          </Tooltip>
+                        )}
+                        <Typography
+                          variant="h6"
+                          color="primary.main"
+                        >
+                          {period.name}
+                        </Typography>
+                      </Box>
                       <Chip
                         label={getStatusText(period.isClosed)}
                         color={getStatusColor(period.isClosed)}
@@ -516,6 +730,12 @@ const PeriodTable = ({ onViewDetails, isMobile = false }) => {
         onApplyFilters={handleApplyFilters}
         initialFilters={filters}
       />
+
+      {/* زر المقارنة (يظهر عند اختيار فترتين) */}
+      {renderCompareButton()}
+
+      {/* معلومات الاختيار */}
+      {renderSelectionInfo()}
 
       {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>

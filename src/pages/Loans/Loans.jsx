@@ -291,7 +291,7 @@ const Loans = () => {
   const handleConfirmConversion = async () => {
     setIsConverting(true);
     try {
-      await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id);
+      await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id, selectedKafeelForConversion?.id || null);
 
       // Get updated loan data after conversion
       const updatedLoan = await getLoanById(loanForConversion.id);
@@ -553,15 +553,15 @@ const Loans = () => {
       });
       setPreviewOpen(false);
 
-      setLoanForm({
-        amount: "",
-        totalInterest: "",
-        interestRate: "",
-        paymentAmount: "",
-        type: "",
-        startDate: new Date().toISOString().split("T")[0],
-        repaymentDay: "",
-      });
+    setLoanForm({
+      amount: "",
+      totalInterest: "",
+      interestRate: "",
+      paymentAmount: "",
+      type: "",
+      startDate: new Date().toISOString().split("T")[0],
+      repaymentDay: "",
+    });
 
       setSelectedClient(null);
       setSelectedKafeel(null);
@@ -1124,7 +1124,6 @@ const Loans = () => {
       loanForm.totalInterest &&
       loanForm.interestRate &&
       loanForm.paymentAmount &&
-      loanForm.repaymentDay &&
       loanForm.type
     );
   };
@@ -1639,7 +1638,7 @@ const Loans = () => {
             ref={debtAckGeneratorRef}
             loanData={savedLoanData}
             clientData={selectedClient?.client}
-            kafeelData={selectedKafeel}
+            kafeelData={savedLoanData?.kafeel || selectedKafeel}
             templateContent={debtAckTemplate}
             onContractGenerated={handleContractGenerated}
             contractType="DEBT_ACKNOWLEDGMENT"
@@ -1650,7 +1649,7 @@ const Loans = () => {
             ref={promissoryNoteGeneratorRef}
             loanData={savedLoanData}
             clientData={selectedClient?.client}
-            kafeelData={selectedKafeel}
+            kafeelData={savedLoanData?.kafeel || selectedKafeel}
             templateContent={promissoryNoteTemplate}
             onContractGenerated={handleContractGenerated}
             contractType="PROMISSORY_NOTE"
@@ -1676,6 +1675,7 @@ const Loans = () => {
         onConfirm={handleConfirmConversion}
         fromClient={loanForConversion?.client}
         toClient={selectedClientForConversion?.client}
+        selectedKafeel={selectedKafeelForConversion}
         loan={loanForConversion}
         remainingAmount={calculateRemainingAmount(loanForConversion)}
         isLoading={isConverting}

@@ -99,6 +99,7 @@ const LoanSimulation = ({
                 </Typography>
               </Box>
 
+
               <Divider />
 
               <Box

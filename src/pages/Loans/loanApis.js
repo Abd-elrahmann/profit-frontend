@@ -180,11 +180,12 @@ export const deleteSmallLoan = async (loanId) => {
 };
 
 // Convert loan client
-export const convertLoanClient = async (fromClientId, toClientId, loanId) => {
+export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeelId) => {
   try {
     const response = await Api.patch(`/api/loans/convert-client/${loanId}`, {
       fromClientId: String(fromClientId),
       toClientId: String(toClientId),
+      kafeelId: kafeelId ? String(kafeelId) : null,
     });
     return response.data;
   } catch (error) {

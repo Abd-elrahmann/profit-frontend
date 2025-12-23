@@ -172,10 +172,10 @@ const LoanClientSection = ({
                 />
               )}
               noOptionsText={
-                !clientLoansData
+                !selectedClient
                   ? "جاري تحميل البيانات..."
                   : selectedClient.kafeels?.length === 0
-                  ? "لا يوجد كفلاء متاحين لهذا العميل"
+                  ? "لا يوجد كفلاء برجاء اضافه كفيل"
                   : "جميع الكفلاء مستخدمون في سلف أخرى"
               }
             />

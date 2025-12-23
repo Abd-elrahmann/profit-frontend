@@ -35,6 +35,8 @@ import {
   MoreVert as MoreVertIcon,
   Check as ApproveIcon,
   Close as RejectIcon,
+  Close as CloseIcon,
+  KeyboardArrowRight as ArrowRightIcon,
   Schedule as PostponeIcon,
   Description as DocumentIcon,
   Print as PrintIcon,
@@ -236,6 +238,7 @@ const Installments = () => {
     useState(null);
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [reviewStepsVisible, setReviewStepsVisible] = useState(true);
   const [rejectLoading, setRejectLoading] = useState(false);
   const [earlyPaymentModalOpen, setEarlyPaymentModalOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("0");
@@ -1518,6 +1521,21 @@ const Installments = () => {
                 دفعات السلفة - {loanData?.client?.name}
               </Typography>
             </Box>
+            {!isSettlementCompleted() && (
+              <IconButton
+                onClick={() => setReviewStepsVisible(!reviewStepsVisible)}
+                sx={{
+                  color: "primary.main",
+                  "&:hover": {
+                    bgcolor: "primary.50",
+                    color: "primary.dark"
+                  },
+                }}
+                title={reviewStepsVisible ? "إخفاء خطوات المراجعة" : "إظهار خطوات المراجعة"}
+              >
+                {reviewStepsVisible ? <CloseIcon /> : <ArrowRightIcon />}
+              </IconButton>
+            )}
           </Box>
 
           {/* Early Payment Button */}
@@ -1699,7 +1717,7 @@ const Installments = () => {
           </Box>
 
           {/* خطوات المراجعة للشاشات الصغيرة */}
-          {isSmallScreen && !isSettlementCompleted() && (
+          {isSmallScreen && !isSettlementCompleted() && reviewStepsVisible && (
             <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.50" }}>
               <Typography variant="h6" fontWeight="bold" mb={2}>
                 خطوات المراجعة
@@ -1920,7 +1938,7 @@ const Installments = () => {
           </Paper>
         </Box>
 
-        {!isSmallScreen && !isSettlementCompleted() && (
+        {!isSmallScreen && !isSettlementCompleted() && reviewStepsVisible && (
           <Box
             sx={{
               width: "300px",

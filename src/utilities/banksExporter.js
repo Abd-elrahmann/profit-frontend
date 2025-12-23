@@ -34,7 +34,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
       });
 
       // Set Arabic as primary font
-      doc.setFont('Amiri', 'normal');
+      doc.setFont('Amiri', 'bold');
       
       // Logo positioned on the right - small and at the very top
       const logoWidth = 10;

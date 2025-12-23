@@ -192,7 +192,6 @@ const Expenses = () => {
         <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center">#</StyledTableCell>
-            <StyledTableCell align="center">رقم القيد</StyledTableCell>
             <StyledTableCell align="center">التاريخ</StyledTableCell>
             <StyledTableCell align="center">عدد المصروفات</StyledTableCell>
             <StyledTableCell align="center">إجمالي المبلغ</StyledTableCell>
@@ -221,11 +220,6 @@ const Expenses = () => {
                 <StyledTableRow hover>
                   <StyledTableCell align="center">
                     {(page - 1) * (expensesData?.limit || 10) + index + 1}
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography variant="body2" fontWeight="bold">
-                      {group.journalId}
-                    </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     {dayjs(group.date).format("DD/MM/YYYY")}
@@ -367,15 +361,7 @@ const Expenses = () => {
                 }}
               >
                 <CardContent>
-                  <Stack spacing={1.5}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Typography variant="body2" color="text.secondary">رقم القيد</Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {group.journalId}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    
+                  <Stack spacing={1.5}>                    
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body2" color="text.secondary">التاريخ</Typography>
                       <Typography variant="body1">
