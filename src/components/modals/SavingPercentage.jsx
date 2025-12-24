@@ -112,10 +112,10 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
                 borderRadius: 1,
                 textAlign: 'center'
               }}>
-                <Typography variant="body2" color="primary.main">
+                <Typography variant="body1" fontWeight="bold" color="primary.main">
                   النسبة المحسوبة: <strong>{calculatedPercentage.toFixed(2)}%</strong>
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body1" fontWeight="bold" color="text.secondary">
                   من إجمالي الأرباح: {totalProfit?.toLocaleString() || 0}
                 </Typography>
               </Box>
@@ -130,7 +130,7 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
         )}
 
         <Alert severity="info" sx={{ mt: 2 }}>
-          <Typography variant="body2">
+          <Typography variant="body1" fontWeight="bold">
             <strong>ملاحظة:</strong> سيتم خصم {calculatedPercentage.toFixed(2)}% ({savingAmount || 0} ريال) من إجمالي الأرباح قبل توزيعها على الشركاء
           </Typography>
         </Alert>

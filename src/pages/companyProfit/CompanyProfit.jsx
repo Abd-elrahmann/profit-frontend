@@ -55,7 +55,9 @@ export default function CompanyProfit() {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [عام] YYYY");
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " "
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
 
   const { data: profitData, isLoading: profitLoading, error: profitError, refetch: refetchProfit } = useQuery({
@@ -311,10 +313,10 @@ export default function CompanyProfit() {
                           </Box>
                           <Box>
                             <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
-                              {profitData?.totalWithdrawals || 0}
+                              {profitData?.data?.length || 0}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              إجمالي عمليات السحب
+                              عدد عمليات السحب
                             </Typography>
                           </Box>
                         </Box>
@@ -329,13 +331,93 @@ export default function CompanyProfit() {
                   </Grid>
                 </Grid>
 
+                {/* Company Profit Sources */}
+                {profitData?.periodsProfit?.periods && profitData.periodsProfit.periods.length > 0 && (
+                  <Box sx={{ p: isSmallScreen ? 2 : 3 }}>
+                    <Typography variant="h6" fontWeight="bold" mb={3}>
+                      مصادر أرباح الشركة
+                    </Typography>
+
+                    <TableContainer sx={{ mb: 4 }}>
+                      <Table>
+                        <TableHead>
+                          <StyledTableRow>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              الفترة
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              إجمالي الأرباح
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              صافي الربح
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              نسبة الشركة
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              أرباح الشركة
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        </TableHead>
+                        <TableBody>
+                          {profitData.periodsProfit.periods.map((period, index) => (
+                            <StyledTableRow key={index} hover>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" fontWeight="medium">
+                                  {period.periodName || `الفترة ${index + 1}`}
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                  {Math.round(period.totalRevenue || 0).toLocaleString('en-US')}
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                  {Math.round(period.netProfit || 0).toLocaleString('en-US')}
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                  {period.companyPercentage || 0}%
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" fontWeight="bold" color="primary.main">
+                                  {Math.round(period.companyProfit || 0).toLocaleString('en-US')}
+                                </Typography>
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))}
+                          {/* Total Row */}
+                          <StyledTableRow sx={{ bgcolor: 'grey.50' }}>
+                            <StyledTableCell align="center">
+                              <Typography variant="body2" fontWeight="bold">
+                                الإجمالي
+                              </Typography>
+                            </StyledTableCell>
+                            <StyledTableCell align="center">-</StyledTableCell>
+                            <StyledTableCell align="center">-</StyledTableCell>
+                            <StyledTableCell align="center">-</StyledTableCell>
+                            <StyledTableCell align="center">
+                              <Typography variant="body2" fontWeight="bold" color="primary.main">
+                                {Math.round(profitData.periodsProfit.totalCompanyProfit || 0).toLocaleString('en-US')}
+                              </Typography>
+                            </StyledTableCell>
+                          </StyledTableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+
                 {/* Withdrawal History */}
                 <Box sx={{ p: isSmallScreen ? 2 : 3 }}>
                   <Typography variant="h6" fontWeight="bold" mb={3}>
                     سجل السحوبات
                   </Typography>
 
-                  {profitData?.withdrawals?.length === 0 ? (
+                  {profitData?.data?.length === 0 ? (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
                       <AccountBalance sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                       <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -363,12 +445,17 @@ export default function CompanyProfit() {
                             </StyledTableRow>
                           </TableHead>
                           <TableBody>
-                            {profitData?.withdrawals?.map((withdrawal) => (
+                            {profitData?.data?.map((withdrawal) => (
                               <StyledTableRow key={withdrawal.id} hover>
                                 <StyledTableCell align="center">
-                                  <Typography variant="body2">
-                                    {formatArabicDate(withdrawal.date)}
-                                  </Typography>
+                                  <Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                                      {formatArabicDate(withdrawal.date)}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.75rem' }}>
+                                      {withdrawal.hijriDate}
+                                    </Typography>
+                                  </Box>
                                 </StyledTableCell>
                                 <StyledTableCell align="center">
                                   <Typography variant="body2">

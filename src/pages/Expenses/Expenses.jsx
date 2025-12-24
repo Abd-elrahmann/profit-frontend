@@ -58,6 +58,14 @@ const Expenses = () => {
   const queryClient = useQueryClient();
   const canExport = permissions.includes("expenses_Export");
 
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " "
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
+
   const { data: expensesData, isLoading } = useQuery({
     queryKey: ["expenses", page],
     queryFn: () => getExpenses(page),
@@ -87,6 +95,7 @@ const Expenses = () => {
         grouped[journalId] = {
           journalId: journalId,
           date: expense.createdAt,
+          createdAtHijri: expense.createdAtHijri,
           addedBy: expense.addedBy,
           totalAmount: 0,
           expenses: [],
@@ -222,7 +231,14 @@ const Expenses = () => {
                     {(page - 1) * (expensesData?.limit || 10) + index + 1}
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    {dayjs(group.date).format("DD/MM/YYYY")}
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                        {formatArabicDate(group.date)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                        {group.createdAtHijri}
+                      </Typography>
+                    </Box>
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <Typography variant="body2">
@@ -364,9 +380,14 @@ const Expenses = () => {
                   <Stack spacing={1.5}>                    
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body2" color="text.secondary">التاريخ</Typography>
-                      <Typography variant="body1">
-                        {dayjs(group.date).format("DD/MM/YYYY")}
-                      </Typography>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5, textAlign: 'right' }}>
+                          {formatArabicDate(group.date)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.7rem', display: 'block', textAlign: 'right' }}>
+                          {group.createdAtHijri}
+                        </Typography>
+                      </Box>
                     </Box>
                     <Divider />
                     

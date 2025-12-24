@@ -41,6 +41,8 @@ import {
   StyledTableRow,
 } from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
+import dayjs from "dayjs";
+import "dayjs/locale/ar";
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
@@ -210,6 +212,13 @@ const Zakah = () => {
     return amount?.toLocaleString() || "0";
   };
 
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " " 
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
   // Helpers to control export buttons availability
   const hasAccountExportData = (() => {
     if (!accountReport?.journalsByMonth) return false;
@@ -842,10 +851,7 @@ const Zakah = () => {
                     <TableHead>
                       <StyledTableRow>
                         <StyledTableCell align="center">التاريخ</StyledTableCell>
-                        <StyledTableCell align="center">المرجع</StyledTableCell>
                         <StyledTableCell align="center">الوصف</StyledTableCell>
-                        <StyledTableCell align="center">المرسل</StyledTableCell>
-                        <StyledTableCell align="center">النوع</StyledTableCell>
                         <StyledTableCell align="center">مدين</StyledTableCell>
                         <StyledTableCell align="center">دائن</StyledTableCell>
                         <StyledTableCell align="center">الرصيد</StyledTableCell>
@@ -856,19 +862,17 @@ const Zakah = () => {
                         data.entries.map((entry) => (
                           <StyledTableRow key={entry.id}>
                           <StyledTableCell align="center">
-                            {new Date(entry.date).toLocaleDateString('en-US')}
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                                {formatArabicDate(entry.date)}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.75rem' }}>
+                                {entry.hijriDate || ''}
+                              </Typography>
+                            </Box>
                           </StyledTableCell>
                             <StyledTableCell align="center">
-                              {entry.reference || '-'}
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
                               {entry.description}
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
-                              {entry.postedBy || '-'}
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
-                              {entry.type === 'GENERAL' ? 'عام' : entry.type || '-'}
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               {formatCurrency(entry.debit)}

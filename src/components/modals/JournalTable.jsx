@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getJournals, postMultipleJournals, unpostMultipleJournals } from "../../pages/Journals/journalsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
+import "dayjs/locale/ar";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { exportJournalsTableToPDF, exportJournalsTableToExcel } from "../../utilities/journalsExporter";
@@ -34,6 +35,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
+
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " "
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
 
   const { data: journalsData, isLoading } = useQuery({
     queryKey: ["journals", page, searchFilters],
@@ -334,7 +343,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                   {journal.postedBy?.name || "لم يتم الاعتماد "}
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {dayjs(journal.createdAt).format("DD/MM/YYYY")}
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                      {formatArabicDate(journal.createdAt)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                      {journal.createdAtHijri}
+                    </Typography>
+                  </Box>
                 </StyledTableCell>
                 {(permissions.includes("journals_Update") || permissions.includes("journals_Delete") || permissions.includes("journals_Add")) && (
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -484,9 +500,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                         <Typography variant="body2" color="textSecondary">
                           التاريخ:
                         </Typography>
-                        <Typography variant="body2" fontWeight="medium">
-                          {dayjs(journal.createdAt).format("DD/MM/YYYY")}
-                        </Typography>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                            {formatArabicDate(journal.createdAt)}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                            {journal.createdAtHijri}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Box>
 

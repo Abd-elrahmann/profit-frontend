@@ -10,10 +10,10 @@ export const getClosedPeriods = async (periodId = null) => {
   return response.data;
 };
 
-// Post distribution for a period with saving percentage
-export const postDistribution = async (periodId, savingPercentage = 0) => {
+// Post distribution for a period with saving amount
+export const postDistribution = async (periodId, savingAmount = 0) => {
   const response = await Api.post(`/api/distribution/post/${periodId}`, {
-    savingPercentage
+    savingAmount
   });
   return response.data;
 };

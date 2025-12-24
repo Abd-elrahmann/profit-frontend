@@ -59,6 +59,7 @@ import ContractGenerator from "../../components/ContractGenerator";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { saveAs } from 'file-saver';
 import dayjs from "dayjs";
+import "dayjs/locale/ar";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -197,6 +198,14 @@ export default function Investors() {
     enabled: !!selectedInvestor,
     retry: 1,
   });
+
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      + " "
+      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
+  };
 
   const debouncedSearch = debounce((value) => {
     setSearch(value);
@@ -440,17 +449,6 @@ export default function Investors() {
     }
 
     const normalizeDecimal = (value) => parseFloat(Number(value).toFixed(2));
-
-    const formatArabicDate = (date) => {
-      const months = [
-        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-      ];
-      const day = date.getDate();
-      const month = months[date.getMonth()];
-      const year = date.getFullYear();
-      return `${day} من ${month} ${year}`;
-    };
 
     // استخدام قيمة التعثرات من الـ API
     let partnerDefaultShare = withdrawPreviewData?.partnerDefaultShare || 0;
@@ -1446,7 +1444,7 @@ export default function Investors() {
                         />
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام</Typography>
+                        <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام الميلادي</Typography>
                         <TextField
                           type="date"
                           value={editMode ? editFormData.createdAt : (investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '')}
@@ -1461,6 +1459,20 @@ export default function Investors() {
                               '&:hover fieldset': {
                                 borderColor: editMode ? 'primary.main' : undefined,
                               },
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام الهجري</Typography>
+                        <TextField
+                          value={investorDetails.HIjriCreatedAt || ''}
+                          fullWidth
+                          disabled
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#f9fafb',
+                              borderRadius: '6px',
                             },
                           }}
                         />
@@ -1857,16 +1869,23 @@ export default function Investors() {
                                     size="small"
                                   />
                                 </StyledTableCell>
-                                <StyledTableCell align="center" sx={{ 
-                                  color: transaction.type === "DEPOSIT" ? "success.main" : "error.main",
-                                  fontWeight: "bold"
-                                }}>
-                                  {transaction.amount?.toLocaleString()}
-                                </StyledTableCell>
-                                <StyledTableCell align="center">
-                                  {dayjs(transaction.date).format("DD/MM/YYYY HH:mm a")}
-                                </StyledTableCell>
-                                <StyledTableCell align="center">
+                              <StyledTableCell align="center" sx={{
+                                color: transaction.type === "DEPOSIT" ? "success.main" : "error.main",
+                                fontWeight: "bold"
+                              }}>
+                                {transaction.amount?.toLocaleString()}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Box>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                                    {formatArabicDate(transaction.date)}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                                    {transaction.dateHijri}
+                                  </Typography>
+                                </Box>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
                                   {permissions.includes("partners_Delete") && (
                                   <IconButton
                                     color="error"

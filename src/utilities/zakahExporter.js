@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ar';
 import logo from '/assets/images/logo.webp';
 
 const formatInt = (value) => {
@@ -142,19 +143,15 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
 
         if (isAccountData) {
           tableData = allEntries.map(entry => [
-            entry.month, 
-            dayjs(entry.date).format('DD/MM/YYYY'),
-            entry.reference || '-',
+            `${dayjs(entry.date).locale("ar").format("D [من] MMMM [الساعة] h:mm") + " " + (dayjs(entry.date).hour() < 12 ? "صباحًا" : "مساءً")}\n${entry.hijriDate || ''}`,
             entry.description || '-',
             entry.debit?.toLocaleString() || '0',
             entry.credit?.toLocaleString() || '0',
-            entry.balance?.toLocaleString() || '0',
-            entry.postedBy || '-',
-            entry.type === 'GENERAL' ? 'عام' : entry.type || '-'
+            entry.balance?.toLocaleString() || '0'
           ]);
 
           headers = [
-            ['الشهر', 'التاريخ', 'المرجع', 'الوصف', 'مدين', 'دائن', 'الرصيد', 'المرسل', 'النوع']
+            ['التاريخ', 'الوصف', 'مدين', 'دائن', 'الرصيد']
           ];
         } else if (isPartnerArray) {
           tableData = allEntries.map(entry => [
@@ -205,15 +202,11 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
         let columnWidths;
         if (isAccountData) {
             columnWidths = {
-            0: 15, 
-            1: 18, 
-            2: 20, 
-            3: 35, 
-            4: 15, 
-            5: 15, 
-            6: 18, 
-            7: 20, 
-            8: 12  
+            0: 50, // التاريخ (أكبر لأنه يحتوي على التاريخين)
+            1: 60, // الوصف
+            2: 25, // مدين
+            3: 25, // دائن
+            4: 30  // الرصيد
           };
         } else if (isPartnerArray) {
           // إجمالي عرض يقارب 150مم داخل الهوامش لتجنب القص
@@ -273,7 +266,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             styles[index] = { cellWidth: columnWidths[key], fontSize: 9 };
             return styles;
           }, {}),
-          margin: { top: yPosition, bottom: 20, left: 20, right: 20 },
+          margin: { top: yPosition, bottom: 20, left: 15, right: 20 },
           horizontalPageBreak: false,
           pageBreak: 'auto',
           showHead: 'everyPage'
@@ -433,15 +426,12 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
     let excelData;
     if (isAccountData) {
       excelData = allEntries.map(entry => ({
-        'الشهر': entry.month,
-        'التاريخ': dayjs(entry.date).format('DD/MM/YYYY'),
-        'المرجع': entry.reference || '-',
+        'التاريخ الميلادي': dayjs(entry.date).locale("ar").format("D [من] MMMM [الساعة] h:mm") + " " + (dayjs(entry.date).hour() < 12 ? "صباحًا" : "مساءً"),
+        'التاريخ الهجري': entry.hijriDate || '',
         'الوصف': entry.description || '-',
         'مدين': entry.debit || 0,
         'دائن': entry.credit || 0,
-        'الرصيد': entry.balance || 0,
-        'المرسل': entry.postedBy || '-',
-        'النوع': entry.type === 'GENERAL' ? 'عام' : entry.type || '-'
+        'الرصيد': entry.balance || 0
       }));
     } else if (isPartnerArray) {
       excelData = allEntries.map(entry => ({
@@ -487,15 +477,12 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
     let wscols;
     if (isAccountData) {
       wscols = [
-        { wch: 12 }, 
-        { wch: 15 }, 
-        { wch: 20 },  
-        { wch: 35 }, 
-        { wch: 12 }, 
-        { wch: 12 }, 
-        { wch: 15 }, 
-        { wch: 18 }, 
-        { wch: 12 } 
+        { wch: 25 }, // التاريخ الميلادي
+        { wch: 15 }, // التاريخ الهجري
+        { wch: 40 }, // الوصف
+        { wch: 15 }, // مدين
+        { wch: 15 }, // دائن
+        { wch: 18 }  // الرصيد
       ];
     } else if (isPartnerArray) {
       wscols = [

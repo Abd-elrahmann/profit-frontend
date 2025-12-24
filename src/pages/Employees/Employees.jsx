@@ -231,7 +231,14 @@ export default function Employees() {
                 />
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ color: "gray" }}>
-                {formatArabicDate(user.createdAt)}
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                    {formatArabicDate(user.createdAt)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'primary.main',fontWeight: 'bold', fontSize: '0.85rem' }}>
+                    {user.hijriCreatedAt}
+                  </Typography>
+                </Box>
               </StyledTableCell>
               {(permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
@@ -380,9 +387,14 @@ export default function Employees() {
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
                           تاريخ الإنشاء:
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {formatArabicDate(user.createdAt)}
-                        </Typography>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                            {formatArabicDate(user.createdAt)}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'primary.main',fontWeight: 'bold', fontSize: '0.85rem' }}>
+                            {user.hijriCreatedAt}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Box>
 

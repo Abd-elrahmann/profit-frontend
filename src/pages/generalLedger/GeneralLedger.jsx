@@ -29,6 +29,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import Api from '../../config/Api';
 import dayjs from 'dayjs';
+import "dayjs/locale/ar";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
 import GeneralLedgerSearch from '../../components/modals/GeneralLedgerSearch';
 import { exportGeneralLedgerToPDF, exportGeneralLedgerToExcel } from '../../utilities/GeneralLedgerExporter';
@@ -47,6 +48,14 @@ const getAccountLedger = async (accountId, fromDate = null, toDate = null, page 
   const queryString = params.toString();
   const response = await Api.get(`/api/accounts/${accountId}/${page}${queryString ? `?${queryString}` : ''}`);
   return response.data;
+};
+
+const formatArabicDate = (date) => {
+  return dayjs(date)
+    .locale("ar")
+    .format("D [من] MMMM [الساعة] h:mm") // format without A
+    + " "
+    + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
 };
 
 export default function GeneralLedger() {
@@ -141,12 +150,14 @@ export default function GeneralLedger() {
                     <Typography variant="subtitle2" fontWeight="bold" color="primary">
                       {journal.reference}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {dayjs(journal.date).format('DD/MM/YYYY')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {dayjs(journal.date).format('HH:mm')}
-                    </Typography>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+                        {formatArabicDate(journal.date)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.7rem', display: 'block' }}>
+                        {journal.hijriDate}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
 
@@ -242,12 +253,14 @@ export default function GeneralLedger() {
             journal.lines.map((line) => (
               <StyledTableRow key={`${journal.id}-${line.id}`} hover>
                 <StyledTableCell align="center">
-                  <Typography variant="body2">
-                    {dayjs(journal.date).format('DD/MM/YYYY')}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {dayjs(journal.date).format('HH:mm')}
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                      {formatArabicDate(journal.date)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.75rem' }}>
+                      {journal.hijriDate}
+                    </Typography>
+                  </Box>
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Typography variant="body2" fontWeight="500" color="primary">

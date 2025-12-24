@@ -194,10 +194,11 @@ const ProfitDistribution = () => {
     try {
       setIsDistributing(true);
       if (action === "post") {
-        // إرسال نسبة الادخار إذا كانت مفعلة
-        const savingPercent = enableSaving ? savingPercentage : 0;
-        await postDistribution(periodId, savingPercent);
-        notifySuccess(`تم توزيع الأرباح بنجاح ${enableSaving ? `مع ادخار ${savingPercentage}%` : ''}`);
+        // إرسال مبلغ الادخار إذا كان مفعل
+        const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0), 0) || 0;
+        const savingAmount = enableSaving ? totalPartnerProfit * (savingPercentage / 100) : 0;
+        await postDistribution(periodId, savingAmount);
+        notifySuccess(`تم توزيع الأرباح بنجاح ${enableSaving ? `مع ادخار ${formatNumber(savingAmount)}` : ''}`);
       }
 
       queryClient.invalidateQueries(["closed-periods"]);
@@ -644,10 +645,24 @@ const ProfitDistribution = () => {
               >
                 <StyledTableCell align="center">{period.name}</StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatArabicDate(period.startDate)}
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center",gap: 1 }}>
+                    <Typography variant="body2" sx={{ lineHeight: 1 }}>
+                      {formatArabicDate(period.startDate)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ lineHeight: 1.2, fontWeight: "bold", color: "primary.main", fontSize: "0.875rem" }}>
+                      {period.startdateHijri}
+                    </Typography>
+                  </Box>
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatArabicDate(period.endDate)}
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center",gap: 1 }}>
+                    <Typography variant="body2" sx={{ lineHeight: 1.2 }}>
+                      {formatArabicDate(period.endDate)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ lineHeight: 1.2, fontWeight: "bold", color: "primary.main", fontSize: "0.875rem" }}>
+                      {period.enddateHijri}
+                    </Typography>
+                  </Box>
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Typography fontWeight="bold" color="black">
@@ -916,18 +931,28 @@ const ProfitDistribution = () => {
             <Typography variant="body2" color="textSecondary" gutterBottom>
               تاريخ البداية
             </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {formatArabicDate(periodData?.startDate)}
-            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
+              <Typography variant="body1" fontWeight="bold">
+                {formatArabicDate(periodData?.startDate)}
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: "bold", color: "primary.main", fontSize: "0.875rem" }}>
+                {periodData?.startdateHijri}
+              </Typography>
+            </Box>
           </Box>
 
           <Box>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               تاريخ النهاية
             </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {formatArabicDate(periodData?.endDate)}
-            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
+              <Typography variant="body1" fontWeight="bold">
+                {formatArabicDate(periodData?.endDate)}
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: "bold", color: "primary.main", fontSize: "0.875rem" }}>
+                {periodData?.enddateHijri}
+              </Typography>
+            </Box>
           </Box>
 
           <Box>
@@ -1227,17 +1252,27 @@ const ProfitDistribution = () => {
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             تاريخ البداية:
           </Typography>
-          <Typography variant="body1">
-            {formatDate(periodData?.startDate)}
-          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Typography variant="body1">
+              {formatDate(periodData?.startDate)}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: "bold", color: "primary.main", fontSize: "0.875rem" }}>
+              {periodData?.startdateHijri}
+            </Typography>
+          </Box>
         </Grid>
         <Grid item xs={12} md={6}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             تاريخ النهاية:
           </Typography>
-          <Typography variant="body1">
-            {formatDate(periodData?.endDate)}
-          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Typography variant="body1">
+              {formatDate(periodData?.endDate)}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: "bold", color: "primary.main", fontSize: "0.875rem" }}>
+              {periodData?.enddateHijri}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
 

@@ -266,7 +266,14 @@ const Logs = () => {
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {formatArabicDate(log.createdAt)}
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                      {formatArabicDate(log.createdAt)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                      {log.createdAtHijri}
+                    </Typography>
+                  </Box>
                 </StyledTableCell>
               </StyledTableRow>
             ))
@@ -341,17 +348,32 @@ const Logs = () => {
                           {getScreenText(log.screen)}
                         </Typography>
                       </Box>
-                      <Typography 
-                        variant="body2" 
-                        color="textSecondary"
-                        sx={{ 
-                          fontSize: isMobile ? '0.75rem' : '0.875rem',
-                          direction: 'ltr',
-                          display: 'inline-block'
-                        }}
-                      >
-                        {formatArabicDate(log.createdAt)}
-                      </Typography>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{
+                            fontSize: isMobile ? '0.75rem' : '0.875rem',
+                            direction: 'ltr',
+                            display: 'block',
+                            mb: 0.5
+                          }}
+                        >
+                          {formatArabicDate(log.createdAt)}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'primary.main',
+                            fontWeight: 'bold',
+                            fontSize: isMobile ? '0.65rem' : '0.85rem',
+                            direction: 'ltr',
+                            display: 'block'
+                          }}
+                        >
+                          {log.createdAtHijri}
+                        </Typography>
+                      </Box>
                     </Box>
 
                     {/* Description */}
