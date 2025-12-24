@@ -184,6 +184,8 @@ const SmallLoansTable = ({ onEditLoan }) => {
         return "مفتوحة";
       case "PAID":
         return "مدفوعة";
+      case "PARTIALLY_PAID":
+        return "مدفوعة جزئياً";
       default:
         return status;
     }
@@ -195,6 +197,8 @@ const SmallLoansTable = ({ onEditLoan }) => {
         return "warning";
       case "PAID":
         return "success";
+      case "PARTIALLY_PAID":
+        return "info";
       default:
         return "default";
     }
@@ -624,7 +628,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
 
 
         {/* Pay Loan - Only for OPEN loans */}
-        {selectedLoanForMenu?.status === "OPEN" && (
+        {selectedLoanForMenu?.status === "OPEN" || "PARTIALLY_PAID" && (
           <MenuItem
             onClick={() => {
               handleOpenPayModal(selectedLoanForMenu);

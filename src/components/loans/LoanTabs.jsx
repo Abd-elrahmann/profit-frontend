@@ -89,7 +89,7 @@ const LoanTabs = ({
           />
         )}
         <Tab
-          label="إنشاء سلفة صغيرة"
+          label="إنشاء سلفة بدون فائدة"
           sx={{
             fontWeight: "bold",
             borderBottom: activeTab === 2 ? "3px solid" : "none",
@@ -98,7 +98,7 @@ const LoanTabs = ({
           }}
         />
         <Tab
-          label="عرض السلفات الصغيرة"
+          label="عرض السلفات بدون فائدة"
           sx={{
             fontWeight: "bold",
             borderBottom: activeTab === 3 ? "3px solid" : "none",
