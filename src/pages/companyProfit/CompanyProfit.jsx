@@ -349,9 +349,6 @@ export default function CompanyProfit() {
                               إجمالي الأرباح
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
-                              صافي الربح
-                            </StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
                               نسبة الشركة
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
@@ -369,12 +366,7 @@ export default function CompanyProfit() {
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                  {Math.round(period.totalRevenue || 0).toLocaleString('en-US')}
-                                </Typography>
-                              </StyledTableCell>
-                              <StyledTableCell align="center">
-                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                  {Math.round(period.netProfit || 0).toLocaleString('en-US')}
+                                  {Math.round(period.totalPeriodProfit || 0).toLocaleString('en-US')}
                                 </Typography>
                               </StyledTableCell>
                               <StyledTableCell align="center">
@@ -396,7 +388,6 @@ export default function CompanyProfit() {
                                 الإجمالي
                               </Typography>
                             </StyledTableCell>
-                            <StyledTableCell align="center">-</StyledTableCell>
                             <StyledTableCell align="center">-</StyledTableCell>
                             <StyledTableCell align="center">-</StyledTableCell>
                             <StyledTableCell align="center">
