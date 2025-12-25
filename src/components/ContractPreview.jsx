@@ -64,18 +64,18 @@ const ContractPreview = ({
           m: 0
         }
       }}>
-        <Paper 
+        <Paper
           id="contract-preview"
-          sx={{ 
-            m: 3, 
-            p: 4, 
+          sx={{
+            m: 3,
+            p: 0,
             minHeight: '500px',
-            bgcolor: 'white',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e0e0e0',
+            bgcolor: 'transparent',
+            boxShadow: 'none',
+            border: 'none',
             '@media print': {
               m: 0,
-              p: 2,
+              p: 0,
               boxShadow: 'none',
               border: 'none',
               minHeight: 'auto'
@@ -86,48 +86,278 @@ const ContractPreview = ({
             <Box
               dangerouslySetInnerHTML={{ __html: contractHtml }}
               sx={{
+                // Base styles
                 '& *': {
-                  fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                  wordSpacing: 'normal',
+                  letterSpacing: 'normal'
+                },
+
+                // Contract wrapper
+                '& .contract-wrapper': {
+                  background: '#f8f9fc',
+                  padding: '15px',
+                  fontFamily: '"Cairo", "Tajawal", "Noto Sans Arabic", sans-serif',
+                  direction: 'rtl',
+                  textAlign: 'right'
+                },
+
+                // Contract container
+                '& .contract-container': {
+                  maxWidth: '900px',
+                  margin: 'auto',
+                  background: '#fff',
+                  border: '1px solid #ddd',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                },
+
+                // Contract header
+                '& .contract-header': {
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: '2px solid rgba(46, 139, 69, 0.2)',
+                  paddingBottom: '8px',
+                  marginBottom: '15px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .header-left': {
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center'
+                },
+
+                '& .contract-logo': {
+                  maxWidth: '40px',
+                  maxHeight: '40px',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  borderRadius: '8px'
+                },
+
+                '& .contract-title': {
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  color: '#2e7d32'
+                },
+
+                '& .contract-dates': {
+                  fontSize: '14px',
+                  color: '#555',
+                  textAlign: 'left'
+                },
+
+                '& .contract-dates p': {
+                  margin: '5px 0'
+                },
+
+                // Section title
+                '& .section-title': {
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#000',
+                  margin: '20px 0 15px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid rgba(46, 139, 69, 0.2)',
+                  pageBreakInside: 'avoid'
+                },
+
+                // Parties grid
+                '& .parties-grid': {
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '20px',
+                  marginBottom: '30px',
+                  pageBreakInside: 'avoid'
+                },
+
+                // Party card
+                '& .party-card': {
+                  background: '#ffffff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(46, 139, 69, 0.2)',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .party-title': {
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#000',
+                  marginBottom: '15px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid rgba(46, 139, 69, 0.2)'
+                },
+
+                '& .sub-party': {
+                  marginBottom: '20px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .sub-party:last-child': {
+                  marginBottom: 0
+                },
+
+                '& .sub-party-title': {
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#4a4a4a',
+                  marginBottom: '10px',
+                  paddingRight: '10px'
+                },
+
+                '& .party-details': {
+                  marginBottom: '15px'
+                },
+
+                '& .detail-row': {
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '10px',
+                  paddingBottom: '8px',
+                  borderBottom: '1px solid rgba(46, 139, 69, 0.1)',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .detail-label': {
+                  color: '#666',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  minWidth: '120px'
+                },
+
+                '& .detail-value': {
+                  color: '#111',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  flex: 1
+                },
+
+                '& .party-reference': {
+                  fontStyle: 'italic',
+                  color: '#777',
+                  fontSize: '13px',
+                  marginTop: '15px',
+                  paddingTop: '10px',
+                  borderTop: '1px solid rgba(46, 139, 69, 0.2)'
+                },
+
+                // Preamble
+                '& .preamble-box': {
+                  background: '#ffffff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(46, 139, 69, 0.2)',
+                  marginBottom: '30px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .preamble-title': {
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#000',
+                  marginBottom: '15px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid rgba(46, 139, 69, 0.2)'
+                },
+
+                '& .preamble-text': {
+                  fontSize: '14px',
+                  color: '#333',
+                  lineHeight: 1.8,
+                  textAlign: 'justify'
+                },
+
+                // Clauses
+                '& .clause': {
+                  background: '#ffffff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(46, 139, 69, 0.2)',
+                  marginBottom: '20px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .clause:last-child': {
+                  marginBottom: 0
+                },
+
+                '& .clause-title': {
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#2e7d32',
+                  marginBottom: '15px',
+                  padding: '8px 12px',
+                  background: 'rgba(0, 0, 0, 0.05)',
+                  borderRadius: '4px',
+                  borderBottom: '1px solid rgba(46, 139, 69, 0.2)'
+                },
+
+                '& .clause-content': {
+                  fontSize: '14px',
+                  color: '#333',
                   lineHeight: 1.8
                 },
-                '& h1': {
-                  textAlign: 'center',
-                  color: '#2e7d32',
-                  marginBottom: '20px',
-                  fontSize: '24px',
-                  fontWeight: 'bold'
+
+                '& .clause-content p': {
+                  marginBottom: '10px',
+                  pageBreakInside: 'avoid'
                 },
-                '& h2, & h3': {
-                  textAlign: 'center',
-                  color: '#000',
-                  marginBottom: '20px'
+
+                '& .clause-content p:last-child': {
+                  marginBottom: 0
                 },
-                '& .section-title, & .party-title, & .preamble-title': {
-                  color: '#000 !important',
-                  fontWeight: 'bold'
+
+                '& .clause-text': {
+                  fontSize: '14px',
+                  color: '#333',
+                  lineHeight: 1.8
                 },
-                '& .clause-title': {
-                  color: '#2e7d32 !important',
-                  fontWeight: 'bold',
-                  background: 'rgba(0, 0, 0, 0.05) !important',
-                  padding: '8px 12px !important',
-                  borderRadius: '4px !important',
-                  marginBottom: '15px !important'
+
+                '& .clause-list': {
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: '15px 0',
+                  pageBreakInside: 'avoid'
                 },
-                '& .signatures-title': {
-                  color: '#2e7d32 !important',
-                  fontSize: '18px',
-                  fontWeight: 'bold'
+
+                '& .clause-list li': {
+                  padding: '8px 0',
+                  paddingRight: '25px',
+                  position: 'relative',
+                  borderBottom: '1px solid rgba(46, 139, 69, 0.1)',
+                  pageBreakInside: 'avoid'
                 },
-                '& p': {
-                  marginBottom: '15px',
-                  textAlign: 'justify',
-                  color: '#333'
-                },
-                '& strong': {
+
+                '& .clause-list li:before': {
+                  content: '"•"',
                   color: '#2E8B45',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  fontSize: '20px',
+                  position: 'absolute',
+                  right: 0,
+                  top: '5px'
                 },
+
+                '& .clause-list li:last-child': {
+                  borderBottom: 'none'
+                },
+
+                '& .percentage': {
+                  display: 'inline-block',
+                  background: '#2E8B45',
+                  color: 'white',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  marginLeft: '5px'
+                },
+
                 '& .placeholder': {
                   color: '#2E8B45',
                   fontWeight: 600,
@@ -136,11 +366,191 @@ const ContractPreview = ({
                   borderRadius: '4px',
                   border: '1px solid rgba(46, 139, 69, 0.3)'
                 },
-                '& .clause-list li:before': {
-                  content: '"•"',
-                  color: '#2E8B45',
+
+                '& .clause-content strong': {
+                  color: '#2E8B45 !important'
+                },
+
+                // Signatures
+                '& .signatures-section': {
+                  marginTop: '40px',
+                  paddingTop: '20px',
+                  borderTop: '2px solid rgba(46, 139, 69, 0.2)',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .signatures-header': {
+                  textAlign: 'center',
+                  marginBottom: '30px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .signatures-title': {
+                  fontSize: '18px',
                   fontWeight: 'bold',
-                  fontSize: '20px'
+                  color: '#2e7d32'
+                },
+
+                '& .signatures-grid': {
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '20px',
+                  marginBottom: '20px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .signature-box': {
+                  textAlign: 'center',
+                  padding: '20px',
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(46, 139, 69, 0.2)',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .signature-party': {
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#000',
+                  marginBottom: '15px'
+                },
+
+                '& .signature-details': {
+                  marginBottom: '20px',
+                  pageBreakInside: 'avoid'
+                },
+
+                '& .signature-name': {
+                  color: '#555',
+                  fontSize: '14px'
+                },
+
+                '& .signature-line': {
+                  width: '100%',
+                  height: '1px',
+                  background: '#222',
+                  margin: '15px 0'
+                },
+
+                '& .signature-fields': {
+                  color: '#666',
+                  fontSize: '13px',
+                  marginTop: '25px'
+                },
+
+                '& .signature-fields p': {
+                  margin: '5px 0'
+                },
+
+                // English numbers
+                '& .english-number': {
+                  fontFamily: "'Arial', sans-serif",
+                  direction: 'ltr',
+                  unicodeBidi: 'embed'
+                },
+
+                // Responsive design
+                '@media (max-width: 768px)': {
+                  '& .parties-grid, & .signatures-grid': {
+                    gridTemplateColumns: '1fr'
+                  },
+                  '& .contract-header': {
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '15px'
+                  },
+                  '& .contract-dates': {
+                    textAlign: 'right'
+                  }
+                },
+
+                // Print styles
+                '@media print': {
+                  '@page': {
+                    margin: '10mm'
+                  },
+                  '& .contract-wrapper': {
+                    background: '#fff',
+                    padding: 0
+                  },
+                  '& .contract-container': {
+                    border: 'none',
+                    boxShadow: 'none',
+                    padding: '10mm',
+                    maxWidth: '100%',
+                    pageBreakInside: 'avoid'
+                  },
+                  '& *': {
+                    wordWrap: 'break-word !important',
+                    overflowWrap: 'break-word !important',
+                    WebkitPrintColorAdjust: 'exact !important',
+                    colorAdjust: 'exact !important'
+                  },
+                  '& .contract-header, & .section-title, & .party-card, & .preamble-box, & .clause, & .signature-box, & .signatures-section': {
+                    pageBreakInside: 'avoid !important',
+                    pageBreakAfter: 'avoid !important',
+                    breakInside: 'avoid !important'
+                  },
+                  '& .parties-grid': {
+                    marginBottom: '15px'
+                  },
+                  '& .party-card': {
+                    padding: '15px'
+                  },
+                  '& .clause': {
+                    padding: '15px',
+                    marginBottom: '15px'
+                  },
+                  '& .preamble-box': {
+                    padding: '15px',
+                    marginBottom: '15px'
+                  },
+                  '& .signatures-grid': {
+                    gap: '15px',
+                    marginBottom: '15px'
+                  },
+                  '& .signature-box': {
+                    padding: '15px'
+                  },
+                  '& .clause-content p, & .preamble-text, & .clause-text, & .party-reference': {
+                    orphans: 3,
+                    widows: 3,
+                    pageBreakInside: 'avoid'
+                  },
+                  '& .clause-list li': {
+                    pageBreakInside: 'avoid'
+                  },
+                  '& .detail-row, & .clause-list li, & .signature-line': {
+                    borderColor: '#000 !important'
+                  },
+                  '& .party-card, & .preamble-box, & .clause, & .signature-box': {
+                    background: '#ffffff !important',
+                    border: '1px solid #000 !important'
+                  },
+                  '& .percentage': {
+                    background: '#2E8B45 !important',
+                    color: 'white !important'
+                  },
+                  '& .placeholder': {
+                    background: 'transparent !important',
+                    border: '1px dashed #000 !important',
+                    color: '#000 !important'
+                  },
+                  '& .section-title, & .party-title, & .preamble-title, & .signature-party': {
+                    color: '#000 !important'
+                  },
+                  '& .clause-title': {
+                    color: '#2e7d32 !important'
+                  },
+                  '& .contract-title': {
+                    color: '#2e7d32 !important'
+                  },
+                  '& .signatures-title': {
+                    color: '#2e7d32 !important'
+                  },
+                  '& .clause-content strong': {
+                    color: '#2E8B45 !important'
+                  }
                 }
               }}
             />

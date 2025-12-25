@@ -2556,8 +2556,26 @@ const Installments = () => {
                                 url: attachment,
                               });
                             } else {
-                              navigator.clipboard.writeText(attachment);
-                              notifySuccess("تم نسخ الرابط إلى الحافظة");
+                              // Check if clipboard API is available before using it
+                              if (navigator.clipboard && navigator.clipboard.writeText) {
+                                navigator.clipboard.writeText(attachment);
+                                notifySuccess("تم نسخ الرابط إلى الحافظة");
+                              } else {
+                                // Fallback: try to use the older execCommand method
+                                const textArea = document.createElement('textarea');
+                                textArea.value = attachment;
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                try {
+                                  document.execCommand('copy');
+                                  notifySuccess("تم نسخ الرابط إلى الحافظة");
+                                } catch (err) {
+                                  console.warn('Fallback copy method also failed:', err);
+                                  notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+                                } finally {
+                                  document.body.removeChild(textArea);
+                                }
+                              }
                             }
                           }}
                           title="مشاركة"
@@ -2629,10 +2647,28 @@ const Installments = () => {
                           url: selectedDocumentsInstallment.PaymentProof,
                         });
                       } else {
-                        navigator.clipboard.writeText(
-                          selectedDocumentsInstallment.PaymentProof
-                        );
-                        notifySuccess("تم نسخ الرابط إلى الحافظة");
+                        // Check if clipboard API is available before using it
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                          navigator.clipboard.writeText(
+                            selectedDocumentsInstallment.PaymentProof
+                          );
+                          notifySuccess("تم نسخ الرابط إلى الحافظة");
+                        } else {
+                          // Fallback: try to use the older execCommand method
+                          const textArea = document.createElement('textarea');
+                          textArea.value = selectedDocumentsInstallment.PaymentProof;
+                          document.body.appendChild(textArea);
+                          textArea.select();
+                          try {
+                            document.execCommand('copy');
+                            notifySuccess("تم نسخ الرابط إلى الحافظة");
+                          } catch (err) {
+                            console.warn('Fallback copy method also failed:', err);
+                            notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+                          } finally {
+                            document.body.removeChild(textArea);
+                          }
+                        }
                       }
                     }}
                     title="مشاركة"

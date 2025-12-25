@@ -227,9 +227,27 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
         });
         return;
       }
-  
-      await navigator.clipboard.writeText(fileUrl);
-      notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+
+      // Check if clipboard API is available before using it
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(fileUrl);
+        notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+      } else {
+        // Fallback: try to use the older execCommand method
+        const textArea = document.createElement('textarea');
+        textArea.value = fileUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+        } catch (err) {
+          console.warn('Fallback copy method also failed:', err);
+          notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
   
     } catch (error) {
       console.error("Share error:", error);

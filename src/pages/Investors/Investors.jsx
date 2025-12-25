@@ -771,13 +771,13 @@ export default function Investors() {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-  
+
       const originalName = fileUrl.split('/').pop();
       const ext = originalName.split('.').pop();
       const fileName = `mudarabah_${investorDetails.name}.${ext}`;
-  
+
       const file = new File([blob], fileName, { type: blob.type });
-  
+
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: fileName,
@@ -786,10 +786,28 @@ export default function Investors() {
         });
         return;
       }
-  
-      await navigator.clipboard.writeText(fileUrl);
-      notifySuccess("جهازك لا يدعم مشاركة الملفات — تم نسخ رابط الملف ✅");
-  
+
+      // Check if clipboard API is available before using it
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(fileUrl);
+        notifySuccess("جهازك لا يدعم مشاركة الملفات — تم نسخ رابط الملف ✅");
+      } else {
+        // Fallback: try to use the older execCommand method
+        const textArea = document.createElement('textarea');
+        textArea.value = fileUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          notifySuccess("جهازك لا يدعم مشاركة الملفات — تم نسخ رابط الملف ✅");
+        } catch (err) {
+          console.warn('Fallback copy method also failed:', err);
+          notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+
     } catch (error) {
       console.error("Share error:", error);
       notifyError("تعذرت مشاركة الملف");

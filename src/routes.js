@@ -233,7 +233,7 @@ const routes = [
     element: Loans,
     protected: true,
     showInSidebar: true,
-    label: 'السلفات',
+    label: 'السلف',
     icon: LoanIcon,
     module: 'loans',
     requiresPermissions: true,

@@ -519,8 +519,26 @@ export default function Clients() {
           files: [file],
         });
       } else {
-        await navigator.clipboard.writeText(fileUrl);
-        notifySuccess("تم نسخ رابط الملف لأن المشاركة غير مدعومة");
+        // Check if clipboard API is available before using it
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(fileUrl);
+          notifySuccess("تم نسخ رابط الملف لأن المشاركة غير مدعومة");
+        } else {
+          // Fallback: try to use the older execCommand method
+          const textArea = document.createElement('textarea');
+          textArea.value = fileUrl;
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            notifySuccess("تم نسخ رابط الملف لأن المشاركة غير مدعومة");
+          } catch (err) {
+            console.warn('Fallback copy method also failed:', err);
+            notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+          } finally {
+            document.body.removeChild(textArea);
+          }
+        }
       }
     } catch (err) {
       console.error(err);

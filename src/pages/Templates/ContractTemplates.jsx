@@ -344,9 +344,27 @@ export default function ContractTemplates() {
 
   const copyToClipboard = (text) => {
     const variableName = text.replace(/\{\{|\}\}/g, '');
-    navigator.clipboard.writeText(variableName).then(() => {
-      notifySuccess('تم نسخ المتغير:', variableName);
-    });
+    // Check if clipboard API is available before using it
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(variableName).then(() => {
+        notifySuccess('تم نسخ المتغير:', variableName);
+      });
+    } else {
+      // Fallback: try to use the older execCommand method
+      const textArea = document.createElement('textarea');
+      textArea.value = variableName;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        notifySuccess('تم نسخ المتغير:', variableName);
+      } catch (err) {
+        console.warn('Fallback copy method also failed:', err);
+        notifyError("تعذرت نسخ المتغير تلقائياً — يرجى نسخه يدوياً");
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    }
   };
 
   const getDefaultTemplate = React.useCallback((templateName) => {
