@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../config/Api";
 import { notifyError } from "../utilities/toastify";
+import contractNumbersService from "../utilities/contractNumbers";
 
 const numberToArabicWords = (num) => {
   const ones = [
@@ -198,7 +199,7 @@ const LoanContractGenerator = React.forwardRef(
     const [isGenerating, setIsGenerating] = useState(false);
 
     const uploadPDFToServer = useCallback(
-      async (pdfBlob, loanDataParam = null) => {
+      async (pdfBlob, loanDataParam = null, contractNumbers = {}) => {
         try {
           const loanDataToUse = loanDataParam;
           console.log("uploadPDFToServer - loanDataToUse:", loanDataToUse);
@@ -213,6 +214,17 @@ const LoanContractGenerator = React.forwardRef(
               ? `إقرار الدين_${loanDataToUse.id}_${Date.now()}.pdf`
               : `سند الأمر_${loanDataToUse.id}_${Date.now()}.pdf`;
           formData.append("file", pdfBlob, filename);
+
+          // إضافة أرقام العقود إلى البيانات المرسلة
+          console.log('uploadPDFToServer - contractNumbers:', contractNumbers);
+          if (contractNumbers.debtAcknowledgmentNumber) {
+            formData.append("debtAcknowledgmentNumber", contractNumbers.debtAcknowledgmentNumber);
+            console.log('Added debtAcknowledgmentNumber:', contractNumbers.debtAcknowledgmentNumber);
+          }
+          if (contractNumbers.promissoryNoteNumber) {
+            formData.append("promissoryNoteNumber", contractNumbers.promissoryNoteNumber);
+            console.log('Added promissoryNoteNumber:', contractNumbers.promissoryNoteNumber);
+          }
 
           const endpoint =
             contractType === "DEBT_ACKNOWLEDGMENT"
@@ -236,77 +248,84 @@ const LoanContractGenerator = React.forwardRef(
     );
 
     const generatePDF = useCallback(
-      async (htmlContent = contractHtml, loanDataParam = null) => {
+      async (htmlContent = contractHtml, loanDataParam = null, contractNumbers = {}) => {
         const contentToUse = htmlContent || contractHtml;
-
+    
         if (!contentToUse) {
           notifyError("لا يوجد محتوى عقد لتحويله إلى PDF");
           return;
         }
-
+    
         try {
           setIsGenerating(true);
-
-          const previewContainer = document.createElement("div");
-          previewContainer.id = `contract-preview-${Date.now()}`;
-
-          previewContainer.style.width = "210mm";
-          previewContainer.style.minHeight = "297mm";
-
-          previewContainer.innerHTML = `
-        <div style="
-          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
-          padding: 20mm;
-          background: white;
-          direction: rtl;
-        ">
-          ${contentToUse}
-        </div>
-      `;
-          document.body.appendChild(previewContainer);
-
+    
+          // إزالة أي div إضافي محيط بالمحتوى
+          let cleanedContent = contentToUse;
+          
+          // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = contentToUse;
+          
+          // البحث عن contract-wrapper داخل المحتوى
+          const contractWrapper = tempDiv.querySelector('.contract-wrapper');
+          
+          if (contractWrapper) {
+            // أخذ المحتوى الداخلي فقط
+            cleanedContent = contractWrapper.outerHTML;
+          }
+    
           const loanDataToUse = loanDataParam || loanData;
           const clientDataToUse = loanDataToUse?.client || clientData;
-
+    
           const options = {
             margin: 0,
             filename: `${contractType.toLowerCase()}_${
               clientDataToUse?.id || loanDataToUse.id
             }_${Date.now()}.pdf`,
-            image: { type: "jpeg", quality: 1.0 },
+            image: { type: "jpeg", quality: 1 },
             html2canvas: {
-              scale: 3,
+              scale: 2,
               useCORS: true,
-              letterRendering: true,
-              allowTaint: true,
-              logging: true,
               backgroundColor: "#ffffff",
+              scrollX: 0,
+              scrollY: 0,
+              windowWidth: 794,
             },
             jsPDF: {
               unit: "mm",
               format: "a4",
               orientation: "portrait",
-              compress: false,
-              hotfixes: ["px_scaling"],
+              compress: true,
             },
           };
-
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          const container = document.getElementById(previewContainer.id);
+    
+          const tempElement = document.createElement("div");
+          tempElement.style.width = "794px";
+          tempElement.style.backgroundColor = "#ffffff";
+          tempElement.style.margin = "0 auto";
+          tempElement.style.padding = "0";
+          tempElement.style.position = "relative";
+          
+          tempElement.innerHTML = cleanedContent;
+          document.body.appendChild(tempElement);
+          
+          // انتظار قليل لتحميل الخطوط والصور
+          await new Promise(resolve => setTimeout(resolve, 500));
+    
           const pdfBlob = await html2pdf()
-            .from(container)
+            .from(tempElement)
             .set(options)
             .outputPdf("blob");
-
-          document.body.removeChild(previewContainer);
-
-          await uploadPDFToServer(pdfBlob, loanDataParam);
-
+    
+          // إزالة العنصر المؤقت
+          document.body.removeChild(tempElement);
+    
+          await uploadPDFToServer(pdfBlob, loanDataParam, contractNumbers);
+    
           if (onContractGenerated) {
             onContractGenerated(pdfBlob, contractType);
           }
-
+    
           return pdfBlob;
         } catch (error) {
           notifyError("حدث خطأ أثناء إنشاء ملف PDF");
@@ -345,6 +364,21 @@ const LoanContractGenerator = React.forwardRef(
 
           const clientDataToUse = loanDataToUse.client || clientData;
 
+          // توليد أرقام العقود وحفظها للإرسال إلى السيرفر
+          const promissoryNoteNumber = contractNumbersService.getNextPromissoryNoteNumber();
+          const debtAcknowledgmentNumber = contractNumbersService.getNextDebtAcknowledgmentNumber();
+
+          // حفظ الأرقام في قاعدة البيانات مباشرة
+          try {
+            console.log('Saving contract numbers:', { debtAcknowledgmentNumber, promissoryNoteNumber });
+            await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, {
+              debtAcknowledgmentNumber,
+              promissoryNoteNumber
+            });
+          } catch (error) {
+            console.error('Error saving contract numbers:', error);
+          }
+
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, clientDataToUse?.name || "")
             .replace(/{{رقم_هوية_العميل}}/g, clientDataToUse?.nationalId || "")
@@ -371,8 +405,8 @@ const LoanContractGenerator = React.forwardRef(
 
             .replace(/{{اسم_الدائن}}/g, loanDataToUse?.partner?.name || "لا يوجد كفيل")
             .replace(/{{اسم_المدين}}/g, clientDataToUse?.name || "")
-            .replace(/{{رقم_السند}}/g, `NOTE-${loanDataToUse.id}`)
-            .replace(/{{رقم_الإقرار}}/g, `ACK-${loanDataToUse.id}`)
+            .replace(/{{رقم_السند}}/g, promissoryNoteNumber)
+            .replace(/{{رقم_الإقرار}}/g, debtAcknowledgmentNumber)
             .replace(/{{مدينة_الاصدار}}/g, "شروة - المملكة العربية السعودية")
             .replace(/{{مدينة_الوفاء}}/g, "الرياض - المملكة العربية السعودية")
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")
@@ -390,7 +424,10 @@ const LoanContractGenerator = React.forwardRef(
           if (generatePdf) {
             setTimeout(async () => {
               try {
-                await generatePDF(filledTemplate, loanDataToUse);
+                await generatePDF(filledTemplate, loanDataToUse, {
+                  debtAcknowledgmentNumber,
+                  promissoryNoteNumber
+                });
               } catch (error) {
                 console.error("Error in auto-generating PDF:", error);
               }

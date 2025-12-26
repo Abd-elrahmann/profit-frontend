@@ -89,7 +89,7 @@ const EditDocuments = ({ open, onClose, clientId, documents, hasKafeel = false }
     const isDeleted = deleteFields.includes(fieldName);
 
     if (existingFile && !isDeleted && !file) {
-      const fileName = existingFile.split('/').pop();
+      const fileName = decodeURIComponent(existingFile.split('/').pop());
       return (
         <Paper sx={{ p: 2 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">

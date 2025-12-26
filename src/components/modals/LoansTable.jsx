@@ -176,8 +176,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       const response = await fetch(fileUrl);
       const blob = await response.blob();
       
-      const originalName = fileUrl.split('/').pop();
-      const decodedName = decodeURIComponent(originalName);
+      const decodedName = decodeURIComponent(fileUrl.split('/').pop());
       const newFileName = `${contractName}_${decodedName}`;
       
       saveAs(blob, newFileName);
@@ -213,8 +212,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       const response = await fetch(fileUrl);
       const blob = await response.blob();
   
-      const originalName = fileUrl.split('/').pop();
-      const decodedName = decodeURIComponent(originalName);
+      const decodedName = decodeURIComponent(fileUrl.split('/').pop());
       const fileName = `${contractName}_${decodedName}`;
   
       const file = new File([blob], fileName, { type: blob.type });

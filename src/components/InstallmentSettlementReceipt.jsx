@@ -204,59 +204,64 @@ const InstallmentSettlementReceipt = React.forwardRef(
         try {
           setIsGenerating(true);
 
-          // إنشاء عنصر ثابت في الصفحة
+          // إزالة أي div إضافي محيط بالمحتوى
+          let cleanedContent = contentToUse;
 
-          const previewContainer = document.createElement("div");
-          previewContainer.id = `settlement-receipt-preview-${Date.now()}`;
+          // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = contentToUse;
 
-          previewContainer.style.width = "210mm";
-          previewContainer.style.minHeight = "297mm";
+          // البحث عن contract-wrapper داخل المحتوى
+          const contractWrapper = tempDiv.querySelector('.contract-wrapper');
 
-          previewContainer.innerHTML = `
-        <div style="
-          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
-          padding: 20mm;
-          background: white;
-          direction: rtl;
-        ">
-          ${contentToUse}
-
-        </div>
-      `;
-          document.body.appendChild(previewContainer);
+          if (contractWrapper) {
+            // أخذ المحتوى الداخلي فقط
+            cleanedContent = contractWrapper.outerHTML;
+          }
 
           const options = {
             margin: 0,
             filename: `settlement_receipt_${
               installmentData.id
             }_${Date.now()}.pdf`,
-            image: { type: "jpeg", quality: 1.0 },
+            image: { type: "jpeg", quality: 1 },
             html2canvas: {
-              scale: 3,
+              scale: 2,
               useCORS: true,
-              letterRendering: true,
-              allowTaint: true,
-              logging: true,
               backgroundColor: "#ffffff",
+              scrollX: 0,
+              scrollY: 0,
+              windowWidth: 794,
             },
             jsPDF: {
               unit: "mm",
               format: "a4",
               orientation: "portrait",
-              compress: false,
-              hotfixes: ["px_scaling"],
+              compress: true,
             },
           };
 
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // إنشاء عنصر مؤقت بدون أي div إضافي
+          const tempElement = document.createElement('div');
+          tempElement.style.width = '794px';
+          tempElement.style.backgroundColor = 'white';
+          tempElement.style.margin = '0 auto';
+          tempElement.style.padding = '0';
+          tempElement.innerHTML = cleanedContent;
 
-          const container = document.getElementById(previewContainer.id);
+          // إضافة العنصر مؤقتاً إلى body
+          document.body.appendChild(tempElement);
+
+          // انتظار قليل لتحميل الخطوط والصور
+          await new Promise(resolve => setTimeout(resolve, 500));
+
           const pdfBlob = await html2pdf()
-            .from(container)
+            .from(tempElement)
             .set(options)
             .outputPdf("blob");
 
-          document.body.removeChild(previewContainer);
+          // إزالة العنصر المؤقت
+          document.body.removeChild(tempElement);
 
           await uploadPDFToServer(pdfBlob);
 
@@ -292,6 +297,10 @@ const InstallmentSettlementReceipt = React.forwardRef(
           employeeName,
         };
 
+        console.log('InstallmentSettlementReceipt - loanData:', dataToUse.loanData);
+        console.log('debtAcknowledgmentNumber:', dataToUse.loanData?.debtAcknowledgmentNumber);
+        console.log('promissoryNoteNumber:', dataToUse.loanData?.promissoryNoteNumber);
+
         if (
           !dataToUse.installmentData ||
           !dataToUse.clientData ||
@@ -323,14 +332,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
               /{{رقم_الإقرار}}/g,
               dataToUse.loanData.debtAcknowledgmentNumber || "غير محدد"
             )
-            .replace(
-              /{{سند_أمر_رقم}}/g,
-              dataToUse.loanData.promissoryNoteNumber || "غير محدد"
-            )
-            .replace(
-              /{{إقرار_دين_رقم}}/g,
-              dataToUse.loanData.debtAcknowledgmentNumber || "غير محدد"
-            )
 
             .replace(
               /{{المبلغ_رقما}}/g,
@@ -342,8 +343,8 @@ const InstallmentSettlementReceipt = React.forwardRef(
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
 
             .replace(
-              /{{اسم_الموظف}}/g,
-              dataToUse.employeeName || "ربيش سالم ناصر الهمامي"
+            /{{توقيع_الدائن}}/g,
+              dataToUse.loanData?.partner?.name || "ربيش سالم ناصر الهمامي"
             )
             .replace(/{{المكان}}/g, "الرياض");
 

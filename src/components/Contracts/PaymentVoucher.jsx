@@ -164,13 +164,36 @@ const PaymentVoucher = () => {
   }
 
   @media print {
-    .contract-wrapper {
-      background: #fff;
-      padding: 0;
+    @page {
+      size: A4;
+      margin: 10mm;
     }
+
+    .contract-wrapper,
     .contract-container {
-      border: none;
-      box-shadow: none;
+      height: auto !important;
+      min-height: auto !important;
+      max-height: none !important;
+      margin: 0 auto !important;
+      padding: 20px !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
+    /* منع أي انقسام للصفحات داخل المحتوى */
+    .grid-wrapper,
+    .info-box,
+    .signatures {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    /* ضبط أقصى ارتفاع ليكون صفحة واحدة فقط */
+    * {
+      max-height: none !important;
+      overflow: visible !important;
     }
   }
 </style>

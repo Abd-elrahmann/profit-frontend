@@ -43,13 +43,14 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
   // حساب الإجماليات
   const totals = useMemo(() => {
     if (!clientsData?.data || clientsData.data.length === 0) {
-      return { totalDebit: 0, totalPaid: 0, remaining: 0, totalInterest: 0 };
+      return { totalDebit: 0, totalPaid: 0, remaining: 0, totalInterest: 0, averageMonthlyInstallment: 0 };
     }
     return {
       totalDebit: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0),
       totalPaid: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0),
       remaining: clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0),
       totalInterest: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalInterestPaid || 0), 0),
+      averageMonthlyInstallment: clientsData.data.reduce((sum, c) => sum + (c.financials?.averageMonthlyInstallment || 0), 0),
     };
   }, [clientsData]);
 
@@ -68,6 +69,8 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
         return client.repaymentSummary.paidRepayments;
       case 'remainingRepayments':
         return client.repaymentSummary.remainingRepayments;
+      case 'monthlyInstallment':
+        return formatCurrency(client.financials.averageMonthlyInstallment || 0);
       case 'totalDebit':
         return formatCurrency(client.financials.totalDebit);
       case 'totalPaid':
@@ -188,6 +191,10 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
                   >
                     {column.id === 'id' ? (
                       <Typography variant="body2" fontWeight="bold">الإجمالي</Typography>
+                    ) : column.id === 'monthlyInstallment' ? (
+                      <Typography variant="body2" fontWeight="bold" color="secondary.main">
+                        {formatCurrency(totals.averageMonthlyInstallment)}
+                      </Typography>
                     ) : column.id === 'totalDebit' ? (
                       <Typography variant="body2" fontWeight="bold" color="error.main">
                         {formatCurrency(totals.totalDebit)}

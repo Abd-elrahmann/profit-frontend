@@ -85,7 +85,12 @@ const downloadFile = async (url, filename) => {
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
-    link.download = filename;
+    // Decode URL encoded filename for proper download
+    try {
+      link.download = decodeURIComponent(filename);
+    } catch {
+      link.download = filename;
+    }
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -93,6 +98,32 @@ const downloadFile = async (url, filename) => {
   } catch (error) {
     console.error('Download error:', error);
     notifyError('حدث خطأ أثناء تحميل الملف');
+  }
+};
+
+const handleShareFile = async (fileUrl, filename) => {
+  try {
+    const response = await fetch(fileUrl);
+    const blob = await response.blob();
+
+    // Decode filename for proper display
+    const decodedFilename = decodeURIComponent(filename);
+    const file = new File([blob], decodedFilename, { type: blob.type });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: decodedFilename,
+        text: 'مشاركة إيصال الدفع',
+        files: [file],
+      });
+    } else {
+      // Fallback: copy URL to clipboard
+      await navigator.clipboard.writeText(fileUrl);
+      notifySuccess('تم نسخ رابط الملف إلى الحافظة');
+    }
+  } catch (error) {
+    console.error('Share error:', error);
+    notifyError('حدث خطأ أثناء مشاركة الملف');
   }
 };
 
@@ -861,7 +892,14 @@ const Installments = () => {
     }
 
     const parts = url.split("/");
-    return parts[parts.length - 1] || "ملف غير معروف";
+    const encodedFileName = parts[parts.length - 1] || "ملف غير معروف";
+
+    // Decode URL encoded filename
+    try {
+      return decodeURIComponent(encodedFileName);
+    } catch {
+      return encodedFileName;
+    }
   };
 
   const hasPendingDocuments = (installment) => {
@@ -1870,6 +1908,18 @@ const Installments = () => {
                             >
                               <Download />
                             </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareFile(
+                                  selectedInstallment.PaymentProof,
+                                  extractFileName(selectedInstallment.PaymentProof)
+                                );
+                              }}
+                            >
+                              <ShareIcon />
+                            </IconButton>
                           </Box>
                         </Box>
                       )}
@@ -2101,6 +2151,18 @@ const Installments = () => {
                             }}
                           >
                             <Download />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleShareFile(
+                                selectedInstallment.PaymentProof,
+                                extractFileName(selectedInstallment.PaymentProof)
+                              );
+                            }}
+                          >
+                            <ShareIcon />
                           </IconButton>
                         </Box>
                       </Box>

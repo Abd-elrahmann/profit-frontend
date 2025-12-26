@@ -150,21 +150,20 @@ const PaymentProofGenerator = React.forwardRef(({
     try {
       setIsGenerating(true);
 
-      const previewContainer = document.createElement('div');
-      previewContainer.id = `payment-proof-preview-${Date.now()}`;
-      previewContainer.style.width = '210mm';
-      previewContainer.style.minHeight = '297mm';
-      previewContainer.innerHTML = `
-        <div style="
-          font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
-          padding: 20mm;
-          background: white;
-          direction: rtl;
-        ">
-          ${contentToUse}
-        </div>
-      `;
-      document.body.appendChild(previewContainer);
+      // إزالة أي div إضافي محيط بالمحتوى
+      let cleanedContent = contentToUse;
+
+      // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = contentToUse;
+
+      // البحث عن contract-wrapper داخل المحتوى
+      const contractWrapper = tempDiv.querySelector('.contract-wrapper');
+
+      if (contractWrapper) {
+        // أخذ المحتوى الداخلي فقط
+        cleanedContent = contractWrapper.outerHTML;
+      }
 
       const filename = isBulkOperation
         ? `payment_proof_bulk_${Date.now()}.pdf`
@@ -173,33 +172,44 @@ const PaymentProofGenerator = React.forwardRef(({
       const options = {
         margin: 0,
         filename: filename,
-        image: { type: 'jpeg', quality: 1.0 },
+        image: { type: 'jpeg', quality: 1 },
         html2canvas: {
-          scale: 3,
+          scale: 2,
           useCORS: true,
-          letterRendering: true,
-          allowTaint: true,
-          logging: true,
-          backgroundColor: '#ffffff'
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
         },
         jsPDF: {
           unit: 'mm',
           format: 'a4',
           orientation: 'portrait',
-          compress: false,
-          hotfixes: ['px_scaling']
+          compress: true,
         }
       };
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // إنشاء عنصر مؤقت بدون أي div إضافي
+      const tempElement = document.createElement('div');
+      tempElement.style.width = '794px';
+      tempElement.style.backgroundColor = 'white';
+      tempElement.style.margin = '0 auto';
+      tempElement.style.padding = '0';
+      tempElement.innerHTML = cleanedContent;
 
-      const container = document.getElementById(previewContainer.id);
+      // إضافة العنصر مؤقتاً إلى body
+      document.body.appendChild(tempElement);
+
+      // انتظار قليل لتحميل الخطوط والصور
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const pdfBlob = await html2pdf()
-        .from(container)
+        .from(tempElement)
         .set(options)
         .outputPdf('blob');
 
-      document.body.removeChild(previewContainer);
+      // إزالة العنصر المؤقت
+      document.body.removeChild(tempElement);
 
       await uploadPDFToServer(pdfBlob, isBulkOperation, repaymentIds);
 

@@ -20,6 +20,8 @@ import {
   Typography,
   CircularProgress,
   Divider,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import Api, { handleApiError } from "../../config/Api";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
@@ -35,6 +37,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     orgProfitPercent: "",
     capitalAmount: "",
     createdAt: "",
+    isNewPartner: true,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -73,6 +76,14 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
         capitalAmount: ''
       }));
     }
+  };
+
+  // Handler for isNewPartner checkbox
+  const handleIsNewPartnerChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      isNewPartner: value
+    }));
   };
 
   const validateForm = () => {
@@ -175,6 +186,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       orgProfitPercent: "",
       capitalAmount: "",
       createdAt: "",
+      isNewPartner: true,
     });
     setErrors({});
     setSavedInvestorData(null);
@@ -290,6 +302,36 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
                 sx={{width: '520px'}}
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ textAlign: 'center', mb: 2,pt: 0.5 }}>
+                هل المستثمر جديد ؟
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.isNewPartner === true}
+                      onChange={() => handleIsNewPartnerChange(true)}
+                      color="primary"
+                    />
+                  }
+                  label="نعم"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.isNewPartner === false}
+                      onChange={() => handleIsNewPartnerChange(false)}
+                      color="primary"
+                    />
+                  }
+                  label="لا"
+                />
+              </Box>
+            </Grid>
           </Grid>
 
           <Typography variant="subtitle1" fontWeight="bold" mt={4} mb={3}>
@@ -312,7 +354,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
                 sx={{width: '250px'}}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <TextField
                 label="نسبة أرباح الشركة (%)"

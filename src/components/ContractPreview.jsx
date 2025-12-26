@@ -74,11 +74,13 @@ const ContractPreview = ({
             boxShadow: 'none',
             border: 'none',
             '@media print': {
-              m: 0,
-              p: 0,
-              boxShadow: 'none',
-              border: 'none',
-              minHeight: 'auto'
+              m: '0 !important',
+              p: '0 !important',
+              boxShadow: 'none !important',
+              border: 'none !important',
+              minHeight: 'auto !important',
+              maxHeight: 'none !important',
+              height: 'auto !important'
             }
           }}
         >
@@ -467,16 +469,28 @@ const ContractPreview = ({
                 // Print styles
                 '@media print': {
                   '@page': {
+                    size: 'A4',
                     margin: '10mm'
                   },
                   '& .contract-wrapper': {
-                    background: '#fff',
-                    padding: 0
+                    background: '#fff !important',
+                    padding: '0 !important',
+                    margin: '0 !important',
+                    'page-break-inside': 'avoid !important',
+                    'break-inside': 'avoid !important',
+                    width: '100% !important',
+                    'max-width': '100% !important'
                   },
                   '& .contract-container': {
-                    border: 'none',
-                    boxShadow: 'none',
-                    padding: '10mm',
+                    margin: '0 auto !important',
+                    padding: '15mm !important',
+                    'page-break-inside': 'avoid !important',
+                    'break-inside': 'avoid !important',
+                    'box-shadow': 'none !important',
+                    border: 'none !important',
+                    width: '100% !important',
+                    'max-width': '180mm !important',
+                    background: '#fff !important',
                     maxWidth: '100%',
                     pageBreakInside: 'avoid'
                   },

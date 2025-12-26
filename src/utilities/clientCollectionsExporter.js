@@ -43,6 +43,8 @@ const getExportColumnValue = (client, columnId, index) => {
       return client.financials?.totalInterestPaid || 0;
     case 'totalDiscounts':
       return client.financials?.totalDiscounts || 0;
+    case 'monthlyInstallment':
+      return client.financials?.averageMonthlyInstallment || 0;
     case 'remaining':
       return Math.abs(client.financials?.remaining) || 0;
     case 'note':
@@ -61,7 +63,7 @@ const getFormattedColumnValue = (client, columnId, index) => {
 
   // For individual columns, format currency values
   const value = getExportColumnValue(client, columnId, index);
-  if (['totalDebit', 'totalPaid', 'totalInterest', 'totalDiscounts', 'remaining'].includes(columnId)) {
+  if (['totalDebit', 'totalPaid', 'totalInterest', 'totalDiscounts', 'remaining', 'monthlyInstallment'].includes(columnId)) {
     return formatCurrency(value);
   }
   return value;
@@ -83,6 +85,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         { id: 'loansCount', label: 'عدد السلف' },
         { id: 'paidRepayments', label: 'الدفعات المدفوعة' },
         { id: 'remainingRepayments', label: 'الدفعات المتبقية' },
+        { id: 'monthlyInstallment', label: 'الدفعة الشهرية' },
         { id: 'totalDebit', label: 'إجمالي المديونية' },
         { id: 'totalPaid', label: 'إجمالي المدفوع' },
         { id: 'totalInterest', label: 'إجمالي الفوائد' },
@@ -357,6 +360,7 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       ['إجمالي المدفوع', clientsData.data.reduce((sum, c) => sum + (c.financials.totalPaid || 0), 0)],
       ['إجمالي الفوائد', clientsData.data.reduce((sum, c) => sum + (c.financials.totalInterestPaid || 0), 0)],
       ['إجمالي الخصومات', clientsData.data.reduce((sum, c) => sum + (c.financials.totalDiscounts || 0), 0)],
+      ['إجمالي الدفعات الشهرية', clientsData.data.reduce((sum, c) => sum + (c.financials.averageMonthlyInstallment || 0), 0)],
       ['إجمالي المتبقي', clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials.remaining) || 0), 0)],
       [''],
       ['تفاصيل العملاء'],
@@ -444,6 +448,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         { id: 'loansCount', label: 'عدد السلف' },
         { id: 'paidRepayments', label: 'الدفعات المدفوعة' },
         { id: 'remainingRepayments', label: 'الدفعات المتبقية' },
+        { id: 'monthlyInstallment', label: 'الدفعة الشهرية' },
         { id: 'totalDebit', label: 'إجمالي المديونية' },
         { id: 'totalPaid', label: 'إجمالي المدفوع' },
         { id: 'totalInterest', label: 'إجمالي الفوائد' },

@@ -42,6 +42,7 @@ import { notifySuccess, notifyError } from "../../utilities/toastify";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
+import "dayjs/locale/ar";
 
 const SmallLoansTable = ({ onEditLoan }) => {
   const [page, setPage] = useState(1);
@@ -70,6 +71,13 @@ const SmallLoansTable = ({ onEditLoan }) => {
     queryFn: () => getSmallLoans(page, searchQuery, PAGE_SIZE),
     retry: 1,
   });
+
+  const formatArabicDate = (date) => {
+    return dayjs(date)
+      .locale("ar")
+      .format("D [من] MMMM") // format without A
+      + " " ;
+  };
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -275,13 +283,20 @@ const SmallLoansTable = ({ onEditLoan }) => {
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Typography variant="caption" color="text.secondary">
                   تاريخ الإنشاء
                 </Typography>
-                <Typography variant="body2">
-                  {dayjs(loan.createdAt).format("DD/MM/YYYY")}
-                </Typography>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    {dayjs(loan.createdAt).format("DD/MM/YYYY")}
+                  </Typography>
+                  {loan.createdAtHijri && (
+                    <Typography variant="caption" color="text.secondary">
+                      {loan.createdAtHijri}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
             </Box>
 
@@ -334,13 +349,13 @@ const SmallLoansTable = ({ onEditLoan }) => {
       <TableBody>
         {isLoading ? (
           <StyledTableRow>
-            <StyledTableCell colSpan={7} align="center">
+            <StyledTableCell colSpan={8} align="center">
               <CircularProgress size={20} />
             </StyledTableCell>
           </StyledTableRow>
         ) : smallLoansData?.data?.length === 0 ? (
           <StyledTableRow>
-            <StyledTableCell colSpan={7} align="center">
+            <StyledTableCell colSpan={8} align="center">
               <Typography>لا توجد سلف صغيرة</Typography>
             </StyledTableCell>
           </StyledTableRow>
@@ -376,9 +391,16 @@ const SmallLoansTable = ({ onEditLoan }) => {
                 )}
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                <Typography variant="body2">
-                  {dayjs(loan.createdAt).format("DD/MM/YYYY")}
-                </Typography>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    {formatArabicDate(loan.createdAt)}
+                  </Typography>
+                  {loan.createdAtHijri && (
+                    <Typography variant="caption" color="text.secondary">
+                      {loan.createdAtHijri}
+                    </Typography>
+                  )}
+                </Box>
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                 <IconButton
@@ -416,7 +438,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         }}
       >
         <InputBase
-          placeholder="ابحث باسم السلفة الصغيرة..."
+          placeholder="ابحث باسم صاحب السلفة..."
           value={searchQuery}
           onChange={handleSearchChange}
           sx={{
@@ -508,7 +530,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
       <Dialog
         open={isPayModalOpen}
         onClose={handleClosePayModal}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -541,6 +563,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
+                    width: "250px",
                     backgroundColor: "#f9fafb",
                   },
                 }}
@@ -559,13 +582,14 @@ const SmallLoansTable = ({ onEditLoan }) => {
                 value={paymentData.notes}
                 onChange={(e) => handlePaymentInputChange("notes", e.target.value)}
                 multiline
-                rows={3}
+                rows={1}
                 InputLabelProps={{
                   shrink: true,
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     backgroundColor: "#f9fafb",
+                    width: "250px",
                   },
                 }}
                 placeholder="أدخل الملاحظات (اختياري)"
@@ -573,7 +597,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
             </Grid>
             {selectedLoanForPayment && (
               <Grid item xs={12}>
-                <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1, width: "250px",height: "56px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     معلومات السلفة:
                   </Typography>
@@ -585,7 +609,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
             )}
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 2, flexDirection: 'row-reverse' }}>
+        <DialogActions sx={{ p: 2, flexDirection: 'row-reverse', justifyContent: 'space-between' }}>
           <Button
             onClick={handleClosePayModal}
             variant="outlined"
@@ -627,19 +651,25 @@ const SmallLoansTable = ({ onEditLoan }) => {
         )}
 
 
-        {/* Pay Loan - Only for OPEN loans */}
-        {selectedLoanForMenu?.status === "OPEN" || "PARTIALLY_PAID" && (
-          <MenuItem
-            onClick={() => {
-              handleOpenPayModal(selectedLoanForMenu);
-              handleMenuClose();
-            }}
-            sx={{ color: "#2E7D32", fontWeight: 'bold', fontSize: '0.875rem' }}
-          >
-            <Payment fontSize="small" sx={{ mr: 1, color: "#2E7D32" }} />
-            سداد الدفعة
-          </MenuItem>
-        )}
+        {/* Pay Loan - Always visible but disabled for PAID loans */}
+        <MenuItem
+          onClick={() => {
+            if (selectedLoanForMenu?.status === "PAID") return;
+            handleOpenPayModal(selectedLoanForMenu);
+            handleMenuClose();
+          }}
+          disabled={selectedLoanForMenu?.status === "PAID"}
+          sx={{
+            color: selectedLoanForMenu?.status === "PAID" ? "#9E9E9E" : "#2E7D32",
+            fontWeight: 'bold',
+            fontSize: '0.875rem',
+            opacity: selectedLoanForMenu?.status === "PAID" ? 0.5 : 1,
+            cursor: selectedLoanForMenu?.status === "PAID" ? "not-allowed" : "pointer"
+          }}
+        >
+          <Payment fontSize="small" sx={{ mr: 1, color: selectedLoanForMenu?.status === "PAID" ? "#9E9E9E" : "#2E7D32" }} />
+          سداد الدفعة
+        </MenuItem>
 
         {/* Delete Loan - Only for OPEN loans */}
           <MenuItem

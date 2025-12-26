@@ -12,10 +12,8 @@ import {
 
 const LoanDetailsSection = ({
   isSmallScreen,
-  isMobile,
   isViewMode,
   isEditMode,
-  isAdditionalLoan,
   customTitle,
   loanForm,
   handleInputChange,
@@ -32,6 +30,7 @@ const LoanDetailsSection = ({
   handlePartnersSearchChange,
   bankBalance,
   formatAmount,
+  selectedLoan,
 }) => {
   return (
     <Paper
@@ -63,7 +62,7 @@ const LoanDetailsSection = ({
         spacing={isSmallScreen ? 2 : 3}
         justifyContent="center"
       >
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <Box
             sx={{
               display: "flex",
@@ -87,7 +86,7 @@ const LoanDetailsSection = ({
               sx={{
                 "& .MuiOutlinedInput-root": {
                   height: "56px",
-                  width: "200px",
+                  width: "300px",
                   backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                 },
               }}
@@ -125,7 +124,7 @@ const LoanDetailsSection = ({
           </Box>
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
             type="text"
@@ -142,14 +141,14 @@ const LoanDetailsSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                width: "200px",
+                width: "300px",
                 backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
               },
             }}
           />
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
             type="number"
@@ -162,14 +161,14 @@ const LoanDetailsSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                width: "200px",
+                width: "300px",
                 backgroundColor: "#f5f5f5", // Always disabled appearance
               },
             }}
           />
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
             type="text"
@@ -186,14 +185,14 @@ const LoanDetailsSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                width: "200px",
+                width: "300px",
                 backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
               },
             }}
           />
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
             type="text"
@@ -205,7 +204,7 @@ const LoanDetailsSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                width: "200px",
+                width: "300px",
                 backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
               },
             }}
@@ -216,29 +215,52 @@ const LoanDetailsSection = ({
           </TextField>
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
-            type="date"
-            label="تاريخ الاستحقاق (اختياري)"
-            value={loanForm.repaymentDay}
-            onChange={(e) => handleInputChange("repaymentDay", e.target.value)}
+            type="text"
+            label="مصدر السلفة"
+            select
+            value={isViewMode ? (loanForm.source || selectedLoan?.source) : loanForm.source}
+            onChange={(e) => handleInputChange("source", e.target.value)}
             disabled={isReadOnlyMode}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            helperText="إذا تُرك فارغاً، سيتم استخدام اليوم العاشر من كل شهر"
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                width: "200px",
+                width: "300px",
+                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+              },
+            }}
+          >
+            <MenuItem value="GENERAL">عام</MenuItem>
+            <MenuItem value="NEW_CAPITAL">رأس مال جديد</MenuItem>
+          </TextField>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            type="date"
+            label="تاريخ بداية الدفعات"
+            value={loanForm.repaymentDay}
+            onChange={(e) => handleInputChange("repaymentDay", e.target.value)}
+            disabled={isReadOnlyMode}
+            required={!isReadOnlyMode}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            helperText="تاريخ بداية الدفعات الأولى"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "56px",
+                width: "300px",
                 backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
               },
             }}
           />
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
             type="date"
@@ -252,7 +274,7 @@ const LoanDetailsSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                width: "200px",
+                width: "300px",
                 backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
               },
             }}
@@ -260,7 +282,7 @@ const LoanDetailsSection = ({
           />
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={banksData?.data || []}
             getOptionLabel={(option) =>
@@ -290,7 +312,7 @@ const LoanDetailsSection = ({
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
-                    width: "200px",
+                    width: "300px",
                     backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                   },
                 }}
@@ -299,7 +321,7 @@ const LoanDetailsSection = ({
           />
         </Grid>
 
-        <Grid item xs={12} sm={isMobile ? 12 : 6} md={6}>
+        <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={partnersData?.partners || []}
             getOptionLabel={(option) =>
@@ -329,7 +351,7 @@ const LoanDetailsSection = ({
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
-                    width: "200px",
+                    width: "300px",
                     backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
                   },
                 }}
@@ -337,6 +359,7 @@ const LoanDetailsSection = ({
             )}
           />
         </Grid>
+
       </Grid>
     </Paper>
   );

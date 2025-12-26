@@ -230,21 +230,20 @@ const WithdrawReceiptGenerator = React.forwardRef(
           const options = {
             margin: 0,
             filename: `مخالصة_${withdrawalData?.partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_')}_${Date.now()}.pdf`,
-            image: { type: "jpeg", quality: 1.0 },
+            image: { type: "jpeg", quality: 1 },
             html2canvas: {
-              scale: 3,
+              scale: 2,
               useCORS: true,
-              letterRendering: true,
-              allowTaint: true,
-              logging: true,
               backgroundColor: "#ffffff",
+              scrollX: 0,
+              scrollY: 0,
+              windowWidth: 794,
             },
             jsPDF: {
               unit: "mm",
               format: "a4",
               orientation: "portrait",
-              compress: false,
-              hotfixes: ["px_scaling"],
+              compress: true,
             },
           };
 

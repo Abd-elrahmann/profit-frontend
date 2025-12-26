@@ -377,20 +377,30 @@ const MudarabahContract = () => {
 
   @media print {
     @page {
+      size: A4;
       margin: 10mm;
     }
-    
+
     .contract-wrapper {
-      background: #fff;
-      padding: 0;
+      background: #fff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+      break-inside: avoid !important;
+      break-after: avoid !important;
     }
-    
+
     .contract-container {
-      border: none;
-      box-shadow: none;
-      padding: 10mm;
-      max-width: 100%;
-      page-break-inside: avoid;
+      margin: 0 auto !important;
+      padding: 15mm !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-shadow: none !important;
+      border: none !important;
+      width: 100% !important;
+      max-width: 180mm !important; /* عرض A4 ناقص الهوامش */
+      background: #fff !important;
     }
     
     /* منع انكماش النص والحفاظ على التنسيق */

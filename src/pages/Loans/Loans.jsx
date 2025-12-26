@@ -64,6 +64,7 @@ const Loans = () => {
     interestRate: "",
     paymentAmount: "",
     type: "",
+    source: "",
     startDate: new Date().toISOString().split("T")[0],
     repaymentDay: "",
   });
@@ -545,6 +546,12 @@ const Loans = () => {
 
       notifySuccess("تم حفظ العقود بنجاح");
 
+      // إعادة جلب البيانات لتحديث الأرقام المحفوظة
+      queryClient.invalidateQueries(["loans"]);
+      if (loanDataToUse?.id) {
+        queryClient.invalidateQueries(["loan", loanDataToUse.id]);
+      }
+
       setSavedLoanData(null);
       setContractsGenerated(0);
       setPreviewContracts({
@@ -745,8 +752,9 @@ const Loans = () => {
         InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
-        startDate: loanForm.startDate || undefined,
-        repaymentDay: loanForm.repaymentDay,
+        source: loanForm.source,
+        startDate: loanForm.startDate ? new Date(loanForm.startDate).toISOString() : undefined,
+        repaymentDay: new Date(loanForm.repaymentDay).toISOString(),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
@@ -806,6 +814,7 @@ const Loans = () => {
       interestRate: "",
       paymentAmount: "",
       type: "",
+      source: "",
       startDate: new Date().toISOString().split("T")[0],
       repaymentDay: dayToDateString(10),
     });
@@ -831,8 +840,9 @@ const Loans = () => {
         InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
-        startDate: loanForm.startDate || undefined,
-        repaymentDay: loanForm.repaymentDay,
+        source: loanForm.source,
+        startDate: loanForm.startDate ? new Date(loanForm.startDate).toISOString() : undefined,
+        repaymentDay: new Date(loanForm.repaymentDay).toISOString(),
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
@@ -1120,11 +1130,15 @@ const Loans = () => {
   const isFormValid = () => {
     return (
       selectedClient &&
+      selectedPartner &&
+      selectedBank &&
       loanForm.amount &&
       loanForm.totalInterest &&
       loanForm.interestRate &&
       loanForm.paymentAmount &&
-      loanForm.type
+      loanForm.type &&
+      loanForm.source &&
+      loanForm.repaymentDay
     );
   };
 
@@ -1532,6 +1546,7 @@ const Loans = () => {
                     handlePartnersSearchChange={handlePartnersSearchChange}
                     bankBalance={bankBalance}
                     formatAmount={formatAmount}
+                    selectedLoan={selectedLoan}
                   />
                 )}
 

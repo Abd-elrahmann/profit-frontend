@@ -204,17 +204,56 @@ return `
   }
 
   @media print {
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+
     .contract-wrapper {
-      background: #fff;
-      padding: 0;
+      background: #fff !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      width: 100% !important;
+      max-width: 100% !important;
     }
+
     .contract-container {
-      border: none;
-      box-shadow: none;
+      margin: 0 !important;
+      padding: 20px !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-shadow: none !important;
+      border: none !important;
+      background: #fff !important;
     }
+
     .grid-wrapper {
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* منع أي انقسام للصفحات داخل المحتوى */
+    .details-box,
+    .content-box,
+    .text-box,
+    .signatures {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    /* ضبط أقصى ارتفاع ليكون صفحة واحدة فقط */
+    * {
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    /* ضمان التمركز والعرض الصحيح */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
     }
   }
 </style>
@@ -260,14 +299,9 @@ return `
 
     <div class="signatures">
       <div>
-        <p class="strong">الاسم والتوقيع:<span class="spacer"></span></p>
+        <p class="strong">توقيع الدائن:<span class="spacer"></span></p>
         <div class="sign-line"></div>
-        <p>{{اسم_الموظف}}</p>
-      </div>
-      <div>
-        <p class="strong">توقيع العميل:<span class="spacer"></span></p>
-        <div class="sign-line"></div>
-        <p>{{اسم_العميل}}</p>
+        <p>{{توقيع_الدائن}}</p>
       </div>
     </div>
 

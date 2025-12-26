@@ -78,7 +78,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
     const isEditMode = !!selectedLoan;
 
     if (!formData.Name.trim()) {
-      notifyError("يرجى إدخال اسم السلفة");
+      notifyError("يرجى إدخال اسم صاحب السلفة");
       return;
     }
 
@@ -140,7 +140,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
           <Grid item xs={12} sm={8} md={6}>
             <TextField
               fullWidth
-              label="اسم السلفة"
+              label="اسم صاحب السلفة"
               value={formData.Name}
               onChange={(e) => handleInputChange("Name", e.target.value)}
               InputLabelProps={{
@@ -153,7 +153,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
                   backgroundColor: "#f9fafb",
                 },
               }}
-              placeholder="أدخل اسم السلفة"
+              placeholder="أدخل اسم صاحب السلفة"
             />
           </Grid>
 

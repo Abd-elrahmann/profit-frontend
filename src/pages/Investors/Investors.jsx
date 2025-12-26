@@ -694,7 +694,7 @@ export default function Investors() {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
       
-      const originalName = investorDetails.mudarabahFileUrl.split('/').pop();
+      const originalName = decodeURIComponent(investorDetails.mudarabahFileUrl.split('/').pop());
       const extension = originalName.split('.').pop();
       const newFileName = `mudarabah_${investorDetails.name}.${extension}`;
       
@@ -772,7 +772,7 @@ export default function Investors() {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
 
-      const originalName = fileUrl.split('/').pop();
+      const originalName = decodeURIComponent(fileUrl.split('/').pop());
       const ext = originalName.split('.').pop();
       const fileName = `mudarabah_${investorDetails.name}.${ext}`;
 
@@ -1538,6 +1538,20 @@ export default function Investors() {
                             }}
                           />
                         )}
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>نوع المستثمر</Typography>
+                        <TextField
+                          value={investorDetails.isNewPartner ? 'مستثمر جديد' : 'مستثمر قديم'}
+                          fullWidth
+                          disabled
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#f9fafb',
+                              borderRadius: '6px',
+                            },
+                          }}
+                        />
                       </Grid>
                     </Grid>
                   </Paper>

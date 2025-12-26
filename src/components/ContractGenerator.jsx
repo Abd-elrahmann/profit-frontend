@@ -3,6 +3,7 @@ import html2pdf from 'html2pdf.js';
 import ContractPreview from './ContractPreview';
 import Api, { handleApiError } from '../config/Api';
 import { notifySuccess, notifyError } from '../utilities/toastify';
+import contractNumbersService from '../utilities/contractNumbers';
 
 const numberToArabicWords = (num) => {
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
@@ -174,7 +175,7 @@ const generateContract = useCallback(async () => {
       // معلومات إضافية للعقود الأخرى
       .replace(/{{اسم_الدائن}}/g, investorData.name || '')
       .replace(/{{اسم_المدين}}/g, investorData.name || '')
-      .replace(/{{رقم_السند}}/g, `${Date.now()}`)
+      .replace(/{{رقم_السند}}/g, contractNumbersService.getNextPromissoryNoteNumber())
       .replace(/{{تاريخ_الانشاء}}/g, gregorianDate)
       .replace(/{{تاريخ_الاستحقاق}}/g, gregorianDate)
       .replace(/{{مدينة_الاصدار}}/g, 'الرياض')
@@ -208,23 +209,22 @@ const generateContract = useCallback(async () => {
 
       // PDF generation options
       const options = {
-        margin: [5, 5, 5, 5],
+        margin: 0,
         filename: `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
-        html2canvas: { 
-          scale: 3,
+        html2canvas: {
+          scale: 2,
           useCORS: true,
-          letterRendering: true,
-          allowTaint: true,
-          logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
         },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
           orientation: 'portrait',
-          compress: false,
-          hotfixes: ['px_scaling']
+          compress: true,
         }
       };
 
