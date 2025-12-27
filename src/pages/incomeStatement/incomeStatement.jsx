@@ -203,6 +203,48 @@ const IncomeStatement = () => {
       capitalDetails: incomeData.capitalByPartner || []
     });
 
+    // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة
+    if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
+      data.push({
+        id: 0.25,
+        name: "تفصيل أنواع الإيرادات",
+        code: "",
+        type: "revenue-breakdown-header"
+      });
+
+      if (incomeData.revenues.generalLoans > 0) {
+        data.push({
+          id: 0.3,
+          name: "إيرادات السلف العامة",
+          code: "REV-GEN",
+          amount: incomeData.revenues.generalLoans,
+          type: "revenue-breakdown",
+          indent: true
+        });
+      }
+
+      if (incomeData.revenues.newCapitalLoans > 0) {
+        data.push({
+          id: 0.35,
+          name: "إيرادات سلف رأس المال الجديد",
+          code: "REV-NEW-CAP",
+          amount: incomeData.revenues.newCapitalLoans,
+          type: "revenue-breakdown",
+          indent: true
+        });
+      }
+    } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
+      // إذا كان هناك إيرادات إجمالية لكن بدون تفصيل، أضف صف إجمالي
+      data.push({
+        id: 0.25,
+        name: "إيرادات السلف العامة",
+        code: "REV-GEN",
+        amount: incomeData.totalRevenue,
+        type: "revenue-breakdown",
+        indent: true
+      });
+    }
+
     // رأس جدول رأس المال
     if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
       data.push({
@@ -388,7 +430,7 @@ const IncomeStatement = () => {
     } else if (period.source === "PERIOD") {
       periodText = `فترة محاسبية محددة (${dayjs(period.from).format('DD/MM/YYYY')} - ${dayjs(period.to).format('DD/MM/YYYY')})`;
     } else {
-      // سنوي أو غير محدد
+      // سنوي أو غير محدد - استخدم التواريخ من الاستجابة
       periodText = `من ${dayjs(period.from).format('DD/MM/YYYY')} إلى ${dayjs(period.to).format('DD/MM/YYYY')}`;
     }
 
@@ -732,21 +774,32 @@ const IncomeStatement = () => {
                     height: '100%'
                   }}
                 >
-                  <Payments sx={{ 
-                    color: '#2E8B45', 
+                  <Payments sx={{
+                    color: '#2E8B45',
                     fontSize: 30,
-                    mb: 1 
+                    mb: 1
                   }} />
                   <Typography sx={{ color: '#5c8a67', fontSize: '0.875rem', mb: 1 }}>
                     إجمالي الإيرادات
                   </Typography>
-                  <Typography sx={{ 
+                  <Typography sx={{
                     color: '#101812',
                     fontSize: '1.25rem',
                     fontWeight: 700
                   }}>
                     {formatNumber(incomeData.totalRevenue)}
                   </Typography>
+                  {/* Revenue Breakdown */}
+                  {incomeData.revenues && (
+                    <Box sx={{ mt: 1, fontSize: '0.75rem', color: '#5c8a67' }}>
+                      <Typography variant="caption" display="block" fontWeight="bold">
+                        سلف عامة: {formatNumber(incomeData.revenues.generalLoans || 0)}
+                      </Typography>
+                      <Typography variant="caption" display="block" fontWeight="bold">
+                        سلف رأس مال جديد: {formatNumber(incomeData.revenues.newCapitalLoans || 0)}
+                      </Typography>
+                    </Box>
+                  )}
                 </Paper>
               </Grid>
 
@@ -1040,6 +1093,44 @@ const IncomeStatement = () => {
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
                               <Typography sx={{
                                 fontWeight: 500,
+                                color: '#101812'
+                              }}>
+                                {formatAmount(row.amount)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "revenue-breakdown-header") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.4)' }}>
+                            <TableCell colSpan={3} sx={{ py: 1, px: 3, textAlign: 'center', fontWeight: 600, color: '#2E8B45' }}>
+                              {row.name}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "revenue-breakdown") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.2)', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
+                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                                {row.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              <Typography sx={{
+                                fontSize: '0.75rem',
+                                color: '#5c8a67'
+                              }}>
+                                {row.code}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              <Typography sx={{
+                                fontWeight: 600,
                                 color: '#101812'
                               }}>
                                 {formatAmount(row.amount)}

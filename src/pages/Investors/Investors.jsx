@@ -77,14 +77,15 @@ const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdra
     }
   }
 
-  // استخدام status بدلاً من isActive
+  // استخدام تصنيف المستثمرين الجديد
   if (status.trim()) {
-    const statusMap = {
-      'نشط': 'ACTIVE',
-      'غير نشط': 'INACTIVE',
-      'منسحب': 'FROZEN'
-    };
-    queryParams.append('status', statusMap[status.trim()] || status.trim());
+    if (status.trim() === 'قديم') {
+      queryParams.append('isNewPartner', 'false');
+    } else if (status.trim() === 'جديد') {
+      queryParams.append('isNewPartner', 'true');
+    } else if (status.trim() === 'منسحب') {
+      queryParams.append('withdrawingStatus', 'WITHDRAWING,WITHDRAWN');
+    }
   }
 
   // إضافة فلترة للمنسحبين فقط
@@ -283,29 +284,33 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
-      // تحويل status إلى isActive و isFrozen
-      let isActive = false;
-      let isFrozen = false;
-      if (editFormData.status === 'ACTIVE') {
-        isActive = true;
-        isFrozen = false;
-      } else if (editFormData.status === 'INACTIVE') {
-        isActive = false;
-        isFrozen = false;
-      } else if (editFormData.status === 'FROZEN') {
-        isActive = false;
-        isFrozen = true;
+      // تحويل status إلى القيم المناسبة
+      let isNewPartner = false;
+      let withdrawingStatus = null;
+      if (editFormData.status === 'NEW') {
+        isNewPartner = true;
+        withdrawingStatus = null;
+      } else if (editFormData.status === 'OLD') {
+        isNewPartner = false;
+        withdrawingStatus = null;
+      } else if (editFormData.status === 'WITHDRAWN') {
+        // للمنسحبين نحتاج للحفاظ على القيمة الحالية أو تعيينها لـ WITHDRAWN
+        withdrawingStatus = 'WITHDRAWN';
       }
 
       const { status: _status, ...restFormData } = editFormData;
       const dataToSend = {
         ...restFormData,
-        isActive,
-        isFrozen,
+        isNewPartner,
         capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
         orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined,
         createdAt: editFormData.createdAt || undefined,
       };
+
+      // إضافة withdrawingStatus فقط إذا كان منسحباً
+      if (withdrawingStatus) {
+        dataToSend.withdrawingStatus = withdrawingStatus;
+      }
       
       await Api.patch(`/api/partners/${selectedInvestor.id}`, dataToSend);
       queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
@@ -844,21 +849,21 @@ export default function Investors() {
     }
   }, [investorDetails]);
 
-  // دالة لتحديد الحالة من isActive و isFrozen
+  // دالة لتحديد تصنيف المستثمر
   const getInvestorStatus = (investor) => {
-    if (investor?.isFrozen) return 'FROZEN';
-    if (investor?.isActive) return 'ACTIVE';
-    return 'INACTIVE';
+    if (investor?.WithdrawingStatus === 'WITHDRAWING' || investor?.WithdrawingStatus === 'WITHDRAWN') return 'WITHDRAWN';
+    if (investor?.isNewPartner) return 'NEW';
+    return 'OLD';
   };
 
   const getStatusColor = (investor) => {
     const status = typeof investor === 'object' ? getInvestorStatus(investor) : investor;
     switch (status) {
-      case 'ACTIVE':
+      case 'NEW':
         return 'success';
-      case 'INACTIVE':
-        return 'error';
-      case 'FROZEN':
+      case 'OLD':
+        return 'info';
+      case 'WITHDRAWN':
         return 'warning';
       default:
         return 'default';
@@ -868,11 +873,11 @@ export default function Investors() {
   const getStatusText = (investor) => {
     const status = typeof investor === 'object' ? getInvestorStatus(investor) : investor;
     switch (status) {
-      case 'ACTIVE':
-        return 'نشط';
-      case 'INACTIVE':
-        return 'غير نشط';
-      case 'FROZEN':
+      case 'NEW':
+        return 'جديد';
+      case 'OLD':
+        return 'قديم';
+      case 'WITHDRAWN':
         return 'منسحب';
       default:
         return 'غير معروف';
@@ -1007,20 +1012,20 @@ export default function Investors() {
                 }}
               />
               <Chip
-                label="نشط"
-                color={selectedStatus === "نشط" ? "success" : "default"}
+                label="قديم"
+                color={selectedStatus === "قديم" ? "info" : "default"}
                 variant="outlined"
                 onClick={() => {
-                  setSelectedStatus(prev => prev === "نشط" ? "" : "نشط");
+                  setSelectedStatus(prev => prev === "قديم" ? "" : "قديم");
                   setCurrentPage(1);
                 }}
               />
               <Chip
-                label="غير نشط"
-                color={selectedStatus === "غير نشط" ? "error" : "default"}
+                label="جديد"
+                color={selectedStatus === "جديد" ? "success" : "default"}
                 variant="outlined"
                 onClick={() => {
-                  setSelectedStatus(prev => prev === "غير نشط" ? "" : "غير نشط");
+                  setSelectedStatus(prev => prev === "جديد" ? "" : "جديد");
                   setCurrentPage(1);
                 }}
               />
@@ -1511,17 +1516,17 @@ export default function Investors() {
                                 },
                               }}
                             >
-                              <MenuItem value="ACTIVE">نشط</MenuItem>
-                              <MenuItem value="INACTIVE">غير نشط</MenuItem>
-                              <MenuItem value="FROZEN">منسحب</MenuItem>
+                              <MenuItem value="NEW">جديد</MenuItem>
+                              <MenuItem value="OLD">قديم</MenuItem>
+                              <MenuItem value="WITHDRAWN">منسحب</MenuItem>
                             </TextField>
                             {editFormData.status !== getInvestorStatus(investorDetails) && (
                               <Alert severity="info" sx={{ mt: 1, fontSize: '0.85rem' }}>
-                                {editFormData.status === 'ACTIVE' ? 
-                                  'سيتم تفعيل المستثمر وسيدخل في توزيع الأرباح' : 
-                                  editFormData.status === 'INACTIVE' ?
-                                  'سيتم إيقاف المستثمر وسيخرج من توزيع الأرباح' :
-                                  'سيتم انسحاب المستثمر'}
+                                {editFormData.status === 'NEW' ?
+                                  'سيتم تصنيف المستثمر كجديد' :
+                                  editFormData.status === 'OLD' ?
+                                  'سيتم تصنيف المستثمر كقديم' :
+                                  'سيتم تصنيف المستثمر كمنسحب'}
                               </Alert>
                             )}
                           </Box>
@@ -1540,9 +1545,9 @@ export default function Investors() {
                         )}
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="body2" mb={1} fontWeight={500}>نوع المستثمر</Typography>
+                        <Typography variant="body2" mb={1} fontWeight={500}>تصنيف المستثمر</Typography>
                         <TextField
-                          value={investorDetails.isNewPartner ? 'مستثمر جديد' : 'مستثمر قديم'}
+                          value={getStatusText(investorDetails)}
                           fullWidth
                           disabled
                           sx={{
