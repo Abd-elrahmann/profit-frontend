@@ -166,8 +166,13 @@ const Login = () => {
       notifySuccess("تم تسجيل الدخول بنجاح");  
       navigate(firstPage, { replace: true });
     } catch (error) {
-      notifyError("خطأ في تسجيل الدخول");
-      handleApiError(error);
+      // فحص إذا كانت رسالة الخطأ خاصة بعدم وجود دور
+      if (error.response?.data?.message?.includes('ليس لديك أي صلاحيات أو أدوار للدخول على النظام')) {
+        notifyError(error.response.data.message);
+      } else {
+        notifyError("خطأ في تسجيل الدخول");
+        handleApiError(error);
+      }
     } finally {
       setIsLoading(false);
     }

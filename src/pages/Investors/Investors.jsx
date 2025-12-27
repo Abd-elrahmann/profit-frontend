@@ -1143,10 +1143,10 @@ export default function Investors() {
                           />
                         </Box>
                         <Typography variant="body2" color="text.secondary" fontWeight={"bold"}>
-                          رأس المال: {investor.totalAmount?.toLocaleString()}
+                          رأس المال: {investor.total?.toLocaleString()}
                         </Typography>
                         <Typography variant="body2" color="black" sx={{ fontSize: '0.75rem' }}>
-                          {investor.capitalAmount?.toLocaleString()} رأس مال صافي + {investor.totalProfit?.toLocaleString()} أرباح
+                          {investor.capitalAmount?.toLocaleString()} رأس مال أصلي + {investor.newCapitalAmount?.toLocaleString()} رأس مال جديد
                         </Typography>
                         <Box display="flex" justifyContent="flex-end" mt={1}>
                           {permissions.includes("partners_Delete") && (
@@ -1575,7 +1575,7 @@ export default function Investors() {
                             إجمالي مبلغ الاستثمار
                           </Typography>
                           <Typography variant="h6" fontWeight="bold" color="success">
-                            {investorDetails.capitalAmount?.toLocaleString()}
+                            {investorDetails.total?.toLocaleString()}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -1653,13 +1653,53 @@ export default function Investors() {
                       </Card>
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                          <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                         <CardContent sx={{textAlign: 'center'}}>
                           <Typography color="text.secondary" variant="body1" gutterBottom>
                             إجمالي الادخار
                           </Typography>
                           <Typography variant="h6" fontWeight="bold" color="info.main">
                             {investorDetails.totalSaving?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    {/* New Statistics Cards */}
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            رأس المال الجديد
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="success.main">
+                            {investorDetails.newCapitalAmount?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            نسبة رأس المال الجديد
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="warning.main">
+                            {investorDetails.newCapitalPercent || 0}%
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            نسبة أرباح المنشأة
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="error.main">
+                            {investorDetails.orgProfitPercent || 0}%
                           </Typography>
                         </CardContent>
                       </Card>
@@ -1717,7 +1757,7 @@ export default function Investors() {
                             address: investorDetails.address || '',
                             email: investorDetails.email || '',
                             orgProfitPercent: investorDetails.orgProfitPercent || '',
-                            capitalAmount: investorDetails.capitalAmount || '',
+                            capitalAmount: investorDetails.total || '',
                             status: getInvestorStatus(investorDetails),
                             createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
                           });
@@ -1746,8 +1786,8 @@ export default function Investors() {
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
-                      <TextField 
-                        value={editMode ? editFormData.capitalAmount : investorDetails.capitalAmount?.toLocaleString()} 
+                      <TextField
+                        value={editMode ? editFormData.capitalAmount : investorDetails.total?.toLocaleString()}
                         onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
                         fullWidth
                         disabled={!editMode}
@@ -1784,8 +1824,8 @@ export default function Investors() {
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المستثمر</Typography>
-                      <TextField 
-                        value={investorDetails.partnerProfitPercent} 
+                      <TextField
+                        value={investorDetails.partnerProfitPercent}
                         fullWidth
                         disabled
                         sx={{

@@ -530,11 +530,11 @@ const Expenses = () => {
         <title>المصروفات - نظام إدارة السلف</title>
       </Helmet>
       <Box sx={{ p: isMobile ? 1 : 3, mt: 3 }}>
-        {/* Header */}
+        {/* Header with Summary Boxes */}
         <Box
           sx={{
             display: "flex",
-            justifyContent: isMobile ? "center" : "space-between",
+            justifyContent: "space-between",
             alignItems: "center",
             mb: 3,
             flexDirection: isMobile ? "column" : "row",
@@ -542,44 +542,75 @@ const Expenses = () => {
             width: "100%",
           }}
         >
-          <Stack direction="row" spacing={1}>
-            {permissions.includes("expenses_Add") && (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAddExpense}
-                sx={{
-                  bgcolor: "primary.main",
-                  fontWeight: "bold",
-                  "&:hover": { bgcolor: "primary.dark" },
-                }}
-              >
-                إضافة مصروفات
-              </Button>
-            )}
-          </Stack>
-
-          {canExport && (
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1 }}>
             <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<PictureAsPdf />}
-                onClick={handleExportPDF}
-                disabled={!groupedExpenses.length}
-              >
-                تصدير PDF
-              </Button>
-              <Button
-                variant="outlined"
-                color="success"
-                startIcon={<FileDownload />}
-                onClick={handleExportExcel}
-                disabled={!groupedExpenses.length}
-              >
-                تصدير Excel
-              </Button>
+              {permissions.includes("expenses_Add") && (
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleAddExpense}
+                  sx={{
+                    bgcolor: "primary.main",
+                    fontWeight: "bold",
+                    "&:hover": { bgcolor: "primary.dark" },
+                  }}
+                >
+                  إضافة مصروفات
+                </Button>
+              )}
             </Stack>
+
+            {canExport && (
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<PictureAsPdf />}
+                  onClick={handleExportPDF}
+                  disabled={!groupedExpenses.length}
+                >
+                  تصدير PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  startIcon={<FileDownload />}
+                  onClick={handleExportExcel}
+                  disabled={!groupedExpenses.length}
+                >
+                  تصدير Excel
+                </Button>
+              </Stack>
+            )}
+          </Box>
+
+          {/* Summary Boxes */}
+          {!isLoading && expensesData?.expenses && expensesData.expenses.length > 0 ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', flex: 1 }}>
+              <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 200, maxWidth: 300 }}>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <Typography variant="body1" color="text.secondary" gutterBottom>
+                    اجمالي مبالغ المصروفات
+                  </Typography>
+                  <Typography variant="h5" color="primary.main" fontWeight="bold">
+                    {expensesData.expenses.reduce((total, expense) => total + expense.amount, 0).toLocaleString('en-US')}
+                  </Typography>
+                </CardContent>
+              </Card>
+              <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 200, maxWidth: 300 }}>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <Typography variant="body1" color="text.secondary" gutterBottom>
+                    عدد المصروفات
+                  </Typography>
+                  <Typography variant="h5" color="success.main" fontWeight="bold">
+                    {expensesData.expenses.length.toLocaleString('en-US')}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Box>
+          ) : (
+            <Box sx={{ flex: 1 }} />
           )}
         </Box>
 

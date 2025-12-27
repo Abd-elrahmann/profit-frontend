@@ -347,7 +347,7 @@ export default function Employees() {
                             <Delete fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
                         )}
-                        {permissions.includes("users_Add") && (
+                        {permissions.includes("users_Update") && (
                           <IconButton 
                             color="info" 
                             onClick={() => handleAssignRole(user)}
@@ -357,7 +357,7 @@ export default function Employees() {
                             <AdminPanelSettings fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
                         )}
-                        {permissions.includes("users_Add") && (
+                        {permissions.includes("users_View") && (
                         <IconButton 
                           color="black" 
                           onClick={() => handleViewLogs(user)}

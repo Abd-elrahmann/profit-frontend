@@ -578,6 +578,42 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         </Box>
       )}
 
+      {/* Summary Boxes */}
+      {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+          <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="body1" color="text.secondary" gutterBottom>
+                عدد القيود
+              </Typography>
+              <Typography variant="h4" color="primary.main" fontWeight="bold">
+                {journalsData.journals.length.toLocaleString('en-US')}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="body1" color="text.secondary" gutterBottom>
+                المعتمد
+              </Typography>
+              <Typography variant="h4" color="success.main" fontWeight="bold">
+                {journalsData.journals.filter(journal => journal.status === 'POSTED').length.toLocaleString('en-US')}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="body1" color="text.secondary" gutterBottom>
+                الغير معتمد
+              </Typography>
+              <Typography variant="h4" color="warning.main" fontWeight="bold">
+                {journalsData.journals.filter(journal => journal.status !== 'POSTED').length.toLocaleString('en-US')}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+      )}
+
       {/* Bulk Actions */}
       {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
         <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: "#f5f5f5" }}>

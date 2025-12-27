@@ -41,6 +41,9 @@ const normalizePartnerData = (partnerData) => {
       yearlyZakatRequired: partnerData.yearlyZakatRequired || 0,
       yearlyZakatPaid: partnerData.yearlyZakatPaid || 0,
       yearlyZakatBalance: partnerData.yearlyZakatBalance || 0,
+      newCapitalAmount: partnerData.newCapitalAmount || 0,
+      newCapitalPercent: partnerData.newCapitalPercent || 0,
+      total: partnerData.total || 0,
     };
   }
 
@@ -68,6 +71,9 @@ const normalizePartnerData = (partnerData) => {
       yearlyZakatRequired: partnerData.yearlyZakatRequired || 0,
       yearlyZakatPaid: partnerData.yearlyZakatPaid || 0,
       yearlyZakatBalance: partnerData.yearlyZakatBalance || 0,
+      newCapitalAmount: partnerData.newCapitalAmount || 0,
+      newCapitalPercent: partnerData.newCapitalPercent || 0,
+      total: partnerData.total || 0,
     };
   }
 
@@ -82,7 +88,7 @@ const normalizePartnerData = (partnerData) => {
       address: partnerData.profile.address || '-',
       capitalAmount: partnerData.profile.capitalAmount || 0,
       orgProfitPercent: partnerData.profile.orgProfitPercent || 0,
-      partnerProfitPercent: 100 - (partnerData.profile.orgProfitPercent || 0),
+      partnerProfitPercent: partnerData.profile.partnerProfitPercent || 0,
       totalProfit: partnerData.profile.totalProfit || 0,
       totalAmount: partnerData.profile.totalAmount || 0,
       createdAt: partnerData.profile.createdAt,
@@ -92,6 +98,9 @@ const normalizePartnerData = (partnerData) => {
       summary: partnerData.summary || {},
       AccountEquity: partnerData.AccountEquity || null,
       AccountPayable: partnerData.AccountPayable || null,
+      newCapitalAmount: partnerData.profile?.newCapitalAmount || 0,
+      newCapitalPercent: partnerData.profile?.newCapitalPercent || 0,
+      total: partnerData.total || 0,
     };
   }
 
@@ -120,6 +129,9 @@ const normalizePartnerData = (partnerData) => {
     loans: partnerData.loans || [],
     AccountEquity: partnerData.AccountEquity || null,
     AccountPayable: partnerData.AccountPayable || null,
+    newCapitalAmount: partnerData.newCapitalAmount || 0,
+    newCapitalPercent: partnerData.newCapitalPercent || 0,
+    total: partnerData.total || 0,
   };
 };
 
@@ -268,11 +280,13 @@ fillColor: [240, 240, 240],
         yPosition += 8;
 
         // Tab 2: Financial Information Table - Professional layout
-        const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر']];
+        const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر', 'رأس المال الجديد', 'نسبة رأس المال الجديد']];
         const financialData = [[
           investor.capitalAmount ? investor.capitalAmount.toLocaleString('en-US') : '-',
           investor.orgProfitPercent ? investor.orgProfitPercent + '%' : '-',
-          investor.partnerProfitPercent ? investor.partnerProfitPercent + '%' : '-'
+          investor.partnerProfitPercent ? investor.partnerProfitPercent + '%' : '-',
+          investor.newCapitalAmount ? investor.newCapitalAmount.toLocaleString('en-US') : '-',
+          investor.newCapitalPercent ? investor.newCapitalPercent + '%' : '-'
         ]];
 
         autoTable(doc, {
@@ -316,7 +330,8 @@ fillColor: [240, 240, 240],
             1: { cellWidth: 'auto', halign: 'right' },
             2: { cellWidth: 'auto', halign: 'right' },
             3: { cellWidth: 'auto', halign: 'right' },
-            4: { cellWidth: 'auto', halign: 'right' }
+            4: { cellWidth: 'auto', halign: 'right' },
+            5: { cellWidth: 'auto', halign: 'right' }
           },
           margin: { top: yPosition, left: 15, right: 15 },
           tableWidth: 'auto',
@@ -614,6 +629,8 @@ export const exportInvestorsToExcel = async (investorsData) => {
         [investor.capitalAmount || 0, 'رأس المال'],
         [investor.orgProfitPercent || 0, 'نسبة أرباح المنشأة'],
         [investor.partnerProfitPercent || 0, 'نسبة أرباح المستثمر'],
+        [investor.newCapitalAmount || 0, 'رأس المال الجديد'],
+        [investor.newCapitalPercent || 0, 'نسبة رأس المال الجديد'],
       ];
 
       // Add summary data (for new format or detailed endpoint)
