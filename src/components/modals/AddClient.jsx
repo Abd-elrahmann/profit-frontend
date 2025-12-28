@@ -19,6 +19,10 @@ import {
   Alert,
   Grid,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { Close as CloseIcon, CloudUpload, Delete } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
@@ -28,11 +32,30 @@ import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 
+// قائمة رموز الدول الشائعة
+const countryCodes = [
+  { code: '+20', country: 'مصر', flag: '🇪🇬' },
+  { code: '+966', country: 'السعودية', flag: '🇸🇦' },
+  { code: '+971', country: 'الإمارات', flag: '🇦🇪' },
+  { code: '+974', country: 'قطر', flag: '🇶🇦' },
+  { code: '+973', country: 'البحرين', flag: '🇧🇭' },
+  { code: '+965', country: 'الكويت', flag: '🇰🇼' },
+  { code: '+968', country: 'عمان', flag: '🇴🇲' },
+  { code: '+962', country: 'الأردن', flag: '🇯🇴' },
+  { code: '+961', country: 'لبنان', flag: '🇱🇧' },
+  { code: '+963', country: 'سوريا', flag: '🇸🇾' },
+  { code: '+964', country: 'العراق', flag: '🇮🇶' },
+  { code: '+970', country: 'فلسطين', flag: '🇵🇸' },
+  { code: '+1', country: 'الولايات المتحدة', flag: '🇺🇸' },
+  { code: '+44', country: 'المملكة المتحدة', flag: '🇬🇧' },
+];
+
 
 const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
   const kafeelSchema = Yup.object().shape({
     name: Yup.string().required('اسم الكفيل مطلوب'),
     nationalId: Yup.string().required('رقم هوية الكفيل مطلوب'),
+    phoneCode: Yup.string().required('رمز الدولة مطلوب'),
     phone: Yup.string().required('رقم جوال الكفيل مطلوب'),
     email: Yup.string()
       .transform((value) => (value?.trim() === '' ? null : value))
@@ -48,6 +71,7 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
 
   const baseSchema = {
     name: Yup.string().required('اسم العميل مطلوب'),
+    phoneCode: Yup.string().required('رمز الدولة مطلوب'),
     phone: Yup.string().required('رقم الجوال مطلوب'),
     email: Yup.string()
       .transform((value) => (value?.trim() === '' ? null : value))
@@ -89,12 +113,14 @@ const AddClient = ({ open, onClose }) => {
     employer: '',
     salary: '',
     obligations: '',
+    phoneCode: '+966', // السعودية كقيمة افتراضية للكفيل
     phone: '',
     email: '',
   });
 
   const initialValues = {
     name: '',
+    phoneCode: '+966', // السعودية كقيمة افتراضية للعميل
     phone: '',
     email: '',
     nationalId: '',
@@ -223,6 +249,13 @@ const AddClient = ({ open, onClose }) => {
         } else if (key === 'email' && (!values[key] || values[key].trim() === '')) {
           // Skip empty email instead of sending empty string
           return;
+        } else if (key === 'phone') {
+          // دمج رمز الدولة مع رقم الهاتف
+          const fullPhone = values.phoneCode + values.phone;
+          formData.append('phone', fullPhone);
+        } else if (key === 'phoneCode') {
+          // لا نحتاج إلى إرسال phoneCode بشكل منفصل
+          return;
         } else if (key !== 'kafeels' && !key.startsWith('kafeel')) {
           formData.append(key, values[key]);
         }
@@ -233,6 +266,13 @@ const AddClient = ({ open, onClose }) => {
           Object.keys(kafeel).forEach(key => {
             if (key === 'email' && (!kafeel[key] || kafeel[key].trim() === '')) {
               // Skip empty email instead of sending empty string
+              return;
+            } else if (key === 'phone') {
+              // دمج رمز الدولة مع رقم هاتف الكفيل
+              const fullPhone = kafeel.phoneCode + kafeel.phone;
+              formData.append(`kafeel[${index}][phone]`, fullPhone);
+            } else if (key === 'phoneCode') {
+              // لا نحتاج إلى إرسال phoneCode بشكل منفصل
               return;
             } else if (kafeel[key] !== '' && key !== 'kafeelIdImage' && key !== 'kafeelWorkCard') {
               formData.append(`kafeel[${index}][${key}]`, kafeel[key]);
@@ -405,16 +445,35 @@ const AddClient = ({ open, onClose }) => {
                         />  
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="phone"
-                          label="رقم الجوال"
-                          value={values.phone}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.phone && Boolean(errors.phone)}
-                          helperText={touched.phone && errors.phone}
-                        />
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <FormControl sx={{ minWidth: 200 }}>
+                            <InputLabel>رمز الدولة</InputLabel>
+                            <Select
+                              name="phoneCode"
+                              value={values.phoneCode}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              error={touched.phoneCode && Boolean(errors.phoneCode)}
+                              label="رمز الدولة"
+                            >
+                              {countryCodes.map((country) => (
+                                <MenuItem key={country.code} value={country.code}>
+                                  {country.flag} {country.code} ({country.country})
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                          <TextField
+                            fullWidth
+                            name="phone"
+                            label="رقم الجوال"
+                            value={values.phone}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            error={touched.phone && Boolean(errors.phone)}
+                            helperText={touched.phone && errors.phone}
+                          />
+                        </Box>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
@@ -595,16 +654,35 @@ const AddClient = ({ open, onClose }) => {
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              name={`kafeels[${index}][phone]`}
-                              label="رقم جوال الكفيل"
-                              value={kafeel.phone || ''}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][phone]`] && Boolean(errors[`kafeels[${index}][phone]`])}
-                              helperText={touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`]}
-                            />
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <FormControl sx={{ minWidth: 120 }}>
+                                <InputLabel>رمز الدولة</InputLabel>
+                                <Select
+                                  name={`kafeels[${index}][phoneCode]`}
+                                  value={kafeel.phoneCode || '+966'}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  error={touched[`kafeels[${index}][phoneCode]`] && Boolean(errors[`kafeels[${index}][phoneCode]`])}
+                                  label="رمز الدولة"
+                                >
+                                  {countryCodes.map((country) => (
+                                    <MenuItem key={country.code} value={country.code}>
+                                      {country.flag} {country.code} ({country.country})
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                              <TextField
+                                fullWidth
+                                name={`kafeels[${index}][phone]`}
+                                label="رقم جوال الكفيل"
+                                value={kafeel.phone || ''}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched[`kafeels[${index}][phone]`] && Boolean(errors[`kafeels[${index}][phone]`])}
+                                helperText={touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`]}
+                              />
+                            </Box>
                           </Grid>
                           <Grid item xs={12} md={6}>
                             <TextField
@@ -829,11 +907,11 @@ const AddClient = ({ open, onClose }) => {
                       onClick={() => handleNext(values)}
                       variant="contained"
                       disabled={
-                        (activeStep === 1 && values.hasKafeel && values.kafeels && values.kafeels.some((kafeel) => 
-                          !kafeel.name || !kafeel.nationalId || !kafeel.phone || !kafeel.employer || !kafeel.salary || !kafeel.obligations
+                        (activeStep === 1 && values.hasKafeel && values.kafeels && values.kafeels.some((kafeel) =>
+                          !kafeel.name || !kafeel.nationalId || !kafeel.phoneCode || !kafeel.phone || !kafeel.employer || !kafeel.salary || !kafeel.obligations
                         )) ||
-                        (activeStep === 0 && (!values.name || !values.phone || !values.nationalId || !values.birthDate || 
-                          !values.city || !values.district || !values.address || !values.employer || !values.salary || 
+                        (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.birthDate ||
+                          !values.city || !values.district || !values.address || !values.employer || !values.salary ||
                           !values.obligations || !values.creationReason))
                       }
                       sx={{

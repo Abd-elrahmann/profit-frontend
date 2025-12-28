@@ -1,4 +1,4 @@
-// components/contracts/MudarabahContract.jsx
+// components/Contracts/MudarabahContract.jsx
 import React from 'react';
 
 const MudarabahContract = () => {
@@ -55,7 +55,7 @@ const MudarabahContract = () => {
   .contract-title {
     font-size: 24px;
     font-weight: bold;
-    color: #2e7d32; /* أخضر مثل باقي العناوين */
+    color: #2e7d32;
   }
 
   .contract-dates {
@@ -71,10 +71,19 @@ const MudarabahContract = () => {
   .section-title {
     font-size: 18px;
     font-weight: bold;
-    color: #000; /* تغيير من أخضر إلى أسود */
+    color: #000;
     margin: 20px 0 15px;
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
+  }
+
+  /* إجبار بدء صفحة جديدة عند بنود العقد */
+  .clauses-section {
+    page-break-before: always !important;
+    page-break-inside: avoid !important;
+  }
+
+  .clauses-container {
     page-break-inside: avoid;
   }
 
@@ -87,7 +96,7 @@ const MudarabahContract = () => {
   }
 
   .party-card {
-    background: #ffffff; /* تغيير من خلفية خضراء فاتحة إلى أبيض */
+    background: #ffffff;
     padding: 20px;
     border-radius: 8px;
     border: 1px solid rgba(46, 139, 69, 0.2);
@@ -97,7 +106,7 @@ const MudarabahContract = () => {
   .party-title {
     font-size: 18px;
     font-weight: bold;
-    color: #000; /* تغيير من أخضر إلى أسود */
+    color: #000;
     margin-bottom: 15px;
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
@@ -158,18 +167,19 @@ const MudarabahContract = () => {
   }
 
   .preamble-box {
-    background: #ffffff; /* تغيير من خلفية خضراء فاتحة إلى أبيض */
+    background: #ffffff;
     padding: 20px;
     border-radius: 8px;
     border: 1px solid rgba(46, 139, 69, 0.2);
     margin-bottom: 30px;
     page-break-inside: avoid;
+    page-break-after: avoid !important;
   }
 
   .preamble-title {
     font-size: 18px;
     font-weight: bold;
-    color: #000; /* تغيير من أخضر إلى أسود */
+    color: #000;
     margin-bottom: 15px;
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
@@ -192,16 +202,16 @@ const MudarabahContract = () => {
   }
 
   .clause:last-child {
-    margin-bottom: 0;
+    margin-bottom: 10px; /* تقليل المسافة لتكون التوقيعات قريبة */
   }
 
   .clause-title {
     font-size: 16px;
     font-weight: bold;
-    color: #2e7d32; /* أخضر مثل باقي العناوين */
+    color: #2e7d32;
     margin-bottom: 15px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.05); /* خلفية رمادية خفيفة */
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 4px;
     border-bottom: 1px solid rgba(46, 139, 69, 0.2);
   }
@@ -244,7 +254,7 @@ const MudarabahContract = () => {
 
   .clause-list li:before {
     content: "•";
-    color: #2E8B45; /* البقاء على اللون الأخضر للنقاط */
+    color: #2E8B45;
     font-weight: bold;
     font-size: 20px;
     position: absolute;
@@ -276,82 +286,85 @@ const MudarabahContract = () => {
     border: 1px solid rgba(46, 139, 69, 0.3);
   }
 
-  /* عناوين فرعية داخل البنود */
   .clause-content strong {
-    color: #2E8B45 !important; /* اللون الأخضر للعناوين الفرعية */
+    color: #2E8B45 !important;
   }
 
+  /* تحسينات قسم التوقيعات - بدون صفحة جديدة */
   .signatures-section {
-    margin-top: 40px;
+    margin-top: 30px; /* تقليل المسافة */
     padding-top: 20px;
     border-top: 2px solid rgba(46, 139, 69, 0.2);
     page-break-inside: avoid;
+    /* تم إزالة page-break-before: always */
   }
 
   .signatures-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* تقليل المسافة */
     page-break-inside: avoid;
   }
 
   .signatures-title {
     font-size: 18px;
     font-weight: bold;
-    color: #2e7d32; /* أخضر مثل باقي العناوين */
+    color: #2e7d32;
   }
 
   .signatures-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 25px; /* تقليل المسافة */
+    margin-bottom: 15px; /* تقليل المسافة */
     page-break-inside: avoid;
   }
 
+  /* إزالة البوكس والحدود من التوقيعات */
   .signature-box {
     text-align: center;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 8px;
-    border: 1px solid rgba(46, 139, 69, 0.2);
+    padding: 0;
+    background: transparent;
+    border: none;
     page-break-inside: avoid;
   }
 
   .signature-party {
     font-size: 16px;
     font-weight: bold;
-    color: #000; /* تغيير من أخضر إلى أسود */
-    margin-bottom: 15px;
+    color: #000;
+    margin-bottom: 15px; /* تقليل المسافة */
   }
 
   .signature-details {
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* تقليل المسافة */
     page-break-inside: avoid;
   }
 
   .signature-name {
     color: #555;
-    font-size: 14px;
+    font-size: 15px;
+    margin-top: 15px; /* تقليل المسافة */
+    margin-bottom: 20px; /* تقليل المسافة */
+    font-weight: 600;
   }
 
   .signature-line {
-    width: 100%;
+    width: 80%;
     height: 1px;
     background: #222;
-    margin: 15px 0;
+    margin: 20px auto; /* تقليل المسافة */
   }
 
   .signature-fields {
     color: #666;
-    font-size: 13px;
-    margin-top: 25px;
+    font-size: 14px;
+    margin-top: 20px; /* تقليل المسافة */
   }
 
   .signature-fields p {
-    margin: 5px 0;
+    margin: 8px 0; /* تقليل المسافة */
   }
 
-  /* تنسيق خاص للأرقام باللغة الإنجليزية */
   .english-number {
     font-family: 'Arial', sans-serif;
     direction: ltr;
@@ -385,25 +398,18 @@ const MudarabahContract = () => {
       background: #fff !important;
       padding: 0 !important;
       margin: 0 !important;
-      page-break-inside: avoid !important;
-      page-break-after: avoid !important;
-      break-inside: avoid !important;
-      break-after: avoid !important;
     }
 
     .contract-container {
       margin: 0 auto !important;
       padding: 15mm !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
       box-shadow: none !important;
       border: none !important;
       width: 100% !important;
-      max-width: 180mm !important; /* عرض A4 ناقص الهوامش */
+      max-width: 180mm !important;
       background: #fff !important;
     }
     
-    /* منع انكماش النص والحفاظ على التنسيق */
     * {
       word-wrap: break-word !important;
       overflow-wrap: break-word !important;
@@ -411,22 +417,37 @@ const MudarabahContract = () => {
       color-adjust: exact !important;
     }
     
-    /* تأكيد عدم انقسام العناصر بين الصفحات */
+    /* إجبار بدء صفحة جديدة عند بنود العقد في الطباعة */
+    .clauses-section {
+      page-break-before: always !important;
+      break-before: page !important;
+    }
+    
+    /* منع انقسام التمهيد عن البنود */
+    .preamble-box {
+      page-break-after: avoid !important;
+    }
+    
+    /* إزالة بدء صفحة جديدة للتوقيعات في الطباعة */
+    .signatures-section {
+      /* تم إزالة page-break-before: always */
+      page-break-inside: avoid !important;
+    }
+    
+    /* منع انقسام العناصر بين الصفحات */
     .contract-header,
     .section-title,
     .party-card,
     .preamble-box,
     .clause,
-    .signature-box,
-    .signatures-section {
+    .signature-box {
       page-break-inside: avoid !important;
-      page-break-after: avoid !important;
       break-inside: avoid !important;
     }
     
-    /* تقليل المسافات مع الحفاظ على عدم الانقسام */
+    /* تقليل المسافات في الطباعة */
     .parties-grid {
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     
     .party-card {
@@ -438,6 +459,10 @@ const MudarabahContract = () => {
       margin-bottom: 15px;
     }
     
+    .clause:last-child {
+      margin-bottom: 10px !important;
+    }
+    
     .preamble-box {
       padding: 15px;
       margin-bottom: 15px;
@@ -445,11 +470,12 @@ const MudarabahContract = () => {
     
     .signatures-grid {
       gap: 15px;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     
-    .signature-box {
-      padding: 15px;
+    .signatures-section {
+      margin-top: 15px !important;
+      padding-top: 15px !important;
     }
     
     /* منع انقسام الفقرات */
@@ -462,15 +488,9 @@ const MudarabahContract = () => {
       page-break-inside: avoid;
     }
     
-    /* تحسين عرض الجداول والقوائم */
+    /* تحسين عرض القوائم */
     .clause-list li {
       page-break-inside: avoid;
-    }
-    
-    /* تحسين عرض التوقيعات */
-    .signatures-section {
-      margin-top: 20px;
-      padding-top: 15px;
     }
     
     /* إصلاح مشكلة الحدود في الطباعة */
@@ -480,13 +500,12 @@ const MudarabahContract = () => {
       border-color: #000 !important;
     }
     
-    /* تحسين الألوان للطباعة */
-    .party-card,
-    .preamble-box,
-    .clause,
+    /* إزالة البوكس والحدود من التوقيعات في الطباعة */
     .signature-box {
-      background: #ffffff !important;
-      border: 1px solid #000 !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
     }
     
     .percentage {
@@ -509,19 +528,40 @@ const MudarabahContract = () => {
     }
 
     .clause-title {
-      color: #2e7d32 !important; /* يبقى أخضر في الطباعة */
+      color: #2e7d32 !important;
     }
 
     .contract-title {
-      color: #2e7d32 !important; /* يبقى أخضر في الطباعة */
+      color: #2e7d32 !important;
     }
 
     .signatures-title {
-      color: #2e7d32 !important; /* يبقى أخضر في الطباعة */
+      color: #2e7d32 !important;
     }
     
     .clause-content strong {
       color: #2E8B45 !important;
+    }
+    
+    /* تحسين التوقيعات في الطباعة */
+    .signature-name {
+      color: #000 !important;
+      font-weight: 700 !important;
+    }
+    
+    .signature-line {
+      width: 80% !important;
+      background: #000 !important;
+      height: 1px !important;
+    }
+    
+    /* منع انقسام آخر بند عن التوقيعات */
+    .clause:last-child {
+      page-break-after: avoid !important;
+    }
+    
+    .signatures-section {
+      page-break-before: avoid !important;
     }
   }
 </style>
@@ -567,7 +607,7 @@ const MudarabahContract = () => {
 
         <!-- الطرف الثاني -->
         <div class="party-card">
-          <h3 class="party-title">الطرف الثاني (المضاربان)</h3>
+          <h3 class="party-title">الطرف الثاني (المضاربون)</h3>
           
           <div class="sub-party">
             <h4 class="sub-party-title">المضارب الأول:</h4>
@@ -622,8 +662,8 @@ const MudarabahContract = () => {
       </div>
     </section>
 
-    <!-- بنود العقد -->
-    <section class="contract-section">
+    <!-- بنود العقد - إجبار بدء صفحة جديدة -->
+    <section class="contract-section clauses-section">
       <h2 class="section-title">بنود العقد</h2>
       
       <div class="clauses-container">
@@ -759,7 +799,7 @@ const MudarabahContract = () => {
       </div>
     </section>
 
-    <!-- التوقيعات -->
+    <!-- التوقيعات - مباشرة تحت آخر بند -->
     <section class="signatures-section">
       <div class="signatures-header">
         <h3 class="signatures-title">وعلى ما ذكر أعلاه، تم التوقيع</h3>
@@ -770,7 +810,7 @@ const MudarabahContract = () => {
         <div class="signature-box">
           <h4 class="signature-party">الطرف الأول (رب المال)</h4>
           <div class="signature-details">
-            <p class="signature-name">الاسم: <span class="placeholder">{{اسم_رب_المال}}</span></p>
+            <p class="signature-name">{{اسم_رب_المال}}</p>
           </div>
           <div class="signature-line"></div>
           <div class="signature-fields">
@@ -783,7 +823,7 @@ const MudarabahContract = () => {
         <div class="signature-box">
           <h4 class="signature-party">الطرف الثاني (المضارب)</h4>
           <div class="signature-details">
-            <p class="signature-name">الاسم (1): <span class="placeholder">{{اسم_المضارب_1}}</span></p>
+            <p class="signature-name">{{اسم_المضارب_1}}</p>
           </div>
           <div class="signature-line"></div>
           <div class="signature-fields">
@@ -796,7 +836,7 @@ const MudarabahContract = () => {
         <div class="signature-box">
           <h4 class="signature-party">الطرف الثاني (المضارب)</h4>
           <div class="signature-details">
-            <p class="signature-name">الاسم (2): <span class="placeholder">{{اسم_المضارب_2}}</span></p>
+            <p class="signature-name">{{اسم_المضارب_2}}</p>
           </div>
           <div class="signature-line"></div>
           <div class="signature-fields">

@@ -63,6 +63,28 @@ const LoanDetailsSection = ({
         justifyContent="center"
       >
         <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            type="text"
+            label="مصدر السلفة"
+            select
+            value={isViewMode ? (loanForm.source || selectedLoan?.source) : loanForm.source}
+            onChange={(e) => handleInputChange("source", e.target.value)}
+            disabled={isReadOnlyMode}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "56px",
+                width: "300px",
+                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+              },
+            }}
+          >
+            <MenuItem value="GENERAL">عام</MenuItem>
+            <MenuItem value="NEW_CAPITAL">رأس مال جديد</MenuItem>
+          </TextField>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={6}>
           <Box
             sx={{
               display: "flex",
@@ -212,28 +234,6 @@ const LoanDetailsSection = ({
             <MenuItem value="DAILY">يومي</MenuItem>
             <MenuItem value="WEEKLY">أسبوعي</MenuItem>
             <MenuItem value="MONTHLY">شهري</MenuItem>
-          </TextField>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={6}>
-          <TextField
-            fullWidth
-            type="text"
-            label="مصدر السلفة"
-            select
-            value={isViewMode ? (loanForm.source || selectedLoan?.source) : loanForm.source}
-            onChange={(e) => handleInputChange("source", e.target.value)}
-            disabled={isReadOnlyMode}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                height: "56px",
-                width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
-              },
-            }}
-          >
-            <MenuItem value="GENERAL">عام</MenuItem>
-            <MenuItem value="NEW_CAPITAL">رأس مال جديد</MenuItem>
           </TextField>
         </Grid>
 

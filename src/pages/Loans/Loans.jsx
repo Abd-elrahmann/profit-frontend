@@ -261,6 +261,14 @@ const Loans = () => {
     activeTab,
   ]);
 
+  // Fetch bank balance when source changes
+  useEffect(() => {
+    if (activeTab === 1 && loanForm.source) {
+      fetchBankBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loanForm.source, activeTab]);
+
   const handleConversionSuccess = useCallback(() => {
     setIsClientConversion(false);
     setLoanForConversion(null);
@@ -440,11 +448,22 @@ const Loans = () => {
   const fetchBankBalance = async () => {
     try {
       setIsLoadingBankBalance(true);
-      const params = new URLSearchParams();
-      params.append('limit', '1');
-      const queryString = params.toString();
-      const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
-      const balance = response?.data?.account?.balance || 0;
+
+      let balance = 0;
+
+      if (loanForm.source === "NEW_CAPITAL") {
+        // Use new endpoint for NEW_CAPITAL source
+        const response = await Api.get(`/api/accounts/NewBank/1`);
+        balance = response?.data?.account?.balance || 0;
+      } else {
+        // Use existing endpoint for other sources
+        const params = new URLSearchParams();
+        params.append('limit', '1');
+        const queryString = params.toString();
+        const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
+        balance = response?.data?.account?.balance || 0;
+      }
+
       setBankBalance(balance);
     } catch (error) {
       handleApiError(error);

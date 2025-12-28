@@ -93,6 +93,122 @@ export default function Treasury() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
+  // Static data for the capital fund
+  const capitalFundData = {
+    pagination: {
+      page: 1,
+      limit: 10,
+      totalJournals: 6,
+      totalPages: 1
+    },
+    account: {
+      id: 17,
+      name: "صندوق رؤوس أموال المساهمين الجدد",
+      code: "11001",
+      debit: 35000,
+      credit: 8000,
+      balance: 27000
+    },
+    total: 27000,
+    totalJournalEntries: 6,
+    loansBalance: 0, // No loans in capital fund
+    journalsByMonth: {
+      "2025-12": {
+        entries: [
+          {
+            id: 46,
+            date: "2025-12-26T23:35:17.131+03:00",
+            reference: "REP-17",
+            description: "استلام سداد دفعة للسلفة رقم 2",
+            debit: 4000,
+            credit: 0,
+            balance: 4000,
+            client: null,
+            postedBy: "ادمن",
+            status: "POSTED",
+            type: "GENERAL"
+          },
+          {
+            id: 45,
+            date: "2025-12-26T23:35:17.028+03:00",
+            reference: "REP-16",
+            description: "استلام سداد دفعة للسلفة رقم 2",
+            debit: 3000,
+            credit: 0,
+            balance: 3000,
+            client: null,
+            postedBy: "ادمن",
+            status: "POSTED",
+            type: "GENERAL"
+          },
+          {
+            id: 44,
+            date: "2025-12-26T23:35:16.885+03:00",
+            reference: "REP-15",
+            description: "استلام سداد دفعة للسلفة رقم 2",
+            debit: 3000,
+            credit: 0,
+            balance: 3000,
+            client: null,
+            postedBy: "ادمن",
+            status: "POSTED",
+            type: "GENERAL"
+          },
+          {
+            id: 13,
+            date: "2025-12-25T22:56:41.047+03:00",
+            reference: "LN-2",
+            description: "سلفة عميل",
+            debit: 0,
+            credit: 8000,
+            balance: -8000,
+            client: null,
+            postedBy: "ادمن",
+            status: "POSTED",
+            type: "GENERAL"
+          },
+          {
+            id: 7,
+            date: "2025-12-25T15:39:42.150+03:00",
+            reference: "CAP-2",
+            description: "إيداع رأس مال (مساهم جديد)",
+            debit: 15000,
+            credit: 0,
+            balance: 15000,
+            client: null,
+            postedBy: "ادمن",
+            status: "POSTED",
+            type: "OPENING"
+          },
+          {
+            id: 6,
+            date: "2025-12-25T15:33:53.434+03:00",
+            reference: "CAP-1",
+            description: "إيداع رأس مال (مساهم جديد)",
+            debit: 10000,
+            credit: 0,
+            balance: 10000,
+            client: null,
+            postedBy: "ادمن",
+            status: "POSTED",
+            type: "OPENING"
+          }
+        ],
+        totalDebit: 35000,
+        totalCredit: 8000,
+        totalBalance: 27000
+      }
+    },
+    repayments: {
+      totalAmount: 10000,
+      paidUntilNow: 10000
+    },
+    currentMonth: {
+      totalAmount: 0,
+      paidUntilNow: 0
+    }
+  };
+
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -104,7 +220,11 @@ export default function Treasury() {
     queryKey: ["bank-account", selectedMonth, page, limit],
     queryFn: () => getBankAccountData(selectedMonth, page, limit),
     retry: 1,
+    enabled: tab === 0 || tab === 2, // Only fetch for general fund and journals tabs
   });
+
+  // Get current data based on active tab
+  const currentData = tab === 1 ? capitalFundData : bankData;
 
 
   const handleTabChange = (event, newValue) => {
@@ -181,16 +301,16 @@ export default function Treasury() {
   };
 
 
-  const availableBalance = bankData?.account?.balance || 0;
-  const totalDebit = bankData?.account?.debit || 0;
-  const totalCredit = bankData?.account?.credit || 0;
-  const totalTransactions = bankData?.totalJournalEntries || 0;
-  const loansBalance = bankData?.loansBalance || 0;
-  const total = bankData?.total || 0;
+  const availableBalance = currentData?.account?.balance || 0;
+  const totalDebit = currentData?.account?.debit || 0;
+  const totalCredit = currentData?.account?.credit || 0;
+  const totalTransactions = currentData?.totalJournalEntries || 0;
+  const loansBalance = currentData?.loansBalance || 0;
+  const total = currentData?.total || 0;
   
   // Repayments data
-  const totalRepaymentsAmount = bankData?.repayments?.totalAmount || 0;
-  const paidRepaymentsUntilNow = bankData?.repayments?.paidUntilNow || 0;
+  const totalRepaymentsAmount = currentData?.repayments?.totalAmount || 0;
+  const paidRepaymentsUntilNow = currentData?.repayments?.paidUntilNow || 0;
   const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
   const repaymentsProgress =
     totalRepaymentsAmount > 0
@@ -204,8 +324,8 @@ export default function Treasury() {
       : 0;
 
   // Current month data
-  const currentMonthTotalAmount = bankData?.currentMonth?.totalAmount || 0;
-  const currentMonthPaidUntilNow = bankData?.currentMonth?.paidUntilNow || 0;
+  const currentMonthTotalAmount = currentData?.currentMonth?.totalAmount || 0;
+  const currentMonthPaidUntilNow = currentData?.currentMonth?.paidUntilNow || 0;
   const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
   const currentMonthProgress =
     currentMonthTotalAmount > 0
@@ -226,8 +346,8 @@ export default function Treasury() {
   const animatedTotal = useCountUp(total, 600, !isLoading);
   const animatedCurrentMonthTotal = useCountUp(currentMonthTotalAmount, 600, !isLoading);
 
-  const monthlyBalanceData = bankData?.journalsByMonth ? 
-    Object.entries(bankData.journalsByMonth)
+  const monthlyBalanceData = currentData?.journalsByMonth ?
+    Object.entries(currentData.journalsByMonth)
       .map(([month, data]) => ({
         name: getMonthName(month),
         monthKey: month,
@@ -244,10 +364,10 @@ export default function Treasury() {
 
   // Get current journals from paginated response
   // The backend returns journals grouped by month, but we need the current page entries
-  const currentJournals = selectedMonth && bankData?.journalsByMonth?.[selectedMonth] ? 
-    bankData.journalsByMonth[selectedMonth].entries : 
-    (bankData?.journalsByMonth ? 
-      Object.values(bankData.journalsByMonth).flatMap(month => month.entries) : 
+  const currentJournals = selectedMonth && currentData?.journalsByMonth?.[selectedMonth] ?
+    currentData.journalsByMonth[selectedMonth].entries :
+    (currentData?.journalsByMonth ?
+      Object.values(currentData.journalsByMonth).flatMap(month => month.entries) :
       []);
 
   const statusDistribution = [
@@ -256,15 +376,15 @@ export default function Treasury() {
   ];
 
   // Pagination data from backend
-  const pagination = bankData?.pagination || {
+  const pagination = currentData?.pagination || {
     page: 1,
     limit: limit,
     totalJournals: 0,
     totalPages: 1,
   };
 
-  const availableMonths = bankData?.journalsByMonth ? 
-    Object.keys(bankData.journalsByMonth).sort().reverse() : [];
+  const availableMonths = currentData?.journalsByMonth ?
+    Object.keys(currentData.journalsByMonth).sort().reverse() : [];
 
   const currentTotalTransactions = pagination.totalJournals || totalTransactions;
 
@@ -530,7 +650,7 @@ export default function Treasury() {
             }}
           >
             <Tab
-              label="إحصائيات الصندوق"
+              label="الصندوق العام"
               icon={<TrendingUp />}
               iconPosition="start"
               sx={{
@@ -538,11 +658,19 @@ export default function Treasury() {
               }}
             />
             <Tab
-              label="سجل القيود"
+              label="الصندوق الخاص (رؤوس الأموال الجديدة)"
               icon={<AccountBalance />}
               iconPosition="start"
               sx={{
                   color: tab === 1 ? 'primary.main' : 'black',
+              }}
+            />
+            <Tab
+              label="سجل القيود"
+              icon={<AccountBalance />}
+              iconPosition="start"
+              sx={{
+                  color: tab === 2 ? 'primary.main' : 'black',
               }}
             />
           </Tabs>
@@ -555,7 +683,7 @@ export default function Treasury() {
               justifyContent: isSmallScreen ? 'center' : 'flex-end',
               flexShrink: 0
             }}>
-              {tab === 0 ? (
+              {(tab === 0 || tab === 1) ? (
                 <>
                   <Button
                     variant="outlined"
@@ -584,7 +712,7 @@ export default function Treasury() {
                     {isSmallScreen ? 'Excel' : 'تصدير إحصائيات Excel'}
                   </Button>
                 </>
-              ) : (
+              ) : tab === 2 ? (
                 <>
                   <Button
                     variant="outlined"
@@ -613,7 +741,7 @@ export default function Treasury() {
                     {isSmallScreen ? 'Excel' : 'تصدير Excel'}
                   </Button>
                 </>
-              )}
+              ) : null}
             </Box>
           )}
         </Box>
@@ -627,10 +755,10 @@ export default function Treasury() {
             <>
               {tab === 0 && (
                 <Box>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexWrap: 'wrap', 
-                    gap: isSmallScreen ? 2 : 3, 
+                  <Box sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: isSmallScreen ? 2 : 3,
                     mb: isSmallScreen ? 2 : 4,
                     justifyContent: 'center',
                     alignItems: 'stretch'
@@ -639,10 +767,10 @@ export default function Treasury() {
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2, 
-                              mr: 2 
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
                             }}>
                               <AccountBalance sx={{ color: "#1976d2", fontSize: 24 }} />
                             </Box>
@@ -655,9 +783,9 @@ export default function Treasury() {
                               </Typography>
                             </Box>
                           </Box>
-                          <Chip 
-                            label="متاح" 
-                            size="small" 
+                          <Chip
+                            label="متاح"
+                            size="small"
                             color="primary"
                             variant="outlined"
                           />
@@ -669,10 +797,10 @@ export default function Treasury() {
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2, 
-                              mr: 2 
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
                             }}>
                               <TrendingUp sx={{ color: "#2e7d32", fontSize: 24 }} />
                             </Box>
@@ -685,9 +813,9 @@ export default function Treasury() {
                               </Typography>
                             </Box>
                           </Box>
-                          <Chip 
-                            label="وارد" 
-                            size="small" 
+                          <Chip
+                            label="وارد"
+                            size="small"
                             color="success"
                             variant="outlined"
                           />
@@ -699,10 +827,10 @@ export default function Treasury() {
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2, 
-                              mr: 2 
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
                             }}>
                               <TrendingDown sx={{ color: "#d32f2f", fontSize: 24 }} />
                             </Box>
@@ -715,9 +843,9 @@ export default function Treasury() {
                               </Typography>
                             </Box>
                           </Box>
-                          <Chip 
-                            label="صادر" 
-                            size="small" 
+                          <Chip
+                            label="صادر"
+                            size="small"
                             color="error"
                             variant="outlined"
                           />
@@ -729,10 +857,10 @@ export default function Treasury() {
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2, 
-                              mr: 2 
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
                             }}>
                               <AccountBalance sx={{ color: "#1976d2", fontSize: 24 }} />
                             </Box>
@@ -745,9 +873,9 @@ export default function Treasury() {
                               </Typography>
                             </Box>
                           </Box>
-                          <Chip 
-                            label="في السوق" 
-                            size="small" 
+                          <Chip
+                            label="في السوق"
+                            size="small"
                             color="primary"
                             variant="outlined"
                           />
@@ -759,10 +887,10 @@ export default function Treasury() {
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                         <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ 
-                              p: 1, 
-                              borderRadius: 2, 
-                              mr: 2 
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
                             }}>
                               <AccountBalance sx={{ color: "#9c27b0", fontSize: 24 }} />
                             </Box>
@@ -775,11 +903,11 @@ export default function Treasury() {
                               </Typography>
                             </Box>
                           </Box>
-                          <Chip 
-                            label="إجمالي" 
-                            size="small" 
-                            sx={{ 
-                              bgcolor: "#9c27b0", 
+                          <Chip
+                            label="إجمالي"
+                            size="small"
+                            sx={{
+                              bgcolor: "#9c27b0",
                               color: "white",
                               '&:hover': { bgcolor: "#7b1fa2" }
                             }}
@@ -794,10 +922,10 @@ export default function Treasury() {
                         <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
                           <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                              <Box sx={{ 
-                                p: 1, 
-                                borderRadius: 2, 
-                                mr: 2 
+                              <Box sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                mr: 2
                               }}>
                                 <CheckCircle sx={{ color: "#2e7d32", fontSize: 24 }} />
                               </Box>
@@ -838,11 +966,11 @@ export default function Treasury() {
                                     {repaymentsProgress.toFixed(1)}%
                                   </Typography>
                                 </Box>
-                                <Box sx={{ 
-                                  position: 'relative', 
-                                  height: 10, 
-                                  borderRadius: 999, 
-                                  bgcolor: '#e0e0e0' 
+                                <Box sx={{
+                                  position: 'relative',
+                                  height: 10,
+                                  borderRadius: 999,
+                                  bgcolor: '#e0e0e0'
                                 }}>
                                   <Box
                                     sx={{
@@ -860,9 +988,9 @@ export default function Treasury() {
                               </Box>
                             </Stack>
 
-                            <Chip 
-                              label="تحصيلات" 
-                              size="small" 
+                            <Chip
+                              label="تحصيلات"
+                              size="small"
                               color="success"
                               variant="outlined"
                               sx={{ mt: 2 }}
@@ -954,8 +1082,188 @@ export default function Treasury() {
                         </Card>
                       </Box>
                   </Box>
+                </Box>
+              )}
 
-                  {/* التصفية والملاحظات */}
+              {tab === 1 && (
+                <Box>
+                  <Box sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: isSmallScreen ? 2 : 3,
+                    mb: isSmallScreen ? 2 : 4,
+                    justifyContent: 'center',
+                    alignItems: 'stretch'
+                  }}>
+                    {/* الرصيد المتاح */}
+                    <Box sx={{ flex: isSmallScreen ? '1 1 100%' : '1 1 200px', minWidth: isSmallScreen ? '100%' : '350px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
+                            }}>
+                              <AccountBalance sx={{ color: "#1976d2", fontSize: 24 }} />
+                            </Box>
+                            <Box>
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="primary">
+                                {animatedAvailableBalance.toLocaleString('en-US')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                الرصيد المتاح
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip
+                            label="رؤوس أموال"
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Box>
+
+                    {/* إجمالي الوارد */}
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
+                            }}>
+                              <TrendingUp sx={{ color: "#2e7d32", fontSize: 24 }} />
+                            </Box>
+                            <Box>
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
+                                {animatedTotalDebit.toLocaleString('en-US')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                إجمالي الوارد
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip
+                            label="إيداعات"
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Box>
+
+                    {/* إجمالي الصادر */}
+                    <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                        <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              mr: 2
+                            }}>
+                              <TrendingDown sx={{ color: "#d32f2f", fontSize: 24 }} />
+                            </Box>
+                            <Box>
+                              <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="error.main">
+                                {animatedTotalCredit.toLocaleString('en-US')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                إجمالي الصادر
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip
+                            label="سحوبات"
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Box>
+
+                    {/* تحصيلات رؤوس الأموال */}
+                    {totalRepaymentsAmount > 0 && (
+                      <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
+                        <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', height: '100%' }}>
+                          <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                              <Box sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                mr: 2
+                              }}>
+                                <CheckCircle sx={{ color: "#2e7d32", fontSize: 24 }} />
+                              </Box>
+                              <Box>
+                                <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
+                                  {totalRepaymentsAmount.toLocaleString('en-US')}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  تحصيلات رؤوس الأموال
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Stack spacing={1}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  تم التحصيل
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="success.main">
+                                  {paidRepaymentsUntilNow.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  النسبة
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="success.main">
+                                  {repaymentsProgress.toFixed(1)}%
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Box sx={{
+                                  position: 'relative',
+                                  height: 10,
+                                  borderRadius: 999,
+                                  bgcolor: '#e0e0e0'
+                                }}>
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      height: '100%',
+                                      width: `${repaymentsProgress}%`,
+                                      borderRadius: 999,
+                                      bgcolor: 'success.main',
+                                      transition: 'width 0.4s ease'
+                                    }}
+                                  />
+                                </Box>
+                              </Box>
+                            </Stack>
+
+                            <Chip
+                              label="تحصيلات"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                              sx={{ mt: 2 }}
+                            />
+                          </CardContent>
+                        </Card>
+                      </Box>
+                    )}
+                  </Box>
                   {availableMonths.length > 0 && (
                     <Paper sx={{ p: 2, mb: 3, borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                       <Grid container spacing={2} alignItems="center">
@@ -1374,7 +1682,7 @@ export default function Treasury() {
                 </Box>
               )}
 
-              {tab === 1 && (
+              {tab === 2 && (
                 <Box>
                   <Paper sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                     <Box sx={{ 

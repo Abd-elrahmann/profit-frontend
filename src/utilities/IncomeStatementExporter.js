@@ -51,7 +51,7 @@ const formatAmount = (amount) => {
 };
 
 // دالة للحصول على بيانات قسم رأس المال
-const getCapitalData = (incomeData) => {
+const getCapitalData = (incomeData, expandedCapital = false) => {
   if (!incomeData) return [];
 
   const data = [];
@@ -67,129 +67,104 @@ const getCapitalData = (incomeData) => {
     hasDetails: incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0
   });
 
-  // رأس جدول رأس المال
-  if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
-    data.push({
-      id: "capital-header",
-      name: "اسم المستثمر",
-      code: "المبلغ",
-      amount: null,
-      type: "capital-table-header",
-      level: 0,
-      isHeader: true
-    });
-
-    // تفاصيل رأس المال
-    incomeData.capitalByPartner.forEach((partner, index) => {
+  // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة وموسعة
+  if (expandedCapital) {
+    if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
       data.push({
-        id: `capital-detail-${index}`,
-        name: partner.partnerName,
-        code: `PRT-${partner.partnerId}`,
-        amount: partner.capitalAmount,
-        type: "capital-detail",
-        level: 1,
-        profitPercentage: partner.profitPercentage
+        id: 0.25,
+        name: "تفصيل أنواع الإيرادات",
+        type: "revenue-breakdown-header",
+        level: 0
       });
-    });
+
+      if (incomeData.revenues.generalLoans > 0) {
+        data.push({
+          id: 0.3,
+          name: "إيرادات السلف العامة",
+          amount: incomeData.revenues.generalLoans,
+          type: "revenue-breakdown",
+          level: 1
+        });
+      }
+
+      if (incomeData.revenues.newCapitalLoans > 0) {
+        data.push({
+          id: 0.35,
+          name: "إيرادات سلف رأس المال الجديد",
+          amount: incomeData.revenues.newCapitalLoans,
+          type: "revenue-breakdown",
+          level: 1
+        });
+      }
+    } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
+      data.push({
+        id: 0.25,
+        name: "إيرادات السلف العامة",
+        amount: incomeData.totalRevenue,
+        type: "revenue-breakdown",
+        level: 1
+      });
+    }
+
+    // تفاصيل رأس المال عند التوسع
+    if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+      incomeData.capitalByPartner.forEach((partner, index) => {
+        data.push({
+          id: `capital-${index}`,
+          name: partner.partnerName,
+          amount: partner.totalAmount,
+          type: "capital-detail",
+          level: 1
+        });
+      });
+    }
   }
 
   return data;
 };
 
 // دالة للحصول على بيانات قسم الإيرادات
-const getRevenueData = (incomeData) => {
+const getRevenueData = (incomeData, expandedRevenues = true, expandedClients = {}) => {
   if (!incomeData) return [];
 
   const data = [];
 
   // عنوان الإيرادات
   data.push({
-    id: "revenue-section",
+    id: 1,
     name: "الإيرادات التشغيلية",
     type: "revenue-header",
     level: 0,
     hasDetails: incomeData.revenueByClient && incomeData.revenueByClient.length > 0
   });
 
-  // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة
-  if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
-    data.push({
-      id: "revenue-breakdown-header",
-      name: "تفصيل أنواع الإيرادات",
-      type: "revenue-breakdown-header",
-      level: 0
-    });
-
-    if (incomeData.revenues.generalLoans > 0) {
-      data.push({
-        id: "revenue-general-loans",
-        name: "إيرادات السلف العامة",
-        code: "REV-GEN",
-        amount: incomeData.revenues.generalLoans,
-        type: "revenue-breakdown",
-        level: 1
-      });
-    }
-
-    if (incomeData.revenues.newCapitalLoans > 0) {
-      data.push({
-        id: "revenue-new-capital-loans",
-        name: "إيرادات سلف رأس المال الجديد",
-        code: "REV-NEW-CAP",
-        amount: incomeData.revenues.newCapitalLoans,
-        type: "revenue-breakdown",
-        level: 1
-      });
-    }
-  } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
-    // إذا كان هناك إيرادات إجمالية لكن بدون تفصيل، أضف صف إجمالي
-    data.push({
-      id: "revenue-general-loans",
-      name: "إيرادات السلف العامة",
-      code: "REV-GEN",
-      amount: incomeData.totalRevenue,
-      type: "revenue-breakdown",
-      level: 1
-    });
-  }
-
   // رأس جدول الإيرادات
-  if (incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
+  if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
     data.push({
-      id: "revenue-header",
-      name: "اسم العميل",
-      code: "المبلغ",
-      amount: null,
-      type: "revenue-table-header",
-      level: 0,
-      isHeader: true
+      id: 1.5,
+      type: "revenue-table-header"
     });
 
     // إيرادات العملاء
     incomeData.revenueByClient.forEach((client, clientIndex) => {
-      // إيرادات العميل الرئيسية
       data.push({
         id: `client-${clientIndex}`,
         name: client.clientName,
-        code: `REV-CLIENT-${clientIndex + 1}`,
         amount: client.totalAmount,
         type: "client-revenue",
-        level: 1,
         clientId: client.clientId,
-        hasEntries: client.entries && client.entries.length > 0,
         entries: client.entries
       });
 
       // تفاصيل إدخالات العميل
-      if (client.entries && client.entries.length > 0) {
+      if (expandedClients[client.clientId] && client.entries && client.entries.length > 0) {
         client.entries.forEach((entry, entryIndex) => {
           data.push({
             id: `client-${clientIndex}-entry-${entryIndex}`,
             name: entry.description,
-            code: `JRN-${entry.journalId}`,
             amount: entry.amount,
             type: "revenue-detail",
-            level: 2,
+            indent: true,
             date: entry.date
           });
         });
@@ -199,71 +174,61 @@ const getRevenueData = (incomeData) => {
 
   // إجمالي الإيرادات
   data.push({
-    id: "revenue-total",
+    id: 2.5,
     name: "إجمالي إيرادات الفترة",
-    code: null,
     amount: incomeData.totalRevenue || 0,
-    type: "revenue-total",
-    level: 0,
-    isTotal: true
+    type: "revenue-total"
   });
 
   return data;
 };
 
 // دالة للحصول على بيانات قسم المصروفات
-const getExpenseData = (incomeData) => {
+const getExpenseData = (incomeData, expandedExpenses = true) => {
   if (!incomeData) return [];
 
   const data = [];
 
   // عنوان المصروفات
   data.push({
-    id: "expense-section",
+    id: 3,
     name: "المصروفات التشغيلية",
     type: "expense-header",
     level: 0,
     hasDetails: incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0
   });
 
-  // إجمالي المصروفات دائماً
-  data.push({
-    id: "expense-total",
-    name: "إجمالي المصروفات التشغيلية",
-    code: null,
-    amount: -(incomeData.totalExpenses || 0),
-    type: "expense-total",
-    level: 0,
-    isTotal: true
-  });
-
-  // رأس جدول المصروفات والتفاصيل إذا كانت موجودة
+  // رأس جدول المصروفات
   if (incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
     data.push({
-      id: "expense-header",
-      name: "وصف المصروف",
-      code: "المبلغ",
-      amount: null,
-      type: "expense-table-header",
-      level: 0,
-      isHeader: true
+      id: 3.5,
+      type: "expense-table-header"
     });
+  }
 
-    // المصروفات التفصيلية
+  // المصروفات التفصيلية
+  if (expandedExpenses && incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
     incomeData.detailedExpenses.forEach((expense, index) => {
       data.push({
-        id: `expense-${index}`,
+        id: 4 + index,
         name: expense.description || expense.type,
-        code: `EXP-${index + 1}`,
-        amount: -Math.abs(expense.amount), // سالب لأنها مصروفات
+        amount: -expense.amount,
         type: "expense",
-        level: 1,
+        indent: true,
         expenseType: expense.type,
         employee: expense.employee,
         date: expense.createdAt
       });
     });
   }
+
+  // إجمالي المصروفات
+  data.push({
+    id: 100,
+    name: "إجمالي المصروفات التشغيلية",
+    amount: -(incomeData.totalExpenses || 0),
+    type: "expense-total"
+  });
 
   return data;
 };
@@ -284,141 +249,108 @@ const getFinalResultData = (incomeData) => {
 };
 
 // دالة لتحويل البيانات إلى هيكل الجدول الكامل (بنفس منطق الواجهة)
-const getFullTableData = (incomeData) => {
+const getFullTableData = (incomeData, expandedCapital = false, expandedRevenues = true, expandedExpenses = true, expandedClients = {}) => {
   if (!incomeData) return [];
 
   const data = [];
 
-  // === قسم رأس المال ===
-  // رأس المال الإجمالي (مع إمكانية التوسيع)
+  // رأس المال
   data.push({
     id: 0,
     name: "إجمالي رأس المال المدفوع الفعلي",
-    code: "CAP-001",
     amount: incomeData.totalCapital || 0,
     type: "capital",
-    level: 0,
-    hasDetails: incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0
+    capitalDetails: incomeData.capitalByPartner || []
   });
 
-  // رأس جدول رأس المال (يظهر كصف منفصل)
-  if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
-    data.push({
-      id: "capital-header",
-      name: "اسم المستثمر",
-      code: "المبلغ",
-      amount: null,
-      type: "capital-table-header",
-      level: 0,
-      isHeader: true
-    });
-
-    // تفاصيل رأس المال
-    incomeData.capitalByPartner.forEach((partner, index) => {
+  // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة وموسعة
+  if (expandedCapital) {
+    if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
       data.push({
-        id: `capital-detail-${index}`,
-        name: partner.partnerName,
-        code: `PRT-${partner.partnerId}`,
-        amount: partner.capitalAmount,
-        type: "capital-detail",
-        level: 1,
-        profitPercentage: partner.profitPercentage
+        id: 0.25,
+        name: "تفصيل أنواع الإيرادات",
+        type: "revenue-breakdown-header"
       });
-    });
-  }
 
-  // إضافة مسافة
-  data.push({ id: "spacer-1", type: "spacer", level: 0 });
+      if (incomeData.revenues.generalLoans > 0) {
+        data.push({
+          id: 0.3,
+          name: "إيرادات السلف العامة",
+          amount: incomeData.revenues.generalLoans,
+          type: "revenue-breakdown",
+          indent: true
+        });
+      }
 
-  // === قسم الإيرادات ===
-  // عنوان الإيرادات (مع إمكانية التوسيع)
-  data.push({
-    id: "revenue-section",
-    name: "الإيرادات التشغيلية",
-    type: "revenue-header",
-    level: 0,
-    hasDetails: incomeData.revenueByClient && incomeData.revenueByClient.length > 0
-  });
-
-  // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة
-  if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
-    data.push({
-      id: "revenue-breakdown-header",
-      name: "تفصيل أنواع الإيرادات",
-      type: "revenue-breakdown-header",
-      level: 0
-    });
-
-    if (incomeData.revenues.generalLoans > 0) {
+      if (incomeData.revenues.newCapitalLoans > 0) {
+        data.push({
+          id: 0.35,
+          name: "إيرادات سلف رأس المال الجديد",
+          amount: incomeData.revenues.newCapitalLoans,
+          type: "revenue-breakdown",
+          indent: true
+        });
+      }
+    } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
       data.push({
-        id: "revenue-general-loans",
+        id: 0.25,
         name: "إيرادات السلف العامة",
-        code: "REV-GEN",
-        amount: incomeData.revenues.generalLoans,
+        amount: incomeData.totalRevenue,
         type: "revenue-breakdown",
-        level: 1
+        indent: true
       });
     }
 
-    if (incomeData.revenues.newCapitalLoans > 0) {
-      data.push({
-        id: "revenue-new-capital-loans",
-        name: "إيرادات سلف رأس المال الجديد",
-        code: "REV-NEW-CAP",
-        amount: incomeData.revenues.newCapitalLoans,
-        type: "revenue-breakdown",
-        level: 1
+    // تفاصيل رأس المال عند التوسع
+    if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+      incomeData.capitalByPartner.forEach((partner, index) => {
+        data.push({
+          id: `capital-${index}`,
+          name: partner.partnerName,
+          amount: partner.totalAmount,
+          type: "capital-detail",
+          indent: true
+        });
       });
     }
-  } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
-    // إذا كان هناك إيرادات إجمالية لكن بدون تفصيل، أضف صف إجمالي
-    data.push({
-      id: "revenue-general-loans",
-      name: "إيرادات السلف العامة",
-      code: "REV-GEN",
-      amount: incomeData.totalRevenue,
-      type: "revenue-breakdown",
-      level: 1
-    });
   }
+
+  data.push({ id: 0.75, type: "spacer" });
+
+  // عنوان الإيرادات
+  data.push({
+    id: 1,
+    name: "الإيرادات التشغيلية",
+    type: "revenue-header"
+  });
 
   // رأس جدول الإيرادات
-  if (incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
+  if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
     data.push({
-      id: "revenue-header",
-      name: "اسم العميل",
-      code: "المبلغ",
-      amount: null,
-      type: "revenue-table-header",
-      level: 0,
-      isHeader: true
+      id: 1.5,
+      type: "revenue-table-header"
     });
 
     // إيرادات العملاء
     incomeData.revenueByClient.forEach((client, clientIndex) => {
-      // إيرادات العميل الرئيسية
       data.push({
         id: `client-${clientIndex}`,
         name: client.clientName,
-        code: `REV-CLIENT-${clientIndex + 1}`,
         amount: client.totalAmount,
         type: "client-revenue",
-        level: 1,
         clientId: client.clientId,
-        hasEntries: client.entries && client.entries.length > 0,
         entries: client.entries
       });
 
-      // تفاصيل إدخالات العميل (جميعها مفردة)
-      if (client.entries && client.entries.length > 0) {
+      // تفاصيل إدخالات العميل
+      if (expandedClients[client.clientId]) {
         client.entries.forEach((entry, entryIndex) => {
           data.push({
             id: `client-${clientIndex}-entry-${entryIndex}`,
             name: entry.description,
-            code: `JRN-${entry.journalId}`,
             amount: entry.amount,
             type: "revenue-detail",
-            level: 2,
+            indent: true,
             date: entry.date
           });
         });
@@ -428,49 +360,38 @@ const getFullTableData = (incomeData) => {
 
   // إجمالي الإيرادات
   data.push({
-    id: "revenue-total",
+    id: 2.5,
     name: "إجمالي إيرادات الفترة",
-    code: null,
     amount: incomeData.totalRevenue || 0,
-    type: "revenue-total",
-    level: 0,
-    isTotal: true
+    type: "revenue-total"
   });
 
-  // إضافة مسافة
-  data.push({ id: "spacer-2", type: "spacer", level: 0 });
+  data.push({ id: 2.75, type: "spacer" });
 
-  // === قسم المصروفات ===
-  // عنوان المصروفات (مع إمكانية التوسيع)
+  // عنوان المصروفات
   data.push({
-    id: "expense-section",
+    id: 3,
     name: "المصروفات التشغيلية",
-    type: "expense-header",
-    level: 0,
-    hasDetails: incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0
+    type: "expense-header"
   });
 
   // رأس جدول المصروفات
   if (incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
     data.push({
-      id: "expense-header",
-      name: "وصف المصروف",
-      code: "المبلغ",
-      amount: null,
-      type: "expense-table-header",
-      level: 0,
-      isHeader: true
+      id: 3.5,
+      type: "expense-table-header"
     });
+  }
 
-    // المصروفات التفصيلية
+  // المصروفات التفصيلية
+  if (expandedExpenses && incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
     incomeData.detailedExpenses.forEach((expense, index) => {
       data.push({
-        id: `expense-${index}`,
+        id: 4 + index,
         name: expense.description || expense.type,
-        code: `EXP-${index + 1}`,
-        amount: -Math.abs(expense.amount), // سالب لأنها مصروفات
+        amount: -expense.amount,
         type: "expense",
-        level: 1,
+        indent: true,
         expenseType: expense.type,
         employee: expense.employee,
         date: expense.createdAt
@@ -480,27 +401,20 @@ const getFullTableData = (incomeData) => {
 
   // إجمالي المصروفات
   data.push({
-    id: "expense-total",
+    id: 100,
     name: "إجمالي المصروفات التشغيلية",
-    code: null,
     amount: -(incomeData.totalExpenses || 0),
-    type: "expense-total",
-    level: 0,
-    isTotal: true
+    type: "expense-total"
   });
 
-  // إضافة مسافة
-  data.push({ id: "spacer-3", type: "spacer", level: 0 });
+  data.push({ id: 100.75, type: "spacer" });
 
-  // === النتيجة النهائية ===
+  // صافي الربح النهائي
   data.push({
-    id: "final-profit",
+    id: 101,
     name: "صافي الربح القابل للتوزيع بعد الإغلاق",
-    code: "FIN-FINAL",
     amount: incomeData.netProfit || 0,
-    type: "final-profit",
-    level: 0,
-    isFinal: true
+    type: "final-profit"
   });
 
   return data;
@@ -590,18 +504,6 @@ const getPeriodInfo = (incomeData, periodType, selectedMonth, selectedYear, from
   };
 };
 
-// دالة للتحقق من وجود مساحة كافية في الصفحة
-const checkPageSpace = (doc, requiredHeight) => {
-  const pageHeight = doc.internal.pageSize.height;
-  const currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 60;
-  const remainingSpace = pageHeight - currentY - 20; // 20px margin
-
-  if (remainingSpace < requiredHeight) {
-    doc.addPage();
-    return 20; // إعادة تعيين Y إلى أعلى الصفحة الجديدة
-  }
-  return currentY + 10;
-};
 
 // دالة لإضافة جدول قسم مع عنوانه
 const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
@@ -736,7 +638,7 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
 };
 
 // تصدير PDF مع الهيكل الكامل
-export const exportIncomeStatementToPDF = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
+export const exportIncomeStatementToPDF = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, expandedCapital = false, expandedRevenues = true, expandedExpenses = true, expandedClients = {}) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     try {
@@ -847,7 +749,7 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
       let currentY = doc.lastAutoTable.finalY + 15;
 
       // قسم رأس المال
-      const capitalData = getCapitalData(incomeData);
+      const capitalData = getCapitalData(incomeData, expandedCapital);
       if (capitalData.length > 0) {
         currentY = currentY + 10;
         addSectionTable(doc, capitalData, 'رأس المال والمستثمرين', currentY);
@@ -855,7 +757,7 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
       }
 
       // قسم الإيرادات
-      const revenueData = getRevenueData(incomeData);
+      const revenueData = getRevenueData(incomeData, expandedRevenues, expandedClients);
       if (revenueData.length > 0) {
         currentY = currentY + 15;
         addSectionTable(doc, revenueData, 'الإيرادات التشغيلية', currentY);
@@ -863,7 +765,7 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
       }
 
       // قسم المصروفات
-      const expenseData = getExpenseData(incomeData);
+      const expenseData = getExpenseData(incomeData, expandedExpenses);
       if (expenseData.length > 0) {
         currentY = currentY + 15;
         addSectionTable(doc, expenseData, 'المصروفات التشغيلية', currentY);
@@ -925,14 +827,14 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
 };
 
 // تصدير Excel مع الهيكل الكامل
-export const exportIncomeStatementToExcel = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
+export const exportIncomeStatementToExcel = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, expandedCapital = false, expandedRevenues = true, expandedExpenses = true, expandedClients = {}) => {
   try {
     if (!incomeData) {
       throw new Error('لا توجد بيانات للتصدير');
     }
 
     const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
-    const tableData = getFullTableData(incomeData);
+    const tableData = getFullTableData(incomeData, expandedCapital, expandedRevenues, expandedExpenses, expandedClients);
 
     // Create workbook
     const workbook = XLSX.utils.book_new();
@@ -1161,7 +1063,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
 };
 
 // دالة الطباعة مع الهيكل الكامل
-export const printIncomeStatement = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
+export const printIncomeStatement = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, expandedCapital = false, expandedRevenues = true, expandedExpenses = true, expandedClients = {}) => {
   return new Promise((resolve, reject) => {
     try {
       if (!incomeData) {
@@ -1209,7 +1111,7 @@ export const printIncomeStatement = async (incomeData, periodType, selectedMonth
       let currentY = 65;
 
       // قسم رأس المال
-      const capitalData = getCapitalData(incomeData);
+      const capitalData = getCapitalData(incomeData, expandedCapital);
       if (capitalData.length > 0) {
         currentY = currentY + 10;
         addSectionTable(doc, capitalData, 'رأس المال والمستثمرين', currentY);
@@ -1217,7 +1119,7 @@ export const printIncomeStatement = async (incomeData, periodType, selectedMonth
       }
 
       // قسم الإيرادات
-      const revenueData = getRevenueData(incomeData);
+      const revenueData = getRevenueData(incomeData, expandedRevenues, expandedClients);
       if (revenueData.length > 0) {
         currentY = currentY + 15;
         addSectionTable(doc, revenueData, 'الإيرادات التشغيلية', currentY);
@@ -1225,7 +1127,7 @@ export const printIncomeStatement = async (incomeData, periodType, selectedMonth
       }
 
       // قسم المصروفات
-      const expenseData = getExpenseData(incomeData);
+      const expenseData = getExpenseData(incomeData, expandedExpenses);
       if (expenseData.length > 0) {
         currentY = currentY + 15;
         addSectionTable(doc, expenseData, 'المصروفات التشغيلية', currentY);
