@@ -70,7 +70,7 @@ import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { useCountUp } from '../../hooks/useCountUp';
 
 
-const getBankAccountData = async (month = null, page = 1, limit = 20) => {
+const getBankAccountData = async (accountType = 'bank', month = null, page = 1, limit = 20) => {
   const params = new URLSearchParams();
   if (month) {
     params.append('month', month);
@@ -78,7 +78,8 @@ const getBankAccountData = async (month = null, page = 1, limit = 20) => {
   params.append('limit', limit.toString());
 
   const queryString = params.toString();
-  const response = await Api.get(`/api/accounts/bank/${page}${queryString ? `?${queryString}` : ''}`);
+  const endpoint = accountType === 'capital' ? 'NewBank' : 'bank';
+  const response = await Api.get(`/api/accounts/${endpoint}/${page}${queryString ? `?${queryString}` : ''}`);
   return response.data;
 };
 
@@ -93,121 +94,6 @@ export default function Treasury() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
-  // Static data for the capital fund
-  const capitalFundData = {
-    pagination: {
-      page: 1,
-      limit: 10,
-      totalJournals: 6,
-      totalPages: 1
-    },
-    account: {
-      id: 17,
-      name: "صندوق رؤوس أموال المساهمين الجدد",
-      code: "11001",
-      debit: 35000,
-      credit: 8000,
-      balance: 27000
-    },
-    total: 27000,
-    totalJournalEntries: 6,
-    loansBalance: 0, // No loans in capital fund
-    journalsByMonth: {
-      "2025-12": {
-        entries: [
-          {
-            id: 46,
-            date: "2025-12-26T23:35:17.131+03:00",
-            reference: "REP-17",
-            description: "استلام سداد دفعة للسلفة رقم 2",
-            debit: 4000,
-            credit: 0,
-            balance: 4000,
-            client: null,
-            postedBy: "ادمن",
-            status: "POSTED",
-            type: "GENERAL"
-          },
-          {
-            id: 45,
-            date: "2025-12-26T23:35:17.028+03:00",
-            reference: "REP-16",
-            description: "استلام سداد دفعة للسلفة رقم 2",
-            debit: 3000,
-            credit: 0,
-            balance: 3000,
-            client: null,
-            postedBy: "ادمن",
-            status: "POSTED",
-            type: "GENERAL"
-          },
-          {
-            id: 44,
-            date: "2025-12-26T23:35:16.885+03:00",
-            reference: "REP-15",
-            description: "استلام سداد دفعة للسلفة رقم 2",
-            debit: 3000,
-            credit: 0,
-            balance: 3000,
-            client: null,
-            postedBy: "ادمن",
-            status: "POSTED",
-            type: "GENERAL"
-          },
-          {
-            id: 13,
-            date: "2025-12-25T22:56:41.047+03:00",
-            reference: "LN-2",
-            description: "سلفة عميل",
-            debit: 0,
-            credit: 8000,
-            balance: -8000,
-            client: null,
-            postedBy: "ادمن",
-            status: "POSTED",
-            type: "GENERAL"
-          },
-          {
-            id: 7,
-            date: "2025-12-25T15:39:42.150+03:00",
-            reference: "CAP-2",
-            description: "إيداع رأس مال (مساهم جديد)",
-            debit: 15000,
-            credit: 0,
-            balance: 15000,
-            client: null,
-            postedBy: "ادمن",
-            status: "POSTED",
-            type: "OPENING"
-          },
-          {
-            id: 6,
-            date: "2025-12-25T15:33:53.434+03:00",
-            reference: "CAP-1",
-            description: "إيداع رأس مال (مساهم جديد)",
-            debit: 10000,
-            credit: 0,
-            balance: 10000,
-            client: null,
-            postedBy: "ادمن",
-            status: "POSTED",
-            type: "OPENING"
-          }
-        ],
-        totalDebit: 35000,
-        totalCredit: 8000,
-        totalBalance: 27000
-      }
-    },
-    repayments: {
-      totalAmount: 10000,
-      paidUntilNow: 10000
-    },
-    currentMonth: {
-      totalAmount: 0,
-      paidUntilNow: 0
-    }
-  };
 
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -217,14 +103,14 @@ export default function Treasury() {
   const { permissions } = usePermissions();
 
   const { data: bankData, isLoading, error } = useQuery({
-    queryKey: ["bank-account", selectedMonth, page, limit],
-    queryFn: () => getBankAccountData(selectedMonth, page, limit),
+    queryKey: ["bank-account", tab, selectedMonth, page, limit],
+    queryFn: () => getBankAccountData(tab === 1 ? 'capital' : 'bank', selectedMonth, page, limit),
     retry: 1,
-    enabled: tab === 0 || tab === 2, // Only fetch for general fund and journals tabs
+    enabled: tab === 0 || tab === 1 || tab === 2, // Fetch for all tabs
   });
 
   // Get current data based on active tab
-  const currentData = tab === 1 ? capitalFundData : bankData;
+  const currentData = bankData;
 
 
   const handleTabChange = (event, newValue) => {
@@ -305,7 +191,7 @@ export default function Treasury() {
   const totalDebit = currentData?.account?.debit || 0;
   const totalCredit = currentData?.account?.credit || 0;
   const totalTransactions = currentData?.totalJournalEntries || 0;
-  const loansBalance = currentData?.loansBalance || 0;
+  const loansBalance = (tab === 1 ? 0 : currentData?.loansBalance) || 0;
   const total = currentData?.total || 0;
   
   // Repayments data
