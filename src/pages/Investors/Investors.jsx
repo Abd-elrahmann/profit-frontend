@@ -840,6 +840,7 @@ export default function Investors() {
         name: investorDetails.name || '',
         phone: investorDetails.phone || '',
         address: investorDetails.address || '',
+        city: investorDetails.city || '',
         email: investorDetails.email || '',
         orgProfitPercent: investorDetails.orgProfitPercent || '',
         capitalAmount: investorDetails.capitalAmount || '',
@@ -1467,6 +1468,24 @@ export default function Investors() {
                         />
                       </Grid>
                       <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>المدينة</Typography>
+                        <TextField
+                          value={editMode ? editFormData.city : investorDetails.city || ''}
+                          onChange={(e) => handleInputChange('city', e.target.value)}
+                          fullWidth
+                          disabled={!editMode}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              borderRadius: '6px',
+                              '&:hover fieldset': {
+                                borderColor: 'primary.main',
+                              },
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
                         <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام الميلادي</Typography>
                         <TextField
                           type="date"
@@ -1755,6 +1774,7 @@ export default function Investors() {
                             name: investorDetails.name || '',
                             phone: investorDetails.phone || '',
                             address: investorDetails.address || '',
+                            city: investorDetails.city || '',
                             email: investorDetails.email || '',
                             orgProfitPercent: investorDetails.orgProfitPercent || '',
                             capitalAmount: investorDetails.total || '',

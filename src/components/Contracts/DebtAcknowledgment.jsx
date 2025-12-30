@@ -181,12 +181,13 @@ return `
 
   .signatures {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     text-align: center;
     margin-top: 20px;
     padding-top: 15px;
     border-top: 2px solid rgba(46, 139, 69, 0.2);
+    justify-content: center;
   }
   .sign-line {
     width: 180px;
@@ -265,8 +266,8 @@ return `
       <div class="content-box">
         <div class="amount-box">
           <h3>مبلغ وقدره</h3>
-          <h1>{{المبلغ_رقما}}</h1>
-          <p>{{المبلغ_كتابة}}</p>
+          <h1>{{المبلغ_رقما}} ريال</h1>
+          <p>{{المبلغ_كتابة}} ريال</p>
         </div>
       </div>
 
@@ -294,11 +295,6 @@ return `
         <p class="strong">توقيع المدين</p>
         <div class="sign-line"></div>
         <p>{{اسم_العميل}}</p>
-      </div>
-      <div>
-        <p class="strong">توقيع الكفيل</p>
-        <div class="sign-line"></div>
-        <p>{{اسم_الكفيل}}</p>
       </div>
     </div>
 

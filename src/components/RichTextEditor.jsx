@@ -240,16 +240,9 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
         <Button
           size="small"
           variant="outlined"
-          onClick={() => document.execCommand('italic', false, null)}
-        >
-          مائل
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
           onClick={() => document.execCommand('underline', false, null)}
         >
-          خط
+          تحته خط
         </Button>
         <Button
           size="small"

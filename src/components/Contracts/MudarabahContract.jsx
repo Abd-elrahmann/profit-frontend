@@ -158,7 +158,6 @@ const MudarabahContract = () => {
   }
 
   .party-reference {
-    font-style: italic;
     color: #777;
     font-size: 13px;
     margin-top: 15px;

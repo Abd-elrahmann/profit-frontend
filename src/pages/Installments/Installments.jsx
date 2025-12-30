@@ -2514,6 +2514,7 @@ const Installments = () => {
         installmentData={selectedProofInstallment}
         loanData={loanData}
         clientData={loanData?.client}
+        investorData={loanData?.partner}
         templateContent={paymentProofTemplate}
         employeeName="الموظف المختص"
         autoGenerate={false}

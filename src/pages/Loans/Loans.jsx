@@ -67,6 +67,8 @@ const Loans = () => {
     source: "",
     startDate: new Date().toISOString().split("T")[0],
     repaymentDay: "",
+    issuanceCity: "",
+    paymentCity: "",
   });
 
   const dayToDateString = (day) => {
@@ -587,6 +589,8 @@ const Loans = () => {
       type: "",
       startDate: new Date().toISOString().split("T")[0],
       repaymentDay: "",
+      issuanceCity: "",
+      paymentCity: "",
     });
 
       setSelectedClient(null);
@@ -777,6 +781,8 @@ const Loans = () => {
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
+        issuanceCity: loanForm.issuanceCity || null,
+        paymentCity: loanForm.paymentCity || null,
       };
 
       const response = await createLoan(loanData);
@@ -836,6 +842,8 @@ const Loans = () => {
       source: "",
       startDate: new Date().toISOString().split("T")[0],
       repaymentDay: dayToDateString(10),
+      issuanceCity: "",
+      paymentCity: "",
     });
     setInstallments([]);
     setIsEditMode(false);
@@ -865,6 +873,8 @@ const Loans = () => {
         bankAccountId: selectedBank?.id || null,
         partnerId: selectedPartner?.id || null,
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
+        issuanceCity: loanForm.issuanceCity || null,
+        paymentCity: loanForm.paymentCity || null,
       };
 
       const oldAmount = selectedLoan.amount;
@@ -1009,6 +1019,8 @@ const Loans = () => {
         type: loan.type,
         startDate: loan.startDate.split("T")[0],
         repaymentDay: loan.repaymentDay ? loan.repaymentDay.split("T")[0] : "",
+        issuanceCity: loan.issuanceCity || "",
+        paymentCity: loan.paymentCity || "",
       });
 
       setActiveTab(1);

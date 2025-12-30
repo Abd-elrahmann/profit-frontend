@@ -147,14 +147,6 @@ return `
     text-align: justify;
   }
 
-  .separator {
-    text-align: center;
-    margin: 15px 0;
-    font-size: 16px;
-    color: #666;
-    letter-spacing: normal;
-  }
-
   .strong {
     font-weight: bold;
     margin-top: 6px;
@@ -163,14 +155,10 @@ return `
     font-weight: bold;
     color: #2E8B45;
   }
-  .spacer {
-    display: inline-block;
-    width: 15px;
-  }
 
   .signatures {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     text-align: center;
     margin-top: 20px;
     padding-top: 15px;
@@ -182,16 +170,6 @@ return `
     height: 40px;
     margin: auto;
     border-bottom: 2px solid #666;
-  }
-
-  .footer-note {
-    text-align: center;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-    font-size: 12px;
-    color: #666;
-    font-style: italic;
   }
 
   @media (max-width: 768px) {
@@ -282,8 +260,8 @@ return `
       <div class="content-box">
         <div class="amount-box">
           <h3>المبلغ المسدد بالكامل</h3>
-          <h1>{{المبلغ_رقما}}</h1>
-          <p>{{المبلغ_كتابة}}</p>
+          <h1>{{المبلغ_رقما}} ريال</h1>
+          <p>{{المبلغ_كتابة}} ريال</p>
         </div>
       </div>
 
@@ -295,18 +273,12 @@ return `
       </p>
     </div>
 
-    <div class="separator">───────────────────────────────</div>
-
     <div class="signatures">
       <div>
-        <p class="strong">توقيع الدائن:<span class="spacer"></span></p>
+        <p class="strong">توقيع الدائن:</p>
         <div class="sign-line"></div>
         <p>{{توقيع_الدائن}}</p>
       </div>
-    </div>
-
-    <div class="footer-note">
-      * هذا النموذج رسمي ويُستخدم لإثبات السداد الكامل وخلو الطرف من أي التزامات مالية.
     </div>
 
   </div>

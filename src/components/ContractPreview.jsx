@@ -240,7 +240,6 @@ const ContractPreview = ({
                 },
 
                 '& .party-reference': {
-                  fontStyle: 'italic',
                   color: '#777',
                   fontSize: '13px',
                   marginTop: '15px',

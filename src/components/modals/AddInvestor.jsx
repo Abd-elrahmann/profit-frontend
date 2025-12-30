@@ -32,6 +32,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     name: "",
     nationalId: "",
     address: "",
+    city: "",
     phone: "",
     email: "",
     orgProfitPercent: "",
@@ -181,6 +182,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       name: "",
       nationalId: "",
       address: "",
+      city: "",
       phone: "",
       email: "",
       orgProfitPercent: "",
@@ -283,10 +285,21 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 size="medium"
-                sx={{width: '520px'}}
+                sx={{width: '250px'}}
               />
             </Grid>
-            
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="المدينة"
+                value={formData.city}
+                onChange={handleChange('city')}
+                fullWidth
+                size="medium"
+                sx={{width: '250px'}}
+              />
+            </Grid>
+
             <Grid item xs={12}>
               <TextField
                 label="العنوان"

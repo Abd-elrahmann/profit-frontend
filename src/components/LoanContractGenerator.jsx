@@ -182,6 +182,38 @@ const getCurrentDates = () => {
   };
 };
 
+const formatRepaymentDay = (repaymentDay) => {
+  if (!repaymentDay) return "لدى الاطلاع";
+
+  const date = new Date(repaymentDay);
+
+  const hijriFormatter = new Intl.DateTimeFormat(
+    "ar-SA-u-ca-islamic-umalqura",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Riyadh",
+    }
+  );
+
+  let hijriDate = hijriFormatter.format(date);
+  hijriDate = hijriDate.replace(/\s+/g, " ").trim();
+  hijriDate = hijriDate.replace(" ", " من ");
+  hijriDate = hijriDate.replace(" هـ", "").trim();
+
+  const gregorianFormatter = new Intl.DateTimeFormat("ar-SA-u-ca-gregory", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Riyadh",
+  });
+
+  const gregorianDate = gregorianFormatter.format(date);
+
+  return `${hijriDate} هـ الموافق ${gregorianDate}`;
+};
+
 const LoanContractGenerator = React.forwardRef(
   (
     {
@@ -401,14 +433,14 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
             .replace(/{{تاريخ_الانشاء}}/g, finalDate)
-            .replace(/{{تاريخ_الاستحقاق}}/g, "لدي الاطلاع")
+            .replace(/{{تاريخ_الاستحقاق}}/g, formatRepaymentDay(loanDataToUse?.repaymentDay))
 
             .replace(/{{اسم_الدائن}}/g, loanDataToUse?.partner?.name || "لا يوجد كفيل")
             .replace(/{{اسم_المدين}}/g, clientDataToUse?.name || "")
             .replace(/{{رقم_السند}}/g, promissoryNoteNumber)
             .replace(/{{رقم_الإقرار}}/g, debtAcknowledgmentNumber)
-            .replace(/{{مدينة_الاصدار}}/g, "شروة - المملكة العربية السعودية")
-            .replace(/{{مدينة_الوفاء}}/g, "الرياض - المملكة العربية السعودية")
+            .replace(/{{مدينة_الاصدار}}/g, loanDataToUse?.issuanceCity || "شروة - المملكة العربية السعودية")
+            .replace(/{{مدينة_الوفاء}}/g, loanDataToUse?.paymentCity || "الرياض - المملكة العربية السعودية")
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")
 
             .replace(/{{رقم_هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")

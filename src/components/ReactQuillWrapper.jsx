@@ -56,9 +56,6 @@ const ReactQuillWrapper = forwardRef(({ value, onChange, placeholder, style, the
             // Bold
             toolbar.querySelector('.ql-bold').setAttribute('title', 'عريض');
             
-            // Italic
-            toolbar.querySelector('.ql-italic').setAttribute('title', 'مائل');
-            
             // Underline
             toolbar.querySelector('.ql-underline').setAttribute('title', 'تحته خط');
             
@@ -154,7 +151,7 @@ const ReactQuillWrapper = forwardRef(({ value, onChange, placeholder, style, the
         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
         [{ 'font': [] }],
         [{ 'size': ['small', false, 'large', 'huge'] }],
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+        ['bold', 'underline', 'strike', 'blockquote'],
         [{ 'color': [] }, { 'background': [] }],
         [{ 'script': 'sub'}, { 'script': 'super' }],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
@@ -174,7 +171,7 @@ const ReactQuillWrapper = forwardRef(({ value, onChange, placeholder, style, the
 
   const formats = [
     'header', 'font', 'size',
-    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'bold', 'underline', 'strike', 'blockquote',
     'list', 'bullet', 'indent',
     'link', 'image', 'video',
     'color', 'background',

@@ -283,6 +283,50 @@ const LoanDetailsSection = ({
         </Grid>
 
         <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            type="text"
+            label="مدينة الإصدار"
+            value={isViewMode ? (loanForm.issuanceCity || selectedLoan?.issuanceCity || "") : loanForm.issuanceCity || ""}
+            onChange={(e) => handleInputChange("issuanceCity", e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            disabled={isReadOnlyMode}
+            placeholder="مثال: شرورة - المملكة العربية السعودية"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "56px",
+                width: "300px",
+                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            type="text"
+            label="مدينة الوفاء"
+            value={isViewMode ? (loanForm.paymentCity || selectedLoan?.paymentCity || "") : loanForm.paymentCity || ""}
+            onChange={(e) => handleInputChange("paymentCity", e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            disabled={isReadOnlyMode}
+            placeholder="مثال: الرياض - المملكة العربية السعودية"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "56px",
+                width: "300px",
+                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={banksData?.data || []}
             getOptionLabel={(option) =>

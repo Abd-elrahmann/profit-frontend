@@ -1346,7 +1346,7 @@ const ProfitDistribution = () => {
               <Typography variant="body2">
                 - إجمالي الأرباح بعد الادخار: {formatNumber(profitAfterSaving.companyProfit + profitAfterSaving.partnerProfit)}
               </Typography>
-              <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary', mt: 1 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 ملاحظة: الادخار يتم من أرباح الشركاء فقط، وأرباح الشركة تظل ثابتة
               </Typography>
             </>

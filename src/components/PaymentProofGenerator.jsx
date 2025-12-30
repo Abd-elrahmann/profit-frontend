@@ -99,6 +99,7 @@ const PaymentProofGenerator = React.forwardRef(({
   installmentsData = [], // Array of installments for bulk operations
   loanData,
   clientData,
+  investorData,
   templateContent,
   onContractGenerated,
   employeeName = "",
@@ -229,7 +230,7 @@ const PaymentProofGenerator = React.forwardRef(({
   }, [contractHtml, installmentData?.id, uploadPDFToServer, onContractGenerated]);
 
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
-    const dataToUse = customData || { installmentData, installmentsData, loanData, clientData, employeeName };
+    const dataToUse = customData || { installmentData, installmentsData, loanData, clientData, investorData, employeeName };
 
     // Check if we have multiple installments or single installment
     const isBulkOperation = dataToUse.installmentsData && dataToUse.installmentsData.length > 0;
@@ -294,6 +295,7 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
           .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
           .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
+          .replace(/{{اسم_رب_المال}}/g, dataToUse.investorData?.name || dataToUse.clientData?.name || '')
 
           // Bulk operation data
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: block;')
@@ -325,6 +327,7 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
           .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
           .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
+          .replace(/{{اسم_رب_المال}}/g, dataToUse.investorData?.name || dataToUse.clientData?.name || '')
 
           // Single operation data
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: none;')
@@ -334,7 +337,7 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{رقم_الايصال}}/g, `${Math.floor(Math.random() * 9000) + 1000}`)
 
           // Amount data
-          .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'}`)
+          .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'} ريال`)
           .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
 
           // Dates
@@ -367,13 +370,13 @@ const PaymentProofGenerator = React.forwardRef(({
       handleApiError(error);
       throw error;
     }
-  }, [installmentData, installmentsData, loanData, clientData, employeeName, templateContent, autoGenerate, generatePDF]);
+  }, [installmentData, installmentsData, loanData, clientData, investorData, employeeName, templateContent, autoGenerate, generatePDF]);
 
   useEffect(() => {
     if (autoGenerate && ((installmentData && clientData && templateContent) || (installmentsData.length > 0 && clientData && templateContent))) {
       generateContract(true);
     }
-  }, [autoGenerate, installmentData, installmentsData, clientData, templateContent, generateContract]);
+  }, [autoGenerate, installmentData, installmentsData, clientData, investorData, templateContent, generateContract]);
 
   React.useImperativeHandle(ref, () => ({
     generateContract,
