@@ -16,24 +16,24 @@ export const ScrollableTableContainer = ({ children, maxHeight = 650, minWidth =
     overflowY: 'auto',
     maxHeight,
     scrollbarWidth: 'thin',
-    scrollbarColor: 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+    scrollbarColor: (theme) => `${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'} ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
     '&::-webkit-scrollbar': {
       height: '8px',
       width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
       borderRadius: '4px',
     },
     '&::-webkit-scrollbar-thumb': {
-      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
       borderRadius: '4px',
       '&:hover': {
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
       },
     },
     '&::-webkit-scrollbar-thumb:active': {
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
     },
   }}>
     <Table stickyHeader sx={{ minWidth }}>
@@ -57,20 +57,22 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
     fontSize: '0.88rem',
     padding: "12px 14px",
     color: theme.palette.text.primary,
-    borderBottom: `1px solid ${theme.palette.secondary.main}`,
+    borderBottom: `1px solid ${theme.palette.divider}`,
     fontFamily: theme.typography.fontFamily
   },
 }));
 
 export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(even)': {
-    backgroundColor: theme.palette.secondary.light,
+    backgroundColor: theme.palette.mode === 'dark'
+      ? theme.palette.action.hover // Subtle hover color for dark mode
+      : theme.palette.background.paper, // Paper color for light mode
   },
   '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.background.default,
+    backgroundColor: theme.palette.background.paper,
   },
   '&:hover': {
-    backgroundColor: theme.palette.secondary.main,
+    backgroundColor: theme.palette.action.selected,
     transition: 'background-color 0.2s ease',
   },
   '&:last-child td, &:last-child th': {
@@ -128,24 +130,24 @@ const TableLayout = ({
           overflowX: 'auto',
           overflowY: 'auto',
           scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+          scrollbarColor: (theme) => `${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'} ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           '&::-webkit-scrollbar': {
             height: '8px',
             width: '8px',
           },
           '&::-webkit-scrollbar-track': {
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
             borderRadius: '4px',
           },
           '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
             borderRadius: '4px',
             '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
             },
           },
           '&::-webkit-scrollbar-thumb:active': {
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
           },
         }}
       >

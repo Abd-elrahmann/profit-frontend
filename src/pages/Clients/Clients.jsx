@@ -47,6 +47,7 @@ import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { useTheme } from '../../theme/ThemeContext';
 import {
   StyledTableCell,
   StyledTableRow,
@@ -140,6 +141,7 @@ export default function Clients() {
     useState(null);
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const { isDarkMode } = useTheme();
   const {
     data: clientsData,
     isLoading: isClientsLoading,
@@ -485,12 +487,12 @@ export default function Clients() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: isDarkMode ? 'background.default' : '#f5f5f5',
             borderRadius: 1,
             cursor: 'pointer',
             transition: 'background-color 0.2s',
             '&:hover': {
-              backgroundColor: '#e0e0e0',
+              backgroundColor: isDarkMode ? 'action.hover' : '#e0e0e0',
             },
           }}
           onClick={() => window.open(fileUrl, '_blank')}
@@ -639,7 +641,7 @@ export default function Clients() {
 
 
   return (
-    <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh" }}>
       <Helmet>
         <title>العملاء</title>
         <meta name="description" content="العملاء" />
@@ -650,7 +652,7 @@ export default function Clients() {
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "#fff",
+          bgcolor: 'background.paper',
           borderBottom: "1px solid #ddd",
         }}
       >
@@ -681,14 +683,14 @@ export default function Clients() {
           sx={{
             width: "350px",
             borderRight: "1px solid #ddd",
-            bgcolor: "#fafafa",
+            bgcolor: isDarkMode ? 'background.paper' : '#fafafa',
             height: "100%",
             overflowY: "auto",
             flexShrink: 0,
           }}
         >
           <Box
-            sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}
+            sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa' }}
           >
             <TextField
               placeholder="البحث بالاسم أو رقم الهوية"
@@ -740,9 +742,9 @@ export default function Clients() {
 
           {clientsData && !isClientsLoading && (
             <Box
-              sx={{ p: 2, borderBottom: "1px solid #eee", bgcolor: "#f9f9f9" }}
+              sx={{ p: 2, borderBottom: "1px solid #eee", bgcolor: isDarkMode ? 'background.paper' : '#f9f9f9' }}
             >
-              <Typography variant="body2" color="black">
+              <Typography variant="body2" color="text.primary">
                 صفحة {clientsData.currentPage} من {clientsData.totalPages} -
                 إجمالي {clientsData.totalClients} عميل
               </Typography>
@@ -766,7 +768,7 @@ export default function Clients() {
               <Typography variant="h6" color="text.secondary" mb={1}>
                 لا توجد عملاء
               </Typography>
-              <Typography variant="body2" color="black">
+              <Typography variant="body2" color="text.primary">
                 {search || selectedStatus
                   ? "لم يتم العثور على عملاء مطابقين للبحث"
                   : "لا توجد عملاء مسجلين"}
@@ -793,7 +795,7 @@ export default function Clients() {
                       ? "0 6px 16px rgba(46, 139, 69, 0.15)"
                       : "0 3px 12px rgba(15, 23, 42, 0.06)",
                     transition: "0.2s",
-                    "&:hover": { bgcolor: "#F3F4F6" },
+                    "&:hover": { bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : "#F3F4F6" },
                   }}
                   onClick={() => handleClientSelect(client)}
                 >
@@ -853,7 +855,7 @@ export default function Clients() {
                 alignItems: "center",
                 p: 2,
                 borderTop: "1px solid #eee",
-                bgcolor: "#fafafa",
+                bgcolor: isDarkMode ? 'background.paper' : '#fafafa',
               }}
             >
               {/* Previous Button */}
@@ -910,7 +912,7 @@ export default function Clients() {
         </Box>
 
         {selectedClient && clientDetails ? (
-          <Box sx={{ flex: 1, p: 4, bgcolor: "#fff", overflowY: "auto" }}>
+          <Box sx={{ flex: 1, p: 4, bgcolor: "background.paper", overflowY: "auto" }}>
             <Box
               sx={{
                 display: "flex",
@@ -1006,7 +1008,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             width: "280px",
                             "&:hover fieldset": {
@@ -1034,7 +1036,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: isDarkMode ? "background.default" : "#f9fafb",
                             borderRadius: "6px",
                             width: "280px",
                           },
@@ -1051,7 +1053,7 @@ export default function Clients() {
                         disabled
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: isDarkMode ? "background.default" : "#f9fafb",
                             borderRadius: "6px",
                           },
                         }}
@@ -1074,7 +1076,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             "&:hover fieldset": {
                               borderColor: "primary.main",
@@ -1105,7 +1107,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             "&:hover fieldset": {
                               borderColor: "primary.main",
@@ -1131,7 +1133,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             "&:hover fieldset": {
                               borderColor: "primary.main",
@@ -1157,7 +1159,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             width: "280px",
                             "&:hover fieldset": {
@@ -1184,7 +1186,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             width: "350px",
                             "&:hover fieldset": {
@@ -1211,7 +1213,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             "&:hover fieldset": {
                               borderColor: "primary.main",
@@ -1240,7 +1242,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                             "&:hover fieldset": {
                               borderColor: "primary.main",
@@ -1272,7 +1274,7 @@ export default function Clients() {
                     placeholder="لا توجد ملاحظات"
                     sx={{
                       "& .MuiOutlinedInput-root": {
-                        backgroundColor: editMode ? "#fff" : "#f9fafb",
+                        backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                         borderRadius: "6px",
                         "&:hover fieldset": {
                           borderColor: "primary.main",
@@ -1290,7 +1292,7 @@ export default function Clients() {
                 </Typography>
                 <Grid container spacing={3} justifyContent="center" alignItems="center">
                   <Grid item xs={12} md={4} sx={{ width: "280px" }}>
-                    <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
+                    <Paper sx={{ p: 3, bgcolor: "background.paper" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>
                         الراتب
                       </Typography>
@@ -1304,7 +1306,7 @@ export default function Clients() {
                     </Paper>
                   </Grid>
                   <Grid item xs={12} md={4} sx={{ width: "280px" }}>
-                    <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
+                    <Paper sx={{ p: 3, bgcolor: "background.paper" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>
                         الالتزامات
                       </Typography>
@@ -1314,7 +1316,7 @@ export default function Clients() {
                     </Paper>
                   </Grid>
                   <Grid item xs={12} md={4} sx={{ width: "280px" }}>
-                    <Paper sx={{ p: 3, bgcolor: "#f8f9fa" }}>
+                    <Paper sx={{ p: 3, bgcolor: "background.paper" }}>
                       <Typography variant="body1" color="text.secondary" mb={1}>
                         الحالة
                       </Typography>
@@ -1508,8 +1510,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                     width: "280px",
                                   },
@@ -1541,8 +1543,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                     width: "280px",
                                   },
@@ -1580,8 +1582,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                   },
                                 }}
@@ -1612,8 +1614,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                     width: "280px",
                                   },
@@ -1645,8 +1647,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                   },
                                 }}
@@ -1677,8 +1679,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                   },
                                 }}
@@ -1709,8 +1711,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                     width: "280px",
                                   },
@@ -1742,8 +1744,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                   },
                                 }}
@@ -1775,8 +1777,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                   },
                                 }}
@@ -1808,8 +1810,8 @@ export default function Clients() {
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     backgroundColor: isEditingThisKafeel
-                                      ? "#fff"
-                                      : "#f9fafb",
+                                      ? (isDarkMode ? "background.paper" : "#fff")
+                                      : (isDarkMode ? "background.default" : "#f9fafb"),
                                     borderRadius: "6px",
                                   },
                                 }}
@@ -1844,7 +1846,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -1867,7 +1869,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -1895,7 +1897,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -1918,7 +1920,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -1941,7 +1943,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -1964,7 +1966,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -1987,7 +1989,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -2010,7 +2012,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -2034,7 +2036,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -2058,7 +2060,7 @@ export default function Clients() {
                         disabled={!editMode}
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: editMode ? "#fff" : "#f9fafb",
+                            backgroundColor: editMode ? (isDarkMode ? "background.paper" : "#fff") : (isDarkMode ? "background.default" : "#f9fafb"),
                             borderRadius: "6px",
                           },
                         }}
@@ -2602,7 +2604,7 @@ export default function Clients() {
 
                 {/* Statement Summary */}
                 {clientStatement && (
-                  <Paper sx={{ p: 3, mb: 3, bgcolor: "#f8f9fa" }}>
+                  <Paper sx={{ p: 3, mb: 3, bgcolor: isDarkMode ? 'background.paper' : "#f8f9fa" }}>
                     <Grid
                       container
                       spacing={6}
@@ -2787,7 +2789,7 @@ export default function Clients() {
                         alignItems: "center",
                         p: 2,
                         borderTop: "1px solid #e0e0e0",
-                        bgcolor: "#fafafa",
+                        bgcolor: isDarkMode ? 'background.paper' : '#fafafa',
                       }}
                     >
                       <Typography variant="body2" color="text.secondary">
@@ -2942,7 +2944,7 @@ export default function Clients() {
                             alignItems: "center",
                             p: 2,
                             borderTop: "1px solid #e0e0e0",
-                            bgcolor: "#fafafa",
+                            bgcolor: isDarkMode ? 'background.paper' : '#fafafa',
                             mt: 2,
                           }}
                         >

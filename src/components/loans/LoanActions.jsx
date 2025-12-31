@@ -33,8 +33,7 @@ const LoanActions = ({
         p: 2,
         mb: 2,
         borderRadius: 2,
-        border: "1px solid #e5e7eb",
-        bgcolor: "#fafafa",
+        bgcolor: 'background.paper',
       }}
     >
       <Typography variant="subtitle1" fontWeight="bold" mb={2}>

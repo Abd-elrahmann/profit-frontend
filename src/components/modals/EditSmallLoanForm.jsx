@@ -132,8 +132,8 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
           p: isSmallScreen ? 2 : 4,
           mb: isSmallScreen ? 2 : 3,
           borderRadius: 2,
-          border: "1px solid #e5e7eb",
-          backgroundColor: "#fff",
+          border: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Grid container spacing={isSmallScreen ? 2 : 3} justifyContent="center">
@@ -150,7 +150,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
                 "& .MuiOutlinedInput-root": {
                   height: "56px",
                   width:"350px",
-                  backgroundColor: "#f9fafb",
+                  backgroundColor: "background.paper",
                 },
               }}
               placeholder="أدخل اسم صاحب السلفة"
@@ -170,7 +170,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
                 "& .MuiOutlinedInput-root": {
                   height: "56px",
                   width:"350px",
-                  backgroundColor: "#f9fafb",
+                  backgroundColor: "background.paper",
                 },
               }}
               placeholder="أدخل مبلغ السلفة"
@@ -193,7 +193,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#f9fafb",
+                  backgroundColor: "background.paper",
                   width:"350px",
                   height:"56px",
                 },

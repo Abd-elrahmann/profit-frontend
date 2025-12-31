@@ -21,6 +21,7 @@ import {
   MenuItem,
   Select,
   Autocomplete,
+  useTheme,
 } from "@mui/material";
 import {
   Print,
@@ -58,6 +59,7 @@ const MONTHS = [
 ];
 
 const IncomeStatement = () => {
+  const theme = useTheme();
   const [periodType, setPeriodType] = useState("monthly");
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month());
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
@@ -431,7 +433,7 @@ const IncomeStatement = () => {
             variant="h4" 
             sx={{ 
               fontWeight: 700,
-              color: '#101812',
+              color: theme.palette.text.primary,
               fontSize: { xs: '1.75rem', md: '2.25rem' },
               mb: 1
             }}
@@ -441,7 +443,7 @@ const IncomeStatement = () => {
           <Typography 
             variant="body1" 
             sx={{ 
-              color: '#5c8a67',
+              color: theme.palette.primary.main,
               textAlign: 'center'
             }}
           >
@@ -450,40 +452,40 @@ const IncomeStatement = () => {
         </Box>
 
         {/* Period Selection */}
-        <Paper 
+        <Paper
           elevation={0}
           sx={{
             p: 2,
             mb: 3,
-            bgcolor: 'white',
+            bgcolor: theme.palette.background.paper,
             borderRadius: 2,
-            border: '1px solid #eaf1eb',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(255,255,255,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
             textAlign: 'center'
           }}
         >
           <Grid container spacing={2} alignItems="center" justifyContent="center">
             {/* Period Type */}
             <Grid item xs={12} md={3}>
-              <Select
-                fullWidth
-                size="small"
-                value={periodType}
-                onChange={(e) => {
-                  setPeriodType(e.target.value);
-                  if (e.target.value !== "period") {
-                    setSelectedPeriodId("");
-                  }
-                }}
-                sx={{
-                  bgcolor: '#f6f8f6',
-                  '& .MuiSelect-select': { 
-                    fontWeight: 500,
-                    color: '#101812',
-                    textAlign: 'center'
-                  }
-                }}
-              >
+                <Select
+                  fullWidth
+                  size="small"
+                  value={periodType}
+                  onChange={(e) => {
+                    setPeriodType(e.target.value);
+                    if (e.target.value !== "period") {
+                      setSelectedPeriodId("");
+                    }
+                  }}
+                  sx={{
+                    bgcolor: theme.palette.background.default,
+                    '& .MuiSelect-select': {
+                      fontWeight: 500,
+                      color: theme.palette.text.primary,
+                      textAlign: 'center'
+                    }
+                  }}
+                >
                 <MenuItem value="monthly" sx={{ textAlign: 'center' }}>شهري</MenuItem>
                 <MenuItem value="yearly" sx={{ textAlign: 'center' }}>سنوي</MenuItem>
                 <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
@@ -501,14 +503,14 @@ const IncomeStatement = () => {
                   onChange={(e) => setSelectedMonth(e.target.value)}
                   startAdornment={
                     <InputAdornment position="start">
-                      <CalendarMonth sx={{ color: '#5c8a67' }} />
+                      <CalendarMonth sx={{ color: theme.palette.primary.main }} />
                     </InputAdornment>
                   }
                   sx={{
-                    bgcolor: '#f6f8f6',
-                    '& .MuiSelect-select': { 
+                    bgcolor: theme.palette.background.default,
+                    '& .MuiSelect-select': {
                       fontWeight: 500,
-                      color: '#101812',
+                      color: theme.palette.text.primary,
                       textAlign: 'center'
                     }
                   }}
@@ -542,15 +544,15 @@ const IncomeStatement = () => {
                         ...params.InputProps,
                         startAdornment: (
                           <InputAdornment position="start">
-                            <CalendarToday sx={{ color: '#5c8a67' }} />
+                            <CalendarToday sx={{ color: theme.palette.primary.main }} />
                           </InputAdornment>
                         ),
                       }}
                       sx={{
-                        bgcolor: '#f6f8f6',
+                        bgcolor: theme.palette.background.default,
                         '& .MuiInputBase-input': {
                           fontWeight: 500,
-                          color: '#101812',
+                          color: theme.palette.text.primary,
                           textAlign: 'center'
                         }
                       }}
@@ -582,15 +584,15 @@ const IncomeStatement = () => {
                         ...params.InputProps,
                         startAdornment: (
                           <InputAdornment position="start">
-                            <CalendarMonth sx={{ color: '#5c8a67' }} />
+                            <CalendarMonth sx={{ color: theme.palette.primary.main }} />
                           </InputAdornment>
                         ),
                       }}
                       sx={{
-                        bgcolor: '#f6f8f6',
+                        bgcolor: theme.palette.background.default,
                         '& .MuiInputBase-input': {
                           fontWeight: 500,
-                          color: '#101812',
+                          color: theme.palette.text.primary,
                           textAlign: 'center'
                         }
                       }}
@@ -614,10 +616,10 @@ const IncomeStatement = () => {
                         fullWidth: true,
                         size: "small",
                         sx: {
-                          bgcolor: '#f6f8f6',
+                          bgcolor: theme.palette.background.default,
                           '& .MuiInputBase-input': {
                             fontWeight: 500,
-                            color: '#101812',
+                            color: theme.palette.text.primary,
                           }
                         }
                       }
@@ -635,10 +637,10 @@ const IncomeStatement = () => {
                         fullWidth: true,
                         size: "small",
                         sx: {
-                          bgcolor: '#f6f8f6',
+                          bgcolor: theme.palette.background.default,
                           '& .MuiInputBase-input': {
                             fontWeight: 500,
-                            color: '#101812',
+                            color: theme.palette.text.primary,
                           }
                         }
                       }
@@ -746,22 +748,22 @@ const IncomeStatement = () => {
                   elevation={0}
                   sx={{
                     p: 2,
-                    bgcolor: 'white',
+                    bgcolor: theme.palette.background.paper,
                     borderRadius: 2,
-                    border: '1px solid #eaf1eb',
+                    border: `1px solid ${theme.palette.divider}`,
                     height: '100%'
                   }}
                 >
                   <MonetizationOn sx={{
-                    color: '#2E8B45',
+                    color: theme.palette.primary.main,
                     fontSize: 30,
                     mb: 1
                   }} />
-                  <Typography sx={{ color: '#5c8a67', fontSize: '0.875rem', mb: 1 }}>
+                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.875rem', mb: 1 }}>
                     رأس المال الفعلي
                   </Typography>
                   <Typography sx={{
-                    color: '#101812',
+                    color: theme.palette.text.primary,
                     fontSize: '1.25rem',
                     fontWeight: 700
                   }}>
@@ -776,22 +778,22 @@ const IncomeStatement = () => {
                   elevation={0}
                   sx={{
                     p: 2,
-                    bgcolor: 'white',
+                    bgcolor: theme.palette.background.paper,
                     borderRadius: 2,
-                    border: '1px solid #eaf1eb',
+                    border: `1px solid ${theme.palette.divider}`,
                     height: '100%'
                   }}
                 >
                   <Payments sx={{
-                    color: '#2E8B45',
+                    color: theme.palette.primary.main,
                     fontSize: 30,
                     mb: 1
                   }} />
-                  <Typography sx={{ color: '#5c8a67', fontSize: '0.875rem', mb: 1 }}>
+                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.875rem', mb: 1 }}>
                     إجمالي الإيرادات
                   </Typography>
                   <Typography sx={{
-                    color: '#101812',
+                    color: theme.palette.text.primary,
                     fontSize: '1.25rem',
                     fontWeight: 700
                   }}>
@@ -799,7 +801,7 @@ const IncomeStatement = () => {
                   </Typography>
                   {/* Revenue Breakdown */}
                   {incomeData.revenues && (
-                    <Box sx={{ mt: 1, fontSize: '0.75rem', color: '#5c8a67' }}>
+                    <Box sx={{ mt: 1, fontSize: '0.75rem', color: theme.palette.primary.main }}>
                       <Typography variant="caption" display="block" fontWeight="bold">
                         سلف عامة: {formatNumber(incomeData.revenues.generalLoans || 0)}
                       </Typography>
@@ -817,22 +819,22 @@ const IncomeStatement = () => {
                   elevation={0}
                   sx={{
                     p: 2,
-                    bgcolor: 'white',
+                    bgcolor: theme.palette.background.paper,
                     borderRadius: 2,
-                    border: '1px solid #eaf1eb',
+                    border: `1px solid ${theme.palette.divider}`,
                     height: '100%'
                   }}
                 >
                   <MoneyOff sx={{ 
-                    color: '#DC2626', 
+                    color: theme.palette.error.main, 
                     fontSize: 30,
                     mb: 1 
                   }} />
-                  <Typography sx={{ color: '#5c8a67', fontSize: '0.875rem', mb: 1 }}>
+                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.875rem', mb: 1 }}>
                     المصروفات التشغيلية
                   </Typography>
                   <Typography sx={{ 
-                    color: '#DC2626',
+                    color: theme.palette.error.main,
                     fontSize: '1.25rem',
                     fontWeight: 700
                   }}>
@@ -847,19 +849,19 @@ const IncomeStatement = () => {
                   elevation={0}
                   sx={{
                     p: 2,
-                    bgcolor: incomeData.netProfit >= 0 ? 'rgba(220, 252, 231, 0.5)' : 'rgba(254, 226, 226, 0.5)',
+                    bgcolor: incomeData.netProfit >= 0 ? theme.palette.success.main + '20' : theme.palette.error.main + '20',
                     borderRadius: 2,
-                    border: `1px solid ${incomeData.netProfit >= 0 ? '#2E8B45' : '#DC2626'}`,
+                    border: `1px solid ${incomeData.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main}`,
                     height: '100%'
                   }}
                 >
                   <AccountBalanceWallet sx={{ 
-                    color: incomeData.netProfit >= 0 ? '#2E8B45' : '#DC2626', 
+                    color: incomeData.netProfit >= 0 ? theme.palette.primary.main : theme.palette.error.main, 
                     fontSize: 30,
                     mb: 1 
                   }} />
                   <Typography sx={{ 
-                    color: incomeData.netProfit >= 0 ? '#2E8B45' : '#DC2626', 
+                    color: incomeData.netProfit >= 0 ? theme.palette.primary.main : theme.palette.error.main, 
                     fontSize: '0.875rem', 
                     mb: 1,
                     fontWeight: 600
@@ -867,7 +869,7 @@ const IncomeStatement = () => {
                     {incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة'}
                   </Typography>
                   <Typography sx={{ 
-                    color: incomeData.netProfit >= 0 ? '#2E8B45' : '#DC2626',
+                    color: incomeData.netProfit >= 0 ? theme.palette.primary.main : theme.palette.error.main,
                     fontSize: '1.25rem',
                     fontWeight: 700
                   }}>
@@ -881,38 +883,38 @@ const IncomeStatement = () => {
             <Paper
               elevation={0}
               sx={{
-                bgcolor: 'white',
+                bgcolor: theme.palette.background.paper,
                 borderRadius: 2,
-                border: '1px solid #eaf1eb',
+                border: `1px solid ${theme.palette.divider}`,
                 overflow: 'hidden',
                 mb: 3
               }}
             >
               {/* Table Header */}
-              <Box sx={{ 
+              <Box sx={{
                 p: 3,
-                borderBottom: '1px solid #eaf1eb',
-                bgcolor: 'rgba(249, 251, 249, 0.5)',
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : 'rgba(249, 251, 249, 0.5)',
                 textAlign: 'center'
               }}>
                 <TableChart sx={{ 
-                  color: '#2E8B45', 
+                  color: theme.palette.primary.main, 
                   fontSize: 30,
                   mb: 1 
                 }} />
-                <Typography sx={{ 
+                <Typography sx={{
                   fontSize: '1.25rem',
                   fontWeight: 700,
-                  color: '#101812'
+                  color: theme.palette.text.primary
                 }}>
                   البيان التفصيلي
                 </Typography>
                 {periodInfo && (
-                  <Typography sx={{ 
-                    fontSize: '0.875rem',
-                    color: '#5c8a67',
-                    mt: 0.5
-                  }}>
+                <Typography sx={{
+                  fontSize: '0.875rem',
+                  color: theme.palette.text.secondary,
+                  mt: 0.5
+                }}>
                     للفترة: {periodInfo.text}
                   </Typography>
                 )}
@@ -922,11 +924,11 @@ const IncomeStatement = () => {
               <TableContainer>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'rgba(234, 241, 235, 0.5)' }}>
-                      <TableCell sx={{ 
+                    <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : 'rgba(234, 241, 235, 0.5)' }}>
+                      <TableCell sx={{
                         py: 2,
                         px: 3,
-                        color: '#5c8a67',
+                        color: theme.palette.text.secondary,
                         fontSize: '0.875rem',
                         fontWeight: 600,
                         textAlign: 'center',
@@ -934,10 +936,10 @@ const IncomeStatement = () => {
                       }}>
                         البند
                       </TableCell>
-                      <TableCell align="center" sx={{ 
+                      <TableCell align="center" sx={{
                         py: 2,
                         px: 3,
-                        color: '#5c8a67',
+                        color: theme.palette.text.secondary,
                         fontSize: '0.875rem',
                         fontWeight: 600,
                         textAlign: 'center',
@@ -959,13 +961,13 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-header") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.3)' }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '20' : 'rgba(220, 252, 231, 0.3)' }}>
                             <TableCell colSpan={2} sx={{ py: 2, px: 3 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Typography sx={{
                                   fontSize: '0.875rem',
                                   fontWeight: 700,
-                                  color: '#2E8B45',
+                                  color: theme.palette.success.main,
                                   mr: 1
                                 }}>
                                   {row.name}
@@ -987,13 +989,13 @@ const IncomeStatement = () => {
 
                       if (row.type === "expense-header") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(254, 226, 226, 0.3)' }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.error.main + '20' : 'rgba(254, 226, 226, 0.3)' }}>
                             <TableCell colSpan={2} sx={{ py: 2, px: 3 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Typography sx={{
                                   fontSize: '0.875rem',
                                   fontWeight: 700,
-                                  color: '#DC2626',
+                                  color: theme.palette.error.main,
                                   mr: 1
                                 }}>
                                   {row.name}
@@ -1016,7 +1018,7 @@ const IncomeStatement = () => {
                       if (row.type === "client-revenue") {
                         return (
                           <React.Fragment key={row.id}>
-                            <TableRow sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                            <TableRow sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
                               <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
                                 <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
                                   <Typography>
@@ -1032,9 +1034,9 @@ const IncomeStatement = () => {
                                 </Stack>
                               </TableCell>
                               <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                                <Typography sx={{ 
+                                <Typography sx={{
                                   fontWeight: 600,
-                                  color: '#101812'
+                                  color: theme.palette.text.primary
                                 }}>
                                   {formatAmount(row.amount)}
                                 </Typography>
@@ -1046,14 +1048,14 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-table-header") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.2)' }}>
-                            <TableCell colSpan={2} sx={{ 
-                              py: 1, 
-                              px: 3, 
-                              textAlign: 'center', 
-                              fontWeight: 600, 
-                              color: '#2E8B45',
-                              borderBottom: '1px solid rgba(0,0,0,0.1)'
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '15' : 'rgba(220, 252, 231, 0.2)' }}>
+                            <TableCell colSpan={2} sx={{
+                              py: 1,
+                              px: 3,
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              color: theme.palette.success.main,
+                              borderBottom: `1px solid ${theme.palette.divider}`
                             }}>
                               إيرادات العملاء
                             </TableCell>
@@ -1063,7 +1065,7 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-detail") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.1)', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '10' : 'rgba(220, 252, 231, 0.1)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
                             <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
                               <Typography sx={{ fontSize: '0.875rem' }}>
                                 {row.name}
@@ -1077,7 +1079,7 @@ const IncomeStatement = () => {
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
                               <Typography sx={{
                                 fontWeight: 500,
-                                color: '#101812'
+                                color: theme.palette.text.primary
                               }}>
                                 {formatAmount(row.amount)}
                               </Typography>
@@ -1088,14 +1090,14 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-breakdown-header") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.4)' }}>
-                            <TableCell colSpan={2} sx={{ 
-                              py: 1, 
-                              px: 3, 
-                              textAlign: 'center', 
-                              fontWeight: 600, 
-                              color: '#2E8B45',
-                              borderBottom: '1px solid rgba(0,0,0,0.1)'
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '25' : 'rgba(220, 252, 231, 0.4)' }}>
+                            <TableCell colSpan={2} sx={{
+                              py: 1,
+                              px: 3,
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              color: theme.palette.success.main,
+                              borderBottom: `1px solid ${theme.palette.divider}`
                             }}>
                               {row.name}
                             </TableCell>
@@ -1105,7 +1107,7 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-breakdown") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(220, 252, 231, 0.2)', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '15' : 'rgba(220, 252, 231, 0.2)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
                             <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
                               <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                                 {row.name}
@@ -1114,7 +1116,7 @@ const IncomeStatement = () => {
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
                               <Typography sx={{
                                 fontWeight: 600,
-                                color: '#101812'
+                                color: theme.palette.text.primary
                               }}>
                                 {formatAmount(row.amount)}
                               </Typography>
@@ -1125,7 +1127,7 @@ const IncomeStatement = () => {
 
                       if (row.type === "capital-detail") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(46, 139, 69, 0.05)', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '10' : 'rgba(46, 139, 69, 0.05)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
                             <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
                               <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
                                 <Typography sx={{ fontSize: '0.875rem',fontWeight: 700 }}>
@@ -1136,7 +1138,7 @@ const IncomeStatement = () => {
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
                               <Typography sx={{
                                 fontWeight: 500,
-                                color: '#2E8B45'
+                                color: theme.palette.primary.main
                               }}>
                                 {formatAmount(row.amount)}
                               </Typography>
@@ -1153,11 +1155,11 @@ const IncomeStatement = () => {
                               ? 'rgba(220, 252, 231, 0.3)' 
                               : 'rgba(254, 226, 226, 0.2)'
                           }}>
-                            <TableCell sx={{ 
-                              py: 2, 
-                              px: 3, 
-                              fontWeight: 600, 
-                              color: '#101812',
+                            <TableCell sx={{
+                              py: 2,
+                              px: 3,
+                              fontWeight: 600,
+                              color: theme.palette.text.primary,
                               textAlign: 'center'
                             }}>
                               {row.name}
@@ -1177,9 +1179,9 @@ const IncomeStatement = () => {
                       if (row.type === "final-profit") {
                         const isProfit = row.amount >= 0;
                         return (
-                          <TableRow key={row.id} sx={{ 
-                            bgcolor: isProfit ? '#2E8B45' : '#DC2626',
-                            borderTop: `2px solid ${isProfit ? '#166534' : '#991B1B'}`
+                          <TableRow key={row.id} sx={{
+                            bgcolor: isProfit ? theme.palette.success.main : theme.palette.error.main,
+                            borderTop: `2px solid ${isProfit ? theme.palette.success.dark : theme.palette.error.dark}`
                           }}>
                             <TableCell colSpan={2} sx={{ py: 3, px: 3, textAlign: 'center' }}>
                               <Typography sx={{ 
@@ -1205,7 +1207,7 @@ const IncomeStatement = () => {
                       // صف رأس المال
                       if (row.type === "capital") {
                         return (
-                          <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                          <TableRow key={row.id} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
                             <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Typography sx={{ fontWeight: 700 }}>
@@ -1225,7 +1227,7 @@ const IncomeStatement = () => {
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
                               <Typography sx={{
                                 fontWeight: 700,
-                                color: row.amount >= 0 ? '#101812' : '#DC2626'
+                                color: row.amount >= 0 ? theme.palette.text.primary : theme.palette.error.main,
                               }}>
                                 {formatAmount(row.amount)}
                               </Typography>
@@ -1236,14 +1238,14 @@ const IncomeStatement = () => {
 
                       if (row.type === "expense-table-header") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: 'rgba(254, 226, 226, 0.2)' }}>
-                            <TableCell colSpan={2} sx={{ 
-                              py: 1, 
-                              px: 3, 
-                              textAlign: 'center', 
-                              fontWeight: 600, 
-                              color: '#DC2626',
-                              borderBottom: '1px solid rgba(0,0,0,0.1)'
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.error.main + '15' : 'rgba(254, 226, 226, 0.2)' }}>
+                            <TableCell colSpan={2} sx={{
+                              py: 1,
+                              px: 3,
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              color: theme.palette.error.main,
+                              borderBottom: `1px solid ${theme.palette.divider}`
                             }}>
                               المصروفات التفصيلية
                             </TableCell>
@@ -1253,7 +1255,7 @@ const IncomeStatement = () => {
 
                       // الصفوف العادية
                       return (
-                        <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                        <TableRow key={row.id} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
                           <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
                             <Typography>
                               {row.name}

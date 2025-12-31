@@ -78,7 +78,7 @@ const LoanClientConversion = ({
       <Typography
         variant="h6"
         fontWeight="bold"
-        color="#333"
+        color="text.primary"
         mb={3}
         textAlign="center"
       >
@@ -94,14 +94,13 @@ const LoanClientConversion = ({
           p: 3,
           mb: 3,
           borderRadius: 2,
-          border: "1px solid #e5e7eb",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "background.paper",
         }}
       >
         <Typography
           variant="subtitle1"
           fontWeight="bold"
-          color="#666"
+          color="text.secondary"
           mb={2}
           textAlign="center"
         >
@@ -119,7 +118,7 @@ const LoanClientConversion = ({
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#e9ecef",
+                  backgroundColor: "action.disabledBackground",
                 },
               }}
             />
@@ -135,7 +134,7 @@ const LoanClientConversion = ({
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#e9ecef",
+                  backgroundColor: "action.disabledBackground",
                 },
               }}
             />
@@ -150,14 +149,13 @@ const LoanClientConversion = ({
             p: 3,
             mb: 3,
             borderRadius: 2,
-            border: "1px solid #e5e7eb",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "background.paper",
           }}
         >
           <Typography
             variant="subtitle1"
             fontWeight="bold"
-            color="#666"
+            color="text.secondary"
             mb={2}
             textAlign="center"
           >
@@ -175,7 +173,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: "action.disabledBackground",
                   },
                 }}
               />
@@ -191,7 +189,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: "action.disabledBackground",
                   },
                 }}
               />
@@ -207,7 +205,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: "action.disabledBackground",
                   },
                 }}
               />
@@ -222,13 +220,12 @@ const LoanClientConversion = ({
           p: isSmallScreen ? 2 : 4,
           mb: isSmallScreen ? 2 : 3,
           borderRadius: 2,
-          border: "1px solid #e5e7eb",
         }}
       >
         <Typography
           variant={isSmallScreen ? "subtitle1" : "h6"}
           fontWeight="bold"
-          color="#333"
+          color="text.primary"
           mb={isSmallScreen ? 2 : 3}
           textAlign="center"
         >
@@ -273,7 +270,7 @@ const LoanClientConversion = ({
                     "& .MuiOutlinedInput-root": {
                       height: "56px",
                       width: isSmallScreen ? "250px" : "350px",
-                      backgroundColor: "#f9fafb",
+                      backgroundColor: "background.paper",
                       "&:hover fieldset": {
                         borderColor: "primary.main",
                       },
@@ -293,13 +290,12 @@ const LoanClientConversion = ({
             p: isSmallScreen ? 2 : 4,
             mb: isSmallScreen ? 2 : 3,
             borderRadius: 2,
-            border: "1px solid #e5e7eb",
           }}
         >
           <Typography
             variant={isSmallScreen ? "subtitle1" : "h6"}
             fontWeight="bold"
-            color="#333"
+            color="text.primary"
             mb={isSmallScreen ? 2 : 3}
             textAlign="center"
           >
@@ -329,7 +325,7 @@ const LoanClientConversion = ({
                       "& .MuiOutlinedInput-root": {
                         height: "56px",
                         width: isSmallScreen ? "250px" : "350px",
-                        backgroundColor: "#f9fafb",
+                        backgroundColor: "background.paper",
                         "&:hover fieldset": {
                           borderColor: "primary.main",
                         },
@@ -394,14 +390,13 @@ const LoanClientConversion = ({
             p: 3,
             mb: 3,
             borderRadius: 2,
-            border: "1px solid #e5e7eb",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "background.paper",
           }}
         >
           <Typography
             variant="subtitle1"
             fontWeight="bold"
-            color="#666"
+            color="text.secondary"
             mb={2}
             textAlign="center"
           >
@@ -419,7 +414,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: "action.disabledBackground",
                   },
                 }}
               />
@@ -435,7 +430,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: "action.disabledBackground",
                   },
                 }}
               />
@@ -451,7 +446,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#e9ecef",
+                    backgroundColor: "action.disabledBackground",
                   },
                 }}
               />

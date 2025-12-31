@@ -575,7 +575,7 @@ const MudarabahContract = () => {
         <h1 class="contract-title">عقد مضاربة</h1>
       </div>
       <div class="contract-dates">
-        <p>حرر هذا العقد في مدينة <span class="placeholder">{{مدينة_العقد}}</span></p>
+        <p>حرر هذا العقد في مدينة <span class="placeholder">{{مدينة_العقد_الثابتة}}</span></p>
         <p>بتاريخ <span class="placeholder">{{التاريخ_الهجري}}</span> الموافق <span class="placeholder">{{التاريخ_الميلادي}}</span></p>
       </div>
     </div>

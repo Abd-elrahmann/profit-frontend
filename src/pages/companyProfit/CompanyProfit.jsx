@@ -22,6 +22,7 @@ import {
   Button,
   Pagination,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   AccountBalance,
@@ -41,6 +42,7 @@ import { getCompanyProfitReport, withdrawCompanyProfit } from './CompanyProfitAp
 import { exportCompanyProfitToPDF, exportCompanyProfitToExcel } from '../../utilities/companyProfitExporter';
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 export default function CompanyProfit() {
+  const theme = useTheme();
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
@@ -177,11 +179,11 @@ export default function CompanyProfit() {
               alignItems: isSmallScreen ? 'flex-start' : 'center',
               p: isSmallScreen ? 2 : 3,
               gap: isSmallScreen ? 2 : 0,
-              borderBottom: '1px solid #e0e0e0',
-              bgcolor: '#fafafa'
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              bgcolor: theme.palette.background.default
             }}>
               <Box>
-                <Typography variant={isSmallScreen ? "subtitle1" : "h6"} fontWeight="bold" color="black">
+                <Typography variant={isSmallScreen ? "subtitle1" : "h6"} fontWeight="bold" color={theme.palette.text.primary}>
                   أرباح الشركة
                 </Typography>
               </Box>
@@ -193,9 +195,9 @@ export default function CompanyProfit() {
                   disabled={!profitData || profitData.availableAmount <= 0}
                   sx={{ minWidth: isSmallScreen ? '100%' : 'auto', fontWeight: "bold",
                     '&:hover': {
-                      bgcolor: 'primary.main',
+                      bgcolor: theme.palette.primary.main,
                       color: 'white',
-                      borderColor: 'primary.main'
+                      borderColor: theme.palette.primary.main
                     },
                    }}
                 >
@@ -210,17 +212,17 @@ export default function CompanyProfit() {
                       onClick={handleExportPDF}
                       disabled={isExporting}
                       sx={{
-                        color: 'error.main',
-                        borderColor: 'error.main',
+                        color: theme.palette.error.main,
+                        borderColor: theme.palette.error.main,
                         '&:hover': {
-                          bgcolor: 'error.main',
+                          bgcolor: theme.palette.error.main,
                           color: 'white',
-                          borderColor: 'error.main'
+                          borderColor: theme.palette.error.main
                         },
                         '&:disabled': {
-                          bgcolor: 'grey.200',
-                          color: 'grey.400',
-                          borderColor: 'grey.400'
+                          bgcolor: theme.palette.grey[200],
+                          color: theme.palette.grey[400],
+                          borderColor: theme.palette.grey[400]
                         },
                         minWidth: isSmallScreen ? '100%' : 'auto'
                       }}
@@ -234,7 +236,7 @@ export default function CompanyProfit() {
                       onClick={handleExportExcel}
                       disabled={isExporting}
                       sx={{
-                        color: 'success.main',
+                        color: theme.palette.primary.main,
                         borderColor: 'success.main',
                         '&:hover': {
                           bgcolor: 'success.main',
@@ -271,7 +273,7 @@ export default function CompanyProfit() {
                 {/* Profit Summary Cards */}
                 <Grid container spacing={3} sx={{ p: isSmallScreen ? 2 : 3, justifyContent: 'center' }}>
                   <Grid item xs={12} md={6}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                    <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1) ' }}>
                       <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                           <Box sx={{
@@ -279,10 +281,10 @@ export default function CompanyProfit() {
                             borderRadius: 2,
                             mr: 2
                           }}>
-                            <AccountBalance sx={{ color: "#1976d2", fontSize: 24 }} />
+                            <AccountBalance sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
                           </Box>
                           <Box>
-                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="primary">
+                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.primary.main}>
                               {Math.round(profitData?.availableAmount || 0).toLocaleString('en-US')}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -293,7 +295,7 @@ export default function CompanyProfit() {
                         <Chip
                           label="متاح للسحب"
                           size="small"
-                          color="primary"
+                          color={theme.palette.primary.main}
                           variant="outlined"
                         />
                       </CardContent>
@@ -301,7 +303,7 @@ export default function CompanyProfit() {
                   </Grid>
 
                   <Grid item xs={12} md={6}>
-                    <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                       <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                           <Box sx={{
@@ -309,10 +311,10 @@ export default function CompanyProfit() {
                             borderRadius: 2,
                             mr: 2
                           }}>
-                            <TrendingDown sx={{ color: "#2e7d32", fontSize: 24 }} />
+                            <TrendingDown sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
                           </Box>
                           <Box>
-                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color="success.main">
+                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.primary.main}>
                               {profitData?.data?.length || 0}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -323,7 +325,7 @@ export default function CompanyProfit() {
                         <Chip
                           label="عمليات سحب"
                           size="small"
-                          color="success"
+                          color={theme.palette.primary.main}
                           variant="outlined"
                         />
                       </CardContent>
@@ -382,7 +384,7 @@ export default function CompanyProfit() {
                             </StyledTableRow>
                           ))}
                           {/* Total Row */}
-                          <StyledTableRow sx={{ bgcolor: 'grey.50' }}>
+                          <StyledTableRow sx={{ bgcolor: theme.palette.grey[50] }}>
                             <StyledTableCell align="center">
                               <Typography variant="body2" fontWeight="bold">
                                 الإجمالي
@@ -410,7 +412,7 @@ export default function CompanyProfit() {
 
                   {profitData?.data?.length === 0 ? (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
-                      <AccountBalance sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                      <AccountBalance sx={{ fontSize: 48, color: theme.palette.text.secondary, mb: 2 }} />
                       <Typography variant="h6" color="text.secondary" gutterBottom>
                         لا توجد عمليات سحب حتى الآن
                       </Typography>

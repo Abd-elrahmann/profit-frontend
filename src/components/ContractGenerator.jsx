@@ -171,6 +171,7 @@ const generateContract = useCallback(async () => {
       .replace(/{{هوية_المضارب_2}}/g, '1116369511')
       .replace(/{{عنوان_المضارب_2}}/g, 'المملكة العربية السعودية - شرورة')
       .replace(/{{مدينة_العقد}}/g, investorData.city || 'الرياض')
+      .replace(/{{مدينة_العقد_الثابتة}}/g, 'الرياض')
 
       // معلومات إضافية للعقود الأخرى
       .replace(/{{اسم_الدائن}}/g, investorData.name || '')

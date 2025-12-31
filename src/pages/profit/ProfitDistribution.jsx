@@ -27,6 +27,7 @@ import {
   DialogActions,
   FormControlLabel,
   Checkbox,
+  useTheme,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -62,6 +63,7 @@ import dayjs from "dayjs";
 const ProfitDistribution = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -355,15 +357,15 @@ const ProfitDistribution = () => {
     <Box
       sx={{
         width: "350px",
-        borderRight: "1px solid #ddd",
-        bgcolor: "#fafafa",
+        borderRight: `1px solid ${theme.palette.divider}`,
+        bgcolor: theme.palette.background.default,
         height: "100%",
         overflowY: "auto",
         flexShrink: 0,
       }}
     >
-      <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
-        <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
+      <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.default }}>
+        <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3}>
           ملخص التوزيع
         </Typography>
         <Stack spacing={2}>
@@ -386,7 +388,7 @@ const ProfitDistribution = () => {
               />
               
               {enableSaving && (
-                <Box sx={{ mt: 1, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                <Box sx={{ mt: 1, p: 2, bgcolor: theme.palette.primary[50], borderRadius: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <Typography variant="body2">نسبة الادخار:</Typography>
                 <Typography variant="body2" fontWeight="bold">
@@ -408,13 +410,13 @@ const ProfitDistribution = () => {
 
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركة:</Typography>
-            <Typography fontWeight="bold" color="primary.main">
+            <Typography fontWeight="bold" color={theme.palette.primary.main}>
               {formatNumber(periodData?.companyProfit) || 0}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي أرباح الشركاء:</Typography>
-            <Typography fontWeight="bold" color="success.main">
+            <Typography fontWeight="bold" color={theme.palette.primary.main}>
               {enableSaving && savingPercentage > 0 ?
                 formatNumber(profitAfterSaving.partnerProfit) :
                 formatNumber((periodData?.totalAfterSaving ||
@@ -425,11 +427,11 @@ const ProfitDistribution = () => {
           </Box>
           
           {(enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) ? (
-            <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: '1px solid #e0e0e0' }}>
-              <Typography variant="body2" color="warning.main">
+            <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color={theme.palette.warning.main}>
                 المبلغ المدخر {enableSaving && savingPercentage > 0 ? `(${savingPercentage.toFixed(2)}%)` : ''}:
               </Typography>
-              <Typography variant="body2" fontWeight="bold" color="warning.main">
+              <Typography variant="body2" fontWeight="bold" color={theme.palette.warning.main}>
                 {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
                   (periodData?.totalSaving ||
                    periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0)
@@ -440,7 +442,7 @@ const ProfitDistribution = () => {
           
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>عدد الشركاء:</Typography>
-            <Typography fontWeight="bold">
+            <Typography fontWeight="bold" color={theme.palette.text.primary}>
               {periodData?.partners?.length || 0}
             </Typography>
           </Box>
@@ -456,7 +458,7 @@ const ProfitDistribution = () => {
       </Box>
 
       <Box sx={{ p: 3 }}>
-        <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
+        <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3}>
           الإجراءات
         </Typography>
         <Stack spacing={2}>
@@ -473,8 +475,8 @@ const ProfitDistribution = () => {
                   )
                 }
                 sx={{
-                  bgcolor: "success.main",
-                  "&:hover": { bgcolor: "success.dark" },
+                  bgcolor: theme.palette.primary.main,
+                  "&:hover": { bgcolor: theme.palette.primary.dark },
                 }}
               >
                 توزيع الأرباح
@@ -494,9 +496,9 @@ const ProfitDistribution = () => {
                   )
                 }
                 sx={{
-                  borderColor: "error.main",
-                  color: "error.main",
-                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                  borderColor: theme.palette.error.main,
+                  color: theme.palette.error.main,
+                  "&:hover": { bgcolor: theme.palette.error.main + "20" },
                 }}
               >
                 إلغاء التوزيع
@@ -509,7 +511,7 @@ const ProfitDistribution = () => {
 
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
+      <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={2}>
         الإجراءات
       </Typography>
       
@@ -532,7 +534,7 @@ const ProfitDistribution = () => {
           />
           
           {enableSaving && (
-            <Box sx={{ mt: 1, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+            <Box sx={{ mt: 1, p: 2, bgcolor: theme.palette.primary[50], borderRadius: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <Typography variant="body2">نسبة الادخار:</Typography>
                 <Typography variant="body2" fontWeight="bold">
@@ -568,7 +570,7 @@ const ProfitDistribution = () => {
               }
               fullWidth
               size="small"
-              sx={{ bgcolor: "success.main" }}
+              sx={{ bgcolor: theme.palette.primary.main }}
             >
               توزيع الأرباح
             </Button>
@@ -588,7 +590,7 @@ const ProfitDistribution = () => {
               }
               fullWidth
               size="small"
-              color="error"
+              color={theme.palette.error.main}
             >
               إلغاء التوزيع
             </Button>
@@ -634,7 +636,7 @@ const ProfitDistribution = () => {
             </StyledTableRow>
           ) : closedPeriods?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={6} align="center">
+              <StyledTableCell colSpan={7} align="center">
                 <Typography>لا توجد فترات مقفلة</Typography>
               </StyledTableCell>
             </StyledTableRow>
@@ -724,11 +726,11 @@ const ProfitDistribution = () => {
             <Grid item xs={12} key={period.periodId}>
               <Card
                 sx={{
-                  border: "1px solid #e0e0e0",
+                  border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 2,
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  boxShadow: `0 2px 4px ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
                   "&:hover": {
-                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                    boxShadow: `0 4px 8px ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
                   },
                   cursor: "pointer",
                 }}
@@ -1612,7 +1614,7 @@ const ProfitDistribution = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: theme.palette.background.default,
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -1641,7 +1643,7 @@ const ProfitDistribution = () => {
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 4,
-            bgcolor: "#fff",
+            bgcolor: theme.palette.background.paper,
             overflowY: "auto",
             width: "100%",
           }}
@@ -1679,8 +1681,8 @@ const ProfitDistribution = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom:
-                        activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "black",
+                        activeTab === 0 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 0 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                   <Tab
@@ -1688,8 +1690,8 @@ const ProfitDistribution = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom:
-                        activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "black",
+                        activeTab === 1 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 1 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                 </Tabs>
@@ -1761,7 +1763,7 @@ const ProfitDistribution = () => {
                         width: "100%",
                         borderRadius: "6px",
                         p: 1,
-                        border: "1px solid #e0e0e0",
+                        border: `1px solid ${theme.palette.divider}`,
                         bgcolor: "background.paper",
                       }}
                     />

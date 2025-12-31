@@ -26,6 +26,7 @@ import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { getAvailableModules } from '../../routes';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../Contexts/PermissionsContext';
+import { useTheme } from '../../theme/ThemeContext';
 
 // تعريف ثابت لحقول الصلاحيات (مصدر واحد للحقيقة)
 const PERMISSION_FIELDS = [
@@ -56,6 +57,7 @@ const availableModules = getAvailableModules();
 const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, isMobile = false }) => {
   const queryClient = useQueryClient();
   const { refreshPermissions } = usePermissions();
+  const { isDarkMode } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialValues, setInitialValues] = useState({
     name: '',
@@ -214,7 +216,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         alignItems: 'center',
         mb: 2,
         p: 1,
-        bgcolor: '#f5f5f5',
+        bgcolor: isDarkMode ? 'background.paper' : '#f5f5f5',
         borderRadius: 1
       }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
@@ -262,7 +264,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
               alignItems: 'center',
               p: 1,
               borderRadius: 1,
-              bgcolor: index % 2 === 0 ? 'transparent' : '#f9f9f9'
+              bgcolor: index % 2 === 0 ? 'transparent' : (isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9f9f9')
             }}
           >
             <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666',fontSize: '0.875rem' }}>
@@ -419,7 +421,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                     sx={{ 
                       minWidth: isMobile ? 'auto' : 250,
                       '& .MuiOutlinedInput-root': {
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                         borderRadius: '6px',
                         '&:hover fieldset': {
                           borderColor: '#2E8B45',
@@ -440,7 +442,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                     sx={{ 
                       minWidth: isMobile ? 'auto' : 250,
                       '& .MuiOutlinedInput-root': {
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                         borderRadius: '6px',
                         '&:hover fieldset': {
                           borderColor: '#2E8B45',

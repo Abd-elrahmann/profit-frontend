@@ -6,7 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Toaster } from 'react-hot-toast'
 import routes from './routes';
 import Layout from './components/layouts/Layout';
-import theme from './theme/theme';
+import { ThemeProviderWrapper } from './theme/ThemeContext';
 import Installments from './pages/Installments/Installments';
 import PaymentReceipt from './components/modals/PaymentReceipt';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -395,8 +395,7 @@ const PublicRoute = ({ children }) => {
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ThemeProviderWrapper>
       <Router>
           <PermissionProvider>
             <AppLayout />
@@ -412,7 +411,7 @@ function App() {
           error: {
             duration: 3000,
           },
-        
+
           style: {
             fontSize: '16px',
             padding: '16px 24px',
@@ -420,7 +419,7 @@ function App() {
         }}
       />
       </Router>
-    </ThemeProvider>
+    </ThemeProviderWrapper>
   );
 }
 

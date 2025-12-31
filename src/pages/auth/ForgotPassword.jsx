@@ -11,6 +11,7 @@ import {
   CircularProgress,
   InputAdornment,
 } from "@mui/material";
+import AuthThemeProvider from "./AuthThemeProvider";
 import {
   MdAccountBalance as AccountBalance,
   MdArrowBack as ArrowBackIcon,
@@ -60,17 +61,18 @@ const ForgotPassword = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background:
-          "radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.08), transparent 25%), radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.12), transparent 28%), #f5f7fb",
-        padding: { xs: 2, md: 4 },
-      }}
-    >
+    <AuthThemeProvider>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background:
+            "radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.08), transparent 25%), radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.12), transparent 28%), #f5f7fb",
+          padding: { xs: 2, md: 4 },
+        }}
+      >
       <Helmet>
         <title>نسيت كلمة المرور</title>
         <meta name="description" content="إعادة تعيين كلمة المرور لنظام إدارة السلف" />
@@ -341,6 +343,7 @@ const ForgotPassword = () => {
         </Box>
       </Card>
     </Box>
+    </AuthThemeProvider>
   );
 };
 

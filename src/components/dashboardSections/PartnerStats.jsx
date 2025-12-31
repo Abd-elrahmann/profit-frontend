@@ -18,11 +18,42 @@ import { useQuery } from '@tanstack/react-query';
 import { getPartnerStats } from '../../pages/dashboard/dashboardApi';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { useCountUp } from '../../hooks/useCountUp';
+import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
 const PartnerStats = () => {
   const [filter, setFilter] = useState('all');
   const theme = useTheme();
+  const { isDarkMode } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Custom tooltip for dark mode compatibility
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          color: isDarkMode ? '#ffffff' : '#000000',
+          fontSize: '14px',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{
+              margin: '4px 0',
+              color: entry.color || (isDarkMode ? '#ffffff' : '#000000')
+            }}>
+              {`${entry.name}: ${Math.round(entry.value).toLocaleString()}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['partner-stats', filter],
@@ -423,9 +454,9 @@ const PartnerStats = () => {
           p: { xs: 1.5, sm: 2, md: 3 },
           height: { xs: 300, sm: 350, md: 400 },
           borderRadius: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
           boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
         }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
@@ -442,7 +473,7 @@ const PartnerStats = () => {
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip formatter={(value) => [Math.round(value).toLocaleString(), '']} />
+              <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
               <Bar dataKey="value">
                 {partnerBarData.map((entry, index) => (
@@ -459,9 +490,9 @@ const PartnerStats = () => {
           p: { xs: 1.5, sm: 2, md: 3 },
           height: { xs: 300, sm: 350, md: 400 },
           borderRadius: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
           boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
         }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
@@ -496,9 +527,9 @@ const PartnerStats = () => {
           p: { xs: 1.5, sm: 2, md: 3 },
           height: { xs: 300, sm: 350, md: 400 },
           borderRadius: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
           boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
         }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
@@ -520,7 +551,7 @@ const PartnerStats = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </Card>

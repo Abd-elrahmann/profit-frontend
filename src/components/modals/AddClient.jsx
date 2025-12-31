@@ -31,6 +31,7 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { useTheme } from '../../theme/ThemeContext';
 
 // قائمة رموز الدول الشائعة
 const countryCodes = [
@@ -97,6 +98,7 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
 };
 
 const AddClient = ({ open, onClose }) => {
+  const { isDarkMode } = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
@@ -186,7 +188,7 @@ const AddClient = ({ open, onClose }) => {
           border: '2px dashed',
           borderColor: isDragActive ? 'primary.main' : '#ccc',
           textAlign: 'center',
-          bgcolor: isDragActive ? 'action.hover' : '#fafafa',
+          bgcolor: isDragActive ? 'action.hover' : (isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#fafafa'),
           cursor: 'pointer',
           '&:hover': {
             borderColor: 'primary.main',

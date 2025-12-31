@@ -137,7 +137,7 @@ const Dashboard = () => {
     return (
       <Box
         sx={{
-          bgcolor: '#f6f6f8',
+          bgcolor: theme.palette.background.default,
           minHeight: '100vh',
           py: 1,
           display: 'flex',
@@ -157,7 +157,7 @@ const Dashboard = () => {
     return (
       <Box
         sx={{
-          bgcolor: '#f6f6f8',
+          bgcolor: theme.palette.background.default,
           minHeight: '100vh',
           py: 1,
           display: 'flex',
@@ -183,7 +183,7 @@ const Dashboard = () => {
   return (
     <Box
       sx={{
-        bgcolor: '#f6f6f8',
+        bgcolor: theme.palette.background.default,
         minHeight: '100vh',
         py: 0,
       }}
@@ -210,9 +210,9 @@ const Dashboard = () => {
                 fontWeight: 600,
                 minHeight: { xs: 48, sm: 56, md: 64 },
                 px: { xs: 1.5, sm: 2, md: 3 },
-                color: 'text.primary',
+                color: theme.palette.text.primary,
                 '&.Mui-selected': {
-                  color: 'primary.main',
+                  color: theme.palette.primary.main,
                 },
               },
             }}

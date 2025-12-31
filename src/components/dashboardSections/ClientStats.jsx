@@ -18,11 +18,42 @@ import { getClientStats } from '../../pages/dashboard/dashboardApi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from '@mui/material';
 import { useCountUp } from '../../hooks/useCountUp';
+import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
 const ClientStats = () => {
   const [filter, setFilter] = useState('all');
   const theme = useTheme();
+  const { isDarkMode } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Custom tooltip for dark mode compatibility
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          color: isDarkMode ? '#ffffff' : '#000000',
+          fontSize: '14px',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{
+              margin: '4px 0',
+              color: entry.color || (isDarkMode ? '#ffffff' : '#000000')
+            }}>
+              {`${entry.name}: ${Math.round(entry.value).toLocaleString()}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['client-stats', filter],
@@ -332,7 +363,7 @@ const ClientStats = () => {
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip formatter={(value) => [Math.round(value).toLocaleString(), '']} />
+              <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
               <Bar dataKey="value">
                 {clientBarData.map((entry, index) => (

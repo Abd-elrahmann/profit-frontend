@@ -508,6 +508,11 @@ const LoanContractGenerator = React.forwardRef(
       return null;
     }
 
+    // إخفاء المكون تماماً إلا عند الحاجة لعرض رسالة التحميل
+    if (!isGenerating) {
+      return null;
+    }
+
     return (
       <div
         style={{
@@ -517,17 +522,15 @@ const LoanContractGenerator = React.forwardRef(
           padding: "10px",
         }}
       >
-        {isGenerating && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "20px",
-              backgroundColor: "#f5f5f5",
-            }}
-          >
-            جاري إنشاء PDF...
-          </div>
-        )}
+        <div
+          style={{
+            textAlign: "center",
+            padding: "20px",
+            backgroundColor: "#f5f5f5",
+          }}
+        >
+          جاري إنشاء PDF...
+        </div>
       </div>
     );
   }

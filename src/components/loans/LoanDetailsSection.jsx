@@ -38,14 +38,12 @@ const LoanDetailsSection = ({
         p: isSmallScreen ? 2 : 4,
         mb: isSmallScreen ? 2 : 3,
         borderRadius: 2,
-        border: "1px solid #e5e7eb",
-        backgroundColor: "#fff",
       }}
     >
       <Typography
         variant={isSmallScreen ? "subtitle1" : "h6"}
         fontWeight="bold"
-        color="#333"
+        color="text.primary"
         mb={isSmallScreen ? 2 : 3}
         textAlign="center"
       >
@@ -75,7 +73,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           >
@@ -109,7 +107,7 @@ const LoanDetailsSection = ({
                 "& .MuiOutlinedInput-root": {
                   height: "56px",
                   width: "300px",
-                  backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                  backgroundColor: "background.paper",
                 },
               }}
             />
@@ -125,7 +123,7 @@ const LoanDetailsSection = ({
               >
                 {bankBalance !== null ? (
                   <>
-                    <span style={{ color: "black", fontSize: "16px" }}>
+                    <span style={{ color: "text.primary", fontSize: "16px" }}>
                       رصيد الصندوق المتاح:{" "}
                     </span>
                     <span
@@ -164,7 +162,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -184,7 +182,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: "#f5f5f5", // Always disabled appearance
+                backgroundColor: "background.paper", // Always disabled appearance
               },
             }}
           />
@@ -208,7 +206,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -227,7 +225,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           >
@@ -254,7 +252,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -275,7 +273,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                  backgroundColor: "background.paper",
               },
             }}
             helperText="إذا تُرك فارغاً، سيتم استخدام التاريخ الحالي"
@@ -298,7 +296,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -320,7 +318,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -357,7 +355,7 @@ const LoanDetailsSection = ({
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
                     width: "300px",
-                    backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                    backgroundColor: "background.paper",
                   },
                 }}
               />
@@ -396,7 +394,7 @@ const LoanDetailsSection = ({
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
                     width: "300px",
-                    backgroundColor: isReadOnlyMode ? "#f5f5f5" : "#f9fafb",
+                    backgroundColor: "background.paper",
                   },
                 }}
               />

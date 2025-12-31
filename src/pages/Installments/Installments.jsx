@@ -964,7 +964,7 @@ const Installments = () => {
                     : "1px solid",
                 borderColor: hasPendingDocuments(installment)
                   ? "primary.main"
-                  : "grey.300",
+                  : "divider",
                 borderLeft: hasPendingDocuments(installment)
                   ? "4px solid"
                   : "none",
@@ -973,18 +973,18 @@ const Installments = () => {
                   : "transparent",
                 backgroundColor:
                   activeInstallmentId === installment.id
-                    ? "primary.50"
+                    ? "action.selected"
                     : hasPendingDocuments(installment)
-                    ? "primary.25"
+                    ? "action.selected"
                     : "inherit",
                 cursor: "pointer",
                 "&:hover": {
                   backgroundColor:
                     activeInstallmentId === installment.id
-                      ? "primary.100"
+                      ? "action.hover"
                       : hasPendingDocuments(installment)
-                      ? "primary.50"
-                      : "grey.100",
+                      ? "action.selected"
+                      : "background.default",
                 },
               }}
               onClick={() => handleRowClick(installment)}
@@ -1096,7 +1096,7 @@ const Installments = () => {
                         variant="body2"
                         fontWeight="bold"
                         sx={{
-                          color: installment.remaining === 0 ? "black" : "red",
+                          color: installment.remaining === 0 ? "text.primary" : "error.main",
                         }}
                       >
                         {installment.remaining?.toFixed(2) || "0.00"}
@@ -1124,7 +1124,7 @@ const Installments = () => {
             variant="outlined"
             sx={{
               borderRadius: 2,
-              backgroundColor: "grey.100",
+              backgroundColor: "background.paper",
               border: "2px solid",
               borderColor: "divider",
             }}
@@ -1243,17 +1243,17 @@ const Installments = () => {
                   : "transparent",
                 backgroundColor:
                   activeInstallmentId === installment.id
-                    ? "primary.50"
+                    ? "action.selected"
                     : hasPendingDocuments(installment)
-                    ? "primary.25"
+                    ? "action.selected"
                     : "inherit",
                 "&:hover": {
                   backgroundColor:
                     activeInstallmentId === installment.id
-                      ? "primary.100"
+                      ? "action.hover"
                       : hasPendingDocuments(installment)
-                      ? "primary.50"
-                      : "grey.100",
+                      ? "action.selected"
+                      : "background.default",
                 },
               }}
             >
@@ -1307,8 +1307,8 @@ const Installments = () => {
               </StyledTableCell>
               <StyledTableCell
                 align="center"
-                style={{
-                  color: installment.remaining === 0 ? "black" : "red",
+                sx={{
+                  color: installment.remaining === 0 ? "text.primary" : "error.main",
                   fontWeight: "bold",
                 }}
               >
@@ -1385,7 +1385,7 @@ const Installments = () => {
             return (
               <StyledTableRow
                 sx={{
-                  backgroundColor: "grey.100",
+                  backgroundColor: "background.paper",
                   "& td": {
                     fontWeight: "bold",
                     fontSize: "1rem",
@@ -1565,7 +1565,7 @@ const Installments = () => {
                 sx={{
                   color: "primary.main",
                   "&:hover": {
-                    bgcolor: "primary.50",
+                    bgcolor: "action.selected",
                     color: "primary.dark"
                   },
                 }}
@@ -1668,7 +1668,7 @@ const Installments = () => {
 
           {/* Bulk Actions */}
           {selectedInstallments.length > 0 && permissions.includes("repayments_Post") && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.100" }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "background.paper" }}>
               <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
                 <Typography variant="body2" color="text.secondary">
                   تم اختيار {selectedInstallments.length} دفعة
@@ -1756,7 +1756,7 @@ const Installments = () => {
 
           {/* خطوات المراجعة للشاشات الصغيرة */}
           {isSmallScreen && !isSettlementCompleted() && reviewStepsVisible && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.50" }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "background.default" }}>
               <Typography variant="h6" fontWeight="bold" mb={2}>
                 خطوات المراجعة
               </Typography>
@@ -1819,7 +1819,7 @@ const Installments = () => {
                             sx={{
                               mb: 2,
                               p: 2,
-                              bgcolor: "grey.100",
+                              bgcolor: "background.paper",
                               borderRadius: 1,
                             }}
                           >
@@ -1839,7 +1839,7 @@ const Installments = () => {
                                     alignItems: "center",
                                     gap: 1,
                                     cursor: "pointer",
-                                    "&:hover": { bgcolor: "grey.200" },
+                                    "&:hover": { bgcolor: "action.hover" },
                                     p: 1,
                                     borderRadius: 1,
                                     mb: 1,
@@ -1868,7 +1868,7 @@ const Installments = () => {
 
                       {/* Display payment proof */}
                       {selectedInstallment?.PaymentProof && (
-                        <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                        <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
                           <Typography
                             variant="body2"
                             fontWeight="bold"
@@ -1882,7 +1882,7 @@ const Installments = () => {
                               alignItems: "center",
                               gap: 1,
                               cursor: "pointer",
-                              "&:hover": { bgcolor: "grey.200" },
+                              "&:hover": { bgcolor: "action.hover" },
                               p: 1,
                               borderRadius: 1,
                             }}
@@ -1938,7 +1938,7 @@ const Installments = () => {
 
           {/* رسالة التسوية المكتملة للشاشات الصغيرة */}
           {isSmallScreen && isSettlementCompleted() && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "grey.50" }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "background.default" }}>
               <Box sx={{ textAlign: "center", py: 2 }}>
                 <Typography variant="h6" fontWeight="bold" color="success.main" mb={2}>
                   🎉 تم تسوية السلفة بالكامل
@@ -1994,7 +1994,7 @@ const Installments = () => {
               width: "300px",
               borderRight: "1px solid",
               borderRightColor: "divider",
-              bgcolor: "grey.50",
+              bgcolor: "background.default",
               height: "100%",
               overflowY: "auto",
               flexShrink: 0,
@@ -2063,7 +2063,7 @@ const Installments = () => {
                           sx={{
                             mb: 2,
                             p: 2,
-                            bgcolor: "grey.100",
+                            bgcolor: "background.paper",
                             borderRadius: 1,
                           }}
                         >
@@ -2083,7 +2083,7 @@ const Installments = () => {
                                   alignItems: "center",
                                   gap: 1,
                                   cursor: "pointer",
-                                  "&:hover": { bgcolor: "grey.200" },
+                                  "&:hover": { bgcolor: "action.hover" },
                                   p: 1,
                                   borderRadius: 1,
                                   mb: 1,
@@ -2112,7 +2112,7 @@ const Installments = () => {
 
                     {/* Display payment proof */}
                     {selectedInstallment?.PaymentProof && (
-                      <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                      <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
                         <Typography
                           variant="body2"
                           fontWeight="bold"
@@ -2126,7 +2126,7 @@ const Installments = () => {
                             alignItems: "center",
                             gap: 1,
                             cursor: "pointer",
-                            "&:hover": { bgcolor: "grey.200" },
+                            "&:hover": { bgcolor: "action.hover" },
                             p: 1,
                             borderRadius: 1,
                           }}
@@ -2188,7 +2188,7 @@ const Installments = () => {
               width: "270px",
               borderRight: "1px solid",
               borderRightColor: "divider",
-              bgcolor: "grey.50",
+              bgcolor: "background.default",
               height: "100%",
               overflowY: "auto",
               flexShrink: 0,
@@ -2381,7 +2381,7 @@ const Installments = () => {
           </Typography>
 
           {/* عرض الأقساط المعلقة فقط */}
-          <Box sx={{ mb: 2, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+          <Box sx={{ mb: 2, p: 2, bgcolor: "background.default", borderRadius: 1 }}>
             <Typography variant="body2" fontWeight="bold" gutterBottom>
               الدفعات المعلقة (
               {
@@ -2586,7 +2586,7 @@ const Installments = () => {
                         alignItems: "center",
                         gap: 1,
                         cursor: "pointer",
-                        "&:hover": { bgcolor: "grey.200" },
+                        "&:hover": { bgcolor: "action.hover" },
                         p: 1,
                         borderRadius: 1,
                         mb: 1,
@@ -2673,7 +2673,7 @@ const Installments = () => {
                   alignItems: "center",
                   gap: 1,
                   cursor: "pointer",
-                  "&:hover": { bgcolor: "grey.200" },
+                  "&:hover": { bgcolor: "action.hover" },
                   p: 1,
                   borderRadius: 1,
                 }}

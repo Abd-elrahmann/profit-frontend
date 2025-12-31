@@ -15,16 +15,20 @@ import {
   MdPerson as Person,
   MdSettings as SettingsIcon,
   MdExitToApp as ExitToAppIcon,
+  MdLightMode as LightModeIcon,
+  MdDarkMode as DarkModeIcon,
 } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "/assets/images/logo.webp";
 import Api from "../../config/Api";
+import { useTheme } from "../../theme/ThemeContext";
 
 const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
   const [userData, setUserData] = useState(null);
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Function to validate and update user data
   const validateUserData = useCallback(() => {
@@ -142,16 +146,16 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   }
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         zIndex: 1201,
-        backgroundColor: "#ffffff",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-        borderBottom: "1px solid #e0e0e0",
+        backgroundColor: "background.paper",
+        boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 2px 4px rgba(0,0,0,0.1)",
+        borderBottom: isDarkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid #e0e0e0",
       }}
     >
       <Toolbar sx={{ justifyContent: "space-between", direction: "rtl" }}>
@@ -188,7 +192,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 component="div"
                 sx={{
                   fontWeight: 700,
-                  color: "primary.main",
+                  color: isDarkMode ? "white" : "primary.main",
                   display: { xs: "none", sm: "flex" },
                   alignItems: "center",
                   justifyContent: "center",
@@ -196,6 +200,22 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
               >
                 <span>نظام إدارة السلف</span>
               </Typography>
+
+              <IconButton
+                onClick={toggleTheme}
+                sx={{
+                  color: "primary.main",
+                  ml: 1,
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "rgba(30, 64, 175, 0.1)",
+                    transform: "scale(1.1)",
+                  },
+                }}
+                aria-label="toggle theme"
+              >
+                {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
               </Box>
             </Box>
         </div>
@@ -207,7 +227,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: "primary.main",
+                    color: isDarkMode ? "white" : "primary.main",
                     fontSize: "0.85rem",
                     fontWeight: 600,
                   }}
@@ -218,7 +238,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                   variant="body1"
                   sx={{
                     fontWeight: 700,
-                    color: "primary.main",
+                    color: isDarkMode ? "white" : "primary.main",
                   }}
                 >
                   {userData.name.split(' ')[0] || 'مستخدم'}
@@ -278,7 +298,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
           )}
         </Box>
       </Toolbar>
-    </div>
+    </Box>
   );
 };
 

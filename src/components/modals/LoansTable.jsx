@@ -703,7 +703,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
           display: 'flex', 
           justifyContent: 'center', 
           p: isSmallScreen ? 1 : 2,
-          borderTop: '1px solid #e0e0e0'
+          borderTop: '1px solid',
+          borderColor: 'divider'
         }}>
           {isSmallScreen ? (
             <Pagination
@@ -799,7 +800,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                     startIcon={<Visibility sx={{marginLeft:'10px'}} />}
                     onClick={() => handleViewContract(selectedLoanContracts.DEBT_ACKNOWLEDGMENT)}
                     size="small"
-                    sx={{ bgcolor: "#1976D2", "&:hover": { bgcolor: "#1565C0" } }}
+                    sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                   >
                     عرض
                   </Button>
@@ -848,7 +849,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                     startIcon={<Visibility sx={{marginLeft:'10px'}} />}
                     onClick={() => handleViewContract(selectedLoanContracts.PROMISSORY_NOTE)}
                     size="small"
-                    sx={{ bgcolor: "#1976D2", "&:hover": { bgcolor: "#1565C0" } }}
+                    sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                   >
                     عرض
                   </Button>
@@ -897,7 +898,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                     startIcon={<Visibility sx={{marginLeft:'10px'}} />}
                     onClick={() => handleViewContract(selectedLoanContracts.SETTLEMENT)}
                     size="small"
-                    sx={{ bgcolor: "#1976D2", "&:hover": { bgcolor: "#1565C0" } }}
+                    sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                   >
                     عرض
                   </Button>
@@ -942,7 +943,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                 </Box>
                 <Stack spacing={1}>
                   {selectedLoanContracts.PAYMENT_PROOF.map((proof, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center', p: 1, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                    <Box key={index} sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                       <Typography variant="body2" sx={{ flex: 1, textAlign: 'right' }}>
                         إثبات دفع #{index + 1}
                       </Typography>
@@ -1021,11 +1022,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               handleActivateLoan(selectedLoanForMenu?.id);
               handleMenuClose();
             }}
-            sx={{ color: "#2E7D32", fontWeight: 'bold', fontSize: '0.875rem' }} // Green
+            sx={{ color: "success.main", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
 
             <ListItemIcon>
-              <PlayArrow fontSize="small" sx={{ color: "#2E7D32" }} />
+              <PlayArrow fontSize="small" sx={{ color: "success.main" }} />
             </ListItemIcon>
             تفعيل السلفة
           </MenuItem>
@@ -1037,10 +1038,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
             onViewDetails(selectedLoanForMenu?.id);
             handleMenuClose();
           }}
-          sx={{ color: "#1976D2", fontWeight: 'bold', fontSize: '0.875rem' }} // Blue
+          sx={{ color: "primary.main", fontWeight: 'bold', fontSize: '0.875rem' }}
         >
           <ListItemIcon>
-            <Visibility fontSize="small" sx={{ color: "#1976D2" }} />
+            <Visibility fontSize="small" sx={{ color: "primary.main" }} />
           </ListItemIcon>
           عرض السلفة
         </MenuItem>
@@ -1051,11 +1052,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
             handleViewInstallmentsClick(selectedLoanForMenu);
             handleMenuClose();
           }}
-          sx={{ color: "#2E7D32", fontWeight: 'bold', fontSize: '0.875rem' }} // Green
+          sx={{ color: "success.main", fontWeight: 'bold', fontSize: '0.875rem' }}
         >
 
           <ListItemIcon>
-            <Schedule fontSize="small" sx={{ color: "#2E7D32" }} />
+            <Schedule fontSize="small" sx={{ color: "success.main" }} />
           </ListItemIcon>
           عرض الأقساط
         </MenuItem>
@@ -1066,10 +1067,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
             onClick={() => {
               handleViewContracts(selectedLoanForMenu);
             }}
-            sx={{ color: "#7B1FA2", fontWeight: 'bold', fontSize: '0.875rem' }} // Purple
+            sx={{ color: "#9c27b0", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
-              <Description fontSize="small" sx={{ color: "#7B1FA2" }} />
+              <Description fontSize="small" sx={{ color: "#9c27b0" }} />
             </ListItemIcon>
             عرض عقود السلفة
           </MenuItem>
@@ -1082,10 +1083,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               onCreateAdditionalLoan(selectedLoanForMenu?.client);
               handleMenuClose();
             }}
-            sx={{ color: "black", fontWeight: 'bold', fontSize: '0.875rem' }}
+            sx={{ color: "text.primary", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
-              <Add fontSize="small" sx={{ color: "black" }} />
+              <Add fontSize="small" sx={{ color: "text.primary" }} />
             </ListItemIcon>
             سلفة إضافية
           </MenuItem>
@@ -1098,10 +1099,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               onConvertClient(selectedLoanForMenu);
               handleMenuClose();
             }}
-            sx={{ color: "#FF9800", fontWeight: 'bold', fontSize: '0.875rem' }}
+            sx={{ color: "warning.main", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
-              <SwapHoriz fontSize="small" sx={{ color: "#FF9800" }} />
+              <SwapHoriz fontSize="small" sx={{ color: "warning.main" }} />
             </ListItemIcon>
             نقل مديونيه
           </MenuItem>
@@ -1114,10 +1115,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               handleDeactivateLoan(selectedLoanForMenu?.id);
               handleMenuClose();
             }}
-            sx={{ color: "red", fontWeight: 'bold', fontSize: '0.875rem' }}
+            sx={{ color: "error.main", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
-              <Pause fontSize="small" sx={{ color: "red" }} />
+              <Pause fontSize="small" sx={{ color: "error.main" }} />
             </ListItemIcon>
             إلغاء تفعيل السلفة
           </MenuItem>
@@ -1131,10 +1132,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               setIsDeleteModalOpen(true);
               handleMenuClose();
             }}
-            sx={{ color: "#D32F2F", fontWeight: 'bold', fontSize: '0.875rem' }} // Red
+            sx={{ color: "error.main", fontWeight: 'bold', fontSize: '0.875rem' }}
           >
             <ListItemIcon>
-              <Delete fontSize="small" sx={{ color: "#D32F2F" }} />
+              <Delete fontSize="small" sx={{ color: "error.main" }} />
             </ListItemIcon>
             حذف السلفة
           </MenuItem>

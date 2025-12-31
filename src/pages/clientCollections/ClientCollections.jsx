@@ -5,6 +5,7 @@ import {
   Tab,
   Paper,
   useMediaQuery,
+  useTheme,
   Button,
   Stack,
   Menu,
@@ -54,6 +55,7 @@ const ClientCollections = () => {
 
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
   const { permissions } = usePermissions();
+  const { isDarkMode } = useTheme();
 
   const { data: activeClientsData, isLoading: isActiveClientsLoading } = useQuery({
     queryKey: ["clients-collections", page, "ACTIVE"],
@@ -135,7 +137,7 @@ const ClientCollections = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: isDarkMode ? 'background.default' : '#f6f6f8',
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -150,7 +152,7 @@ const ClientCollections = () => {
         sx={{
           flex: 1,
           p: isSmallScreen ? 2 : 4,
-          bgcolor: "#fff",
+          bgcolor: 'background.paper',
         }}
       >
         <Box sx={{ width: "100%" }}>
@@ -176,7 +178,7 @@ const ClientCollections = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: clientsTab === 0 ? "3px solid #d32f2f" : "none",
-                      color: clientsTab === 0 ? "#d32f2f" : "black",
+                      color: clientsTab === 0 ? "#d32f2f" : "text.primary",
                     }}
                   />
                   <Tab
@@ -184,7 +186,7 @@ const ClientCollections = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom: clientsTab === 1 ? "3px solid #2e7d32" : "none",
-                      color: clientsTab === 1 ? "#2e7d32" : "black",
+                      color: clientsTab === 1 ? "#2e7d32" : "text.primary",
                     }}
                   />
                 </Tabs>

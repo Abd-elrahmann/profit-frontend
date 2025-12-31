@@ -481,7 +481,8 @@ const SmallLoansTable = ({ onEditLoan }) => {
           display: 'flex',
           justifyContent: 'center',
           p: isSmallScreen ? 1 : 2,
-          borderTop: '1px solid #e0e0e0'
+          borderTop: '1px solid',
+          borderColor: 'divider'
         }}>
           {isSmallScreen ? (
             <TablePagination
@@ -564,7 +565,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
                     width: "250px",
-                    backgroundColor: "#f9fafb",
+                    backgroundColor: "background.paper",
                   },
                 }}
                 placeholder="أدخل مبلغ الدفعة"
@@ -588,7 +589,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#f9fafb",
+                    backgroundColor: "background.paper",
                     width: "250px",
                   },
                 }}
@@ -597,7 +598,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
             </Grid>
             {selectedLoanForPayment && (
               <Grid item xs={12}>
-                <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1, width: "250px",height: "56px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                <Box sx={{ p: 2, bgcolor: "action.disabledBackground", borderRadius: 1, width: "250px",height: "56px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     معلومات السلفة:
                   </Typography>

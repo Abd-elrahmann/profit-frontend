@@ -11,6 +11,7 @@ import {
   Divider,
   CircularProgress,
   Chip,
+  useTheme,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -29,6 +30,7 @@ import { notifySuccess, notifyError } from '../utilities/toastify';
 import Api from '../config/Api';
 
 const Profile = () => {
+  const theme = useTheme();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -218,16 +220,16 @@ const Profile = () => {
         >
           {/* Profile Image Section */}
           <Grid item xs={12} sm={12} md={6} sx={{width: '1000px'}}>
-            <Card 
-              sx={{ 
+            <Card
+              sx={{
                 height: 'fit-content',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(255,255,255,0.08)' : '0 4px 20px rgba(0,0,0,0.08)',
                 borderRadius: 3,
                 overflow: 'hidden',
                 transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                 '&:hover': {
                   transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                  boxShadow: theme.palette.mode === 'dark' ? '0 8px 30px rgba(255,255,255,0.12)' : '0 8px 30px rgba(0,0,0,0.12)',
                 }
               }}
             >
@@ -256,10 +258,10 @@ const Profile = () => {
                       height: { xs: 100, sm: 120, md: 140 },
                       margin: '0 auto',
                       fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                      bgcolor: 'primary.main',
+                      bgcolor: theme.palette.primary.main,
                       border: '4px solid',
-                      borderColor: 'primary.light',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      borderColor: theme.palette.primary.light,
+                      boxShadow: theme.palette.mode === 'dark' ? '0 4px 12px rgba(255,255,255,0.15)' : '0 4px 12px rgba(0,0,0,0.15)',
                     }}
                   >
                     {!userData?.profileImage && (userData?.name?.charAt(0) || 'U')}
@@ -294,16 +296,16 @@ const Profile = () => {
                   sx={{
                     width: '100%',
                     border: '2px dashed',
-                    borderColor: isDragActive ? 'primary.main' : 'grey.300',
+                    borderColor: isDragActive ? theme.palette.primary.main : theme.palette.grey[300],
                     borderRadius: 2,
                     p: { xs: 2, sm: 3 },
                     textAlign: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    backgroundColor: isDragActive ? 'primary.50' : 'grey.50',
+                    backgroundColor: isDragActive ? theme.palette.primary.main + '20' : theme.palette.grey[50],
                     '&:hover': {
-                      borderColor: 'primary.main',
-                      backgroundColor: 'primary.50',
+                      borderColor: theme.palette.primary.main,
+                      backgroundColor: theme.palette.primary.main + '20',
                       transform: 'scale(1.02)',
                     },
                   }}
@@ -354,7 +356,7 @@ const Profile = () => {
           <Grid item xs={12} sm={12} md={6}>
             <Card
               sx={{
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(255,255,255,0.08)' : '0 4px 20px rgba(0,0,0,0.08)',
                 borderRadius: 3,
                 overflow: 'hidden',
                 height: 'fit-content',
@@ -473,15 +475,15 @@ const Profile = () => {
                           variant="contained"
                           startIcon={!updating && <SaveIcon sx={{marginLeft: 2}} />}
                           disabled={updating}
-                          sx={{ 
+                          sx={{
                             minWidth: { xs: '100%', sm: 160 },
                             py: 1.25,
                             borderRadius: 2,
                             fontSize: { xs: '0.875rem', sm: '1rem' },
                             fontWeight: 600,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            boxShadow: theme.palette.mode === 'dark' ? '0 4px 12px rgba(255,255,255,0.15)' : '0 4px 12px rgba(0,0,0,0.15)',
                             '&:hover': {
-                              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+                              boxShadow: theme.palette.mode === 'dark' ? '0 6px 16px rgba(255,255,255,0.2)' : '0 6px 16px rgba(0,0,0,0.2)',
                             }
                           }}
                         >
@@ -520,14 +522,14 @@ const Profile = () => {
                   <Grid container spacing={{ xs: 2, sm: 3 }}>
                     <Grid item xs={12} sm={6}>
                       <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
                           justifyContent: { xs: 'center', sm: 'flex-start' },
                           mb: { xs: 1.5, sm: 2 },
                           p: 2,
                           borderRadius: 2,
-                          backgroundColor: 'grey.50',
+                          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : 'grey.50',
                         }}
                       >
                         <Typography 
@@ -551,15 +553,15 @@ const Profile = () => {
                       </Box>
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
+                      <Box
+                        sx={{
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: { xs: 'center', sm: 'flex-start' },
                           mb: { xs: 1.5, sm: 2 },
                           p: 2,
                           borderRadius: 2,
-                          backgroundColor: 'grey.50',
+                          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : 'grey.50',
                         }}
                       >
                         <Typography 

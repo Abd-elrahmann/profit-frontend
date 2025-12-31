@@ -21,7 +21,7 @@ import {
   InputAdornment,
   Alert,
   Tooltip,
-
+  useTheme,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -83,7 +83,7 @@ export default function ContractTemplates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const { permissions } = usePermissions();
-
+  const theme = useTheme();
   // Map tab values to API template names
   const templateNameMap = React.useMemo(() => ({
     "mudarabah": "MUDARABAH",
@@ -206,10 +206,10 @@ export default function ContractTemplates() {
     );
 
     return (
-      <Card sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
+      <Card sx={{ mb: 3, border: `1px solid ${theme.palette.divider}` }}>
         <CardContent>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2d3748' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
               المتغيرات المتاحة
             </Typography>
             {permissions.includes('templates_Update') && (
@@ -261,11 +261,11 @@ export default function ContractTemplates() {
                         justifyContent: 'flex-start',
                         height: 'auto',
                         minHeight: '36px',
-                        backgroundColor: '#f8f9fc',
-                        border: '1px solid #e5e7eb',
+                        backgroundColor: theme.palette.background.default,
+                        border: `1px solid ${theme.palette.divider}`,
                         '&:hover': {
-                          backgroundColor: '#e0e7ff',
-                          borderColor: '#3b82f6',
+                          backgroundColor: theme.palette.background.paper,
+                          borderColor: theme.palette.primary.main,
                         },
                         '& .MuiChip-label': {
                           fontSize: '0.8rem',
@@ -517,14 +517,11 @@ export default function ContractTemplates() {
         p: 4,
         mb: 4,
         minHeight: "600px",
-        bgcolor: 'white',
-        border: '1px solid #e0e0e0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        bgcolor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        boxShadow: `0 2px 4px ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
         maxWidth: '1200px',
         margin: '0 auto',
-        background: 'linear-gradient(45deg, #fafafa 25%, transparent 25%), linear-gradient(-45deg, #fafafa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #fafafa 75%), linear-gradient(-45deg, transparent 75%, #fafafa 75%)',
-        backgroundSize: '20px 20px',
-        backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
       }}>
         <Box
           dangerouslySetInnerHTML={{ __html: getStyledContent(content, styles) }}
@@ -591,7 +588,7 @@ export default function ContractTemplates() {
   }, [loadTemplates]);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: theme.palette.background.default }}>
       <Helmet>
         <title>القوالب المالية</title>
         <meta name="description" content="القوالب المالية" />
@@ -609,7 +606,7 @@ export default function ContractTemplates() {
               textColor="primary"
               indicatorColor="primary"
               sx={{
-                borderBottom: "1px solid #e5e7eb",
+                borderBottom: `1px solid ${theme.palette.divider}`,
                 mb: 3,
                 "& .MuiTab-root": {
                   fontWeight: "bold",
@@ -637,7 +634,7 @@ export default function ContractTemplates() {
               ) : (
                 <>
                   <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2d3748' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
                       {activeTab === "mudarabah" && "عقد المضاربة"}
                       {activeTab === "promissory-note" && "سند لأمر"}
                       {activeTab === "debt-acknowledgment" && "إقرار دين وتعهد بالسداد"}

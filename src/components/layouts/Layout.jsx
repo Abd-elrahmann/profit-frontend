@@ -137,7 +137,7 @@ const Layout = ({ children }) => {
               xs: '100vw',
               md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100vw - 240px)' : '100vw'
             },
-            backgroundColor: isLoggedIn ? '#f8f9fa' : 'transparent',
+            backgroundColor: 'background.paper',
             minHeight: 'calc(100vh - 64px)',
             overflow: 'auto', 
             overflowX: 'hidden' 

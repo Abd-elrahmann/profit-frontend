@@ -179,14 +179,14 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
       dir="rtl"
       fullScreen={isMobile}
     >
-      <DialogTitle sx={{ fontWeight: "bold", color: "primary.main" }}>
+      <DialogTitle sx={{ fontWeight: "bold", color: "primary.main", bgcolor: 'background.paper' }}>
         إضافة مصروفات جديدة
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ bgcolor: 'background.paper' }}>
         <Stack spacing={3} sx={{ mt: 1 }}>
           {expenses.map((expense, index) => (
             <Box key={index} sx={{ position: "relative" }}>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: "black" }}>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: "text.primary" }}>
                 مصروف #{index + 1}
               </Typography>
               
@@ -323,7 +323,7 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
           </Button>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ p: 2, gap: 1, flexDirection: "row-reverse", justifyContent: "space-between" }}>
+      <DialogActions sx={{ p: 2, gap: 1, flexDirection: "row-reverse", justifyContent: "space-between", bgcolor: 'background.paper' }}>
         <Button onClick={onClose} variant="outlined" disabled={loading}>
           إلغاء
         </Button>
@@ -331,7 +331,7 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
           onClick={handleSubmit}
           variant="contained"
           disabled={loading}
-          sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "#2E8B41" } }}
+          sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
         >
           {loading ? <CircularProgress size={20} /> : "حفظ المصروفات"}
         </Button>

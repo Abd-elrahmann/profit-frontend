@@ -46,6 +46,7 @@ import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportEmployeesToPDF, exportEmployeesToExcel } from "../../utilities/employeesExporter";
+import { useTheme } from '../../theme/ThemeContext';
 
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
@@ -69,7 +70,8 @@ export default function Employees() {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
-  
+  const { isDarkMode } = useTheme();
+
   const { permissions } = usePermissions();
   const { data: usersData, isLoading, refetch } = useQuery({ 
     queryKey: ["employees", page + 1, searchQuery], 
@@ -174,7 +176,7 @@ export default function Employees() {
   const renderTable = () => (
     <TableContainer  sx={{ borderRadius: 2 }}>
       <Table stickyHeader>
-        <TableHead sx={{ bgcolor: "#F3F4F6" }}>
+        <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الاسم</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>البريد الإلكتروني</StyledTableCell>
@@ -438,7 +440,7 @@ export default function Employees() {
   );
 
   return (
-    <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
         <title>الموظفين</title>
         <meta name="description" content="الموظفين" />
@@ -463,7 +465,7 @@ export default function Employees() {
             onChange={handleSearchChange}
             sx={{
               flex: 1,
-              bgcolor: "#F3F4F6",
+              bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6',
               borderRadius: 2,
               "& fieldset": { border: "none" },
               minWidth: isSmallScreen ? '100%' : 'auto',

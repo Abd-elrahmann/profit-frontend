@@ -30,6 +30,7 @@ import { Helmet } from "react-helmet-async";
 import { exportLogsToPDF, exportLogsToExcel } from "../../utilities/logsExporter";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
+import { useTheme } from '../../theme/ThemeContext';
 
 const Logs = () => {
   const [page, setPage] = useState(1);
@@ -43,6 +44,7 @@ const Logs = () => {
   });
 
   const { permissions } = usePermissions();
+  const { isDarkMode } = useTheme();
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -210,7 +212,7 @@ const Logs = () => {
   const renderTable = () => (
     <TableContainer>
       <Table stickyHeader>
-        <TableHead sx={{ bgcolor: "#F3F4F6" }}>
+        <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
               المستخدم
@@ -389,7 +391,7 @@ const Logs = () => {
                         variant="outlined" 
                         sx={{ 
                           p: 2, 
-                          bgcolor: '#fafafa',
+                          bgcolor: 'background.paper',
                           borderRadius: 1,
                           border: '1px solid #e0e0e0'
                         }}
@@ -416,7 +418,7 @@ const Logs = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
         <title>سجلات النشاطات</title>
         <meta name="description" content="سجلات النشاطات" />

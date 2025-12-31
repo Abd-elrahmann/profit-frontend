@@ -406,6 +406,10 @@ const InstallmentSettlementReceipt = React.forwardRef(
       return null;
     }
 
+    if (!isGenerating) {
+      return null;
+    }
+
     return (
       <div
         style={{

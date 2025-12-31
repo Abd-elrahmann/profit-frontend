@@ -61,7 +61,7 @@ const LoanMainTab = ({
       )}
 
       {/* Sub-tabs for loan status filtering */}
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3, display: "flex", justifyContent: "center" }}>
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
         <Tabs
           value={subTab}
           onChange={(e, newValue) => setSubTab(newValue)}

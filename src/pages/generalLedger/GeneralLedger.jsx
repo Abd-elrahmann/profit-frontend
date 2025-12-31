@@ -70,7 +70,6 @@ export default function GeneralLedger() {
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();
-
   // Query for account ledger data
   const { data: ledgerData, isLoading: isLoadingLedger, error } = useQuery({
     queryKey: ['account-ledger', searchParams?.account?.id, searchParams?.fromDate, searchParams?.toDate, currentPage, pageLimit],
@@ -141,7 +140,7 @@ export default function GeneralLedger() {
     <Stack spacing={2}>
       {ledgerData.journals?.map((journal) => 
         journal.lines.map((line) => (
-          <Card key={`${journal.id}-${line.id}`} variant="outlined" sx={{ borderRadius: 2 }}>
+          <Card key={`${journal.id}-${line.id}`} variant="outlined" sx={{ borderRadius: 2, bgcolor: 'background.paper' }}>
             <CardContent sx={{ p: 2 }}>
               <Stack spacing={1.5}>
                 {/* Header */}
@@ -314,7 +313,7 @@ export default function GeneralLedger() {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f6f6f8" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.paper" }}>
       <Helmet>
         <title>دفتر الأستاذ العام</title>
         <meta name="description" content="دفتر الأستاذ العام للمحاسبة" />
@@ -492,7 +491,7 @@ export default function GeneralLedger() {
               p: 6
             }}>
               <Search sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-              <Typography variant="body2" color="black">
+              <Typography variant="body2">
                 لا توجد قيود في الفترة المحددة
               </Typography>
             </Paper>

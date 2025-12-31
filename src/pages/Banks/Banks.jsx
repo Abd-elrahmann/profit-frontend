@@ -35,8 +35,10 @@ import {
 import { useTranslation } from "react-i18next";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportBanksToPDF, exportBanksToExcel } from "../../utilities/banksExporter";
+import { useTheme } from "../../theme/ThemeContext";
 const Banks = () => {
   const { i18n } = useTranslation();
+  const { isDarkMode } = useTheme();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [bankToDelete, setBankToDelete] = useState(null);
@@ -44,11 +46,11 @@ const Banks = () => {
   const [isAddBankOpen, setIsAddBankOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  
+
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
-  
+
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
@@ -158,50 +160,50 @@ const Banks = () => {
           <StyledTableRow>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               #
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               اسم الحساب
             </StyledTableCell>  
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               اسم المالك
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               رقم الحساب
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               رقم الايبان
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               السلف المسموح بها
             </StyledTableCell>
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               الحالة
             </StyledTableCell>
             {(permissions.includes("banks_Update") || permissions.includes("banks_Delete") || permissions.includes("banks_Add")) && (
             <StyledTableCell
               align="center"
-              sx={{ fontWeight: "bold", backgroundColor: "grey.100" }}
+              sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}
             >
               الإجراءات
             </StyledTableCell>
@@ -449,7 +451,7 @@ const Banks = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: "background.default", minHeight: "100vh", p: isMobile ? 2 : 4 }}>
+    <Box sx={{ bgcolor: "background.paper", minHeight: "100vh", p: isMobile ? 2 : 4 }}>
       <Helmet>
         <title>الحسابات البنكية</title>
         <meta name="description" content="الحسابات البنكية" />
@@ -487,7 +489,10 @@ const Banks = () => {
               sx={{
                 borderColor: "error.main",
                 color: "error.main",
-                "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                "&:hover": {
+                  bgcolor: isDarkMode ? "rgba(211, 47, 47, 0.2)" : "rgba(211, 47, 47, 0.1)",
+                  borderColor: "error.dark"
+                },
                 borderRadius: 2,
                 px: 2,
                 fontWeight: "bold",
@@ -505,7 +510,10 @@ const Banks = () => {
               sx={{
                 borderColor: "success.main",
                 color: "success.main",
-                "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                "&:hover": {
+                  bgcolor: isDarkMode ? "rgba(46, 125, 50, 0.2)" : "rgba(46, 125, 50, 0.1)",
+                  borderColor: "success.dark"
+                },
                 borderRadius: 2,
                 px: 2,
                 fontWeight: "bold",
@@ -561,7 +569,7 @@ const Banks = () => {
           }}
           sx={{
             width: isSmallScreen ? '100%' : "300px",
-            backgroundColor: "grey.50",
+            backgroundColor: isDarkMode ? "grey.800" : "grey.50",
             borderRadius: "6px",
             p: 1,
           }}

@@ -23,7 +23,6 @@ const LoanClientSection = ({
   setIsAddClientOpen,
   selectedKafeel,
   handleKafeelSelect,
-  clientLoansData,
 }) => {
   // Get all kafeels for the selected client
   const getAvailableKafeels = () => {
@@ -37,13 +36,12 @@ const LoanClientSection = ({
         p: isSmallScreen ? 2 : 4,
         mb: isSmallScreen ? 2 : 3,
         borderRadius: 2,
-        border: "1px solid #e5e7eb",
       }}
     >
       <Typography
         variant={isSmallScreen ? "subtitle1" : "h6"}
         fontWeight="bold"
-        color="#333"
+        color="text.primary"
         mb={isSmallScreen ? 2 : 3}
         textAlign="center"
       >
@@ -86,9 +84,7 @@ const LoanClientSection = ({
                     height: "56px",
                     width: isSmallScreen ? "250px" : "350px",
                     backgroundColor:
-                      isViewMode || isEditMode || isAdditionalLoan
-                        ? "#f5f5f5"
-                        : "#f9fafb",
+                      "background.paper",
                     "&:hover fieldset": {
                       borderColor: "primary.main",
                     },
@@ -163,7 +159,7 @@ const LoanClientSection = ({
                     "& .MuiOutlinedInput-root": {
                       height: "56px",
                       width: isSmallScreen ? "250px" : "350px",
-                      backgroundColor: isViewMode ? "#f5f5f5" : "#f9fafb",
+                      backgroundColor: "background.paper",
                       "&:hover fieldset": {
                         borderColor: "primary.main",
                       },

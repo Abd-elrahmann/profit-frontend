@@ -38,6 +38,7 @@ import DashboardPermissions from "../../components/modals/DashboardPermissions";
 import { debounce } from 'lodash';
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { Helmet } from "react-helmet-async";
+import { useTheme } from '../../theme/ThemeContext';
 
 // eslint-disable-next-line no-unused-vars
 const getRoles = async (page = 1, name = '') => {
@@ -60,7 +61,8 @@ export default function Roles() {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
-  
+  const { isDarkMode } = useTheme();
+
   const { permissions, refreshPermissions } = usePermissions();
   const { data: rolesData, isLoading, refetch } = useQuery({ 
     queryKey: ["roles", page + 1, searchQuery], 
@@ -127,7 +129,7 @@ export default function Roles() {
   const renderTable = () => (
     <TableContainer  sx={{ borderRadius: 2 }}>
       <Table stickyHeader>
-        <TableHead sx={{ bgcolor: "#F3F4F6" }}>
+        <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>اسم الدور</StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الوصف</StyledTableCell>
@@ -290,7 +292,7 @@ export default function Roles() {
   );
 
   return (
-    <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
         <title>الأدوار</title>
         <meta name="description" content="الأدوار" />
@@ -315,7 +317,7 @@ export default function Roles() {
             onChange={handleSearchChange}
             sx={{
               flex: 1,
-              bgcolor: "#F3F4F6",
+              bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6',
               borderRadius: 2,
               "& fieldset": { border: "none" },
               minWidth: isSmallScreen ? '100%' : 'auto',

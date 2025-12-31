@@ -18,14 +18,14 @@ const LoanKafeelSection = ({
         p: isSmallScreen ? 2 : 4,
         mb: isSmallScreen ? 2 : 3,
         borderRadius: 2,
-        border: "1px solid #e5e7eb",
-        backgroundColor: "#fff",
+        border: "1px solid",
+        borderColor: "divider",
       }}
     >
       <Typography
         variant={isSmallScreen ? "subtitle1" : "h6"}
         fontWeight="bold"
-        color="#333"
+        color="text.primary"
         mb={isSmallScreen ? 2 : 3}
         textAlign="center"
       >
@@ -53,7 +53,7 @@ const LoanKafeelSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -75,7 +75,7 @@ const LoanKafeelSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "background.paper",
               },
             }}
           />
@@ -98,7 +98,7 @@ const LoanKafeelSection = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "background.paper",
               },
             }}
           />

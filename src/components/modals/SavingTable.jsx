@@ -14,6 +14,7 @@ import {
   Card,
   CardContent,
   Stack,
+  useTheme,
 } from '@mui/material';
 import {
   StyledTableCell,
@@ -23,7 +24,7 @@ import {
 const SavingTable = ({ isLoading, savingData }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  const theme = useTheme();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleChangePage = (event, newPage) => {
@@ -76,7 +77,7 @@ const SavingTable = ({ isLoading, savingData }) => {
           ) : !savingData?.data || savingData?.data?.length === 0 ? (
             <StyledTableRow>
               <StyledTableCell colSpan={6} align="center">
-                <Typography variant="body1" color="primary.main">
+                <Typography variant="body1" color={theme.palette.primary.main}>
                   لا توجد مدخرات للشركاء
                 </Typography>
               </StyledTableCell>
@@ -98,7 +99,7 @@ const SavingTable = ({ isLoading, savingData }) => {
                     <StyledTableCell align="center">
                       <Chip
                         label={partner.periods.length}
-                        color={hasSavings ? "primary" : "default"}
+                        color={hasSavings ? theme.palette.primary.main : theme.palette.text.primary}
                         variant="outlined"
                         size="small"
                       />
@@ -109,18 +110,18 @@ const SavingTable = ({ isLoading, savingData }) => {
                           {lastPeriod.period.name}
                         </Typography>
                       ) : (
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2" color={theme.palette.text.secondary}>
                           لا توجد
                         </Typography>
                       )}
                     </StyledTableCell>
                     <StyledTableCell align="center">
                       {lastPeriod ? (
-                        <Typography variant="body2" fontWeight="bold" color="success.main">
+                        <Typography variant="body2" fontWeight="bold" color={theme.palette.primary.main}>
                           {formatCurrency(lastPeriod.total)}
                         </Typography>
                       ) : (
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2" color={theme.palette.text.secondary}>
                           -
                         </Typography>
                       )}
@@ -128,7 +129,7 @@ const SavingTable = ({ isLoading, savingData }) => {
                     <StyledTableCell align="center">
                       <Chip
                         label={hasSavings ? "لديه مدخرات" : "لا يوجد مدخرات"}
-                        color={hasSavings ? "success" : "default"}
+                        color={hasSavings ? theme.palette.primary.main : theme.palette.text.primary}
                         size="small"
                       />
                     </StyledTableCell>
@@ -165,7 +166,7 @@ const SavingTable = ({ isLoading, savingData }) => {
         </Box>
       ) : !savingData?.data || savingData?.data?.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Typography variant="h6" color="primary.main">
+          <Typography variant="h6" color={theme.palette.primary.main}>
             لا توجد مدخرات للشركاء
           </Typography>
         </Box>
@@ -181,21 +182,21 @@ const SavingTable = ({ isLoading, savingData }) => {
                 <Card
                   key={partner.partnerId}
                   sx={{
-                    border: '1px solid #e0e0e0',
-                    borderRadius: 2,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 2,
+                      boxShadow: `0 2px 4px ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
                   }}
                 >
                   <CardContent sx={{ p: 2 }}>
                     <Stack spacing={2}>
                       {/* Header */}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Typography variant="h6" fontWeight="bold" color="primary.main">
+                        <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
                           {partner.partnerName}
                         </Typography>
                         <Chip
                           label={hasSavings ? "لديه مدخرات" : "لا يوجد مدخرات"}
-                          color={hasSavings ? "success" : "default"}
+                          color={hasSavings ? theme.palette.primary.main : theme.palette.text.primary}
                           size="small"
                         />
                       </Box>
@@ -203,24 +204,24 @@ const SavingTable = ({ isLoading, savingData }) => {
                       {/* Savings Summary */}
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="body2" color="primary.main">
+                          <Typography variant="body2" color={theme.palette.primary.main}>
                             فترات الادخار
                           </Typography>
                           <Chip
                             label={partner.periods.length}
-                            color={hasSavings ? "primary" : "default"}
+                            color={hasSavings ? theme.palette.primary.main : theme.palette.text.primary}
                             variant="outlined"
                             size="small"
                           />
                         </Box>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="body2" color="primary.main">
+                          <Typography variant="body2" color={theme.palette.primary.main}>
                             إجمالي المدخرات
                           </Typography>
                           <Typography 
                             variant="h6" 
                             fontWeight="bold" 
-                            color={lastPeriod.total > 0 ? "success.main" : "text.secondary"}
+                            color={lastPeriod.total > 0 ? theme.palette.primary.main : theme.palette.text.secondary}
                           >
                             {formatCurrency(lastPeriod.total)}
                           </Typography>
@@ -229,8 +230,8 @@ const SavingTable = ({ isLoading, savingData }) => {
 
                       {/* Last Period */}
                       {lastPeriod && (
-                        <Box sx={{ p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
-                          <Typography variant="body2" color="primary.main">
+                        <Box sx={{ p: 1, bgcolor: theme.palette.background.default, borderRadius: 1 }}>
+                          <Typography variant="body2" color={theme.palette.primary.main}>
                             آخر فترة: {lastPeriod.period.name}
                           </Typography>
                           <Typography variant="body2" fontWeight="bold">

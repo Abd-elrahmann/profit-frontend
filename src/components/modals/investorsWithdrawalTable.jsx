@@ -55,7 +55,7 @@ const InvestorsWithdrawalTable = ({
 
   if (!data || !data.data || data.data.length === 0) {
     return (
-      <Paper sx={{ p: 4, textAlign: "center" }}>
+      <Paper sx={{ p: 4, textAlign: "center", bgcolor: "background.default" }}>
         <Typography variant="h6" color="text.secondary">
           لا يوجد مستثمرين منسحبين
         </Typography>
@@ -65,7 +65,7 @@ const InvestorsWithdrawalTable = ({
 
   return (
     <Box>
-      <Paper sx={{ width: "100%", overflow: "hidden" }}>
+      <Paper sx={{ width: "100%", overflow: "hidden", bgcolor: "background.default" }}>
         <TableContainer>
           <Table stickyHeader>
             <TableHead>
@@ -150,6 +150,7 @@ const InvestorsWithdrawalTable = ({
               alignItems: "center",
               p: 2,
               borderTop: "1px solid #eee",
+              bgcolor: "background.default",
             }}
           >
             <Pagination

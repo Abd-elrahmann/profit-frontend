@@ -63,6 +63,7 @@ import "dayjs/locale/ar";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { useTheme } from "../../theme/ThemeContext";
 import { exportInvestorsToPDF, exportInvestorsToExcel } from "../../utilities/investorsExporter";
 import { useNavigate } from "react-router-dom";
 
@@ -137,6 +138,7 @@ const deletePartnerTransaction = async (transactionId) => {
 
 export default function Investors() {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -753,12 +755,12 @@ export default function Investors() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: isDarkMode ? 'background.default' : '#f5f5f5',
             borderRadius: 1,
             cursor: 'pointer',
             transition: 'background-color 0.2s',
             '&:hover': {
-              backgroundColor: '#e0e0e0',
+              backgroundColor: isDarkMode ? 'action.hover' : '#e0e0e0',
             },
           }}
           onClick={() => window.open(fileUrl, '_blank')}
@@ -916,7 +918,7 @@ export default function Investors() {
   };
 
   return (
-    <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
       <Helmet>
         <title>المستثمرين</title>
         <meta name="description" content="المستثمرين" />
@@ -927,7 +929,7 @@ export default function Investors() {
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "#fff", 
+          bgcolor: "background.paper",
           borderBottom: "1px solid #ddd",
         }}
       >
@@ -981,14 +983,14 @@ export default function Investors() {
           sx={{
             width: '350px',
             borderRight: "1px solid #ddd",
-            bgcolor: "#fafafa",
+            bgcolor: isDarkMode ? 'background.default' : '#fafafa',
             height: "100%",
             display: 'flex',
             flexDirection: 'column',
             flexShrink: 0
           }}
         >
-          <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa", flexShrink: 0 }}>
+          <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa', flexShrink: 0 }}>
             <TextField
               placeholder="البحث بالاسم أو رقم الهوية"
               fullWidth
@@ -1071,8 +1073,8 @@ export default function Investors() {
           </Box>
 
           {investorsData && !isInvestorsLoading && investorsData.partners && investorsData.partners.length > 0 && (
-            <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: '#f9f9f9', flexShrink: 0 }}>
-              <Typography variant="body2" color="black">
+            <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: isDarkMode ? 'background.paper' : '#f9f9f9', flexShrink: 0 }}>
+              <Typography variant="body2" color="text.primary">
                 صفحة {investorsData.currentPage} من {investorsData.totalPages} - إجمالي {investorsData.totalPartners} {showWithdrawnOnly ? 'مستثمر منسحب' : 'مستثمر'}
               </Typography>
             </Box>
@@ -1146,7 +1148,7 @@ export default function Investors() {
                         <Typography variant="body2" color="text.secondary" fontWeight={"bold"}>
                           رأس المال: {investor.total?.toLocaleString()}
                         </Typography>
-                        <Typography variant="body2" color="black" sx={{ fontSize: '0.75rem' }}>
+                        <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.75rem' }}>
                           {investor.capitalAmount?.toLocaleString()} رأس مال أصلي + {investor.newCapitalAmount?.toLocaleString()} رأس مال جديد
                         </Typography>
                         <Box display="flex" justifyContent="flex-end" mt={1}>
@@ -1170,12 +1172,13 @@ export default function Investors() {
                 
                 {investorsData && investorsData.totalPages > 1 && (
                   <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
+                    display: 'flex',
+                    justifyContent: 'center',
                     alignItems: 'center',
-                    p: 2, 
+                    p: 2,
                     gap: 2,
                     borderTop: '1px solid #eee',
+                    bgcolor: 'background.paper',
                   }}>
                     <Pagination
                       count={investorsData.totalPages}
@@ -1199,13 +1202,13 @@ export default function Investors() {
         </Box>
 
         {selectedInvestor && investorDetails ? (
-          <Box sx={{ flex: 1, bgcolor: "#fff", overflowY: "auto", position: 'relative' }}>
+          <Box sx={{ flex: 1, bgcolor: "background.paper", overflowY: "auto", position: 'relative' }}>
             <Box
               sx={{
                 position: 'sticky',
                 top: 0,
                 zIndex: 1000,
-                bgcolor: '#fff',
+                bgcolor: 'background.paper',
                 p: 2,
                 borderBottom: '1px solid #ddd',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -1352,7 +1355,7 @@ export default function Investors() {
 
               {tab === 0 && (
                 <Box>
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: 3, mb: 3, bgcolor: "background.paper" }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                       <Typography variant="h6">المعلومات الشخصية</Typography>
                       <Box sx={{ display: "flex", gap: 2 }}>
@@ -1390,7 +1393,7 @@ export default function Investors() {
                           disabled={!editMode}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                               borderRadius: '6px',
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
@@ -1408,7 +1411,7 @@ export default function Investors() {
                           disabled={!editMode}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                               borderRadius: '6px',
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
@@ -1425,7 +1428,7 @@ export default function Investors() {
                           disabled
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#f9fafb',
+                              backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                               borderRadius: '6px',
                             },
                           }}
@@ -1440,7 +1443,7 @@ export default function Investors() {
                           disabled={!editMode}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                               borderRadius: '6px',
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
@@ -1458,7 +1461,7 @@ export default function Investors() {
                           disabled={!editMode}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                               borderRadius: '6px',
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
@@ -1476,7 +1479,7 @@ export default function Investors() {
                           disabled={!editMode}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                               borderRadius: '6px',
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
@@ -1496,7 +1499,7 @@ export default function Investors() {
                           InputLabelProps={{ shrink: true }}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: editMode ? '#fff' : '#f9fafb',
+                              backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                               borderRadius: '6px',
                               '&:hover fieldset': {
                                 borderColor: editMode ? 'primary.main' : undefined,
@@ -1513,7 +1516,7 @@ export default function Investors() {
                           disabled
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#f9fafb',
+                              backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                               borderRadius: '6px',
                             },
                           }}
@@ -1530,7 +1533,7 @@ export default function Investors() {
                               fullWidth
                               sx={{
                                 '& .MuiOutlinedInput-root': {
-                                  backgroundColor: '#ffffff',
+                                  backgroundColor: isDarkMode ? 'background.paper' : '#ffffff',
                                   borderRadius: '6px',
                                 },
                               }}
@@ -1556,7 +1559,7 @@ export default function Investors() {
                             disabled
                             sx={{
                               '& .MuiOutlinedInput-root': {
-                                backgroundColor: '#f9fafb',
+                                backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                                 borderRadius: '6px',
                               },
                             }}
@@ -1571,7 +1574,7 @@ export default function Investors() {
                           disabled
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#f9fafb',
+                              backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                               borderRadius: '6px',
                             },
                           }}
@@ -1813,7 +1816,7 @@ export default function Investors() {
                         disabled={!editMode}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                             borderRadius: '6px',
                             width: '280px',
                             '&:hover fieldset': {
@@ -1832,7 +1835,7 @@ export default function Investors() {
                         disabled={!editMode}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? '#fff' : '#f9fafb',
+                            backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                             borderRadius: '6px',
                             width: '280px',
                             '&:hover fieldset': {
@@ -1850,7 +1853,7 @@ export default function Investors() {
                         disabled
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#f9fafb',
+                            backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                             borderRadius: '6px',
                           },
                         }}
@@ -1864,7 +1867,7 @@ export default function Investors() {
                         disabled
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#f9fafb',
+                            backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                             borderRadius: '6px',
                             width: '280px',
                           },
@@ -1879,7 +1882,7 @@ export default function Investors() {
                         disabled
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#f9fafb',
+                            backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                             borderRadius: '6px',
                             width: '280px',
                           },
@@ -1933,7 +1936,7 @@ export default function Investors() {
                   <Paper sx={{ width: '100%', overflow: 'hidden' }}>
                     <TableContainer>
                       <Table stickyHeader>
-                        <TableHead sx={{ bgcolor: "grey.50" }}>
+                        <TableHead sx={{ bgcolor: isDarkMode ? 'background.default' : 'grey.50' }}>
                           <StyledTableRow>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>رقم المرجع</StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>نوع العملية</StyledTableCell>
@@ -2479,7 +2482,7 @@ export default function Investors() {
                     <Grid container spacing={2}>
                       {/* Step 1: Original Capital */}
                       <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             ① رأس المال الأصلي
                           </Typography>
@@ -2491,7 +2494,7 @@ export default function Investors() {
 
                       {/* Step 2: Total Profit */}
                       <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             ② إجمالي الأرباح
                           </Typography>
@@ -2503,7 +2506,7 @@ export default function Investors() {
 
                       {/* Step 3: Total Amount */}
                       <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             ③ إجمالي المبلغ
                           </Typography>
@@ -2518,7 +2521,7 @@ export default function Investors() {
 
                       {/* Step 4: Default Share */}
                       <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             ④ خصم التعثر (يُحسب من النظام)
                           </Typography>
@@ -2533,7 +2536,7 @@ export default function Investors() {
 
                       {/* Step 5: Remaining Capital for Schedule */}
                       <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             ⑤ رأس المال للجدول
                           </Typography>
@@ -2548,7 +2551,7 @@ export default function Investors() {
 
                       {/* Savings (separate from schedule) */}
                       <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fffef0', borderRadius: 1, border: '1px solid #ffd700' }}>
+                        <Box sx={{ p: 1.5, bgcolor: isDarkMode ? 'background.default' : '#fffef0', borderRadius: 1, border: '1px solid #ffd700' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             💰 الادخار (يُصرف منفصل)
                           </Typography>
@@ -2563,7 +2566,7 @@ export default function Investors() {
 
                       {/* Number of payments */}
                       <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                           <Typography variant="body2" color="text.secondary" mb={0.5}>
                             📅 عدد الدفعات
                           </Typography>

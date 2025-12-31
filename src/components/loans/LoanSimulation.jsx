@@ -3,7 +3,6 @@ import {
   Typography,
   Stack,
   Box,
-  Paper,
   Alert,
   Divider,
   Chip,
@@ -23,8 +22,7 @@ const LoanSimulation = ({
       <Box
         sx={{
           width: isSmallScreen ? "300px" : "350px",
-          borderRight: "1px solid #ddd",
-          bgcolor: "#fafafa",
+          bgcolor: 'background.paper',
           height: "100%",
           overflowY: "auto",
           flexShrink: 0,
@@ -33,8 +31,6 @@ const LoanSimulation = ({
         <Box
           sx={{
             p: isSmallScreen ? 2 : 3,
-            borderBottom: "1px solid #ddd",
-            bgcolor: "#fafafa",
           }}
         >
           <Typography
@@ -79,7 +75,7 @@ const LoanSimulation = ({
                 <Typography color="text.secondary">
                   إجمالي الفائدة
                 </Typography>
-                <Typography color="#333" fontSize="16px">
+                <Typography color="text.primary" fontSize="16px">
                   {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
                 </Typography>
               </Box>
@@ -94,7 +90,7 @@ const LoanSimulation = ({
                 <Typography color="text.secondary">
                   المبلغ الإجمالي المستحق
                 </Typography>
-                <Typography color="#333" fontSize="16px">
+                <Typography color="text.primary" fontSize="16px">
                   {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
                 </Typography>
               </Box>
@@ -125,10 +121,10 @@ const LoanSimulation = ({
                       ? "rgba(214, 158, 46, 0.2)"
                       : "rgba(56, 161, 105, 0.2)",
                     color: isViewMode
-                      ? "#666"
+                      ? "text.secondary"
                       : isEditMode
-                      ? "#D69E2E"
-                      : "#38A169",
+                      ? "warning.main"
+                      : "success.main",
                     fontWeight: "bold",
                   }}
                 />
@@ -144,13 +140,11 @@ const LoanSimulation = ({
 
   // Mobile version - inline simulation
   return (
-    <Paper
+    <Box
       sx={{
         p: 2,
         mb: 2,
-        borderRadius: 2,
-        border: "1px solid #e5e7eb",
-        bgcolor: "#fafafa",
+        bgcolor: 'background.paper',
       }}
     >
       <Typography variant="subtitle1" fontWeight="bold" mb={2}>
@@ -210,7 +204,7 @@ const LoanSimulation = ({
             <Typography color="text.secondary" variant="body2">
               إجمالي الفائدة
             </Typography>
-            <Typography color="#333" fontSize="14px">
+            <Typography color="text.primary" fontSize="14px">
               {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
             </Typography>
           </Box>
@@ -225,7 +219,7 @@ const LoanSimulation = ({
             <Typography color="text.secondary" variant="body2">
               المبلغ الإجمالي المستحق
             </Typography>
-            <Typography color="#333" fontSize="14px">
+            <Typography color="text.primary" fontSize="14px">
               {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
             </Typography>
           </Box>
@@ -258,10 +252,10 @@ const LoanSimulation = ({
                   ? "rgba(214, 158, 46, 0.2)"
                   : "rgba(56, 161, 105, 0.2)",
                 color: isViewMode
-                  ? "#666"
+                  ? "text.secondary"
                   : isEditMode
-                  ? "#D69E2E"
-                  : "#38A169",
+                  ? "warning.main"
+                  : "success.main",
                 fontWeight: "bold",
               }}
             />
@@ -272,7 +266,7 @@ const LoanSimulation = ({
           أدخل بيانات السلفة لعرض المحاكاة
         </Alert>
       )}
-    </Paper>
+    </Box>
   );
 };
 

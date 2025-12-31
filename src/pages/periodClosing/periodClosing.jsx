@@ -21,6 +21,7 @@ import {
   IconButton,
   Chip as MuiChip,
   InputBase,
+  useTheme,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -34,11 +35,9 @@ import {
   getPeriodById,
   closePeriod,
   unpostClosing,
-  comparePeriods,
 } from "./periodApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import PeriodTable from "../../components/modals/periodTable";
-import PeriodComparisonModal from "../../components/modals/PeriodComparisonModal";
 import {
   StyledTableCell,
   StyledTableRow,
@@ -47,15 +46,12 @@ import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 
 const PeriodClosing = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDraftAlert, setShowDraftAlert] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
-  const [selectedPeriods, setSelectedPeriods] = useState([]);
-  const [showComparisonModal, setShowComparisonModal] = useState(false);
-  const [comparisonData, setComparisonData] = useState(null);
-  const [isComparisonLoading, setIsComparisonLoading] = useState(false);
 
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -134,32 +130,6 @@ const PeriodClosing = () => {
     navigate(`/profit-distribution?periodId=${selectedPeriod}&from=period-closing`);
   };
 
-  const handleComparePeriods = async (periodId1, periodId2) => {
-    setIsComparisonLoading(true);
-    setComparisonData(null); // Clear previous data
-    try {
-      const comparison = await comparePeriods(periodId1, periodId2);
-      setComparisonData(comparison);
-      // Small delay to ensure state is updated before opening modal
-      setTimeout(() => {
-        setShowComparisonModal(true);
-        setIsComparisonLoading(false);
-      }, 100);
-    } catch (error) {
-      setIsComparisonLoading(false);
-      notifyError(error.response?.data?.message || "حدث خطأ في مقارنة الفترات");
-    }
-  };
-
-  const handleCloseComparisonModal = () => {
-    setShowComparisonModal(false);
-    setComparisonData(null);
-  };
-
-  const handleSelectionChange = (newSelectedPeriods) => {
-    setSelectedPeriods(newSelectedPeriods);
-  };
-
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
@@ -221,13 +191,13 @@ const PeriodClosing = () => {
       sx={{
         width: "350px",
         borderRight: "1px solid #ddd",
-        bgcolor: "#fafafa",
+        bgcolor: theme.palette.background.default,
         height: "100%",
         overflowY: "auto",
         flexShrink: 0,
       }}
     >
-      <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
+      <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: theme.palette.background.default }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
           ملخص الفترة
         </Typography>
@@ -842,7 +812,7 @@ const PeriodClosing = () => {
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
-                <StyledTableRow style={{ backgroundColor: "#f5f5f5" }}>
+                <StyledTableRow style={{ backgroundColor: theme.palette.background.default }}>
                   <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
                     إجمالي أرباح الشركاء
                   </StyledTableCell>
@@ -928,7 +898,7 @@ const PeriodClosing = () => {
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
-              <StyledTableRow style={{ backgroundColor: "#f5f5f5" }}>
+              <StyledTableRow style={{ backgroundColor: theme.palette.background.default }}>
                 <StyledTableCell align="center" colSpan={4} style={{ fontWeight: 'bold' }}>
                   الإجمالي
                 </StyledTableCell>
@@ -980,7 +950,7 @@ const PeriodClosing = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: theme.palette.background.default,
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -1007,7 +977,7 @@ const PeriodClosing = () => {
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 4,
-            bgcolor: "#fff",
+            bgcolor: theme.palette.background.paper,
             overflowY: "auto",
             width: "100%",
           }}
@@ -1030,8 +1000,8 @@ const PeriodClosing = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom:
-                        activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "black",
+                        activeTab === 0 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 0 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                   <Tab
@@ -1039,8 +1009,8 @@ const PeriodClosing = () => {
                     sx={{
                       fontWeight: "bold",
                       borderBottom:
-                        activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "black",
+                        activeTab === 1 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 1 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                 </Tabs>
@@ -1074,7 +1044,7 @@ const PeriodClosing = () => {
                         width: "100%",
                         borderRadius: "6px",
                         p: 1,
-                        border: "1px solid #e0e0e0",
+                        border: `1px solid ${theme.palette.divider}`,
                         bgcolor: "background.paper"
                       }}
                     />
@@ -1084,14 +1054,10 @@ const PeriodClosing = () => {
             )}
 
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
-              <PeriodTable
-                onViewDetails={handleViewDetails}
-                isMobile={isMobile}
+              <PeriodTable 
+                onViewDetails={handleViewDetails} 
+                isMobile={isMobile} 
                 searchQuery={searchQuery}
-                showSelection={true}
-                selectedPeriods={selectedPeriods}
-                onSelectionChange={handleSelectionChange}
-                onComparePeriods={handleComparePeriods}
               />
             ) : (
               <Box>
@@ -1120,14 +1086,6 @@ const PeriodClosing = () => {
           </Box>
         </Box>
       </Box>
-
-      {/* Period Comparison Modal */}
-      <PeriodComparisonModal
-        open={showComparisonModal}
-        onClose={handleCloseComparisonModal}
-        comparison={comparisonData}
-        isLoading={isComparisonLoading}
-      />
     </Box>
   );
 };

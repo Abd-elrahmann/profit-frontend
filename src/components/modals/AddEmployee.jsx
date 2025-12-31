@@ -19,6 +19,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { useTheme } from '../../theme/ThemeContext';
 
 // Create dynamic validation schema based on mode
 const createValidationSchema = (mode) => {
@@ -53,6 +54,7 @@ const passwordChangeSchema = Yup.object().shape({
 });
 
 const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = null, isMobile = false }) => {
+  const { isDarkMode } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -180,7 +182,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                   helperText={touched.name && errors.name}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                       borderRadius: '6px',
                       '&:hover fieldset': {
                         borderColor: '#2E8B45',
@@ -202,7 +204,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                   disabled={mode === 'edit'}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                       borderRadius: '6px',
                       '&:hover fieldset': {
                         borderColor: '#2E8B45',
@@ -224,7 +226,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                     helperText={touched.password && errors.password}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                         borderRadius: '6px',
                         '&:hover fieldset': {
                           borderColor: '#2E8B45',
@@ -256,7 +258,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                   helperText={touched.phone && errors.phone}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                       borderRadius: '6px',
                       '&:hover fieldset': {
                         borderColor: '#2E8B45',
@@ -306,7 +308,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                 helperText={pwdTouched.oldPassword && pwdErrors.oldPassword}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                                     borderRadius: '6px',
                                     '&:hover fieldset': {
                                       borderColor: '#2E8B45',
@@ -338,7 +340,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                 helperText={pwdTouched.newPassword && pwdErrors.newPassword}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                                     borderRadius: '6px',
                                     '&:hover fieldset': {
                                       borderColor: '#2E8B45',
@@ -370,7 +372,7 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                 helperText={pwdTouched.confirmPassword && pwdErrors.confirmPassword}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
                                     borderRadius: '6px',
                                     '&:hover fieldset': {
                                       borderColor: '#2E8B45',

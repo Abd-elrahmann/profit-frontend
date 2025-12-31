@@ -1180,7 +1180,7 @@ const Loans = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: 'background.paper',
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -1203,8 +1203,7 @@ const Loans = () => {
           <Box
             sx={{
               width: isSmallScreen ? "300px" : "350px",
-              borderRight: "1px solid #ddd",
-              bgcolor: "#fafafa",
+              bgcolor: 'background.paper',
               height: "100%",
               overflowY: "auto",
               flexShrink: 0,
@@ -1214,8 +1213,6 @@ const Loans = () => {
               <Box
                 sx={{
                   p: isTablet ? 2 : 3,
-                  borderBottom: "1px solid #ddd",
-                  bgcolor: "#fafafa",
                 }}
               >
                 <Typography
@@ -1468,7 +1465,7 @@ const Loans = () => {
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 4,
-            bgcolor: "#fff",
+            bgcolor: 'background.paper',
             overflowY: "auto",
             width: "100%",
           }}

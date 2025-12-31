@@ -22,6 +22,7 @@ import {
   Chip,
   Autocomplete,
   TextField,
+  useTheme,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -48,6 +49,7 @@ import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 
 const Zakah = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
@@ -262,39 +264,39 @@ const Zakah = () => {
       <Box
         sx={{
           width: "350px",
-          borderRight: "1px solid #ddd",
-          bgcolor: "#fafafa",
+          borderRight: `1px solid ${theme.palette.divider}`,
+          bgcolor: theme.palette.background.default,
           height: "100%",
           overflowY: "auto",
           flexShrink: 0,
         }}
       >
-        <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
-          <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
+        <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.default }}>
+          <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3}>
             ملخص الزكاة
           </Typography>
           <Stack spacing={2}>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>رأس المال:</Typography>
-              <Typography fontWeight="bold">
+              <Typography fontWeight="bold" color={theme.palette.text.primary}>
                 {formatCurrency(currentYearData?.capitalAmount)}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>الزكاة السنوية:</Typography>
-              <Typography fontWeight="bold" color="primary.main">
+              <Typography fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.annualZakat)}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>الزكاة الشهرية:</Typography>
-              <Typography fontWeight="bold">
+              <Typography fontWeight="bold" color={theme.palette.text.primary}>
                 {formatCurrency(currentYearData?.monthlyZakat)}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>المدفوع:</Typography>
-              <Typography fontWeight="bold" color="success.main">
+              <Typography fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.totalPaid)}
               </Typography>
             </Box>
@@ -302,7 +304,7 @@ const Zakah = () => {
               <Typography>المتبقي:</Typography>
               <Typography 
                 fontWeight="bold" 
-                color={currentYearData?.remaining > 0 ? "error" : "success.main"}
+                color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main}
               >
                 {formatCurrency(currentYearData?.remaining)}
               </Typography>
@@ -311,7 +313,7 @@ const Zakah = () => {
         </Box>
 
         <Box sx={{ p: 3 }}>
-          <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
+          <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3}>
             السنوات المتاحة
           </Typography>
           <Stack spacing={1}>
@@ -345,32 +347,32 @@ const Zakah = () => {
 
   // Render account summary for financial operations tab
   const renderAccountSummary = () => (
-    <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa",width:"300px" }}>
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
+    <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.default,width:"300px" }}>
+      <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3}>
         ملخص حساب الزكاة
       </Typography>
       <Stack spacing={2}>
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography>رصيد الحساب:</Typography>
-          <Typography fontWeight="bold" color="primary.main">
+          <Typography fontWeight="bold" color={theme.palette.primary.main}>
             {formatCurrency(accountReport?.account?.balance)}
           </Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography>الزكاة المدفوعة:</Typography>
-          <Typography fontWeight="bold" color="success.main">
+          <Typography fontWeight="bold" color={theme.palette.primary.main}>
             {formatCurrency(accountReport?.account?.credit)}
           </Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography>الزكاة المتبقية:</Typography>
-          <Typography fontWeight="bold">
+          <Typography fontWeight="bold" color={theme.palette.text.primary}>
             {formatCurrency(accountReport?.account?.debit)}
           </Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography>إجمالي العمليات:</Typography>
-          <Typography fontWeight="bold" color="info.main">
+          <Typography fontWeight="bold" color={theme.palette.primary.main}>
             {accountReport?.totalJournalEntries || 0}
           </Typography>
         </Box>
@@ -391,7 +393,7 @@ const Zakah = () => {
   // Render mobile actions for partner details
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
+      <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={2}>
         السنوات المتاحة
       </Typography>
       <Stack spacing={1}>
@@ -431,36 +433,36 @@ const Zakah = () => {
         {/* Summary Cards */}
         <Grid container spacing={2} mb={3} justifyContent="center">
           <Grid item xs={6}>
-            <Card sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", textAlign: "center" }}>
+            <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
               <CardContent sx={{ p: 2 }}>
-                <Typography variant="body2" color="primary.main">
+                <Typography variant="body2" color={theme.palette.primary.main}>
                   رأس المال
                 </Typography>
-                <Typography variant="h6" fontWeight="bold" color="primary.main">
+                <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
                   {formatCurrency(currentYearData?.capitalAmount)}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={6}>
-            <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center" }}>
+                <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
               <CardContent sx={{ p: 2 }}>
-                <Typography variant="body2" color="success.main">
+                <Typography variant="body2" color={theme.palette.primary.main}>
                   المدفوع
                 </Typography>
-                <Typography variant="h6" fontWeight="bold" color="success.main">
+                <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
                   {formatCurrency(currentYearData?.totalPaid)}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={6}>
-            <Card sx={{ bgcolor: "rgba(237, 108, 2, 0.1)", textAlign: "center" }}>
+            <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
               <CardContent sx={{ p: 2 }}>
-                <Typography variant="body2" color="warning.main">
+                <Typography variant="body2" color={theme.palette.primary.main}>
                   الزكاة السنوية
                 </Typography>
-                <Typography variant="h6" fontWeight="bold" color="warning.main">
+                <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
                   {formatCurrency(currentYearData?.annualZakat)}
                 </Typography>
               </CardContent>
@@ -468,17 +470,17 @@ const Zakah = () => {
           </Grid>
           <Grid item xs={6}>
             <Card sx={{ 
-              bgcolor: currentYearData?.remaining > 0 ? "rgba(211, 47, 47, 0.1)" : "rgba(46, 125, 50, 0.1)", 
+              bgcolor: currentYearData?.remaining > 0 ? theme.palette.error[50] : theme.palette.primary[50], 
               textAlign: "center" 
             }}>
               <CardContent sx={{ p: 2 }}>
-                <Typography variant="body2" color={currentYearData?.remaining > 0 ? "error" : "success.main"}>
+                <Typography variant="body2" color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main}>
                   المتبقي
                 </Typography>
                 <Typography 
                   variant="h6" 
                   fontWeight="bold" 
-                  color={currentYearData?.remaining > 0 ? "error" : "success.main"}
+                  color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main}
                 >
                   {formatCurrency(currentYearData?.remaining)}
                 </Typography>
@@ -492,13 +494,13 @@ const Zakah = () => {
 
         {/* Partner Info */}
         <Paper sx={{ p: 3, borderRadius: 2, mb: 2 }}>
-          <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
+          <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center" color={theme.palette.primary.main}>
             معلومات الزكاة
           </Typography>
 
           <Stack spacing={2}>
             <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
+              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
                 اسم الشريك
               </Typography>
               <Typography variant="body1" fontWeight="bold">
@@ -507,7 +509,7 @@ const Zakah = () => {
             </Box>
 
             <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
+              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
                 السنة
               </Typography>
               <Typography variant="body1" fontWeight="bold">
@@ -516,7 +518,7 @@ const Zakah = () => {
             </Box>
 
             <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
+              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
                 الزكاة الشهرية
               </Typography>
               <Typography variant="body1" fontWeight="bold">
@@ -529,7 +531,7 @@ const Zakah = () => {
         {/* Monthly Breakdown */}
         {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
           <Paper sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
+            <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center" color={theme.palette.primary.main}>
               التفصيل الشهري
             </Typography>
             
@@ -542,7 +544,7 @@ const Zakah = () => {
                         {getMonthName(month.month)}
                       </Typography>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2" color={theme.palette.text.secondary}>
                           المبلغ:
                         </Typography>
                         <Typography variant="body2" fontWeight="bold">
@@ -569,7 +571,7 @@ const Zakah = () => {
 
     return (
       <Paper sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={"center"}>
+        <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3} textAlign={"center"}>
           تفاصيل زكاة الشريك
         </Typography>
 
@@ -579,25 +581,25 @@ const Zakah = () => {
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               اسم الشريك:
             </Typography>
-            <Typography variant="body1" fontWeight="bold" color="primary.main">{currentYearData?.partnerName || "-"}</Typography>
+            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{currentYearData?.partnerName || "-"}</Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               السنة:
             </Typography>
-            <Typography variant="body1" fontWeight="bold" color="primary.main">{selectedYear}</Typography>
+            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{selectedYear}</Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               رأس المال:
             </Typography>
-            <Typography variant="body1" fontWeight="bold" color="primary.main">{formatCurrency(currentYearData?.capitalAmount)}</Typography>
+            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{formatCurrency(currentYearData?.capitalAmount)}</Typography>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               الزكاة الشهرية:
             </Typography>
-            <Typography variant="body1" fontWeight="bold" color="primary.main">{formatCurrency(currentYearData?.monthlyZakat)}</Typography>
+            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{formatCurrency(currentYearData?.monthlyZakat)}</Typography>
           </Grid>
         </Grid>
 
@@ -606,48 +608,48 @@ const Zakah = () => {
         {/* Zakat Summary */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center",width: "350px" }}>
-              <VolunteerActivismIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" color="primary.main">
+            <Card sx={{ bgcolor: theme.palette.primary[50], p: 3, textAlign: "center",width: "350px" }}>
+              <VolunteerActivismIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.annualZakat)}
               </Typography>
-              <Typography variant="body1" color="primary.main">
+              <Typography variant="body1" color={theme.palette.text.primary}>
                 الزكاة السنوية
               </Typography>
             </Card>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center",width: "350px" }}>
-              <VolunteerActivismIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" color="success.main">
+            <Card sx={{ bgcolor: theme.palette.primary[50], p: 3, textAlign: "center",width: "350px" }}>
+              <VolunteerActivismIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.totalPaid)}
               </Typography>
-              <Typography variant="body1" color="success.main">
+              <Typography variant="body1" color={theme.palette.text.primary}>
                 المدفوع
               </Typography>
             </Card>
           </Grid>
           <Grid item xs={12} md={4}>
             <Card sx={{ 
-              bgcolor: currentYearData?.remaining > 0 ? "error.50" : "success.50", 
+              bgcolor: currentYearData?.remaining > 0 ? theme.palette.error[50] : theme.palette.primary[50], 
               p: 3, 
               textAlign: "center",
               width: "350px"
             }}>
               <VolunteerActivismIcon 
-                color={currentYearData?.remaining > 0 ? "error" : "success"} 
+                color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main} 
                 sx={{ fontSize: 40, mb: 1 }} 
               />
               <Typography 
                 variant="h5" 
                 fontWeight="bold" 
-                color={currentYearData?.remaining > 0 ? "error" : "success.main"}
+                color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main}
               >
                 {formatCurrency(currentYearData?.remaining)}
               </Typography>
               <Typography 
                 variant="body1" 
-                color={currentYearData?.remaining > 0 ? "error" : "success.main"}
+                color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.text.primary}
               >
                 المتبقي
               </Typography>
@@ -739,7 +741,6 @@ const Zakah = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
             <Button
               variant="contained"
-              sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
               startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
               onClick={() => handleExportPDF()}
               disabled={isExporting || !hasAccountExportData}
@@ -748,7 +749,6 @@ const Zakah = () => {
             </Button>
             <Button
               variant="contained"
-              sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
               startIcon={<TableChart sx={{marginLeft: "10px"}} />}
               onClick={() => handleExportExcel()}
               disabled={isExporting || !hasAccountExportData}
@@ -843,7 +843,7 @@ const Zakah = () => {
 
             {Object.entries(accountReport.journalsByMonth).map(([month, data]) => (
               <Box key={month} sx={{ mb: 4 }}>
-                <Typography variant="h6" color="primary" sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography variant="h6" color={theme.palette.primary.main} sx={{ mb: 2, p: 2, bgcolor: theme.palette.background.default, borderRadius: 1 }}>
                   شهر {month}
                 </Typography>
                 <TableContainer>
@@ -913,7 +913,7 @@ const Zakah = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: theme.palette.background.default,
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -941,7 +941,7 @@ const Zakah = () => {
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 4,
-            bgcolor: "#fff",
+            bgcolor: theme.palette.background.paper,
             overflowY: "auto",
             width: "100%",
           }}
@@ -964,24 +964,24 @@ const Zakah = () => {
                     label="عرض جميع الزكاة"
                     sx={{
                       fontWeight: "bold",
-                      borderBottom: activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "black",
+                      borderBottom: activeTab === 0 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 0 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                   <Tab
                     label={selectedPartner ? "تفاصيل الزكاة" : "زكاة محددة"}
                     sx={{
                       fontWeight: "bold",
-                      borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "black",
+                      borderBottom: activeTab === 1 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 1 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                   <Tab
                     label="صندوق الزكاة"
                     sx={{
                       fontWeight: "bold",
-                      borderBottom: activeTab === 2 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 2 ? "#0d40a5" : "black",
+                      borderBottom: activeTab === 2 ? `3px solid ${theme.palette.primary.main}` : "none",
+                      color: activeTab === 2 ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
                 </Tabs>
@@ -1034,7 +1034,6 @@ const Zakah = () => {
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
                         <Button
                           variant="contained"
-                          sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}
                           startIcon={<PictureAsPdf sx={{marginLeft: "10px"}} />}
                           onClick={() => handleExportPDF()}
                           disabled={isExporting || !hasPartnerExportData}
@@ -1043,7 +1042,6 @@ const Zakah = () => {
                         </Button>
                         <Button
                           variant="contained"
-                          sx={{ backgroundColor: '#2e7d32', '&:hover': { backgroundColor: '#1b5e20' } }}
                           startIcon={<TableChart sx={{marginLeft: "10px"}} />}
                           onClick={() => handleExportExcel()}
                           disabled={isExporting || !hasPartnerExportData}

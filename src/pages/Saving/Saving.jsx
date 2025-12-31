@@ -20,6 +20,7 @@ import {
   TableContainer,
   TableHead,
   Button,
+  useTheme,
 } from "@mui/material";
 import {
   AccountBalance as BalanceIcon,
@@ -63,7 +64,7 @@ const Saving = () => {
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
-
+  const theme = useTheme();
   // Query for all partners savings
   const { data: savingData, isLoading: isSavingLoading } = useQuery({
     queryKey: ["partners-savings", page],
@@ -98,18 +99,18 @@ const Saving = () => {
     <Grid container spacing={3} sx={{ mb: 4, justifyContent: "center" }}>
       <Grid item xs={12} sm={6} md={3}>
         <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2,width: "350px" }}>
-          <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-          <Typography variant="h5" fontWeight="bold" color="primary.main">
+          <BalanceIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
+          <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
             {formatCurrency(accountReport?.account?.balance)}
           </Typography>
-          <Typography variant="body2" color="primary.main">
+          <Typography variant="body2" color={theme.palette.primary.main}>
             رصيد الصندوق
           </Typography>
         </Card>
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
         <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
-          <SavingsIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
+          <SavingsIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="success.main">
             {formatCurrency(accountReport?.account?.debit)}
           </Typography>
@@ -415,7 +416,7 @@ const Saving = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: theme.palette.background.default,
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -430,7 +431,7 @@ const Saving = () => {
         sx={{
           flex: 1,
           p: isSmallScreen ? 2 : 4,
-          bgcolor: "#fff",
+          bgcolor: theme.palette.background.paper,
         }}
       >
         <Box sx={{ width: "100%" }}>
@@ -447,16 +448,16 @@ const Saving = () => {
                   label="كشف المدخرات العام"
                   sx={{
                     fontWeight: "bold",
-                    borderBottom: activeTab === 0 ? "3px solid #0d40a5" : "none",
-                    color: activeTab === 0 ? "#0d40a5" : "black",
+                    borderBottom: activeTab === 0 ? `3px solid ${theme.palette.primary.main}` : "none",
+                    color: activeTab === 0 ? theme.palette.primary.main : theme.palette.text.primary,
                   }}
                 />
                 <Tab
                   label="صندوق الادخار"
                   sx={{
                     fontWeight: "bold",
-                    borderBottom: activeTab === 1 ? "3px solid #0d40a5" : "none",
-                    color: activeTab === 1 ? "#0d40a5" : "black",
+                    borderBottom: activeTab === 1 ? `3px solid ${theme.palette.primary.main}` : "none",
+                    color: activeTab === 1 ? theme.palette.primary.main : theme.palette.text.primary,
                   }}
                 />
               </Tabs>

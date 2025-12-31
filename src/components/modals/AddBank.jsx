@@ -12,8 +12,9 @@ import {
 } from "@mui/material";
 import { createBank, updateBank } from "../../pages/Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-
+import { useTheme } from "../../theme/ThemeContext";
 const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile = false }) => {
+  const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
     name: "",
     accountNumber: "",
@@ -167,7 +168,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
       </DialogTitle>
 
       <DialogContent sx={{ py: 3 }}>
-        <Stack spacing={2}>
+        <Stack spacing={2} sx={{ mt: 3 }}>
           <TextField
             label="اسم الحساب"
             value={formData.name}
@@ -271,11 +272,11 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
           fullWidth={isMobile}
           sx={{
             minWidth: isMobile ? 'auto' : "100px",
-            borderColor: "grey.300",
+            borderColor: "grey.400",
             color: "text.secondary",
             "&:hover": {
-              borderColor: "grey.400",
-              bgcolor: "grey.50",
+              borderColor: "grey.500",
+              bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "grey.50",
             },
           }}
         >
@@ -287,8 +288,8 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
           disabled={loading}
           fullWidth={isMobile}
           sx={{
-            bgcolor: "#0d40a5",
-            "&:hover": { bgcolor: "#0b3589" },
+            bgcolor: "primary.main",
+            "&:hover": { bgcolor: "primary.dark" },
             minWidth: isMobile ? 'auto' : "100px",
           }}
         >

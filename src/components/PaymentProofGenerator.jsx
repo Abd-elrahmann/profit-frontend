@@ -388,6 +388,10 @@ const PaymentProofGenerator = React.forwardRef(({
     return null;
   }
 
+  if (!isGenerating) {
+    return null;
+  }
+
   return (
     <div style={{ 
       width: '100%',

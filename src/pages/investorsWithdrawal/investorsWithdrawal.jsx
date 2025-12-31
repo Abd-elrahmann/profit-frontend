@@ -415,7 +415,7 @@ export default function InvestorsWithdrawal() {
   };
 
   return (
-    <Box sx={{ bgcolor: "#f6f6f8", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: 'background.paper', minHeight: "100vh" }}>
       <Helmet>
         <title>انسحابات المستثمرين</title>
         <meta name="description" content="انسحابات المستثمرين" />
@@ -428,7 +428,7 @@ export default function InvestorsWithdrawal() {
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "#fff",
+          bgcolor: "background.default",
           borderBottom: "1px solid #ddd",
         }}
       >
@@ -438,7 +438,7 @@ export default function InvestorsWithdrawal() {
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ bgcolor: "#fff", borderBottom: "1px solid #ddd" }}>
+      <Box sx={{ bgcolor: "background.default", borderBottom: "1px solid #ddd" }}>
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
@@ -460,7 +460,7 @@ export default function InvestorsWithdrawal() {
       </Box>
 
       {/* Content */}
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
         {activeTab === 0 && (
           <InvestorsWithdrawalTable
             data={withdrawingInvestorsData}
@@ -472,7 +472,7 @@ export default function InvestorsWithdrawal() {
         )}
 
         {activeTab === 1 && (
-          <Box>
+          <Box sx={{ bgcolor: 'background.paper', minHeight: '100%' }}>
             {/* Success notification when withdrawal receipt exists */}
             {withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
@@ -546,7 +546,7 @@ export default function InvestorsWithdrawal() {
                 )}
 
                 {/* Partner Info */}
-                <Paper sx={{ p: 3, mb: 3 }}>
+                <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                     معلومات المستثمر
                   </Typography>
@@ -561,7 +561,7 @@ export default function InvestorsWithdrawal() {
                             readOnly
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: 'background.paper',
                             borderRadius: "6px",
                           },
                         }}
@@ -577,7 +577,7 @@ export default function InvestorsWithdrawal() {
                         readOnly
                         sx={{
                           "& .MuiOutlinedInput-root": {
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: 'background.paper',
                             borderRadius: "6px",
                           },
                         }}
@@ -594,7 +594,7 @@ export default function InvestorsWithdrawal() {
                           readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -617,7 +617,7 @@ export default function InvestorsWithdrawal() {
                           readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -634,7 +634,7 @@ export default function InvestorsWithdrawal() {
 
                 {/* Withdrawal Request Info */}
                 {withdrawalDetails.withdrawal && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                       معلومات طلب الانسحاب
                     </Typography>
@@ -649,7 +649,7 @@ export default function InvestorsWithdrawal() {
                             readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -665,7 +665,7 @@ export default function InvestorsWithdrawal() {
                           readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -681,7 +681,7 @@ export default function InvestorsWithdrawal() {
                           readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -697,7 +697,7 @@ export default function InvestorsWithdrawal() {
                           readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -717,7 +717,7 @@ export default function InvestorsWithdrawal() {
                           readOnly
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              backgroundColor: "#f9fafb",
+                              backgroundColor: 'background.paper',
                               borderRadius: "6px",
                             },
                           }}
@@ -729,7 +729,7 @@ export default function InvestorsWithdrawal() {
 
                 {/* Schedule Table */}
                 {withdrawalDetails.schedule && withdrawalDetails.schedule.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                       <Typography variant="h6" sx={{ fontWeight: "bold" ,color: "primary.main"}}>
                         جدول السحب
@@ -749,9 +749,9 @@ export default function InvestorsWithdrawal() {
                         </Button>
                       )}
                     </Box>
-                    <TableContainer>
+                    <TableContainer sx={{ bgcolor: 'background.paper' }}>
                       <Table>
-                        <TableHead>
+                        <TableHead sx={{ bgcolor: 'background.paper' }}>
                           <StyledTableRow>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                               السنة
@@ -895,9 +895,9 @@ export default function InvestorsWithdrawal() {
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                       القيود المحاسبية
                     </Typography>
-                    <TableContainer>
+                    <TableContainer sx={{ bgcolor: 'background.paper' }}>
                       <Table>
-                        <TableHead>
+                        <TableHead sx={{ bgcolor: 'background.paper' }}>
                           <StyledTableRow>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                               المرجع
@@ -996,7 +996,7 @@ export default function InvestorsWithdrawal() {
               }}
             />
             {partialAmount && parseFloat(partialAmount) > 0 && withdrawalDetails?.schedule && selectedScheduleId && (
-              <Box sx={{ p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
                 {(() => {
                   const currentSchedule = withdrawalDetails.schedule.find(s => s.id === selectedScheduleId);
                   const totalAmount = currentSchedule ? (currentSchedule.amount + (currentSchedule.carryAmount || 0)) : 0;

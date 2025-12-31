@@ -19,6 +19,7 @@ import {
   MenuItem,
   CircularProgress,
   useMediaQuery,
+  useTheme,
   Card,
   CardContent,
   IconButton,
@@ -61,7 +62,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportJournalToPDF, exportJournalToExcel } from "../../utilities/journalsExporter";
-
+ 
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -99,6 +100,7 @@ const Journals = () => {
 
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const fromPeriod = location.state?.fromPeriod;
   const fromProfitDistribution = location.state?.fromProfitDistribution;
@@ -776,7 +778,7 @@ const Journals = () => {
         variant="outlined"
         sx={{
           borderRadius: 2,
-          backgroundColor: "grey.100",
+          backgroundColor: isDarkMode ? 'background.default' : 'grey.100',
           border: "2px solid",
           borderColor: "divider",
         }}
@@ -900,7 +902,7 @@ const Journals = () => {
               </StyledTableRow>
             );
           })}
-          <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
+          <StyledTableRow sx={{ backgroundColor: isDarkMode ? 'background.default' : '#f5f5f5' }}>
             <StyledTableCell colSpan={3} align="center">
               <Typography fontWeight="bold">الإجمالي</Typography>
             </StyledTableCell>
@@ -929,7 +931,7 @@ const Journals = () => {
   );
 
   const renderLinesForm = () => (
-    <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
         {editingLineIndex !== null ? "تعديل البند" : "إضافة بند جديد"}
       </Typography>
@@ -1038,7 +1040,7 @@ const Journals = () => {
   );
 
   const renderLinesList = () => (
-    <Paper sx={{ p: isSmallScreen ? 2 : 3, borderRadius: 2 }}>
+    <Paper sx={{ p: isSmallScreen ? 2 : 3, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Typography variant="h6" fontWeight="bold" mb={3} color="primary.main" textAlign="center">
         بنود القيد
       </Typography>
@@ -1063,14 +1065,13 @@ const Journals = () => {
     <Box
       sx={{
         width: "350px",
-        borderRight: "1px solid #ddd",
-        bgcolor: "#fafafa",
-        height: "100%",
-        overflowY: "auto",
+        borderRight: "1px solid",
+        borderColor: "divider",
+        bgcolor: 'background.paper',
         flexShrink: 0,
       }}
     >
-      <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: "#fafafa" }}>
+      <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "divider" }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
           معلومات القيد
         </Typography>
@@ -1088,7 +1089,7 @@ const Journals = () => {
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography color="black">الفرق:</Typography>
+            <Typography color="text.primary">الفرق:</Typography>
             <Typography
               fontWeight="bold"
               color={(totals.totalBalance || 0) === 0 ? "success.main" : "error"}
@@ -1154,7 +1155,7 @@ const Journals = () => {
                 onClick={handleCancelAdd}
                 sx={{
                   borderColor: "grey.500",
-                  color: "grey.700",
+                  color: "text.primary",
                 }}
               >
                 إلغاء
@@ -1233,7 +1234,7 @@ const Journals = () => {
                 onClick={handleCancelEdit}
                 sx={{
                   borderColor: "grey.500",
-                  color: "grey.700",
+                  color: "text.primary",
                 }}
               >
                 إلغاء التعديل
@@ -1261,7 +1262,7 @@ const Journals = () => {
   
   // Update mobile actions to include export buttons
   const renderMobileActions = () => (
-    <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+    <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
         الإجراءات
       </Typography>
@@ -1444,7 +1445,7 @@ const Journals = () => {
       {renderMobileActions()}
 
       {/* Journal Info */}
-      <Paper sx={{ p: 3, borderRadius: 2, mb: 2 }}>
+      <Paper sx={{ p: 3, borderRadius: 2, mb: 2, bgcolor: 'background.paper' }}>
         <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
           معلومات القيد
         </Typography>
@@ -1594,7 +1595,7 @@ const Journals = () => {
 
   // Render desktop journal details
   const renderDesktopJournalDetails = () => (
-    <Paper sx={{ p: 4, borderRadius: 2 }}>
+    <Paper sx={{ p: 4, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Typography
         variant="h6"
         color="primary"
@@ -1748,7 +1749,7 @@ const Journals = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#f6f6f8",
+        bgcolor: isDarkMode ? 'background.default' : '#f6f6f8',
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -1778,7 +1779,7 @@ const Journals = () => {
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 4,
-            bgcolor: "#fff",
+            bgcolor: 'background.paper',
             overflowY: "auto",
             width: "100%",
           }}
@@ -1814,7 +1815,7 @@ const Journals = () => {
                       fontWeight: "bold",
                       borderBottom:
                         activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "black",
+                      color: activeTab === 0 ? "#0d40a5" : "text.primary",
                     }}
                   />
                   <Tab
@@ -1829,7 +1830,7 @@ const Journals = () => {
                       fontWeight: "bold",
                       borderBottom:
                         activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "black",
+                      color: activeTab === 1 ? "#0d40a5" : "text.primary",
                     }}
                   />
                 </Tabs>

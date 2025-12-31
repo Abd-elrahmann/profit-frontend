@@ -25,8 +25,6 @@ const LoanTabs = ({
   return (
     <Box
       sx={{
-        borderBottom: 1,
-        borderColor: "divider",
         mb: isSmallScreen ? 2 : 4,
       }}
     >
@@ -55,6 +53,7 @@ const LoanTabs = ({
             fontSize: isSmallScreen ? "0.875rem" : "0.85rem",
             minWidth: isSmallScreen ? "auto" : 72,
             padding: isSmallScreen ? "12px 8px" : "12px 16px",
+            bgcolor: 'background.paper',
           },
         }}
       >
@@ -64,7 +63,7 @@ const LoanTabs = ({
             fontWeight: "bold",
             borderBottom: activeTab === 0 ? "3px solid" : "none",
             borderBottomColor: activeTab === 0 ? "primary.main" : "transparent",
-            color: activeTab === 0 ? "primary.main" : "black",
+            color: activeTab === 0 ? "primary.main" : "text.primary",
           }}
         />
         {permissions.includes("loans_Add") && (
@@ -84,7 +83,7 @@ const LoanTabs = ({
               fontWeight: "bold",
               borderBottom: activeTab === 1 ? "3px solid" : "none",
               borderBottomColor: activeTab === 1 ? "primary.main" : "transparent",
-              color: activeTab === 1 ? "primary.main" : "black",
+              color: activeTab === 1 ? "primary.main" : "text.primary",
             }}
           />
         )}
@@ -94,7 +93,7 @@ const LoanTabs = ({
             fontWeight: "bold",
             borderBottom: activeTab === 2 ? "3px solid" : "none",
             borderBottomColor: activeTab === 2 ? "primary.main" : "transparent",
-            color: activeTab === 2 ? "primary.main" : "black",
+            color: activeTab === 2 ? "primary.main" : "text.primary",
           }}
         />
         <Tab
@@ -103,7 +102,7 @@ const LoanTabs = ({
             fontWeight: "bold",
             borderBottom: activeTab === 3 ? "3px solid" : "none",
             borderBottomColor: activeTab === 3 ? "primary.main" : "transparent",
-            color: activeTab === 3 ? "primary.main" : "black",
+            color: activeTab === 3 ? "primary.main" : "text.primary",
           }}
         />
       </Tabs>

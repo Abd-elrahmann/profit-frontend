@@ -15,9 +15,11 @@ import {
 import { RadioButtonUnchecked } from '@mui/icons-material';
 import { getSidebarMenuItems } from '../../routes';
 import { usePermissions } from '../Contexts/PermissionsContext';
+import { useTheme } from '../../theme/ThemeContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const sidebarRef = useRef(null);
+  const { isDarkMode } = useTheme();
   const [openGroup, setOpenGroup] = useState(null);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
   // eslint-disable-next-line no-unused-vars
@@ -341,11 +343,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             backgroundColor: 'transparent'
           },
           '&::-webkit-scrollbar-thumb': {
-            backgroundColor: '#c5cae9',
+            backgroundColor: isDarkMode ? '#555' : '#c5cae9',
             borderRadius: '8px'
           },
           '&::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: '#9fa8da'
+            backgroundColor: isDarkMode ? '#777' : '#9fa8da'
           },
         }}>
           {singleItems.map((item, index) => renderSingleMenuItem(item, index))}
