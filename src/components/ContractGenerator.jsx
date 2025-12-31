@@ -135,6 +135,7 @@ const generateContract = useCallback(async () => {
     let filledTemplate = templateContent
       // معلومات المستثمر الأساسية
       .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
+      .replace(/{{اسم_رب_المال_النسبة}}/g, investorData.name || '')
       .replace(/{{هوية_رب_المال}}/g, investorData.nationalId || '')
       .replace(/{{عنوان_رب_المال}}/g, investorData.address || '')
       .replace(/{{اسم_العميل}}/g, investorData.name || '')
@@ -251,16 +252,16 @@ const generateContract = useCallback(async () => {
     } finally {
       setLoading(false);
     }
-  }, [contractHtml, investorData, onContractGenerated]);
+  }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer]);
 
   // Upload PDF to server
-  const uploadPDFToServer = async (pdfBlob) => {
+  const uploadPDFToServer = useCallback(async (pdfBlob) => {
     try {
       const formData = new FormData();
       formData.append('file', pdfBlob, `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`);
       formData.append('investorId', investorData.id);
       formData.append('contractType', contractType);
-      
+
       // Include profit percentages for reference
       formData.append('partnerProfitPercent', 100 - (investorData?.orgProfitPercent || 0));
       formData.append('orgProfitPercent', investorData?.orgProfitPercent || 0);
@@ -276,7 +277,7 @@ const generateContract = useCallback(async () => {
       console.error('Error uploading PDF:', error);
       throw error;
     }
-  };
+  }, [investorData, contractType]);
 
   // Expose generateContract method through ref
   React.useImperativeHandle(ref, () => ({
