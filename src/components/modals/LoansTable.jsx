@@ -305,6 +305,17 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
     }
   };
 
+  const getSourceText = (source) => {
+    switch (source) {
+      case "NEW_CAPITAL":
+        return "رأس مال جديد";
+      case "EXISTING_CAPITAL":
+        return "رأس مال موجود";
+      default:
+        return source || "غير محدد";
+    }
+  };
+
   // Render mobile loan cards
   const renderMobileLoanCards = () => (
     <Stack spacing={2} sx={{ p: 2 }}>
@@ -411,6 +422,15 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                   </Box>
                 )}
 
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    مصدر السلفة
+                  </Typography>
+                  <Typography variant="body2">
+                    {getSourceText(loan.source)}
+                  </Typography>
+                </Box>
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Typography variant="caption" color="text.secondary">
                     تاريخ الإنشاء
@@ -477,6 +497,9 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               الحساب البنكي
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              مصدر السلفة
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               مبلغ السلفة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -507,13 +530,13 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={hasActions ? 13 : 12} align="center">
+              <StyledTableCell colSpan={hasActions ? 14 : 13} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : loansData?.data?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={hasActions ? 13 : 12} align="center">
+              <StyledTableCell colSpan={hasActions ? 14 : 13} align="center">
                 <Typography>لا توجد سلف</Typography>
               </StyledTableCell>
             </StyledTableRow>
@@ -546,6 +569,12 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                   sx={{ whiteSpace: "nowrap" }}
                 >
                   {loan.bankAccount?.name}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {getSourceText(loan.source)}
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"
@@ -638,7 +667,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
           {!isLoading && loansData?.data?.length > 0 && (
             <StyledTableRow>
               <StyledTableCell
-                colSpan={3}
+                colSpan={4}
                 align="center"
                 sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
               >
@@ -1038,10 +1067,10 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
             onViewDetails(selectedLoanForMenu?.id);
             handleMenuClose();
           }}
-          sx={{ color: "primary.main", fontWeight: 'bold', fontSize: '0.875rem' }}
+          sx={{ color: "info.main", fontWeight: 'bold', fontSize: '0.875rem' }}
         >
           <ListItemIcon>
-            <Visibility fontSize="small" sx={{ color: "primary.main" }} />
+            <Visibility fontSize="small" sx={{ color: "info.main" }} />
           </ListItemIcon>
           عرض السلفة
         </MenuItem>
@@ -1052,11 +1081,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
             handleViewInstallmentsClick(selectedLoanForMenu);
             handleMenuClose();
           }}
-          sx={{ color: "success.main", fontWeight: 'bold', fontSize: '0.875rem' }}
+          sx={{ color: "warning.main", fontWeight: 'bold', fontSize: '0.875rem' }}
         >
 
           <ListItemIcon>
-            <Schedule fontSize="small" sx={{ color: "success.main" }} />
+            <Schedule fontSize="small" sx={{ color: "warning.main" }} />
           </ListItemIcon>
           عرض الأقساط
         </MenuItem>

@@ -929,7 +929,7 @@ const Loans = () => {
 
       queryClient.invalidateQueries(["loans"]);
       setIsEditMode(false);
-      setIsViewMode(false);
+      setIsViewMode(true); // Stay in view mode so user can continue working with the loan
     } catch (error) {
       handleApiError(error);
       notifyError(
@@ -1017,6 +1017,7 @@ const Loans = () => {
         interestRate: loan.interestRate.toString(),
         paymentAmount: loan.paymentAmount?.toString() || "",
         type: loan.type,
+        source: loan.source,
         startDate: loan.startDate.split("T")[0],
         repaymentDay: loan.repaymentDay ? loan.repaymentDay.split("T")[0] : "",
         issuanceCity: loan.issuanceCity || "",

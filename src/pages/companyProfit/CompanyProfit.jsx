@@ -27,6 +27,7 @@ import {
 import {
   AccountBalance,
   TrendingDown,
+  TrendingUp,
   Download,
   Print,
   PictureAsPdf,
@@ -272,7 +273,37 @@ export default function CompanyProfit() {
               <>
                 {/* Profit Summary Cards */}
                 <Grid container spacing={3} sx={{ p: isSmallScreen ? 2 : 3, justifyContent: 'center' }}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
+                    <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                      <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Box sx={{
+                            p: 1,
+                            borderRadius: 2,
+                            mr: 2
+                          }}>
+                            <TrendingUp sx={{ color: theme.palette.success.main, fontSize: 24 }} />
+                          </Box>
+                          <Box>
+                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.success.main}>
+                              {Math.round(profitData?.upcomingProfit || 0).toLocaleString('en-US')}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              الأرباح القادمة للشركة
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Chip
+                          label="أرباح قادمة"
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1) ' }}>
                       <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -302,7 +333,7 @@ export default function CompanyProfit() {
                     </Card>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                       <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

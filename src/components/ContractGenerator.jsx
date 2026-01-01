@@ -192,7 +192,32 @@ const generateContract = useCallback(async () => {
     console.error('Error generating contract:', error);
     notifyError('حدث خطأ أثناء توليد العقد');
   }
-}, [investorData, templateContent]);
+  }, [investorData, templateContent]);
+
+  // Upload PDF to server
+  const uploadPDFToServer = useCallback(async (pdfBlob) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', pdfBlob, `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`);
+      formData.append('investorId', investorData.id);
+      formData.append('contractType', contractType);
+
+      // Include profit percentages for reference
+      formData.append('partnerProfitPercent', 100 - (investorData?.orgProfitPercent || 0));
+      formData.append('orgProfitPercent', investorData?.orgProfitPercent || 0);
+
+      const response = await Api.post(`/api/partners/upload/${investorData.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading PDF:', error);
+      throw error;
+    }
+  }, [investorData, contractType]);
 
   // Generate PDF from HTML
   const generatePDF = useCallback(async () => {
@@ -253,31 +278,6 @@ const generateContract = useCallback(async () => {
       setLoading(false);
     }
   }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer]);
-
-  // Upload PDF to server
-  const uploadPDFToServer = useCallback(async (pdfBlob) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', pdfBlob, `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`);
-      formData.append('investorId', investorData.id);
-      formData.append('contractType', contractType);
-
-      // Include profit percentages for reference
-      formData.append('partnerProfitPercent', 100 - (investorData?.orgProfitPercent || 0));
-      formData.append('orgProfitPercent', investorData?.orgProfitPercent || 0);
-
-      const response = await Api.post(`/api/partners/upload/${investorData.id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading PDF:', error);
-      throw error;
-    }
-  }, [investorData, contractType]);
 
   // Expose generateContract method through ref
   React.useImperativeHandle(ref, () => ({

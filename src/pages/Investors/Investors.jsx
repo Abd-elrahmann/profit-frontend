@@ -1148,13 +1148,16 @@ export default function Investors() {
                         <Typography variant="body2" color="text.secondary" fontWeight={"bold"}>
                           رأس المال: {investor.total?.toLocaleString()}
                         </Typography>
-                        <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.75rem' }}>
+                        <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.80rem' }}>
                           {investor.capitalAmount?.toLocaleString()} رأس مال أصلي + {investor.newCapitalAmount?.toLocaleString()} رأس مال جديد
                         </Typography>
-                        <Box display="flex" justifyContent="flex-end" mt={1}>
+                        <Typography variant="body2" color="success.main" fontWeight={"bold"}>
+                          الأرباح القادمة: {investor.upcomingProfit?.toLocaleString() || 0}
+                        </Typography>
+                        <Box display="flex" justifyContent="flex-end" mt={-5}>
                           {permissions.includes("partners_Delete") && (
                           <IconButton 
-                            size="small" 
+                            size="medium" 
                             color="error"
                             onClick={(e) => {
                               e.stopPropagation();
