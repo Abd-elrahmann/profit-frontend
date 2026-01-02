@@ -49,6 +49,10 @@ import {
   InsertDriveFile,
   Warning,
   Description,
+  TrendingUp,
+  Assessment,
+  Mosque,
+  Savings,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1193,14 +1197,16 @@ export default function Investors() {
                             alignItems: "center",
                           }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Typography fontWeight="bold">{investor.name}</Typography>
+                          <Box sx={{ flex: 1, mr: 2 }}>
+                            <Typography fontWeight="bold" sx={{ fontSize: '0.95rem', mb: 0.5 }}>
+                              {investor.name}
+                            </Typography>
                             {(investor.WithdrawingStatus === 'WITHDRAWING' || investor.WithdrawingStatus === 'WITHDRAWN') && (
                               <Chip
                                 label={investor.WithdrawingStatus === 'WITHDRAWING' ? 'جاري السحب' : 'تم السحب'}
                                 size="small"
                                 color={investor.WithdrawingStatus === 'WITHDRAWING' ? 'warning' : 'info'}
-                                sx={{ fontSize: '0.65rem', height: '20px' }}
+                                sx={{ fontSize: '0.65rem', height: '20px', mb: 0.5 }}
                               />
                             )}
                           </Box>
@@ -1657,146 +1663,262 @@ export default function Investors() {
                 <Paper sx={{ p: 3 }}>
                   <Typography variant="h6" sx={{ mb: 3 }}>المعلومات المالية</Typography>
 
-                  <Grid container spacing={2} mb={3} sx={{width: '100%', justifyContent: 'center'}}>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            إجمالي مبلغ الاستثمار
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="success">
-                            {investorDetails.total?.toLocaleString()}
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                  {/* Investment Group */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <AccountBalanceWallet sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
+                        الاستثمار
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2} justifyContent="center">
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'success.light',
+                          bgcolor: 'success.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              إجمالي مبلغ الاستثمار
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.total?.toLocaleString()}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'info.light',
+                          bgcolor: 'info.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              رأس المال الجديد
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="info.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.newCapitalAmount?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'warning.light',
+                          bgcolor: 'warning.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              نسبة رأس المال الجديد
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="warning.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.newCapitalPercent || 0}%
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            الأرباح القادمة
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="info">
-                            {investorDetails.upcomingProfit?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            إجمالي الأرباح الفعلي
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="primary">
-                            {investorDetails.totalProfit?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            نسبة أرباح المستثمر
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold">
-                            {investorDetails.partnerProfitPercent}%
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
+                  </Box>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            نسبة أرباح المنشأة
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold">
-                            {investorDetails.orgProfitPercent}%
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                  {/* Profits Group */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <TrendingUp sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
+                        الأرباح والمدخرات
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2} justifyContent="center">
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'primary.light',
+                          bgcolor: 'primary.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              الأرباح القادمة
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.upcomingProfit?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'secondary.light',
+                          bgcolor: 'secondary.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              إجمالي الأرباح الفعلي
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="secondary.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.totalProfit?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'info.light',
+                          bgcolor: 'info.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              إجمالي الادخار
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="info.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.totalSaving?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     </Grid>
+                  </Box>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            الزكاة السنوية المستحقة
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="warning.main">
-                            {investorDetails.yearlyZakatRequired?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                  {/* Ratios Group */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <Assessment sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
+                        النسب والمعدلات
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2} justifyContent="center">
+                      <Grid item xs={12} sm={6}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'success.light',
+                          bgcolor: 'success.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              نسبة أرباح المستثمر
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold" color="success.main">
+                              {investorDetails.partnerProfitPercent}%
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'warning.light',
+                          bgcolor: 'warning.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              نسبة أرباح المنشأة
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold" color="warning.main">
+                              {investorDetails.orgProfitPercent}%
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            الزكاة السنوية المدفوعة
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="success.main">
-                            {investorDetails.yearlyZakatPaid?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            رصيد الزكاة السنوية
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="error.main">
-                            {investorDetails.yearlyZakatBalance?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            إجمالي الادخار
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="info.main">
-                            {investorDetails.totalSaving?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
+                  </Box>
 
-                    {/* New Statistics Cards */}
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            رأس المال الجديد
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="success.main">
-                            {investorDetails.newCapitalAmount?.toLocaleString() || 0}
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                  {/* Zakat Group */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <Mosque sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
+                        الزكاة السنوية
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2} justifyContent="center">
+                      <Grid item xs={12} sm={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'warning.light',
+                          bgcolor: 'warning.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              المستحقة
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="warning.main" sx={{ fontSize: '1.1rem' }}>
+                              {investorDetails.yearlyZakatRequired?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'success.light',
+                          bgcolor: 'success.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              المدفوعة
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ fontSize: '1.1rem' }}>
+                              {investorDetails.yearlyZakatPaid?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'error.light',
+                          bgcolor: 'error.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              الرصيد
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="error.main" sx={{ fontSize: '1.1rem' }}>
+                              {investorDetails.yearlyZakatBalance?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     </Grid>
-
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            نسبة رأس المال الجديد
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="warning.main">
-                            {investorDetails.newCapitalPercent || 0}%
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-
-                  </Grid>
+                  </Box>
 
                   {/* Saving Progress Alert */}
                   {(() => {

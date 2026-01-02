@@ -21,6 +21,10 @@ import {
   MenuItem,
   Select,
   Autocomplete,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Tooltip,
   useTheme,
 } from "@mui/material";
 import {
@@ -37,6 +41,7 @@ import {
   TrendingDown,
   ExpandMore,
   ExpandLess,
+  Info,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
@@ -65,10 +70,6 @@ const IncomeStatement = () => {
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [fromDate, setFromDate] = useState(dayjs().startOf('month'));
   const [toDate, setToDate] = useState(dayjs().endOf('month'));
-  const [expandedClients, setExpandedClients] = useState({});
-  const [expandedCapital, setExpandedCapital] = useState(false);
-  const [expandedRevenues, setExpandedRevenues] = useState(true);
-  const [expandedExpenses, setExpandedExpenses] = useState(true);
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
 
   // توليد السنوات من 2020 إلى 2050
@@ -119,7 +120,7 @@ const IncomeStatement = () => {
     }
 
     try {
-      await printIncomeStatement(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, expandedCapital, expandedRevenues, expandedExpenses, expandedClients);
+      await printIncomeStatement(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
     } catch (error) {
       notifyError(error.message || "حدث خطأ أثناء الطباعة");
     }
@@ -132,7 +133,7 @@ const IncomeStatement = () => {
     }
 
     try {
-      await exportIncomeStatementToPDF(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, expandedCapital, expandedRevenues, expandedExpenses, expandedClients);
+      await exportIncomeStatementToPDF(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
       notifySuccess("تم تصدير التقرير بنجاح");
     } catch (error) {
       notifyError(error.message || "حدث خطأ أثناء تصدير PDF");
@@ -146,7 +147,7 @@ const IncomeStatement = () => {
     }
 
     try {
-      await exportIncomeStatementToExcel(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, expandedCapital, expandedRevenues, expandedExpenses, expandedClients);
+      await exportIncomeStatementToExcel(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
       notifySuccess("تم تصدير التقرير بنجاح");
     } catch (error) {
       notifyError(error.message || "حدث خطأ أثناء تصدير Excel");
@@ -160,218 +161,7 @@ const IncomeStatement = () => {
     }).format(Math.abs(amount || 0));
   };
 
-  const formatAmount = (amount) => {
-    if (amount < 0) {
-      return `(${formatNumber(amount)})`;
-    }
-    return formatNumber(amount);
-  };
 
-  const toggleClientDetails = (clientId) => {
-    setExpandedClients(prev => ({
-      ...prev,
-      [clientId]: !prev[clientId]
-    }));
-  };
-
-  const toggleCapitalDetails = () => {
-    setExpandedCapital(prev => !prev);
-  };
-
-  const toggleRevenueDetails = () => {
-    setExpandedRevenues(prev => !prev);
-  };
-
-  const toggleExpenseDetails = () => {
-    setExpandedExpenses(prev => !prev);
-  };
-
-  const getTableData = () => {
-    if (!incomeData) return [];
-
-    const data = [];
-
-    // رأس المال
-    data.push({
-      id: 0,
-      name: "إجمالي رأس المال المدفوع الفعلي",
-      amount: incomeData.totalCapital || 0,
-      type: "capital",
-      icon: <MonetizationOn />,
-      capitalDetails: incomeData.capitalByPartner || []
-    });
-
-    // تفاصيل رأس المال عند التوسع
-    if (expandedCapital && incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
-      incomeData.capitalByPartner.forEach((partner, index) => {
-        data.push({
-          id: `capital-${index}`,
-          name: partner.partnerName,
-          amount: partner.totalAmount,
-          type: "capital-detail",
-          indent: true
-        });
-      });
-    }
-
-    data.push({ id: 0.75, type: "spacer" });
-
-    // عنوان الإيرادات
-    data.push({
-      id: 1,
-      name: "الإيرادات التشغيلية",
-      type: "revenue-header",
-      icon: <TrendingUpIcon />
-    });
-
-    // رأس جدول الإيرادات
-    if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
-      data.push({
-        id: 1.5,
-        type: "revenue-table-header"
-      });
-
-      // إيرادات العملاء
-      incomeData.revenueByClient.forEach((client, clientIndex) => {
-        data.push({
-          id: `client-${clientIndex}`,
-          name: client.clientName,
-          amount: client.totalRevenue,
-          type: "client-revenue",
-          clientId: client.clientId,
-          entries: client.entries
-        });
-
-        // تفاصيل إدخالات العميل
-        if (expandedClients[client.clientId]) {
-          // عرض إيرادات الشركة والشركاء إذا كانت متوفرة
-          if (client.companyRevenue && client.companyRevenue > 0) {
-            data.push({
-              id: `client-${clientIndex}-company-revenue`,
-              name: "حصة الشركة",
-              amount: client.companyRevenue,
-              type: "revenue-breakdown",
-              indent: true,
-              subIndent: true
-            });
-          }
-
-          if (client.partnersRevenue && client.partnersRevenue > 0) {
-            data.push({
-              id: `client-${clientIndex}-partners-revenue`,
-              name: "حصة الشركاء",
-              amount: client.partnersRevenue,
-              type: "revenue-breakdown",
-              indent: true,
-              subIndent: true
-            });
-          }
-
-          // عرض تفاصيل الإدخالات
-          client.entries.forEach((entry, entryIndex) => {
-            data.push({
-              id: `client-${clientIndex}-entry-${entryIndex}`,
-              name: entry.description,
-              amount: entry.rawShare || entry.amount,
-              type: "revenue-detail",
-              indent: true,
-              subIndent: true,
-              date: entry.date,
-              entryData: entry // حفظ بيانات الإدخال الكاملة
-            });
-          });
-        }
-      });
-    }
-
-    // إجمالي الإيرادات
-    data.push({
-      id: 2.5,
-      name: "إجمالي إيرادات الفترة",
-      amount: incomeData.revenues?.total || 0,
-      type: "revenue-total"
-    });
-
-    // تفصيل توزيع الإيرادات إذا كان متوفراً ومفتوحاً
-    if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
-      const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
-      const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
-
-      if (totalCompanyRevenue > 0) {
-        data.push({
-          id: 2.6,
-          name: "إجمالي حصة الشركة",
-          amount: totalCompanyRevenue,
-          type: "revenue-distribution"
-        });
-      }
-
-      if (totalPartnersRevenue > 0) {
-        data.push({
-          id: 2.7,
-          name: "إجمالي حصة الشركاء",
-          amount: totalPartnersRevenue,
-          type: "revenue-distribution"
-        });
-      }
-    }
-
-    data.push({ id: 2.75, type: "spacer" });
-
-    // عنوان المصروفات
-    data.push({
-      id: 3,
-      name: "المصروفات التشغيلية",
-      type: "expense-header",
-      icon: <TrendingDown />
-    });
-
-    // رأس جدول المصروفات
-    if (incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
-      data.push({
-        id: 3.5,
-        type: "expense-table-header"
-      });
-    }
-
-    // المصروفات التفصيلية
-    if (expandedExpenses && incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
-      incomeData.detailedExpenses.forEach((expense, index) => {
-        data.push({
-          id: 4 + index,
-          name: expense.description || expense.type,
-          amount: -expense.amount,
-          type: "expense",
-          indent: true,
-          expenseType: expense.type,
-          employee: expense.employee,
-          date: expense.createdAt
-        });
-      });
-    }
-
-    // إجمالي المصروفات
-    data.push({
-      id: 100,
-      name: "إجمالي المصروفات التشغيلية",
-      amount: -(incomeData.totalExpenses || 0),
-      type: "expense-total"
-    });
-
-    data.push({ id: 100.75, type: "spacer" });
-
-    // صافي الربح النهائي
-    data.push({
-      id: 101,
-      name: "صافي الربح القابل للتوزيع بعد الإغلاق",
-      amount: incomeData.netProfit || 0,
-      type: "final-profit"
-    });
-
-    return data;
-  };
-
-  const tableData = getTableData();
 
   const getChipColor = (expenseType) => {
     switch (expenseType) {
@@ -432,288 +222,270 @@ const IncomeStatement = () => {
         padding: { xs: 2, md: 3, lg: 1 },
       }}>
 
-        {/* Header */}
-        <Box sx={{ 
-          textAlign: 'center',
-          mb: 2,
-          pb: 2,
-          borderBottom: '1px solid',
-          borderColor: 'divider'
-        }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 700,
-              color: theme.palette.text.primary,
-              fontSize: { xs: '1.75rem', md: '2.25rem' },
-              mb: 1
-            }}
-          >
-            قائمة الدخل
-          </Typography>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              color: theme.palette.primary.main,
-              textAlign: 'center'
-            }}
-          >
-            تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين
-          </Typography>
-        </Box>
+     
 
-        {/* Period Selection */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            mb: 3,
-            bgcolor: theme.palette.background.paper,
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            boxShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(255,255,255,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
-            textAlign: 'center'
-          }}
-        >
-          <Grid container spacing={2} alignItems="center" justifyContent="center">
-            {/* Period Type */}
-            <Grid item xs={12} md={3}>
-                <Select
-                  fullWidth
-                  size="small"
-                  value={periodType}
-                  onChange={(e) => {
-                    setPeriodType(e.target.value);
-                    if (e.target.value !== "period") {
-                      setSelectedPeriodId("");
-                    }
-                  }}
-                  sx={{
-                    bgcolor: theme.palette.background.default,
-                    '& .MuiSelect-select': {
-                      fontWeight: 500,
-                      color: theme.palette.text.primary,
-                      textAlign: 'center'
-                    }
-                  }}
-                >
-                <MenuItem value="monthly" sx={{ textAlign: 'center' }}>شهري</MenuItem>
-                <MenuItem value="yearly" sx={{ textAlign: 'center' }}>سنوي</MenuItem>
-                <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
-                <MenuItem value="period" sx={{ textAlign: 'center' }}>فترة محاسبية</MenuItem>
-              </Select>
-            </Grid>
-
-            {/* Month Selection */}
-            {periodType === "monthly" && (
-              <Grid item xs={12} md={3}>
-                <Select
-                  fullWidth
-                  size="small"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <CalendarMonth sx={{ color: theme.palette.primary.main }} />
-                    </InputAdornment>
-                  }
-                  sx={{
-                    bgcolor: theme.palette.background.default,
-                    '& .MuiSelect-select': {
-                      fontWeight: 500,
-                      color: theme.palette.text.primary,
-                      textAlign: 'center'
-                    }
-                  }}
-                >
-                  {MONTHS.map((month, index) => (
-                    <MenuItem key={index} value={index} sx={{ textAlign: 'center' }}>
-                      {month}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Grid>
-            )}
-
-            {/* Year Selection */}
-            {periodType === "monthly" || periodType === "yearly" ? (
-              <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
-                <Autocomplete
-                  fullWidth
-                  size="small"
-                  value={selectedYear}
-                  onChange={(event, newValue) => {
-                    setSelectedYear(newValue);
-                  }}
-                  options={years}
-                  getOptionLabel={(option) => option.toString()}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="اختر السنة"
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CalendarToday sx={{ color: theme.palette.primary.main }} />
-                          </InputAdornment>
-                        ),
+        {/* Filters and Action Buttons */}
+        <Grid container spacing={3} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+          {/* Filters Section */}
+          <Grid item xs={12} md={8}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: theme.palette.background.paper,
+                borderRadius: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(255,255,255,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
+              }}
+            >
+              <Grid container spacing={2} alignItems="center">
+                {/* Period Type */}
+                <Grid item xs={12} md={3}>
+                    <Select
+                      fullWidth
+                      size="small"
+                      value={periodType}
+                      onChange={(e) => {
+                        setPeriodType(e.target.value);
+                        if (e.target.value !== "period") {
+                          setSelectedPeriodId("");
+                        }
                       }}
                       sx={{
                         bgcolor: theme.palette.background.default,
-                        '& .MuiInputBase-input': {
+                        '& .MuiSelect-select': {
                           fontWeight: 500,
                           color: theme.palette.text.primary,
                           textAlign: 'center'
                         }
                       }}
-                    />
-                  )}
-                />
-              </Grid>
-            ) : null}
+                    >
+                    <MenuItem value="monthly" sx={{ textAlign: 'center' }}>شهري</MenuItem>
+                    <MenuItem value="yearly" sx={{ textAlign: 'center' }}>سنوي</MenuItem>
+                    <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
+                    <MenuItem value="period" sx={{ textAlign: 'center' }}>فترة محاسبية</MenuItem>
+                  </Select>
+                </Grid>
 
-            {/* Accounting Period Selection */}
-            {periodType === "period" && (
-              <Grid item xs={12} md={6}>
-                <Autocomplete
-                  fullWidth
-                  size="small"
-                  value={accountingPeriods.find(p => p.id === selectedPeriodId) || null}
-                  onChange={(event, newValue) => {
-                    setSelectedPeriodId(newValue?.id || "");
-                  }}
-                  options={[{ id: "", name: "لا توجد فترة محددة", startDate: null, endDate: null }, ...accountingPeriods]}
-                  getOptionLabel={(option) =>
-                    option && option.name ? `${option.name} (${option.startDate ? dayjs(option.startDate).format('DD/MM/YYYY') : ''} - ${option.endDate ? dayjs(option.endDate).format('DD/MM/YYYY') : 'مفتوحة'})` : 'لا توجد فترة محددة'
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="اختر الفترة المحاسبية"
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CalendarMonth sx={{ color: theme.palette.primary.main }} />
-                          </InputAdornment>
-                        ),
-                      }}
+                {/* Month Selection */}
+                {periodType === "monthly" && (
+                  <Grid item xs={12} md={3}>
+                    <Select
+                      fullWidth
+                      size="small"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <CalendarMonth sx={{ color: theme.palette.primary.main }} />
+                        </InputAdornment>
+                      }
                       sx={{
                         bgcolor: theme.palette.background.default,
-                        '& .MuiInputBase-input': {
+                        '& .MuiSelect-select': {
                           fontWeight: 500,
                           color: theme.palette.text.primary,
                           textAlign: 'center'
                         }
                       }}
+                    >
+                      {MONTHS.map((month, index) => (
+                        <MenuItem key={index} value={index} sx={{ textAlign: 'center' }}>
+                          {month}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </Grid>
+                )}
+
+                {/* Year Selection */}
+                {periodType === "monthly" || periodType === "yearly" ? (
+                  <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
+                    <Autocomplete
+                      fullWidth
+                      size="small"
+                      value={selectedYear}
+                      onChange={(event, newValue) => {
+                        setSelectedYear(newValue);
+                      }}
+                      options={years}
+                      getOptionLabel={(option) => option.toString()}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="اختر السنة"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <CalendarToday sx={{ color: theme.palette.primary.main }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            bgcolor: theme.palette.background.default,
+                            '& .MuiInputBase-input': {
+                              fontWeight: 500,
+                              color: theme.palette.text.primary,
+                              textAlign: 'center'
+                            }
+                          }}
+                        />
+                      )}
                     />
-                  )}
-                />
+                  </Grid>
+                ) : null}
+
+                {/* Accounting Period Selection */}
+                {periodType === "period" && (
+                  <Grid item xs={12} md={6}>
+                    <Autocomplete
+                      fullWidth
+                      size="small"
+                      value={accountingPeriods.find(p => p.id === selectedPeriodId) || null}
+                      onChange={(event, newValue) => {
+                        setSelectedPeriodId(newValue?.id || "");
+                      }}
+                      options={[{ id: "", name: "لا توجد فترة محددة", startDate: null, endDate: null }, ...accountingPeriods]}
+                      getOptionLabel={(option) =>
+                        option && option.name ? `${option.name} (${option.startDate ? dayjs(option.startDate).format('DD/MM/YYYY') : ''} - ${option.endDate ? dayjs(option.endDate).format('DD/MM/YYYY') : 'مفتوحة'})` : 'لا توجد فترة محددة'
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="اختر الفترة المحاسبية"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <CalendarMonth sx={{ color: theme.palette.primary.main }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            bgcolor: theme.palette.background.default,
+                            '& .MuiInputBase-input': {
+                              fontWeight: 500,
+                              color: theme.palette.text.primary,
+                              textAlign: 'center'
+                            }
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                )}
+
+                {/* Custom Date Range */}
+                {periodType === "custom" && (
+                  <>
+                    <Grid item xs={12} md={3}>
+                      <DatePicker
+                        label="من تاريخ"
+                        value={fromDate}
+                        onChange={(newValue) => setFromDate(newValue)}
+                        format="DD/MM/YYYY"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: "small",
+                            sx: {
+                              bgcolor: theme.palette.background.default,
+                              '& .MuiInputBase-input': {
+                                fontWeight: 500,
+                                color: theme.palette.text.primary,
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <DatePicker
+                        label="إلى تاريخ"
+                        value={toDate}
+                        onChange={(newValue) => setToDate(newValue)}
+                        format="DD/MM/YYYY"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: "small",
+                            sx: {
+                              bgcolor: theme.palette.background.default,
+                              '& .MuiInputBase-input': {
+                                fontWeight: 500,
+                                color: theme.palette.text.primary,
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </Grid>
+                  </>
+                )}
               </Grid>
-            )}
-
-            {/* Custom Date Range */}
-            {periodType === "custom" && (
-              <>
-                <Grid item xs={12} md={3}>
-                  <DatePicker
-                    label="من تاريخ"
-                    value={fromDate}
-                    onChange={(newValue) => setFromDate(newValue)}
-                    format="DD/MM/YYYY"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: "small",
-                        sx: {
-                          bgcolor: theme.palette.background.default,
-                          '& .MuiInputBase-input': {
-                            fontWeight: 500,
-                            color: theme.palette.text.primary,
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <DatePicker
-                    label="إلى تاريخ"
-                    value={toDate}
-                    onChange={(newValue) => setToDate(newValue)}
-                    format="DD/MM/YYYY"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: "small",
-                        sx: {
-                          bgcolor: theme.palette.background.default,
-                          '& .MuiInputBase-input': {
-                            fontWeight: 500,
-                            color: theme.palette.text.primary,
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </Grid>
-              </>
-            )}
-
+            </Paper>
           </Grid>
-        </Paper>
 
-        {/* Action Buttons */}
-        {!isLoading && !isError && incomeData && (
-          <Stack direction="row" justifyContent="space-around" sx={{ mb: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Print sx={{marginLeft: '10px'}} />}
-              onClick={handlePrint}
-              sx={{
-                borderColor: '#F97316',
-                color: '#F97316',
-                fontWeight: 600,
-                '&:hover': {
-                  borderColor: '#EA580C',
-                  bgcolor: '#FEF3C7',
-                  color: '#EA580C'
-                }
-              }}
-            >
-              طباعة
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<TableChart sx={{marginLeft: '10px'}} />}
-              onClick={handleExportExcel}
-              sx={{
-                bgcolor: '#DC2626',
-                fontWeight: 600,
-                '&:hover': {
-                  bgcolor: '#B91C1C'
-                }
-              }}
-            >
-              تصدير Excel
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<FileUpload sx={{marginLeft: '10px'}} />}
-              onClick={handleExportPDF}
-              sx={{
-                bgcolor: '#2E8B45',
-                fontWeight: 600,
-                '&:hover': {
-                  bgcolor: '#257239'
-                }
-              }}
-            >
-              تصدير PDF
-            </Button>
-          </Stack>
-        )}
+          {/* Action Buttons Section */}
+          {!isLoading && !isError && incomeData && (
+            <Grid item xs={12} md={3}>
+           <Stack direction="row" justifyContent="flex-end" sx={{ gap: 1 }}>
+  <Button
+    variant="outlined"
+    startIcon={<Print />}
+    onClick={handlePrint}
+    size="small"
+    sx={{
+      borderColor: '#F97316',
+      color: '#F97316',
+      fontWeight: 600,
+      '&:hover': {
+        borderColor: '#EA580C',
+        bgcolor: '#FEF3C7',
+        color: '#EA580C'
+      }
+    }}
+  >
+    طباعة
+  </Button>
+
+  <Button
+    variant="contained"
+    startIcon={<TableChart />}
+    onClick={handleExportExcel}
+    size="small"
+    sx={{
+      bgcolor: '#DC2626',
+      fontWeight: 600,
+      '&:hover': {
+        bgcolor: '#B91C1C'
+      }
+    }}
+  >
+    Excel
+  </Button>
+
+  <Button
+    variant="contained"
+    startIcon={<FileUpload />}
+    onClick={handleExportPDF}
+    size="small"
+    sx={{
+      bgcolor: '#2E8B45',
+      fontWeight: 600,
+      '&:hover': {
+        bgcolor: '#257239'
+      }
+    }}
+  >
+    PDF
+  </Button>
+</Stack>
+
+            </Grid>
+          )}
+        </Grid>
 
         {/* Loading State */}
         {isLoading && (
@@ -737,14 +509,14 @@ const IncomeStatement = () => {
           </Paper>
         )}
 
-        {/* Summary Cards */}
+        {/* Net Profit - King Card */}
         {!isLoading && !isError && incomeData && (
           <>
             {/* Period Info */}
             {periodInfo && (
               <Box sx={{ mb: 3, textAlign: 'center' }}>
                 <Chip
-                  label={`الفترة: ${periodInfo.text}`}
+                  label={`الفترة ${periodInfo.text}`}
                   color="primary"
                   variant="outlined"
                   sx={{ fontSize: '0.9rem', fontWeight: 600 }}
@@ -752,30 +524,98 @@ const IncomeStatement = () => {
               </Box>
             )}
 
-            <Grid container spacing={2} sx={{ mb: 3, textAlign: 'center' }} justifyContent="center">
-              {/* Total Capital */}
-              <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
+            {/* Net Profit - King Card */}
+            <Grid container justifyContent="center" sx={{ mb: 4, width: '100%' }}>
+              <Grid item xs={12} md={8}>
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2,
+                    p: 4,
+                    width: '100%',
+                    color: 'white',
+                    textAlign: 'center',
+                    borderRadius: 3,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }
+                  }}
+                >
+                  <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <AccountBalanceWallet sx={{
+                      fontSize: 48,
+                      color: theme.palette.primary.main,
+                      mb: 2,
+                      opacity: 0.9
+                    }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <Typography sx={{
+                        fontSize: '1.25rem',
+                        fontWeight: 'bold',
+                        opacity: 0.9,
+                        mr: 1
+                      }}>
+                        {incomeData.netProfit >= 0 ? 'صافي الربح القابل للتوزيع' : 'صافي الخسارة'}
+                      </Typography>
+                      <Tooltip title="صافي الربح = إجمالي الإيرادات - إجمالي المصروفات" arrow>
+                        <Info sx={{ fontSize: 20, opacity: 0.7, cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
+                    <Typography sx={{
+                      fontSize: '3rem',
+                      color:incomeData.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main,
+                      fontWeight: 900,
+                      mb: 1
+                    }}>
+                      {formatNumber(Math.abs(incomeData.netProfit))}
+                    </Typography>
+                    <Typography sx={{
+                      fontSize: '0.875rem',
+                      opacity: 0.8
+                    }}>
+                      المبلغ المتبقي بعد خصم جميع المصروفات - جاهز للتوزيع على المساهمين
+                    </Typography>
+                  </Box>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Summary Cards */}
+            <Grid container spacing={2} sx={{ mb: 4, textAlign: 'center' }} justifyContent="center">
+              {/* Total Capital */}
+              <Grid item xs={12} md={4} sx={{ width: '280px', maxWidth: '100%' }}>
+                <Paper
+                  elevation={1}
+                  sx={{
+                    p: 3,
                     bgcolor: theme.palette.background.paper,
                     borderRadius: 2,
                     border: `1px solid ${theme.palette.divider}`,
-                    height: '100%'
+                    height: '100%',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.palette.mode === 'dark' ? '0 4px 8px rgba(255,255,255,0.1)' : '0 4px 8px rgba(0,0,0,0.1)',
+                    }
                   }}
                 >
                   <MonetizationOn sx={{
                     color: theme.palette.primary.main,
-                    fontSize: 30,
+                    fontSize: 32,
                     mb: 1
                   }} />
-                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.875rem', mb: 1 }}>
-                    رأس المال الفعلي
+                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.9rem', mb: 1, fontWeight: 600 }}>
+                    رأس المال المدفوع الفعلي
                   </Typography>
                   <Typography sx={{
                     color: theme.palette.text.primary,
-                    fontSize: '1.25rem',
+                    fontSize: '1.5rem',
                     fontWeight: 700
                   }}>
                     {formatNumber(incomeData.totalCapital)}
@@ -784,48 +624,53 @@ const IncomeStatement = () => {
               </Grid>
 
               {/* Total Revenue */}
-              <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
+              <Grid item xs={12} md={4} sx={{ width: '280px', maxWidth: '100%' }}>
                 <Paper
-                  elevation={0}
+                  elevation={1}
                   sx={{
-                    p: 2,
+                    p: 3,
                     bgcolor: theme.palette.background.paper,
                     borderRadius: 2,
                     border: `1px solid ${theme.palette.divider}`,
-                    height: '100%'
+                    height: '100%',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.palette.mode === 'dark' ? '0 4px 8px rgba(255,255,255,0.1)' : '0 4px 8px rgba(0,0,0,0.1)',
+                    }
                   }}
                 >
-                  <Payments sx={{
-                    color: theme.palette.primary.main,
-                    fontSize: 30,
+                  <TrendingUpIcon sx={{
+                    color: theme.palette.success.main,
+                    fontSize: 32,
                     mb: 1
                   }} />
-                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.875rem', mb: 1 }}>
-                    إجمالي الإيرادات
+                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.9rem', mb: 1, fontWeight: 600 }}>
+                    إجمالي الدخل المحقق خلال الفترة
                   </Typography>
                   <Typography sx={{
                     color: theme.palette.text.primary,
-                    fontSize: '1.25rem',
+                    fontSize: '1.5rem',
                     fontWeight: 700
                   }}>
                     {formatNumber(incomeData.revenues?.total || 0)}
                   </Typography>
                   {/* Revenue Distribution Display */}
                   {incomeData.revenueByClient && incomeData.revenueByClient.length > 0 && (
-                    <Box sx={{ mt: 1, fontSize: '0.75rem' }}>
+                    <Box sx={{ mt: 2, fontSize: '0.75rem', pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                       {(() => {
                         const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
                         const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
                         return (
                           <>
                             {totalPartnersRevenue > 0 && (
-                              <Typography variant="caption" display="block" sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>
-                                أرباح الشركاء: {formatNumber(totalPartnersRevenue)}
+                              <Typography variant="caption" display="block" sx={{ color: theme.palette.primary.main, fontWeight: 'bold', mb: 0.5 }}>
+                                حصة الشركاء: {formatNumber(totalPartnersRevenue)}
                               </Typography>
                             )}
                             {totalCompanyRevenue > 0 && (
                               <Typography variant="caption" display="block" sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>
-                                أرباح الشركة: {formatNumber(totalCompanyRevenue)}
+                                حصة الشركة: {formatNumber(totalCompanyRevenue)}
                               </Typography>
                             )}
                           </>
@@ -837,548 +682,324 @@ const IncomeStatement = () => {
               </Grid>
 
               {/* Total Expenses */}
-              <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
+              <Grid item xs={12} md={4} sx={{ width: '280px', maxWidth: '100%' }}>
                 <Paper
-                  elevation={0}
+                  elevation={1}
                   sx={{
-                    p: 2,
+                    p: 3,
                     bgcolor: theme.palette.background.paper,
                     borderRadius: 2,
                     border: `1px solid ${theme.palette.divider}`,
-                    height: '100%'
+                    height: '100%',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.palette.mode === 'dark' ? '0 4px 8px rgba(255,255,255,0.1)' : '0 4px 8px rgba(0,0,0,0.1)',
+                    }
                   }}
                 >
-                  <MoneyOff sx={{ 
-                    color: theme.palette.error.main, 
-                    fontSize: 30,
-                    mb: 1 
-                  }} />
-                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.875rem', mb: 1 }}>
-                    المصروفات التشغيلية
-                  </Typography>
-                  <Typography sx={{ 
+                  <MoneyOff sx={{
                     color: theme.palette.error.main,
-                    fontSize: '1.25rem',
+                    fontSize: 32,
+                    mb: 1
+                  }} />
+                  <Typography sx={{ color: theme.palette.primary.main, fontSize: '0.9rem', mb: 1, fontWeight: 600 }}>
+                    إجمالي المصروفات التشغيلية
+                  </Typography>
+                  <Typography sx={{
+                    color: theme.palette.error.main,
+                    fontSize: '1.5rem',
                     fontWeight: 700
                   }}>
                     {formatNumber(incomeData.totalExpenses)}
                   </Typography>
                 </Paper>
               </Grid>
-
-              {/* Net Profit/Loss */}
-              <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    bgcolor: incomeData.netProfit >= 0 ? theme.palette.success.main + '20' : theme.palette.error.main + '20',
-                    borderRadius: 2,
-                    border: `1px solid ${incomeData.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main}`,
-                    height: '100%'
-                  }}
-                >
-                  <AccountBalanceWallet sx={{ 
-                    color: incomeData.netProfit >= 0 ? theme.palette.primary.main : theme.palette.error.main, 
-                    fontSize: 30,
-                    mb: 1 
-                  }} />
-                  <Typography sx={{ 
-                    color: incomeData.netProfit >= 0 ? theme.palette.primary.main : theme.palette.error.main, 
-                    fontSize: '0.875rem', 
-                    mb: 1,
-                    fontWeight: 600
-                  }}>
-                    {incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة'}
-                  </Typography>
-                  <Typography sx={{ 
-                    color: incomeData.netProfit >= 0 ? theme.palette.primary.main : theme.palette.error.main,
-                    fontSize: '1.25rem',
-                    fontWeight: 700
-                  }}>
-                    {formatNumber(Math.abs(incomeData.netProfit))}
-                  </Typography>
-                </Paper>
-              </Grid>
             </Grid>
 
-            {/* Detailed Statement */}
-            <Paper
-              elevation={0}
-              sx={{
-                bgcolor: theme.palette.background.paper,
-                borderRadius: 2,
-                border: `1px solid ${theme.palette.divider}`,
-                overflow: 'hidden',
-                mb: 3
-              }}
-            >
-              {/* Table Header */}
-              <Box sx={{
-                p: 3,
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : 'rgba(249, 251, 249, 0.5)',
-                textAlign: 'center'
-              }}>
-                <TableChart sx={{ 
-                  color: theme.palette.primary.main, 
-                  fontSize: 30,
-                  mb: 1 
-                }} />
-                <Typography sx={{
-                  fontSize: '1.25rem',
+            {/* تفاصيل حساب الفترة */}
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  textAlign: 'center',
+                  mb: 3,
                   fontWeight: 700,
                   color: theme.palette.text.primary
-                }}>
-                  البيان التفصيلي
-                </Typography>
-                {periodInfo && (
-                <Typography sx={{
-                  fontSize: '0.875rem',
-                  color: theme.palette.text.secondary,
-                  mt: 0.5
-                }}>
-                    للفترة: {periodInfo.text}
-                  </Typography>
-                )}
-              </Box>
+                }}
+              >
+                من أين جاء الربح؟
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  textAlign: 'center',
+                  mb: 4,
+                  color: theme.palette.text.secondary
+                }}
+              >
+                تفاصيل مصادر الدخل والمصروفات - اضغط على أي قسم لرؤية التفاصيل الكاملة
+              </Typography>
 
-              {/* Table */}
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : 'rgba(234, 241, 235, 0.5)' }}>
-                      <TableCell sx={{
-                        py: 2,
-                        px: 3,
-                        color: theme.palette.text.secondary,
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        textAlign: 'center',
-                        width: '60%'
-                      }}>
-                        البند
-                      </TableCell>
-                      <TableCell align="center" sx={{
-                        py: 2,
-                        px: 3,
-                        color: theme.palette.text.secondary,
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        textAlign: 'center',
-                        width: '40%'
-                      }}>
-                        المبلغ
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tableData.map((row) => {
-                      if (row.type === "spacer") {
-                        return (
-                          <TableRow key={row.id}>
-                            <TableCell colSpan={2} sx={{ py: 1, bgcolor: 'rgba(0,0,0,0.02)' }} />
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-header") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '20' : 'rgba(220, 252, 231, 0.3)' }}>
-                            <TableCell colSpan={2} sx={{ py: 2, px: 3 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography sx={{
-                                  fontSize: '0.875rem',
-                                  fontWeight: 700,
-                                  color: theme.palette.success.main,
-                                  mr: 1
-                                }}>
-                                  {row.name}
-                                </Typography>
-                                {incomeData.revenueByClient && incomeData.revenueByClient.length > 0 && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={toggleRevenueDetails}
-                                    sx={{ color: '#2E8B45' }}
-                                  >
-                                    {expandedRevenues ? <ExpandLess /> : <ExpandMore />}
-                                  </IconButton>
-                                )}
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "expense-header") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.error.main + '20' : 'rgba(254, 226, 226, 0.3)' }}>
-                            <TableCell colSpan={2} sx={{ py: 2, px: 3 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography sx={{
-                                  fontSize: '0.875rem',
-                                  fontWeight: 700,
-                                  color: theme.palette.error.main,
-                                  mr: 1
-                                }}>
-                                  {row.name}
-                                </Typography>
-                                {incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0 && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={toggleExpenseDetails}
-                                    sx={{ color: '#DC2626' }}
-                                  >
-                                    {expandedExpenses ? <ExpandLess /> : <ExpandMore />}
-                                  </IconButton>
-                                )}
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "client-revenue") {
-                        return (
-                          <React.Fragment key={row.id}>
-                            <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '10' : 'rgba(219, 234, 254, 0.2)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                              <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
-                                <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                                  <Typography>
-                                    {row.name}
-                                  </Typography>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => toggleClientDetails(row.clientId)}
-                                    sx={{ p: 0.5 }}
-                                  >
-                                    {expandedClients[row.clientId] ? <ExpandLess /> : <ExpandMore />}
-                                  </IconButton>
-                                </Stack>
-                              </TableCell>
-                              <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                                <Typography sx={{
-                                  fontWeight: 600,
-                                  color: theme.palette.text.primary
-                                }}>
-                                  {formatAmount(row.amount)}
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          </React.Fragment>
-                        );
-                      }
-
-                      if (row.type === "revenue-table-header") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '15' : 'rgba(219, 234, 254, 0.3)' }}>
-                            <TableCell colSpan={2} sx={{
-                              py: 1,
-                              px: 3,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: theme.palette.primary.main,
-                              borderBottom: `1px solid ${theme.palette.divider}`
-                            }}>
-                              إيرادات العملاء
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-detail") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.warning.main + '10' : 'rgba(255, 237, 213, 0.3)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: row.subIndent ? 8 : 6 }}>
-                              <Typography sx={{ fontSize: '0.875rem' }}>
-                                {row.name}
-                              </Typography>
-                              {row.date && (
-                                <Typography variant="caption" color="text.secondary" display="block">
-                                  {dayjs(row.date).format('DD/MM/YYYY')}
-                                </Typography>
-                              )}
-                              {row.entryData && (
-                                <Box sx={{ mt: 0.5 }}>
-                                  {row.entryData.companyCut && row.entryData.companyCut > 0 && (
-                                    <Typography variant="caption" color="primary" display="block" sx={{ fontSize: '0.7rem' }}>
-                                      حصة الشركة: {formatNumber(row.entryData.companyCut)}
-                                    </Typography>
-                                  )}
-                                  {row.entryData.partnerShare && row.entryData.partnerShare > 0 && (
-                                    <Typography variant="caption" color="secondary" display="block" sx={{ fontSize: '0.7rem' }}>
-                                      حصة الشركاء: {formatNumber(row.entryData.partnerShare)}
-                                    </Typography>
-                                  )}
-                                </Box>
-                              )}
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{
-                                fontWeight: 500,
-                                color: theme.palette.text.primary
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-breakdown") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.secondary.main + '15' : 'rgba(251, 207, 232, 0.3)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                            <TableCell sx={{ py: 1, px: 3, textAlign: 'center', pl: row.subIndent ? 8 : 6 }}>
-                              <Typography sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
-                                {row.name}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 1, px: 3 }}>
-                              <Typography sx={{
-                                fontWeight: 600,
-                                color: theme.palette.text.primary,
-                                fontSize: '0.875rem'
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-distribution") {
-                        return (
-                          <TableRow key={row.id} sx={{
-                            bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '10' : 'rgba(46, 139, 69, 0.1)',
-                            borderTop: '1px solid rgba(0,0,0,0.1)',
-                            '&:hover': { bgcolor: theme.palette.action.hover }
-                          }}>
-                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', fontWeight: 600 }}>
-                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                                {row.name}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{
-                                fontWeight: 700,
-                                color: theme.palette.primary.main,
-                                fontSize: '1rem'
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-breakdown-header") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '25' : 'rgba(220, 252, 231, 0.4)' }}>
-                            <TableCell colSpan={2} sx={{
-                              py: 1,
-                              px: 3,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: theme.palette.success.main,
-                              borderBottom: `1px solid ${theme.palette.divider}`
-                            }}>
-                              {row.name}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-breakdown") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '15' : 'rgba(220, 252, 231, 0.2)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
-                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                                {row.name}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{
-                                fontWeight: 600,
-                                color: theme.palette.text.primary
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "capital-detail") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '10' : 'rgba(46, 139, 69, 0.05)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
-                              <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                                <Typography sx={{ fontSize: '0.875rem',fontWeight: 700 }}>
-                                  {row.name}
-                                </Typography>
-                              </Stack>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{
-                                fontWeight: 500,
-                                color: theme.palette.primary.main
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "revenue-total" || row.type === "expense-total") {
-                        return (
-                          <TableRow key={row.id} sx={{ 
-                            borderTop: '1px dashed rgba(0,0,0,0.1)',
-                            bgcolor: row.type === "revenue-total" 
-                              ? 'rgba(220, 252, 231, 0.3)' 
-                              : 'rgba(254, 226, 226, 0.2)'
-                          }}>
-                            <TableCell sx={{
-                              py: 2,
-                              px: 3,
-                              fontWeight: 600,
-                              color: theme.palette.text.primary,
-                              textAlign: 'center'
-                            }}>
-                              {row.name}
-                            </TableCell>
-                            <TableCell align="center" sx={{ 
-                              py: 2, 
-                              px: 3,
-                              color: row.type === "expense-total" ? '#DC2626' : '#101812',
-                              fontWeight: 600
-                            }}>
-                              {formatAmount(row.amount)}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "final-profit") {
-                        const isProfit = row.amount >= 0;
-                        return (
-                          <TableRow key={row.id} sx={{
-                            bgcolor: isProfit ? theme.palette.success.main : theme.palette.error.main,
-                            borderTop: `2px solid ${isProfit ? theme.palette.success.dark : theme.palette.error.dark}`
-                          }}>
-                            <TableCell colSpan={2} sx={{ py: 3, px: 3, textAlign: 'center' }}>
-                              <Typography sx={{ 
-                                color: 'white',
-                                fontSize: '1.125rem',
-                                fontWeight: 700
-                              }}>
-                                {row.name}
-                              </Typography>
-                              <Typography sx={{ 
-                                fontWeight: 900,
-                                color: 'white',
-                                fontSize: '1.25rem',
-                                mt: 1
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      // صف رأس المال
-                      if (row.type === "capital") {
-                        return (
-                          <TableRow key={row.id} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography sx={{ fontWeight: 700 }}>
-                                  {row.name}
-                                </Typography>
-                                {incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0 && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={toggleCapitalDetails}
-                                    sx={{ ml: 1, color: '#5c8a67' }}
-                                  >
-                                    {expandedCapital ? <ExpandLess /> : <ExpandMore />}
-                                  </IconButton>
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                              <Typography sx={{
-                                fontWeight: 700,
-                                color: row.amount >= 0 ? theme.palette.text.primary : theme.palette.error.main,
-                              }}>
-                                {formatAmount(row.amount)}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      if (row.type === "expense-table-header") {
-                        return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.error.main + '15' : 'rgba(254, 226, 226, 0.2)' }}>
-                            <TableCell colSpan={2} sx={{
-                              py: 1,
-                              px: 3,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: theme.palette.error.main,
-                              borderBottom: `1px solid ${theme.palette.divider}`
-                            }}>
-                              المصروفات التفصيلية
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      // الصفوف العادية
-                      return (
-                        <TableRow key={row.id} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                          <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
-                            <Typography>
-                              {row.name}
-                            </Typography>
-                            {row.expenseType && (
-                              <Box sx={{ mt: 1 }}>
-                                <Chip
-                                  label={row.expenseType}
-                                  size="small"
-                                  color={getChipColor(row.expenseType)}
-                                  sx={{ fontSize: '0.75rem' }}
-                                />
-                                {row.employee && (
-                                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                                    للموظف: {row.employee}
-                                  </Typography>
-                                )}
-                              </Box>
-                            )}
-                          </TableCell>
-                          <TableCell align="center" sx={{ py: 2, px: 3 }}>
-                            <Typography sx={{
-                              fontWeight: row.type === "capital" ? 700 : 500,
-                              color: row.amount >= 0 ? '#101812' : '#DC2626'
-                            }}>
-                              {formatAmount(row.amount)}
-                            </Typography>
-                            {row.date && (
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                {dayjs(row.date).format('DD/MM/YYYY')}
-                              </Typography>
-                            )}
-                          </TableCell>
+              {/* Capital Section */}
+              <Accordion
+                defaultExpanded={false}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  '&:before': { display: 'none' },
+                  boxShadow: theme.palette.mode === 'dark' ? '0 1px 3px rgba(255,255,255,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMore />}
+                  sx={{
+                    bgcolor: theme.palette.primary.main + '08',
+                    borderRadius: 2,
+                    '&:hover': { bgcolor: theme.palette.primary.main + '12' }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <MonetizationOn sx={{ color: theme.palette.primary.main, mr: 2, fontSize: 28 }} />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                        رأس المال المدفوع الفعلي
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                        إجمالي رأس المال المساهم به في الشركة
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '1.25rem', color: theme.palette.primary.main }}>
+                      {formatNumber(incomeData.totalCapital)}
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0 }}>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: theme.palette.primary.main + '05' }}>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الشريك</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>المبلغ</TableCell>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
+                      </TableHead>
+                      <TableBody>
+                        {incomeData.capitalByPartner?.map((partner, index) => (
+                          <TableRow key={index} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 500 }}>
+                              {partner.partnerName}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
+                              {formatNumber(partner.totalAmount)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Revenue Section */}
+              <Accordion
+                defaultExpanded={true}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  '&:before': { display: 'none' },
+                  boxShadow: theme.palette.mode === 'dark' ? '0 1px 3px rgba(255,255,255,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMore />}
+                  sx={{
+                    bgcolor: theme.palette.success.main + '08',
+                    borderRadius: 2,
+                    '&:hover': { bgcolor: theme.palette.success.main + '12' }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <TrendingUpIcon sx={{ color: theme.palette.success.main, mr: 2, fontSize: 28 }} />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography sx={{ fontWeight: 600, color: theme.palette.success.main }}>
+                        الإيرادات التشغيلية
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                        إجمالي الدخل المحقق من العملاء خلال الفترة
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '1.25rem', color: theme.palette.success.main }}>
+                      {formatNumber(incomeData.revenues?.total || 0)}
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0 }}>
+                  <Box sx={{ p: 2, bgcolor: theme.palette.success.main + '03' }}>
+                    <Typography sx={{ fontWeight: 600, mb: 2, color: theme.palette.success.main }}>
+                      إيرادات العملاء
+                    </Typography>
+                    {incomeData.revenueByClient?.map((client, clientIndex) => (
+                      <Accordion
+                        key={clientIndex}
+                        size="small"
+                        sx={{
+                          mb: 1,
+                          '&:before': { display: 'none' },
+                          boxShadow: 'none',
+                          border: `1px solid ${theme.palette.divider}`,
+                          borderRadius: 1
+                        }}
+                      >
+                        <AccordionSummary expandIcon={<ExpandMore />} sx={{ minHeight: 48 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', pr: 2 }}>
+                            <Typography sx={{ flexGrow: 1, fontWeight: 500 }}>
+                              {client.clientName}
+                            </Typography>
+                            <Typography sx={{ fontWeight: 600, color: theme.palette.success.main }}>
+                              {formatNumber(client.totalRevenue)}
+                            </Typography>
+                          </Box>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 1 }}>
+                          <TableContainer size="small">
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontSize: '0.8rem', fontWeight: 600, textAlign: 'center' }}>الوصف</TableCell>
+                                  <TableCell sx={{ fontSize: '0.8rem', fontWeight: 600, textAlign: 'center' }}>المبلغ</TableCell>
+                                  <TableCell sx={{ fontSize: '0.8rem', fontWeight: 600, textAlign: 'center' }}>التاريخ</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {/* حصة الشركة */}
+                                {client.companyRevenue > 0 && (
+                                  <TableRow sx={{ bgcolor: theme.palette.primary.main + '05', '&:hover': { bgcolor: theme.palette.primary.main + '08' } }}>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
+                                      حصة الشركة
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
+                                      {formatNumber(client.companyRevenue)}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', color: theme.palette.text.secondary }}>
+                                      -
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                                {/* حصة الشركاء */}
+                                {client.partnersRevenue > 0 && (
+                                  <TableRow sx={{ bgcolor: theme.palette.secondary.main + '05', '&:hover': { bgcolor: theme.palette.secondary.main + '08' } }}>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.secondary.main }}>
+                                      حصة الشركاء
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.secondary.main }}>
+                                      {formatNumber(client.partnersRevenue)}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', color: theme.palette.text.secondary }}>
+                                      -
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                                {/* تفاصيل الإدخالات */}
+                                {client.entries?.map((entry, entryIndex) => (
+                                  <TableRow key={entryIndex} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
+                                      {entry.description}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 500 }}>
+                                      {formatNumber(entry.rawShare || entry.amount)}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
+                                      {dayjs(entry.date).format('DD/MM/YYYY')}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Expenses Section */}
+              <Accordion
+                defaultExpanded={true}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  '&:before': { display: 'none' },
+                  boxShadow: theme.palette.mode === 'dark' ? '0 1px 3px rgba(255,255,255,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMore />}
+                  sx={{
+                    bgcolor: theme.palette.error.main + '08',
+                    borderRadius: 2,
+                    '&:hover': { bgcolor: theme.palette.error.main + '12' }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <MoneyOff sx={{ color: theme.palette.error.main, mr: 2, fontSize: 28 }} />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography sx={{ fontWeight: 600, color: theme.palette.error.main }}>
+                        المصروفات التشغيلية
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                        إجمالي المصروفات والنفقات خلال الفترة
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '1.25rem', color: theme.palette.error.main }}>
+                      {formatNumber(incomeData.totalExpenses)}
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0 }}>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: theme.palette.error.main + '05' }}>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الوصف</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>النوع</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الموظف</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>المبلغ</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>التاريخ</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {incomeData.detailedExpenses?.map((expense, index) => (
+                          <TableRow key={index} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
+                            <TableCell sx={{ textAlign: 'center', fontSize: '0.875rem' }}>
+                              {expense.description || expense.type}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center' }}>
+                              <Chip
+                                label={expense.type}
+                                size="small"
+                                color={getChipColor(expense.type)}
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontSize: '0.875rem' }}>
+                              {expense.employee || '-'}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.error.main }}>
+                              {formatNumber(expense.amount)}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontSize: '0.875rem' }}>
+                              {dayjs(expense.createdAt).format('DD/MM/YYYY')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </AccordionDetails>
+              </Accordion>
+
+            </Box>
 
           </>
         )}

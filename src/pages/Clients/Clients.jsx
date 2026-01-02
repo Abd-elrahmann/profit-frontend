@@ -69,7 +69,7 @@ const getClients = async (page = 1, searchQuery = "", status = "") => {
     }
   }
 
-  if (status.trim()) {
+  if (status.trim() && status !== "الكل") {
     queryParams.append("status", status.trim());
   }
 
@@ -117,7 +117,7 @@ const getClientStatement = async (
 export default function Clients() {
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("الكل");
   const [selectedClient, setSelectedClient] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -620,6 +620,8 @@ export default function Clients() {
 
   const getClientStatusColor = (status) => {
     switch (status) {
+      case "الكل":
+        return "primary";
       case "نشط":
         return "success";
       case "منتهي":
@@ -707,32 +709,41 @@ export default function Clients() {
             />
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
               <Chip
-                label="نشط"
-                color={getClientStatusColor(selectedStatus)}
-                variant="outlined"
+                label="الكل"
+                color={getClientStatusColor("الكل")}
+                variant={selectedStatus === "الكل" ? "filled" : "outlined"}
                 onClick={() => {
-                  setSelectedStatus((prev) => (prev === "نشط" ? "" : "نشط"));
+                  setSelectedStatus("الكل");
+                  setCurrentPage(1);
+                }}
+              />
+              <Chip
+                label="نشط"
+                color={getClientStatusColor("نشط")}
+                variant={selectedStatus === "نشط" ? "filled" : "outlined"}
+                onClick={() => {
+                  setSelectedStatus((prev) => (prev === "نشط" ? "الكل" : "نشط"));
                   setCurrentPage(1);
                 }}
               />
               <Chip
                 label="منتهي"
-                color={getClientStatusColor(selectedStatus)}
-                variant="outlined"
+                color={getClientStatusColor("منتهي")}
+                variant={selectedStatus === "منتهي" ? "filled" : "outlined"}
                 onClick={() => {
                   setSelectedStatus((prev) =>
-                    prev === "منتهي" ? "" : "منتهي"
+                    prev === "منتهي" ? "الكل" : "منتهي"
                   );
                   setCurrentPage(1);
                 }}
               />
               <Chip
                 label="متعثر"
-                color={getClientStatusColor(selectedStatus)}
-                variant="outlined"
+                color={getClientStatusColor("متعثر")}
+                variant={selectedStatus === "متعثر" ? "filled" : "outlined"}
                 onClick={() => {
                   setSelectedStatus((prev) =>
-                    prev === "متعثر" ? "" : "متعثر"
+                    prev === "متعثر" ? "الكل" : "متعثر"
                   );
                   setCurrentPage(1);
                 }}

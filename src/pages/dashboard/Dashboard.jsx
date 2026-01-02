@@ -183,7 +183,6 @@ const Dashboard = () => {
   return (
     <Box
       sx={{
-        bgcolor: theme.palette.background.default,
         minHeight: '100vh',
         py: 0,
       }}

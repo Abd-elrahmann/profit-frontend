@@ -101,7 +101,6 @@ const ClientStats = () => {
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center',
-      backgroundColor: 'background.default'
     }}>
       {/* Filter */}
       <Box sx={{

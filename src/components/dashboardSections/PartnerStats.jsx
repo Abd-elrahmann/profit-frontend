@@ -31,7 +31,6 @@ const PartnerStats = () => {
     if (active && payload && payload.length) {
       return (
         <div style={{
-          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
           borderRadius: '8px',
           padding: '12px',
@@ -125,7 +124,6 @@ const PartnerStats = () => {
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center',
-      backgroundColor: 'background.default'
     }}>
       {/* Filter */}
       <Box sx={{
