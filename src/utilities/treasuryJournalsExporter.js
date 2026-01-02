@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
@@ -250,6 +250,9 @@ export const exportJournalsToExcel = async (journalData, accountName) => {
     }
     
     allJournals.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Lazy load XLSX library
+    const XLSX = await import('xlsx');
 
     const workbook = XLSX.utils.book_new();
     
@@ -722,6 +725,9 @@ export const exportStatisticsToExcel = async (statisticsData, accountName) => {
           )
         : 0;
 
+    // Lazy load XLSX library
+    const XLSX = await import('xlsx');
+
     const workbook = XLSX.utils.book_new();
     
     const statisticsDataArray = [
@@ -785,3 +791,4 @@ export const exportStatisticsToExcel = async (statisticsData, accountName) => {
     throw error;
   }
 };
+

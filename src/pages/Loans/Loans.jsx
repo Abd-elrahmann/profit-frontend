@@ -9,7 +9,7 @@ import {
   Chip,
   useMediaQuery,
 } from "@mui/material";
-import { debounce } from "lodash";
+import { debounce } from "../../utilities/debounce";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getClients,

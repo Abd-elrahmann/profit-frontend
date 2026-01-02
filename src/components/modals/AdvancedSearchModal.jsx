@@ -14,7 +14,7 @@ import {
   Autocomplete,
 } from "@mui/material";
 import { Close as CloseIcon, Search as SearchIcon } from "@mui/icons-material";
-import { debounce } from "lodash";
+import { debounce } from "../../utilities/debounce";
 import Api from "../../config/Api";
 
 const AdvancedSearchModal = ({ open, onClose, onSearch }) => {

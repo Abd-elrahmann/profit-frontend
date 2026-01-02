@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
@@ -325,6 +325,9 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
 
 export const exportZakahToExcel = async (zakahData, filters = {}) => {
   try {
+    // Lazy load XLSX library
+    const XLSX = await import('xlsx');
+
     const workbook = XLSX.utils.book_new();
 
     const summaryData = [
@@ -525,3 +528,4 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
     throw error;
   }
 };
+

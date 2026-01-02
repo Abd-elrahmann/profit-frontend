@@ -17,7 +17,7 @@ import { Schedule, Person } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getUpcomingRepayments } from '../../pages/dashboard/dashboardApi';
 import { useTheme } from '@mui/material';
-import moment from 'moment';
+import { format } from 'date-fns';
 import {StyledTableCell, StyledTableRow, ScrollableTableContainer} from '../layouts/tableLayout';
 const UpcomingRepayments = () => {
   const theme = useTheme();
@@ -33,7 +33,7 @@ const UpcomingRepayments = () => {
   };
 
   const formatDate = (date) => {
-    return moment(date).format('DD/MM/YYYY');
+    return format(new Date(date), 'dd/MM/yyyy');
   };
 
   const getDueDate = (repayment) => {

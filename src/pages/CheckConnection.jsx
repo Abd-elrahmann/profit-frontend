@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { MdWifiOff, MdCheckCircle } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 

@@ -189,8 +189,8 @@ export default function Treasury() {
 
   const currentTotalTransactions = pagination.totalJournals || totalTransactions;
 
-  const totalBalance = availableBalance + Math.abs(loansBalance);
-  const balancePercentage = totalBalance > 0 ? (Math.abs(loansBalance) / totalBalance) * 100 : 0;
+  const totalBalance = availableBalance + totalCredit;
+  const balancePercentage = totalBalance > 0 ? (availableBalance / totalBalance) * 100 : 0;
   const circumference = 2 * Math.PI * 45;
   const strokeDasharray = `${(balancePercentage / 100) * circumference} ${circumference}`;
 
@@ -1041,13 +1041,18 @@ export default function Treasury() {
                               </svg>
                               
                               <Box sx={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography
-                                  variant={isSmallScreen ? "h5" : "h4"}
-                                  fontWeight="bold"
+                                <Typography 
+                                  variant={isSmallScreen ? "h5" : "h4"} 
+                                  fontWeight="bold" 
                                   color="primary"
                                   sx={{ mb: 0.5 }}
                                 >
-                                  {(availableBalance + loansBalance).toLocaleString('en-US')}
+                                  {availableBalance >= 1000000 
+                                    ? `${(availableBalance / 1000000).toFixed(1)}م`
+                                    : availableBalance >= 1000
+                                    ? `${(availableBalance / 1000).toFixed(0)} ألف`
+                                    : availableBalance.toLocaleString('en-US')
+                                  }
                                 </Typography>
                               </Box>
                             </Box>
@@ -1068,7 +1073,12 @@ export default function Treasury() {
                                   </Typography>
                                 </Box>
                                 <Typography variant="h6" fontWeight="semibold" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                                  {Math.abs(loansBalance).toLocaleString('en-US')}
+                                  {totalCredit >= 1000000 
+                                    ? `${(totalCredit / 1000000).toFixed(1)}م`
+                                    : totalCredit >= 1000
+                                    ? `${(totalCredit / 1000).toFixed(0)} ألف`
+                                    : `${totalCredit.toLocaleString('en-US')}`
+                                  }
                                 </Typography>
                               </Box>
                               
@@ -1080,7 +1090,12 @@ export default function Treasury() {
                                   </Typography>
                                 </Box>
                                 <Typography variant="h6" fontWeight="semibold" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                                  {(availableBalance - Math.abs(loansBalance)).toLocaleString('en-US')}
+                                  {availableBalance >= 1000000 
+                                    ? `${(availableBalance / 1000000).toFixed(1)}م`
+                                    : availableBalance >= 1000
+                                    ? `${(availableBalance / 1000).toFixed(0)} ألف`
+                                    : `${availableBalance.toLocaleString('en-US')}`
+                                  }
                                 </Typography>
                               </Box>
                             </Box>

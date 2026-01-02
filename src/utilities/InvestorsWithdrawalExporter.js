@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
@@ -415,6 +415,9 @@ export const exportWithdrawalDetailsToExcel = async (withdrawalDetails) => {
 
     const { partner, withdrawal, schedule } = withdrawalDetails;
 
+    // Lazy load XLSX library
+    const XLSX = await import('xlsx');
+
     // Create workbook
     const workbook = XLSX.utils.book_new();
     
@@ -526,3 +529,4 @@ export const exportWithdrawalDetailsToExcel = async (withdrawalDetails) => {
     throw error;
   }
 };
+

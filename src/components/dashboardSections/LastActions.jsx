@@ -24,7 +24,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { getLastActions } from '../../pages/dashboard/dashboardApi';
 import { useTheme } from '@mui/material';
-import moment from 'moment';
+import { differenceInMinutes, differenceInHours, differenceInDays, format } from 'date-fns';
 
 const LastActions = () => {
   const theme = useTheme();
@@ -72,17 +72,17 @@ const LastActions = () => {
 
   // Format relative time
   const formatRelativeTime = (date) => {
-    const now = moment();
-    const actionTime = moment(date);
-    const diffMinutes = now.diff(actionTime, 'minutes');
-    const diffHours = now.diff(actionTime, 'hours');
-    const diffDays = now.diff(actionTime, 'days');
+    const now = new Date();
+    const actionTime = new Date(date);
+    const diffMinutes = differenceInMinutes(now, actionTime);
+    const diffHours = differenceInHours(now, actionTime);
+    const diffDays = differenceInDays(now, actionTime);
 
     if (diffMinutes < 1) return 'الآن';
     if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
     if (diffHours < 24) return `منذ ${diffHours} ساعة`;
     if (diffDays < 7) return `منذ ${diffDays} يوم`;
-    return actionTime.format('DD/MM/YYYY');
+    return format(actionTime, 'dd/MM/yyyy');
   };
 
 

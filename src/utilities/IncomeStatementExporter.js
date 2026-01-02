@@ -1,6 +1,5 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
@@ -624,6 +623,9 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
     const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
     const tableData = getAllData(incomeData);
 
+    // Lazy load XLSX library
+    const XLSX = await import('xlsx');
+
     // Create workbook
     const workbook = XLSX.utils.book_new();
 
@@ -935,3 +937,4 @@ export const printIncomeStatement = async (incomeData, periodType, selectedMonth
     }
   });
 };
+

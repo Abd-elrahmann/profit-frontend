@@ -7,14 +7,17 @@ import { Toaster } from 'react-hot-toast'
 import routes from './routes';
 import Layout from './components/layouts/Layout';
 import { ThemeProviderWrapper } from './theme/ThemeContext';
-import Installments from './pages/Installments/Installments';
-import PaymentReceipt from './components/modals/PaymentReceipt';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
+const Installments = React.lazy(() => import('./pages/Installments/Installments'));
+const PaymentReceipt = React.lazy(() => import('./components/modals/PaymentReceipt'));
+const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { notifyError } from './utilities/toastify';
-import { Box, CircularProgress } from '@mui/material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import Api from './config/Api';
+import PageLoader from './components/PageLoader';
+import { usePrefetch } from './hooks/usePrefetch';
 const CheckConnection = React.lazy(() => import('./pages/CheckConnection'));
 
 const getFirstAccessiblePage = (permissions) => {
@@ -71,11 +74,7 @@ const RestrictedNavigationRoute = ({ children }) => {
   return children;
 };
 
-const LoadingFallback = () => (
-  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-    <CircularProgress />
-  </Box>
-);
+const LoadingFallback = () => <PageLoader message="جاري تحميل الصفحة..." />;
 
 const ConnectionWatcher = () => {
   const navigate = useNavigate();
@@ -113,6 +112,12 @@ const ConnectionWatcher = () => {
 const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { prefetchCommonPages } = usePrefetch();
+
+  // Prefetch common pages on app load
+  useEffect(() => {
+    prefetchCommonPages();
+  }, [prefetchCommonPages]);
 
   // Validate token on app load
   useEffect(() => {

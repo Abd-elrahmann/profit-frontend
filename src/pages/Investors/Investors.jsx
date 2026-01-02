@@ -57,7 +57,7 @@ import {
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { checkUnpostedOpeningJournals } from "../Journals/journalsApi";
-import { debounce } from 'lodash';
+import { debounce } from '../../utilities/debounce';
 import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
 import ContractGenerator from "../../components/ContractGenerator";

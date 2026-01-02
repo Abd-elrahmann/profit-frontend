@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
@@ -246,6 +246,9 @@ export const exportSavingsToExcel = async (savingData) => {
       throw new Error('لا توجد بيانات للتصدير');
     }
 
+    // Lazy load XLSX library
+    const XLSX = await import('xlsx');
+
     // Create workbook
     const workbook = XLSX.utils.book_new();
 
@@ -325,3 +328,4 @@ export const exportSavingsToExcel = async (savingData) => {
     throw error;
   }
 };
+

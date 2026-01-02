@@ -41,7 +41,7 @@ import AddEmployee from "../../components/modals/AddEmployee";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AssignRole from "../../components/modals/AssignRole";
 import LogsTable from "../../components/modals/LogsTable";
-import { debounce } from 'lodash';
+import { debounce } from '../../utilities/debounce';
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";

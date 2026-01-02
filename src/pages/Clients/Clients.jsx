@@ -37,7 +37,7 @@ import {
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import { debounce } from "../../utilities/debounce";
 import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import DeleteModal from "../../components/modals/DeleteModal";

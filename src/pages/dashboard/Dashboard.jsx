@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import {
   Box,
   Container,
@@ -12,14 +12,15 @@ import { Helmet } from 'react-helmet-async';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import Api from '../../config/Api';
+import PageSkeleton from '../../components/PageSkeleton';
 
-// Import components
-import ClientStats from '../../components/dashboardSections/ClientStats';
-import PartnerStats from '../../components/dashboardSections/PartnerStats';
-import LoanStats from '../../components/dashboardSections/LoanStats';
-import CollectionStats from '../../components/dashboardSections/CollectionStats';
-import UpcomingRepayments from '../../components/dashboardSections/UpcomingRepayments';
-import LastActions from '../../components/dashboardSections/LastActions';
+// Lazy load dashboard components for better performance
+const ClientStats = React.lazy(() => import('../../components/dashboardSections/ClientStats'));
+const PartnerStats = React.lazy(() => import('../../components/dashboardSections/PartnerStats'));
+const LoanStats = React.lazy(() => import('../../components/dashboardSections/LoanStats'));
+const CollectionStats = React.lazy(() => import('../../components/dashboardSections/CollectionStats'));
+const UpcomingRepayments = React.lazy(() => import('../../components/dashboardSections/UpcomingRepayments'));
+const LastActions = React.lazy(() => import('../../components/dashboardSections/LastActions'));
 
 function TabPanel({ children, value, index }) {
   return (
@@ -29,7 +30,13 @@ function TabPanel({ children, value, index }) {
       id={`dashboard-tabpanel-${index}`}
       aria-labelledby={`dashboard-tab-${index}`}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          <Suspense fallback={<PageSkeleton type="dashboard" />}>
+            {children}
+          </Suspense>
+        </Box>
+      )}
     </div>
   );
 }
@@ -41,8 +48,8 @@ const Dashboard = () => {
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
-  // Fetch dashboard permissions - تحديث تلقائي عند تغيير المستخدم
-  const { data: dashboardPermissions } = useQuery({
+  // Fetch dashboard permissions - deferred loading for better performance
+  const { data: dashboardPermissions, isLoading: permissionsLoading } = useQuery({
     queryKey: ['dashboard-permissions', permissions?.length || 0],
     queryFn: async () => {
       try {
@@ -61,9 +68,10 @@ const Dashboard = () => {
         return [];
       }
     },
-    staleTime: 0, // تحديث فوري عند تغيير الصلاحيات
-    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnMount: false, // Don't refetch on mount for better initial load
     refetchOnWindowFocus: false,
+    enabled: !!permissions?.length, // Only run when permissions are available
   });
 
   // تحديث تلقائي عند تغيير الصلاحيات
@@ -76,41 +84,41 @@ const Dashboard = () => {
     }
   }, [permissions, queryClient]);
 
-  // Define all available tabs with their permissions
+  // Define all available tabs with their permissions - lazy loaded components
   const allTabs = [
     {
       label: "إحصائيات العملاء",
-      component: <ClientStats />,
+      Component: ClientStats,
       permission: 'client-stats',
       index: 0
     },
     {
       label: "إحصائيات الشركاء",
-      component: <PartnerStats />,
+      Component: PartnerStats,
       permission: 'partner-stats',
       index: 1
     },
     {
       label: "إحصائيات السلف",
-      component: <LoanStats />,
+      Component: LoanStats,
       permission: 'loan-stats',
       index: 2
     },
     {
       label: "التحصيل الشهري",
-      component: <CollectionStats />,
+      Component: CollectionStats,
       permission: 'monthly-collection',
       index: 3
     },
     {
       label: "الدفعات القادمة",
-      component: <UpcomingRepayments />,
+      Component: UpcomingRepayments,
       permission: 'Upcoming-Repayments',
       index: 4
     },
     {
       label: "آخر الأنشطة",
-      component: <LastActions />,
+      Component: LastActions,
       permission: 'Last-Actions',
       index: 5
     }
@@ -132,23 +140,14 @@ const Dashboard = () => {
     setValue(newValue);
   };
 
-  // Show loading or empty state if no permissions
-  if (!dashboardPermissions) {
+  // Show skeleton first for better UX
+  if (permissionsLoading || !dashboardPermissions) {
     return (
-      <Box
-        sx={{
-          bgcolor: theme.palette.background.default,
-          minHeight: '100vh',
-          py: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
+      <Box sx={{ bgcolor: theme.palette.background.default, minHeight: '100vh', py: 1 }}>
         <Helmet>
           <title>لوحة التحكم - النظام المالي</title>
         </Helmet>
-        <Typography>جاري التحميل...</Typography>
+        <PageSkeleton type="dashboard" />
       </Box>
     );
   }
@@ -236,7 +235,7 @@ const Dashboard = () => {
                 display: 'flex',
                 justifyContent: 'center'
               }}>
-                {tab.component}
+                <tab.Component />
               </Box>
             </Box>
           </TabPanel>

@@ -35,7 +35,7 @@ import dayjs from "dayjs";
 import AddRole from "../../components/modals/AddRole";
 import DeleteModal from "../../components/modals/DeleteModal";
 import DashboardPermissions from "../../components/modals/DashboardPermissions";
-import { debounce } from 'lodash';
+import { debounce } from '../../utilities/debounce';
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { Helmet } from "react-helmet-async";
 import { useTheme } from '../../theme/ThemeContext';

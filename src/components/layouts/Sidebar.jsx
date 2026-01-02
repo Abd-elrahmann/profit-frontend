@@ -13,17 +13,18 @@ import {
   MdExpandLess as ExpandLessIcon
 } from 'react-icons/md';
 import { RadioButtonUnchecked } from '@mui/icons-material';
-import { getSidebarMenuItems } from '../../routes';
+import { getSidebarMenuItems } from '../../sidebar.config';
 import { usePermissions } from '../Contexts/PermissionsContext';
 import { useTheme } from '../../theme/ThemeContext';
+import { usePrefetch } from '../../hooks/usePrefetch';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const sidebarRef = useRef(null);
   const { isDarkMode } = useTheme();
   const [openGroup, setOpenGroup] = useState(null);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const { permissions, loading } = usePermissions();
+  const { prefetchPage } = usePrefetch();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -66,6 +67,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         component={NavLink}
         to={item.path}
         onClick={onClose}
+        onMouseEnter={() => prefetchPage(item.module)}
         sx={{
           flexDirection: 'row-reverse',
           justifyContent: 'space-between',
@@ -228,6 +230,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 component={NavLink}
                 to={child.path}
                 onClick={onClose}
+                onMouseEnter={() => prefetchPage(child.module)}
                 sx={{
                   flexDirection: 'row-reverse',
                   justifyContent: 'space-between',
