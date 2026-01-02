@@ -8,6 +8,7 @@ import {
   CircularProgress,
   MenuItem,
   Box,
+  Alert,
 } from "@mui/material";
 
 const LoanDetailsSection = ({
@@ -145,27 +146,40 @@ const LoanDetailsSection = ({
         </Grid>
 
         <Grid item xs={12} sm={6} md={6}>
-          <TextField
-            fullWidth
-            type="text"
-            label="مبلغ الفائدة الإجمالي"
-            value={formatAmount(loanForm.totalInterest)}
-            onChange={(e) => handleInputChange("totalInterest", e.target.value)}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            disabled={isReadOnlyMode}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "+") e.preventDefault();
-            }}
+          <Box
             sx={{
-              "& .MuiOutlinedInput-root": {
-                height: "56px",
-                width: "300px",
-                backgroundColor: "background.paper",
-              },
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
             }}
-          />
+          >
+            <TextField
+              fullWidth
+              type="text"
+              label="مبلغ الفائدة الإجمالي"
+              value={formatAmount(loanForm.totalInterest)}
+              onChange={(e) => handleInputChange("totalInterest", e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              disabled={isReadOnlyMode}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "+") e.preventDefault();
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "56px",
+                  width: "300px",
+                  backgroundColor: "background.paper",
+                },
+              }}
+            />
+            {!isReadOnlyMode && parseFloat(loanForm.totalInterest?.replace(/,/g, "") || 0) === 0 && loanForm.totalInterest !== "" && (
+              <Alert severity="info" sx={{ mt: 1, mb: 1 }}>
+                السلفة ستصبح بدون فوائد
+              </Alert>
+            )}
+          </Box>
         </Grid>
 
         <Grid item xs={12} sm={6} md={6}>

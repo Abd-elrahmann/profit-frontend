@@ -129,3 +129,14 @@ export const getChartOfAccounts = async () => {
     throw error;
   }
 };
+
+// Check for unposted opening journals
+export const checkUnpostedOpeningJournals = async () => {
+  try {
+    const response = await Api.get('/api/journals/check-opening-journals');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

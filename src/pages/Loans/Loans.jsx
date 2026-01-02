@@ -18,6 +18,7 @@ import {
   updateLoan,
   getPartners,
   convertLoanClient,
+  transferPartialLoanAmount,
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
@@ -110,6 +111,8 @@ const Loans = () => {
   const [selectedClientForConversion, setSelectedClientForConversion] = useState(null);
   const [selectedKafeelForConversion, setSelectedKafeelForConversion] = useState(null);
   const [showConversionConfirmModal, setShowConversionConfirmModal] = useState(false);
+  const [conversionType, setConversionType] = useState("full"); // "full" or "partial"
+  const [partialTransferAmount, setPartialTransferAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [bankBalance, setBankBalance] = useState(null);
   const [_isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
@@ -263,6 +266,20 @@ const Loans = () => {
     activeTab,
   ]);
 
+  // Recalculate simulation whenever relevant loan data changes
+  useEffect(() => {
+    if (activeTab === 1 || activeTab === 6) {
+      calculateInstallments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    loanForm.amount,
+    loanForm.totalInterest,
+    loanForm.paymentAmount,
+    loanForm.type,
+    activeTab,
+  ]);
+
   // Fetch bank balance when source changes
   useEffect(() => {
     if (activeTab === 1 && loanForm.source) {
@@ -282,6 +299,10 @@ const Loans = () => {
   }, [queryClient]);
 
   const calculateRemainingAmount = (loan) => {
+    // Use pagination.totalRemainingAmount if available (most accurate)
+    if (loan?.pagination?.totalRemainingAmount !== undefined) {
+      return loan.pagination.totalRemainingAmount;
+    }
     // Use totalRemainingAmount if available, otherwise fallback to remainingBalance
     if (loan?.totalRemainingAmount !== undefined) {
       return loan.totalRemainingAmount;
@@ -292,58 +313,131 @@ const Loans = () => {
     // Fallback to calculating from repayments if available
     if (!loan?.repayments) return 0;
     return loan.repayments
-      .filter(repayment => repayment.status !== "PAID")
+      .filter(repayment => !["PAID", "EARLY_PAID"].includes(repayment.status))
       .reduce((sum, repayment) => {
         const remaining = repayment.amount - (repayment.paidAmount || 0);
         return sum + Math.max(0, remaining);
       }, 0);
   };
 
-  const handleConfirmConversion = async () => {
-    setIsConverting(true);
+  const handleOpenPreview = useCallback(async (loanData = null) => {
     try {
-      await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id, selectedKafeelForConversion?.id || null);
+      const isEvent = loanData && typeof loanData === 'object' && loanData._reactName;
+      const actualLoanData = isEvent ? null : loanData;
 
-      // Get updated loan data after conversion
-      const updatedLoan = await getLoanById(loanForConversion.id);
+      const loanDataToUse = actualLoanData || savedLoanData || selectedLoan;
 
-      // Get full client data for the new client
-      const newClientResponse = await getClients(1, selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name);
-      const fullNewClientData = newClientResponse?.clients?.find(
-        (c) => c.client.id === selectedClientForConversion.client.id
-      );
+      if (!loanDataToUse) {
+        notifyError("يرجى حفظ السلفة أولاً قبل عرض معاينة العقود");
+        return;
+      }
 
-      // Create loan data for preview with new client information
-      const loanDataForPreview = {
-        ...updatedLoan,
-        client: fullNewClientData?.client || selectedClientForConversion.client,
-        partner: updatedLoan.partner,
-        kafeel: updatedLoan.kafeel || null,
+      const clientDataToUse = loanDataToUse.client;
+
+      if (!debtAckTemplate || !promissoryNoteTemplate) {
+        notifyError("جاري تحميل قوالب العقود، يرجى المحاولة مرة أخرى");
+        return;
+      }
+
+      const previewLoanData = {
+        ...loanDataToUse,
+        client: clientDataToUse,
+        partner: loanDataToUse.partner || selectedPartner,
+        kafeel: loanDataToUse.kafeel || selectedKafeel,
       };
 
-      // Set the loan data for contracts generation
-      setSavedLoanData(loanDataForPreview);
+      if (!debtAckGeneratorRef.current || !promissoryNoteGeneratorRef.current) {
+        notifyError("مولدات العقود غير جاهزة بعد، يرجى المحاولة مرة أخرى");
+        return;
+      }
 
-      notifySuccess("تم نقل المديونية بنجاح");
+      const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
+        false,
+        previewLoanData,
+        selectedKafeel || savedLoanData?.kafeel
+      );
 
-      // Open preview with new client data
-      setTimeout(async () => {
-        try {
-          await handleOpenPreview(loanDataForPreview);
-        } catch (previewError) {
-          console.error("Error opening preview after conversion:", previewError);
-          notifyWarning("يرجى فتح معاينة العقود يدوياً من الزر المخصص");
-        }
-      }, 100);
+      const promissoryNoteHtml =
+        await promissoryNoteGeneratorRef.current.generateContract(
+          false,
+          previewLoanData,
+          selectedKafeel || savedLoanData?.kafeel
+        );
 
+      setPreviewContracts({
+        debtAck: debtAckHtml,
+        promissoryNote: promissoryNoteHtml,
+      });
+      setPreviewOpen(true);
+    } catch (error) {
+      handleApiError(error);
+      notifyError(
+        error.response?.data?.message || "حدث خطأ أثناء توليد معاينة العقود"
+      );
+    }
+  }, [savedLoanData, selectedLoan, debtAckTemplate, promissoryNoteTemplate, selectedPartner, selectedKafeel, debtAckGeneratorRef, promissoryNoteGeneratorRef, setPreviewContracts, setPreviewOpen]);
+
+  const handleConfirmConversion = useCallback(async (partialAmount = null) => {
+    setIsConverting(true);
+    try {
+      if (conversionType === "partial") {
+        // Partial transfer
+        const amount = parseFloat(partialAmount.replace(/,/g, ""));
+        await transferPartialLoanAmount(
+          loanForConversion.clientId,
+          selectedClientForConversion.client.id,
+          loanForConversion.id,
+          amount,
+          selectedKafeelForConversion?.id || null
+        );
+        notifySuccess("تم نقل جزء من المديونية بنجاح");
+      } else {
+        // Full transfer
+        await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id, selectedKafeelForConversion?.id || null);
+
+        // Get updated loan data after conversion
+        const updatedLoan = await getLoanById(loanForConversion.id);
+
+        // Get full client data for the new client
+        const newClientResponse = await getClients(1, selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name);
+        const fullNewClientData = newClientResponse?.clients?.find(
+          (c) => c.client.id === selectedClientForConversion.client.id
+        );
+
+        // Create loan data for preview with new client information
+        const loanDataForPreview = {
+          ...updatedLoan,
+          client: fullNewClientData?.client || selectedClientForConversion.client,
+          partner: updatedLoan.partner,
+          kafeel: updatedLoan.kafeel || null,
+        };
+
+        // Set the loan data for contracts generation
+        setSavedLoanData(loanDataForPreview);
+
+        notifySuccess("تم نقل المديونية بنجاح");
+
+        // Open preview with new client data
+        setTimeout(async () => {
+          try {
+            await handleOpenPreview(loanDataForPreview);
+          } catch (previewError) {
+            console.error("Error opening preview after conversion:", previewError);
+            notifyWarning("يرجى فتح معاينة العقود يدوياً من الزر المخصص");
+          }
+        }, 100);
+      }
+
+      setShowConversionConfirmModal(false);
+      setPartialTransferAmount("");
       handleConversionSuccess();
     } catch (error) {
       handleApiError(error);
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء نقل المديونية");
+      notifyError(error.response?.data?.message || `حدث خطأ أثناء ${conversionType === "partial" ? "نقل جزء من المديونية" : "نقل المديونية"}`);
     } finally {
       setIsConverting(false);
     }
-  };
+  }, [conversionType, loanForConversion, selectedClientForConversion, selectedKafeelForConversion, handleConversionSuccess, handleOpenPreview]);
 
   useEffect(() => {
     const handleOpenAddKafeelModal = () => {
@@ -354,36 +448,17 @@ const Loans = () => {
       navigate(`/installments/${event.detail}`);
     };
 
-    const handleConvertLoan = () => {
-      handleOpenConversionConfirm();
-    };
-
-    const handleOpenConversionConfirm = () => {
-      if (!selectedClientForConversion) {
-        notifyError("يرجى اختيار العميل الجديد أولاً");
-        return;
-      }
-
-      if (selectedClientForConversion.client.id === loanForConversion.clientId) {
-        notifyError("لا يمكن نقل المديونية لنفس العميل");
-        return;
-      }
-
-      setShowConversionConfirmModal(true);
-    };
 
 
     window.addEventListener('open-add-kafeel-modal', handleOpenAddKafeelModal);
     window.addEventListener('navigate-to-installments', handleNavigateToInstallments);
-    window.addEventListener('convert-loan', handleConvertLoan);
 
     return () => {
       window.removeEventListener('open-add-kafeel-modal', handleOpenAddKafeelModal);
       window.removeEventListener('navigate-to-installments', handleNavigateToInstallments);
-      window.removeEventListener('convert-loan', handleConvertLoan);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, selectedClient, loanForConversion, queryClient, handleConversionSuccess, handleConfirmConversion]);
+
+  }, [navigate, selectedClient, loanForConversion, queryClient, handleConversionSuccess]);
 
 
   const debouncedSearch = debounce((value) => {
@@ -487,62 +562,6 @@ const Loans = () => {
     return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  const handleOpenPreview = async (loanData = null) => {
-    try {
-      const isEvent = loanData && typeof loanData === 'object' && loanData._reactName;
-      const actualLoanData = isEvent ? null : loanData;
-
-      const loanDataToUse = actualLoanData || savedLoanData || selectedLoan;
-
-      if (!loanDataToUse) {
-        notifyError("يرجى حفظ السلفة أولاً قبل عرض معاينة العقود");
-        return;
-      }
-
-      const clientDataToUse = loanDataToUse.client;
-
-      if (!debtAckTemplate || !promissoryNoteTemplate) {
-        notifyError("جاري تحميل قوالب العقود، يرجى المحاولة مرة أخرى");
-        return;
-      }
-
-      const previewLoanData = {
-        ...loanDataToUse,
-        client: clientDataToUse,
-        partner: loanDataToUse.partner || selectedPartner,
-        kafeel: loanDataToUse.kafeel || selectedKafeel,
-      };
-
-      if (!debtAckGeneratorRef.current || !promissoryNoteGeneratorRef.current) {
-        notifyError("مولدات العقود غير جاهزة بعد، يرجى المحاولة مرة أخرى");
-        return;
-      }
-
-      const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
-        false,
-        previewLoanData,
-        selectedKafeel || savedLoanData?.kafeel
-      );
-
-      const promissoryNoteHtml =
-        await promissoryNoteGeneratorRef.current.generateContract(
-          false,
-          previewLoanData,
-          selectedKafeel || savedLoanData?.kafeel
-        );
-
-      setPreviewContracts({
-        debtAck: debtAckHtml,
-        promissoryNote: promissoryNoteHtml,
-      });
-      setPreviewOpen(true);
-    } catch (error) {
-      handleApiError(error);
-      notifyError(
-        error.response?.data?.message || "حدث خطأ أثناء توليد معاينة العقود"
-      );
-    }
-  };
 
   const handleSaveContracts = async (contractType) => {
     try {
@@ -618,7 +637,7 @@ const Loans = () => {
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const loanType = loanForm.type;
 
-    if (amount > 0 && paymentAmount > 0 && totalInterest > 0) {
+    if (amount > 0 && paymentAmount > 0 && totalInterest >= 0) {
       const profit = totalInterest;
       const total = amount + profit;
 
@@ -698,10 +717,7 @@ const Loans = () => {
   const getSimulationSummary = () => {
     if (installments.length === 0) return null;
 
-    const totalInterest = installments.reduce(
-      (sum, inst) => sum + inst.interest,
-      0
-    );
+    const totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
     const totalAmount =
       (parseFloat(loanForm.amount.replace(/,/g, "")) || 0) + totalInterest;
     const paymentAmount =
@@ -929,7 +945,7 @@ const Loans = () => {
 
       queryClient.invalidateQueries(["loans"]);
       setIsEditMode(false);
-      setIsViewMode(true); // Stay in view mode so user can continue working with the loan
+      setIsViewMode(true);
     } catch (error) {
       handleApiError(error);
       notifyError(
@@ -1046,7 +1062,9 @@ const Loans = () => {
     try {
       // Get full loan details including repayments for accurate remaining amount calculation
       const fullLoanData = await getLoanById(loan.id);
-      setLoanForConversion(fullLoanData);
+      // Merge with original loan data to ensure amount is available
+      const mergedLoanData = { ...fullLoanData, amount: loan.amount };
+      setLoanForConversion(mergedLoanData);
       setIsClientConversion(true);
       setActiveTab(1); // Switch to loan creation tab
     } catch (error) {
@@ -1130,8 +1148,8 @@ const Loans = () => {
         const amount = parseFloat((field === "amount" ? value : prev.amount).replace(/,/g, "")) || 0;
         const totalInterest = parseFloat((field === "totalInterest" ? value : prev.totalInterest).replace(/,/g, "")) || 0;
 
-        if (amount > 0 && totalInterest > 0) {
-          const percentage = (totalInterest / amount) * 100;
+        if (amount > 0 && totalInterest >= 0) {
+          const percentage = totalInterest > 0 ? (totalInterest / amount) * 100 : 0;
           updatedForm.interestRate = percentage.toFixed(2);
 
         } else if (amount > 0) {
@@ -1142,11 +1160,7 @@ const Loans = () => {
       return updatedForm;
     });
     
-    if (field === "type" || field === "amount" || field === "paymentAmount" || field === "totalInterest") {
-      setTimeout(() => {
-        calculateInstallments();
-      }, 0);
-    }
+    // Note: calculateInstallments() is now handled automatically by useEffect when relevant fields change
   };
 
   const handleSaveLoan = () => {
@@ -1165,8 +1179,8 @@ const Loans = () => {
       selectedPartner &&
       selectedBank &&
       loanForm.amount &&
-      loanForm.totalInterest &&
-      loanForm.interestRate &&
+      (loanForm.totalInterest || loanForm.totalInterest === 0) &&
+      (loanForm.interestRate || loanForm.interestRate === 0) &&
       loanForm.paymentAmount &&
       loanForm.type &&
       loanForm.source &&
@@ -1330,7 +1344,16 @@ const Loans = () => {
                     <Button
                       variant="contained"
                       onClick={() => {
-                        window.dispatchEvent(new CustomEvent('convert-loan'));
+                        if (!selectedClientForConversion) {
+                          notifyError("يرجى اختيار العميل الجديد أولاً");
+                          return;
+                        }
+                        if (selectedClientForConversion.client.id === loanForConversion.clientId) {
+                          notifyError("لا يمكن نقل المديونية لنفس العميل");
+                          return;
+                        }
+                        setConversionType("full");
+                        setShowConversionConfirmModal(true);
                       }}
                       disabled={!selectedClientForConversion}
                       sx={{
@@ -1347,7 +1370,39 @@ const Loans = () => {
                         }
                       }}
                     >
-                      تأكيد نقل المديونيه
+                      نقل كامل المديونية
+                    </Button>
+
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        if (!selectedClientForConversion) {
+                          notifyError("يرجى اختيار العميل الجديد أولاً");
+                          return;
+                        }
+                        if (selectedClientForConversion.client.id === loanForConversion.clientId) {
+                          notifyError("لا يمكن نقل المديونية لنفس العميل");
+                          return;
+                        }
+                        setConversionType("partial");
+                        setShowConversionConfirmModal(true);
+                      }}
+                      disabled={!selectedClientForConversion}
+                      sx={{
+                        bgcolor: selectedClientForConversion ? "warning.main" : "grey.400",
+                        height: isTablet ? "44px" : "48px",
+                        fontSize: isTablet ? "14px" : "16px",
+                        fontWeight: "bold",
+                        "&:hover": {
+                          bgcolor: selectedClientForConversion ? "warning.dark" : "grey.400"
+                        },
+                        "&:disabled": {
+                          bgcolor: "grey.400",
+                          color: "grey.600"
+                        }
+                      }}
+                    >
+                      نقل جزء من المديونية
                     </Button>
 
                     <Button
@@ -1723,7 +1778,12 @@ const Loans = () => {
         loan={loanForConversion}
         remainingAmount={calculateRemainingAmount(loanForConversion)}
         isLoading={isConverting}
+        transferType={conversionType}
+        partialAmount={partialTransferAmount}
+        onPartialAmountChange={setPartialTransferAmount}
+        maxPartialAmount={calculateRemainingAmount(loanForConversion)}
       />
+
     </Box>
   );
 };

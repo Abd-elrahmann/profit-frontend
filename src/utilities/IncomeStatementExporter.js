@@ -67,57 +67,17 @@ const getCapitalData = (incomeData, expandedCapital = false) => {
     hasDetails: incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0
   });
 
-  // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة وموسعة
-  if (expandedCapital) {
-    if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
+  // تفاصيل رأس المال عند التوسع
+  if (expandedCapital && incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+    incomeData.capitalByPartner.forEach((partner, index) => {
       data.push({
-        id: 0.25,
-        name: "تفصيل أنواع الإيرادات",
-        type: "revenue-breakdown-header",
-        level: 0
-      });
-
-      if (incomeData.revenues.generalLoans > 0) {
-        data.push({
-          id: 0.3,
-          name: "إيرادات السلف العامة",
-          amount: incomeData.revenues.generalLoans,
-          type: "revenue-breakdown",
-          level: 1
-        });
-      }
-
-      if (incomeData.revenues.newCapitalLoans > 0) {
-        data.push({
-          id: 0.35,
-          name: "إيرادات سلف رأس المال الجديد",
-          amount: incomeData.revenues.newCapitalLoans,
-          type: "revenue-breakdown",
-          level: 1
-        });
-      }
-    } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
-      data.push({
-        id: 0.25,
-        name: "إيرادات السلف العامة",
-        amount: incomeData.totalRevenue,
-        type: "revenue-breakdown",
+        id: `capital-${index}`,
+        name: partner.partnerName,
+        amount: partner.totalAmount,
+        type: "capital-detail",
         level: 1
       });
-    }
-
-    // تفاصيل رأس المال عند التوسع
-    if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
-      incomeData.capitalByPartner.forEach((partner, index) => {
-        data.push({
-          id: `capital-${index}`,
-          name: partner.partnerName,
-          amount: partner.totalAmount,
-          type: "capital-detail",
-          level: 1
-        });
-      });
-    }
+    });
   }
 
   return data;
@@ -150,7 +110,7 @@ const getRevenueData = (incomeData, expandedRevenues = true, expandedClients = {
       data.push({
         id: `client-${clientIndex}`,
         name: client.clientName,
-        amount: client.totalAmount,
+        amount: client.totalRevenue,
         type: "client-revenue",
         clientId: client.clientId,
         entries: client.entries
@@ -158,25 +118,75 @@ const getRevenueData = (incomeData, expandedRevenues = true, expandedClients = {
 
       // تفاصيل إدخالات العميل
       if (expandedClients[client.clientId] && client.entries && client.entries.length > 0) {
+        // عرض إيرادات الشركة والشركاء إذا كانت متوفرة
+        if (client.companyRevenue && client.companyRevenue > 0) {
+          data.push({
+            id: `client-${clientIndex}-company-revenue`,
+            name: "حصة الشركة",
+            amount: client.companyRevenue,
+            type: "revenue-breakdown",
+            level: 2,
+            subIndent: true
+          });
+        }
+
+        if (client.partnersRevenue && client.partnersRevenue > 0) {
+          data.push({
+            id: `client-${clientIndex}-partners-revenue`,
+            name: "حصة الشركاء",
+            amount: client.partnersRevenue,
+            type: "revenue-breakdown",
+            level: 2,
+            subIndent: true
+          });
+        }
+
+        // عرض تفاصيل الإدخالات
         client.entries.forEach((entry, entryIndex) => {
           data.push({
             id: `client-${clientIndex}-entry-${entryIndex}`,
             name: entry.description,
-            amount: entry.amount,
+            amount: entry.rawShare || entry.amount,
             type: "revenue-detail",
-            indent: true,
-            date: entry.date
+            level: 2,
+            subIndent: true,
+            date: entry.date,
+            entryData: entry // حفظ بيانات الإدخال الكاملة
           });
         });
       }
     });
+
+    // تفصيل توزيع الإيرادات إذا كان متوفراً ومفتوحاً
+    if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
+      const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
+      const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
+
+      if (totalCompanyRevenue > 0) {
+        data.push({
+          id: 2.6,
+          name: "إجمالي حصة الشركة",
+          amount: totalCompanyRevenue,
+          type: "revenue-distribution"
+        });
+      }
+
+      if (totalPartnersRevenue > 0) {
+        data.push({
+          id: 2.7,
+          name: "إجمالي حصة الشركاء",
+          amount: totalPartnersRevenue,
+          type: "revenue-distribution"
+        });
+      }
+    }
   }
 
   // إجمالي الإيرادات
   data.push({
     id: 2.5,
     name: "إجمالي إيرادات الفترة",
-    amount: incomeData.totalRevenue || 0,
+    amount: incomeData.revenues?.total || 0,
     type: "revenue-total"
   });
 
@@ -263,56 +273,17 @@ const getFullTableData = (incomeData, expandedCapital = false, expandedRevenues 
     capitalDetails: incomeData.capitalByPartner || []
   });
 
-  // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة وموسعة
-  if (expandedCapital) {
-    if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
+  // تفاصيل رأس المال عند التوسع
+  if (expandedCapital && incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+    incomeData.capitalByPartner.forEach((partner, index) => {
       data.push({
-        id: 0.25,
-        name: "تفصيل أنواع الإيرادات",
-        type: "revenue-breakdown-header"
-      });
-
-      if (incomeData.revenues.generalLoans > 0) {
-        data.push({
-          id: 0.3,
-          name: "إيرادات السلف العامة",
-          amount: incomeData.revenues.generalLoans,
-          type: "revenue-breakdown",
-          indent: true
-        });
-      }
-
-      if (incomeData.revenues.newCapitalLoans > 0) {
-        data.push({
-          id: 0.35,
-          name: "إيرادات سلف رأس المال الجديد",
-          amount: incomeData.revenues.newCapitalLoans,
-          type: "revenue-breakdown",
-          indent: true
-        });
-      }
-    } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
-      data.push({
-        id: 0.25,
-        name: "إيرادات السلف العامة",
-        amount: incomeData.totalRevenue,
-        type: "revenue-breakdown",
+        id: `capital-${index}`,
+        name: partner.partnerName,
+        amount: partner.totalAmount,
+        type: "capital-detail",
         indent: true
       });
-    }
-
-    // تفاصيل رأس المال عند التوسع
-    if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
-      incomeData.capitalByPartner.forEach((partner, index) => {
-        data.push({
-          id: `capital-${index}`,
-          name: partner.partnerName,
-          amount: partner.totalAmount,
-          type: "capital-detail",
-          indent: true
-        });
-      });
-    }
+    });
   }
 
   data.push({ id: 0.75, type: "spacer" });
@@ -336,33 +307,83 @@ const getFullTableData = (incomeData, expandedCapital = false, expandedRevenues 
       data.push({
         id: `client-${clientIndex}`,
         name: client.clientName,
-        amount: client.totalAmount,
+        amount: client.totalRevenue,
         type: "client-revenue",
         clientId: client.clientId,
         entries: client.entries
       });
 
       // تفاصيل إدخالات العميل
-      if (expandedClients[client.clientId]) {
+      if (expandedClients[client.clientId] && client.entries && client.entries.length > 0) {
+        // عرض إيرادات الشركة والشركاء إذا كانت متوفرة
+        if (client.companyRevenue && client.companyRevenue > 0) {
+          data.push({
+            id: `client-${clientIndex}-company-revenue`,
+            name: "حصة الشركة",
+            amount: client.companyRevenue,
+            type: "revenue-breakdown",
+            indent: true,
+            subIndent: true
+          });
+        }
+
+        if (client.partnersRevenue && client.partnersRevenue > 0) {
+          data.push({
+            id: `client-${clientIndex}-partners-revenue`,
+            name: "حصة الشركاء",
+            amount: client.partnersRevenue,
+            type: "revenue-breakdown",
+            indent: true,
+            subIndent: true
+          });
+        }
+
+        // عرض تفاصيل الإدخالات
         client.entries.forEach((entry, entryIndex) => {
           data.push({
             id: `client-${clientIndex}-entry-${entryIndex}`,
             name: entry.description,
-            amount: entry.amount,
+            amount: entry.rawShare || entry.amount,
             type: "revenue-detail",
             indent: true,
-            date: entry.date
+            subIndent: true,
+            date: entry.date,
+            entryData: entry // حفظ بيانات الإدخال الكاملة
           });
         });
       }
     });
+
+    // تفصيل توزيع الإيرادات إذا كان متوفراً ومفتوحاً
+    if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
+      const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
+      const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
+
+      if (totalCompanyRevenue > 0) {
+        data.push({
+          id: 2.6,
+          name: "إجمالي حصة الشركة",
+          amount: totalCompanyRevenue,
+          type: "revenue-distribution"
+        });
+      }
+
+      if (totalPartnersRevenue > 0) {
+        data.push({
+          id: 2.7,
+          name: "إجمالي حصة الشركاء",
+          amount: totalPartnersRevenue,
+          type: "revenue-distribution"
+        });
+      }
+    }
   }
 
   // إجمالي الإيرادات
   data.push({
     id: 2.5,
     name: "إجمالي إيرادات الفترة",
-    amount: incomeData.totalRevenue || 0,
+    amount: incomeData.revenues?.total || 0,
     type: "revenue-total"
   });
 
@@ -433,6 +454,9 @@ const getRowStyle = (row) => {
   }
   if (row.type === "revenue-breakdown") {
     return { fillColor: [220, 252, 231] };
+  }
+  if (row.type === "revenue-distribution") {
+    return { textColor: [46, 139, 69] };
   }
   if (row.type === "revenue-total" || row.type === "expense-total") {
     return { fillColor: [240, 240, 240] };
@@ -544,6 +568,7 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
       let name = row.name || '';
       if (row.level === 1) name = `   ${name}`;
       if (row.level === 2) name = `      ${name}`;
+      if (row.subIndent) name = `         ${name}`;
 
       const amount = row.amount !== null && row.amount !== undefined ? formatAmount(row.amount) : '';
 

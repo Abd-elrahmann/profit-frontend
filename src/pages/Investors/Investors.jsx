@@ -52,6 +52,7 @@ import {
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { checkUnpostedOpeningJournals } from "../Journals/journalsApi";
 import { debounce } from 'lodash';
 import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
@@ -199,6 +200,13 @@ export default function Investors() {
     queryKey: ["partner-transactions", selectedInvestor?.id, transactionsPage],
     queryFn: () => selectedInvestor ? getPartnerTransactions(selectedInvestor.id, transactionsPage) : null,
     enabled: !!selectedInvestor,
+    retry: 1,
+  });
+
+  // Check for unposted opening journals
+  const { data: openingJournalsCheck } = useQuery({
+    queryKey: ["opening-journals-check"],
+    queryFn: () => checkUnpostedOpeningJournals(),
     retry: 1,
   });
 
@@ -923,6 +931,63 @@ export default function Investors() {
         <title>المستثمرين</title>
         <meta name="description" content="المستثمرين" />
       </Helmet>
+
+      {openingJournalsCheck?.hasUnpostedOpeningJournals && (
+  <Alert
+    severity="warning"
+    icon={<Warning />}
+    sx={{
+      mx: 2,
+      mt: 2,
+      mb: 1,
+      borderRadius: 2,
+      boxShadow: 2,
+      border: '2px solid #f59e0b',
+      '& .MuiAlert-message': {
+        width: '100%',
+      },
+      '& .MuiAlert-icon': {
+        fontSize: '1.5rem'
+      }
+    }}
+  >
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 2,
+        flexWrap: 'wrap'
+      }}
+    >
+      {/* النص */}
+      <Box>
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          ⚠️ تنبيه مهم: يوجد {openingJournalsCheck.count} قيد افتتاحي غير معتمد
+        </Typography>
+        <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+          يرجى مراجعة صفحة القيود والتأكد من اعتماد جميع القيود الافتتاحية قبل إجراء أي معاملات لضمان سلامة البيانات المحاسبية.
+        </Typography>
+      </Box>
+
+      {/* الزر */}
+      <Button
+        size="small"
+        color="primary"
+        onClick={() => navigate('/journal-entries')}
+        sx={{
+          fontWeight: 600,
+          textTransform: 'none',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        الذهاب للقيود
+      </Button>
+    </Box>
+  </Alert>
+)}
+
+
       <Box
         sx={{
           display: "flex",
@@ -1609,10 +1674,22 @@ export default function Investors() {
                       <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                         <CardContent sx={{textAlign: 'center'}}>
                           <Typography color="text.secondary" variant="body1" gutterBottom>
-                            نسبة أرباح المنشأة
+                            الأرباح القادمة
                           </Typography>
-                          <Typography variant="h6" fontWeight="bold">
-                            {investorDetails.orgProfitPercent}%
+                          <Typography variant="h6" fontWeight="bold" color="info">
+                            {investorDetails.upcomingProfit?.toLocaleString() || 0}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                        <CardContent sx={{textAlign: 'center'}}>
+                          <Typography color="text.secondary" variant="body1" gutterBottom>
+                            إجمالي الأرباح الفعلي
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold" color="primary">
+                            {investorDetails.totalProfit?.toLocaleString() || 0}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -1629,18 +1706,20 @@ export default function Investors() {
                         </CardContent>
                       </Card>
                     </Grid>
+
                     <Grid item xs={12} sm={6} md={3}>
-                        <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
+                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                         <CardContent sx={{textAlign: 'center'}}>
                           <Typography color="text.secondary" variant="body1" gutterBottom>
-                            إجمالي الأرباح
+                            نسبة أرباح المنشأة
                           </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="primary">
-                            {investorDetails.totalProfit?.toLocaleString() || 0}
+                          <Typography variant="h6" fontWeight="bold">
+                            {investorDetails.orgProfitPercent}%
                           </Typography>
                         </CardContent>
                       </Card>
                     </Grid>
+
                     <Grid item xs={12} sm={6} md={3}>
                       <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
                         <CardContent sx={{textAlign: 'center'}}>
@@ -1717,18 +1796,6 @@ export default function Investors() {
                       </Card>
                     </Grid>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card sx={{width: '100%', minWidth: '350px', maxWidth: '400px'}}>
-                        <CardContent sx={{textAlign: 'center'}}>
-                          <Typography color="text.secondary" variant="body1" gutterBottom>
-                            نسبة أرباح المنشأة
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="error.main">
-                            {investorDetails.orgProfitPercent || 0}%
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
                   </Grid>
 
                   {/* Saving Progress Alert */}

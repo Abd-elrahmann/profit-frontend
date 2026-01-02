@@ -625,6 +625,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][name]`] && Boolean(errors[`kafeels[${index}][name]`])}
                               helperText={touched[`kafeels[${index}][name]`] && errors[`kafeels[${index}][name]`]}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -637,6 +640,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][nationalId]`] && Boolean(errors[`kafeels[${index}][nationalId]`])}
                               helperText={touched[`kafeels[${index}][nationalId]`] && errors[`kafeels[${index}][nationalId]`]}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -653,6 +659,9 @@ const AddClient = ({ open, onClose }) => {
                               InputLabelProps={{
                                 shrink: true
                               }}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -666,6 +675,9 @@ const AddClient = ({ open, onClose }) => {
                                   onBlur={handleBlur}
                                   error={touched[`kafeels[${index}][phoneCode]`] && Boolean(errors[`kafeels[${index}][phoneCode]`])}
                                   label="رمز الدولة"
+                                  sx={{
+                                    width: '250px',
+                                  }}
                                 >
                                   {countryCodes.map((country) => (
                                     <MenuItem key={country.code} value={country.code}>
@@ -683,6 +695,9 @@ const AddClient = ({ open, onClose }) => {
                                 onBlur={handleBlur}
                                 error={touched[`kafeels[${index}][phone]`] && Boolean(errors[`kafeels[${index}][phone]`])}
                                 helperText={touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`]}
+                                sx={{
+                                  width: '250px',
+                                }}
                               />
                             </Box>
                           </Grid>
@@ -697,6 +712,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][email]`] && Boolean(errors[`kafeels[${index}][email]`])}
                               helperText={touched[`kafeels[${index}][email]`] && errors[`kafeels[${index}][email]`]}
+                              sx={{
+                                width: '300px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -709,6 +727,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][city]`] && Boolean(errors[`kafeels[${index}][city]`])}
                               helperText={touched[`kafeels[${index}][city]`] && errors[`kafeels[${index}][city]`]}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -721,6 +742,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][district]`] && Boolean(errors[`kafeels[${index}][district]`])}
                               helperText={touched[`kafeels[${index}][district]`] && errors[`kafeels[${index}][district]`]}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -733,6 +757,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][employer]`] && Boolean(errors[`kafeels[${index}][employer]`])}
                               helperText={touched[`kafeels[${index}][employer]`] && errors[`kafeels[${index}][employer]`]}
+                              sx={{
+                                  width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -746,6 +773,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][salary]`] && Boolean(errors[`kafeels[${index}][salary]`])}
                               helperText={touched[`kafeels[${index}][salary]`] && errors[`kafeels[${index}][salary]`]}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
@@ -759,6 +789,9 @@ const AddClient = ({ open, onClose }) => {
                               onBlur={handleBlur}
                               error={touched[`kafeels[${index}][obligations]`] && Boolean(errors[`kafeels[${index}][obligations]`])}
                               helperText={touched[`kafeels[${index}][obligations]`] && errors[`kafeels[${index}][obligations]`]}
+                              sx={{
+                                width: '250px',
+                              }}
                             />
                           </Grid>
                         </Grid>

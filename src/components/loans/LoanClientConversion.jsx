@@ -41,6 +41,9 @@ const LoanClientConversion = ({
     interestRate: loan?.interestRate?.toString() || "",
     paymentAmount: loan?.paymentAmount?.toString() || "",
     type: loan?.type || "",
+    source: loan?.source || "",
+    issuanceCity: loan?.issuanceCity || "",
+    paymentCity: loan?.paymentCity || "",
     startDate: loan?.startDate ? new Date(loan.startDate).toISOString().split("T")[0] : "",
     repaymentDay: loan?.repaymentDay ? new Date(loan.repaymentDay).toISOString().split("T")[0] : "",
   };
@@ -118,7 +121,7 @@ const LoanClientConversion = ({
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "action.disabledBackground",
+                  backgroundColor: "background.default",
                 },
               }}
             />
@@ -134,7 +137,7 @@ const LoanClientConversion = ({
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "action.disabledBackground",
+                  backgroundColor: "background.default",
                 },
               }}
             />
@@ -173,7 +176,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "action.disabledBackground",
+                    backgroundColor: "background.default",
                   },
                 }}
               />
@@ -189,7 +192,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "action.disabledBackground",
+                    backgroundColor: "background.default",
                   },
                 }}
               />
@@ -205,7 +208,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "action.disabledBackground",
+                    backgroundColor: "background.default",
                   },
                 }}
               />
@@ -270,7 +273,7 @@ const LoanClientConversion = ({
                     "& .MuiOutlinedInput-root": {
                       height: "56px",
                       width: isSmallScreen ? "250px" : "350px",
-                      backgroundColor: "background.paper",
+                        backgroundColor: "background.default",
                       "&:hover fieldset": {
                         borderColor: "primary.main",
                       },
@@ -325,7 +328,7 @@ const LoanClientConversion = ({
                       "& .MuiOutlinedInput-root": {
                         height: "56px",
                         width: isSmallScreen ? "250px" : "350px",
-                        backgroundColor: "background.paper",
+                        backgroundColor: "background.default",
                         "&:hover fieldset": {
                           borderColor: "primary.main",
                         },
@@ -414,7 +417,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "action.disabledBackground",
+                    backgroundColor: "background.default",
                   },
                 }}
               />
@@ -430,7 +433,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "action.disabledBackground",
+                    backgroundColor: "background.default",
                   },
                 }}
               />
@@ -446,7 +449,7 @@ const LoanClientConversion = ({
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "action.disabledBackground",
+                    backgroundColor: "background.default",
                   },
                 }}
               />
@@ -478,6 +481,7 @@ const LoanClientConversion = ({
         handlePartnersSearchChange={handlePartnersSearchChange}
         bankBalance={null}
         formatAmount={formatAmount}
+        selectedLoan={loan}
       />
 
     </Box>

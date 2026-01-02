@@ -201,56 +201,17 @@ const IncomeStatement = () => {
       capitalDetails: incomeData.capitalByPartner || []
     });
 
-    // إضافة تفاصيل أنواع الإيرادات إذا كانت متوفرة
-    if (expandedCapital) {
-      if (incomeData.revenues && (incomeData.revenues.generalLoans > 0 || incomeData.revenues.newCapitalLoans > 0)) {
+    // تفاصيل رأس المال عند التوسع
+    if (expandedCapital && incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
+      incomeData.capitalByPartner.forEach((partner, index) => {
         data.push({
-          id: 0.25,
-          name: "تفصيل أنواع الإيرادات",
-          type: "revenue-breakdown-header"
-        });
-
-        if (incomeData.revenues.generalLoans > 0) {
-          data.push({
-            id: 0.3,
-            name: "إيرادات السلف العامة",
-            amount: incomeData.revenues.generalLoans,
-            type: "revenue-breakdown",
-            indent: true
-          });
-        }
-
-        if (incomeData.revenues.newCapitalLoans > 0) {
-          data.push({
-            id: 0.35,
-            name: "إيرادات سلف رأس المال الجديد",
-            amount: incomeData.revenues.newCapitalLoans,
-            type: "revenue-breakdown",
-            indent: true
-          });
-        }
-      } else if (incomeData.revenues && incomeData.totalRevenue > 0) {
-        data.push({
-          id: 0.25,
-          name: "إيرادات السلف العامة",
-          amount: incomeData.totalRevenue,
-          type: "revenue-breakdown",
+          id: `capital-${index}`,
+          name: partner.partnerName,
+          amount: partner.totalAmount,
+          type: "capital-detail",
           indent: true
         });
-      }
-
-      // تفاصيل رأس المال عند التوسع
-      if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
-        incomeData.capitalByPartner.forEach((partner, index) => {
-          data.push({
-            id: `capital-${index}`,
-            name: partner.partnerName,
-            amount: partner.totalAmount,
-            type: "capital-detail",
-            indent: true
-          });
-        });
-      }
+      });
     }
 
     data.push({ id: 0.75, type: "spacer" });
@@ -275,7 +236,7 @@ const IncomeStatement = () => {
         data.push({
           id: `client-${clientIndex}`,
           name: client.clientName,
-          amount: client.totalAmount,
+          amount: client.totalRevenue,
           type: "client-revenue",
           clientId: client.clientId,
           entries: client.entries
@@ -283,14 +244,40 @@ const IncomeStatement = () => {
 
         // تفاصيل إدخالات العميل
         if (expandedClients[client.clientId]) {
+          // عرض إيرادات الشركة والشركاء إذا كانت متوفرة
+          if (client.companyRevenue && client.companyRevenue > 0) {
+            data.push({
+              id: `client-${clientIndex}-company-revenue`,
+              name: "حصة الشركة",
+              amount: client.companyRevenue,
+              type: "revenue-breakdown",
+              indent: true,
+              subIndent: true
+            });
+          }
+
+          if (client.partnersRevenue && client.partnersRevenue > 0) {
+            data.push({
+              id: `client-${clientIndex}-partners-revenue`,
+              name: "حصة الشركاء",
+              amount: client.partnersRevenue,
+              type: "revenue-breakdown",
+              indent: true,
+              subIndent: true
+            });
+          }
+
+          // عرض تفاصيل الإدخالات
           client.entries.forEach((entry, entryIndex) => {
             data.push({
               id: `client-${clientIndex}-entry-${entryIndex}`,
               name: entry.description,
-              amount: entry.amount,
+              amount: entry.rawShare || entry.amount,
               type: "revenue-detail",
               indent: true,
-              date: entry.date
+              subIndent: true,
+              date: entry.date,
+              entryData: entry // حفظ بيانات الإدخال الكاملة
             });
           });
         }
@@ -301,9 +288,33 @@ const IncomeStatement = () => {
     data.push({
       id: 2.5,
       name: "إجمالي إيرادات الفترة",
-      amount: incomeData.totalRevenue || 0,
+      amount: incomeData.revenues?.total || 0,
       type: "revenue-total"
     });
+
+    // تفصيل توزيع الإيرادات إذا كان متوفراً ومفتوحاً
+    if (expandedRevenues && incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
+      const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
+      const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
+
+      if (totalCompanyRevenue > 0) {
+        data.push({
+          id: 2.6,
+          name: "إجمالي حصة الشركة",
+          amount: totalCompanyRevenue,
+          type: "revenue-distribution"
+        });
+      }
+
+      if (totalPartnersRevenue > 0) {
+        data.push({
+          id: 2.7,
+          name: "إجمالي حصة الشركاء",
+          amount: totalPartnersRevenue,
+          type: "revenue-distribution"
+        });
+      }
+    }
 
     data.push({ id: 2.75, type: "spacer" });
 
@@ -797,17 +808,29 @@ const IncomeStatement = () => {
                     fontSize: '1.25rem',
                     fontWeight: 700
                   }}>
-                    {formatNumber(incomeData.totalRevenue)}
+                    {formatNumber(incomeData.revenues?.total || 0)}
                   </Typography>
-                  {/* Revenue Breakdown */}
-                  {incomeData.revenues && (
-                    <Box sx={{ mt: 1, fontSize: '0.75rem', color: theme.palette.primary.main }}>
-                      <Typography variant="caption" display="block" fontWeight="bold">
-                        سلف عامة: {formatNumber(incomeData.revenues.generalLoans || 0)}
-                      </Typography>
-                      <Typography variant="caption" display="block" fontWeight="bold">
-                        سلف رأس مال جديد: {formatNumber(incomeData.revenues.newCapitalLoans || 0)}
-                      </Typography>
+                  {/* Revenue Distribution Display */}
+                  {incomeData.revenueByClient && incomeData.revenueByClient.length > 0 && (
+                    <Box sx={{ mt: 1, fontSize: '0.75rem' }}>
+                      {(() => {
+                        const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
+                        const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
+                        return (
+                          <>
+                            {totalPartnersRevenue > 0 && (
+                              <Typography variant="caption" display="block" sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>
+                                أرباح الشركاء: {formatNumber(totalPartnersRevenue)}
+                              </Typography>
+                            )}
+                            {totalCompanyRevenue > 0 && (
+                              <Typography variant="caption" display="block" sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>
+                                أرباح الشركة: {formatNumber(totalCompanyRevenue)}
+                              </Typography>
+                            )}
+                          </>
+                        );
+                      })()}
                     </Box>
                   )}
                 </Paper>
@@ -1018,7 +1041,7 @@ const IncomeStatement = () => {
                       if (row.type === "client-revenue") {
                         return (
                           <React.Fragment key={row.id}>
-                            <TableRow sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
+                            <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '10' : 'rgba(219, 234, 254, 0.2)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
                               <TableCell sx={{ py: 2, px: 3, textAlign: 'center' }}>
                                 <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
                                   <Typography>
@@ -1048,13 +1071,13 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-table-header") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '15' : 'rgba(220, 252, 231, 0.2)' }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '15' : 'rgba(219, 234, 254, 0.3)' }}>
                             <TableCell colSpan={2} sx={{
                               py: 1,
                               px: 3,
                               textAlign: 'center',
                               fontWeight: 600,
-                              color: theme.palette.success.main,
+                              color: theme.palette.primary.main,
                               borderBottom: `1px solid ${theme.palette.divider}`
                             }}>
                               إيرادات العملاء
@@ -1065,8 +1088,8 @@ const IncomeStatement = () => {
 
                       if (row.type === "revenue-detail") {
                         return (
-                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.success.main + '10' : 'rgba(220, 252, 231, 0.1)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
-                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: 6 }}>
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.warning.main + '10' : 'rgba(255, 237, 213, 0.3)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
+                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', pl: row.subIndent ? 8 : 6 }}>
                               <Typography sx={{ fontSize: '0.875rem' }}>
                                 {row.name}
                               </Typography>
@@ -1075,11 +1098,71 @@ const IncomeStatement = () => {
                                   {dayjs(row.date).format('DD/MM/YYYY')}
                                 </Typography>
                               )}
+                              {row.entryData && (
+                                <Box sx={{ mt: 0.5 }}>
+                                  {row.entryData.companyCut && row.entryData.companyCut > 0 && (
+                                    <Typography variant="caption" color="primary" display="block" sx={{ fontSize: '0.7rem' }}>
+                                      حصة الشركة: {formatNumber(row.entryData.companyCut)}
+                                    </Typography>
+                                  )}
+                                  {row.entryData.partnerShare && row.entryData.partnerShare > 0 && (
+                                    <Typography variant="caption" color="secondary" display="block" sx={{ fontSize: '0.7rem' }}>
+                                      حصة الشركاء: {formatNumber(row.entryData.partnerShare)}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              )}
                             </TableCell>
                             <TableCell align="center" sx={{ py: 2, px: 3 }}>
                               <Typography sx={{
                                 fontWeight: 500,
                                 color: theme.palette.text.primary
+                              }}>
+                                {formatAmount(row.amount)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "revenue-breakdown") {
+                        return (
+                          <TableRow key={row.id} sx={{ bgcolor: theme.palette.mode === 'dark' ? theme.palette.secondary.main + '15' : 'rgba(251, 207, 232, 0.3)', '&:hover': { bgcolor: theme.palette.action.hover } }}>
+                            <TableCell sx={{ py: 1, px: 3, textAlign: 'center', pl: row.subIndent ? 8 : 6 }}>
+                              <Typography sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                                {row.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 1, px: 3 }}>
+                              <Typography sx={{
+                                fontWeight: 600,
+                                color: theme.palette.text.primary,
+                                fontSize: '0.875rem'
+                              }}>
+                                {formatAmount(row.amount)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (row.type === "revenue-distribution") {
+                        return (
+                          <TableRow key={row.id} sx={{
+                            bgcolor: theme.palette.mode === 'dark' ? theme.palette.primary.main + '10' : 'rgba(46, 139, 69, 0.1)',
+                            borderTop: '1px solid rgba(0,0,0,0.1)',
+                            '&:hover': { bgcolor: theme.palette.action.hover }
+                          }}>
+                            <TableCell sx={{ py: 2, px: 3, textAlign: 'center', fontWeight: 600 }}>
+                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                                {row.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center" sx={{ py: 2, px: 3 }}>
+                              <Typography sx={{
+                                fontWeight: 700,
+                                color: theme.palette.primary.main,
+                                fontSize: '1rem'
                               }}>
                                 {formatAmount(row.amount)}
                               </Typography>

@@ -193,3 +193,19 @@ export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeel
     throw error;
   }
 };
+
+// Transfer partial loan amount to another client
+export const transferPartialLoanAmount = async (fromClientId, toClientId, loanId, amount, kafeelId) => {
+  try {
+    const response = await Api.patch(`/api/loans/convert-partial/${loanId}`, {
+      fromClientId: Number(fromClientId),
+      toClientId: Number(toClientId),
+      kafeelId: kafeelId ? Number(kafeelId) : null,
+      amount: Number(amount),
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
