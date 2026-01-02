@@ -41,6 +41,7 @@ const normalizePartnerData = (partnerData) => {
       yearlyZakatRequired: partnerData.yearlyZakatRequired || 0,
       yearlyZakatPaid: partnerData.yearlyZakatPaid || 0,
       yearlyZakatBalance: partnerData.yearlyZakatBalance || 0,
+      upcomingProfit: partnerData.upcomingProfit || 0,
       newCapitalAmount: partnerData.newCapitalAmount || 0,
       newCapitalPercent: partnerData.newCapitalPercent || 0,
       total: partnerData.total || 0,
@@ -71,6 +72,7 @@ const normalizePartnerData = (partnerData) => {
       yearlyZakatRequired: partnerData.yearlyZakatRequired || 0,
       yearlyZakatPaid: partnerData.yearlyZakatPaid || 0,
       yearlyZakatBalance: partnerData.yearlyZakatBalance || 0,
+      upcomingProfit: partnerData.upcomingProfit || 0,
       newCapitalAmount: partnerData.newCapitalAmount || 0,
       newCapitalPercent: partnerData.newCapitalPercent || 0,
       total: partnerData.total || 0,
@@ -98,6 +100,7 @@ const normalizePartnerData = (partnerData) => {
       summary: partnerData.summary || {},
       AccountEquity: partnerData.AccountEquity || null,
       AccountPayable: partnerData.AccountPayable || null,
+      upcomingProfit: partnerData.upcomingProfit || 0,
       newCapitalAmount: partnerData.profile?.newCapitalAmount || 0,
       newCapitalPercent: partnerData.profile?.newCapitalPercent || 0,
       total: partnerData.total || 0,
@@ -129,6 +132,7 @@ const normalizePartnerData = (partnerData) => {
     loans: partnerData.loans || [],
     AccountEquity: partnerData.AccountEquity || null,
     AccountPayable: partnerData.AccountPayable || null,
+    upcomingProfit: partnerData.upcomingProfit || 0,
     newCapitalAmount: partnerData.newCapitalAmount || 0,
     newCapitalPercent: partnerData.newCapitalPercent || 0,
     total: partnerData.total || 0,
@@ -280,11 +284,12 @@ fillColor: [240, 240, 240],
         yPosition += 8;
 
         // Tab 2: Financial Information Table - Professional layout
-        const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر', 'رأس المال الجديد', 'نسبة رأس المال الجديد']];
+        const financialHeaders = [['رأس المال', 'نسبة أرباح المنشأة', 'نسبة أرباح المستثمر', 'الأرباح القادمة', 'رأس المال الجديد', 'نسبة رأس المال الجديد']];
         const financialData = [[
           investor.capitalAmount ? investor.capitalAmount.toLocaleString('en-US') : '-',
           investor.orgProfitPercent ? investor.orgProfitPercent + '%' : '-',
           investor.partnerProfitPercent ? investor.partnerProfitPercent + '%' : '-',
+          investor.upcomingProfit ? investor.upcomingProfit.toLocaleString('en-US') : '0',
           investor.newCapitalAmount ? investor.newCapitalAmount.toLocaleString('en-US') : '-',
           investor.newCapitalPercent ? investor.newCapitalPercent + '%' : '-'
         ]];
@@ -629,6 +634,7 @@ export const exportInvestorsToExcel = async (investorsData) => {
         [investor.capitalAmount || 0, 'رأس المال'],
         [investor.orgProfitPercent || 0, 'نسبة أرباح المنشأة'],
         [investor.partnerProfitPercent || 0, 'نسبة أرباح المستثمر'],
+        [investor.upcomingProfit || 0, 'الأرباح القادمة'],
         [investor.newCapitalAmount || 0, 'رأس المال الجديد'],
         [investor.newCapitalPercent || 0, 'نسبة رأس المال الجديد'],
       ];
