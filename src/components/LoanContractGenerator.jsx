@@ -444,7 +444,11 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
             .replace(/{{تاريخ_الانشاء}}/g, finalDate)
-            .replace(/{{تاريخ_الاستحقاق}}/g, formatRepaymentDay(loanDataToUse?.repaymentDay))
+            .replace(/{{تاريخ_الاستحقاق}}/g,
+              loanDataToUse?.promissoryNoteType === "manual" && loanDataToUse?.promissoryNoteDate
+                ? formatRepaymentDay(loanDataToUse.promissoryNoteDate)
+                : "لدى الاطلاع"
+            )
 
             .replace(/{{اسم_الدائن}}/g, loanDataToUse?.partner?.name || "لا يوجد كفيل")
             .replace(/{{اسم_المدين}}/g, clientDataToUse?.name || "")
@@ -453,6 +457,7 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{مدينة_الاصدار}}/g, loanDataToUse?.issuanceCity || "شروة - المملكة العربية السعودية")
             .replace(/{{مدينة_الوفاء}}/g, loanDataToUse?.paymentCity || "الرياض - المملكة العربية السعودية")
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")
+            .replace(/{{العملة}}/g, "ريال سعودي")
 
             .replace(/{{رقم_هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")
             .replace(/{{رقم_هوية_المدين}}/g, clientDataToUse?.nationalId || "")

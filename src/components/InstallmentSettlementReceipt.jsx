@@ -88,7 +88,6 @@ const numberToArabicWords = (num) => {
       }
 
       num %= s.value;
-      if (num > 0) result += "و ";
       if (s.value === 1e3) hasThousands = true;
     }
   }
@@ -96,7 +95,7 @@ const numberToArabicWords = (num) => {
   // المئات
   if (num >= 100) {
     const h = Math.floor(num / 100);
-    if (hasThousands) {
+    if (hasThousands && result.length > 0) {
       result += "و" + hundreds[h] + " ";
     } else {
       result += hundreds[h] + " ";
@@ -111,7 +110,7 @@ const numberToArabicWords = (num) => {
     const hasHigherUnits = result.length > 0;
 
     if (hasHigherUnits && !result.trim().endsWith("و")) {
-      result = result.trim() + " و";
+      result += "و";
     }
 
     if (o > 0) {
@@ -123,14 +122,14 @@ const numberToArabicWords = (num) => {
     const hasHigherUnits = result.length > 0;
 
     if (hasHigherUnits && !result.trim().endsWith("و")) {
-      result = result.trim() + " و";
+      result += "و";
     }
     result += teens[num - 10];
   } else if (num > 0) {
     const hasHigherUnits = result.length > 0;
 
     if (hasHigherUnits && !result.trim().endsWith("و")) {
-      result = result.trim() + " و";
+      result += "و";
     }
     result += ones[num];
   }

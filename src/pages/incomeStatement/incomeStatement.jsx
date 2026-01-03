@@ -78,8 +78,7 @@ const IncomeStatement = () => {
   // جلب الفترات المحاسبية
   const { data: accountingPeriods = [] } = useQuery({
     queryKey: ["accountingPeriods"],
-    queryFn: () => incomeStatementApi.getAccountingPeriods(),
-    enabled: periodType === "period",
+    queryFn: () => incomeStatementApi.getAccountingPeriods(1, 1),
   });
 
   // إعداد معلمات الاستعلام بناءً على الفترة المحددة
@@ -240,7 +239,7 @@ const IncomeStatement = () => {
             >
               <Grid container spacing={2} alignItems="center">
                 {/* Period Type */}
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2}>
                     <Select
                       fullWidth
                       size="small"
@@ -266,6 +265,51 @@ const IncomeStatement = () => {
                     <MenuItem value="period" sx={{ textAlign: 'center' }}>فترة محاسبية</MenuItem>
                   </Select>
                 </Grid>
+
+                {/* Accounting Period Selection */}
+                {periodType === "period" && (
+                  <Grid item xs={12} md={3}>
+                    <Autocomplete
+                      fullWidth
+                      size="small"
+                      value={accountingPeriods.find(p => p.id === selectedPeriodId) || null}
+                      onChange={(event, newValue) => {
+                        setSelectedPeriodId(newValue?.id || "");
+                        // إذا تم اختيار فترة محاسبية، غير نوع الفترة إلى "period"
+                        if (newValue?.id) {
+                          setPeriodType("period");
+                        }
+                      }}
+                      options={accountingPeriods}
+                      getOptionLabel={(option) =>
+                        option && option.name ? `${option.name} (${option.startDateHijri || (option.startDate ? dayjs(option.startDate).format('DD/MM/YYYY') : '')} - ${option.endDateHijri || (option.endDate ? dayjs(option.endDate).format('DD/MM/YYYY') : 'مفتوحة')})` : ''
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="اختر الفترة المحاسبية"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <CalendarMonth sx={{ color: theme.palette.primary.main }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            width: '250px',
+                            bgcolor: theme.palette.background.default,
+                            '& .MuiInputBase-input': {
+                              fontWeight: 500,
+                              color: theme.palette.text.primary,
+                              textAlign: 'center'
+                            }
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                )}
 
                 {/* Month Selection */}
                 {periodType === "monthly" && (
@@ -336,45 +380,6 @@ const IncomeStatement = () => {
                   </Grid>
                 ) : null}
 
-                {/* Accounting Period Selection */}
-                {periodType === "period" && (
-                  <Grid item xs={12} md={6}>
-                    <Autocomplete
-                      fullWidth
-                      size="small"
-                      value={accountingPeriods.find(p => p.id === selectedPeriodId) || null}
-                      onChange={(event, newValue) => {
-                        setSelectedPeriodId(newValue?.id || "");
-                      }}
-                      options={[{ id: "", name: "لا توجد فترة محددة", startDate: null, endDate: null }, ...accountingPeriods]}
-                      getOptionLabel={(option) =>
-                        option && option.name ? `${option.name} (${option.startDate ? dayjs(option.startDate).format('DD/MM/YYYY') : ''} - ${option.endDate ? dayjs(option.endDate).format('DD/MM/YYYY') : 'مفتوحة'})` : 'لا توجد فترة محددة'
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          placeholder="اختر الفترة المحاسبية"
-                          InputProps={{
-                            ...params.InputProps,
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <CalendarMonth sx={{ color: theme.palette.primary.main }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{
-                            bgcolor: theme.palette.background.default,
-                            '& .MuiInputBase-input': {
-                              fontWeight: 500,
-                              color: theme.palette.text.primary,
-                              textAlign: 'center'
-                            }
-                          }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                )}
 
                 {/* Custom Date Range */}
                 {periodType === "custom" && (

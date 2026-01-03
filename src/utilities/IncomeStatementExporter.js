@@ -303,26 +303,6 @@ const getAllData = (incomeData) => {
 
 // الحصول على لون الخلفية بناءً على نوع الصف
 const getRowStyle = (row) => {
-  // النتيجة النهائية فقط تحتفظ باللون
-  if (row.isFinal) {
-    return { fillColor: row.amount >= 0 ? [46, 139, 69] : [220, 38, 38] };
-  }
-
-  // جعل الأرباح بلون أزرق للتمييز
-  if (row.isProfit) {
-    return { fillColor: [25, 103, 210] };
-  }
-
-  // جعل رأس المال الجديد بلون أخضر فاتح
-  if (row.isNewCapitalAmount) {
-    return { fillColor: [76, 175, 80] };
-  }
-
-  // جعل رأس المال الأصلي بلون برتقالي فاتح
-  if (row.isCapitalAmount) {
-    return { fillColor: [255, 193, 7] };
-  }
-
   // جعل أسماء العملاء بلون أخضر للتمييز
   if (row.isClientName) {
     return { textColor: [46, 139, 69] };
@@ -485,11 +465,13 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
 
         if (row) {
           const style = getRowStyle(row);
-          if (style.fillColor) {
-            data.cell.styles.fillColor = style.fillColor;
-          }
           if (style.textColor) {
             data.cell.styles.textColor = style.textColor;
+          }
+
+          // ألوان خاصة للنتيجة النهائية
+          if (row.isFinal) {
+            data.cell.styles.textColor = row.amount >= 0 ? [46, 139, 69] : [220, 38, 38];
           }
 
           if (row.isHeader || row.isTotal || row.isFinal || row.level === 0 ||
@@ -501,23 +483,7 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
             }
           }
 
-          // ألوان خاصة لرأس المال والأرباح
-          if (row.isProfit) {
-            data.cell.styles.fillColor = [25, 103, 210]; // أزرق
-            data.cell.styles.textColor = [255, 255, 255];
-          }
-          if (row.isNewCapitalAmount) {
-            data.cell.styles.fillColor = [76, 175, 80]; // أخضر
-            data.cell.styles.textColor = [255, 255, 255];
-          }
-          if (row.isCapitalAmount) {
-            data.cell.styles.fillColor = [255, 193, 7]; // برتقالي فاتح
-            data.cell.styles.textColor = [0, 0, 0];
-          }
-
-          if (row.isFinal) {
-            data.cell.styles.textColor = [255, 255, 255];
-          }
+          // إزالة جميع الألوان الخاصة
 
           if (row.amount < 0 && !row.isHeader) {
             data.cell.styles.textColor = [220, 38, 38];
@@ -747,49 +713,21 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
             // صفوف الرؤوس
             if (rowData.isHeader) {
               cell.s = {
-                fill: { fgColor: { rgb: "F0F0F0" } },
                 font: { color: { rgb: "2E8B45" }, bold: true },
                 alignment: { horizontal: "center" }
               };
             }
             
-            // رأس المال الأصلي
-            else if (rowData.isCapitalAmount) {
-              cell.s = {
-                fill: { fgColor: { rgb: "FFC107" } },
-                font: { color: { rgb: "000000" }, bold: true },
-                alignment: { horizontal: "center" }
-              };
-            }
-
-            // رأس المال الجديد
-            else if (rowData.isNewCapitalAmount) {
-              cell.s = {
-                fill: { fgColor: { rgb: "4CAF50" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true },
-                alignment: { horizontal: "center" }
-              };
-            }
-
-            // الأرباح
-            else if (rowData.isProfit) {
-              cell.s = {
-                fill: { fgColor: { rgb: "1967D2" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true },
-                alignment: { horizontal: "center" }
-              };
-            }
+            // إزالة الألوان الخاصة لرأس المال والأرباح
 
             // العناوين الرئيسية
             else if (rowData.type === "revenue-header" || rowData.type === "expense-header") {
-              const bgColor = rowData.type === "revenue-header" ? "DCFCE7" : "FEE2E2";
               cell.s = {
-                fill: { fgColor: { rgb: bgColor } },
-                font: { bold: true },
+                font: { color: { rgb: "2E8B45" }, bold: true },
                 alignment: { horizontal: "center" }
               };
             }
-            
+
             // المجاميع
             else if (rowData.isTotal) {
               cell.s = {
@@ -801,14 +739,13 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
             
             // النتيجة النهائية
             else if (rowData.isFinal) {
-              const bgColor = rowData.amount >= 0 ? "2E8B45" : "DC2626";
+              const textColor = rowData.amount >= 0 ? "2E8B45" : "DC2626";
               cell.s = {
-                fill: { fgColor: { rgb: bgColor } },
-                font: { color: { rgb: "FFFFFF" }, bold: true },
+                font: { color: { rgb: textColor }, bold: true },
                 alignment: { horizontal: "center" }
               };
             }
-            
+
             // المبالغ السالبة باللون الأحمر
             else if (rowData.amount < 0) {
               if (!cell.s) cell.s = {};

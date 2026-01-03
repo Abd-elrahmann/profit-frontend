@@ -26,6 +26,8 @@ import {
   AccountBalance as BalanceIcon,
   Savings as SavingsIcon,
   CalendarMonth as CalendarIcon,
+  ArrowCircleDown as DepositIcon,
+  ArrowCircleUp as WithdrawalIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { getAllPartnerSavings, getSavingAccountReport } from "./savingApi";
@@ -110,7 +112,7 @@ const Saving = () => {
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
         <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
-          <SavingsIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
+          <DepositIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="success.main">
             {formatCurrency(accountReport?.account?.debit)}
           </Typography>
@@ -121,7 +123,7 @@ const Saving = () => {
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
         <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2,width: "350px" }}>
-          <SavingsIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
+          <WithdrawalIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
           <Typography variant="h5" fontWeight="bold" color="warning.main">
             {formatCurrency(accountReport?.account?.credit)}
           </Typography>

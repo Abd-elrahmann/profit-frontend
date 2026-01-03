@@ -339,6 +339,51 @@ const LoanDetailsSection = ({
         </Grid>
 
         <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            type="text"
+            label="تاريخ استحقاق السند"
+            select
+            value={isViewMode ? (loanForm.promissoryNoteType || selectedLoan?.promissoryNoteType || "inspection") : loanForm.promissoryNoteType || "inspection"}
+            onChange={(e) => handleInputChange("promissoryNoteType", e.target.value)}
+            disabled={isReadOnlyMode}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "56px",
+                width: "300px",
+                backgroundColor: "background.paper",
+              },
+            }}
+          >
+            <MenuItem value="inspection">لدي الاطلاع</MenuItem>
+            <MenuItem value="manual">تحديد تاريخ يدوي</MenuItem>
+          </TextField>
+        </Grid>
+
+        {(loanForm.promissoryNoteType === "manual" || (isViewMode && selectedLoan?.promissoryNoteType === "manual")) && (
+          <Grid item xs={12} sm={6} md={6}>
+            <TextField
+              fullWidth
+              type="date"
+              label="تاريخ السند"
+              value={isViewMode ? (loanForm.promissoryNoteDate || selectedLoan?.promissoryNoteDate?.split("T")[0] || "") : loanForm.promissoryNoteDate || ""}
+              onChange={(e) => handleInputChange("promissoryNoteDate", e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              disabled={isReadOnlyMode}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "56px",
+                  width: "300px",
+                  backgroundColor: "background.paper",
+                },
+              }}
+            />
+          </Grid>
+        )}
+
+        <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={banksData?.data || []}
             getOptionLabel={(option) =>

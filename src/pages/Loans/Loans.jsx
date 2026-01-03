@@ -70,6 +70,8 @@ const Loans = () => {
     repaymentDay: "",
     issuanceCity: "",
     paymentCity: "",
+    promissoryNoteType: "inspection", // "inspection" أو "manual"
+    promissoryNoteDate: "",
   });
 
   const dayToDateString = (day) => {
@@ -799,6 +801,10 @@ const Loans = () => {
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
         issuanceCity: loanForm.issuanceCity || null,
         paymentCity: loanForm.paymentCity || null,
+        promissoryNoteType: loanForm.promissoryNoteType,
+        promissoryNoteDate: loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate
+          ? new Date(loanForm.promissoryNoteDate).toISOString()
+          : null,
       };
 
       const response = await createLoan(loanData);
@@ -860,6 +866,8 @@ const Loans = () => {
       repaymentDay: dayToDateString(10),
       issuanceCity: "",
       paymentCity: "",
+      promissoryNoteType: "inspection",
+      promissoryNoteDate: "",
     });
     setInstallments([]);
     setIsEditMode(false);
@@ -891,6 +899,10 @@ const Loans = () => {
         kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
         issuanceCity: loanForm.issuanceCity || null,
         paymentCity: loanForm.paymentCity || null,
+        promissoryNoteType: loanForm.promissoryNoteType,
+        promissoryNoteDate: loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate
+          ? new Date(loanForm.promissoryNoteDate).toISOString()
+          : null,
       };
 
       const oldAmount = selectedLoan.amount;
@@ -1038,6 +1050,8 @@ const Loans = () => {
         repaymentDay: loan.repaymentDay ? loan.repaymentDay.split("T")[0] : "",
         issuanceCity: loan.issuanceCity || "",
         paymentCity: loan.paymentCity || "",
+        promissoryNoteType: loan.promissoryNoteType || "inspection",
+        promissoryNoteDate: loan.promissoryNoteDate ? loan.promissoryNoteDate.split("T")[0] : "",
       });
 
       setActiveTab(1);
@@ -1174,6 +1188,9 @@ const Loans = () => {
   const simulationSummary = getSimulationSummary();
 
   const isFormValid = () => {
+    const isPromissoryNoteValid = loanForm.promissoryNoteType === "inspection" ||
+      (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate);
+
     return (
       selectedClient &&
       selectedPartner &&
@@ -1184,7 +1201,8 @@ const Loans = () => {
       loanForm.paymentAmount &&
       loanForm.type &&
       loanForm.source &&
-      loanForm.repaymentDay
+      loanForm.repaymentDay &&
+      isPromissoryNoteValid
     );
   };
 

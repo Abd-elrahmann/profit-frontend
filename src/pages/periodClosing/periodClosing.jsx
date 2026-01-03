@@ -132,16 +132,16 @@ const PeriodClosing = () => {
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return "غير محدد";
+    if (!dateString) return "لم تنتهي بعد";
     return new Date(dateString).toLocaleDateString('en-US');
   };
 
   // Format date with Hijri for display
   const formatDateWithHijri = (dateString, hijriDate) => {
-    if (!dateString) return "غير محدد";
+    if (!dateString) return "لم تنتهي بعد";
 
     const gregorianDate = new Date(dateString).toLocaleDateString('en-US');
-    const hijriText = hijriDate || "غير محدد";
+    const hijriText = hijriDate || "لم تنتهي بعد";
 
     return (
       <Box>
@@ -808,7 +808,7 @@ const PeriodClosing = () => {
                       {partner.partnerName}
                     </StyledTableCell>
                     <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                      {Math.round(partner.totalProfit).toLocaleString()}
+                      {partner.totalProfit}
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
@@ -817,7 +817,23 @@ const PeriodClosing = () => {
                     إجمالي أرباح الشركاء
                   </StyledTableCell>
                   <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                    {Math.round(periodData.totalPartnerProfit).toLocaleString()}
+                    {periodData.totalPartnerProfit}
+                  </StyledTableCell>
+                </StyledTableRow>
+                <StyledTableRow style={{ backgroundColor: theme.palette.background.default }}>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
+                    أرباح الشركة
+                  </StyledTableCell>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#1976d2' }}>
+                    {periodData.companyProfit || 0}
+                  </StyledTableCell>
+                </StyledTableRow>
+                <StyledTableRow style={{ backgroundColor: theme.palette.grey[100], borderTop: `2px solid ${theme.palette.primary.main}` }}>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
+                    الإجمالي العام
+                  </StyledTableCell>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1em' }}>
+                    {(periodData.totalPartnerProfit || 0) + (periodData.companyProfit || 0)}
                   </StyledTableCell>
                 </StyledTableRow>
               </TableBody>

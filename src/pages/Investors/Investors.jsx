@@ -1181,7 +1181,7 @@ export default function Investors() {
                         mx: 2,
                         mt: 2,
                         cursor: "pointer",
-                        height: '130px',
+                        height: '150px',
                         border: isSelected ? "2px solid" : "1px solid #E5E7EB",
                         borderColor: isSelected ? "primary.main" : "#E5E7EB",
                         bgcolor: isSelected ? "primary.50" : "background.paper",
@@ -1223,7 +1223,7 @@ export default function Investors() {
                           <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي + <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'success.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box> رأس مال جديد + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
                         </Typography>
                         <Typography variant="body2" color="success.main" fontWeight={"bold"}>
-                          الأرباح القادمة: {investor.upcomingProfit?.toLocaleString() || 0}
+                          الأرباح القادمة: {(investor.upcomingProfit || 0)}
                         </Typography>
                         <Box display="flex" justifyContent="flex-end" mt={-2}>
                           {permissions.includes("partners_Delete") && (
@@ -1774,7 +1774,7 @@ export default function Investors() {
                               الأرباح القادمة
                             </Typography>
                             <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ fontSize: '1.25rem' }}>
-                              {investorDetails.upcomingProfit?.toLocaleString() || 0}
+                              {Math.round(investorDetails.upcomingProfit || 0)?.toLocaleString() || 0}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -2021,15 +2021,18 @@ export default function Investors() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
                       <TextField
-                        value={investorDetails.total?.toLocaleString()}
+                        value={editMode ? editFormData.capitalAmount || investorDetails.total : investorDetails.total?.toLocaleString()}
                         onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
                         fullWidth
-                        disabled
+                        disabled={!editMode}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
+                            backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
                             borderRadius: '6px',
                             width: '280px',
+                            '&:hover fieldset': {
+                              borderColor: editMode ? 'primary.main' : undefined,
+                            },
                           },
                         }}
                       />
