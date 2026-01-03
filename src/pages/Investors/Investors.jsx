@@ -1220,7 +1220,7 @@ export default function Investors() {
                           رأس المال: {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
                         </Typography>
                         <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.85rem' }}>
-                          <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي + <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box> رأس مال جديد + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
+                          <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي{investor.isNewPartner ? ` + ${investor.newCapitalAmount?.toLocaleString()} رأس مال جديد` : ''} + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
                         </Typography>
                         <Typography variant="body2" color="success.main" fontWeight={"bold"}>
                           الأرباح القادمة: {investor.upcomingProfit?.toLocaleString() || 0}

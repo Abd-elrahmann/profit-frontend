@@ -69,12 +69,24 @@ const getCapitalData = (incomeData) => {
   // تفاصيل رأس المال دائماً مفتوحة
   if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
     incomeData.capitalByPartner.forEach((partner, index) => {
+      // رأس المال الأصلي
       data.push({
-        id: `capital-${index}`,
-        name: partner.partnerName,
-        amount: partner.totalAmount,
+        id: `capital-${index}-capital`,
+        name: `${partner.partnerName} - رأس المال الأصلي`,
+        amount: partner.capitalAmount,
         type: "capital-detail",
-        level: 1
+        level: 1,
+        isCapitalAmount: true
+      });
+
+      // الأرباح
+      data.push({
+        id: `capital-${index}-profit`,
+        name: `${partner.partnerName} - الأرباح`,
+        amount: partner.totalProfit,
+        type: "capital-detail",
+        level: 1,
+        isProfit: true
       });
     });
   }
@@ -284,6 +296,16 @@ const getRowStyle = (row) => {
     return { fillColor: row.amount >= 0 ? [46, 139, 69] : [220, 38, 38] };
   }
 
+  // جعل الأرباح بلون أزرق للتمييز
+  if (row.isProfit) {
+    return { fillColor: [25, 103, 210] };
+  }
+
+  // جعل رأس المال الأصلي بلون برتقالي فاتح
+  if (row.isCapitalAmount) {
+    return { fillColor: [255, 193, 7] };
+  }
+
   // جعل أسماء العملاء بلون أخضر للتمييز
   if (row.isClientName) {
     return { textColor: [46, 139, 69] };
@@ -454,12 +476,22 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
           }
 
           if (row.isHeader || row.isTotal || row.isFinal || row.level === 0 ||
-              row.type === "client-revenue") {
+              row.type === "client-revenue" || row.isCapitalAmount || row.isProfit) {
             data.cell.styles.fontStyle = 'bold';
             // جعل حجم الخط أكبر لاسماء العملاء
             if (row.type === "client-revenue") {
               data.cell.styles.fontSize = 11;
             }
+          }
+
+          // ألوان خاصة لرأس المال والأرباح
+          if (row.isProfit) {
+            data.cell.styles.fillColor = [25, 103, 210]; // أزرق
+            data.cell.styles.textColor = [255, 255, 255];
+          }
+          if (row.isCapitalAmount) {
+            data.cell.styles.fillColor = [255, 193, 7]; // برتقالي فاتح
+            data.cell.styles.textColor = [0, 0, 0];
           }
 
           if (row.isFinal) {
@@ -700,6 +732,24 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
               };
             }
             
+            // رأس المال الأصلي
+            else if (rowData.isCapitalAmount) {
+              cell.s = {
+                fill: { fgColor: { rgb: "FFC107" } },
+                font: { color: { rgb: "000000" }, bold: true },
+                alignment: { horizontal: "center" }
+              };
+            }
+
+            // الأرباح
+            else if (rowData.isProfit) {
+              cell.s = {
+                fill: { fgColor: { rgb: "1967D2" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true },
+                alignment: { horizontal: "center" }
+              };
+            }
+
             // العناوين الرئيسية
             else if (rowData.type === "revenue-header" || rowData.type === "expense-header") {
               const bgColor = rowData.type === "revenue-header" ? "DCFCE7" : "FEE2E2";
@@ -798,7 +848,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       ['الفترة', periodInfo ? periodInfo.text : 'غير محدد'],
       ['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')],
       [''],
-      ['المبلغ', 'اسم المستثمر', 'الرمز المرجعي', 'نسبة الربح']
+      ['المبلغ', 'اسم المستثمر', 'التفاصيل', 'نسبة الربح']
     ];
 
     // إضافة رأس المال الإجمالي
@@ -812,12 +862,21 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
     // إضافة تفاصيل المستثمرين
     if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
       capitalDetails.push(['', '', '', '']); // فاصل
-      
+
       incomeData.capitalByPartner.forEach(partner => {
+        // رأس المال الأصلي
         capitalDetails.push([
           partner.capitalAmount || 0,
           partner.partnerName || '',
-          `PRT-${partner.partnerId}`,
+          'رأس المال الأصلي',
+          `${partner.profitPercentage || 0}%`
+        ]);
+
+        // الأرباح
+        capitalDetails.push([
+          partner.totalProfit || 0,
+          partner.partnerName || '',
+          'الأرباح',
           `${partner.profitPercentage || 0}%`
         ]);
       });
