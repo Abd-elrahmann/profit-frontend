@@ -1675,18 +1675,18 @@ export default function Investors() {
                       <Grid item xs={12} sm={6} md={4}>
                         <Card sx={{
                           border: '1px solid',
-                          borderColor: 'success.light',
-                          bgcolor: 'success.50',
+                          borderColor: 'primary.light',
+                          bgcolor: 'primary.50',
                           minWidth: '280px',
                           maxWidth: '350px',
                           mx: 'auto'
                         }}>
                           <CardContent sx={{ p: 3, textAlign: 'center' }}>
                             <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
-                              إجمالي مبلغ الاستثمار
+                              رأس المال الأصلي
                             </Typography>
-                            <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ fontSize: '1.25rem' }}>
-                              {investorDetails.total?.toLocaleString()}
+                            <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.capitalAmount?.toLocaleString() || 0}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -1706,6 +1706,25 @@ export default function Investors() {
                             </Typography>
                             <Typography variant="h6" fontWeight="bold" color="info.main" sx={{ fontSize: '1.25rem' }}>
                               {investorDetails.newCapitalAmount?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'success.light',
+                          bgcolor: 'success.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              إجمالي مبلغ الاستثمار
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.total?.toLocaleString()}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -1821,7 +1840,7 @@ export default function Investors() {
                         }}>
                           <CardContent sx={{ p: 3, textAlign: 'center' }}>
                             <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
-                              نسبة أرباح المستثمر
+                              نسبة أرباح المستثمر بالنسبة لباقي المستثمرين
                             </Typography>
                             <Typography variant="h5" fontWeight="bold" color="success.main">
                               {investorDetails.partnerProfitPercent}%
@@ -2002,7 +2021,7 @@ export default function Investors() {
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
                       <TextField
-                        value={editMode ? editFormData.capitalAmount : investorDetails.total?.toLocaleString()}
+                        value={investorDetails.total?.toLocaleString()}
                         onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
                         fullWidth
                         disabled
