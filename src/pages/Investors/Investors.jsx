@@ -1050,7 +1050,7 @@ export default function Investors() {
       <Box sx={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
         <Box
           sx={{
-            width: '350px',
+            width: '380px',
             borderRight: "1px solid #ddd",
             bgcolor: isDarkMode ? 'background.default' : '#fafafa',
             height: "100%",
@@ -1217,15 +1217,15 @@ export default function Investors() {
                           />
                         </Box>
                         <Typography variant="body2" color="text.secondary" fontWeight={"bold"}>
-                          رأس المال: {investor.total?.toLocaleString()}
+                          رأس المال: {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
                         </Typography>
-                        <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.80rem' }}>
-                          {investor.capitalAmount?.toLocaleString()} رأس مال أصلي + {investor.newCapitalAmount?.toLocaleString()} رأس مال جديد
+                        <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.85rem' }}>
+                          <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي + <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box> رأس مال جديد + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
                         </Typography>
                         <Typography variant="body2" color="success.main" fontWeight={"bold"}>
                           الأرباح القادمة: {investor.upcomingProfit?.toLocaleString() || 0}
                         </Typography>
-                        <Box display="flex" justifyContent="flex-end" mt={-5}>
+                        <Box display="flex" justifyContent="flex-end" mt={-2}>
                           {permissions.includes("partners_Delete") && (
                           <IconButton 
                             size="medium" 
@@ -1773,7 +1773,7 @@ export default function Investors() {
                             <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
                               إجمالي الأرباح الفعلي
                             </Typography>
-                            <Typography variant="h6" fontWeight="bold" color="secondary.main" sx={{ fontSize: '1.25rem' }}>
+                            <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ fontSize: '1.25rem' }}>
                               {investorDetails.totalProfit?.toLocaleString() || 0}
                             </Typography>
                           </CardContent>
