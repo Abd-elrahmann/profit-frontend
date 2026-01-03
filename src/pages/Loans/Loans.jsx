@@ -1105,7 +1105,7 @@ const Loans = () => {
 
     setIsAdditionalLoan(true);
 
-    setActiveTab(4);
+    setActiveTab(1);
   };
 
   const handleEditLoan = () => {
