@@ -1220,7 +1220,7 @@ export default function Investors() {
                           رأس المال: {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
                         </Typography>
                         <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.85rem' }}>
-                          <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي{investor.isNewPartner ? ` + ${investor.newCapitalAmount?.toLocaleString()} رأس مال جديد` : ''} + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
+                          <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي + <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'success.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box> رأس مال جديد + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
                         </Typography>
                         <Typography variant="body2" color="success.main" fontWeight={"bold"}>
                           الأرباح القادمة: {investor.upcomingProfit?.toLocaleString() || 0}
@@ -2005,15 +2005,12 @@ export default function Investors() {
                         value={editMode ? editFormData.capitalAmount : investorDetails.total?.toLocaleString()}
                         onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
                         fullWidth
-                        disabled={!editMode}
+                        disabled
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
+                            backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
                             borderRadius: '6px',
                             width: '280px',
-                            '&:hover fieldset': {
-                              borderColor: 'primary.main',
-                            },
                           },
                         }}
                       />
@@ -2038,7 +2035,7 @@ export default function Investors() {
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المستثمر</Typography>
+                      <Typography variant="body2" mb={1} fontWeight={500}>نسبة أرباح المستثمر بالنسبة لباقي المستثمرين</Typography>
                       <TextField
                         value={investorDetails.partnerProfitPercent}
                         fullWidth

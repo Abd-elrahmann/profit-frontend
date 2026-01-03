@@ -5,13 +5,16 @@ import { notifyError } from '../utilities/toastify';
 import html2pdf from 'html2pdf.js';
 
 const numberToArabicWords = (num) => {
-  if (num === 0) return "صفر";
-  if (num < 0) return "سالب " + numberToArabicWords(-num);
-
   const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
   const tens = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
   const teens = ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
   const hundreds = ["", "مئة", "مئتان", "ثلاث مئة", "أربع مئة", "خمس مئة", "ست مئة", "سبع مئة", "ثمان مئة", "تسع مئة"];
+
+  if (num === 0) return "صفر";
+  if (num < 0) return "سالب " + numberToArabicWords(-num);
+
+  let result = "";
+  let hasThousands = false;
 
   const scale = [
     { value: 1e9, singular: "مليار", dual: "ملياران", plural: "مليارات" },
@@ -19,39 +22,73 @@ const numberToArabicWords = (num) => {
     { value: 1e3, singular: "ألف", dual: "ألفان", plural: "آلاف" },
   ];
 
-  let result = "";
-
   // معالجة المليارات والملايين والآلاف
   for (let s of scale) {
     if (num >= s.value) {
       const part = Math.floor(num / s.value);
-      if (part === 1) result += s.singular;
-      else if (part === 2) result += s.dual;
-      else if (part < 11) result += ones[part] + " " + s.plural;
-      else result += numberToArabicWords(part) + " " + s.singular;
+      if (part === 1) result += s.singular + " ";
+      else if (part === 2) result += s.dual + " ";
+      else if (part < 11) result += ones[part] + " " + s.plural + " ";
+      else {
+        // Fix: For compound numbers >= 20, use proper Arabic grammar
+        if (part >= 20) {
+          const partTens = Math.floor(part / 10);
+          const partOnes = part % 10;
+          if (partOnes > 0) {
+            result += ones[partOnes] + " و" + tens[partTens] + " " + s.singular + " ";
+          } else {
+            result += tens[partTens] + " " + s.singular + " ";
+          }
+        } else {
+          result += numberToArabicWords(part) + " " + s.singular + " ";
+        }
+      }
 
       num %= s.value;
-      if (num > 0) result += " و ";
+      if (num > 0) result += "و ";
+      if (s.value === 1e3) hasThousands = true;
     }
   }
 
   // المئات
   if (num >= 100) {
     const h = Math.floor(num / 100);
-    result += hundreds[h];
+    if (hasThousands) {
+      result += "و" + hundreds[h] + " ";
+    } else {
+      result += hundreds[h] + " ";
+    }
     num %= 100;
-    if (num > 0) result += " و ";
   }
 
-  // العشرات والآحاد
+  // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {
     const t = Math.floor(num / 10);
     const o = num % 10;
-    result += tens[t];
-    if (o > 0) result += " و " + ones[o];
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
+
+    if (o > 0) {
+      result += ones[o] + " و" + tens[t];
+    } else {
+      result += tens[t];
+    }
   } else if (num >= 10) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += teens[num - 10];
   } else if (num > 0) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += ones[num];
   }
 
@@ -262,7 +299,7 @@ const PaymentProofGenerator = React.forwardRef(({
       if (isBulkOperation) {
         // Bulk operation: multiple installments
         const totalAmount = dataToUse.installmentsData.reduce((sum, inst) => sum + (inst.amount || 0), 0);
-        const totalAmountInWords = numberToArabicWords(totalAmount);
+        const totalAmountInWords = `${numberToArabicWords(totalAmount)} ريال سعودي`;
 
         // Generate installments table HTML
         const installmentsTable = `
@@ -319,7 +356,7 @@ const PaymentProofGenerator = React.forwardRef(({
       } else {
         // Single installment operation
         const amount = dataToUse.installmentData.amount || 0;
-        const amountInWords = numberToArabicWords(amount);
+        const amountInWords = `${numberToArabicWords(amount)} ريال سعودي`;
 
         filledTemplate = templateContent
           // Client data

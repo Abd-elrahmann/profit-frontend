@@ -69,16 +69,27 @@ const getCapitalData = (incomeData) => {
   // تفاصيل رأس المال دائماً مفتوحة
   if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
     incomeData.capitalByPartner.forEach((partner, index) => {
-      // رأس المال (أصلي + جديد)
-      const totalCapital = (partner.capitalAmount || 0) + (partner.newCapitalAmount || 0);
+      // رأس المال الأصلي
       data.push({
         id: `capital-${index}-capital`,
-        name: `${partner.partnerName} - رأس المال`,
-        amount: totalCapital,
+        name: `${partner.partnerName} - رأس المال الأصلي`,
+        amount: partner.capitalAmount,
         type: "capital-detail",
         level: 1,
         isCapitalAmount: true
       });
+
+      // رأس المال الجديد
+      if (partner.newCapitalAmount && partner.newCapitalAmount > 0) {
+        data.push({
+          id: `capital-${index}-new-capital`,
+          name: `${partner.partnerName} - رأس المال الجديد`,
+          amount: partner.newCapitalAmount,
+          type: "capital-detail",
+          level: 1,
+          isNewCapitalAmount: true
+        });
+      }
 
       // الأرباح
       data.push({
@@ -88,16 +99,6 @@ const getCapitalData = (incomeData) => {
         type: "capital-detail",
         level: 1,
         isProfit: true
-      });
-
-      // الإجمالي
-      data.push({
-        id: `capital-${index}-total`,
-        name: `${partner.partnerName} - الإجمالي`,
-        amount: partner.totalAmount,
-        type: "capital-detail",
-        level: 1,
-        isTotalAmount: true
       });
     });
   }
@@ -307,17 +308,17 @@ const getRowStyle = (row) => {
     return { fillColor: row.amount >= 0 ? [46, 139, 69] : [220, 38, 38] };
   }
 
-  // جعل الإجمالي بلون بنفسجي
-  if (row.isTotalAmount) {
-    return { fillColor: [156, 39, 176] };
-  }
-
   // جعل الأرباح بلون أزرق للتمييز
   if (row.isProfit) {
     return { fillColor: [25, 103, 210] };
   }
 
-  // جعل رأس المال بلون برتقالي فاتح
+  // جعل رأس المال الجديد بلون أخضر فاتح
+  if (row.isNewCapitalAmount) {
+    return { fillColor: [76, 175, 80] };
+  }
+
+  // جعل رأس المال الأصلي بلون برتقالي فاتح
   if (row.isCapitalAmount) {
     return { fillColor: [255, 193, 7] };
   }
@@ -500,13 +501,13 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
             }
           }
 
-          // ألوان خاصة لرأس المال والأرباح والإجمالي
-          if (row.isTotalAmount) {
-            data.cell.styles.fillColor = [156, 39, 176]; // بنفسجي
-            data.cell.styles.textColor = [255, 255, 255];
-          }
+          // ألوان خاصة لرأس المال والأرباح
           if (row.isProfit) {
             data.cell.styles.fillColor = [25, 103, 210]; // أزرق
+            data.cell.styles.textColor = [255, 255, 255];
+          }
+          if (row.isNewCapitalAmount) {
+            data.cell.styles.fillColor = [76, 175, 80]; // أخضر
             data.cell.styles.textColor = [255, 255, 255];
           }
           if (row.isCapitalAmount) {
@@ -752,7 +753,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
               };
             }
             
-            // رأس المال
+            // رأس المال الأصلي
             else if (rowData.isCapitalAmount) {
               cell.s = {
                 fill: { fgColor: { rgb: "FFC107" } },
@@ -761,10 +762,10 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
               };
             }
 
-            // الإجمالي
-            else if (rowData.isTotalAmount) {
+            // رأس المال الجديد
+            else if (rowData.isNewCapitalAmount) {
               cell.s = {
-                fill: { fgColor: { rgb: "9C27B0" } },
+                fill: { fgColor: { rgb: "4CAF50" } },
                 font: { color: { rgb: "FFFFFF" }, bold: true },
                 alignment: { horizontal: "center" }
               };
@@ -877,7 +878,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       ['الفترة', periodInfo ? periodInfo.text : 'غير محدد'],
       ['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')],
       [''],
-      ['المبلغ', 'اسم المستثمر', 'التفاصيل', 'النوع', 'نسبة الربح']
+      ['المبلغ', 'اسم المستثمر', 'التفاصيل', 'نوع رأس المال', 'نسبة الربح']
     ];
 
     // إضافة رأس المال الإجمالي
@@ -893,16 +894,24 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       capitalDetails.push(['', '', '', '']); // فاصل
 
       incomeData.capitalByPartner.forEach(partner => {
-        const totalCapital = (partner.capitalAmount || 0) + (partner.newCapitalAmount || 0);
-
-        // رأس المال
         capitalDetails.push([
-          totalCapital,
+          partner.capitalAmount || 0,
           partner.partnerName || '',
-          'رأس المال',
-          'رأس مال',
+          'رأس المال الأصلي',
+          'أصلي',
           `${partner.profitPercentage || 0}%`
         ]);
+
+        // رأس المال الجديد
+        if (partner.newCapitalAmount && partner.newCapitalAmount > 0) {
+          capitalDetails.push([
+            partner.newCapitalAmount || 0,
+            partner.partnerName || '',
+            'رأس المال الجديد',
+            'جديد',
+            `${partner.profitPercentage || 0}%`
+          ]);
+        }
 
         // الأرباح
         capitalDetails.push([
@@ -912,15 +921,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
           'أرباح',
           `${partner.profitPercentage || 0}%`
         ]);
-
-        // الإجمالي
-        capitalDetails.push([
-          partner.totalAmount || 0,
-          partner.partnerName || '',
-          'الإجمالي',
-          'إجمالي',
-          `${partner.profitPercentage || 0}%`
-        ]);
       });
     }
 
@@ -928,7 +928,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
     capitalSheet['!cols'] = [
       { wch: 15 },
       { wch: 30 },
-      { wch: 20 },
+      { wch: 15 },
       { wch: 15 },
       { wch: 15 }
     ];

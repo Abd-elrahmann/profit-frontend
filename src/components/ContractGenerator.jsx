@@ -7,7 +7,7 @@ import contractNumbersService from '../utilities/contractNumbers';
 
 const numberToArabicWords = (num) => {
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-  const tens = ['', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+  const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
   const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
   const hundreds = ['', 'مئة', 'مئتان', 'ثلاث مئة', 'أربع مئة', 'خمس مئة', 'ست مئة', 'سبع مئة', 'ثمان مئة', 'تسع مئة'];
 
@@ -15,61 +15,95 @@ const numberToArabicWords = (num) => {
   if (num < 0) return 'سالب ' + numberToArabicWords(-num);
 
   let result = '';
+  let hasThousands = false;
 
   // الملايين
   if (num >= 1000000) {
     const millionsPart = Math.floor(num / 1000000);
     if (millionsPart === 1) {
-      result += 'مليون';
+      result += 'مليون ';
     } else if (millionsPart === 2) {
-      result += 'مليونان';
-    } else if (millionsPart <= 10) {
-      result += ones[millionsPart] + ' ملايين';
+      result += 'مليونان ';
+    } else if (millionsPart < 11) {
+      result += ones[millionsPart] + ' ملايين ';
     } else {
-      result += numberToArabicWords(millionsPart) + ' مليون';
+      result += numberToArabicWords(millionsPart) + ' مليون ';
     }
     num %= 1000000;
-    if (num > 0) result += ' و ';
   }
 
   // الآلاف
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
-
     if (thousandsPart === 1) {
-      result += 'ألف';
+      result += 'ألف ';
     } else if (thousandsPart === 2) {
-      result += 'ألفان';
+      result += 'ألفان ';
+    } else if (thousandsPart >= 10 && thousandsPart <= 19) {
+      if (thousandsPart === 10) {
+        result += 'عشرة آلاف ';
+      } else {
+        result += teens[thousandsPart - 10] + ' ألفاً ';
+      }
     } else if (thousandsPart < 11) {
-      result += numberToArabicWords(thousandsPart) + ' آلاف';
+      result += ones[thousandsPart] + ' آلاف ';
     } else {
-      result += numberToArabicWords(thousandsPart) + ' ألف';
+      // Fix: For compound numbers >= 20, use proper Arabic grammar
+      if (thousandsPart >= 20) {
+        const thousandsTens = Math.floor(thousandsPart / 10);
+        const thousandsOnes = thousandsPart % 10;
+        if (thousandsOnes > 0) {
+          result += ones[thousandsOnes] + ' و' + tens[thousandsTens] + ' ألف ';
+        } else {
+          result += tens[thousandsTens] + ' ألف ';
+        }
+      } else {
+        result += numberToArabicWords(thousandsPart) + ' ألف ';
+      }
     }
-
     num %= 1000;
-    if (num > 0) result += ' و ';
+    hasThousands = true;
   }
 
   // المئات
   if (num >= 100) {
     const hundredsPart = Math.floor(num / 100);
-    result += hundreds[hundredsPart];
+    if (hasThousands) {
+      result += 'و' + hundreds[hundredsPart] + ' ';
+    } else {
+      result += hundreds[hundredsPart] + ' ';
+    }
     num %= 100;
-    if (num > 0) result += ' و ';
   }
 
-  // العشرات والآحاد
+  // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith('و')) {
+      result = result.trim() + ' و';
+    }
+
     if (onesPart > 0) {
       result += ones[onesPart] + ' و' + tens[tensPart];
     } else {
       result += tens[tensPart];
     }
   } else if (num >= 10) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith('و')) {
+      result = result.trim() + ' و';
+    }
     result += teens[num - 10];
   } else if (num > 0) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith('و')) {
+      result = result.trim() + ' و';
+    }
     result += ones[num];
   }
 
@@ -119,9 +153,9 @@ const generateContract = useCallback(async () => {
     return;
   }
 
-  try {
-    const { gregorianDate, hijriDate } = getCurrentDates();
-    const capitalInWords = numberToArabicWords(investorData.capitalAmount);
+        try {
+          const { gregorianDate, hijriDate } = getCurrentDates();
+          const capitalInWords = `${numberToArabicWords(investorData.capitalAmount)} ريال سعودي`;
     
     // حساب النسب الديناميكية
     const orgProfitPercent = investorData.orgProfitPercent || 0;

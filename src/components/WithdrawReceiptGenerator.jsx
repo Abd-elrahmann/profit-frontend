@@ -42,21 +42,22 @@ const numberToArabicWords = (num) => {
   ];
   const hundreds = [
     "",
-    "مائة",
-    "مائتان",
-    "ثلاثمائة",
-    "أربعمائة",
-    "خمسمائة",
-    "ستمائة",
-    "سبعمائة",
-    "ثمانمائة",
-    "تسعمائة",
+    "مئة",
+    "مئتان",
+    "ثلاث مئة",
+    "أربع مئة",
+    "خمس مئة",
+    "ست مئة",
+    "سبع مئة",
+    "ثمان مئة",
+    "تسع مئة",
   ];
 
   if (num === 0) return "صفر";
   if (num < 0) return "سالب " + numberToArabicWords(-num);
 
   let result = "";
+  let hasThousands = false;
 
   // Handle millions
   if (num >= 1000000) {
@@ -84,35 +85,67 @@ const numberToArabicWords = (num) => {
       if (thousandsPart === 10) {
         result += "عشرة آلاف ";
       } else {
-        result += teens[thousandsPart - 10] + " ألف ";
+        result += teens[thousandsPart - 10] + " ألفاً ";
       }
     } else if (thousandsPart < 11) {
       result += ones[thousandsPart] + " آلاف ";
     } else {
-      result += numberToArabicWords(thousandsPart) + " ألف ";
+      // Fix: For compound numbers >= 20, use proper Arabic grammar
+      if (thousandsPart >= 20) {
+        const thousandsTens = Math.floor(thousandsPart / 10);
+        const thousandsOnes = thousandsPart % 10;
+        if (thousandsOnes > 0) {
+          result += ones[thousandsOnes] + " و" + tens[thousandsTens] + " ألف ";
+        } else {
+          result += tens[thousandsTens] + " ألف ";
+        }
+      } else {
+        result += numberToArabicWords(thousandsPart) + " ألف ";
+      }
     }
     num %= 1000;
+    hasThousands = true;
   }
 
   // Handle hundreds
   if (num >= 100) {
     const hundredsPart = Math.floor(num / 100);
-    result += hundreds[hundredsPart] + " ";
+    if (hasThousands) {
+      result += "و" + hundreds[hundredsPart] + " ";
+    } else {
+      result += hundreds[hundredsPart] + " ";
+    }
     num %= 100;
   }
 
-  // Handle tens and ones
+  // Handle tens and ones with proper Arabic grammar
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
+
     if (onesPart > 0) {
       result += ones[onesPart] + " و" + tens[tensPart];
     } else {
       result += tens[tensPart];
     }
   } else if (num >= 10) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += teens[num - 10];
   } else if (num > 0) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += ones[num];
   }
 
@@ -304,8 +337,8 @@ const WithdrawReceiptGenerator = React.forwardRef(
           // Calculate number of installments from schedule
           const numberOfInstallments = withdrawalDataToUse.schedule?.length || 9;
           
-          const totalCapitalWords = numberToArabicWords(totalCapital);
-          const netAmountDueWords = numberToArabicWords(netAmountDue);
+          const totalCapitalWords = `${numberToArabicWords(totalCapital)} ريال سعودي`;
+          const netAmountDueWords = `${numberToArabicWords(netAmountDue)} ريال سعودي`;
 
           const withdrawalDate = withdrawalDataToUse.withdrawal?.createdAt 
             ? new Date(withdrawalDataToUse.withdrawal.createdAt).toISOString().split("T")[0]

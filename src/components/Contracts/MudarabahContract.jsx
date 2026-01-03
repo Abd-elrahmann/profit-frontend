@@ -680,7 +680,7 @@ const MudarabahContract = () => {
         <div class="clause">
           <h4 class="clause-title">البند الثاني: رأس المال</h4>
           <div class="clause-content">
-            <p>1. رأس مال المضاربة هو مبلغ وقدره <span class="placeholder english-number">{{رأس_المال}}</span> ريال سعودي (<span class="placeholder">{{رأس_المال_كتابة}}</span>) فقط لا غير.</p>
+            <p>1. رأس مال المضاربة هو مبلغ وقدره <span class="placeholder english-number">{{رأس_المال}}</span> (<span class="placeholder">{{رأس_المال_كتابة}}</span>) فقط لا غير.</p>
             <p>2. يُقر رب المال بأنه قد سلّم رأس المال كاملاً للمضارب عند توقيع هذا العقد، ويُقر المضارب باستلامه للمبلغ،
             ويعتبر توقيع الطرفين على هذا العقد بمثابة إيصال استلام.</p>
           </div>

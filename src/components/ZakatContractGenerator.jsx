@@ -91,7 +91,18 @@ const numberToArabicWords = (num) => {
     } else if (thousandsPart < 11) {
       result += ones[thousandsPart] + " آلاف ";
     } else {
-      result += numberToArabicWords(thousandsPart) + " ألف ";
+      // Fix: For compound numbers >= 20, use proper Arabic grammar
+      if (thousandsPart >= 20) {
+        const thousandsTens = Math.floor(thousandsPart / 10);
+        const thousandsOnes = thousandsPart % 10;
+        if (thousandsOnes > 0) {
+          result += ones[thousandsOnes] + " و" + tens[thousandsTens] + " ألف ";
+        } else {
+          result += tens[thousandsTens] + " ألف ";
+        }
+      } else {
+        result += numberToArabicWords(thousandsPart) + " ألف ";
+      }
     }
     num %= 1000;
     hasThousands = true;

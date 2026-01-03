@@ -4,9 +4,6 @@ import Api, { handleApiError } from "../config/Api";
 import { notifyError } from "../utilities/toastify";
 
 const numberToArabicWords = (num) => {
-  if (num === 0) return "صفر";
-  if (num < 0) return "سالب " + numberToArabicWords(-num);
-
   const ones = [
     "",
     "واحد",
@@ -56,52 +53,85 @@ const numberToArabicWords = (num) => {
     "تسع مئة",
   ];
 
+  if (num === 0) return "صفر";
+  if (num < 0) return "سالب " + numberToArabicWords(-num);
+
+  let result = "";
+  let hasThousands = false;
+
   const scale = [
     { value: 1e9, singular: "مليار", dual: "ملياران", plural: "مليارات" },
     { value: 1e6, singular: "مليون", dual: "مليونان", plural: "ملايين" },
     { value: 1e3, singular: "ألف", dual: "ألفان", plural: "آلاف" },
   ];
 
-  let result = "";
-
   // معالجة المليارات والملايين والآلاف
   for (let s of scale) {
     if (num >= s.value) {
       const part = Math.floor(num / s.value);
-      if (part === 1) result += s.singular;
-      else if (part === 2) result += s.dual;
-      else if (part < 11) result += ones[part] + " " + s.plural;
+      if (part === 1) result += s.singular + " ";
+      else if (part === 2) result += s.dual + " ";
+      else if (part < 11) result += ones[part] + " " + s.plural + " ";
       else {
-        // للأرقام المركبة (>= 11)، نضع الوحدة بعد العدد
-        result += numberToArabicWords(part) + " " + s.singular;
+        // Fix: For compound numbers >= 20, use proper Arabic grammar
+        if (part >= 20) {
+          const partTens = Math.floor(part / 10);
+          const partOnes = part % 10;
+          if (partOnes > 0) {
+            result += ones[partOnes] + " و" + tens[partTens] + " " + s.singular + " ";
+          } else {
+            result += tens[partTens] + " " + s.singular + " ";
+          }
+        } else {
+          result += numberToArabicWords(part) + " " + s.singular + " ";
+        }
       }
 
       num %= s.value;
-      if (num > 0) result += " و ";
+      if (num > 0) result += "و ";
+      if (s.value === 1e3) hasThousands = true;
     }
   }
 
   // المئات
   if (num >= 100) {
     const h = Math.floor(num / 100);
-    result += hundreds[h];
+    if (hasThousands) {
+      result += "و" + hundreds[h] + " ";
+    } else {
+      result += hundreds[h] + " ";
+    }
     num %= 100;
-    if (num > 0) result += " و ";
   }
 
-  // العشرات والآحاد
+  // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {
     const t = Math.floor(num / 10);
     const o = num % 10;
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
+
     if (o > 0) {
-      // استخدام التنسيق "واحد وعشرون" بدلاً من "عشرون وواحد"
       result += ones[o] + " و" + tens[t];
     } else {
       result += tens[t];
     }
   } else if (num >= 10) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += teens[num - 10];
   } else if (num > 0) {
+    const hasHigherUnits = result.length > 0;
+
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
+      result = result.trim() + " و";
+    }
     result += ones[num];
   }
 
@@ -315,7 +345,7 @@ const InstallmentSettlementReceipt = React.forwardRef(
           const { gregorianDate, hijriDate } = getCurrentDates();
 
           const amount = dataToUse.loanData?.totalAmount || 0;
-          const amountInWords = numberToArabicWords(amount);
+          const amountInWords = `${numberToArabicWords(amount)} ريال سعودي`;
 
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || "")

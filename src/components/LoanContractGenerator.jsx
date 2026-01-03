@@ -92,7 +92,18 @@ const numberToArabicWords = (num) => {
     } else if (thousandsPart < 11) {
       result += ones[thousandsPart] + " آلاف ";
     } else {
-      result += numberToArabicWords(thousandsPart) + " ألف ";
+      // Fix: For compound numbers >= 20, use proper Arabic grammar
+      if (thousandsPart >= 20) {
+        const thousandsTens = Math.floor(thousandsPart / 10);
+        const thousandsOnes = thousandsPart % 10;
+        if (thousandsOnes > 0) {
+          result += ones[thousandsOnes] + " و" + tens[thousandsTens] + " ألف ";
+        } else {
+          result += tens[thousandsTens] + " ألف ";
+        }
+      } else {
+        result += numberToArabicWords(thousandsPart) + " ألف ";
+      }
     }
     num %= 1000;
     hasThousands = true;
@@ -109,13 +120,13 @@ const numberToArabicWords = (num) => {
     num %= 100;
   }
 
-  // Handle tens and ones (add "و" between hundreds and tens if both exist)
+  // Handle tens and ones with proper Arabic grammar
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
-    const hasHundredsInResult = result.includes("مئة") || result.includes("مئتان") || result.includes("ثلاث مئة") || result.includes("أربع مئة") || result.includes("خمس مئة") || result.includes("ست مئة") || result.includes("سبع مئة") || result.includes("ثمان مئة") || result.includes("تسع مئة");
+    const hasHigherUnits = result.length > 0;
 
-    if (hasHundredsInResult && !result.trim().endsWith("و")) {
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
       result = result.trim() + " و";
     }
 
@@ -125,16 +136,16 @@ const numberToArabicWords = (num) => {
       result += tens[tensPart];
     }
   } else if (num >= 10) {
-    const hasHundredsInResult = result.includes("مئة") || result.includes("مئتان") || result.includes("ثلاث مئة") || result.includes("أربع مئة") || result.includes("خمس مئة") || result.includes("ست مئة") || result.includes("سبع مئة") || result.includes("ثمان مئة") || result.includes("تسع مئة");
+    const hasHigherUnits = result.length > 0;
 
-    if (hasHundredsInResult && !result.trim().endsWith("و")) {
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
       result = result.trim() + " و";
     }
     result += teens[num - 10];
   } else if (num > 0) {
-    const hasHundredsInResult = result.includes("مئة") || result.includes("مئتان") || result.includes("ثلاث مئة") || result.includes("أربع مئة") || result.includes("خمس مئة") || result.includes("ست مئة") || result.includes("سبع مئة") || result.includes("ثمان مئة") || result.includes("تسع مئة");
+    const hasHigherUnits = result.length > 0;
 
-    if (hasHundredsInResult && !result.trim().endsWith("و")) {
+    if (hasHigherUnits && !result.trim().endsWith("و")) {
       result = result.trim() + " و";
     }
     result += ones[num];
@@ -392,7 +403,7 @@ const LoanContractGenerator = React.forwardRef(
           const amount = loanDataToUse.amount || 0;
           const interestAmount = loanDataToUse.interestAmount || loanDataToUse.TotalInterest || 0;
           const totalAmount = amount + interestAmount;
-          const amountInWords = numberToArabicWords(totalAmount);
+          const amountInWords = `${numberToArabicWords(totalAmount)} ريال سعودي`;
 
           const clientDataToUse = loanDataToUse.client || clientData;
 
