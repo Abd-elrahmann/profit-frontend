@@ -781,6 +781,7 @@ const IncomeStatement = () => {
                         <TableRow sx={{ bgcolor: theme.palette.primary.main + '05' }}>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الشريك</TableCell>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال الأصلي</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال الجديد</TableCell>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الأرباح</TableCell>
                         </TableRow>
                       </TableHead>
@@ -792,6 +793,9 @@ const IncomeStatement = () => {
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
                               {formatNumber(partner.capitalAmount)}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.warning.main }}>
+                              {formatNumber(partner.newCapitalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.success.main }}>
                               {formatNumber(partner.totalProfit)}

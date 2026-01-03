@@ -79,6 +79,18 @@ const getCapitalData = (incomeData) => {
         isCapitalAmount: true
       });
 
+      // رأس المال الجديد
+      if (partner.newCapitalAmount && partner.newCapitalAmount > 0) {
+        data.push({
+          id: `capital-${index}-new-capital`,
+          name: `${partner.partnerName} - رأس المال الجديد`,
+          amount: partner.newCapitalAmount,
+          type: "capital-detail",
+          level: 1,
+          isNewCapitalAmount: true
+        });
+      }
+
       // الأرباح
       data.push({
         id: `capital-${index}-profit`,
@@ -301,6 +313,11 @@ const getRowStyle = (row) => {
     return { fillColor: [25, 103, 210] };
   }
 
+  // جعل رأس المال الجديد بلون أخضر فاتح
+  if (row.isNewCapitalAmount) {
+    return { fillColor: [76, 175, 80] };
+  }
+
   // جعل رأس المال الأصلي بلون برتقالي فاتح
   if (row.isCapitalAmount) {
     return { fillColor: [255, 193, 7] };
@@ -487,6 +504,10 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
           // ألوان خاصة لرأس المال والأرباح
           if (row.isProfit) {
             data.cell.styles.fillColor = [25, 103, 210]; // أزرق
+            data.cell.styles.textColor = [255, 255, 255];
+          }
+          if (row.isNewCapitalAmount) {
+            data.cell.styles.fillColor = [76, 175, 80]; // أخضر
             data.cell.styles.textColor = [255, 255, 255];
           }
           if (row.isCapitalAmount) {
@@ -741,6 +762,15 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
               };
             }
 
+            // رأس المال الجديد
+            else if (rowData.isNewCapitalAmount) {
+              cell.s = {
+                fill: { fgColor: { rgb: "4CAF50" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true },
+                alignment: { horizontal: "center" }
+              };
+            }
+
             // الأرباح
             else if (rowData.isProfit) {
               cell.s = {
@@ -848,7 +878,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       ['الفترة', periodInfo ? periodInfo.text : 'غير محدد'],
       ['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')],
       [''],
-      ['المبلغ', 'اسم المستثمر', 'التفاصيل', 'نسبة الربح']
+      ['المبلغ', 'اسم المستثمر', 'التفاصيل', 'نوع رأس المال', 'نسبة الربح']
     ];
 
     // إضافة رأس المال الإجمالي
@@ -864,19 +894,31 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       capitalDetails.push(['', '', '', '']); // فاصل
 
       incomeData.capitalByPartner.forEach(partner => {
-        // رأس المال الأصلي
         capitalDetails.push([
           partner.capitalAmount || 0,
           partner.partnerName || '',
           'رأس المال الأصلي',
+          'أصلي',
           `${partner.profitPercentage || 0}%`
         ]);
+
+        // رأس المال الجديد
+        if (partner.newCapitalAmount && partner.newCapitalAmount > 0) {
+          capitalDetails.push([
+            partner.newCapitalAmount || 0,
+            partner.partnerName || '',
+            'رأس المال الجديد',
+            'جديد',
+            `${partner.profitPercentage || 0}%`
+          ]);
+        }
 
         // الأرباح
         capitalDetails.push([
           partner.totalProfit || 0,
           partner.partnerName || '',
           'الأرباح',
+          'أرباح',
           `${partner.profitPercentage || 0}%`
         ]);
       });
@@ -886,6 +928,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
     capitalSheet['!cols'] = [
       { wch: 15 },
       { wch: 30 },
+      { wch: 15 },
       { wch: 15 },
       { wch: 15 }
     ];
