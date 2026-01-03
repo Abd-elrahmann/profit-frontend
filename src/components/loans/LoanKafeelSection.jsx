@@ -85,12 +85,11 @@ const LoanKafeelSection = ({
           <TextField
             fullWidth
             label="تاريخ الميلاد"
-            value={() => {
-              const birthDate = isViewMode
-                ? selectedLoan?.kafeel?.birthDate
-                : selectedKafeel?.birthDate;
-              return birthDate ? new Date(birthDate).toISOString().split("T")[0] : "";
-            }}
+            value={
+              isViewMode
+                ? (selectedLoan?.kafeel?.birthDate ? new Date(selectedLoan.kafeel.birthDate).toISOString().split("T")[0] : "")
+                : (selectedKafeel?.birthDate ? new Date(selectedKafeel.birthDate).toISOString().split("T")[0] : "")
+            }
             disabled
             InputLabelProps={{
               shrink: true,
