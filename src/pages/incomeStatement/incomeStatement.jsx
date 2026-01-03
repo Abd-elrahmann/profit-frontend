@@ -780,9 +780,9 @@ const IncomeStatement = () => {
                       <TableHead>
                         <TableRow sx={{ bgcolor: theme.palette.primary.main + '05' }}>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الشريك</TableCell>
-                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال الأصلي</TableCell>
-                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال الجديد</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال</TableCell>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الأرباح</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الإجمالي</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -792,13 +792,13 @@ const IncomeStatement = () => {
                               {partner.partnerName}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
-                              {formatNumber(partner.capitalAmount)}
-                            </TableCell>
-                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.warning.main }}>
-                              {formatNumber(partner.newCapitalAmount)}
+                              {formatNumber((partner.capitalAmount || 0) + (partner.newCapitalAmount || 0))}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.success.main }}>
                               {formatNumber(partner.totalProfit)}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.warning.main }}>
+                              {formatNumber(partner.totalAmount)}
                             </TableCell>
                           </TableRow>
                         ))}
