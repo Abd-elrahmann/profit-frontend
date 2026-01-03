@@ -1050,7 +1050,7 @@ export default function Investors() {
       <Box sx={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
         <Box
           sx={{
-            width: '380px',
+            width: '350px',
             borderRight: "1px solid #ddd",
             bgcolor: isDarkMode ? 'background.default' : '#fafafa',
             height: "100%",
@@ -1181,7 +1181,7 @@ export default function Investors() {
                         mx: 2,
                         mt: 2,
                         cursor: "pointer",
-                        height: '150px',
+                        height: '200px',
                         border: isSelected ? "2px solid" : "1px solid #E5E7EB",
                         borderColor: isSelected ? "primary.main" : "#E5E7EB",
                         bgcolor: isSelected ? "primary.50" : "background.paper",
@@ -1216,16 +1216,26 @@ export default function Investors() {
                             color={getStatusColor(investor)}
                           />
                         </Box>
-                        <Typography variant="body2" color="text.secondary" fontWeight={"bold"}>
+                        <Typography variant="body2" color="text.secondary" fontWeight={"bold"} sx={{ mb: 1 }}>
                           رأس المال: {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
                         </Typography>
-                        <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.85rem' }}>
-                          <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box> رأس مال أصلي + <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'success.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box> رأس مال جديد + <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box> ارباح
-                        </Typography>
+                        <Box sx={{ fontSize: '0.87rem' }}>
+                          <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
+                            رأس مال أصلي <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box>
+                          </Typography>
+                          <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
+                            رأس مال جديد <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'success.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box>
+                          </Typography>
+                          {(investor.totalProfit || 0) > 0 && (
+                            <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
+                              أرباح <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box>
+                            </Typography>
+                          )}
+                        </Box>
                         <Typography variant="body2" color="success.main" fontWeight={"bold"}>
                           الأرباح القادمة: {(investor.upcomingProfit || 0)}
                         </Typography>
-                        <Box display="flex" justifyContent="flex-end" mt={-2}>
+                        <Box display="flex" justifyContent="flex-end" mt={-5}>
                           {permissions.includes("partners_Delete") && (
                           <IconButton 
                             size="medium" 
