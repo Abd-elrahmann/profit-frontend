@@ -857,7 +857,7 @@ export default function Investors() {
         city: investorDetails.city || '',
         email: investorDetails.email || '',
         orgProfitPercent: investorDetails.orgProfitPercent || '',
-        capitalAmount: investorDetails.capitalAmount || '',
+        capitalAmount: investorDetails.total || '',
         status: getInvestorStatus(investorDetails),
         createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
       });

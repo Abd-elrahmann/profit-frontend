@@ -160,6 +160,14 @@ const IncomeStatement = () => {
     }).format(Math.abs(amount || 0));
   };
 
+  // دالة لتنسيق الأرقام بدون تقريب لجدول رأس المال
+  const formatCapitalNumber = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Math.abs(amount || 0));
+  };
+
 
 
   const getChipColor = (expenseType) => {
@@ -797,13 +805,13 @@ const IncomeStatement = () => {
                               {partner.partnerName}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
-                              {formatNumber(partner.capitalAmount)}
+                              {formatCapitalNumber(partner.capitalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.warning.main }}>
-                              {formatNumber(partner.newCapitalAmount)}
+                              {formatCapitalNumber(partner.newCapitalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.success.main }}>
-                              {formatNumber(partner.totalProfit)}
+                              {formatCapitalNumber(partner.totalProfit)}
                             </TableCell>
                           </TableRow>
                         ))}
