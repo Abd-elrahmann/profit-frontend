@@ -61,11 +61,26 @@ export const exportSavingsToPDF = async (savingData) => {
       // Calculate totals
       const partners = savingData.data || [];
       const totalPartners = partners.length;
-      const partnersWithSavings = partners.filter(partner => partner.periods && partner.periods.length > 0);
+      const partnersWithSavings = partners.filter(partner => {
+        const lastPeriod = partner.periods?.[0];
+        return lastPeriod && lastPeriod.currentBalance > 0;
+      });
       const totalPeriods = partners.reduce((sum, partner) => sum + (partner.periods?.length || 0), 0);
+
+      // Calculate new totals based on current data structure
       const totalSavingsAmount = partners.reduce((sum, partner) => {
         const lastPeriod = partner.periods?.[0];
-        return sum + (lastPeriod?.total || 0);
+        return sum + (lastPeriod?.totalSavings || 0);
+      }, 0);
+
+      const totalWithdrawals = partners.reduce((sum, partner) => {
+        const lastPeriod = partner.periods?.[0];
+        return sum + (lastPeriod?.totalWithdrawals || 0);
+      }, 0);
+
+      const totalCurrentBalance = partners.reduce((sum, partner) => {
+        const lastPeriod = partner.periods?.[0];
+        return sum + (lastPeriod?.currentBalance || 0);
       }, 0);
 
       // Summary data
@@ -75,8 +90,14 @@ export const exportSavingsToPDF = async (savingData) => {
       const summaryText1 = `إجمالي الشركاء: ${totalPartners}  |  شركاء لديهم مدخرات: ${partnersWithSavings.length}`;
       doc.text(summaryText1, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
 
-      const summaryText2 = `إجمالي فترات الادخار: ${totalPeriods}  |  إجمالي مبلغ المدخرات: ${totalSavingsAmount.toLocaleString('en-US')}`;
-      doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 8, { align: 'center' });
+      const summaryText2 = `إجمالي فترات الادخار: ${totalPeriods}`;
+      doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 6, { align: 'center' });
+
+      const summaryText3 = `إجمالي المدخرات الأساسية: ${totalSavingsAmount.toLocaleString('en-US')}  |  إجمالي السحوبات: ${totalWithdrawals.toLocaleString('en-US')}`;
+      doc.text(summaryText3, doc.internal.pageSize.width / 2, summaryY + 12, { align: 'center' });
+
+      const summaryText4 = `إجمالي الرصيد الحالي: ${totalCurrentBalance.toLocaleString('en-US')}`;
+      doc.text(summaryText4, doc.internal.pageSize.width / 2, summaryY + 18, { align: 'center' });
 
       let yPosition = summaryY + 20;
 
@@ -90,11 +111,12 @@ export const exportSavingsToPDF = async (savingData) => {
         const tableData = [];
         partners.forEach(partner => {
           const lastPeriod = partner.periods?.[0];
-          const hasSavings = partner.periods && partner.periods.length > 0;
+          const hasSavings = lastPeriod && lastPeriod.currentBalance > 0;
 
           tableData.push([
-            hasSavings ? 'لديه مدخرات' : 'لا يوجد مدخرات',
-            lastPeriod ? lastPeriod.total.toLocaleString('en-US') : '0',
+            lastPeriod ? lastPeriod.currentBalance.toLocaleString('en-US') : '0',
+            lastPeriod ? lastPeriod.totalWithdrawals.toLocaleString('en-US') : '0',
+            lastPeriod ? lastPeriod.totalSavings.toLocaleString('en-US') : '0',
             lastPeriod ? lastPeriod.period.name : '-',
             partner.periods?.length || 0,
             partner.partnerName
@@ -103,7 +125,7 @@ export const exportSavingsToPDF = async (savingData) => {
 
         // Table headers (RTL order)
         const headers = [
-          ['حالة الادخار', 'مبلغ المدخرات', 'آخر فترة', 'عدد فترات الادخار', 'اسم الشريك']
+          ['الرصيد الحالي', 'إجمالي السحوبات', 'إجمالي المدخرات', 'آخر فترة', 'عدد فترات الادخار', 'اسم الشريك']
         ];
 
         // Create table with RTL support - centered and larger, no extra borders
@@ -111,11 +133,12 @@ export const exportSavingsToPDF = async (savingData) => {
 
         // Optimize column widths to fit on one page
         const columnWidths = {
-          0: 35, // حالة الادخار
-          1: 35, // مبلغ المدخرات
-          2: 40, // آخر فترة
-          3: 30, // عدد فترات الادخار
-          4: 40  // اسم الشريك
+          0: 25, // الرصيد الحالي
+          1: 25, // إجمالي السحوبات
+          2: 25, // إجمالي المدخرات
+          3: 35, // آخر فترة
+          4: 25, // عدد فترات الادخار
+          5: 35  // اسم الشريك
         };
 
         // Calculate table width to center it properly
@@ -161,11 +184,12 @@ fillColor: [240, 240, 240],
             fillColor: [250, 250, 250]
           },
           columnStyles: {
-            0: { cellWidth: columnWidths[0], fontSize: 8, halign: 'right' }, // حالة الادخار
-            1: { cellWidth: columnWidths[1], fontSize: 8 }, // مبلغ المدخرات
-            2: { cellWidth: columnWidths[2], fontSize: 8, halign: 'right' }, // آخر فترة
-            3: { cellWidth: columnWidths[3], fontSize: 8 }, // عدد فترات الادخار
-            4: { cellWidth: columnWidths[4], fontSize: 9, halign: 'right' } // اسم الشريك
+            0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد الحالي
+            1: { cellWidth: columnWidths[1], fontSize: 8 }, // إجمالي السحوبات
+            2: { cellWidth: columnWidths[2], fontSize: 8 }, // إجمالي المدخرات
+            3: { cellWidth: columnWidths[3], fontSize: 8, halign: 'right' }, // آخر فترة
+            4: { cellWidth: columnWidths[4], fontSize: 8 }, // عدد فترات الادخار
+            5: { cellWidth: columnWidths[5], fontSize: 9, halign: 'right' } // اسم الشريك
           },
           margin: { top: yPosition, bottom: 20 },
           tableWidth: totalColumnWidth,
@@ -175,9 +199,12 @@ fillColor: [240, 240, 240],
           didParseCell: function (data) {
             // Prevent cell content from being too wide
             if (data.cell.text && data.cell.text.length > 0) {
-              const maxLength = data.column.index === 0 ? 20 :
-                               data.column.index === 2 ? 25 :
-                               data.column.index === 4 ? 15 : 25;
+              const maxLength = data.column.index === 0 ? 15 :
+                               data.column.index === 1 ? 15 :
+                               data.column.index === 2 ? 15 :
+                               data.column.index === 3 ? 20 :
+                               data.column.index === 4 ? 20 :
+                               data.column.index === 5 ? 15 : 25;
               if (data.cell.text[0].length > maxLength) {
                 data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
               }
@@ -255,11 +282,26 @@ export const exportSavingsToExcel = async (savingData) => {
     // Calculate totals
     const partners = savingData.data || [];
     const totalPartners = partners.length;
-    const partnersWithSavings = partners.filter(partner => partner.periods && partner.periods.length > 0);
+    const partnersWithSavings = partners.filter(partner => {
+      const lastPeriod = partner.periods?.[0];
+      return lastPeriod && lastPeriod.currentBalance > 0;
+    });
     const totalPeriods = partners.reduce((sum, partner) => sum + (partner.periods?.length || 0), 0);
+
+    // Calculate new totals based on current data structure
     const totalSavingsAmount = partners.reduce((sum, partner) => {
       const lastPeriod = partner.periods?.[0];
-      return sum + (lastPeriod?.total || 0);
+      return sum + (lastPeriod?.totalSavings || 0);
+    }, 0);
+
+    const totalWithdrawals = partners.reduce((sum, partner) => {
+      const lastPeriod = partner.periods?.[0];
+      return sum + (lastPeriod?.totalWithdrawals || 0);
+    }, 0);
+
+    const totalCurrentBalance = partners.reduce((sum, partner) => {
+      const lastPeriod = partner.periods?.[0];
+      return sum + (lastPeriod?.currentBalance || 0);
     }, 0);
 
     const summaryData = [
@@ -269,7 +311,9 @@ export const exportSavingsToExcel = async (savingData) => {
       ['إجمالي الشركاء', totalPartners],
       ['شركاء لديهم مدخرات', partnersWithSavings.length],
       ['إجمالي فترات الادخار', totalPeriods],
-      ['إجمالي مبلغ المدخرات', totalSavingsAmount],
+      ['إجمالي المدخرات الأساسية', totalSavingsAmount],
+      ['إجمالي السحوبات', totalWithdrawals],
+      ['إجمالي الرصيد الحالي', totalCurrentBalance],
       [''],
       ['تفاصيل المدخرات']
     ];
@@ -278,11 +322,12 @@ export const exportSavingsToExcel = async (savingData) => {
     const partnersData = [];
     partners.forEach(partner => {
       const lastPeriod = partner.periods?.[0];
-      const hasSavings = partner.periods && partner.periods.length > 0;
+      const hasSavings = lastPeriod && lastPeriod.currentBalance > 0;
 
       partnersData.push({
-        'حالة الادخار': hasSavings ? 'لديه مدخرات' : 'لا يوجد مدخرات',
-        'مبلغ المدخرات': lastPeriod ? lastPeriod.total : 0,
+        'الرصيد الحالي': lastPeriod ? lastPeriod.currentBalance : 0,
+        'إجمالي السحوبات': lastPeriod ? lastPeriod.totalWithdrawals : 0,
+        'إجمالي المدخرات': lastPeriod ? lastPeriod.totalSavings : 0,
         'آخر فترة ادخار': lastPeriod ? lastPeriod.period.name : '-',
         'عدد فترات الادخار': partner.periods?.length || 0,
         'اسم الشريك': partner.partnerName
@@ -297,9 +342,10 @@ export const exportSavingsToExcel = async (savingData) => {
 
     // Auto-size columns for better Excel display
     const wscols = [
-      { wch: 20 }, // حالة الادخار
-      { wch: 20 }, // مبلغ المدخرات
-      { wch: 30 }, // آخر فترة ادخار
+      { wch: 18 }, // الرصيد الحالي
+      { wch: 18 }, // إجمالي السحوبات
+      { wch: 18 }, // إجمالي المدخرات
+      { wch: 25 }, // آخر فترة ادخار
       { wch: 20 }, // عدد فترات الادخار
       { wch: 25 }  // اسم الشريك
     ];

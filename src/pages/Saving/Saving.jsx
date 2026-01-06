@@ -32,6 +32,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getAllPartnerSavings, getSavingAccountReport } from "./savingApi";
 import SavingTable from "../../components/modals/SavingTable";
+import SavingWithdrawModal from "../../components/modals/SavingWithdrawModal";
 import { exportSavingsToPDF, exportSavingsToExcel } from "../../utilities/savingExporter";
 import {
   StyledTableCell,
@@ -62,6 +63,7 @@ const Saving = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [page] = useState(1);
   const [limit] = useState(10);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -75,12 +77,22 @@ const Saving = () => {
   });
 
   // Query for saving account report
-  const { data: accountReport, isLoading: isAccountLoading } = useQuery({
+  const { data: accountReport, isLoading: isAccountLoading, refetch: refetchAccountReport } = useQuery({
     queryKey: ["saving-account"],
     retry: 1,
     queryFn: () => getSavingAccountReport(),
     enabled: activeTab === 1,
   });
+
+  // Handle successful withdrawal
+  const handleWithdrawSuccess = (data) => {
+    // Refetch both saving data and account report
+    refetchAccountReport();
+    // If we're on the first tab, we might want to refetch saving data too
+    if (activeTab === 0) {
+      // The saving data query will refetch automatically since it's enabled
+    }
+  };
 
 
   // Format currency
@@ -489,8 +501,17 @@ const Saving = () => {
                 borderRadius: 2,
               }}
             >
-              {/* Export Buttons */}
-              <Box sx={{ p: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
+              {/* Action Buttons */}
+              <Box sx={{ p: 2, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => setWithdrawModalOpen(true)}
+                  disabled={isSavingLoading || !savingData?.data?.length}
+                  sx={{ minWidth: 120, fontWeight: 'bold' }}
+                >
+                  سحب مبلغ ادخار
+                </Button>
                 <Button
                   variant="outlined"
                   color="error"
@@ -522,6 +543,13 @@ const Saving = () => {
           )}
         </Box>
       </Box>
+
+      {/* Withdraw Modal */}
+      <SavingWithdrawModal
+        open={withdrawModalOpen}
+        onClose={() => setWithdrawModalOpen(false)}
+        onSuccess={handleWithdrawSuccess}
+      />
     </Box>
   );
 };

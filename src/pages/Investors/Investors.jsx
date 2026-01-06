@@ -907,8 +907,6 @@ export default function Investors() {
         return "سحب من رأس المال";
       case "PROFIT_WITHDRAWAL":
         return "سحب أرباح";
-      case "SAVING_WITHDRAWAL":
-        return "سحب ادخار";
       default:
         return type;
     }
@@ -922,8 +920,6 @@ export default function Investors() {
         return "error";
       case "PROFIT_WITHDRAWAL":
         return "warning";
-      case "SAVING_WITHDRAWAL":
-        return "info";
       default:
         return "default";
     }
@@ -2508,7 +2504,6 @@ export default function Investors() {
                 <MenuItem value="DEPOSIT">إيداع</MenuItem>
                 <MenuItem value="WITHDRAWAL">سحب من رأس المال</MenuItem>
                 <MenuItem value="PROFIT_WITHDRAWAL">سحب أرباح</MenuItem>
-                <MenuItem value="SAVING_WITHDRAWAL">سحب ادخار</MenuItem>
               </TextField>
             </FormControl>
             

@@ -25,3 +25,15 @@ export const getSavingAccountReport = async (month = null) => {
   const response = await Api.get(`/api/saving/account-report${params}`);
   return response.data;
 };
+
+// Preview global saving withdrawal
+export const previewGlobalSavingWithdrawal = async (amount) => {
+  const response = await Api.get(`/api/saving/preview/withdraw?amount=${amount}`);
+  return response.data;
+};
+
+// Withdraw from all partners savings
+export const withdrawFromAllPartnersSavings = async (amount, description = '') => {
+  const response = await Api.post('/api/saving/withdraw', { amount, description });
+  return response.data;
+};
