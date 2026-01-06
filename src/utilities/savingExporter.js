@@ -286,7 +286,7 @@ export const exportSavingsToExcel = async (savingData) => {
       const lastPeriod = partner.periods?.[0];
       return lastPeriod && lastPeriod.currentBalance > 0;
     });
-    const totalPeriods = partners.partner.totalPeriods;
+    const totalPeriods = partners.reduce((sum, partner) => (partner.totalPeriods || 0), 0);
 
     // Calculate new totals based on current data structure
     const totalSavingsAmount = partners.reduce((sum, partner) => {
