@@ -109,7 +109,7 @@ const SavingTable = ({ isLoading, savingData }) => {
                         </StyledTableCell>
                         <StyledTableCell align="center">
                           <Chip
-                            label={partner.periods.length}
+                            label={partner.totalPeriods}
                             color={hasSavings ? theme.palette.primary.main : theme.palette.text.primary}
                             variant="outlined"
                             size="small"

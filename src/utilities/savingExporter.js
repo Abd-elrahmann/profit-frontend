@@ -65,7 +65,7 @@ export const exportSavingsToPDF = async (savingData) => {
         const lastPeriod = partner.periods?.[0];
         return lastPeriod && lastPeriod.currentBalance > 0;
       });
-      const totalPeriods = partners.reduce((sum, partner) => sum + (partner.periods?.length || 0), 0);
+      const totalPeriods = partners.reduce((sum, partner) => (partner.totalPeriods || 0), 0);
 
       // Calculate new totals based on current data structure
       const totalSavingsAmount = partners.reduce((sum, partner) => {
@@ -118,7 +118,7 @@ export const exportSavingsToPDF = async (savingData) => {
             lastPeriod ? lastPeriod.totalWithdrawals.toLocaleString('en-US') : '0',
             lastPeriod ? lastPeriod.totalSavings.toLocaleString('en-US') : '0',
             lastPeriod ? lastPeriod.period.name : '-',
-            partner.periods?.length || 0,
+            partner.totalPeriods || 0,
             partner.partnerName
           ]);
         });
@@ -162,8 +162,8 @@ export const exportSavingsToPDF = async (savingData) => {
             valign: 'middle'
           },
           headStyles: {
-fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+            fillColor: [240, 240, 240],
+            textColor: [46, 139, 69],
             fontStyle: 'bold',
             fontSize: 9,
             halign: 'center',
@@ -200,11 +200,11 @@ fillColor: [240, 240, 240],
             // Prevent cell content from being too wide
             if (data.cell.text && data.cell.text.length > 0) {
               const maxLength = data.column.index === 0 ? 15 :
-                               data.column.index === 1 ? 15 :
-                               data.column.index === 2 ? 15 :
-                               data.column.index === 3 ? 20 :
-                               data.column.index === 4 ? 20 :
-                               data.column.index === 5 ? 15 : 25;
+                data.column.index === 1 ? 15 :
+                  data.column.index === 2 ? 15 :
+                    data.column.index === 3 ? 20 :
+                      data.column.index === 4 ? 20 :
+                        data.column.index === 5 ? 15 : 25;
               if (data.cell.text[0].length > maxLength) {
                 data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
               }
@@ -286,7 +286,7 @@ export const exportSavingsToExcel = async (savingData) => {
       const lastPeriod = partner.periods?.[0];
       return lastPeriod && lastPeriod.currentBalance > 0;
     });
-    const totalPeriods = partners.reduce((sum, partner) => sum + (partner.periods?.length || 0), 0);
+    const totalPeriods = partners.partner.totalPeriods;
 
     // Calculate new totals based on current data structure
     const totalSavingsAmount = partners.reduce((sum, partner) => {
@@ -329,7 +329,7 @@ export const exportSavingsToExcel = async (savingData) => {
         'إجمالي السحوبات': lastPeriod ? lastPeriod.totalWithdrawals : 0,
         'إجمالي المدخرات': lastPeriod ? lastPeriod.totalSavings : 0,
         'آخر فترة ادخار': lastPeriod ? lastPeriod.period.name : '-',
-        'عدد فترات الادخار': partner.periods?.length || 0,
+        'عدد فترات الادخار': totalPeriods || 0,
         'اسم الشريك': partner.partnerName
       });
     });
