@@ -1108,6 +1108,23 @@ const Installments = () => {
 
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">
+                        مبلغ الخصم
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="bold"
+                        sx={{
+                          color: (installment.discount || 0) > 0 ? "warning.main" : "text.secondary",
+                        }}
+                      >
+                        {(installment.discount || 0) > 0
+                          ? `${installment.discount.toFixed(2)}`
+                          : "0.00"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">
                         الرصيد المتبقي
                       </Typography>
                       <Typography
@@ -1182,6 +1199,20 @@ const Installments = () => {
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="caption" color="text.secondary">
+                    إجمالي الخصم
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    sx={{ color: "warning.main" }}
+                  >
+                    {sortedInstallments
+                      .reduce((sum, inst) => sum + (inst.discount || 0), 0)
+                      .toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="caption" color="text.secondary">
                     إجمالي المتبقي
                   </Typography>
                   <Typography
@@ -1227,6 +1258,9 @@ const Installments = () => {
             <StyledTableCell align="center">الدفعة</StyledTableCell>
             <StyledTableCell align="center">
               المبلغ المدفوع
+            </StyledTableCell>
+            <StyledTableCell align="center">
+              مبلغ الخصم
             </StyledTableCell>
             <StyledTableCell align="center">
               الرصيد المتبقي
@@ -1321,6 +1355,17 @@ const Installments = () => {
               >
                 {installment.paidAmount > 0
                   ? `${installment.paidAmount.toFixed(2)}`
+                  : "0.00"}
+              </StyledTableCell>
+              <StyledTableCell
+                align="center"
+                sx={{
+                  color: (installment.discount || 0) > 0 ? "warning.main" : "text.secondary",
+                  fontWeight: "bold",
+                }}
+              >
+                {(installment.discount || 0) > 0
+                  ? `${installment.discount.toFixed(2)}`
                   : "0.00"}
               </StyledTableCell>
               <StyledTableCell
@@ -1441,6 +1486,13 @@ const Installments = () => {
                   }}
                 >
                   {totalPaid.toFixed(2)}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  <Typography variant="body2" fontWeight="bold" sx={{ color: "warning.main" }}>
+                    {sortedInstallments
+                      .reduce((sum, inst) => sum + (inst.discount || 0), 0)
+                      .toFixed(2)}
+                  </Typography>
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"
@@ -1649,7 +1701,7 @@ const Installments = () => {
 
             {/* الصف الثاني - تفاصيل الدفعات */}
             <Grid container spacing={3} justifyContent="center">
-              <Grid item xs={6} sm={3} textAlign="center">
+              <Grid item xs={6} sm={2.4} textAlign="center">
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   المبلغ المدفوع
                 </Typography>
@@ -1657,7 +1709,7 @@ const Installments = () => {
                   {(loanData?.pagination?.totalPaidAmount || 0).toLocaleString()}
                 </Typography>
               </Grid>
-              <Grid item xs={6} sm={3} textAlign="center">
+              <Grid item xs={6} sm={2.4} textAlign="center">
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   المبلغ المتبقي
                 </Typography>
@@ -1665,7 +1717,17 @@ const Installments = () => {
                   {(loanData?.pagination?.totalRemainingAmount || 0).toLocaleString()}
                 </Typography>
               </Grid>
-              <Grid item xs={6} sm={3} textAlign="center">
+              <Grid item xs={6} sm={2.4} textAlign="center">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  إجمالي الخصومات
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="warning.main">
+                  {sortedInstallments
+                    .reduce((sum, inst) => sum + (inst.discount || 0), 0)
+                    .toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={2.4} textAlign="center">
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   الدفعات المدفوعة
                 </Typography>
@@ -1673,7 +1735,7 @@ const Installments = () => {
                   {loanData?.pagination?.paidRepayments || 0} / {loanData?.pagination?.totalRepayments || 0}
                 </Typography>
               </Grid>
-              <Grid item xs={6} sm={3} textAlign="center">
+              <Grid item xs={6} sm={2.4} textAlign="center">
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   الدفعات المتبقية
                 </Typography>
