@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Api, { handleApiError } from '../config/Api';
 import { notifyError } from '../utilities/toastify';
 import html2pdf from 'html2pdf.js';
+import contractCounterService from '../utilities/contractCounterService';
 
 const numberToArabicWords = (num) => {
   const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
@@ -140,7 +141,8 @@ const PaymentProofGenerator = React.forwardRef(({
   templateContent,
   onContractGenerated,
   employeeName = "",
-  autoGenerate = false
+  autoGenerate = false,
+  discount = 0
 }, ref) => {
   const [contractHtml, setContractHtml] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -251,6 +253,9 @@ const PaymentProofGenerator = React.forwardRef(({
 
       await uploadPDFToServer(pdfBlob, isBulkOperation, repaymentIds);
 
+      // Increment the counter after successful save
+      contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.PAYMENT_RECEIPT);
+
       if (onContractGenerated) {
         onContractGenerated(pdfBlob, 'PAYMENT_PROOF');
       }
@@ -267,7 +272,7 @@ const PaymentProofGenerator = React.forwardRef(({
   }, [contractHtml, installmentData?.id, uploadPDFToServer, onContractGenerated]);
 
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
-    const dataToUse = customData || { installmentData, installmentsData, loanData, clientData, investorData, employeeName };
+    const dataToUse = customData || { installmentData, installmentsData, loanData, clientData, investorData, employeeName, discount };
 
     // Check if we have multiple installments or single installment
     const isBulkOperation = dataToUse.installmentsData && dataToUse.installmentsData.length > 0;
@@ -294,12 +299,16 @@ const PaymentProofGenerator = React.forwardRef(({
       const { gregorianDate, hijriDate } = getCurrentDates();
       const finalDate = `${hijriDate}\n${gregorianDate}`;
 
+      // Generate receipt number based on whether we're saving or previewing
+      // Always use current counter for both preview and saving
+      let receiptNumber = contractCounterService.getCurrentContractNumber(contractCounterService.COUNTER_TYPES.PAYMENT_RECEIPT);
+
       let filledTemplate = templateContent;
 
       if (isBulkOperation) {
         // Bulk operation: multiple installments
         const totalAmount = dataToUse.installmentsData.reduce((sum, inst) => sum + (inst.amount || 0), 0);
-        const totalAmountInWords = `${numberToArabicWords(totalAmount)} ريال سعودي`;
+        const totalAmountInWords = `${numberToArabicWords(totalAmount)} ريال`;
 
         // Generate installments table HTML
         const installmentsTable = `
@@ -338,7 +347,7 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: block;')
           .replace(/{{عرض_نص_فردي}}/g, 'display: none;')
           .replace(/{{عرض_نص_مجمع}}/g, 'display: block;')
-          .replace(/{{رقم_الايصال}}/g, `${Math.floor(Math.random() * 9000) + 1000}`)
+          .replace(/{{رقم_الايصال}}/g, receiptNumber)
           .replace(/{{جدول_الدفعات}}/g, installmentsTable)
 
           // Amount data
@@ -355,8 +364,10 @@ const PaymentProofGenerator = React.forwardRef(({
 
       } else {
         // Single installment operation
-        const amount = dataToUse.installmentData.amount || 0;
-        const amountInWords = `${numberToArabicWords(amount)} ريال سعودي`;
+        const originalAmount = dataToUse.installmentData.amount || 0;
+        const discount = dataToUse.discount || 0;
+        const finalAmount = Math.max(0, originalAmount - discount);
+        const amountInWords = `${numberToArabicWords(finalAmount)} ريال`;
 
         filledTemplate = templateContent
           // Client data
@@ -371,10 +382,10 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{عرض_نص_فردي}}/g, 'display: block;')
           .replace(/{{عرض_نص_مجمع}}/g, 'display: none;')
           .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || 'N/A')
-          .replace(/{{رقم_الايصال}}/g, `${Math.floor(Math.random() * 9000) + 1000}`)
+          .replace(/{{رقم_الايصال}}/g, receiptNumber)
 
           // Amount data
-          .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString('en-US') || '0'} ريال`)
+          .replace(/{{المبلغ_رقما}}/g, `${finalAmount?.toLocaleString('en-US') || '0'} ريال`)
           .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
 
           // Dates
@@ -407,7 +418,7 @@ const PaymentProofGenerator = React.forwardRef(({
       handleApiError(error);
       throw error;
     }
-  }, [installmentData, installmentsData, loanData, clientData, investorData, employeeName, templateContent, autoGenerate, generatePDF]);
+  }, [installmentData, installmentsData, loanData, clientData, investorData, employeeName, discount, templateContent, autoGenerate, generatePDF]);
 
   useEffect(() => {
     if (autoGenerate && ((installmentData && clientData && templateContent) || (installmentsData.length > 0 && clientData && templateContent))) {

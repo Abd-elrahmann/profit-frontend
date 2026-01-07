@@ -22,6 +22,7 @@ import {
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
+import contractCounterService from "../../utilities/contractCounterService";
 import LoansTable from "../../components/modals/LoansTable";
 import EditSmallLoanForm from "../../components/modals/EditSmallLoanForm";
 import SmallLoansTable from "../../components/modals/SmallLoansTable";
@@ -65,7 +66,7 @@ const Loans = () => {
     interestRate: "",
     paymentAmount: "",
     type: "",
-    source: "",
+    source: "GENERAL",
     startDate: new Date().toISOString().split("T")[0],
     repaymentDay: "",
     issuanceCity: "",
@@ -574,6 +575,33 @@ const Loans = () => {
       if (!loanDataToUse) {
         notifyError("لم يتم تحديد السلفة. يرجى اختيار سلفة أولاً");
         return;
+      }
+
+      // Generate and save contract numbers first
+      if (contractType === "both" || contractType === "debt-acknowledgment" || contractType === "promissory-note") {
+        const contractNumbers = contractCounterService.getSettlementContractNumbers();
+
+        // Determine which numbers to save based on contract type
+        const numbersToSave = {};
+        if (contractType === "both" || contractType === "debt-acknowledgment") {
+          numbersToSave.debtAcknowledgmentNumber = contractNumbers.debtAcknowledgmentNumber;
+        }
+        if (contractType === "both" || contractType === "promissory-note") {
+          numbersToSave.promissoryNoteNumber = contractNumbers.promissoryNoteNumber;
+        }
+
+        // Save the numbers to database immediately
+        await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, numbersToSave);
+
+        // Update loanDataToUse with the saved numbers so generators can use them
+        if (numbersToSave.debtAcknowledgmentNumber) {
+          loanDataToUse.debtAcknowledgmentNumber = contractNumbers.debtAcknowledgmentNumber;
+        }
+        if (numbersToSave.promissoryNoteNumber) {
+          loanDataToUse.promissoryNoteNumber = contractNumbers.promissoryNoteNumber;
+        }
+
+        console.log('Saved contract numbers:', numbersToSave);
       }
 
       if (contractType === "both" || contractType === "debt-acknowledgment") {

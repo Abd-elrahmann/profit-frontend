@@ -89,17 +89,17 @@ export default function Roles() {
     setPage(0);
   };
 
-  const handleEdit = (role) => {
+  const handleEdit = React.useCallback((role) => {
     setSelectedRole(role);
     setEditMode('edit');
     setIsAddModalOpen(true);
-  };
+  }, []);
 
-  const handleAdd = () => {
+  const handleAdd = React.useCallback(() => {
     setSelectedRole(null);
     setEditMode('add');
     setIsAddModalOpen(true);
-  };
+  }, []);
 
   const handleDelete = async (id) => {
     try {
@@ -159,15 +159,42 @@ export default function Roles() {
               </StyledTableCell>
               {(permissions.includes("roles_Update") || permissions.includes("roles_Delete")) && (
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                <IconButton color="primary" onClick={() => handleEdit(role)} title="تعديل الدور">
-                  <Edit />
-                </IconButton>
-                <IconButton color="info" onClick={() => handleDashboardPermissions(role)} title="صلاحيات الداشبورد">
-                  <Dashboard />
-                </IconButton> 
-                <IconButton color="error" onClick={() => openDeleteModal(role.id)} title="حذف الدور">
-                  <Delete />
-                </IconButton>
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleEdit(role)}
+                          title="تعديل الدور"
+                          sx={{
+                            transition: 'all 0.1s ease-in-out',
+                            '&:hover': { transform: 'scale(1.1)' },
+                            '&:active': { transform: 'scale(0.95)' }
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                        <IconButton
+                          color="info"
+                          onClick={() => handleDashboardPermissions(role)}
+                          title="صلاحيات الداشبورد"
+                          sx={{
+                            transition: 'all 0.1s ease-in-out',
+                            '&:hover': { transform: 'scale(1.1)' },
+                            '&:active': { transform: 'scale(0.95)' }
+                          }}
+                        >
+                          <Dashboard />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => openDeleteModal(role.id)}
+                          title="حذف الدور"
+                          sx={{
+                            transition: 'all 0.1s ease-in-out',
+                            '&:hover': { transform: 'scale(1.1)' },
+                            '&:active': { transform: 'scale(0.95)' }
+                          }}
+                        >
+                          <Delete />
+                        </IconButton>
                 </StyledTableCell>
               )}
             </StyledTableRow>
@@ -228,6 +255,11 @@ export default function Roles() {
                             onClick={() => handleEdit(role)}
                             size="small"
                             title="تعديل الدور"
+                            sx={{
+                              transition: 'all 0.1s ease-in-out',
+                              '&:hover': { transform: 'scale(1.1)' },
+                              '&:active': { transform: 'scale(0.95)' }
+                            }}
                           >
                             <Edit fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
@@ -238,6 +270,11 @@ export default function Roles() {
                             onClick={() => handleDashboardPermissions(role)}
                             size="small"
                             title="صلاحيات الداشبورد"
+                            sx={{
+                              transition: 'all 0.1s ease-in-out',
+                              '&:hover': { transform: 'scale(1.1)' },
+                              '&:active': { transform: 'scale(0.95)' }
+                            }}
                           >
                             <Dashboard fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
@@ -248,6 +285,11 @@ export default function Roles() {
                             onClick={() => openDeleteModal(role.id)}
                             size="small"
                             title="حذف الدور"
+                            sx={{
+                              transition: 'all 0.1s ease-in-out',
+                              '&:hover': { transform: 'scale(1.1)' },
+                              '&:active': { transform: 'scale(0.95)' }
+                            }}
                           >
                             <Delete fontSize={isMobile ? "small" : "medium"} />
                           </IconButton>
@@ -331,7 +373,7 @@ export default function Roles() {
             }}
           />
           
-          {permissions.includes("roles_Add") && (          
+          {permissions.includes("roles_Add") && (
             <Button
               variant="contained"
               startIcon={<Add />}
@@ -342,6 +384,9 @@ export default function Roles() {
                 fontWeight: "bold",
                 minWidth: isSmallScreen ? '100%' : 'auto',
                 py: isSmallScreen ? 1.5 : 1,
+                transition: 'all 0.1s ease-in-out',
+                cursor: 'pointer',
+                '&:active': { transform: 'scale(0.98)' }
               }}
             >
               إضافة دور جديد

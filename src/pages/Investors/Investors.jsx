@@ -907,6 +907,8 @@ export default function Investors() {
         return "سحب من رأس المال";
       case "PROFIT_WITHDRAWAL":
         return "سحب أرباح";
+      case "SAVING_WITHDRAWAL":
+        return "سحب ادخار";
       default:
         return type;
     }
@@ -920,6 +922,8 @@ export default function Investors() {
         return "error";
       case "PROFIT_WITHDRAWAL":
         return "warning";
+      case "SAVING_WITHDRAWAL":
+        return "info";
       default:
         return "default";
     }
@@ -1177,7 +1181,7 @@ export default function Investors() {
                         mx: 2,
                         mt: 2,
                         cursor: "pointer",
-                        height: '200px',
+                        minHeight: '200px',
                         border: isSelected ? "2px solid" : "1px solid #E5E7EB",
                         borderColor: isSelected ? "primary.main" : "#E5E7EB",
                         bgcolor: isSelected ? "primary.50" : "background.paper",
@@ -1228,6 +1232,11 @@ export default function Investors() {
                             </Typography>
                           )}
                         </Box>
+                        {(investor.totalAvilableSaving || 0) > 0 && (
+                          <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
+                            المدخرات المتاحة للسحب <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalAvilableSaving || 0) > 0 ? 'primary.main' : 'inherit' }}>{(investor.totalAvilableSaving || 0)?.toLocaleString()}</Box>
+                          </Typography>
+                        )}
                         <Typography variant="body2" color="success.main" fontWeight={"bold"}>
                           الأرباح القادمة: {(investor.upcomingProfit || 0)}
                         </Typography>
@@ -1819,6 +1828,75 @@ export default function Investors() {
                             </Typography>
                             <Typography variant="h6" fontWeight="bold" color="info.main" sx={{ fontSize: '1.25rem' }}>
                               {investorDetails.totalSaving?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Box>
+
+                  {/* Savings Details Group */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <Savings sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
+                        تفاصيل المدخرات
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2} justifyContent="center">
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'success.light',
+                          bgcolor: 'success.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              الرصيد المتاح للسحب
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.totalAvilableSaving?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'warning.light',
+                          bgcolor: 'warning.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              المبلغ المسحوب
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="warning.main" sx={{ fontSize: '1.25rem' }}>
+                              {investorDetails.totalWithdrawal?.toLocaleString() || 0}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <Card sx={{
+                          border: '1px solid',
+                          borderColor: 'error.light',
+                          bgcolor: 'error.50',
+                          minWidth: '280px',
+                          maxWidth: '350px',
+                          mx: 'auto'
+                        }}>
+                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
+                              المبلغ المتبقي
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" color="error.main" sx={{ fontSize: '1.25rem' }}>
+                              {((investorDetails.totalAvilableSaving || 0) - (investorDetails.totalWithdrawal || 0)).toLocaleString()}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -2504,6 +2582,7 @@ export default function Investors() {
                 <MenuItem value="DEPOSIT">إيداع</MenuItem>
                 <MenuItem value="WITHDRAWAL">سحب من رأس المال</MenuItem>
                 <MenuItem value="PROFIT_WITHDRAWAL">سحب أرباح</MenuItem>
+                <MenuItem value="SAVING_WITHDRAWAL">سحب ادخار</MenuItem>
               </TextField>
             </FormControl>
             

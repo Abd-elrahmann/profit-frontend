@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../config/Api";
 import { notifyError } from "../utilities/toastify";
-import contractNumbersService from "../utilities/contractNumbers";
+import contractCounterService from "../utilities/contractCounterService";
 
 const numberToArabicWords = (num) => {
   const ones = [
@@ -293,21 +293,28 @@ const LoanContractGenerator = React.forwardRef(
     const generatePDF = useCallback(
       async (htmlContent = contractHtml, loanDataParam = null, contractNumbers = {}) => {
         const contentToUse = htmlContent || contractHtml;
-    
+
         if (!contentToUse) {
           notifyError("لا يوجد محتوى عقد لتحويله إلى PDF");
           return;
         }
-    
+
         try {
           setIsGenerating(true);
+
+          // Regenerate contract with actual numbers for saving if not already provided
+          let finalContent = contentToUse;
+
+          if (!contractNumbers.debtAcknowledgmentNumber || !contractNumbers.promissoryNoteNumber) {
+            finalContent = await generateContract(false, loanDataParam, null, true);
+          }
     
           // إزالة أي div إضافي محيط بالمحتوى
-          let cleanedContent = contentToUse;
-          
+          let cleanedContent = finalContent;
+
           // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
           const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = contentToUse;
+          tempDiv.innerHTML = finalContent;
           
           // البحث عن contract-wrapper داخل المحتوى
           const contractWrapper = tempDiv.querySelector('.contract-wrapper');
@@ -364,11 +371,18 @@ const LoanContractGenerator = React.forwardRef(
           document.body.removeChild(tempElement);
     
           await uploadPDFToServer(pdfBlob, loanDataParam, contractNumbers);
-    
+
+          // Increment the appropriate counter after successful save
+          if (contractType === "DEBT_ACKNOWLEDGMENT") {
+            contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.DEBT_ACKNOWLEDGMENT);
+          } else if (contractType === "PROMISSORY_NOTE") {
+            contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.PROMISSORY_NOTE);
+          }
+
           if (onContractGenerated) {
             onContractGenerated(pdfBlob, contractType);
           }
-    
+
           return pdfBlob;
         } catch (error) {
           notifyError("حدث خطأ أثناء إنشاء ملف PDF");
@@ -383,7 +397,7 @@ const LoanContractGenerator = React.forwardRef(
     );
 
     const generateContract = useCallback(
-      async (generatePdf = autoGenerate, customLoanData = null, customKafeelData = null) => {
+      async (generatePdf = autoGenerate, customLoanData = null, customKafeelData = null, isForSaving = false) => {
         const loanDataToUse = customLoanData || loanData;
         const kafeelDataToUse = customKafeelData || kafeelData;
         if (!loanDataToUse || !templateContent) {
@@ -403,23 +417,41 @@ const LoanContractGenerator = React.forwardRef(
           const amount = loanDataToUse.amount || 0;
           const interestAmount = loanDataToUse.interestAmount || loanDataToUse.TotalInterest || 0;
           const totalAmount = amount + interestAmount;
-          const amountInWords = `${numberToArabicWords(totalAmount)} ريال سعودي`;
+          const amountInWords = `${numberToArabicWords(totalAmount)} ريال`;
 
           const clientDataToUse = loanDataToUse.client || clientData;
 
-          // توليد أرقام العقود وحفظها للإرسال إلى السيرفر
-          const promissoryNoteNumber = contractNumbersService.getNextPromissoryNoteNumber();
-          const debtAcknowledgmentNumber = contractNumbersService.getNextDebtAcknowledgmentNumber();
+          // توليد أرقام العقود بناءً على ما إذا كنا نحفظ أم نعاين
+          let promissoryNoteNumber, debtAcknowledgmentNumber;
 
-          // حفظ الأرقام في قاعدة البيانات مباشرة
-          try {
-            console.log('Saving contract numbers:', { debtAcknowledgmentNumber, promissoryNoteNumber });
-            await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, {
-              debtAcknowledgmentNumber,
-              promissoryNoteNumber
-            });
-          } catch (error) {
-            console.error('Error saving contract numbers:', error);
+          // Use saved numbers if they exist in loanData, otherwise use current counter numbers
+          if (loanDataToUse.debtAcknowledgmentNumber && loanDataToUse.promissoryNoteNumber) {
+            // Use the numbers already saved in the database
+            promissoryNoteNumber = loanDataToUse.promissoryNoteNumber;
+            debtAcknowledgmentNumber = loanDataToUse.debtAcknowledgmentNumber;
+          } else {
+            // Use current counter numbers for preview or when numbers aren't saved yet
+            const settlementNumbers = contractCounterService.getSettlementContractNumbers();
+            promissoryNoteNumber = settlementNumbers.promissoryNoteNumber;
+            debtAcknowledgmentNumber = settlementNumbers.debtAcknowledgmentNumber;
+          }
+
+          if (isForSaving) {
+            // حفظ الأرقام في قاعدة البيانات مباشرة
+            // Only save if numbers are not already saved (should not happen with new logic)
+            const shouldSaveNumbers = !loanDataToUse.debtAcknowledgmentNumber || !loanDataToUse.promissoryNoteNumber;
+
+            if (shouldSaveNumbers) {
+              try {
+                console.log('Saving contract numbers:', { debtAcknowledgmentNumber, promissoryNoteNumber });
+                await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, {
+                  debtAcknowledgmentNumber,
+                  promissoryNoteNumber
+                });
+              } catch (error) {
+                console.error('Error saving contract numbers:', error);
+              }
+            }
           }
 
           let filledTemplate = templateContent
@@ -457,7 +489,7 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{مدينة_الاصدار}}/g, loanDataToUse?.issuanceCity || "شروة - المملكة العربية السعودية")
             .replace(/{{مدينة_الوفاء}}/g, loanDataToUse?.paymentCity || "الرياض - المملكة العربية السعودية")
             .replace(/{{سبب_انشاء_السند}}/g, "سلفة مالية")
-            .replace(/{{العملة}}/g, "ريال سعودي")
+            .replace(/{{العملة}}/g, "ريال")
 
             .replace(/{{رقم_هوية_الدائن}}/g,loanDataToUse?.partner?.nationalId || "لا يوجد كفيل")
             .replace(/{{رقم_هوية_المدين}}/g, clientDataToUse?.nationalId || "")
@@ -490,13 +522,11 @@ const LoanContractGenerator = React.forwardRef(
           throw error;
         }
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       [
         loanData,
         clientData,
         kafeelData,
         templateContent,
-        contractType,
         autoGenerate,
         generatePDF,
       ]

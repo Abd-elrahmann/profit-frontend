@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -52,38 +52,35 @@ const validationSchema = Yup.object().shape({
   )
 });
 
-const availableModules = getAvailableModules();
-
 const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, isMobile = false }) => {
   const queryClient = useQueryClient();
   const { refreshPermissions } = usePermissions();
   const { isDarkMode } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialValues, setInitialValues] = useState({
-    name: '',
-    description: '',
-    permissions: []
-  });
 
-  useEffect(() => {
+  // Memoize available modules to avoid recalculating on every render
+  const availableModules = useMemo(() => getAvailableModules(), []);
+
+  // Memoize initial values to avoid heavy calculations on every render
+  const initialValues = useMemo(() => {
     if (mode === 'edit' && editData) {
       const formattedPermissions = availableModules.map(module => {
         const existingPermission = editData.permissions?.find(p => p.module === module.value);
-        
+
         // إنشاء كائن الإذن مع جميع الحقول المطلوبة
         const permissionObj = { module: module.value };
         PERMISSION_FIELDS.forEach(({ field }) => {
           permissionObj[field] = existingPermission?.[field] || false;
         });
-        
+
         return permissionObj;
       });
 
-      setInitialValues({
+      return {
         name: editData.name || '',
         description: editData.description || '',
         permissions: formattedPermissions
-      });
+      };
     } else {
       const defaultPermissions = availableModules.map(module => {
         const permissionObj = { module: module.value };
@@ -93,13 +90,13 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         return permissionObj;
       });
 
-      setInitialValues({
+      return {
         name: '',
         description: '',
         permissions: defaultPermissions
-      });
+      };
     }
-  }, [mode, editData, open]);
+  }, [mode, editData, availableModules]);
 
   const handleSubmit = async (values, { resetForm }) => {
     setIsSubmitting(true);

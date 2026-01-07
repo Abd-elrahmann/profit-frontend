@@ -73,11 +73,12 @@ export const uploadPaymentProof = async (installmentId, file) => {
 };
 
 // Approve repayment
-export const approveRepayment = async (installmentId, amount, reason) => {
+export const approveRepayment = async (installmentId, amount, reason, discount = 0) => {
   try {
     const response = await Api.patch(`/api/repayments/approve/${installmentId}`, {
-      amount,
-      reason
+      paidAmount: amount,
+      notes: reason,
+      discount: discount
     });
     return response.data;
   } catch (error) {

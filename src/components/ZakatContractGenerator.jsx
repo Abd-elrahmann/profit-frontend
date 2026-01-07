@@ -398,7 +398,7 @@ const ZakatContractGenerator = React.forwardRef(
 
           let filledTemplate = templateContent
             .replace(/{{المبلغ_رقما}}/g, `${amount?.toLocaleString("ar-SA") || "0"}`)
-            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال سعودي`)
+            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ريال`)
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
             .replace(/{{رقم_السند}}/g, `ZK-${withdrawDataToUse.id}`)

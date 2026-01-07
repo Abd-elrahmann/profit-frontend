@@ -337,8 +337,8 @@ const WithdrawReceiptGenerator = React.forwardRef(
           // Calculate number of installments from schedule
           const numberOfInstallments = withdrawalDataToUse.schedule?.length || 9;
           
-          const totalCapitalWords = `${numberToArabicWords(totalCapital)} ريال سعودي`;
-          const netAmountDueWords = `${numberToArabicWords(netAmountDue)} ريال سعودي`;
+          const totalCapitalWords = `${numberToArabicWords(totalCapital)} ريال`;
+          const netAmountDueWords = `${numberToArabicWords(netAmountDue)} ريال`;
 
           const withdrawalDate = withdrawalDataToUse.withdrawal?.createdAt 
             ? new Date(withdrawalDataToUse.withdrawal.createdAt).toISOString().split("T")[0]

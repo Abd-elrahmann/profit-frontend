@@ -39,24 +39,6 @@ import {
   StyledTableRow,
 } from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  ComposedChart,
-} from "recharts";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
 const Saving = () => {
@@ -85,7 +67,7 @@ const Saving = () => {
   });
 
   // Handle successful withdrawal
-  const handleWithdrawSuccess = (data) => {
+  const handleWithdrawSuccess = () => {
     // Refetch both saving data and account report
     refetchAccountReport();
     // If we're on the first tab, we might want to refetch saving data too
@@ -110,52 +92,44 @@ const Saving = () => {
 
   // Render saving account summary
   const renderAccountSummary = () => (
-    <Grid container spacing={3} sx={{ mb: 4, justifyContent: "center" }}>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2,width: "350px" }}>
-          <BalanceIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
-          <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
-            {formatCurrency(accountReport?.account?.balance)}
-          </Typography>
-          <Typography variant="body2" color={theme.palette.primary.main}>
-            رصيد الصندوق
-          </Typography>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2,width: "350px" }}>
-          <DepositIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-          <Typography variant="h5" fontWeight="bold" color="success.main">
-            {formatCurrency(accountReport?.account?.debit)}
-          </Typography>
-          <Typography variant="body2" color="success.main">
-            إجمالي الإيداعات
-          </Typography>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2,width: "350px" }}>
-          <WithdrawalIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
-          <Typography variant="h5" fontWeight="bold" color="warning.main">
-            {formatCurrency(accountReport?.account?.credit)}
-          </Typography>
-          <Typography variant="body2" color="warning.main">
-            إجمالي السحوبات
-          </Typography>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ bgcolor: "info.50", textAlign: "center", p: 2,width: "350px" }}>
-          <CalendarIcon color="info" sx={{ fontSize: 40, mb: 1 }} />
-          <Typography variant="h5" fontWeight="bold" color="info.main">
-            {accountReport?.totalJournalEntries || 0}
-          </Typography>
-          <Typography variant="body2" color="info.main">
-            عدد العمليات
-          </Typography>
-        </Card>
-      </Grid>
-    </Grid>
+    <Box sx={{ display: 'flex', gap: 2, mb: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
+      <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
+        <BalanceIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main} sx={{ wordBreak: 'break-word' }}>
+          {formatCurrency(accountReport?.account?.balance)}
+        </Typography>
+        <Typography variant="body2" color={theme.palette.primary.main}>
+          رصيد الصندوق
+        </Typography>
+      </Card>
+      <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
+        <DepositIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color="success.main" sx={{ wordBreak: 'break-word' }}>
+          {formatCurrency(accountReport?.account?.debit)}
+        </Typography>
+        <Typography variant="body2" color="success.main">
+          إجمالي الإيداعات
+        </Typography>
+      </Card>
+      <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
+        <WithdrawalIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color="warning.main" sx={{ wordBreak: 'break-word' }}>
+          {formatCurrency(accountReport?.account?.credit)}
+        </Typography>
+        <Typography variant="body2" color="warning.main">
+          إجمالي السحوبات
+        </Typography>
+      </Card>
+      <Card sx={{ bgcolor: "info.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
+        <CalendarIcon color="info" sx={{ fontSize: 40, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color="info.main" sx={{ wordBreak: 'break-word' }}>
+          {accountReport?.totalJournalEntries || 0}
+        </Typography>
+        <Typography variant="body2" color="info.main">
+          عدد العمليات
+        </Typography>
+      </Card>
+    </Box>
   );
 
 
@@ -212,6 +186,21 @@ const Saving = () => {
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}
+                  {/* Total Row */}
+                  <StyledTableRow sx={{ bgcolor: 'grey.100', '& .MuiTableCell-root': { fontWeight: 'bold' } }}>
+                    <StyledTableCell align="center" colSpan={2}>
+                      الإجمالي
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {formatCurrency(data.totalDebit)}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {formatCurrency(data.totalCredit)}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {formatCurrency(data.totalBalance)}
+                    </StyledTableCell>
+                  </StyledTableRow>
                 </TableBody>
               </Table>
             </TableContainer>
@@ -222,45 +211,7 @@ const Saving = () => {
   };
 
 
-  // Helper function to get month name
-  const getMonthName = (monthKey) => {
-    if (!monthKey) return "";
-    const [year, month] = monthKey.split('-');
-    const monthNames = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ];
-    return `${monthNames[parseInt(month) - 1]} ${year}`;
-  };
 
-  // Prepare chart data
-  const prepareChartData = () => {
-    if (!accountReport) return { monthlyData: [], transactionData: [] };
-
-    // Monthly balance data
-    const monthlyData = accountReport.journalsByMonth
-      ? Object.entries(accountReport.journalsByMonth)
-          .map(([month, data]) => ({
-            name: getMonthName(month),
-            monthKey: month,
-            الرصيد: data.totalBalance || 0,
-            الإيداعات: data.totalDebit || 0,
-            السحوبات: data.totalCredit || 0,
-          }))
-          .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
-      : [];
-
-    // Transaction type distribution
-    const transactionData = [
-      { name: 'الإيداعات', value: accountReport.account?.debit || 0, color: '#00C49F' },
-      { name: 'السحوبات', value: accountReport.account?.credit || 0, color: '#FF8042' },
-    ];
-
-    return { monthlyData, transactionData };
-  };
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-  const { monthlyData, transactionData } = prepareChartData();
 
   // Render saving account tab
   const renderSavingAccountTab = () => {
@@ -275,152 +226,6 @@ const Saving = () => {
     return (
       <Box sx={{ textAlign: "center" }}>
         {renderAccountSummary()}
-        
-        {/* Charts Section */}
-        {accountReport && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            {/* Monthly Balance Trend Chart */}
-            {monthlyData.length > 0 && (
-              <Grid item xs={12}>
-                <Paper sx={{ 
-                  p: isSmallScreen ? 2 : 3, 
-                  borderRadius: 2, 
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                }}>
-                  <Typography variant="h6" fontWeight="bold" mb={3}>
-                    تطور الرصيد والإيداعات والسحوبات
-                  </Typography>
-                  <ResponsiveContainer width={1200} height={isSmallScreen ? 300 : 400}>
-                    <ComposedChart data={monthlyData}>
-                      <defs>
-                        <linearGradient id="colorCredit" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="colorDebit" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
-                        contentStyle={{ borderRadius: '8px' }}
-                      />
-                      <Legend />
-                      <Area 
-                        type="monotone" 
-                        dataKey="الإيداعات" 
-                        stackId="1"
-                        stroke="#00C49F" 
-                        fill="url(#colorCredit)" 
-                        name="الإيداعات"
-                        strokeWidth={2}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="السحوبات" 
-                        stackId="1"
-                        stroke="#FF8042" 
-                        fill="url(#colorDebit)" 
-                        name="السحوبات"
-                        strokeWidth={2}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="الرصيد" 
-                        stroke="#1976d2" 
-                        strokeWidth={3}
-                        name="الرصيد"
-                        dot={{ fill: '#1976d2', r: 5 }}
-                        activeDot={{ r: 7 }}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </Paper>
-              </Grid>
-            )}
-
-            {/* Transaction Distribution Pie Chart */}
-            {transactionData.some(t => t.value > 0) && (
-              <Grid item xs={12}>
-                <Paper sx={{
-                  p: isSmallScreen ? 2 : 3,
-                  borderRadius: 2,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                }}>
-                  <Typography variant="h6" fontWeight="bold" mb={3}>
-                    توزيع الإيداعات والسحوبات
-                  </Typography>
-                  <ResponsiveContainer width={1200} height={isSmallScreen ? 300 : 400}>
-                    <PieChart>
-                      <Pie
-                        data={transactionData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={isSmallScreen ? 80 : 120}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                      >
-                        {transactionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]}
-                        contentStyle={{ borderRadius: '8px' }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')}`}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </Paper>
-              </Grid>
-            )}
-
-            {/* Monthly Transactions Bar Chart */}
-            {monthlyData.length > 0 && (
-              <Grid item xs={12}>
-                <Paper sx={{ 
-                  p: isSmallScreen ? 2 : 3, 
-                  borderRadius: 2, 
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                }}>
-                  <Typography variant="h6" fontWeight="bold" mb={3}>
-                    عدد العمليات الشهرية
-                  </Typography>
-                  <ResponsiveContainer width={1200} height={isSmallScreen ? 300 : 400}>
-                    <BarChart data={monthlyData.map(month => ({
-                      ...month,
-                      العمليات: accountReport.journalsByMonth[month.monthKey]?.entries?.length || 0
-                    }))}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value, name) => [name === 'العمليات' ? `${value} عملية` : `${value.toLocaleString('en-US')}`, name]} 
-                        contentStyle={{ borderRadius: '8px' }}
-                      />
-                      <Legend />
-                      <Bar 
-                        dataKey="العمليات" 
-                        fill="#8884D8"
-                        radius={[8, 8, 0, 0]}
-                        name="عدد العمليات"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </Paper>
-              </Grid>
-            )}
-          </Grid>
-        )}
 
         {renderAccountJournals()}
       </Box>

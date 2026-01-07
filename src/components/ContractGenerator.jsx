@@ -3,7 +3,7 @@ import html2pdf from 'html2pdf.js';
 import ContractPreview from './ContractPreview';
 import Api, { handleApiError } from '../config/Api';
 import { notifySuccess, notifyError } from '../utilities/toastify';
-import contractNumbersService from '../utilities/contractNumbers';
+import contractCounterService from '../utilities/contractCounterService';
 
 const numberToArabicWords = (num) => {
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
@@ -146,8 +146,7 @@ const ContractGenerator = React.forwardRef(({
   const [loading, setLoading] = useState(false);
 
   // Generate filled contract from template
- // في جزء generateContract في ContractGenerator.jsx
-const generateContract = useCallback(async () => {
+  const generateContract = useCallback(async () => {
   if (!investorData || !templateContent) {
     notifyError('بيانات المستثمر أو قالب العقد غير متوفر');
     return;
@@ -155,7 +154,7 @@ const generateContract = useCallback(async () => {
 
         try {
           const { gregorianDate, hijriDate } = getCurrentDates();
-          const capitalInWords = `${numberToArabicWords(investorData.capitalAmount)} ريال سعودي`;
+          const capitalInWords = `${numberToArabicWords(investorData.capitalAmount)} ريال`;
     
     // حساب النسب الديناميكية
     const orgProfitPercent = investorData.orgProfitPercent || 0;
@@ -211,7 +210,7 @@ const generateContract = useCallback(async () => {
       // معلومات إضافية للعقود الأخرى
       .replace(/{{اسم_الدائن}}/g, investorData.name || '')
       .replace(/{{اسم_المدين}}/g, investorData.name || '')
-      .replace(/{{رقم_السند}}/g, contractNumbersService.getNextPromissoryNoteNumber())
+      .replace(/{{رقم_السند}}/g, contractCounterService.getCurrentContractNumber(contractCounterService.COUNTER_TYPES.MUDARABAH))
       .replace(/{{تاريخ_الانشاء}}/g, gregorianDate)
       .replace(/{{تاريخ_الاستحقاق}}/g, gregorianDate)
       .replace(/{{مدينة_الاصدار}}/g, 'الرياض')
@@ -262,10 +261,16 @@ const generateContract = useCallback(async () => {
 
     setLoading(true);
     try {
+      // Regenerate contract with saving numbers for PDF generation
+      const finalContractHtml = await generateContract(true);
+
       const element = document.getElementById('contract-preview');
       if (!element) {
         throw new Error('عنصر معاينة العقد غير موجود');
       }
+
+      // Update the preview with the final contract HTML
+      element.innerHTML = finalContractHtml;
 
 
       // PDF generation options
@@ -298,6 +303,9 @@ const generateContract = useCallback(async () => {
       // Upload PDF to server
       await uploadPDFToServer(pdfBlob);
 
+      // Increment the counter after successful save
+      contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.MUDARABAH);
+
       notifySuccess('تم إنشاء وحفظ العقد بنجاح');
       setShowPreview(false);
 
@@ -311,7 +319,7 @@ const generateContract = useCallback(async () => {
     } finally {
       setLoading(false);
     }
-  }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer]);
+  }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer, generateContract]);
 
   // Expose generateContract method through ref
   React.useImperativeHandle(ref, () => ({

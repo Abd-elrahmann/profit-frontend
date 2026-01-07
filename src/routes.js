@@ -246,13 +246,14 @@ const routes = [
 
 // Re-export sidebar functions from sidebar.config.js
 export { getSidebarMenuItems } from './sidebar.config.js';
+import { sidebarItems } from './sidebar.config.js';
 
 export const getAvailableModules = () => {
-  return routes
-    .filter(route => route.protected && route.requiresPermissions && route.label && route.showInSidebar)
-    .map(route => ({
-      value: route.module,
-      label: route.label
+  return sidebarItems
+    .filter(item => item.requiresPermissions && item.module)
+    .map(item => ({
+      value: item.module,
+      label: item.label
     }));
 };
 

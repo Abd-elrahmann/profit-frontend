@@ -286,7 +286,7 @@ export default function CompanyProfit() {
                           </Box>
                           <Box>
                             <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.success.main}>
-                              {Math.round(profitData?.upcomingProfit || 0).toLocaleString('en-US')}
+                              {profitData?.upcomingProfit}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               الأرباح القادمة للشركة
@@ -316,7 +316,7 @@ export default function CompanyProfit() {
                           </Box>
                           <Box>
                             <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.primary.main}>
-                              {Math.round(profitData?.availableAmount || 0).toLocaleString('en-US')}
+                              {profitData?.availableAmount}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               الرصيد المتاح للسحب

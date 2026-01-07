@@ -72,6 +72,7 @@ import PaymentProofPreview from "../../components/PaymentProofPreview";
 import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
 import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
 import DeleteModal from "../../components/modals/DeleteModal";
+import DiscountModal from "../../components/modals/DiscountModal";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -150,6 +151,10 @@ const Installments = () => {
   const [paidAmount, setPaidAmount] = useState("");
 
   const [activeInstallmentId, setActiveInstallmentId] = useState(null);
+
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountInstallment, setDiscountInstallment] = useState(null);
+  const [confirmedDiscount, setConfirmedDiscount] = useState({ discount: 0, notes: '' });
 
   const [paymentProofModalOpen, setPaymentProofModalOpen] = useState(false);
   const [selectedProofInstallment, setSelectedProofInstallment] =
@@ -387,19 +392,28 @@ const Installments = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments, settlementTemplate, settlementJustSaved, settlementManuallyClosed]);
 
-  const handleApprove = async (installment) => {
+  const handleApprove = (installment) => {
+    setDiscountInstallment(installment);
+    setDiscountModalOpen(true);
+    setAnchorEl(null);
+  };
+
+  const handleDiscountConfirm = async ({ discount, notes }) => {
     try {
-      setSelectedProofInstallment(installment);
+      setConfirmedDiscount({ discount, notes });
+      setDiscountModalOpen(false);
+      setSelectedProofInstallment(discountInstallment);
 
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const proofHtml = await paymentProofGeneratorRef.current.generateContract(
         false,
         {
-          installmentData: installment,
+          installmentData: discountInstallment,
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
+          discount: discount,
         }
       );
 
@@ -409,7 +423,6 @@ const Installments = () => {
       notifyError("حدث خطأ أثناء توليد إيصال السداد");
       handleApiError(error);
     }
-    setAnchorEl(null);
   };
 
   const handleSavePaymentProof = async () => {
@@ -424,7 +437,8 @@ const Installments = () => {
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
-        });
+          discount: confirmedDiscount.discount,
+        }, true); // true = isForSaving
 
       await paymentProofGeneratorRef.current.generatePDF(finalProofHtml);
 
@@ -433,7 +447,8 @@ const Installments = () => {
       await approveRepayment(
         selectedProofInstallment.id,
         selectedProofInstallment.amount,
-        "تمت الموافقة على السداد"
+        confirmedDiscount.notes || "تمت الموافقة على السداد",
+        confirmedDiscount.discount
       );
 
       setPaymentProofModalOpen(false);
@@ -447,9 +462,12 @@ const Installments = () => {
         setActiveInstallmentId(null);
       }, 2000);
 
-      queryClient.invalidateQueries(["loan", loanId]);
-      queryClient.invalidateQueries(["repayments", loanId]);
-      queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
+      // إعادة تحميل البيانات للتأكد من عرض الملف المحدث
+      setTimeout(() => {
+        queryClient.invalidateQueries(["loan", loanId]);
+        queryClient.invalidateQueries(["repayments", loanId]);
+        queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
+      }, 400); // انتظار ثانية واحدة للتأكد من حفظ الملف والخصم
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال");
     } finally {
@@ -473,7 +491,7 @@ const Installments = () => {
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
-        });
+        }, true); // true = isForSaving
 
       await paymentProofGeneratorRef.current.generatePDF(
         finalBulkProofHtml,
@@ -704,7 +722,7 @@ const Installments = () => {
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
-        });
+        }, true); // true = isForSaving
   
       await settlementReceiptRef.current.generatePDF(finalSettlementHtml);
   
@@ -2531,6 +2549,7 @@ const Installments = () => {
         loading={isGeneratingProof}
         clientName={loanData?.client?.name}
         installmentAmount={selectedProofInstallment?.amount || 0}
+        discount={confirmedDiscount?.discount || 0}
         installmentNumber={selectedProofInstallment?.id || ""}
       />
 
@@ -2601,48 +2620,82 @@ const Installments = () => {
                       <Box sx={{ display: "flex", gap: 0.5 }}>
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            window.print();
+                            try {
+                              // تحميل الملف وطباعته مباشرة
+                              const response = await fetch(attachment);
+                              const blob = await response.blob();
+                              const url = URL.createObjectURL(blob);
+
+                              // إنشاء iframe مخفي للطباعة
+                              const iframe = document.createElement('iframe');
+                              iframe.style.display = 'none';
+                              iframe.src = url;
+                              document.body.appendChild(iframe);
+
+                              iframe.onload = () => {
+                                iframe.contentWindow.print();
+                                // تنظيف بعد الطباعة
+                                setTimeout(() => {
+                                  document.body.removeChild(iframe);
+                                  URL.revokeObjectURL(url);
+                                }, 1000);
+                              };
+                            } catch (error) {
+                              console.error('Print error:', error);
+                              notifyError("حدث خطأ في الطباعة");
+                            }
                           }}
                           title="طباعة"
                         >
                           <PrintIcon />
                         </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (navigator.share) {
-                              navigator.share({
-                                title: extractFileName(attachment),
-                                url: attachment,
-                              });
-                            } else {
-                              // Check if clipboard API is available before using it
-                              if (navigator.clipboard && navigator.clipboard.writeText) {
-                                navigator.clipboard.writeText(attachment);
-                                notifySuccess("تم نسخ الرابط إلى الحافظة");
-                              } else {
-                                // Fallback: try to use the older execCommand method
-                                const textArea = document.createElement('textarea');
-                                textArea.value = attachment;
-                                document.body.appendChild(textArea);
-                                textArea.select();
-                                try {
-                                  document.execCommand('copy');
-                                  notifySuccess("تم نسخ الرابط إلى الحافظة");
-                                } catch (err) {
-                                  console.warn('Fallback copy method also failed:', err);
-                                  notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
-                                } finally {
-                                  document.body.removeChild(textArea);
-                                }
-                              }
+                  <IconButton
+                    size="small"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        // تحميل الملف أولاً
+                        const response = await fetch(attachment);
+                        const blob = await response.blob();
+                        const file = new File([blob], extractFileName(attachment), { type: blob.type });
+
+                        if (navigator.share && navigator.canShare({ files: [file] })) {
+                          // مشاركة الملف نفسه
+                          await navigator.share({
+                            title: extractFileName(attachment),
+                            files: [file],
+                          });
+                        } else {
+                          // Fallback: نسخ الرابط إلى الحافظة
+                          if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(attachment);
+                            notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+                          } else {
+                            // Fallback: try to use the older execCommand method
+                            const textArea = document.createElement('textarea');
+                            textArea.value = attachment;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            try {
+                              document.execCommand('copy');
+                              notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+                            } catch (err) {
+                              console.warn('Fallback copy method also failed:', err);
+                              notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+                            } finally {
+                              document.body.removeChild(textArea);
                             }
-                          }}
-                          title="مشاركة"
-                        >
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Share error:', error);
+                        notifyError("حدث خطأ في مشاركة الملف");
+                      }
+                    }}
+                    title="مشاركة"
+                  >
                           <ShareIcon />
                         </IconButton>
                         <IconButton
@@ -2690,9 +2743,32 @@ const Installments = () => {
                 <Box sx={{ display: "flex", gap: 0.5 }}>
                   <IconButton
                     size="small"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      window.print();
+                      try {
+                        // تحميل الملف وطباعته مباشرة
+                        const response = await fetch(selectedDocumentsInstallment.PaymentProof);
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+
+                        // إنشاء iframe مخفي للطباعة
+                        const iframe = document.createElement('iframe');
+                        iframe.style.display = 'none';
+                        iframe.src = url;
+                        document.body.appendChild(iframe);
+
+                        iframe.onload = () => {
+                          iframe.contentWindow.print();
+                          // تنظيف بعد الطباعة
+                          setTimeout(() => {
+                            document.body.removeChild(iframe);
+                            URL.revokeObjectURL(url);
+                          }, 1000);
+                        };
+                      } catch (error) {
+                        console.error('Print error:', error);
+                        notifyError("حدث خطأ في الطباعة");
+                      }
                     }}
                     title="طباعة"
                   >
@@ -2700,38 +2776,45 @@ const Installments = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      if (navigator.share) {
-                        navigator.share({
-                          title: extractFileName(
-                            selectedDocumentsInstallment.PaymentProof
-                          ),
-                          url: selectedDocumentsInstallment.PaymentProof,
-                        });
-                      } else {
-                        // Check if clipboard API is available before using it
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                          navigator.clipboard.writeText(
-                            selectedDocumentsInstallment.PaymentProof
-                          );
-                          notifySuccess("تم نسخ الرابط إلى الحافظة");
+                      try {
+                        // تحميل الملف أولاً
+                        const response = await fetch(selectedDocumentsInstallment.PaymentProof);
+                        const blob = await response.blob();
+                        const file = new File([blob], extractFileName(selectedDocumentsInstallment.PaymentProof), { type: blob.type });
+
+                        if (navigator.share && navigator.canShare({ files: [file] })) {
+                          // مشاركة الملف نفسه
+                          await navigator.share({
+                            title: extractFileName(selectedDocumentsInstallment.PaymentProof),
+                            files: [file],
+                          });
                         } else {
-                          // Fallback: try to use the older execCommand method
-                          const textArea = document.createElement('textarea');
-                          textArea.value = selectedDocumentsInstallment.PaymentProof;
-                          document.body.appendChild(textArea);
-                          textArea.select();
-                          try {
-                            document.execCommand('copy');
-                            notifySuccess("تم نسخ الرابط إلى الحافظة");
-                          } catch (err) {
-                            console.warn('Fallback copy method also failed:', err);
-                            notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
-                          } finally {
-                            document.body.removeChild(textArea);
+                          // Fallback: نسخ الرابط إلى الحافظة
+                          if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(selectedDocumentsInstallment.PaymentProof);
+                            notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+                          } else {
+                            // Fallback: try to use the older execCommand method
+                            const textArea = document.createElement('textarea');
+                            textArea.value = selectedDocumentsInstallment.PaymentProof;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            try {
+                              document.execCommand('copy');
+                              notifySuccess("تم نسخ رابط الملف إلى الحافظة");
+                            } catch (err) {
+                              console.warn('Fallback copy method also failed:', err);
+                              notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
+                            } finally {
+                              document.body.removeChild(textArea);
+                            }
                           }
                         }
+                      } catch (error) {
+                        console.error('Share error:', error);
+                        notifyError("حدث خطأ في مشاركة الملف");
                       }
                     }}
                     title="مشاركة"
@@ -2797,6 +2880,7 @@ const Installments = () => {
         installmentAmount={sortedInstallments
           .filter(installment => selectedInstallments.includes(installment.id))
           .reduce((sum, inst) => sum + (inst.amount || 0), 0)}
+        discount={0}
         installmentNumber={`مجمع (${selectedInstallments.length} دفعات)`}
       />
 
@@ -2819,6 +2903,16 @@ const Installments = () => {
           />
         </Box>
       )}
+
+      {/* Discount Modal */}
+      <DiscountModal
+        open={discountModalOpen}
+        onClose={() => setDiscountModalOpen(false)}
+        onConfirm={handleDiscountConfirm}
+        installmentAmount={discountInstallment?.amount || 0}
+        installmentInterest={discountInstallment?.interestAmount || 0}
+        loading={false}
+      />
     </Box>
   );
 };

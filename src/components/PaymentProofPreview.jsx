@@ -14,16 +14,18 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 
-const PaymentProofPreview = ({ 
-  open, 
-  onClose, 
-  paymentProofHtml, 
-  onSaveProof, 
+const PaymentProofPreview = ({
+  open,
+  onClose,
+  paymentProofHtml,
+  onSaveProof,
   loading = false,
   clientName = "",
   installmentAmount = 0,
+  discount = 0,
 }) => {
 
+  const finalAmount = Math.max(0, installmentAmount - discount);
 
   return (
     <Dialog 
@@ -59,7 +61,12 @@ const PaymentProofPreview = ({
           </Typography>
           {clientName && (
             <Typography variant="body2" color="text.secondary">
-              العميل: {clientName} - المبلغ: {installmentAmount.toLocaleString()} ر.س
+              العميل: {clientName} - المبلغ: {finalAmount.toLocaleString()} ر.س
+              {discount > 0 && (
+                <span style={{ color: '#d32f2f' }}>
+                  {' '}({installmentAmount.toLocaleString()} - خصم {discount.toLocaleString()})
+                </span>
+              )}
             </Typography>
           )}
         </Box>

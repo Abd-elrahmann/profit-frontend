@@ -330,6 +330,11 @@ const InstallmentSettlementReceipt = React.forwardRef(
         console.log('debtAcknowledgmentNumber:', dataToUse.loanData?.debtAcknowledgmentNumber);
         console.log('promissoryNoteNumber:', dataToUse.loanData?.promissoryNoteNumber);
 
+        // Use existing contract numbers from the loan data
+        // Settlement references the original contract numbers, not new ones
+        const promissoryNoteNumber = dataToUse.loanData?.promissoryNoteNumber || "غير محدد";
+        const debtAcknowledgmentNumber = dataToUse.loanData?.debtAcknowledgmentNumber || "غير محدد";
+
         if (
           !dataToUse.installmentData ||
           !dataToUse.clientData ||
@@ -344,7 +349,7 @@ const InstallmentSettlementReceipt = React.forwardRef(
           const { gregorianDate, hijriDate } = getCurrentDates();
 
           const amount = dataToUse.loanData?.totalAmount || 0;
-          const amountInWords = `${numberToArabicWords(amount)} ريال سعودي`;
+          const amountInWords = `${numberToArabicWords(amount)} ريال`;
 
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || "")
@@ -355,11 +360,11 @@ const InstallmentSettlementReceipt = React.forwardRef(
             .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || "N/A")
             .replace(
               /{{رقم_السند}}/g,
-              dataToUse.loanData.promissoryNoteNumber || "غير محدد"
+              promissoryNoteNumber
             )
             .replace(
               /{{رقم_الإقرار}}/g,
-              dataToUse.loanData.debtAcknowledgmentNumber || "غير محدد"
+              debtAcknowledgmentNumber
             )
 
             .replace(
