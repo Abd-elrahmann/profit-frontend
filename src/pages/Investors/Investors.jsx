@@ -1882,25 +1882,6 @@ export default function Investors() {
                           </CardContent>
                         </Card>
                       </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <Card sx={{
-                          border: '1px solid',
-                          borderColor: 'error.light',
-                          bgcolor: 'error.50',
-                          minWidth: '280px',
-                          maxWidth: '350px',
-                          mx: 'auto'
-                        }}>
-                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                            <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontSize: '0.85rem' }}>
-                              المبلغ المتبقي
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold" color="error.main" sx={{ fontSize: '1.25rem' }}>
-                              {((investorDetails.totalAvilableSaving || 0) - (investorDetails.totalWithdrawal || 0)).toLocaleString()}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
                     </Grid>
                   </Box>
 
