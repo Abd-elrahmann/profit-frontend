@@ -2137,105 +2137,179 @@ export default function Clients() {
                   <Box>
                     {clientDetails.documents &&
                     clientDetails.documents.length > 0 ? (
-                      <Grid container spacing={2}>
-                        {clientDetails.documents.map((doc, docIndex) =>
-                          Object.entries(doc).map(([key, value]) => {
-                            const clientDocumentTypes = {
-                              clientIdImage: "صورة هوية العميل",
-                              clientWorkCard: "بطاقة عمل العميل",
-                              salaryReport: "تقرير الراتب",
-                              simaReport: "تقرير SIMA",
-                              DEBT_ACKNOWLEDGMENT: "إقرار الدين",
-                              PROMISSORY_NOTE: "سند الأمر",
-                              SETTLEMENT: " تسوية سلفة ",
-                            };
+                      (() => {
+                        // تصنيف المرفقات حسب نوعها
+                        const clientGeneralDocs = [];
+                        const loanDocsById = {};
 
-                            // تأكد إن القيمة موجودة ومفتاحها من ضمن الأنواع اللي بنعرضها
-                            if (value && clientDocumentTypes[key]) {
-                              return (
-                                <Grid item xs={12} sm={6} md={4} lg={3} key={`${key}-${docIndex}`}>
-                                  <Paper
-                                    sx={{
-                                      p: 2,
-                                      height: '100%',
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      borderRadius: 2,
-                                      overflow: 'hidden',
-                                    }}
-                                    elevation={2}
-                                  >
-                                    {/* معاينة الملف */}
-                                    {renderFileThumbnail(value, clientDocumentTypes[key])}
-                                    
-                                    {/* اسم المستند وأزرار العمليات */}
-                                    <Box sx={{ mt: 2 }}>
-                                      <Box
-                                        display="flex"
-                                        alignItems="center"
-                                        gap={1}
-                                        mb={1}
-                                      >
-                                        <CheckCircle
-                                          color="success"
-                                          fontSize="small"
-                                        />
-                                        <Typography fontWeight="500" variant="body2">
-                                          {clientDocumentTypes[key]}
-                                        </Typography>
-                                      </Box>
+                        clientDetails.documents.forEach((doc, docIndex) => {
+                          Object.entries(doc).forEach(([key, value]) => {
+                            if (value) {
+                              if (key === 'loanId') return; // تجاهل loanId نفسه
 
-                                      {/* أزرار العمليات */}
-                                      {permissions.includes("clients_Export") && (
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                                          <IconButton
-                                            size="small"
-                                            onClick={() =>
-                                              handleDownloadFile(
-                                                value,
-                                                "",
-                                                clientDocumentTypes[key],
-                                                clientDetails.client.name
-                                              )
-                                            }
-                                            title="تحميل"
-                                          >
-                                            <Download fontSize="small" />
-                                          </IconButton>
-                                          <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleShareFile(
-                                                value,
-                                                clientDocumentTypes[key],
-                                                clientDetails.client.name
-                                              );
-                                            }}
-                                            title="مشاركة"
-                                          >
-                                            <Share fontSize="small" />
-                                          </IconButton>
-                                          <IconButton
-                                            size="small"
-                                            onClick={() => window.open(value, '_blank')}
-                                            title="عرض"
-                                          >
-                                            <Visibility fontSize="small" />
-                                          </IconButton>
-                                        </Box>
-                                      )}
-                                    </Box>
-                                  </Paper>
-                                </Grid>
-                              );
+                              // مرفقات العميل العامة
+                              if (['clientIdImage', 'clientWorkCard', 'salaryReport', 'simaReport'].includes(key)) {
+                                clientGeneralDocs.push({
+                                  key,
+                                  value,
+                                  type: key,
+                                  index: docIndex
+                                });
+                              }
+                              // مرفقات السلفات
+                              else if (['DEBT_ACKNOWLEDGMENT', 'PROMISSORY_NOTE', 'SETTLEMENT'].includes(key)) {
+                                const loanId = doc.loanId || 'unknown';
+                                if (!loanDocsById[loanId]) {
+                                  loanDocsById[loanId] = [];
+                                }
+                                loanDocsById[loanId].push({
+                                  key,
+                                  value,
+                                  type: key,
+                                  index: docIndex
+                                });
+                              }
                             }
+                          });
+                        });
 
-                            // تجاهل أي مفتاح غير معروف
-                            return null;
-                          })
-                        )}
-                      </Grid>
+                        const clientDocumentTypes = {
+                          clientIdImage: "صورة هوية العميل",
+                          clientWorkCard: "بطاقة عمل العميل",
+                          salaryReport: "تقرير الراتب",
+                          simaReport: "تقرير SIMA",
+                          DEBT_ACKNOWLEDGMENT: "إقرار الدين",
+                          PROMISSORY_NOTE: "سند الأمر",
+                          SETTLEMENT: " تسوية سلفة ",
+                        };
+
+                        const renderDocumentCard = (doc, docType) => (
+                          <Grid item xs={12} sm={6} md={4} lg={3} key={`${doc.key}-${doc.index}`}>
+                            <Paper
+                              sx={{
+                                p: 2,
+                                height: '100%',
+                                display: "flex",
+                                flexDirection: "column",
+                                borderRadius: 2,
+                                overflow: 'hidden',
+                              }}
+                              elevation={2}
+                            >
+                              {/* معاينة الملف */}
+                              {renderFileThumbnail(doc.value, clientDocumentTypes[docType])}
+
+                              {/* اسم المستند وأزرار العمليات */}
+                              <Box sx={{ mt: 2 }}>
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  gap={1}
+                                  mb={1}
+                                >
+                                  <CheckCircle
+                                    color="success"
+                                    fontSize="small"
+                                  />
+                                  <Typography fontWeight="500" variant="body2">
+                                    {clientDocumentTypes[docType]}
+                                  </Typography>
+                                </Box>
+
+                                {/* أزرار العمليات */}
+                                {permissions.includes("clients_Export") && (
+                                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        handleDownloadFile(
+                                          doc.value,
+                                          "",
+                                          clientDocumentTypes[docType],
+                                          clientDetails.client.name
+                                        )
+                                      }
+                                      title="تحميل"
+                                    >
+                                      <Download fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleShareFile(
+                                          doc.value,
+                                          clientDocumentTypes[docType],
+                                          clientDetails.client.name
+                                        );
+                                      }}
+                                      title="مشاركة"
+                                    >
+                                      <Share fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => window.open(doc.value, '_blank')}
+                                      title="عرض"
+                                    >
+                                      <Visibility fontSize="small" />
+                                    </IconButton>
+                                  </Box>
+                                )}
+                              </Box>
+                            </Paper>
+                          </Grid>
+                        );
+
+                        return (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {/* مرفقات العميل العامة */}
+                            {clientGeneralDocs.length > 0 && (
+                              <Box>
+                                <Typography variant="h6" color="primary" mb={3} textAlign="center" fontWeight="bold">
+                                  مرفقات العميل العامة
+                                </Typography>
+                                <Grid container spacing={2}>
+                                  {clientGeneralDocs.map((doc) => renderDocumentCard(doc, doc.key))}
+                                </Grid>
+                              </Box>
+                            )}
+
+                            {/* مرفقات السلفات */}
+                            {Object.keys(loanDocsById).length > 0 && (
+                              <Box>
+                                <Typography variant="h6" color="primary" mb={3} textAlign="center" fontWeight="bold">
+                                  مرفقات السلفات
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                  {Object.entries(loanDocsById).map(([loanId, docs], index) => {
+                                    const getOrdinalText = (num) => {
+                                      const ordinals = [
+                                        "الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة",
+                                        "السادسة", "السابعة", "الثامنة", "التاسعة", "العاشرة",
+                                        "الحادية عشرة", "الثانية عشرة", "الثالثة عشرة", "الرابعة عشرة", "الخامسة عشرة",
+                                        "السادسة عشرة", "السابعة عشرة", "الثامنة عشرة", "التاسعة عشرة", "العشرون"
+                                      ];
+                                      return ordinals[num] || `ال${num + 1}`;
+                                    };
+
+                                    return (
+                                      <Box key={loanId}>
+                                        <Typography variant="h6" color="black" mb={2}>
+                                          مرفقات السلفة {getOrdinalText(index)}
+                                        </Typography>
+                                        <Grid container spacing={2}>
+                                          {docs.map((doc) => renderDocumentCard(doc, doc.key))}
+                                        </Grid>
+                                      </Box>
+                                    );
+                                  })}
+                                </Box>
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      })()
                     ) : (
                       <Paper sx={{ p: 3, textAlign: "center" }}>
                         <Typography color="text.secondary">
