@@ -10,6 +10,9 @@ class ContractCounterService {
       WITHDRAWAL_RECEIPT: 'withdrawal_receipt',
       PAYMENT_VOUCHER: 'payment_voucher'
     };
+
+    // Initialize counters if this is the first time or if localStorage is empty
+    this.initializeCountersIfNeeded();
   }
 
   // Get current counter for a specific type
@@ -56,6 +59,41 @@ class ContractCounterService {
     const counters = this.getCounters();
     counters[type] = 1;
     this.saveCounters(counters);
+  }
+
+  // Reset all counters to 1 (useful when starting fresh)
+  resetAllCounters() {
+    const resetCounters = {};
+    // Initialize all counter types to 1
+    Object.values(this.COUNTER_TYPES).forEach(type => {
+      resetCounters[type] = 1;
+    });
+    this.saveCounters(resetCounters);
+    console.log('All contract counters have been reset to 1');
+  }
+
+  // Initialize counters if localStorage is empty or doesn't exist
+  initializeCountersIfNeeded() {
+    const stored = localStorage.getItem(this.STORAGE_KEY);
+    if (!stored) {
+      // First time use - initialize all counters to 1
+      const initialCounters = {};
+      Object.values(this.COUNTER_TYPES).forEach(type => {
+        initialCounters[type] = 1;
+      });
+      this.saveCounters(initialCounters);
+      console.log('Contract counters initialized to 1 for first use');
+    }
+  }
+
+  // Clear all stored counters completely (removes from localStorage)
+  clearAllStoredCounters() {
+    try {
+      localStorage.removeItem(this.STORAGE_KEY);
+      console.log('All stored contract counters have been cleared from localStorage');
+    } catch (error) {
+      console.error('Error clearing contract counters:', error);
+    }
   }
 
   // Get formatted contract number with type prefix

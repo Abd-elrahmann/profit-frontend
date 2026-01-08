@@ -31,6 +31,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import CloseIcon from "@mui/icons-material/Close";
 import WarningIcon from "@mui/icons-material/Warning";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 
 import RichTextEditor from "../../components/RichTextEditor";
@@ -46,6 +47,7 @@ import WithdrawReceipt from "../../components/Contracts/WithdrawReceipt";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import contractCounterService from "../../utilities/contractCounterService";
 
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
@@ -82,6 +84,7 @@ export default function ContractTemplates() {
   const [viewMode, setViewMode] = useState("preview");
   const [searchTerm, setSearchTerm] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showResetCountersConfirm, setShowResetCountersConfirm] = useState(false);
   const { permissions } = usePermissions();
   const theme = useTheme();
   // Map tab values to API template names
@@ -388,54 +391,25 @@ export default function ContractTemplates() {
     }
   }, []);
 
-  const fetchTemplateFromAPI = React.useCallback(async (templateName) => {
-    try {
-      const response = await Api.get(`/api/templates/${templateName}/with-variables`);
-      if (response.data.content && response.data.content.trim() !== "") {
-        return {
-          content: response.data.content,
-          variables: response.data.variables || [],
-          styles: response.data.styles?.[0]?.css || ""
-        };
-      } else {
-        return {
-          content: getDefaultTemplate(templateName),
-          variables: [],
-          styles: ""
-        };
-      }
-    } catch {
-      return {
-        content: getDefaultTemplate(templateName),
-        variables: [],
-        styles: ""
-      };
-    }
-  }, [getDefaultTemplate]);
 
   const loadTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
-      const templatePromises = Object.keys(templateNameMap).map(async (key) => {
-        const templateName = templateNameMap[key];
-        const templateData = await fetchTemplateFromAPI(templateName);
-        return { key, ...templateData };
-      });
-      
-      const results = await Promise.all(templatePromises);
       const newTemplates = {};
       const newStyles = {};
       const newVariables = {};
 
-      results.forEach(({ key, content, variables, styles }) => {
+      Object.keys(templateNameMap).forEach((key) => {
+        const templateName = templateNameMap[key];
         const stateKey = getStateKey(key);
-        
-        newTemplates[stateKey] = content;
-        newStyles[stateKey] = styles;
-        
+
+        // Use default templates directly without API calls
+        newTemplates[stateKey] = getDefaultTemplate(templateName);
+        newStyles[stateKey] = "";
+
+        // Use only default variables
         const defaultVars = defaultContractVariables[key] || [];
-        const dynamicVars = variables || [];
-        newVariables[stateKey] = [...defaultVars, ...dynamicVars];
+        newVariables[stateKey] = [...defaultVars];
       });
 
       setTemplates(newTemplates);
@@ -447,7 +421,7 @@ export default function ContractTemplates() {
     } finally {
       setLoading(false);
     }
-  }, [templateNameMap, fetchTemplateFromAPI, defaultContractVariables]);
+  }, [templateNameMap, defaultContractVariables]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -492,6 +466,17 @@ export default function ContractTemplates() {
       ...prev,
       [templateKey]: value
     }));
+  };
+
+  const handleResetCounters = () => {
+    try {
+      contractCounterService.resetAllCounters();
+      notifySuccess("تم إعادة تعيين عدادات العقود بنجاح");
+      setShowResetCountersConfirm(false);
+    } catch (error) {
+      console.error("Error resetting counters:", error);
+      notifyError("حدث خطأ في إعادة تعيين العدادات");
+    }
   };
 
 
@@ -572,12 +557,46 @@ export default function ContractTemplates() {
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setShowDeleteConfirm(null)}>إلغاء</Button>
-        <Button 
-          color="error" 
+        <Button
+          color="error"
           variant="contained"
           onClick={showDeleteConfirm?.onConfirm}
         >
           نعم، احذف
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  // Reset Counters Confirmation Dialog
+  const ResetCountersConfirmation = () => (
+    <Dialog open={showResetCountersConfirm} onClose={() => setShowResetCountersConfirm(false)}>
+      <DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <RestartAltIcon color="warning" />
+          تأكيد إعادة تعيين العدادات
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Typography>
+          هل أنت متأكد من إعادة تعيين عدادات أرقام العقود؟
+        </Typography>
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          سيتم إعادة تعيين جميع عدادات الأرقام (سند لأمر، إقرار دين، سند صرف، إلخ) إلى 1.
+          هذا الإجراء لا رجعة فيه وسيؤثر على الأرقام المستقبلية للعقود.
+        </Alert>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          استخدم هذا الخيار فقط إذا كنت تريد بدء العدادات من جديد للنظام.
+        </Alert>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShowResetCountersConfirm(false)}>إلغاء</Button>
+        <Button
+          color="warning"
+          variant="contained"
+          onClick={handleResetCounters}
+        >
+          نعم، أعد التعيين
         </Button>
       </DialogActions>
     </Dialog>
@@ -645,6 +664,14 @@ export default function ContractTemplates() {
                     </Typography>
                     
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        startIcon={<RestartAltIcon sx={{marginLeft:'10px'}} />}
+                        onClick={() => setShowResetCountersConfirm(true)}
+                      >
+                        إعادة تعيين عدادات العقود
+                      </Button>
                       <Button
                         variant={viewMode === "preview" ? "contained" : "outlined"}
                         startIcon={<PreviewIcon sx={{marginLeft:'10px'}} />}
@@ -743,6 +770,9 @@ export default function ContractTemplates() {
 
       {/* Delete Confirmation */}
       <DeleteConfirmation />
+
+      {/* Reset Counters Confirmation */}
+      <ResetCountersConfirmation />
 
 
     </Box>

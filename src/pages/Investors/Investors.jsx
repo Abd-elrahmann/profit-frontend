@@ -2507,6 +2507,8 @@ export default function Investors() {
         onSuccess={() => {
           setIsAddModalOpen(false);
           refetch();
+          // إعادة تحميل فحص القيود الافتتاحية
+          queryClient.invalidateQueries({ queryKey: ["opening-journals-check"] });
         }}
       />
 
