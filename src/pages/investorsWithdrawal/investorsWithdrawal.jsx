@@ -129,9 +129,14 @@ export default function InvestorsWithdrawal() {
     }
 
     try {
+      // Fetch receipt number from backend
+      const { data: countData } = await Api.get('/api/partner-withdraw/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
       const receiptHtml = await withdrawReceiptGeneratorRef.current.generateContract(
         false,
-        withdrawalDetails
+        withdrawalDetails,
+        receiptNumber
       );
       setPreviewReceiptHtml(receiptHtml);
       setIsPreviewOpen(true);
@@ -304,9 +309,15 @@ export default function InvestorsWithdrawal() {
 
     try {
       setIsSavingReceipt(true);
+      
+      // Fetch receipt number from backend
+      const { data: countData } = await Api.get('/api/partner-withdraw/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
       const receiptHtml = await withdrawReceiptGeneratorRef.current.generateContract(
         false,
-        withdrawalDetails
+        withdrawalDetails,
+        receiptNumber
       );
       const pdfBlob = await withdrawReceiptGeneratorRef.current.generatePDF(receiptHtml);
       

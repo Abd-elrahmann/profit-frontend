@@ -3,7 +3,6 @@ import html2pdf from 'html2pdf.js';
 import ContractPreview from './ContractPreview';
 import Api, { handleApiError } from '../config/Api';
 import { notifySuccess, notifyError } from '../utilities/toastify';
-import contractCounterService from '../utilities/contractCounterService';
 
 const numberToArabicWords = (num) => {
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
@@ -210,7 +209,7 @@ const ContractGenerator = React.forwardRef(({
       // معلومات إضافية للعقود الأخرى
       .replace(/{{اسم_الدائن}}/g, investorData.name || '')
       .replace(/{{اسم_المدين}}/g, investorData.name || '')
-      .replace(/{{رقم_السند}}/g, contractCounterService.getCurrentContractNumber(contractCounterService.COUNTER_TYPES.MUDARABAH))
+      .replace(/{{رقم_السند}}/g, '')
       .replace(/{{تاريخ_الانشاء}}/g, gregorianDate)
       .replace(/{{تاريخ_الاستحقاق}}/g, gregorianDate)
       .replace(/{{مدينة_الاصدار}}/g, 'الرياض')
@@ -302,9 +301,6 @@ const ContractGenerator = React.forwardRef(({
 
       // Upload PDF to server
       await uploadPDFToServer(pdfBlob);
-
-      // Increment the counter after successful save
-      contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.MUDARABAH);
 
       notifySuccess('تم إنشاء وحفظ العقد بنجاح');
       setShowPreview(false);

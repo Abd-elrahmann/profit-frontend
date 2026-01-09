@@ -47,7 +47,6 @@ import WithdrawReceipt from "../../components/Contracts/WithdrawReceipt";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
-import contractCounterService from "../../utilities/contractCounterService";
 
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
@@ -84,7 +83,6 @@ export default function ContractTemplates() {
   const [viewMode, setViewMode] = useState("preview");
   const [searchTerm, setSearchTerm] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [showResetCountersConfirm, setShowResetCountersConfirm] = useState(false);
   const { permissions } = usePermissions();
   const theme = useTheme();
   // Map tab values to API template names
@@ -421,6 +419,7 @@ export default function ContractTemplates() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateNameMap, defaultContractVariables]);
 
   const handleSave = async () => {
@@ -468,16 +467,7 @@ export default function ContractTemplates() {
     }));
   };
 
-  const handleResetCounters = () => {
-    try {
-      contractCounterService.resetAllCounters();
-      notifySuccess("تم إعادة تعيين عدادات العقود بنجاح");
-      setShowResetCountersConfirm(false);
-    } catch (error) {
-      console.error("Error resetting counters:", error);
-      notifyError("حدث خطأ في إعادة تعيين العدادات");
-    }
-  };
+
 
 
   const getCurrentVariables = () => {
@@ -568,39 +558,7 @@ export default function ContractTemplates() {
     </Dialog>
   );
 
-  // Reset Counters Confirmation Dialog
-  const ResetCountersConfirmation = () => (
-    <Dialog open={showResetCountersConfirm} onClose={() => setShowResetCountersConfirm(false)}>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <RestartAltIcon color="warning" />
-          تأكيد إعادة تعيين العدادات
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Typography>
-          هل أنت متأكد من إعادة تعيين عدادات أرقام العقود؟
-        </Typography>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          سيتم إعادة تعيين جميع عدادات الأرقام (سند لأمر، إقرار دين، سند صرف، إلخ) إلى 1.
-          هذا الإجراء لا رجعة فيه وسيؤثر على الأرقام المستقبلية للعقود.
-        </Alert>
-        <Alert severity="info" sx={{ mt: 2 }}>
-          استخدم هذا الخيار فقط إذا كنت تريد بدء العدادات من جديد للنظام.
-        </Alert>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setShowResetCountersConfirm(false)}>إلغاء</Button>
-        <Button
-          color="warning"
-          variant="contained"
-          onClick={handleResetCounters}
-        >
-          نعم، أعد التعيين
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
+ 
 
   useEffect(() => {
     loadTemplates();
@@ -664,14 +622,6 @@ export default function ContractTemplates() {
                     </Typography>
                     
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <Button
-                        variant="outlined"
-                        color="warning"
-                        startIcon={<RestartAltIcon sx={{marginLeft:'10px'}} />}
-                        onClick={() => setShowResetCountersConfirm(true)}
-                      >
-                        إعادة تعيين عدادات العقود
-                      </Button>
                       <Button
                         variant={viewMode === "preview" ? "contained" : "outlined"}
                         startIcon={<PreviewIcon sx={{marginLeft:'10px'}} />}

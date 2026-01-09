@@ -308,9 +308,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   const getSourceText = (source) => {
     switch (source) {
       case "GENERAL":
-        return "رأس مال جديد";
+        return "عام";
       case "NEW_CAPITAL":
-        return "رأس مال موجود";
+        return "رأس مال جديد";
+      case "MIX":
+        return "عام و رأس مال جديد";
       default:
         return source || "غير محدد";
     }

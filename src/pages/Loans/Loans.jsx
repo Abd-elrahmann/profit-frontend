@@ -22,7 +22,6 @@ import {
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
-import contractCounterService from "../../utilities/contractCounterService";
 import LoansTable from "../../components/modals/LoansTable";
 import EditSmallLoanForm from "../../components/modals/EditSmallLoanForm";
 import SmallLoansTable from "../../components/modals/SmallLoansTable";
@@ -118,12 +117,14 @@ const Loans = () => {
   const [partialTransferAmount, setPartialTransferAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [bankBalance, setBankBalance] = useState(null);
+  const [mixBalances, setMixBalances] = useState({ general: null, newCapital: null });
   const [_isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
   const [selectedLoanForEdit, setSelectedLoanForEdit] = useState(null);
   const [_isSmallLoanEditMode, setIsSmallLoanEditMode] = useState(false);
   const { permissions } = usePermissions();
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
+  const previousSourceRef = useRef(loanForm.source);
 
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -290,6 +291,18 @@ const Loans = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source, activeTab]);
+
+  // Reset amount field when source changes
+  useEffect(() => {
+    if (activeTab === 1 && loanForm.source && previousSourceRef.current !== loanForm.source && previousSourceRef.current !== null) {
+      setLoanForm((prev) => ({
+        ...prev,
+        amount: "",
+      }));
+    }
+    previousSourceRef.current = loanForm.source;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loanForm.source]);
 
   const handleConversionSuccess = useCallback(() => {
     setIsClientConversion(false);
@@ -529,25 +542,41 @@ const Loans = () => {
     try {
       setIsLoadingBankBalance(true);
 
-      let balance = 0;
+      if (loanForm.source === "MIX") {
+        // Fetch both balances for MIX source
+        const [generalResponse, newCapitalResponse] = await Promise.all([
+          Api.get(`/api/accounts/bank/1?limit=1`),
+          Api.get(`/api/accounts/NewBank/1`)
+        ]);
 
-      if (loanForm.source === "NEW_CAPITAL") {
-        // Use new endpoint for NEW_CAPITAL source
-        const response = await Api.get(`/api/accounts/NewBank/1`);
-        balance = response?.data?.account?.balance || 0;
+        const generalBalance = generalResponse?.data?.account?.balance || 0;
+        const newCapitalBalance = newCapitalResponse?.data?.account?.balance || 0;
+
+        setMixBalances({ general: generalBalance, newCapital: newCapitalBalance });
+        setBankBalance(null); // Clear single balance for MIX
       } else {
-        // Use existing endpoint for other sources
-        const params = new URLSearchParams();
-        params.append('limit', '1');
-        const queryString = params.toString();
-        const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
-        balance = response?.data?.account?.balance || 0;
-      }
+        let balance = 0;
 
-      setBankBalance(balance);
+        if (loanForm.source === "NEW_CAPITAL") {
+          // Use new endpoint for NEW_CAPITAL source
+          const response = await Api.get(`/api/accounts/NewBank/1`);
+          balance = response?.data?.account?.balance || 0;
+        } else {
+          // Use existing endpoint for other sources
+          const params = new URLSearchParams();
+          params.append('limit', '1');
+          const queryString = params.toString();
+          const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
+          balance = response?.data?.account?.balance || 0;
+        }
+
+        setBankBalance(balance);
+        setMixBalances({ general: null, newCapital: null }); // Clear mix balances for single source
+      }
     } catch (error) {
       handleApiError(error);
       setBankBalance(null);
+      setMixBalances({ general: null, newCapital: null });
     } finally {
       setIsLoadingBankBalance(false);
     }
@@ -577,31 +606,40 @@ const Loans = () => {
         return;
       }
 
-      // Generate and save contract numbers first
+      // Fetch loan count from backend and save contract numbers first
       if (contractType === "both" || contractType === "debt-acknowledgment" || contractType === "promissory-note") {
-        const contractNumbers = contractCounterService.getSettlementContractNumbers();
+        try {
+          // Fetch count from backend
+          const countResponse = await Api.get(`/api/loans/get/counts/${loanDataToUse.id}`);
+          const count = countResponse.data.count;
+          const contractNumber = count.toString();
 
-        // Determine which numbers to save based on contract type
-        const numbersToSave = {};
-        if (contractType === "both" || contractType === "debt-acknowledgment") {
-          numbersToSave.debtAcknowledgmentNumber = contractNumbers.debtAcknowledgmentNumber;
-        }
-        if (contractType === "both" || contractType === "promissory-note") {
-          numbersToSave.promissoryNoteNumber = contractNumbers.promissoryNoteNumber;
-        }
+          // Determine which numbers to save based on contract type
+          const numbersToSave = {};
+          if (contractType === "both" || contractType === "debt-acknowledgment") {
+            numbersToSave.debtAcknowledgmentNumber = contractNumber;
+          }
+          if (contractType === "both" || contractType === "promissory-note") {
+            numbersToSave.promissoryNoteNumber = contractNumber;
+          }
 
-        // Save the numbers to database immediately
-        await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, numbersToSave);
+          // Save the numbers to database immediately
+          await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, numbersToSave);
 
-        // Update loanDataToUse with the saved numbers so generators can use them
-        if (numbersToSave.debtAcknowledgmentNumber) {
-          loanDataToUse.debtAcknowledgmentNumber = contractNumbers.debtAcknowledgmentNumber;
-        }
-        if (numbersToSave.promissoryNoteNumber) {
-          loanDataToUse.promissoryNoteNumber = contractNumbers.promissoryNoteNumber;
-        }
+          // Update loanDataToUse with the saved numbers so generators can use them
+          if (numbersToSave.debtAcknowledgmentNumber) {
+            loanDataToUse.debtAcknowledgmentNumber = contractNumber;
+          }
+          if (numbersToSave.promissoryNoteNumber) {
+            loanDataToUse.promissoryNoteNumber = contractNumber;
+          }
 
-        console.log('Saved contract numbers:', numbersToSave);
+          console.log('Saved contract numbers:', numbersToSave);
+        } catch (error) {
+          console.error('Error fetching loan count:', error);
+          notifyError("حدث خطأ في جلب رقم العقد");
+          return;
+        }
       }
 
       if (contractType === "both" || contractType === "debt-acknowledgment") {
@@ -797,7 +835,20 @@ const Loans = () => {
       return;
     }
 
-    if (bankBalance !== null) {
+    if (loanForm.source === "MIX") {
+      const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
+      const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
+      if (loanAmount > totalBalances) {
+        notifyError(
+          `المبلغ المدخل (${formatAmount(
+            loanAmount.toFixed(2)
+          )}) يتجاوز مجموع أرصدة الصناديق المتاحة (${formatAmount(
+            totalBalances.toFixed(2)
+          )})`
+        );
+        return;
+      }
+    } else if (bankBalance !== null) {
       const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
       if (loanAmount > bankBalance) {
         notifyError(
@@ -1165,16 +1216,32 @@ const Loans = () => {
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
 
-        if (field === "amount" && bankBalance !== null) {
+        if (field === "amount") {
           const numericAmount = parseFloat(rawValue);
-          if (numericAmount > bankBalance) {
-            notifyError(
-              `المبلغ المدخل (${formatAmount(
-                numericAmount.toFixed(2)
-              )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
-                bankBalance.toFixed(2)
-              )})`
-            );
+
+          if (loanForm.source === "MIX") {
+            const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
+            if (numericAmount > totalBalances) {
+              notifyError(
+                `المبلغ المدخل (${formatAmount(
+                  numericAmount.toFixed(2)
+                )}) يتجاوز مجموع أرصدة الصناديق المتاحة (${formatAmount(
+                  totalBalances.toFixed(2)
+                )})`
+              );
+              return;
+            }
+          } else if (bankBalance !== null) {
+            if (numericAmount > bankBalance) {
+              notifyError(
+                `المبلغ المدخل (${formatAmount(
+                  numericAmount.toFixed(2)
+                )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
+                  bankBalance.toFixed(2)
+                )})`
+              );
+              return;
+            }
           }
         }
       }
@@ -1675,6 +1742,7 @@ const Loans = () => {
                     handlePartnerSelect={handlePartnerSelect}
                     handlePartnersSearchChange={handlePartnersSearchChange}
                     bankBalance={bankBalance}
+                    mixBalances={mixBalances}
                     formatAmount={formatAmount}
                     selectedLoan={selectedLoan}
                   />

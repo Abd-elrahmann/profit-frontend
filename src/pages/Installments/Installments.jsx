@@ -218,6 +218,10 @@ const Installments = () => {
     }
 
     try {
+      // Fetch receipt number from backend for preview
+      const { data: countData } = await Api.get('/api/repayments/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
       // Generate bulk payment proof HTML first
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
@@ -228,6 +232,7 @@ const Installments = () => {
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
+          receiptNumber: receiptNumber,
         }
       );
 
@@ -404,6 +409,10 @@ const Installments = () => {
       setDiscountModalOpen(false);
       setSelectedProofInstallment(discountInstallment);
 
+      // Fetch receipt number from backend for preview
+      const { data: countData } = await Api.get('/api/repayments/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const proofHtml = await paymentProofGeneratorRef.current.generateContract(
@@ -414,6 +423,7 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
           discount: discount,
+          receiptNumber: receiptNumber,
         }
       );
 
@@ -429,6 +439,10 @@ const Installments = () => {
     try {
       setIsGeneratingProof(true);
 
+      // Fetch receipt number from backend
+      const { data: countData } = await Api.get('/api/repayments/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const finalProofHtml =
@@ -438,6 +452,7 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
           discount: confirmedDiscount.discount,
+          receiptNumber: receiptNumber,
         }, true); // true = isForSaving
 
       await paymentProofGeneratorRef.current.generatePDF(finalProofHtml);
@@ -479,6 +494,10 @@ const Installments = () => {
     try {
       setIsGeneratingBulkProof(true);
 
+      // Fetch receipt number from backend
+      const { data: countData } = await Api.get('/api/repayments/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
       const installmentsToApprove = sortedInstallments.filter(installment =>
         selectedInstallments.includes(installment.id)
       );
@@ -491,6 +510,7 @@ const Installments = () => {
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
+          receiptNumber: receiptNumber,
         }, true); // true = isForSaving
 
       await paymentProofGeneratorRef.current.generatePDF(

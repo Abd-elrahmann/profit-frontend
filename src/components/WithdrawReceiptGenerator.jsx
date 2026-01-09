@@ -199,6 +199,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
       templateContent,
       onReceiptGenerated,
       autoGenerate = false,
+      receiptNumber = null, // Add receiptNumber prop from backend
     },
     ref
   ) => {
@@ -309,8 +310,9 @@ const WithdrawReceiptGenerator = React.forwardRef(
     );
 
     const generateContract = useCallback(
-      async (generatePdf = autoGenerate, customWithdrawalData = null) => {
+      async (generatePdf = autoGenerate, customWithdrawalData = null, customReceiptNumber = null) => {
         const withdrawalDataToUse = customWithdrawalData || withdrawalData;
+        const receiptNumberToUse = customReceiptNumber || receiptNumber;
         
         if (!withdrawalDataToUse || !templateContent) {
           console.error("Missing data:", {
@@ -323,6 +325,9 @@ const WithdrawReceiptGenerator = React.forwardRef(
 
         try {
           const { gregorianDate, hijriDate, fullDate } = getCurrentDates();
+          
+          // Use receipt number from props or parameter (passed from backend)
+          const receiptNum = receiptNumberToUse || 'غير محدد';
           
           const totalCapital = withdrawalDataToUse.withdrawal?.totalCapital || 0;
           // خصم نصيب المساهم من الخسائر
@@ -346,7 +351,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
 
           let filledTemplate = templateContent
             // Basic Information
-            .replace(/{{رقم_المرجع}}/g, `WR-${withdrawalDataToUse.partner?.id || Date.now()}`)
+            .replace(/{{رقم_المرجع}}/g, receiptNum)
             .replace(/{{اسم_المضارب}}/g, "المضارب (الإدارة)")
             .replace(/{{رقم_هوية_المضارب}}/g, "")
             .replace(/{{اسم_المساهم}}/g, withdrawalDataToUse.partner?.name || "")
@@ -392,7 +397,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
           throw error;
         }
       },
-      [withdrawalData, templateContent, autoGenerate, generatePDF]
+      [withdrawalData, templateContent, autoGenerate, generatePDF, receiptNumber]
     );
 
     useEffect(() => {

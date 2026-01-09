@@ -64,8 +64,7 @@ const numberToArabicWords = (num) => {
     { value: 1e6, singular: "مليون", dual: "مليونان", plural: "ملايين" },
     { value: 1e3, singular: "ألف", dual: "ألفان", plural: "آلاف" },
   ];
-
-  // معالجة المليارات والملايين والآلاف
+  
   for (let s of scale) {
     if (num >= s.value) {
       const part = Math.floor(num / s.value);
@@ -73,7 +72,6 @@ const numberToArabicWords = (num) => {
       else if (part === 2) result += s.dual + " ";
       else if (part < 11) result += ones[part] + " " + s.plural + " ";
       else {
-        // Fix: For compound numbers >= 20, use proper Arabic grammar
         if (part >= 20) {
           const partTens = Math.floor(part / 10);
           const partOnes = part % 10;
@@ -92,7 +90,6 @@ const numberToArabicWords = (num) => {
     }
   }
 
-  // المئات
   if (num >= 100) {
     const h = Math.floor(num / 100);
     if (hasThousands && result.length > 0) {
@@ -103,7 +100,6 @@ const numberToArabicWords = (num) => {
     num %= 100;
   }
 
-  // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {
     const t = Math.floor(num / 10);
     const o = num % 10;
@@ -138,11 +134,9 @@ const numberToArabicWords = (num) => {
 };
 
 const getCurrentDates = () => {
-  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
 
-  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
   const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat(
@@ -191,7 +185,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
     const [contractHtml, setContractHtml] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // Upload PDF to server function
     const uploadPDFToServer = useCallback(
       async (pdfBlob) => {
         try {
@@ -219,7 +212,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
       [installmentData?.id, loanData?.id]
     );
 
-    // Generate PDF from HTML
     const generatePDF = useCallback(
       async (htmlContent = contractHtml) => {
         const contentToUse = htmlContent || contractHtml;
@@ -233,18 +225,14 @@ const InstallmentSettlementReceipt = React.forwardRef(
         try {
           setIsGenerating(true);
 
-          // إزالة أي div إضافي محيط بالمحتوى
           let cleanedContent = contentToUse;
 
-          // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = contentToUse;
 
-          // البحث عن contract-wrapper داخل المحتوى
           const contractWrapper = tempDiv.querySelector('.contract-wrapper');
 
           if (contractWrapper) {
-            // أخذ المحتوى الداخلي فقط
             cleanedContent = contractWrapper.outerHTML;
           }
 
@@ -270,7 +258,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
             },
           };
 
-          // إنشاء عنصر مؤقت بدون أي div إضافي
           const tempElement = document.createElement('div');
           tempElement.style.width = '794px';
           tempElement.style.backgroundColor = 'white';
@@ -278,10 +265,8 @@ const InstallmentSettlementReceipt = React.forwardRef(
           tempElement.style.padding = '0';
           tempElement.innerHTML = cleanedContent;
 
-          // إضافة العنصر مؤقتاً إلى body
           document.body.appendChild(tempElement);
 
-          // انتظار قليل لتحميل الخطوط والصور
           await new Promise(resolve => setTimeout(resolve, 500));
 
           const pdfBlob = await html2pdf()
@@ -289,7 +274,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
             .set(options)
             .outputPdf("blob");
 
-          // إزالة العنصر المؤقت
           document.body.removeChild(tempElement);
 
           await uploadPDFToServer(pdfBlob);
@@ -316,7 +300,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
       ]
     );
 
-    // Generate filled settlement receipt from template
     const generateContract = useCallback(
       async (generatePdf = autoGenerate, customData = null) => {
         const dataToUse = customData || {
@@ -326,12 +309,6 @@ const InstallmentSettlementReceipt = React.forwardRef(
           employeeName,
         };
 
-        console.log('InstallmentSettlementReceipt - loanData:', dataToUse.loanData);
-        console.log('debtAcknowledgmentNumber:', dataToUse.loanData?.debtAcknowledgmentNumber);
-        console.log('promissoryNoteNumber:', dataToUse.loanData?.promissoryNoteNumber);
-
-        // Use existing contract numbers from the loan data
-        // Settlement references the original contract numbers, not new ones
         const promissoryNoteNumber = dataToUse.loanData?.promissoryNoteNumber || "غير محدد";
         const debtAcknowledgmentNumber = dataToUse.loanData?.debtAcknowledgmentNumber || "غير محدد";
 
@@ -348,7 +325,36 @@ const InstallmentSettlementReceipt = React.forwardRef(
 
           const { gregorianDate, hijriDate } = getCurrentDates();
 
-          const amount = dataToUse.loanData?.totalAmount || 0;
+          let amount = 0;
+          
+          const totalAmount = Number(dataToUse.loanData?.totalAmount || 0);
+          const earlyPaidAmount = Number(dataToUse.loanData?.earlyPaidAmount || 0);
+          const earlyPaymentDiscount = Number(dataToUse.loanData?.earlyPaymentDiscount || 0);
+          
+          if (earlyPaidAmount > 0 && earlyPaymentDiscount >= 0) {
+            amount = Math.max(0, earlyPaidAmount - earlyPaymentDiscount);
+          }
+          else if (dataToUse.loanData?.pagination?.totalRemainingAmount !== undefined && 
+                   dataToUse.loanData.pagination.totalRemainingAmount !== null &&
+                   dataToUse.loanData.pagination.totalRemainingAmount > 0) {
+            amount = Number(dataToUse.loanData.pagination.totalRemainingAmount);
+          } 
+          else if (dataToUse.loanData?.totalRemainingAmount !== undefined && 
+                   dataToUse.loanData.totalRemainingAmount !== null) {
+            amount = Number(dataToUse.loanData.totalRemainingAmount);
+          } 
+          else if (dataToUse.loanData?.remainingBalance !== undefined && 
+                   dataToUse.loanData.remainingBalance !== null) {
+            amount = Number(dataToUse.loanData.remainingBalance);
+          } 
+          else if (dataToUse.loanData?.pagination?.totalPaidAmount !== undefined) {
+            const totalPaidAmount = Number(dataToUse.loanData.pagination.totalPaidAmount);
+            amount = Math.max(0, totalAmount - totalPaidAmount);
+          }
+          else {
+            amount = totalAmount;
+          }
+          
           const amountInWords = `${numberToArabicWords(amount)} ريال`;
 
           let filledTemplate = templateContent
@@ -429,13 +435,11 @@ const InstallmentSettlementReceipt = React.forwardRef(
       generateContract,
     ]);
 
-    // Expose methods through ref
     React.useImperativeHandle(ref, () => ({
       generateContract,
       generatePDF: () => generatePDF(contractHtml),
     }));
 
-    // إذا كان التوليد تلقائي، لا تعرض المعاينة
     if (autoGenerate) {
       return null;
     }

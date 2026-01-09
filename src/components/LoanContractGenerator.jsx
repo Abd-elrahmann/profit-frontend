@@ -3,7 +3,6 @@ import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../config/Api";
 import { notifyError } from "../utilities/toastify";
-import contractCounterService from "../utilities/contractCounterService";
 
 const numberToArabicWords = (num) => {
   const ones = [
@@ -372,13 +371,6 @@ const LoanContractGenerator = React.forwardRef(
     
           await uploadPDFToServer(pdfBlob, loanDataParam, contractNumbers);
 
-          // Increment the appropriate counter after successful save
-          if (contractType === "DEBT_ACKNOWLEDGMENT") {
-            contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.DEBT_ACKNOWLEDGMENT);
-          } else if (contractType === "PROMISSORY_NOTE") {
-            contractCounterService.generateContractNumber(contractCounterService.COUNTER_TYPES.PROMISSORY_NOTE);
-          }
-
           if (onContractGenerated) {
             onContractGenerated(pdfBlob, contractType);
           }
@@ -424,16 +416,23 @@ const LoanContractGenerator = React.forwardRef(
           // توليد أرقام العقود بناءً على ما إذا كنا نحفظ أم نعاين
           let promissoryNoteNumber, debtAcknowledgmentNumber;
 
-          // Use saved numbers if they exist in loanData, otherwise use current counter numbers
+          // Use saved numbers if they exist in loanData, otherwise fetch count from backend
           if (loanDataToUse.debtAcknowledgmentNumber && loanDataToUse.promissoryNoteNumber) {
             // Use the numbers already saved in the database
             promissoryNoteNumber = loanDataToUse.promissoryNoteNumber;
             debtAcknowledgmentNumber = loanDataToUse.debtAcknowledgmentNumber;
           } else {
-            // Use current counter numbers for preview or when numbers aren't saved yet
-            const settlementNumbers = contractCounterService.getSettlementContractNumbers();
-            promissoryNoteNumber = settlementNumbers.promissoryNoteNumber;
-            debtAcknowledgmentNumber = settlementNumbers.debtAcknowledgmentNumber;
+            // Fetch count from backend
+            try {
+              const countResponse = await Api.get(`/api/loans/get/counts/${loanDataToUse.id}`);
+              const count = countResponse.data.count;
+              promissoryNoteNumber = count.toString();
+              debtAcknowledgmentNumber = count.toString();
+            } catch (error) {
+              console.error('Error fetching loan count:', error);
+              notifyError("حدث خطأ في جلب رقم العقد");
+              return;
+            }
           }
 
           if (isForSaving) {

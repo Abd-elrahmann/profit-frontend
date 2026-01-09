@@ -30,6 +30,7 @@ const LoanDetailsSection = ({
   handlePartnerSelect,
   handlePartnersSearchChange,
   bankBalance,
+  mixBalances,
   formatAmount,
   selectedLoan,
 }) => {
@@ -80,6 +81,7 @@ const LoanDetailsSection = ({
           >
             <MenuItem value="GENERAL">عام</MenuItem>
             <MenuItem value="NEW_CAPITAL">رأس مال جديد</MenuItem>
+            <MenuItem value="MIX">عام و رأس مال جديد</MenuItem>
           </TextField>
         </Grid>
 
@@ -113,34 +115,100 @@ const LoanDetailsSection = ({
               }}
             />
             {!isReadOnlyMode && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "16px",
-                  mt: -0.5,
-                  ml: 1,
-                }}
-              >
-                {bankBalance !== null ? (
-                  <>
-                    <span style={{ color: "text.primary", fontSize: "16px" }}>
-                      رصيد الصندوق المتاح:{" "}
-                    </span>
-                    <span
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        color: "green",
-                      }}
-                    >
-                      {formatAmount(bankBalance.toString())}
-                    </span>
-                  </>
-                ) : (
-                  "لا يوجد رصيد متاح"
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "16px",
+                    mt: -0.5,
+                    ml: 1,
+                  }}
+                >
+                  {loanForm.source === "MIX" ? (
+                    mixBalances.general !== null && mixBalances.newCapital !== null ? (
+                      <>
+                        <span style={{ color: "text.primary", fontSize: "14px" }}>
+                          رصيد الصناديق:{" "}
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                            color: "green",
+                          }}
+                        >
+                          {formatAmount(mixBalances.general.toString())} صندوق عام + {formatAmount(mixBalances.newCapital.toString())} رأس مال جديد
+                        </span>
+                      </>
+                    ) : (
+                      "جاري تحميل أرصدة الصناديق..."
+                    )
+                  ) : bankBalance !== null ? (
+                    <>
+                      <span style={{ color: "text.primary", fontSize: "16px" }}>
+                        رصيد الصندوق المتاح:{" "}
+                      </span>
+                      <span
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: "16px",
+                          color: "green",
+                        }}
+                      >
+                        {formatAmount(bankBalance.toString())}
+                      </span>
+                    </>
+                  ) : (
+                    "لا يوجد رصيد متاح"
+                  )}
+                </Typography>
+                {loanForm.amount && loanForm.amount.replace(/,/g, "") !== "" && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "14px",
+                      ml: 1,
+                    }}
+                  >
+                    {(() => {
+                      const loanAmount = parseFloat(loanForm.amount.replace(/,/g, "") || 0);
+                      if (isNaN(loanAmount) || loanAmount === 0) return null;
+
+                      if (loanForm.source === "MIX") {
+                        const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
+                        const remaining = totalBalances - loanAmount;
+                        if (remaining >= 0) {
+                          return (
+                            <>
+                              سيتبقي{" "}
+                              <span style={{ fontWeight: "bold", color: "green" }}>
+                                {formatAmount(remaining.toFixed(2))}
+                              </span>{" "}
+                              في الرصيد المتاح
+                            </>
+                          );
+                        }
+                      } else if (bankBalance !== null) {
+                        const remaining = bankBalance - loanAmount;
+                        if (remaining >= 0) {
+                          return (
+                            <>
+                              سيتبقي{" "}
+                              <span style={{ fontWeight: "bold", color: "green" }}>
+                                {formatAmount(remaining.toFixed(2))}
+                              </span>{" "}
+                              في الرصيد المتاح
+                            </>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
+                  </Typography>
                 )}
-              </Typography>
+              </Box>
             )}
           </Box>
         </Grid>
