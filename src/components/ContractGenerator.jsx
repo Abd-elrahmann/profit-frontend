@@ -64,16 +64,20 @@ const numberToArabicWords = (num) => {
     hasThousands = true;
   }
 
-  // المئات
-  if (num >= 100) {
-    const hundredsPart = Math.floor(num / 100);
-    if (hasThousands) {
-      result += 'و' + hundreds[hundredsPart] + ' ';
-    } else {
-      result += hundreds[hundredsPart] + ' ';
-    }
-    num %= 100;
+// Handle hundreds
+if (num >= 100) {
+  const hundredsPart = Math.floor(num / 100);
+
+  if (hasThousands) {
+    result += "و" + hundreds[hundredsPart]; // ❌ شيل المسافة
+  } else {
+    result += hundreds[hundredsPart];
   }
+
+  num %= 100;
+
+  if (num > 0) result += " ";
+}
 
   // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {

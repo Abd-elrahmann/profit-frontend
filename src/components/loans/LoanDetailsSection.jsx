@@ -70,7 +70,7 @@ const LoanDetailsSection = ({
             select
             value={isViewMode ? (loanForm.source || selectedLoan?.source) : loanForm.source}
             onChange={(e) => handleInputChange("source", e.target.value)}
-            disabled={isReadOnlyMode}
+            disabled={isReadOnlyMode || isEditMode}
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",

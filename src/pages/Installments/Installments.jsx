@@ -708,10 +708,24 @@ const Installments = () => {
 
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
+      // حساب المبلغ من الدفعات المدفوعة
+      const paidInstallments = sortedInstallments.filter(
+        inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
+      );
+      const totalPaidFromInstallments = paidInstallments.reduce(
+        (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
+        0
+      );
+
       const settlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
-          loanData,
+          loanData: {
+            ...loanData,
+            // إضافة المبلغ المحسوب من الدفعات إذا كانت البيانات غير محدثة
+            calculatedSettlementAmount: totalPaidFromInstallments,
+            allInstallments: sortedInstallments,
+          },
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
         });
@@ -736,10 +750,24 @@ const Installments = () => {
       const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
   
+      // حساب المبلغ من الدفعات المدفوعة
+      const paidInstallments = sortedInstallments.filter(
+        inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
+      );
+      const totalPaidFromInstallments = paidInstallments.reduce(
+        (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
+        0
+      );
+  
       const finalSettlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
-          loanData,
+          loanData: {
+            ...loanData,
+            // إضافة المبلغ المحسوب من الدفعات إذا كانت البيانات غير محدثة
+            calculatedSettlementAmount: totalPaidFromInstallments,
+            allInstallments: sortedInstallments,
+          },
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
         }, true); // true = isForSaving

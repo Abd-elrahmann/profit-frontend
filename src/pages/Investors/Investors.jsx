@@ -674,6 +674,7 @@ export default function Investors() {
 
       queryClient.invalidateQueries({ queryKey: ['partner-transactions', selectedInvestor.id] });
       queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
       
       notifySuccess("تم إضافة العملية المالية بنجاح");
       setIsTransactionModalOpen(false);
@@ -693,6 +694,7 @@ export default function Investors() {
       
       queryClient.invalidateQueries({ queryKey: ['partner-transactions', selectedInvestor.id] });
       queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
       
       notifySuccess("تم حذف العملية المالية بنجاح");
       setIsDeleteTransactionModalOpen(false);

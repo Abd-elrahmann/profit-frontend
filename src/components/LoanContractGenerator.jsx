@@ -108,16 +108,21 @@ const numberToArabicWords = (num) => {
     hasThousands = true;
   }
 
-  // Handle hundreds
-  if (num >= 100) {
-    const hundredsPart = Math.floor(num / 100);
-    if (hasThousands) {
-      result += "و" + hundreds[hundredsPart] + " ";
-    } else {
-      result += hundreds[hundredsPart] + " ";
-    }
-    num %= 100;
+// Handle hundreds
+if (num >= 100) {
+  const hundredsPart = Math.floor(num / 100);
+
+  if (hasThousands) {
+    result += "و" + hundreds[hundredsPart]; // ❌ شيل المسافة
+  } else {
+    result += hundreds[hundredsPart];
   }
+
+  num %= 100;
+
+  if (num > 0) result += " ";
+}
+
 
   // Handle tens and ones with proper Arabic grammar
   if (num >= 20) {
