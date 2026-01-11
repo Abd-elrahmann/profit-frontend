@@ -117,7 +117,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   const formatInt = (value) => {
     const num = Number(value ?? 0);
     if (!Number.isFinite(num)) return '0';
-    return Math.round(num).toLocaleString();
+    return num.toLocaleString();
   };
 
   const renderTable = () => (

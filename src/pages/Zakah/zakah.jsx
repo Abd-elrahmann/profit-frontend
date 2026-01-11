@@ -295,6 +295,18 @@ const Zakah = () => {
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography>الزكاة السنوية الحالية:</Typography>
+              <Typography fontWeight="bold" color={theme.palette.primary.main}>
+                {formatCurrency(currentYearData?.currentAnnualZakat)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography>الزكاة الشهرية الحالية:</Typography>
+              <Typography fontWeight="bold" color={theme.palette.primary.main}>
+                {formatCurrency(currentYearData?.currentMonthlyZakat)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>المدفوع:</Typography>
               <Typography fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.totalPaid)}
@@ -469,20 +481,44 @@ const Zakah = () => {
             </Card>
           </Grid>
           <Grid item xs={6}>
-            <Card sx={{ 
-              bgcolor: currentYearData?.remaining > 0 ? theme.palette.error[50] : theme.palette.primary[50], 
-              textAlign: "center" 
+            <Card sx={{
+              bgcolor: currentYearData?.remaining > 0 ? theme.palette.error[50] : theme.palette.primary[50],
+              textAlign: "center"
             }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="body2" color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main}>
                   المتبقي
                 </Typography>
-                <Typography 
-                  variant="h6" 
-                  fontWeight="bold" 
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
                   color={currentYearData?.remaining > 0 ? theme.palette.error.main : theme.palette.primary.main}
                 >
                   {formatCurrency(currentYearData?.remaining)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={6}>
+            <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
+              <CardContent sx={{ p: 2 }}>
+                <Typography variant="body2" color={theme.palette.primary.main}>
+                  الزكاة السنوية الحالية
+                </Typography>
+                <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
+                  {formatCurrency(currentYearData?.currentAnnualZakat)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={6}>
+            <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
+              <CardContent sx={{ p: 2 }}>
+                <Typography variant="body2" color={theme.palette.primary.main}>
+                  الزكاة الشهرية الحالية
+                </Typography>
+                <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
+                  {formatCurrency(currentYearData?.currentMonthlyZakat)}
                 </Typography>
               </CardContent>
             </Card>
@@ -523,6 +559,24 @@ const Zakah = () => {
               </Typography>
               <Typography variant="body1" fontWeight="bold">
                 {formatCurrency(currentYearData?.monthlyZakat)}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
+                الزكاة السنوية الحالية
+              </Typography>
+              <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>
+                {formatCurrency(currentYearData?.currentAnnualZakat)}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
+                الزكاة الشهرية الحالية
+              </Typography>
+              <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>
+                {formatCurrency(currentYearData?.currentMonthlyZakat)}
               </Typography>
             </Box>
           </Stack>
@@ -574,36 +628,6 @@ const Zakah = () => {
         <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3} textAlign={"center"}>
           تفاصيل زكاة الشريك
         </Typography>
-
-        {/* Partner Information */}
-        <Grid container spacing={3} mb={4} justifyContent="space-between" alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              اسم الشريك:
-            </Typography>
-            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{currentYearData?.partnerName || "-"}</Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              السنة:
-            </Typography>
-            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{selectedYear}</Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              رأس المال:
-            </Typography>
-            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{formatCurrency(currentYearData?.capitalAmount)}</Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              الزكاة الشهرية:
-            </Typography>
-            <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>{formatCurrency(currentYearData?.monthlyZakat)}</Typography>
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
 
         {/* Zakat Summary */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">

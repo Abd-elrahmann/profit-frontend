@@ -7,33 +7,16 @@ import {
   Button,
   Paper,
   Chip,
-  Grid,
-  Card,
-  CardContent,
-  Divider,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
   TextField,
   InputAdornment,
-  Alert,
   Tooltip,
   useTheme,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
-import ManageSearchIcon from "@mui/icons-material/ManageSearch";
-import CloseIcon from "@mui/icons-material/Close";
-import RestoreIcon from "@mui/icons-material/Restore";
-import WarningIcon from "@mui/icons-material/Warning";
 import SearchIcon from "@mui/icons-material/Search";
 import ReactQuillWrapper from "../../components/ReactQuillWrapper";
-import TemplateVariablesManager from "../../components/TemplateVariablesManager";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
@@ -74,52 +57,11 @@ export default function MessagesTemplates() {
     paymentApproved: "",
     paymentRejected: "",
   });
-  const [dynamicVariables, setDynamicVariables] = useState({
-    repaymentDue: [],
-    repaymentLate: [],
-    paymentApproved: [],
-    paymentRejected: [],
-  });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [manageVariablesOpen, setManageVariablesOpen] = useState(false);
   const [viewMode, setViewMode] = useState("preview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const { permissions } = usePermissions();
   const theme = useTheme();
-  const defaultMessageVariables = React.useMemo(() => ({
-    "repayment-due": [
-      { key: "{{اسم_العميل}}", description: "اسم العميل", group: "بيانات العميل" },
-      { key: "{{اسم_الشركة}}", description: "اسم الشركة أو المؤسسة", group: "بيانات الشركة" },
-      { key: "{{مبلغ_الدفعة}}", description: "مبلغ الدفعة المستحق", group: "البيانات المالية" },
-      { key: "{{تاريخ_الاستحقاق}}", description: "تاريخ استحقاق الدفعة", group: "التواريخ" },
-      { key: "{{رقم_الاتصال}}", description: "رقم الاتصال أو خدمة العملاء", group: "بيانات الاتصال" },
-    ],
-    "repayment-late": [
-      { key: "{{اسم_العميل}}", description: "اسم العميل", group: "بيانات العميل" },
-      { key: "{{اسم_الشركة}}", description: "اسم الشركة أو المؤسسة", group: "بيانات الشركة" },
-      { key: "{{مبلغ_الدفعة}}", description: "مبلغ الدفعة المستحق", group: "البيانات المالية" },
-      { key: "{{تاريخ_الاستحقاق}}", description: "تاريخ استحقاق الدفعة", group: "التواريخ" },
-      { key: "{{رقم_الاتصال}}", description: "رقم الاتصال أو خدمة العملاء", group: "بيانات الاتصال" },
-      { key: "{{عدد_أيام_التأخير}}", description: "عدد أيام التأخير", group: "بيانات التأخير" },
-      { key: "{{الغرامات_المستحقة}}", description: "قيمة الغرامات المستحقة", group: "البيانات المالية" },
-    ],
-    "payment-approved": [
-      { key: "{{اسم_العميل}}", description: "اسم العميل", group: "بيانات العميل" },
-      { key: "{{اسم_الشركة}}", description: "اسم الشركة أو المؤسسة", group: "بيانات الشركة" },
-      { key: "{{مبلغ_الدفعة}}", description: "مبلغ الدفعة المدفوع", group: "البيانات المالية" },
-      { key: "{{رقم_المرجع}}", description: "رقم المرجع أو المعاملة", group: "بيانات المعاملة" },
-      { key: "{{تاريخ_المعاملة}}", description: "تاريخ إتمام المعاملة", group: "التواريخ" },
-    ],
-    "payment-rejected": [
-      { key: "{{اسم_العميل}}", description: "اسم العميل", group: "بيانات العميل" },
-      { key: "{{اسم_الشركة}}", description: "اسم الشركة أو المؤسسة", group: "بيانات الشركة" },
-      { key: "{{مبلغ_الدفعة}}", description: "مبلغ الدفعة المرفوضة", group: "البيانات المالية" },
-      { key: "{{سبب_الرفض}}", description: "سبب رفض الدفعة", group: "بيانات المعاملة" },
-      { key: "{{رقم_الاتصال}}", description: "رقم الاتصال أو خدمة العملاء", group: "بيانات الاتصال" },
-    ],
-  }), []);
 
   const templateNameMap = React.useMemo(() => ({
     "repayment-due": "REPAYMENT_DUE",
@@ -144,27 +86,6 @@ export default function MessagesTemplates() {
   }, []);
 
 
-  const fetchTemplateFromAPI = React.useCallback(async (templateName) => {
-    try {
-      const response = await Api.get(`/api/templates/${templateName}/with-variables`);
-      if (response.data.content && response.data.content.trim() !== "") {
-        return {
-          content: response.data.content,
-          variables: response.data.variables || [],
-        };
-      } else {
-        return {
-          content: getDefaultTemplate(templateName),
-          variables: [],
-        };
-      }
-    } catch {
-      return {
-        content: getDefaultTemplate(templateName),
-        variables: [],
-      };
-    }
-  }, [getDefaultTemplate]);
 
   const getStateKey = (tab) => {
     return tab === "repayment-due" ? "repaymentDue" :
@@ -173,207 +94,33 @@ export default function MessagesTemplates() {
            tab === "payment-rejected" ? "paymentRejected" : tab;
   };
 
-  const ensureVariableBrackets = (content) => {
-    if (!content) return content;
 
-    const stateKey = getStateKey(activeTab);
-    const allVariables = dynamicVariables[stateKey] || [];
-    const variableNames = allVariables.map(v => {
-      const match = v.key.match(/\{\{([^}]+)\}\}/);
-      return match ? match[1] : v.key.replace(/[{}]/g, '');
-    });
-
-    let processedContent = content;
-
-    variableNames.forEach(varName => {
-      const escapedVarName = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      const regex = new RegExp(`(?!\\{\\{)${escapedVarName}(?!\\}\\})`, 'g');
-
-      processedContent = processedContent.replace(regex, (match, offset) => {
-        const before = processedContent.substring(Math.max(0, offset - 20), offset);
-        const after = processedContent.substring(offset + match.length, offset + match.length + 20);
-
-        if (before.includes('{{') || after.includes('}}')) {
-          return match;
-        }
-
-
-        const beforeTag = processedContent.substring(Math.max(0, offset - 100), offset);
-        const afterTag = processedContent.substring(offset + match.length, offset + match.length + 100);
-
-        const lastOpenTag = beforeTag.lastIndexOf('<');
-        const lastCloseTag = beforeTag.lastIndexOf('>');
-        const nextCloseTag = afterTag.indexOf('>');
-        const nextOpenTag = afterTag.indexOf('<');
-
-        if (lastOpenTag > lastCloseTag && nextCloseTag !== -1 && (nextCloseTag < nextOpenTag || nextOpenTag === -1)) {
-          return match;
-        }
-
-        return `{{${match}}}`;
-      });
-    });
-
-    return processedContent;
-  };
-
-  const copyToClipboard = (text) => {
-    const variableName = text.replace(/\{\{|\}\}/g, '');
-    navigator.clipboard.writeText(variableName).then(() => {
-      notifySuccess('تم نسخ المتغير:', variableName);
-    });
-  };
 
   const loadTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
-      const templatePromises = Object.keys(templateNameMap).map(async (key) => {
-        const templateName = templateNameMap[key];
-        const templateData = await fetchTemplateFromAPI(templateName);
-        return { key, ...templateData };
-      });
-
-      const results = await Promise.all(templatePromises);
       const newTemplates = {};
-      const newVariables = {};
 
-      results.forEach(({ key, content, variables: dynamicVars }) => {
+      Object.keys(templateNameMap).forEach((key) => {
+        const templateName = templateNameMap[key];
         const stateKey = getStateKey(key);
 
-        newTemplates[stateKey] = content;
-
-        const defaultVars = defaultMessageVariables[key] || [];
-        const dynamicVariablesList = dynamicVars || [];
-        newVariables[stateKey] = [...defaultVars, ...dynamicVariablesList];
+        // Use default templates directly without API calls
+        newTemplates[stateKey] = getDefaultTemplate(templateName);
       });
 
       setTemplates(newTemplates);
-      setDynamicVariables(newVariables);
     } catch (error) {
       notifyError("خطأ في تحميل القوالب");
       handleApiError(error);
     } finally {
       setLoading(false);
     }
-  }, [templateNameMap, fetchTemplateFromAPI, defaultMessageVariables]);
+  }, [templateNameMap, getDefaultTemplate]);
 
-  const SimpleVariablesList = ({ variables, onManageVariables, onCopyVariable }) => {
-    const filteredVariables = variables.filter(variable =>
-      variable.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      variable.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
-    return (
-      <Card sx={{ mb: 3, border: `1px solid ${theme.palette.divider}` }}>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
-              المتغيرات المتاحة
-            </Typography>
-            {permissions.includes('templates_Update') && (
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ManageSearchIcon sx={{marginLeft:'10px'}} />}
-                onClick={onManageVariables}
-              >
-                إدارة المتغيرات
-              </Button>
-            )}
-          </Box>
 
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="ابحث في المتغيرات..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ mb: 2 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
 
-          {searchTerm && (
-            <Typography variant="caption" sx={{ mb: 2, display: 'block', color: theme.palette.text.secondary }}>
-              {filteredVariables.length} متغير وجد
-            </Typography>
-          )}
-
-          <Grid container spacing={1}>
-            {filteredVariables.map((variable, index) => {
-              const displayName = variable.key.replace(/\{\{|\}\}/g, '');
-              return (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Tooltip title={variable.description} arrow>
-                    <Chip
-                      label={displayName}
-                      onClick={() => onCopyVariable(variable.key)}
-                      icon={<ContentCopyIcon sx={{ fontSize: '14px !important' }} />}
-                      sx={{
-                        width: '100%',
-                        justifyContent: 'flex-start',
-                        height: 'auto',
-                        minHeight: '36px',
-                        backgroundColor: theme.palette.background.default,
-                        border: `1px solid ${theme.palette.divider}`,
-                        '&:hover': {
-                          backgroundColor: theme.palette.background.paper,
-                          borderColor: theme.palette.primary.main,
-                        },
-                        '& .MuiChip-label': {
-                          fontSize: '0.8rem',
-                          fontWeight: '500',
-                          whiteSpace: 'normal',
-                          textAlign: 'right',
-                          direction: 'rtl',
-                        }
-                      }}
-                    />
-                  </Tooltip>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Delete Confirmation Dialog
-  const DeleteConfirmation = () => (
-    <Dialog open={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)}>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningIcon color="warning" />
-          تأكيد الحذف
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Typography>
-          هل أنت متأكد من حذف المتغير <strong>{showDeleteConfirm?.name}</strong>؟
-        </Typography>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          قد يسبب ذلك أخطاء في الرسائل الموجودة التي تستخدم هذا المتغير.
-        </Alert>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setShowDeleteConfirm(null)}>إلغاء</Button>
-        <Button
-          color="error"
-          variant="contained"
-          onClick={showDeleteConfirm?.onConfirm}
-        >
-          نعم، احذف
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
 
   const renderMessagePreview = (templateKey) => {
     const content = templates[templateKey];
@@ -417,22 +164,13 @@ export default function MessagesTemplates() {
       const currentTemplateKey = activeTab;
       const templateName = templateNameMap[currentTemplateKey];
       const stateKey = getStateKey(currentTemplateKey);
-      let templateContent = templates[stateKey];
-
-      // Ensure all variables have {{ }} brackets before saving
-      templateContent = ensureVariableBrackets(templateContent);
+      const templateContent = templates[stateKey];
 
       await Api.post("/api/templates", {
         name: templateName,
         description: `Template for ${templateName} messages`,
         content: templateContent,
       });
-
-      // Update the template in state with brackets
-      setTemplates(prev => ({
-        ...prev,
-        [stateKey]: templateContent
-      }));
 
       notifySuccess("تم حفظ القالب بنجاح");
     } catch (error) {
@@ -450,30 +188,6 @@ export default function MessagesTemplates() {
     }));
   };
 
-  const getCurrentVariables = () => {
-    const stateKey = getStateKey(activeTab);
-    return dynamicVariables[stateKey] || [];
-  };
-
-  const handleResetToDefault = () => {
-    const currentTemplateKey = activeTab;
-    const templateName = templateNameMap[currentTemplateKey];
-    const defaultContent = getDefaultTemplate(templateName);
-    const stateKey = getStateKey(currentTemplateKey);
-
-    setTemplates(prev => ({
-      ...prev,
-      [stateKey]: defaultContent
-    }));
-
-    const defaultVars = defaultMessageVariables[currentTemplateKey] || [];
-    setDynamicVariables(prev => ({
-      ...prev,
-      [stateKey]: defaultVars
-    }));
-
-    notifySuccess("تم إعادة تعيين القالب إلى النسخة الافتراضية");
-  };
 
   return (
     <>
@@ -544,17 +258,6 @@ export default function MessagesTemplates() {
                       )}
                       {permissions.includes('templates_Update') && (
                         <Button
-                          variant="outlined"
-                          color="secondary"
-                          startIcon={<RestoreIcon sx={{marginLeft:'10px'}} />}
-                          onClick={handleResetToDefault}
-                          sx={{ mr: 1 }}
-                        >
-                          إعادة تعيين
-                        </Button>
-                      )}
-                      {permissions.includes('templates_Update') && (
-                        <Button
                           variant="contained"
                           color="success"
                           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{marginLeft:'10px'}} />}
@@ -567,11 +270,6 @@ export default function MessagesTemplates() {
                     </Box>
                   </Box>
 
-                  <SimpleVariablesList
-                    variables={getCurrentVariables()}
-                    onManageVariables={() => setManageVariablesOpen(true)}
-                    onCopyVariable={copyToClipboard}
-                  />
 
                   {activeTab === "repayment-due" && (
                     viewMode === "preview"
@@ -630,23 +328,6 @@ export default function MessagesTemplates() {
 
 
 
-      {/* Template Variables Manager */}
-      <TemplateVariablesManager
-        templateName={templateNameMap[activeTab]}
-        open={manageVariablesOpen}
-        onClose={() => setManageVariablesOpen(false)}
-        onVariablesUpdate={loadTemplates}
-        onDeleteVariable={(variable) => setShowDeleteConfirm({
-          name: variable.key,
-          onConfirm: () => {
-            // Add your delete logic here
-            setShowDeleteConfirm(null);
-          }
-        })}
-      />
-
-      {/* Delete Confirmation */}
-      <DeleteConfirmation />
 
       </Box>
     </>

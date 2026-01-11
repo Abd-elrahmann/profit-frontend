@@ -182,6 +182,7 @@ export default function Investors() {
   const [withdrawPreviewData, setWithdrawPreviewData] = useState(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
+  // eslint-disable-next-line no-unused-vars
   const [showWithdrawnOnly, setShowWithdrawnOnly] = useState(false);
 
   const { permissions } = usePermissions();
@@ -994,12 +995,13 @@ export default function Investors() {
 )}
 
 
+      {/* Navigation / Actions Header */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          p: 2,
+          p: 1.5,
           bgcolor: "background.paper",
           borderBottom: "1px solid #ddd",
         }}
@@ -1008,27 +1010,27 @@ export default function Investors() {
           <Typography variant="h5" fontWeight="bold">
             إدارة المستثمرين
           </Typography>
+          {/* Secondary Actions */}
           <Button
-            variant="outlined"
+            variant="text"
             startIcon={<Visibility sx={{marginLeft: '10px'}} />}
             onClick={() => navigate('/investors-withdraw')}
             sx={{
-              borderColor: "primary.main",
-              color: "primary.main",
+              color: "text.secondary",
               "&:hover": { 
-                bgcolor: "primary.50",
-                borderColor: "primary.dark",
+                bgcolor: "action.hover",
               },
-              fontWeight: "bold",
+              fontWeight: 500,
               borderRadius: 2,
               px: 2,
               py: 0.75,
             }}
           >
-            عرض المستثمرين المنسحبين
+            عرض المنسحبين
           </Button>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
+          {/* Primary Action */}
           {permissions.includes("partners_Add") && (
           <Button
             variant="contained"
@@ -1049,7 +1051,7 @@ export default function Investors() {
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
+      <Box sx={{ display: 'flex', height: 'calc(100vh - 100px)' }}>
         <Box
           sx={{
             width: '350px',
@@ -1061,7 +1063,7 @@ export default function Investors() {
             flexShrink: 0
           }}
         >
-          <Box sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa', flexShrink: 0 }}>
+          <Box sx={{ p: 2, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa', flexShrink: 0 }}>
             <TextField
               placeholder="البحث بالاسم أو رقم الهوية"
               fullWidth
@@ -1075,7 +1077,7 @@ export default function Investors() {
                 ),
               }}
             />
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
               <Chip
                 label="الكل"
                 color={selectedStatus === "" ? "primary" : "default"}
@@ -1112,34 +1114,6 @@ export default function Investors() {
                   setCurrentPage(1);
                 }}
               />
-            </Box>
-
-            {/* زر قائمة المنسحبين */}
-            <Box sx={{ mt: 2 }}>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setShowWithdrawnOnly(prev => !prev);
-                  setSelectedStatus(""); // إعادة تعيين الفلاتر الأخرى
-                  setSearch(""); // إعادة تعيين البحث
-                  setCurrentPage(1);
-                }}
-                sx={{
-                  bgcolor: showWithdrawnOnly ? "warning.main" : "primary.main",
-                  color: "white",
-                  fontWeight: "bold",
-                  borderRadius: 2,
-                  px: 3,
-                  py: 1,
-                  "&:hover": {
-                    bgcolor: showWithdrawnOnly ? "warning.dark" : "primary.main",
-                  },
-                  minWidth: '200px'
-                }}
-              >
-                {showWithdrawnOnly ? "عرض المستثمرين الحاليين" : "قائمة المنسحبين"}
-              </Button>
             </Box>
           </Box>
 
@@ -1184,6 +1158,7 @@ export default function Investors() {
                         mt: 2,
                         cursor: "pointer",
                         minHeight: '200px',
+                        minWidth:'300px',
                         border: isSelected ? "2px solid" : "1px solid #E5E7EB",
                         borderColor: isSelected ? "primary.main" : "#E5E7EB",
                         bgcolor: isSelected ? "primary.50" : "background.paper",
@@ -1192,15 +1167,17 @@ export default function Investors() {
                       }}
                     >
                       <CardContent sx={{ p: 2 }}>
+                        {/* Summary Row: Name + Status */}
                         <Box
                           sx={{
                             display: "flex",
                             justifyContent: "space-between",
-                            alignItems: "center",
+                            alignItems: "flex-start",
+                            mb: 2,
                           }}
                         >
                           <Box sx={{ flex: 1, mr: 2 }}>
-                            <Typography fontWeight="bold" sx={{ fontSize: '0.95rem', mb: 0.5 }}>
+                            <Typography fontWeight="bold" sx={{ fontSize: '1rem', mb: 0.5 }}>
                               {investor.name}
                             </Typography>
                             {(investor.WithdrawingStatus === 'WITHDRAWING' || investor.WithdrawingStatus === 'WITHDRAWN') && (
@@ -1208,7 +1185,7 @@ export default function Investors() {
                                 label={investor.WithdrawingStatus === 'WITHDRAWING' ? 'جاري السحب' : 'تم السحب'}
                                 size="small"
                                 color={investor.WithdrawingStatus === 'WITHDRAWING' ? 'warning' : 'info'}
-                                sx={{ fontSize: '0.65rem', height: '20px', mb: 0.5 }}
+                                sx={{ fontSize: '0.65rem', height: '20px', mt: 0.5 }}
                               />
                             )}
                           </Box>
@@ -1218,39 +1195,68 @@ export default function Investors() {
                             color={getStatusColor(investor)}
                           />
                         </Box>
-                        <Typography variant="body2" color="text.secondary" fontWeight={"bold"} sx={{ mb: 1 }}>
-                          رأس المال: {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
-                        </Typography>
-                        <Box sx={{ fontSize: '0.87rem' }}>
-                          <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
-                            رأس مال أصلي <Box component="span" sx={{ fontWeight: 'bold', color: investor.capitalAmount > 0 ? 'primary.main' : 'inherit' }}>{investor.capitalAmount?.toLocaleString()}</Box>
+
+                        {/* Total Capital - Bold + Fixed Color */}
+                        <Box sx={{ mb: 2, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
+                            رأس المال الكلي
                           </Typography>
-                          <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
-                            رأس مال جديد <Box component="span" sx={{ fontWeight: 'bold', color: investor.newCapitalAmount > 0 ? 'success.main' : 'inherit' }}>{investor.newCapitalAmount?.toLocaleString()}</Box>
+                          <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ fontSize: '1.1rem' }}>
+                            {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
+                          </Typography>
+                        </Box>
+
+                        {/* Details - Smaller Font + Muted Colors */}
+                        <Box sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+                          <Typography variant="body2" component="div" sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>رأس مال أصلي:</span>
+                            <Box component="span" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                              {investor.capitalAmount?.toLocaleString()}
+                            </Box>
+                          </Typography>
+                          <Typography variant="body2" component="div" sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>رأس مال جديد:</span>
+                            <Box component="span" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                              {investor.newCapitalAmount?.toLocaleString()}
+                            </Box>
                           </Typography>
                           {(investor.totalProfit || 0) > 0 && (
-                            <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
-                              أرباح <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalProfit || 0) > 0 ? 'primary.main' : 'inherit' }}>{investor.totalProfit?.toLocaleString() || 0}</Box>
+                            <Typography variant="body2" component="div" sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between' }}>
+                              <span>أرباح:</span>
+                              <Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>
+                                {investor.totalProfit?.toLocaleString() || 0}
+                              </Box>
+                            </Typography>
+                          )}
+                          {(investor.totalAvilableSaving || 0) > 0 && (
+                            <Typography variant="body2" component="div" sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between' }}>
+                              <span>مدخرات متاحة:</span>
+                              <Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>
+                                {(investor.totalAvilableSaving || 0)?.toLocaleString()}
+                              </Box>
+                            </Typography>
+                          )}
+                          {(investor.upcomingProfit || 0) > 0 && (
+                            <Typography variant="body2" component="div" sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>أرباح قادمة:</span>
+                              <Box component="span" sx={{ fontWeight: 600, color: 'success.main' }}>
+                                {(investor.upcomingProfit || 0)?.toLocaleString()}
+                              </Box>
                             </Typography>
                           )}
                         </Box>
-                        {(investor.totalAvilableSaving || 0) > 0 && (
-                          <Typography variant="body2" color="text.primary" component="div" sx={{ mb: 1 }}>
-                            المدخرات المتاحة للسحب <Box component="span" sx={{ fontWeight: 'bold', color: (investor.totalAvilableSaving || 0) > 0 ? 'primary.main' : 'inherit' }}>{(investor.totalAvilableSaving || 0)?.toLocaleString()}</Box>
-                          </Typography>
-                        )}
-                        <Typography variant="body2" color="success.main" fontWeight={"bold"}>
-                          الأرباح القادمة: {(investor.upcomingProfit || 0)}
-                        </Typography>
-                        <Box display="flex" justifyContent="flex-end" mt={-5}>
+
+                        {/* Delete Button */}
+                        <Box display="flex" justifyContent="flex-end" mt={1}>
                           {permissions.includes("partners_Delete") && (
                           <IconButton 
-                            size="medium" 
+                            size="small" 
                             color="error"
                             onClick={(e) => {
                               e.stopPropagation();
                               openDeleteModal(investor);
                             }}
+                            sx={{ opacity: 0.7, "&:hover": { opacity: 1 } }}
                           >
                             <Delete fontSize="small" />
                           </IconButton>
@@ -1330,20 +1336,20 @@ export default function Investors() {
                 )}
               </Box>
               
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: 'flex-end' }}>
+              {/* Secondary Actions */}
+              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", justifyContent: 'flex-end' }}>
                 {permissions.includes("partners_Export") && (
                 <Button
-                  variant="outlined"
+                  variant="text"
                   startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
                   onClick={handleExportSpecificPartnerPDF}
                   disabled={isExporting}
                   sx={{
-                    borderColor: "#d32f2f",
-                    color: "#d32f2f",
-                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                    color: "text.secondary",
+                    "&:hover": { bgcolor: "action.hover" },
                     borderRadius: 2,
                     px: 2,
-                    fontWeight: "bold",
+                    fontWeight: 500,
                   }}
                 >
                   تصدير PDF
@@ -1351,17 +1357,16 @@ export default function Investors() {
                 )}
                 {permissions.includes("partners_Export") && (
                 <Button
-                  variant="outlined"
+                  variant="text"
                   startIcon={<TableChart sx={{marginLeft: '10px'}} />}
                   onClick={handleExportSpecificPartnerExcel}
                   disabled={isExporting}
                   sx={{
-                    borderColor: "#2e7d32",
-                    color: "#2e7d32",
-                    "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                    color: "text.secondary",
+                    "&:hover": { bgcolor: "action.hover" },
                     borderRadius: 2,
                     px: 2,
-                    fontWeight: "bold",
+                    fontWeight: 500,
                   }}
                 >
                   تصدير Excel
@@ -1375,12 +1380,12 @@ export default function Investors() {
                     onClick={() => handleOpenWithdrawModal(false)}
                     disabled={isWithdrawing || investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN'}
                     sx={{
-                      borderColor: "#d32f2f",
-                      color: "#d32f2f",
-                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                      borderColor: "error.main",
+                      color: "error.main",
+                      "&:hover": { bgcolor: "error.50", borderColor: "error.dark" },
                       borderRadius: 2,
                       px: 2,
-                      fontWeight: "bold",
+                      fontWeight: 500,
                     }}
                   >
                     انسحاب المستثمر
@@ -1393,12 +1398,12 @@ export default function Investors() {
                       onClick={handleOpenEditWithdrawModal}
                       disabled={isWithdrawing}
                       sx={{
-                        borderColor: "#ed6c02",
-                        color: "#ed6c02",
-                        "&:hover": { bgcolor: "rgba(237, 108, 2, 0.1)" },
+                        borderColor: "warning.main",
+                        color: "warning.main",
+                        "&:hover": { bgcolor: "warning.50", borderColor: "warning.dark" },
                         borderRadius: 2,
                         px: 2,
-                        fontWeight: "bold",
+                        fontWeight: 500,
                       }}
                     >
                       تعديل مبلغ الانسحاب
@@ -1446,9 +1451,12 @@ export default function Investors() {
 
               {tab === 0 && (
                 <Box>
+                  {/* ملخص المستثمر */}
                   <Paper sx={{ p: 3, mb: 3, bgcolor: "background.paper" }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                      <Typography variant="h6">المعلومات الشخصية</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        ملخص المستثمر
+                      </Typography>
                       <Box sx={{ display: "flex", gap: 2 }}>
                         {permissions.includes("partners_Update") && (
                         <Button
@@ -1474,7 +1482,14 @@ export default function Investors() {
                         )}
                       </Box>
                     </Box>
-                    <Grid container spacing={3}>
+                    <Divider sx={{ mb: 3 }} />
+                    
+                    {/* البيانات الأساسية */}
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
+                        البيانات الأساسية
+                      </Typography>
+                      <Grid container spacing={3}>
                       <Grid item xs={12} md={6}>
                         <Typography variant="body2" mb={1} fontWeight={500}>الاسم الكامل</Typography>
                         <TextField 
@@ -1493,6 +1508,17 @@ export default function Investors() {
                           }}
                         />
                       </Grid>
+                      </Grid>
+                    </Box>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* معلومات الاتصال */}
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
+                        معلومات الاتصال
+                      </Typography>
+                      <Grid container spacing={3}>
                       <Grid item xs={12} md={6}>
                         <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
                         <TextField 
@@ -1507,20 +1533,6 @@ export default function Investors() {
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
                               },
-                            },
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="body2" mb={1} fontWeight={500}>رقم الهوية الوطنية</Typography>
-                        <TextField 
-                          value={investorDetails.nationalId} 
-                          fullWidth
-                          disabled
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
-                              borderRadius: '6px',
                             },
                           }}
                         />
@@ -1575,6 +1587,31 @@ export default function Investors() {
                               '&:hover fieldset': {
                                 borderColor: 'primary.main',
                               },
+                            },
+                          }}
+                        />
+                      </Grid>
+                      </Grid>
+                    </Box>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* معلومات إضافية */}
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
+                        معلومات إضافية
+                      </Typography>
+                      <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>رقم الهوية الوطنية</Typography>
+                        <TextField 
+                          value={investorDetails.nationalId} 
+                          fullWidth
+                          disabled
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
+                              borderRadius: '6px',
                             },
                           }}
                         />
@@ -1671,14 +1708,21 @@ export default function Investors() {
                           }}
                         />
                       </Grid>
-                    </Grid>
+                      </Grid>
+                    </Box>
                   </Paper>
                 </Box>
               )}
 
               {tab === 1 && (
                 <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 3 }}>المعلومات المالية</Typography>
+                  {/* الأرباح والمعاملات */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
+                      الأرباح والمعاملات
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                  </Box>
 
                   {/* Investment Group */}
                   <Box sx={{ mb: 4 }}>
@@ -2304,12 +2348,15 @@ export default function Investors() {
                 </Box>
               )}
 
-              {/* المستندات */}
+              {/* المستندات والعقود */}
               {tab === 3 && (
                 <Box>
                   {/* Existing Documents */}
                   <Box sx={{ mb: 4 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>المستندات المرفوعة</Typography>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
+                      المستندات والعقود
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
 
                     {/* Alert for missing Mudarabah Contract */}
                     {!investorDetails.mudarabahFileUrl && (

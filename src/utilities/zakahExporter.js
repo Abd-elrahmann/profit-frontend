@@ -9,7 +9,7 @@ import logo from '/assets/images/logo.webp';
 const formatInt = (value) => {
   const num = Number(value || 0);
   if (!Number.isFinite(num)) return '0';
-  return Math.round(num).toLocaleString();
+  return num.toLocaleString();
 };
 
 const registerArabicFonts = (doc) => {
@@ -80,7 +80,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           ? zakahData.find(item => item.year === filters.year) || zakahData[0]
           : zakahData;
         if (partnerData) {
-          const summaryText = `اسم الشريك: ${partnerData.partnerName || '-'} | رأس المال: ${partnerData.capitalAmount?.toLocaleString() || 0} | الزكاة السنوية: ${partnerData.annualZakat?.toLocaleString() || 0} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+          const summaryText = `اسم الشريك: ${partnerData.partnerName || '-'} | رأس المال: ${partnerData.capitalAmount?.toLocaleString() || 0} | الزكاة السنوية: ${partnerData.annualZakat?.toLocaleString() || 0} | الزكاة السنوية الحالية: ${partnerData.currentAnnualZakat?.toLocaleString() || 0} | الزكاة الشهرية الحالية: ${partnerData.currentMonthlyZakat?.toLocaleString() || 0} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
           doc.text(summaryText, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
           yPosition += 12;
         }
@@ -170,6 +170,8 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             formatInt(entry.totalPaid),
             formatInt(entry.monthlyZakat),
             formatInt(entry.annualZakat),
+            formatInt(entry.currentMonthlyZakat),
+            formatInt(entry.currentAnnualZakat),
             formatInt(entry.capitalAmount),
             entry.year || filters.year || '-',
             entry.partnerName || '-',
@@ -179,22 +181,26 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
             capitalAmount: acc.capitalAmount + Number(entry.capitalAmount || 0),
             annualZakat: acc.annualZakat + Number(entry.annualZakat || 0),
             monthlyZakat: acc.monthlyZakat + Number(entry.monthlyZakat || 0),
+            currentAnnualZakat: acc.currentAnnualZakat + Number(entry.currentAnnualZakat || 0),
+            currentMonthlyZakat: acc.currentMonthlyZakat + Number(entry.currentMonthlyZakat || 0),
             totalPaid: acc.totalPaid + Number(entry.totalPaid || 0),
             remaining: acc.remaining + Number(entry.remaining || 0),
-          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 });
+          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, currentAnnualZakat: 0, currentMonthlyZakat: 0, totalPaid: 0, remaining: 0 });
 
           tableData.push([
             formatInt(totals.remaining),
             formatInt(totals.totalPaid),
             formatInt(totals.monthlyZakat),
             formatInt(totals.annualZakat),
+            formatInt(totals.currentMonthlyZakat),
+            formatInt(totals.currentAnnualZakat),
             formatInt(totals.capitalAmount),
             filters.year || allEntries[0]?.year || '-',
             'الإجمالي',
           ]);
 
           headers = [
-            ['المتبقي', 'المدفوع', 'الزكاة الشهرية', 'الزكاة السنوية', 'رأس المال', 'السنة', 'اسم الشريك']
+            ['المتبقي', 'المدفوع', 'الزكاة الشهرية', 'الزكاة السنوية', 'الزكاة الشهرية الحالية', 'الزكاة السنوية الحالية', 'رأس المال', 'السنة', 'اسم الشريك']
           ];
         }
 
@@ -218,13 +224,15 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           };
         } else {
           columnWidths = {
-            0: 26, 
-            1: 26, 
-            2: 26, 
-            3: 26, 
-            4: 26, 
-            5: 16, 
-            6: 36, 
+            0: 20,
+            1: 20,
+            2: 20,
+            3: 20,
+            4: 20,
+            5: 20,
+            6: 20,
+            7: 16,
+            8: 36,
           };
         }
 
@@ -366,6 +374,8 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
         summaryData.push(['رأس المال', partnerData.capitalAmount || 0]);
         summaryData.push(['الزكاة السنوية', partnerData.annualZakat || 0]);
         summaryData.push(['الزكاة الشهرية', partnerData.monthlyZakat || 0]);
+        summaryData.push(['الزكاة السنوية الحالية', partnerData.currentAnnualZakat || 0]);
+        summaryData.push(['الزكاة الشهرية الحالية', partnerData.currentMonthlyZakat || 0]);
         summaryData.push(['المدفوع', partnerData.totalPaid || 0]);
         summaryData.push(['المتبقي', partnerData.remaining || 0]);
         summaryData.push(['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')]);
@@ -441,15 +451,17 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
         'الشهر': entry.month,
         'التاريخ': dayjs(entry.date).format('DD/MM/YYYY'),
         'الوصف': entry.description || '-',
-        'المبلغ': Math.round(entry.credit || 0)
+        'المبلغ': entry.credit || 0
       }));
     } else {
           excelData = allEntries.map(entry => ({
-            'المتبقي': Math.round(Number(entry.remaining) || 0),
-            'المدفوع': Math.round(Number(entry.totalPaid) || 0),
-            'الزكاة الشهرية': Math.round(Number(entry.monthlyZakat) || 0),
-            'الزكاة السنوية': Math.round(Number(entry.annualZakat) || 0),
-            'رأس المال': Math.round(Number(entry.capitalAmount) || 0),
+            'المتبقي': Number(entry.remaining) || 0,
+            'المدفوع': Number(entry.totalPaid) || 0,
+            'الزكاة الشهرية': Number(entry.monthlyZakat) || 0,
+            'الزكاة السنوية': Number(entry.annualZakat) || 0,
+            'الزكاة الشهرية الحالية': Number(entry.currentMonthlyZakat) || 0,
+            'الزكاة السنوية الحالية': Number(entry.currentAnnualZakat) || 0,
+            'رأس المال': Number(entry.capitalAmount) || 0,
             'السنة': entry.year || filters.year || '-',
             'اسم الشريك': entry.partnerName || '-',
           }));
@@ -458,16 +470,20 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
             capitalAmount: acc.capitalAmount + Number(entry.capitalAmount || 0),
             annualZakat: acc.annualZakat + Number(entry.annualZakat || 0),
             monthlyZakat: acc.monthlyZakat + Number(entry.monthlyZakat || 0),
+            currentAnnualZakat: acc.currentAnnualZakat + Number(entry.currentAnnualZakat || 0),
+            currentMonthlyZakat: acc.currentMonthlyZakat + Number(entry.currentMonthlyZakat || 0),
             totalPaid: acc.totalPaid + Number(entry.totalPaid || 0),
             remaining: acc.remaining + Number(entry.remaining || 0),
-          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 });
+          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, currentAnnualZakat: 0, currentMonthlyZakat: 0, totalPaid: 0, remaining: 0 });
 
           excelData.push({
-            'المتبقي': Math.round(totals.remaining),
-            'المدفوع': Math.round(totals.totalPaid),
-            'الزكاة الشهرية': Math.round(totals.monthlyZakat),
-            'الزكاة السنوية': Math.round(totals.annualZakat),
-            'رأس المال': Math.round(totals.capitalAmount),
+            'المتبقي': totals.remaining,
+            'المدفوع': totals.totalPaid,
+            'الزكاة الشهرية': totals.monthlyZakat,
+            'الزكاة السنوية': totals.annualZakat,
+            'الزكاة الشهرية الحالية': totals.currentMonthlyZakat,
+            'الزكاة السنوية الحالية': totals.currentAnnualZakat,
+            'رأس المال': totals.capitalAmount,
             'السنة': filters.year || allEntries[0]?.year || '-',
             'اسم الشريك': 'الإجمالي',
           });
@@ -496,12 +512,14 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
       ];
     } else {
       wscols = [
-        { wch: 20 }, 
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 14 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 12 },
         { wch: 30 },
       ];
     }
