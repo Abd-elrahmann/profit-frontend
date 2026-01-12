@@ -674,16 +674,37 @@ export default function Investors() {
         freshInvestorData = freshInvestorResponse.partner;
       } else if (freshInvestorResponse.data && freshInvestorResponse.data.partner) {
         freshInvestorData = freshInvestorResponse.data.partner;
+      } else if (freshInvestorResponse.data) {
+        freshInvestorData = freshInvestorResponse.data;
       } else {
         freshInvestorData = freshInvestorResponse;
       }
 
-      // التحقق من وجود رأس المال وتحويله إلى رقم
-      const capitalAmount = Number(freshInvestorData.capitalAmount);
+      // الحصول على رأس المال من مصادر مختلفة مع الأولوية للبيانات الطازجة
+      let capitalAmount = freshInvestorData.capitalAmount;
       
-      if (!capitalAmount || capitalAmount === 0 || isNaN(capitalAmount)) {
-        notifyError("رأس المال غير محدد أو يساوي صفر. يرجى تحديث بيانات المستثمر أولاً");
-        return;
+      // إذا لم يكن موجوداً، جرب من selectedInvestor
+      if (capitalAmount === null || capitalAmount === undefined || capitalAmount === '') {
+        capitalAmount = selectedInvestor.capitalAmount;
+      }
+      
+      // إذا لم يكن موجوداً، جرب من investorDetails (من الـ query cache)
+      if (capitalAmount === null || capitalAmount === undefined || capitalAmount === '') {
+        const cachedData = investorDetails?.partner || investorDetails;
+        capitalAmount = cachedData?.capitalAmount;
+      }
+      
+      // تحويل إلى رقم (السماح بصفر كقيمة صالحة)
+      capitalAmount = Number(capitalAmount);
+      
+      // إذا كان NaN، استخدم صفر كقيمة افتراضية (ContractGenerator سيتعامل مع التحقق)
+      if (isNaN(capitalAmount)) {
+        console.warn('Capital amount is NaN, using 0 as default:', {
+          freshInvestorData,
+          selectedInvestor,
+          investorDetails
+        });
+        capitalAmount = 0;
       }
 
       // Fetch mudarabah template
@@ -691,21 +712,30 @@ export default function Investors() {
       setMudarabahTemplate(templateResponse.data.content || '');
 
       // Prepare investor data for contract generation مع التأكد من تحويل جميع القيم الرقمية
+      // استخدام البيانات من freshInvestorData أولاً (البيانات الطازجة من API)، ثم selectedInvestor كبديل
       const investorData = {
-        ...freshInvestorData,
         id: freshInvestorData.id || selectedInvestor.id,
-        name: freshInvestorData.name || selectedInvestor.name,
-        nationalId: freshInvestorData.nationalId || selectedInvestor.nationalId,
-        address: freshInvestorData.address || '',
-        city: freshInvestorData.city || '',
-        phone: freshInvestorData.phone || '',
-        email: freshInvestorData.email || '',
-        capitalAmount: capitalAmount, // استخدام القيمة المحولة
-        orgProfitPercent: Number(freshInvestorData.orgProfitPercent) || 0,
-        investorProfitPercent: freshInvestorData.orgProfitPercent ? (100 - Number(freshInvestorData.orgProfitPercent)) : 0
+        name: freshInvestorData.name || selectedInvestor.name || '',
+        nationalId: freshInvestorData.nationalId || selectedInvestor.nationalId || '',
+        address: freshInvestorData.address || selectedInvestor.address || '',
+        city: freshInvestorData.city || selectedInvestor.city || '',
+        phone: freshInvestorData.phone || selectedInvestor.phone || '',
+        email: freshInvestorData.email || selectedInvestor.email || '',
+        capitalAmount: capitalAmount, // استخدام القيمة المحولة (من API أولاً)
+        orgProfitPercent: Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent || 0),
+        investorProfitPercent: (freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent) 
+          ? (100 - Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent)) 
+          : 0
       };
 
-      console.log('Investor data for contract:', investorData); // للتحقق من البيانات
+      console.log('Investor data for contract:', {
+        freshInvestorResponse,
+        freshInvestorData,
+        selectedInvestor,
+        investorDetails,
+        capitalAmount,
+        finalData: investorData
+      }); // للتحقق من البيانات
 
       setContractInvestorData(investorData);
       setIsContractModalOpen(true);
