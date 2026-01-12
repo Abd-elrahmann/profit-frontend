@@ -282,8 +282,32 @@ export default function Investors() {
 
   const handleGenerateContractAfterUpdate = async (updatedInvestorData) => {
     try {
+      // إعادة جلب بيانات المستثمر بشكل صريح لضمان الحصول على أحدث البيانات
+      const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
+      
+      // التعامل مع مختلف أشكال الاستجابة من الـ API
+      let freshInvestorData;
+      if (freshInvestorResponse.partner) {
+        freshInvestorData = freshInvestorResponse.partner;
+      } else if (freshInvestorResponse.data && freshInvestorResponse.data.partner) {
+        freshInvestorData = freshInvestorResponse.data.partner;
+      } else {
+        freshInvestorData = freshInvestorResponse;
+      }
+
+      // دمج البيانات المحدثة مع البيانات الطازجة
+      const mergedData = {
+        ...freshInvestorData,
+        ...updatedInvestorData,
+        capitalAmount: Number(updatedInvestorData.capitalAmount || freshInvestorData.capitalAmount) || 0,
+        orgProfitPercent: Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) || 0,
+        investorProfitPercent: (updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) 
+          ? (100 - Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent)) 
+          : 0
+      };
+
       await fetchMudarabahTemplate();
-      setContractInvestorData(updatedInvestorData);
+      setContractInvestorData(mergedData);
       setIsContractModalOpen(true);
       
       setTimeout(() => {
@@ -332,14 +356,26 @@ export default function Investors() {
       queryClient.invalidateQueries({ queryKey: ['investors'] });
       notifySuccess('تم تحديث بيانات المستثمر بنجاح');
       
-      const originalCapital = investorDetails.capitalAmount;
-      const newCapital = parseInt(editFormData.capitalAmount);
+      // إعادة جلب البيانات المحدثة
+      const updatedInvestorResponse = await getInvestorDetails(selectedInvestor.id);
+      let updatedInvestorData;
+      if (updatedInvestorResponse.partner) {
+        updatedInvestorData = updatedInvestorResponse.partner;
+      } else if (updatedInvestorResponse.data && updatedInvestorResponse.data.partner) {
+        updatedInvestorData = updatedInvestorResponse.data.partner;
+      } else {
+        updatedInvestorData = updatedInvestorResponse;
+      }
+
+      const originalCapital = investorDetails?.partner?.capitalAmount || investorDetails?.capitalAmount || 0;
+      const newCapital = Number(editFormData.capitalAmount) || Number(dataToSend.capitalAmount) || 0;
       
-      if (originalCapital !== newCapital) {
+      if (originalCapital !== newCapital && newCapital > 0) {
         handleGenerateContractAfterUpdate({
-          ...investorDetails,
-          ...dataToSend,
-          partnerProfitPercent: investorDetails.partnerProfitPercent || (100 - parseInt(editFormData.orgProfitPercent))
+          ...updatedInvestorData,
+          capitalAmount: newCapital,
+          orgProfitPercent: Number(editFormData.orgProfitPercent) || Number(updatedInvestorData.orgProfitPercent) || 0,
+          investorProfitPercent: (100 - (Number(editFormData.orgProfitPercent) || Number(updatedInvestorData.orgProfitPercent) || 0))
         });
       } else {
         setEditMode(false);
@@ -629,15 +665,47 @@ export default function Investors() {
     }
 
     try {
+      // إعادة جلب بيانات المستثمر بشكل صريح لضمان الحصول على أحدث البيانات
+      const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
+      
+      // التعامل مع مختلف أشكال الاستجابة من الـ API
+      let freshInvestorData;
+      if (freshInvestorResponse.partner) {
+        freshInvestorData = freshInvestorResponse.partner;
+      } else if (freshInvestorResponse.data && freshInvestorResponse.data.partner) {
+        freshInvestorData = freshInvestorResponse.data.partner;
+      } else {
+        freshInvestorData = freshInvestorResponse;
+      }
+
+      // التحقق من وجود رأس المال وتحويله إلى رقم
+      const capitalAmount = Number(freshInvestorData.capitalAmount);
+      
+      if (!capitalAmount || capitalAmount === 0 || isNaN(capitalAmount)) {
+        notifyError("رأس المال غير محدد أو يساوي صفر. يرجى تحديث بيانات المستثمر أولاً");
+        return;
+      }
+
       // Fetch mudarabah template
       const templateResponse = await Api.get('/api/templates/mudarabah');
       setMudarabahTemplate(templateResponse.data.content || '');
 
-      // Prepare investor data for contract generation
+      // Prepare investor data for contract generation مع التأكد من تحويل جميع القيم الرقمية
       const investorData = {
-        ...investorDetails,
-        investorProfitPercent: investorDetails.orgProfitPercent ? (100 - investorDetails.orgProfitPercent) : 0
+        ...freshInvestorData,
+        id: freshInvestorData.id || selectedInvestor.id,
+        name: freshInvestorData.name || selectedInvestor.name,
+        nationalId: freshInvestorData.nationalId || selectedInvestor.nationalId,
+        address: freshInvestorData.address || '',
+        city: freshInvestorData.city || '',
+        phone: freshInvestorData.phone || '',
+        email: freshInvestorData.email || '',
+        capitalAmount: capitalAmount, // استخدام القيمة المحولة
+        orgProfitPercent: Number(freshInvestorData.orgProfitPercent) || 0,
+        investorProfitPercent: freshInvestorData.orgProfitPercent ? (100 - Number(freshInvestorData.orgProfitPercent)) : 0
       };
+
+      console.log('Investor data for contract:', investorData); // للتحقق من البيانات
 
       setContractInvestorData(investorData);
       setIsContractModalOpen(true);
