@@ -385,6 +385,9 @@ export default function Investors() {
       // Refetch data
       const refetchedData = await refetch();
       
+      // إعادة تحميل فحص القيود الافتتاحية
+      queryClient.invalidateQueries({ queryKey: ["opening-journals-check"] });
+      
       // اختيار المستثمر التالي للعرض فقط (بدون تغيير حالته في قاعدة البيانات)
       if (selectedInvestor?.id === investorId) {
         if (nextInvestorId) {

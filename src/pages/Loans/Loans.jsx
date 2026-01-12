@@ -1253,6 +1253,17 @@ const Loans = () => {
         [field]: value,
       };
 
+      // Handle promissoryNoteType change
+      if (field === "promissoryNoteType") {
+        if (value === "inspection") {
+          // Clear the date when switching to inspection mode
+          updatedForm.promissoryNoteDate = "";
+        } else if (value === "manual" && !prev.promissoryNoteDate) {
+          // Initialize empty date when switching to manual mode
+          updatedForm.promissoryNoteDate = "";
+        }
+      }
+
       if (field === "amount" || field === "totalInterest") {
         const amount = parseFloat((field === "amount" ? value : prev.amount).replace(/,/g, "")) || 0;
         const totalInterest = parseFloat((field === "totalInterest" ? value : prev.totalInterest).replace(/,/g, "")) || 0;
@@ -1284,7 +1295,7 @@ const Loans = () => {
 
   const isFormValid = () => {
     const isPromissoryNoteValid = loanForm.promissoryNoteType === "inspection" ||
-      (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate);
+      (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate && loanForm.promissoryNoteDate.trim() !== "");
 
     return (
       selectedClient &&

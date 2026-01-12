@@ -5,6 +5,11 @@ import Api, { handleApiError } from '../config/Api';
 import { notifySuccess, notifyError } from '../utilities/toastify';
 
 const numberToArabicWords = (num) => {
+  // Handle null, undefined, or invalid numbers
+  if (num === null || num === undefined || isNaN(num)) {
+    return 'صفر';
+  }
+  
   const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
   const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
   const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
@@ -149,98 +154,123 @@ const ContractGenerator = React.forwardRef(({
   const [loading, setLoading] = useState(false);
 
   // Generate filled contract from template
-  const generateContract = useCallback(async () => {
-  if (!investorData || !templateContent) {
-    notifyError('بيانات المستثمر أو قالب العقد غير متوفر');
-    return;
-  }
+  const generateContract = useCallback(async (forPDF = false) => {
+    if (!investorData || !templateContent) {
+      const errorMsg = 'بيانات المستثمر أو قالب العقد غير متوفر';
+      if (!forPDF) {
+        notifyError(errorMsg);
+      }
+      return forPDF ? '' : undefined;
+    }
 
-        try {
-          const { gregorianDate, hijriDate } = getCurrentDates();
-          const capitalInWords = `${numberToArabicWords(investorData.capitalAmount)} ريال`;
+    // Validate required fields
+    if (!investorData.name || investorData.capitalAmount === undefined || investorData.capitalAmount === null) {
+      const errorMsg = 'بيانات المستثمر غير كاملة (الاسم أو رأس المال مفقود)';
+      if (!forPDF) {
+        notifyError(errorMsg);
+      }
+      return forPDF ? '' : undefined;
+    }
+
+    try {
+      const { gregorianDate, hijriDate } = getCurrentDates();
+      const capitalAmount = Number(investorData.capitalAmount) || 0;
+      const capitalInWords = `${numberToArabicWords(capitalAmount)} ريال`;
     
-    // حساب النسب الديناميكية
-    const orgProfitPercent = investorData.orgProfitPercent || 0;
-    const partnerProfitPercent = 100 - orgProfitPercent;
-    // إصلاح النقطة الرابعة: إزالة العلامة العشرية إذا كان الرقم صحيح
-    const orgProfitDivided = (orgProfitPercent / 2);
-    const formattedOrgProfitDivided = orgProfitDivided % 1 === 0 ? 
-      orgProfitDivided.toString() : 
-      orgProfitDivided.toFixed(1);
+      // حساب النسب الديناميكية
+      const orgProfitPercent = investorData.orgProfitPercent || 0;
+      const partnerProfitPercent = 100 - orgProfitPercent;
+      // إصلاح النقطة الرابعة: إزالة العلامة العشرية إذا كان الرقم صحيح
+      const orgProfitDivided = (orgProfitPercent / 2);
+      const formattedOrgProfitDivided = orgProfitDivided % 1 === 0 ? 
+        orgProfitDivided.toString() : 
+        orgProfitDivided.toFixed(1);
 
-    let filledTemplate = templateContent
-      // معلومات المستثمر الأساسية
-      .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
-      .replace(/{{اسم_رب_المال_النسبة}}/g, investorData.name || '')
-      .replace(/{{هوية_رب_المال}}/g, investorData.nationalId || '')
-      .replace(/{{عنوان_رب_المال}}/g, investorData.address || '')
-      .replace(/{{اسم_العميل}}/g, investorData.name || '')
-      .replace(/{{رقم_هوية_العميل}}/g, investorData.nationalId || '')
-      .replace(/{{عنوان_العميل}}/g, investorData.address || '')
-      .replace(/{{هاتف_العميل}}/g, investorData.phone || '')
-      .replace(/{{بريد_العميل}}/g, investorData.email || '')
+      let filledTemplate = templateContent
+        // معلومات المستثمر الأساسية
+        .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
+        .replace(/{{اسم_رب_المال_النسبة}}/g, investorData.name || '')
+        .replace(/{{هوية_رب_المال}}/g, investorData.nationalId || '')
+        .replace(/{{عنوان_رب_المال}}/g, investorData.address || '')
+        .replace(/{{اسم_العميل}}/g, investorData.name || '')
+        .replace(/{{رقم_هوية_العميل}}/g, investorData.nationalId || '')
+        .replace(/{{عنوان_العميل}}/g, investorData.address || '')
+        .replace(/{{هاتف_العميل}}/g, investorData.phone || '')
+        .replace(/{{بريد_العميل}}/g, investorData.email || '')
 
-      // المعلومات المالية - إصلاح النقطة الثالثة
-      // تحويل المبلغ إلى تنسيق إنجليزي
-      .replace(/{{رأس_المال}}/g, investorData.capitalAmount?.toLocaleString('en-US') || '0')
-      .replace(/{{المبلغ_رقما}}/g, investorData.capitalAmount?.toLocaleString('en-US') || '0')
-      
-      // إصلاح النقطة الثالثة: تحويل "مائة" إلى "مئة"
-      .replace(/{{رأس_المال_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
-      .replace(/{{المبلغ_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
-      
-      // النسب الديناميكية - إصلاح النقطة الرابعة
-      .replace(/{{نسبة_أرباح_المنشأة}}/g, String(orgProfitPercent || '0'))
-      .replace(/{{نسبة_أرباح_المستثمر}}/g, String(partnerProfitPercent || '0'))
-      .replace(/{{نسبة_أرباح_المنشأة_مقسمة}}/g, String(formattedOrgProfitDivided))
+        // المعلومات المالية - إصلاح النقطة الثالثة
+        // تحويل المبلغ إلى تنسيق إنجليزي
+        .replace(/{{رأس_المال}}/g, capitalAmount.toLocaleString('en-US') || '0')
+        .replace(/{{المبلغ_رقما}}/g, capitalAmount.toLocaleString('en-US') || '0')
+        
+        // إصلاح النقطة الثالثة: تحويل "مائة" إلى "مئة"
+        .replace(/{{رأس_المال_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
+        .replace(/{{المبلغ_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
+        
+        // النسب الديناميكية - إصلاح النقطة الرابعة
+        .replace(/{{نسبة_أرباح_المنشأة}}/g, String(orgProfitPercent || '0'))
+        .replace(/{{نسبة_أرباح_المستثمر}}/g, String(partnerProfitPercent || '0'))
+        .replace(/{{نسبة_أرباح_المنشأة_مقسمة}}/g, String(formattedOrgProfitDivided))
 
-      // بقية الاستبدالات...
-      .replace(/{{التاريخ_الهجري}}/g, hijriDate)
-      .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
-      .replace(/{{تاريخ_العقد_هجري}}/g, hijriDate)
-      .replace(/{{تاريخ_العقد_ميلادي}}/g, gregorianDate)
+        // بقية الاستبدالات...
+        .replace(/{{التاريخ_الهجري}}/g, hijriDate)
+        .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
+        .replace(/{{تاريخ_العقد_هجري}}/g, hijriDate)
+        .replace(/{{تاريخ_العقد_ميلادي}}/g, gregorianDate)
 
-      // معلومات المضاربين (ثابتة)
-      .replace(/{{اسم_المضارب_1}}/g, 'ربيش سالم ناصر الهمامي')
-      .replace(/{{هوية_المضارب_1}}/g, '1116369545')
-      .replace(/{{عنوان_المضارب_1}}/g, 'المملكة العربية السعودية - شرورة')
-      .replace(/{{اسم_المضارب_2}}/g, 'مبارك سالم ناصر الهمامي')
-      .replace(/{{هوية_المضارب_2}}/g, '1116369511')
-      .replace(/{{عنوان_المضارب_2}}/g, 'المملكة العربية السعودية - شرورة')
-      .replace(/{{مدينة_العقد}}/g, investorData.city || 'الرياض')
-      .replace(/{{مدينة_العقد_الثابتة}}/g, 'الرياض')
+        // معلومات المضاربين (ثابتة)
+        .replace(/{{اسم_المضارب_1}}/g, 'ربيش سالم ناصر الهمامي')
+        .replace(/{{هوية_المضارب_1}}/g, '1116369545')
+        .replace(/{{عنوان_المضارب_1}}/g, 'المملكة العربية السعودية - شرورة')
+        .replace(/{{اسم_المضارب_2}}/g, 'مبارك سالم ناصر الهمامي')
+        .replace(/{{هوية_المضارب_2}}/g, '1116369511')
+        .replace(/{{عنوان_المضارب_2}}/g, 'المملكة العربية السعودية - شرورة')
+        .replace(/{{مدينة_العقد}}/g, investorData.city || 'الرياض')
+        .replace(/{{مدينة_العقد_الثابتة}}/g, 'الرياض')
 
-      // معلومات إضافية للعقود الأخرى
-      .replace(/{{اسم_الدائن}}/g, investorData.name || '')
-      .replace(/{{اسم_المدين}}/g, investorData.name || '')
-      .replace(/{{رقم_السند}}/g, '')
-      .replace(/{{تاريخ_الانشاء}}/g, gregorianDate)
-      .replace(/{{تاريخ_الاستحقاق}}/g, gregorianDate)
-      .replace(/{{مدينة_الاصدار}}/g, 'الرياض')
-      .replace(/{{مدينة_الوفاء}}/g, 'الرياض')
-      .replace(/{{سبب_انشاء_السند}}/g, 'استثمار في المضاربة')
-      .replace(/{{قيمة_السند_رقما}}/g, investorData.capitalAmount?.toLocaleString('en-US') || '0')
-      .replace(/{{قيمة_السند_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'));
+        // معلومات إضافية للعقود الأخرى
+        .replace(/{{اسم_الدائن}}/g, investorData.name || '')
+        .replace(/{{اسم_المدين}}/g, investorData.name || '')
+        .replace(/{{رقم_السند}}/g, '')
+        .replace(/{{تاريخ_الانشاء}}/g, gregorianDate)
+        .replace(/{{تاريخ_الاستحقاق}}/g, gregorianDate)
+        .replace(/{{مدينة_الاصدار}}/g, 'الرياض')
+        .replace(/{{مدينة_الوفاء}}/g, 'الرياض')
+        .replace(/{{سبب_انشاء_السند}}/g, 'استثمار في المضاربة')
+        .replace(/{{قيمة_السند_رقما}}/g, capitalAmount.toLocaleString('en-US') || '0')
+        .replace(/{{قيمة_السند_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'));
 
-    setContractHtml(filledTemplate);
-    setShowPreview(true);
-  } catch (error) {
-    console.error('Error generating contract:', error);
-    notifyError('حدث خطأ أثناء توليد العقد');
-  }
+      // إذا كان للـ PDF، ارجع HTML مباشرة
+      if (forPDF) {
+        return filledTemplate;
+      }
+
+      // وإلا قم بتحديث state وعرض المعاينة
+      setContractHtml(filledTemplate);
+      setShowPreview(true);
+      return filledTemplate;
+    } catch (error) {
+      console.error('Error generating contract:', error);
+      notifyError('حدث خطأ أثناء توليد العقد');
+      return forPDF ? '' : undefined;
+    }
   }, [investorData, templateContent]);
 
   // Upload PDF to server
   const uploadPDFToServer = useCallback(async (pdfBlob) => {
+    if (!investorData || !investorData.id) {
+      throw new Error('بيانات المستثمر غير كاملة');
+    }
+    
     try {
       const formData = new FormData();
-      formData.append('file', pdfBlob, `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`);
+      formData.append('file', pdfBlob, `mudarabah_contract_${investorData.name || 'unknown'}_${Date.now()}.pdf`);
       formData.append('investorId', investorData.id);
       formData.append('contractType', contractType);
 
       // Include profit percentages for reference
-      formData.append('partnerProfitPercent', 100 - (investorData?.orgProfitPercent || 0));
-      formData.append('orgProfitPercent', investorData?.orgProfitPercent || 0);
+      formData.append('partnerProfitPercent', 100 - (investorData.orgProfitPercent || 0));
+      formData.append('orgProfitPercent', investorData.orgProfitPercent || 0);
 
       const response = await Api.post(`/api/partners/upload/${investorData.id}`, formData, {
         headers: {
@@ -257,15 +287,21 @@ const ContractGenerator = React.forwardRef(({
 
   // Generate PDF from HTML
   const generatePDF = useCallback(async () => {
-    if (!contractHtml) {
-      notifyError('لا يوجد محتوى عقد لتحويله إلى PDF');
+    if (!investorData || !templateContent) {
+      notifyError('بيانات المستثمر أو قالب العقد غير متوفر');
       return;
     }
 
     setLoading(true);
     try {
-      // Regenerate contract with saving numbers for PDF generation
+      // Regenerate contract HTML for PDF generation
       const finalContractHtml = await generateContract(true);
+      
+      if (!finalContractHtml || finalContractHtml.trim() === '') {
+        notifyError('فشل في توليد محتوى العقد');
+        setLoading(false);
+        return;
+      }
 
       const element = document.getElementById('contract-preview');
       if (!element) {
