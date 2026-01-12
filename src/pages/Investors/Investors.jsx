@@ -681,30 +681,132 @@ export default function Investors() {
       }
 
       // الحصول على رأس المال من مصادر مختلفة مع الأولوية للبيانات الطازجة
-      let capitalAmount = freshInvestorData.capitalAmount;
+      // للمستثمرين الجدد، رأس المال موجود في newCapitalAmount أو PartnerNewCapital
+      let capitalAmount = null;
       
-      // إذا لم يكن موجوداً، جرب من selectedInvestor
-      if (capitalAmount === null || capitalAmount === undefined || capitalAmount === '') {
-        capitalAmount = selectedInvestor.capitalAmount;
+      // 1. جرب newCapitalAmount أولاً (للمستثمرين الجدد) - الأولوية الأولى
+      if (freshInvestorData.newCapitalAmount !== null && freshInvestorData.newCapitalAmount !== undefined) {
+        const newCapitalValue = Number(freshInvestorData.newCapitalAmount);
+        if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
+          capitalAmount = newCapitalValue;
+        }
+      }
+      
+      // 2. جرب PartnerNewCapital[0].amount إذا لم نجد في newCapitalAmount
+      if (!capitalAmount && freshInvestorData.PartnerNewCapital && Array.isArray(freshInvestorData.PartnerNewCapital) && freshInvestorData.PartnerNewCapital.length > 0) {
+        const newCapital = freshInvestorData.PartnerNewCapital[0];
+        if (newCapital && newCapital.amount !== null && newCapital.amount !== undefined) {
+          const newCapitalValue = Number(newCapital.amount);
+          if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
+            capitalAmount = newCapitalValue;
+          }
+        }
+      }
+      
+      // 3. جرب total إذا لم نجد في المصادر السابقة
+      if (!capitalAmount && freshInvestorData.total !== null && freshInvestorData.total !== undefined) {
+        const totalValue = Number(freshInvestorData.total);
+        if (!isNaN(totalValue) && totalValue > 0) {
+          capitalAmount = totalValue;
+        }
+      }
+      
+      // 4. جرب capitalAmount التقليدي كحل أخير
+      if (!capitalAmount && freshInvestorData.capitalAmount !== null && freshInvestorData.capitalAmount !== undefined) {
+        const capitalValue = Number(freshInvestorData.capitalAmount);
+        if (!isNaN(capitalValue) && capitalValue > 0) {
+          capitalAmount = capitalValue;
+        }
+      }
+      
+      // إذا لم يكن موجوداً، جرب من selectedInvestor (بنفس الأولوية)
+      if (!capitalAmount) {
+        if (selectedInvestor.newCapitalAmount !== null && selectedInvestor.newCapitalAmount !== undefined) {
+          const newCapitalValue = Number(selectedInvestor.newCapitalAmount);
+          if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
+            capitalAmount = newCapitalValue;
+          }
+        }
+        
+        if (!capitalAmount && selectedInvestor.PartnerNewCapital && Array.isArray(selectedInvestor.PartnerNewCapital) && selectedInvestor.PartnerNewCapital.length > 0) {
+          const newCapital = selectedInvestor.PartnerNewCapital[0];
+          if (newCapital && newCapital.amount !== null && newCapital.amount !== undefined) {
+            const newCapitalValue = Number(newCapital.amount);
+            if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
+              capitalAmount = newCapitalValue;
+            }
+          }
+        }
+        
+        if (!capitalAmount && selectedInvestor.total !== null && selectedInvestor.total !== undefined) {
+          const totalValue = Number(selectedInvestor.total);
+          if (!isNaN(totalValue) && totalValue > 0) {
+            capitalAmount = totalValue;
+          }
+        }
+        
+        if (!capitalAmount && selectedInvestor.capitalAmount !== null && selectedInvestor.capitalAmount !== undefined) {
+          const capitalValue = Number(selectedInvestor.capitalAmount);
+          if (!isNaN(capitalValue) && capitalValue > 0) {
+            capitalAmount = capitalValue;
+          }
+        }
       }
       
       // إذا لم يكن موجوداً، جرب من investorDetails (من الـ query cache)
-      if (capitalAmount === null || capitalAmount === undefined || capitalAmount === '') {
+      if (!capitalAmount) {
         const cachedData = investorDetails?.partner || investorDetails;
-        capitalAmount = cachedData?.capitalAmount;
+        if (cachedData) {
+          if (cachedData.newCapitalAmount !== null && cachedData.newCapitalAmount !== undefined) {
+            const newCapitalValue = Number(cachedData.newCapitalAmount);
+            if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
+              capitalAmount = newCapitalValue;
+            }
+          }
+          
+          if (!capitalAmount && cachedData.PartnerNewCapital && Array.isArray(cachedData.PartnerNewCapital) && cachedData.PartnerNewCapital.length > 0) {
+            const newCapital = cachedData.PartnerNewCapital[0];
+            if (newCapital && newCapital.amount !== null && newCapital.amount !== undefined) {
+              const newCapitalValue = Number(newCapital.amount);
+              if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
+                capitalAmount = newCapitalValue;
+              }
+            }
+          }
+          
+          if (!capitalAmount && cachedData.total !== null && cachedData.total !== undefined) {
+            const totalValue = Number(cachedData.total);
+            if (!isNaN(totalValue) && totalValue > 0) {
+              capitalAmount = totalValue;
+            }
+          }
+          
+          if (!capitalAmount && cachedData.capitalAmount !== null && cachedData.capitalAmount !== undefined) {
+            const capitalValue = Number(cachedData.capitalAmount);
+            if (!isNaN(capitalValue) && capitalValue > 0) {
+              capitalAmount = capitalValue;
+            }
+          }
+        }
       }
       
-      // تحويل إلى رقم (السماح بصفر كقيمة صالحة)
-      capitalAmount = Number(capitalAmount);
-      
-      // إذا كان NaN، استخدم صفر كقيمة افتراضية (ContractGenerator سيتعامل مع التحقق)
-      if (isNaN(capitalAmount)) {
-        console.warn('Capital amount is NaN, using 0 as default:', {
-          freshInvestorData,
-          selectedInvestor,
-          investorDetails
-        });
+      // إذا لم نجد رأس المال بعد كل المحاولات، استخدم صفر
+      if (!capitalAmount) {
         capitalAmount = 0;
+        console.warn('Capital amount not found after checking all sources, using 0:', {
+          freshInvestorData: {
+            capitalAmount: freshInvestorData.capitalAmount,
+            newCapitalAmount: freshInvestorData.newCapitalAmount,
+            PartnerNewCapital: freshInvestorData.PartnerNewCapital,
+            total: freshInvestorData.total
+          },
+          selectedInvestor: {
+            capitalAmount: selectedInvestor.capitalAmount,
+            newCapitalAmount: selectedInvestor.newCapitalAmount,
+            PartnerNewCapital: selectedInvestor.PartnerNewCapital,
+            total: selectedInvestor.total
+          }
+        });
       }
 
       // Fetch mudarabah template
