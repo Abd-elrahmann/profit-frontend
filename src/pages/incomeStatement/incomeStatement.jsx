@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -65,21 +65,41 @@ const MONTHS = [
 
 const IncomeStatement = () => {
   const theme = useTheme();
-  const [periodType, setPeriodType] = useState("monthly");
+  const [periodType, setPeriodType] = useState("period"); // الفترة المحاسبية كافتراضي
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month());
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [fromDate, setFromDate] = useState(dayjs().startOf('month'));
   const [toDate, setToDate] = useState(dayjs().endOf('month'));
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
 
-  // توليد السنوات من 2020 إلى 2050
-  const years = Array.from({ length: 31 }, (_, i) => 2020 + i);
+  // توليد السنوات من 2020 إلى 2040
+  const years = Array.from({ length: 21 }, (_, i) => 2020 + i);
 
   // جلب الفترات المحاسبية
   const { data: accountingPeriods = [] } = useQuery({
     queryKey: ["accountingPeriods"],
     queryFn: () => incomeStatementApi.getAccountingPeriods(1, 1),
   });
+
+  // تحديد الفترة المحاسبية النشطة (المفتوحة) تلقائيًا عند تحميل البيانات
+  useEffect(() => {
+    if (accountingPeriods.length > 0 && !selectedPeriodId) {
+      // البحث عن الفترة النشطة (المفتوحة) - الفترة التي ليس لها تاريخ نهاية أو حالتها "open"
+      const activePeriod = accountingPeriods.find(
+        (period) => period.status === "open" || period.isActive || !period.endDate
+      );
+      
+      if (activePeriod) {
+        setSelectedPeriodId(activePeriod.id);
+      } else {
+        // إذا لم توجد فترة نشطة، اختر أحدث فترة
+        const latestPeriod = accountingPeriods[0];
+        if (latestPeriod) {
+          setSelectedPeriodId(latestPeriod.id);
+        }
+      }
+    }
+  }, [accountingPeriods, selectedPeriodId]);
 
   // إعداد معلمات الاستعلام بناءً على الفترة المحددة
   const getQueryParams = () => {
@@ -305,7 +325,7 @@ const IncomeStatement = () => {
                             ),
                           }}
                           sx={{
-                            width: '250px',
+                            width: '350px',
                             bgcolor: theme.palette.background.default,
                             '& .MuiInputBase-input': {
                               fontWeight: 500,
