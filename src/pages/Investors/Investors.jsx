@@ -400,6 +400,15 @@ export default function Investors() {
     notifySuccess('تم توليد العقد الجديد بنجاح');
   };
 
+  const handleContractPreviewClose = () => {
+    setIsContractModalOpen(false);
+    setContractInvestorData(null);
+    // إغلاق dialog إضافة المستثمر إذا كان مفتوحاً
+    if (isAddModalOpen) {
+      setIsAddModalOpen(false);
+    }
+  };
+
   const handleAddInvestor = () => {
     setIsAddModalOpen(true);
   };
@@ -829,16 +838,6 @@ export default function Investors() {
           ? (100 - Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent)) 
           : 0
       };
-
-      console.log('Investor data for contract:', {
-        freshInvestorResponse,
-        freshInvestorData,
-        selectedInvestor,
-        investorDetails,
-        capitalAmount,
-        finalData: investorData
-      }); // للتحقق من البيانات
-
       setContractInvestorData(investorData);
       setIsContractModalOpen(true);
 
@@ -2789,6 +2788,7 @@ export default function Investors() {
           investorData={contractInvestorData}
           templateContent={mudarabahTemplate}
           onContractGenerated={handleContractGenerated}
+          onPreviewClose={handleContractPreviewClose}
           contractType="MUDARABAH_UPDATE"
         />
       )}

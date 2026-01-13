@@ -86,7 +86,7 @@ const numberToArabicWords = (num) => {
       if (thousandsPart === 10) {
         result += "عشرة آلاف ";
       } else {
-        result += teens[thousandsPart - 10] + " ألفاً ";
+        result += teens[thousandsPart - 10] + " ألف ";
       }
     } else if (thousandsPart < 11) {
       result += ones[thousandsPart] + " آلاف ";

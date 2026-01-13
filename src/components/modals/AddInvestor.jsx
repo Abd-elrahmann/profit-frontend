@@ -427,6 +427,7 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
           investorData={savedInvestorData}
           templateContent={mudarabahTemplate}
           onContractGenerated={handleContractGenerated}
+          onPreviewClose={handleClose}
           contractType="MUDARABAH"
         />
       )}

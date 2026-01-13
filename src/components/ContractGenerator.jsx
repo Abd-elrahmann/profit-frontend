@@ -47,7 +47,7 @@ const numberToArabicWords = (num) => {
       if (thousandsPart === 10) {
         result += 'عشرة آلاف ';
       } else {
-        result += teens[thousandsPart - 10] + ' ألفاً ';
+        result += teens[thousandsPart - 10] + ' ألف ';
       }
     } else if (thousandsPart < 11) {
       result += ones[thousandsPart] + ' آلاف ';
@@ -143,10 +143,11 @@ const getCurrentDates = () => {
   return { gregorianDate, hijriDate };
 };
 
-const ContractGenerator = React.forwardRef(({ 
-  investorData,   
-  templateContent, 
+const ContractGenerator = React.forwardRef(({
+  investorData,
+  templateContent,
   onContractGenerated,
+  onPreviewClose,
   contractType = 'MUDARABAH'
 }, ref) => {
   const [showPreview, setShowPreview] = useState(false);
@@ -366,7 +367,13 @@ const ContractGenerator = React.forwardRef(({
     <>
       <ContractPreview
         open={showPreview}
-        onClose={() => setShowPreview(false)}
+        onClose={() => {
+          setShowPreview(false);
+          // استدعاء callback لإغلاق dialog إضافة المستثمر إذا كان موجوداً
+          if (onPreviewClose) {
+            onPreviewClose();
+          }
+        }}
         contractHtml={contractHtml}
         onGeneratePDF={generatePDF}
         loading={loading}
