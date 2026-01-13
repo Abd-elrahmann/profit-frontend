@@ -431,25 +431,8 @@ export default function InvestorsWithdrawal() {
         <title>انسحابات المستثمرين</title>
         <meta name="description" content="انسحابات المستثمرين" />
       </Helmet>
-
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          p: 2,
-          bgcolor: "background.default",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <Typography variant="h5" fontWeight="bold">
-          انسحابات المستثمرين
-        </Typography>
-      </Box>
-
       {/* Tabs */}
-      <Box sx={{ bgcolor: "background.default", borderBottom: "1px solid #ddd" }}>
+      <Box sx={{ bgcolor: "background.default", borderBottom: "1px solid #ddd", p: 1 }}>
         <Tabs
           value={activeTab}
           onChange={handleTabChange}

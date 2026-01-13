@@ -329,15 +329,6 @@ export default function GeneralLedger() {
       >
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography 
-            variant="h5" 
-            fontWeight="bold" 
-            color="primary"
-            sx={{ mb: 2, textAlign: isSmallScreen ? 'center' : 'right' }}
-          >
-            دفتر الأستاذ العام
-          </Typography>
-
           {/* Toolbar */}
           <Box sx={{ 
             display: 'flex', 

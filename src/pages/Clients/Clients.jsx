@@ -35,6 +35,7 @@ import {
   TableChart,
   Visibility,
   InsertDriveFile,
+  Close,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -658,44 +659,20 @@ export default function Clients() {
 
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh" }}>
+    <Box
+      sx={{
+        bgcolor: 'background.default',
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Helmet>
         <title>العملاء</title>
         <meta name="description" content="العملاء" />
       </Helmet>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          p: 2,
-          bgcolor: 'background.paper',
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <Typography variant="h5" fontWeight="bold">
-          العملاء
-        </Typography>
-        {permissions.includes("clients_Add") && (
-          <Button
-            variant="contained"
-            startIcon={<Add sx={{ marginLeft: "10px" }} />}
-            onClick={handleAddClient}
-            sx={{
-              bgcolor: "primary.main",
-              "&:hover": { bgcolor: "primary.dark" },
-              fontWeight: "bold",
-              borderRadius: 2,
-              px: 2.5,
-              py: 1,
-            }}
-          >
-            إضافة عميل جديد
-          </Button>
-        )}
-      </Box>
 
-      <Box sx={{ display: "flex", height: "calc(100vh - 80px)" }}>
+      <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
         <Box
           sx={{
             width: "350px",
@@ -709,6 +686,26 @@ export default function Clients() {
           <Box
             sx={{ p: 3, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa' }}
           >
+            {permissions.includes("clients_Add") && (
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="contained"
+                  startIcon={<Add sx={{ marginLeft: "10px" }} />}
+                  onClick={handleAddClient}
+                  sx={{
+                    bgcolor: "primary.main",
+                    "&:hover": { bgcolor: "primary.dark" },
+                    fontWeight: "bold",
+                    borderRadius: 2,
+                    py: 1,
+                  }}
+                >
+                  إضافة عميل جديد
+                </Button>
+              </Box>
+            )}
             <TextField
               placeholder="البحث بالاسم أو رقم الهوية"
               fullWidth

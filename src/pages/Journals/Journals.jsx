@@ -1778,7 +1778,7 @@ const Journals = () => {
         <Box
           sx={{
             flex: 1,
-            p: isSmallScreen ? 2 : 4,
+            p: isSmallScreen ? 2 : 3,
             bgcolor: 'background.paper',
             overflowY: "auto",
             width: "100%",

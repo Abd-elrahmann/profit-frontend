@@ -114,7 +114,7 @@ const LoanDetailsSection = ({
                 },
               }}
             />
-            {!isReadOnlyMode && (
+            {!isReadOnlyMode && loanForm.source && loanForm.source.trim() !== "" && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                 <Typography
                   variant="caption"
@@ -412,7 +412,7 @@ const LoanDetailsSection = ({
             type="text"
             label="تاريخ استحقاق السند"
             select
-            value={isViewMode ? (loanForm.promissoryNoteType || selectedLoan?.promissoryNoteType || "inspection") : loanForm.promissoryNoteType || "inspection"}
+            value={isViewMode ? (loanForm.promissoryNoteType || selectedLoan?.promissoryNoteType || "") : loanForm.promissoryNoteType || ""}
             onChange={(e) => handleInputChange("promissoryNoteType", e.target.value)}
             disabled={isReadOnlyMode}
             sx={{

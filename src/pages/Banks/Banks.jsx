@@ -451,7 +451,7 @@ const Banks = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: "background.paper", minHeight: "100vh", p: isMobile ? 2 : 4 }}>
+    <Box sx={{ bgcolor: "background.paper", minHeight: "100vh", p: isMobile ? 2 : 3 }}>
       <Helmet>
         <title>الحسابات البنكية</title>
         <meta name="description" content="الحسابات البنكية" />
@@ -462,16 +462,31 @@ const Banks = () => {
         sx={{
           display: "flex",
           justifyContent: "space-between",
+          flexDirection:'row-reverse',
           alignItems: isSmallScreen ? "stretch" : "center",
-          mb: 4,
-          flexDirection: isSmallScreen ? "column" : "row",
-          gap: 2,
+          mb: 2,
+          gap: 1,
         }}
       >
-        <Typography variant="h5" fontWeight="bold" color="text.primary">
-          الحسابات البنكية
-        </Typography>
-        
+        {/* Search Bar */}
+        <InputBase
+          placeholder="ابحث باسم الحساب أو رقم الحساب..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            width: isSmallScreen ? '100%' : "300px",
+            borderRadius: "6px",
+            p: 1,
+          }}
+        />
+      
         <Stack 
           direction={isSmallScreen ? "column" : "row"} 
           spacing={1}
@@ -543,37 +558,6 @@ const Banks = () => {
             </Button>
           )}
         </Stack>
-      </Box>
-
-      {/* Search Bar */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: isSmallScreen ? "stretch" : "space-between",
-          alignItems: "center",
-          mb: 4,
-          flexDirection: isSmallScreen ? "column" : "row",
-          gap: 2,
-        }}
-      >
-        <InputBase
-          placeholder="ابحث باسم الحساب أو رقم الحساب..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            width: isSmallScreen ? '100%' : "300px",
-            backgroundColor: isDarkMode ? "grey.800" : "grey.50",
-            borderRadius: "6px",
-            p: 1,
-          }}
-        />
       </Box>
 
       {/* Table for large screens, Cards for small screens */}

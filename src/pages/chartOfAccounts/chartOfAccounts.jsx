@@ -188,7 +188,6 @@ const ChartOfAccount = () => {
     const hasChildren = account.children && account.children.length > 0;
     const isExpanded = expandedItems.has(account.id);
     const isSelected = selectedAccount?.id === account.id;
-    const isChild = depth > 0;
 
     // ألوان حلزونية متدرجة لكل مستوى
     const spiralColors = [
@@ -422,7 +421,6 @@ const ChartOfAccount = () => {
         display: 'flex', 
         flexDirection: { xs: 'column', md: 'row' },
         gap: { xs: 2, md: 3 }, 
-        minHeight: '70vh', 
         width: '100%' 
       }}>
         <Box sx={{ 
@@ -440,15 +438,9 @@ const ChartOfAccount = () => {
             flex: 1, 
             display: 'flex', 
             flexDirection: 'column', 
-            height: { xs: 'auto', md: '100%' },
-            minHeight: { xs: '300px', md: 'auto' }
           }}>
-            <Typography variant="h5" gutterBottom color='primary.main' fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
-              شجرة الحسابات
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
 
-            <Box sx={{ flex: 1, overflow: 'auto', maxHeight: { xs: '400px', md: '70vh' }, pr: 1 }}>
+            <Box sx={{ flex: 1, overflow: 'auto', pr: 1 }}>
               {accountsTree.map(account => renderAccountItem(account))}
             </Box>
           </Box>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -65,23 +65,15 @@ const Loans = () => {
     interestRate: "",
     paymentAmount: "",
     type: "",
-    source: "GENERAL",
+    source: "",
     startDate: new Date().toISOString().split("T")[0],
     repaymentDay: "",
     issuanceCity: "",
     paymentCity: "",
-    promissoryNoteType: "inspection", // "inspection" أو "manual"
+    promissoryNoteType: "",
     promissoryNoteDate: "",
   });
 
-  const dayToDateString = (day) => {
-    if (!day || isNaN(day)) return "";
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const dayStr = day.toString().padStart(2, '0');
-    return `${year}-${month}-${dayStr}`;
-  };
 
   const dateToDay = (dateString) => {
     if (!dateString) return "";
@@ -674,10 +666,13 @@ const Loans = () => {
       interestRate: "",
       paymentAmount: "",
       type: "",
+      source: "",
       startDate: new Date().toISOString().split("T")[0],
       repaymentDay: "",
       issuanceCity: "",
       paymentCity: "",
+      promissoryNoteType: "",
+      promissoryNoteDate: "",
     });
 
       setSelectedClient(null);
@@ -942,10 +937,10 @@ const Loans = () => {
       type: "",
       source: "",
       startDate: new Date().toISOString().split("T")[0],
-      repaymentDay: dayToDateString(10),
+      repaymentDay: "",
       issuanceCity: "",
       paymentCity: "",
-      promissoryNoteType: "inspection",
+      promissoryNoteType: "",
       promissoryNoteDate: "",
     });
     setInstallments([]);
@@ -1129,7 +1124,7 @@ const Loans = () => {
         repaymentDay: loan.repaymentDay ? loan.repaymentDay.split("T")[0] : "",
         issuanceCity: loan.issuanceCity || "",
         paymentCity: loan.paymentCity || "",
-        promissoryNoteType: loan.promissoryNoteType || "inspection",
+        promissoryNoteType: loan.promissoryNoteType || "",
         promissoryNoteDate: loan.promissoryNoteDate ? loan.promissoryNoteDate.split("T")[0] : "",
       });
 
@@ -1293,24 +1288,56 @@ const Loans = () => {
 
   const simulationSummary = getSimulationSummary();
 
-  const isFormValid = () => {
-    const isPromissoryNoteValid = loanForm.promissoryNoteType === "inspection" ||
-      (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate && loanForm.promissoryNoteDate.trim() !== "");
+  const isFormValid = useMemo(() => {
+    // Check promissory note validity:
+    // - Must have a type selected
+    // - If type is "manual", must have a date
+    // - If type is "inspection", date is optional
+    const isPromissoryNoteValid = 
+      loanForm.promissoryNoteType && 
+      loanForm.promissoryNoteType.trim() !== "" &&
+      (loanForm.promissoryNoteType === "inspection" ||
+        (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate && loanForm.promissoryNoteDate.trim() !== ""));
+
+    // Check if totalInterest and interestRate have valid values (including 0)
+    const totalInterestValue = loanForm.totalInterest === "" ? null : parseFloat(String(loanForm.totalInterest).replace(/,/g, ""));
+    const interestRateValue = loanForm.interestRate === "" ? null : parseFloat(String(loanForm.interestRate));
+    
+    const isTotalInterestValid = totalInterestValue !== null && !isNaN(totalInterestValue) && totalInterestValue >= 0;
+    const isInterestRateValid = interestRateValue !== null && !isNaN(interestRateValue) && interestRateValue >= 0;
 
     return (
       selectedClient &&
       selectedPartner &&
       selectedBank &&
       loanForm.amount &&
-      (loanForm.totalInterest || loanForm.totalInterest === 0) &&
-      (loanForm.interestRate || loanForm.interestRate === 0) &&
+      String(loanForm.amount).trim() !== "" &&
+      isTotalInterestValid &&
+      isInterestRateValid &&
       loanForm.paymentAmount &&
+      String(loanForm.paymentAmount).trim() !== "" &&
       loanForm.type &&
+      String(loanForm.type).trim() !== "" &&
       loanForm.source &&
+      String(loanForm.source).trim() !== "" &&
       loanForm.repaymentDay &&
+      String(loanForm.repaymentDay).trim() !== "" &&
       isPromissoryNoteValid
     );
-  };
+  }, [
+    selectedClient,
+    selectedPartner,
+    selectedBank,
+    loanForm.amount,
+    loanForm.totalInterest,
+    loanForm.interestRate,
+    loanForm.paymentAmount,
+    loanForm.type,
+    loanForm.source,
+    loanForm.repaymentDay,
+    loanForm.promissoryNoteType,
+    loanForm.promissoryNoteDate
+  ]);
 
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
   const isReadOnlyMode = isViewMode;
@@ -1570,7 +1597,7 @@ const Loans = () => {
                   <Button
                     variant="contained"
                     onClick={handleSaveLoan}
-                    disabled={!isFormValid()}
+                    disabled={!isFormValid}
                     sx={{
                       bgcolor: "primary.main",
                       height: isTablet ? "44px" : "48px",

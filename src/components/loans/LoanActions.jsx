@@ -104,7 +104,7 @@ const LoanActions = ({
           <Button
             variant="contained"
             onClick={handleSaveLoan}
-            disabled={!isFormValid()}
+            disabled={!isFormValid}
             fullWidth
             sx={{
               bgcolor: "primary.main",

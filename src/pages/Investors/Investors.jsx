@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Menu,
   MenuItem,
   Stack,
   FormControl,
@@ -48,11 +49,13 @@ import {
   Visibility,
   InsertDriveFile,
   Warning,
+  Close,
   Description,
   TrendingUp,
   Assessment,
   Mosque,
   Savings,
+  KeyboardArrowDown,
 } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -162,6 +165,7 @@ export default function Investors() {
     amount: ""
   });
   const [transactionsPage, setTransactionsPage] = useState(1);
+  const [showAlert, setShowAlert] = useState(true);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
 
@@ -170,6 +174,7 @@ export default function Investors() {
   // eslint-disable-next-line no-unused-vars
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
   const [contractInvestorData, setContractInvestorData] = useState(null);
+  const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
   const contractGeneratorRef = useRef(null);
 
@@ -181,6 +186,14 @@ export default function Investors() {
   const [isWithdrawEditMode, setIsWithdrawEditMode] = useState(false);
   const [withdrawPreviewData, setWithdrawPreviewData] = useState(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+
+  const handleExportMenuOpen = (event) => {
+    setExportMenuAnchor(event.currentTarget);
+  };
+
+  const handleExportMenuClose = () => {
+    setExportMenuAnchor(null);
+  };
 
   // eslint-disable-next-line no-unused-vars
   const [showWithdrawnOnly, setShowWithdrawnOnly] = useState(false);
@@ -1135,16 +1148,28 @@ export default function Investors() {
   };
 
   return (
-    <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        bgcolor: "background.default",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Helmet>
         <title>المستثمرين</title>
         <meta name="description" content="المستثمرين" />
       </Helmet>
 
-      {openingJournalsCheck?.hasUnpostedOpeningJournals && (
+      {showAlert && openingJournalsCheck?.hasUnpostedOpeningJournals && (
   <Alert
     severity="warning"
     icon={<Warning />}
+    action={
+      <IconButton size="small" onClick={() => setShowAlert(false)}>
+        <Close />
+      </IconButton>
+    }
     sx={{
       mx: 2,
       mt: 2,
@@ -1196,64 +1221,7 @@ export default function Investors() {
   </Alert>
 )}
 
-
-      {/* Navigation / Actions Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          p: 1.5,
-          bgcolor: "background.paper",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="h5" fontWeight="bold">
-            إدارة المستثمرين
-          </Typography>
-          {/* Secondary Actions */}
-          <Button
-            variant="text"
-            startIcon={<Visibility sx={{marginLeft: '10px'}} />}
-            onClick={() => navigate('/investors-withdraw')}
-            sx={{
-              color: "text.secondary",
-              "&:hover": { 
-                bgcolor: "action.hover",
-              },
-              fontWeight: 500,
-              borderRadius: 2,
-              px: 2,
-              py: 0.75,
-            }}
-          >
-            عرض المنسحبين
-          </Button>
-        </Box>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          {/* Primary Action */}
-          {permissions.includes("partners_Add") && (
-          <Button
-            variant="contained"
-            startIcon={<Add sx={{marginLeft: '10px'}} />}
-            onClick={handleAddInvestor}
-            sx={{
-              bgcolor: "primary.main",
-              "&:hover": { bgcolor: "primary.dark" },
-              fontWeight: "bold",
-              borderRadius: 2,
-              px: 2.5,
-              py: 1,
-            }}
-          >
-            إضافة مستثمر جديد
-          </Button>
-          )}
-        </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 100px)' }}>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <Box
           sx={{
             width: '350px',
@@ -1266,6 +1234,47 @@ export default function Investors() {
           }}
         >
           <Box sx={{ p: 2, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa', flexShrink: 0 }}>
+            {/* Action Buttons */}
+            <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {permissions.includes("partners_Add") && (
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="contained"
+                  startIcon={<Add sx={{marginLeft: '10px'}} />}
+                  onClick={handleAddInvestor}
+                  sx={{
+                    bgcolor: "primary.main",
+                    "&:hover": { bgcolor: "primary.dark" },
+                    fontWeight: "bold",
+                    borderRadius: 2,
+                    py: 1,
+                  }}
+                >
+                  إضافة مستثمر جديد
+                </Button>
+              )}
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                startIcon={<Visibility sx={{marginLeft: '10px'}} />}
+                onClick={() => navigate('/investors-withdraw')}
+                sx={{
+                  color: "text.secondary",
+                  borderColor: "divider",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                    borderColor: "text.secondary",
+                  },
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  py: 1,
+                }}
+              >
+                عرض المنسحبين
+              </Button>
+            </Box>
             <TextField
               placeholder="البحث بالاسم أو رقم الهوية"
               fullWidth
@@ -1357,14 +1366,12 @@ export default function Investors() {
                       sx={{
                         mb: 1,
                         mx: 2,
-                        mt: 2,
+                        mt: 1,
                         cursor: "pointer",
-                        minHeight: '200px',
-                        minWidth:'300px',
                         border: isSelected ? "2px solid" : "1px solid #E5E7EB",
                         borderColor: isSelected ? "primary.main" : "#E5E7EB",
                         bgcolor: isSelected ? "primary.50" : "background.paper",
-                        transition: "0.2s",
+                        transition: "0.1s",
                         "&:hover": { bgcolor: "action.hover" },
                       }}
                     >
@@ -1375,7 +1382,7 @@ export default function Investors() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "flex-start",
-                            mb: 2,
+                            mb: 1,
                           }}
                         >
                           <Box sx={{ flex: 1, mr: 2 }}>
@@ -1399,7 +1406,7 @@ export default function Investors() {
                         </Box>
 
                         {/* Total Capital - Bold + Fixed Color */}
-                        <Box sx={{ mb: 2, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <Box sx={{ mb: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                           <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
                             رأس المال الكلي
                           </Typography>
@@ -1445,23 +1452,6 @@ export default function Investors() {
                                 {(investor.upcomingProfit || 0)?.toLocaleString()}
                               </Box>
                             </Typography>
-                          )}
-                        </Box>
-
-                        {/* Delete Button */}
-                        <Box display="flex" justifyContent="flex-end" mt={1}>
-                          {permissions.includes("partners_Delete") && (
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openDeleteModal(investor);
-                            }}
-                            sx={{ opacity: 0.7, "&:hover": { opacity: 1 } }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
                           )}
                         </Box>
                       </CardContent>
@@ -1541,38 +1531,57 @@ export default function Investors() {
               {/* Secondary Actions */}
               <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", justifyContent: 'flex-end' }}>
                 {permissions.includes("partners_Export") && (
-                <Button
-                  variant="text"
-                  startIcon={<PictureAsPdf sx={{marginLeft: '10px'}} />}
-                  onClick={handleExportSpecificPartnerPDF}
-                  disabled={isExporting}
-                  sx={{
-                    color: "text.secondary",
-                    "&:hover": { bgcolor: "action.hover" },
-                    borderRadius: 2,
-                    px: 2,
-                    fontWeight: 500,
-                  }}
-                >
-                  تصدير PDF
-                </Button>
-                )}
-                {permissions.includes("partners_Export") && (
-                <Button
-                  variant="text"
-                  startIcon={<TableChart sx={{marginLeft: '10px'}} />}
-                  onClick={handleExportSpecificPartnerExcel}
-                  disabled={isExporting}
-                  sx={{
-                    color: "text.secondary",
-                    "&:hover": { bgcolor: "action.hover" },
-                    borderRadius: 2,
-                    px: 2,
-                    fontWeight: 500,
-                  }}
-                >
-                  تصدير Excel
-                </Button>
+                <>
+                  <Button
+                    variant="text"
+                    startIcon={<Download sx={{marginLeft: '10px'}} />}
+                    endIcon={<KeyboardArrowDown />}
+                    onClick={handleExportMenuOpen}
+                    disabled={isExporting}
+                    sx={{
+                      color: "black",
+                      borderRadius: 2,
+                      px: 2,
+                      fontWeight: 500,
+                    }}
+                  >
+                    تصدير
+                  </Button>
+                  <Menu
+                    anchorEl={exportMenuAnchor}
+                    open={Boolean(exportMenuAnchor)}
+                    onClose={handleExportMenuClose}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        handleExportMenuClose();
+                        handleExportSpecificPartnerExcel();
+                      }}
+                      disabled={isExporting}
+                    >
+                      <TableChart sx={{ mr: 1, fontSize: '18px', color: 'primary.main' }} />
+                      تصدير Excel
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleExportMenuClose();
+                        handleExportSpecificPartnerPDF();
+                      }}
+                      disabled={isExporting}
+                    >
+                      <PictureAsPdf sx={{ mr: 1, fontSize: '18px', color: 'error.main' }} />
+                      تصدير PDF
+                    </MenuItem>
+                  </Menu>
+                </>
                 )}
                 {permissions.includes("partners_Add") && (
                 <>
@@ -1592,6 +1601,24 @@ export default function Investors() {
                   >
                     انسحاب المستثمر
                   </Button>
+
+                  {permissions.includes("partners_Delete") && (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<Delete sx={{marginLeft: '10px'}} />}
+                      onClick={() => openDeleteModal(investorDetails)}
+                      sx={{
+                        borderColor: "error.main",
+                        "&:hover": { bgcolor: "error.50", borderColor: "error.dark" },
+                        borderRadius: 2,
+                        px: 2,
+                        fontWeight: 500,
+                      }}
+                    >
+                      حذف المستثمر
+                    </Button>
+                  )}
                   
                   {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
                     <Button

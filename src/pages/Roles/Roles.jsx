@@ -341,7 +341,7 @@ export default function Roles() {
       </Helmet>
       
       {/* Main Content */}
-      <Box sx={{ p: isMobile ? 2 : 5 }}>
+      <Box sx={{ p: isMobile ? 2 : 3 }}>
         {/* Search and Add Button */}
         <Box
           sx={{

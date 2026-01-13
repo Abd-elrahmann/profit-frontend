@@ -529,7 +529,7 @@ const Expenses = () => {
       <Helmet>
         <title>المصروفات - نظام إدارة السلف</title>
       </Helmet>
-      <Box sx={{ p: isMobile ? 1 : 3, mt: 3 }}>
+      <Box sx={{ p: isMobile ? 2 : 3 }}>
         {/* Header with Summary Boxes */}
         <Box
           sx={{
