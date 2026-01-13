@@ -1870,15 +1870,12 @@ export default function Investors() {
                             >
                               <MenuItem value="NEW">جديد</MenuItem>
                               <MenuItem value="OLD">قديم</MenuItem>
-                              <MenuItem value="WITHDRAWN">منسحب</MenuItem>
                             </TextField>
                             {editFormData.status !== getInvestorStatus(investorDetails) && (
                               <Alert severity="info" sx={{ mt: 1, fontSize: '0.85rem' }}>
                                 {editFormData.status === 'NEW' ?
                                   'سيتم تصنيف المستثمر كجديد' :
-                                  editFormData.status === 'OLD' ?
-                                  'سيتم تصنيف المستثمر كقديم' :
-                                  'سيتم تصنيف المستثمر كمنسحب'}
+                                  'سيتم تصنيف المستثمر كقديم'}
                               </Alert>
                             )}
                           </Box>
