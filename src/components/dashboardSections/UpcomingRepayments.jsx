@@ -4,16 +4,11 @@ import {
   Typography,
   Card,
   CardContent,
-  Table,
   TableBody,
-  TableContainer,
   TableHead,
-  Paper,
-  Chip,
   CircularProgress,
-  useMediaQuery,
 } from '@mui/material';
-import { Schedule, Person } from '@mui/icons-material';
+import { Schedule } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getUpcomingRepayments } from '../../pages/dashboard/dashboardApi';
 import { useTheme } from '@mui/material';
@@ -21,7 +16,6 @@ import { format } from 'date-fns';
 import {StyledTableCell, StyledTableRow, ScrollableTableContainer} from '../layouts/tableLayout';
 const UpcomingRepayments = () => {
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { data: repayments, isLoading } = useQuery({
     queryKey: ['upcoming-repayments'],
@@ -73,19 +67,9 @@ const UpcomingRepayments = () => {
                       تاريخ الاستحقاق
                     </StyledTableCell>
                     <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
-                      المبلغ الأصلي
-                    </StyledTableCell>
-                    {!isSmallScreen && (
-                      <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
-                        الفوائد
-                      </StyledTableCell>
-                    )}
-                    <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
                       إجمالي المبلغ
                     </StyledTableCell>
-                    <StyledTableCell align="center" sx={{ minWidth: { md: 150, lg: 180 }, width: { md: '10%', lg: '10%' } }}>
-                      الحالة
-                    </StyledTableCell>
+                 
                   </StyledTableRow>
                 </TableHead>
                 <TableBody>
@@ -105,34 +89,9 @@ const UpcomingRepayments = () => {
                         </Typography>
                       </StyledTableCell>
                       <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
-                        <Typography variant="body2">
-                          {formatCurrency(repayment.principalAmount)}
-                        </Typography>
-                      </StyledTableCell>
-                      {!isSmallScreen && (
-                        <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
-                          <Typography variant="body2">
-                            {formatCurrency(repayment.interestAmount)}
-                          </Typography>
-                        </StyledTableCell>
-                      )}
-                      <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
                         <Typography variant="body2" fontWeight="bold">
                           {formatCurrency((repayment.principalAmount || 0) + (repayment.interestAmount || 0))}
                         </Typography>
-                      </StyledTableCell>
-                      <StyledTableCell align="center" sx={{ minWidth: { md: 150, lg: 180 }, width: { md: '10%', lg: '10%' } }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                          <Chip
-                            label="معلق"
-                            size="small"
-                            sx={{
-                              bgcolor: theme.palette.warning.light,
-                              color: theme.palette.warning.contrastText,
-                              fontSize: '0.75rem'
-                            }}
-                          />
-                        </Box>
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}

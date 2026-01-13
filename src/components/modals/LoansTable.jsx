@@ -451,15 +451,23 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Typography variant="caption" color="text.secondary">
-                    تاريخ التفعيل
+                    تاريخ الانتهاء
                   </Typography>
                   <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" fontWeight="bold">
-                      {loan.startDate ? dayjs(loan.startDate).format("DD/MM/YYYY") : "-"}
-                    </Typography>
-                    {loan.startDateHijri && (
-                      <Typography variant="caption" color="text.secondary">
-                        {loan.startDateHijri}
+                    {loan.status === "COMPLETED" && loan.endDate ? (
+                      <>
+                        <Typography variant="body2" fontWeight="bold">
+                          {dayjs(loan.endDate).format("DD/MM/YYYY")}
+                        </Typography>
+                        {loan.endDateHijri && (
+                          <Typography variant="caption" color="text.secondary">
+                            {loan.endDateHijri}
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        لم تنتهي بعد
                       </Typography>
                     )}
                   </Box>
@@ -520,7 +528,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               تاريخ الإنشاء
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              تاريخ التفعيل
+              تاريخ الانتهاء
             </StyledTableCell>
             {hasActions && (
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -639,12 +647,20 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                   sx={{ whiteSpace: "nowrap" }}
                 >
                   <Box>
-                    <Typography variant="body2" fontWeight="bold">
-                      {loan.startDate ? dayjs(loan.startDate).format("DD/MM/YYYY") : "-"}
-                    </Typography>
-                    {loan.startDateHijri && (
-                      <Typography variant="caption" color="text.secondary">
-                        {loan.startDateHijri}
+                    {loan.status === "COMPLETED" && loan.endDate ? (
+                      <>
+                        <Typography variant="body2" fontWeight="bold">
+                          {dayjs(loan.endDate).format("DD/MM/YYYY")}
+                        </Typography>
+                        {loan.endDateHijri && (
+                          <Typography variant="caption" color="text.secondary">
+                            {loan.endDateHijri}
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        لم تنتهي بعد
                       </Typography>
                     )}
                   </Box>

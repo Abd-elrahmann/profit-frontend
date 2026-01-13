@@ -14,10 +14,9 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
+  Card,
+  CardContent,
+  CardActionArea,
   Collapse,
   IconButton,
 } from '@mui/material';
@@ -29,6 +28,7 @@ import {
   Cancel as CancelIcon,
   ChevronRight,
   ExpandMore,
+  AccountBalance as AccountIcon,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { Helmet } from 'react-helmet-async';
@@ -187,64 +187,172 @@ const ChartOfAccount = () => {
   const renderAccountItem = (account, depth = 0) => {
     const hasChildren = account.children && account.children.length > 0;
     const isExpanded = expandedItems.has(account.id);
+    const isSelected = selectedAccount?.id === account.id;
+    const isChild = depth > 0;
+
+    // ألوان حلزونية متدرجة لكل مستوى
+    const spiralColors = [
+      { bg: '#ffffff', border: '#e0e0e0', icon: '#757575' }, // المستوى 0 - أبيض
+      { bg: '#e3f2fd', border: '#90caf9', icon: '#1976d2' }, // المستوى 1 - أزرق فاتح
+      { bg: '#f3e5f5', border: '#ce93d8', icon: '#9c27b0' }, // المستوى 2 - بنفسجي فاتح
+      { bg: '#e8f5e9', border: '#a5d6a7', icon: '#388e3c' }, // المستوى 3 - أخضر فاتح
+      { bg: '#fff3e0', border: '#ffb74d', icon: '#f57c00' }, // المستوى 4 - برتقالي فاتح
+      { bg: '#fce4ec', border: '#f48fb1', icon: '#c2185b' }, // المستوى 5 - وردي فاتح
+      { bg: '#e0f2f1', border: '#80cbc4', icon: '#00796b' }, // المستوى 6 - تركواز
+    ];
+
+    // الحصول على اللون بناءً على العمق (مع التكرار للمستويات العميقة)
+    const colorIndex = depth % spiralColors.length;
+    const colors = spiralColors[colorIndex];
+
+    // تحديد لون الخلفية بناءً على العمق والتحديد
+    const getBackgroundColor = () => {
+      if (isSelected) {
+        return depth === 0 ? 'rgba(25, 118, 210, 0.08)' : colors.bg;
+      }
+      return colors.bg;
+    };
+
+    // تحديد سمك الحدود بناءً على العمق
+    const getBorderWidth = () => {
+      if (isSelected) return 3;
+      return depth === 0 ? 2 : 1;
+    };
 
     return (
-      <Box key={account.id}>
-        <ListItem
+      <Box key={account.id} sx={{ mb: 2, ml: depth * 2.5 }}>
+        <Card
+          elevation={isSelected ? 8 : (depth === 0 ? 3 : 2)}
           sx={{
-            pl: depth * 3,
-            backgroundColor: selectedAccount?.id === account.id ? 'action.selected' : 'transparent',
-            borderLeft: selectedAccount?.id === account.id ? '3px solid' : 'none',
-            borderColor: 'primary.main',
+            border: getBorderWidth(),
+            borderColor: isSelected ? 'primary.main' : colors.border,
+            borderRightWidth: depth > 0 ? 4 : getBorderWidth(),
+            borderRightColor: isSelected ? 'primary.main' : colors.icon,
+            backgroundColor: getBackgroundColor(),
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            '&:hover': {
+              elevation: 6,
+              transform: 'translateY(-2px)',
+              boxShadow: 4,
+            },
+            // خط متصل من الأعلى للحسابات الفرعية
+            '&::before': depth > 0 ? {
+              content: '""',
+              position: 'absolute',
+              right: -10,
+              top: '50%',
+              width: '10px',
+              height: '2px',
+              backgroundColor: colors.icon,
+              opacity: 0.5,
+            } : {},
           }}
-          secondaryAction={
-            hasChildren && (
-              <IconButton
-                size="small"
-                onClick={() => toggleExpand(account.id)}
-                sx={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-              >
-                <ExpandMore />
-              </IconButton>
-            )
-          }
-          disablePadding
         >
-          <ListItemButton onClick={() => handleAccountSelect(account)}>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" fontWeight="bold">
-                    {account.code}
-                  </Typography>
-                  <Typography variant="body1">{account.name}</Typography>
-                  <Chip
-                    label={getAccountTypeLabel(account.type)}
-                    size="small"
-                    color={
-                      account.type === 'ASSET' ? 'primary' :
-                      account.type === 'LIABILITY' ? 'secondary' :
-                      account.type === 'EQUITY' ? 'success' :
-                      account.type === 'REVENUE' ? 'warning' : 'error'
-                    }
+          <CardActionArea onClick={() => handleAccountSelect(account)}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                  {/* دائرة ملونة للمستوى */}
+                  {depth > 0 && (
+                    <Box
+                      sx={{
+                        width: 8 + (depth * 2),
+                        height: 8 + (depth * 2),
+                        borderRadius: '50%',
+                        backgroundColor: colors.icon,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <AccountIcon 
+                    sx={{ 
+                      fontSize: 28 - (depth * 2),
+                      color: isSelected ? 'primary.main' : colors.icon,
+                    }}
                   />
-                  <Chip
-                    label={`${account.balance.toLocaleString()}`}
-                    size="small"
-                    variant="outlined"
-                    color={account.balance >= 0 ? 'success' : 'error'}
-                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={depth === 0 ? 'bold' : 'medium'}
+                      color={isSelected ? 'primary.main' : 'text.primary'}
+                      sx={{ fontSize: { xs: '0.95rem', sm: (1.1 - depth * 0.05) + 'rem' } }}
+                    >
+                      {account.name}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        color: colors.icon,
+                        fontWeight: 'medium',
+                      }}
+                    >
+                      كود: {account.code}
+                      {depth > 0 && (
+                        <Chip 
+                          label={`المستوى ${depth}`} 
+                          size="small" 
+                          sx={{ 
+                            ml: 1, 
+                            height: 18, 
+                            fontSize: '0.7rem',
+                            backgroundColor: colors.icon,
+                            color: 'white',
+                          }} 
+                        />
+                      )}
+                    </Typography>
+                  </Box>
                 </Box>
-              }
-            />
-          </ListItemButton>
-        </ListItem>
+                
+                {hasChildren && (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExpand(account.id);
+                    }}
+                    sx={{ 
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.3s ease',
+                      color: colors.icon,
+                    }}
+                  >
+                    <ExpandMore />
+                  </IconButton>
+                )}
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
+                <Chip
+                  label={getAccountTypeLabel(account.type)}
+                  size="small"
+                  color={
+                    account.type === 'ASSET' ? 'primary' :
+                    account.type === 'LIABILITY' ? 'secondary' :
+                    account.type === 'EQUITY' ? 'success' :
+                    account.type === 'REVENUE' ? 'warning' : 'error'
+                  }
+                  sx={{ fontWeight: 'bold' }}
+                />
+                <Chip
+                  label={account.balance.toLocaleString()}
+                  size="small"
+                  variant="outlined"
+                  color={account.balance >= 0 ? 'success' : 'error'}
+                  sx={{ fontWeight: 'bold' }}
+                />
+              </Box>
+            </CardContent>
+          </CardActionArea>
+        </Card>
 
         {hasChildren && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
+            <Box sx={{ mt: 2 }}>
               {account.children.map(child => renderAccountItem(child, depth + 1))}
-            </List>
+            </Box>
           </Collapse>
         )}
       </Box>
@@ -340,9 +448,9 @@ const ChartOfAccount = () => {
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
-            <List sx={{ flex: 1, overflow: 'auto', maxHeight: { xs: '400px', md: '70vh' } }}>
+            <Box sx={{ flex: 1, overflow: 'auto', maxHeight: { xs: '400px', md: '70vh' }, pr: 1 }}>
               {accountsTree.map(account => renderAccountItem(account))}
-            </List>
+            </Box>
           </Box>
         </Box>
 

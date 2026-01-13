@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Stack,
 } from "@mui/material";
 import {
   Add,
@@ -42,6 +43,7 @@ import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import DeleteModal from "../../components/modals/DeleteModal";
 import EditDocuments from "../../components/modals/EditDocuments";
+import dayjs from "dayjs";
 import EditKafeelDocuments from "../../components/modals/EditKafeelDocuments";
 import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
@@ -255,6 +257,19 @@ export default function Clients() {
         return "شهري";
       default:
         return type;
+    }
+  };
+
+  const getSourceText = (source) => {
+    switch (source) {
+      case "GENERAL":
+        return "عام";
+      case "NEW_CAPITAL":
+        return "رأس مال جديد";
+      case "MIX":
+        return "عام و رأس مال جديد";
+      default:
+        return source || "غير محدد";
     }
   };
 
@@ -2848,7 +2863,7 @@ export default function Clients() {
                         ) : (
                           <StyledTableRow>
                             <StyledTableCell
-                              colSpan={6}
+                              colSpan={14}
                               align="center"
                               sx={{ py: 3 }}
                             >
@@ -2856,7 +2871,7 @@ export default function Clients() {
                                 variant="body1"
                                 color="text.secondary"
                               >
-                                لا توجد معاملات
+                                لا توجد سلفات
                               </Typography>
                             </StyledTableCell>
                           </StyledTableRow>
@@ -2902,55 +2917,79 @@ export default function Clients() {
                             <TableRow>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
                                 كود السلفة
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
                                 الشريك
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
                                 الكفيل
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
-                                المبلغ
+                                الحساب البنكي
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
-                                المبلغ الإجمالي
+                                مصدر السلفة
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
-                                المدة
+                                مبلغ السلفة
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
-                                نوع السداد
+                                مبلغ الدفعة
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
+                              >
+                                الفائدة
+                              </StyledTableCell>
+                              <StyledTableCell
+                                align="center"
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
+                              >
+                                النوع / يوم الاستحقاق
+                              </StyledTableCell>
+                              <StyledTableCell
+                                align="center"
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
                               >
                                 الحالة
                               </StyledTableCell>
                               <StyledTableCell
                                 align="center"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
+                              >
+                                تاريخ الإنشاء
+                              </StyledTableCell>
+                              <StyledTableCell
+                                align="center"
+                                sx={{ fontWeight: "bold", minWidth: 120 }}
+                              >
+                                تاريخ الانتهاء
+                              </StyledTableCell>
+                              <StyledTableCell
+                                align="center"
+                                sx={{ fontWeight: "bold", minWidth: 80 }}
                               >
                                 عرض التفاصيل
                               </StyledTableCell>
@@ -2975,17 +3014,29 @@ export default function Clients() {
                                     {loan.kafeel?.name || "-"}
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
+                                    {loan.bankAccount?.name || "-"}
+                                  </StyledTableCell>
+                                  <StyledTableCell align="center">
+                                    {getSourceText(loan.source)}
+                                  </StyledTableCell>
+                                  <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                                     {loan.amount?.toLocaleString()}
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
-                                    {loan.totalAmount?.toLocaleString()}
+                                    {loan.paymentAmount?.toLocaleString()}
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
-                                    {loan.durationMonths}{" "}
-                                    {loan.durationMonths === 1 ? "شهر" : "أشهر"}
+                                    {loan.interestAmount?.toLocaleString()} ({loan.interestRate}%)
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
-                                    {getTypeText(loan.type)}
+                                    <Stack spacing={0.25} sx={{ whiteSpace: "nowrap" }}>
+                                      <Typography variant="body2">
+                                        {getTypeText(loan.type)}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '14px' }}>
+                                        يوم الاستحقاق: {loan.repaymentDay}
+                                      </Typography>
+                                    </Stack>
                                   </StyledTableCell>
                                   <StyledTableCell align="center">
                                     <Chip
@@ -2994,6 +3045,38 @@ export default function Clients() {
                                       size="small"
                                       variant="outlined"
                                     />
+                                  </StyledTableCell>
+                                  <StyledTableCell align="center">
+                                    <Box>
+                                      <Typography variant="body2" fontWeight="bold">
+                                        {dayjs(loan.createdAt).format("DD/MM/YYYY")}
+                                      </Typography>
+                                      {loan.createdAtHijri && (
+                                        <Typography variant="caption" color="text.secondary">
+                                          {loan.createdAtHijri}
+                                        </Typography>
+                                      )}
+                                    </Box>
+                                  </StyledTableCell>
+                                  <StyledTableCell align="center">
+                                    <Box>
+                                      {loan.status === "COMPLETED" && loan.endDate ? (
+                                        <>
+                                          <Typography variant="body2" fontWeight="bold">
+                                            {dayjs(loan.endDate).format("DD/MM/YYYY")}
+                                          </Typography>
+                                          {loan.endDateHijri && (
+                                            <Typography variant="caption" color="text.secondary">
+                                              {loan.endDateHijri}
+                                            </Typography>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                          لم تنتهي بعد
+                                        </Typography>
+                                      )}
+                                    </Box>
                                   </StyledTableCell>
                                   {/* Add View Details Icon Button */}
                                   <StyledTableCell align="center">
