@@ -273,7 +273,7 @@ export default function CompanyProfit() {
               <>
                 {/* Profit Summary Cards */}
                 <Grid container spacing={3} sx={{ p: isSmallScreen ? 2 : 3, justifyContent: 'center' }}>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
                       <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -289,7 +289,7 @@ export default function CompanyProfit() {
                               {profitData?.upcomingProfit}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              الأرباح القادمة للشركة
+                              صافي الأرباح القادمة للشركة
                             </Typography>
                           </Box>
                         </Box>
@@ -303,7 +303,67 @@ export default function CompanyProfit() {
                     </Card>
                   </Grid>
 
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
+                    <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                      <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Box sx={{
+                            p: 1,
+                            borderRadius: 2,
+                            mr: 2
+                          }}>
+                            <AccountBalance sx={{ color: theme.palette.warning.main, fontSize: 24 }} />
+                          </Box>
+                          <Box>
+                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.warning.main}>
+                              {profitData?.cents}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              باقي أرباح الشركاء
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Chip
+                          label="باقي الأرباح"
+                          size="small"
+                          color="warning"
+                          variant="outlined"
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} md={3}>
+                    <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+                      <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Box sx={{
+                            p: 1,
+                            borderRadius: 2,
+                            mr: 2
+                          }}>
+                            <TrendingUp sx={{ color: theme.palette.info.main, fontSize: 24 }} />
+                          </Box>
+                          <Box>
+                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.info.main}>
+                              {profitData?.totalUpcoming}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              إجمالي الأرباح
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Chip
+                          label="إجمالي"
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} md={3}>
                     <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1) ' }}>
                       <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -325,36 +385,6 @@ export default function CompanyProfit() {
                         </Box>
                         <Chip
                           label="متاح للسحب"
-                          size="small"
-                          color={theme.palette.primary.main}
-                          variant="outlined"
-                        />
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
-                      <CardContent sx={{ p: isSmallScreen ? 2 : 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <Box sx={{
-                            p: 1,
-                            borderRadius: 2,
-                            mr: 2
-                          }}>
-                            <TrendingDown sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
-                          </Box>
-                          <Box>
-                            <Typography variant={isSmallScreen ? "h5" : "h4"} fontWeight="bold" color={theme.palette.primary.main}>
-                              {profitData?.data?.length || 0}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              عدد عمليات السحب
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Chip
-                          label="عمليات سحب"
                           size="small"
                           color={theme.palette.primary.main}
                           variant="outlined"
