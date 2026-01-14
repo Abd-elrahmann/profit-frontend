@@ -547,70 +547,75 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         height: "100%",
       }}
     >
-      {canExport && (
+      {/* Export buttons and Summary Boxes in same line */}
+      {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
         <Box
           sx={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
-            gap: 1,
+            mb: 1,
+            gap: 2,
+            flexWrap: 'wrap'
           }}
         >
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            startIcon={<PictureAsPdf sx={{ marginLeft: "6px" }} />}
-            onClick={handleExportAllPDF}
-          >
-            تصدير PDF
-          </Button>
-          <Button
-            variant="outlined"
-            color="success"
-            size="small"
-            startIcon={<TableChart sx={{ marginLeft: "6px" }} />}
-            onClick={handleExportAllExcel}
-          >
-            تصدير Excel
-          </Button>
-        </Box>
-      )}
+          {/* Summary Boxes */}
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
+              <CardContent sx={{ textAlign: 'center', py: 1 }}>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  عدد القيود
+                </Typography>
+                <Typography variant="h4" color="primary.main" fontWeight="bold">
+                  {journalsData.journals.length.toLocaleString('en-US')}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
+              <CardContent sx={{ textAlign: 'center', py: 1 }}>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  المعتمد
+                </Typography>
+                <Typography variant="h4" color="success.main" fontWeight="bold">
+                  {journalsData.journals.filter(journal => journal.status === 'POSTED').length.toLocaleString('en-US')}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
+              <CardContent sx={{ textAlign: 'center', py: 1 }}>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  الغير معتمد
+                </Typography>
+                <Typography variant="h4" color="warning.main" fontWeight="bold">
+                  {journalsData.journals.filter(journal => journal.status !== 'POSTED').length.toLocaleString('en-US')}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
 
-      {/* Summary Boxes */}
-      {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-          <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                عدد القيود
-              </Typography>
-              <Typography variant="h4" color="primary.main" fontWeight="bold">
-                {journalsData.journals.length.toLocaleString('en-US')}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                المعتمد
-              </Typography>
-              <Typography variant="h4" color="success.main" fontWeight="bold">
-                {journalsData.journals.filter(journal => journal.status === 'POSTED').length.toLocaleString('en-US')}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                الغير معتمد
-              </Typography>
-              <Typography variant="h4" color="warning.main" fontWeight="bold">
-                {journalsData.journals.filter(journal => journal.status !== 'POSTED').length.toLocaleString('en-US')}
-              </Typography>
-            </CardContent>
-          </Card>
+          {/* Export buttons */}
+          {canExport && (
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                startIcon={<PictureAsPdf sx={{ marginLeft: "6px" }} />}
+                onClick={handleExportAllPDF}
+              >
+                تصدير PDF
+              </Button>
+              <Button
+                variant="outlined"
+                color="success"
+                size="small"
+                startIcon={<TableChart sx={{ marginLeft: "6px" }} />}
+                onClick={handleExportAllExcel}
+              >
+                تصدير Excel
+              </Button>
+            </Box>
+          )}
         </Box>
       )}
 

@@ -20,10 +20,6 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Checkbox,
   Card,
@@ -73,6 +69,10 @@ import InstallmentSettlementPreview from "../../components/InstallmentSettlement
 import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
 import DeleteModal from "../../components/modals/DeleteModal";
 import DiscountModal from "../../components/modals/DiscountModal";
+import PartialPaymentModal from "../../components/modals/PartialPaymentModal";
+import PostponeModal from "../../components/modals/PostponeModal";
+import EarlyPaymentModal from "../../components/modals/EarlyPaymentModal";
+import DocumentsModal from "../../components/modals/DocumentsModal";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
@@ -1673,32 +1673,44 @@ const Installments = () => {
               >
                 رجوع لجدول السلف
               </Button>
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant="h6" fontWeight="bold">
                 دفعات السلفة - {loanData?.client?.name}
               </Typography>
-            </Box>
-            {!isSettlementCompleted() && (
-              <IconButton
-                onClick={() => setReviewStepsVisible(!reviewStepsVisible)}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<PDFIcon sx={{ marginLeft: "6px" }} />}
+                onClick={handleExportPDF}
+                disabled={isExporting}
                 sx={{
-                  color: "primary.main",
-                  "&:hover": {
-                    bgcolor: "action.selected",
-                    color: "primary.dark"
-                  },
+                  bgcolor: "error.main",
+                  "&:hover": { bgcolor: "error.dark" },
+                  height: "32px",
+                  fontSize: "13px",
                 }}
-                title={reviewStepsVisible ? "إخفاء خطوات المراجعة" : "إظهار خطوات المراجعة"}
               >
-                {reviewStepsVisible ? <CloseIcon /> : <ArrowRightIcon />}
-              </IconButton>
-            )}
-          </Box>
-
-          {/* Early Payment Button */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            {!isSettlementCompleted() &&
-              sortedInstallments.some((inst) => inst.status === "PENDING") &&
-              permissions.includes("repayments_Post") && (
+                تصدير PDF
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<ExcelIcon sx={{ marginLeft: "6px" }} />}
+                onClick={handleExportExcel}
+                disabled={isExporting}
+                sx={{
+                  bgcolor: "success.main",
+                  "&:hover": { bgcolor: "success.dark" },
+                  height: "32px",
+                  fontSize: "13px",
+                }}
+              >
+                تصدير Excel
+              </Button>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {!isSettlementCompleted() &&
+                sortedInstallments.some((inst) => inst.status === "PENDING") &&
+                permissions.includes("repayments_Post") && (
                 <Button
                   variant="contained"
                   onClick={() => setEarlyPaymentModalOpen(true)}
@@ -1708,38 +1720,55 @@ const Installments = () => {
                     fontWeight: "bold",
                     borderRadius: 2,
                     width: "120px",
-                    height: "40px",
+                    height: "36px",
                     fontSize: "14px",
                   }}
                 >
                   سداد مبكر
                 </Button>
               )}
+              {!isSettlementCompleted() && (
+                <IconButton
+                  onClick={() => setReviewStepsVisible(!reviewStepsVisible)}
+                  sx={{
+                    color: "primary.main",
+                    "&:hover": {
+                      bgcolor: "action.selected",
+                      color: "primary.dark"
+                    },
+                  }}
+                  title={reviewStepsVisible ? "إخفاء خطوات المراجعة" : "إظهار خطوات المراجعة"}
+                >
+                  {reviewStepsVisible ? <CloseIcon /> : <ArrowRightIcon />}
+                </IconButton>
+              )}
+            </Box>
           </Box>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+
+          <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
             {/* الصف الأول - معلومات السلفة الأساسية */}
-            <Grid container spacing={3} justifyContent="center" sx={{ mb: 3 }}>
+            <Grid container spacing={2} justifyContent="center" sx={{ mb: 2 }}>
               <Grid item xs={12} sm={4} textAlign="center">
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                   مبلغ السلفة
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="warning.main">
+                <Typography variant="h6" fontWeight="bold" color="warning.main">
                   {loanData?.amount?.toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={4} textAlign="center">
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                   إجمالي الفائدة
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="error.main">
+                <Typography variant="h6" fontWeight="bold" color="error.main">
                   {loanData?.interestAmount?.toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={4} textAlign="center">
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                   المبلغ الإجمالي
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="success.main">
+                <Typography variant="h6" fontWeight="bold" color="success.main">
                   {loanData?.totalAmount?.toLocaleString()}
                 </Typography>
               </Grid>
@@ -1748,46 +1777,46 @@ const Installments = () => {
             <Divider sx={{ my: 2 }} />
 
             {/* الصف الثاني - تفاصيل الدفعات */}
-            <Grid container spacing={3} justifyContent="center">
+            <Grid container spacing={2} justifyContent="center">
               <Grid item xs={6} sm={2.4} textAlign="center">
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
                   المبلغ المدفوع
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="success.dark">
+                <Typography variant="subtitle1" fontWeight="bold" color="success.dark">
                   {(loanData?.pagination?.totalPaidAmount || 0).toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={6} sm={2.4} textAlign="center">
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
                   المبلغ المتبقي
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="error.dark">
+                <Typography variant="subtitle1" fontWeight="bold" color="error.dark">
                   {(loanData?.pagination?.totalRemainingAmount || 0).toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={6} sm={2.4} textAlign="center">
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
                   إجمالي الخصومات
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="warning.main">
+                <Typography variant="subtitle1" fontWeight="bold" color="warning.main">
                   {sortedInstallments
                     .reduce((sum, inst) => sum + (inst.discount || 0), 0)
                     .toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={6} sm={2.4} textAlign="center">
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
                   الدفعات المدفوعة
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="primary.main">
+                <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
                   {loanData?.pagination?.paidRepayments || 0} / {loanData?.pagination?.totalRepayments || 0}
                 </Typography>
               </Grid>
               <Grid item xs={6} sm={2.4} textAlign="center">
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
                   الدفعات المتبقية
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="info.main">
+                <Typography variant="subtitle1" fontWeight="bold" color="info.main">
                   {(loanData?.pagination?.totalRepayments || 0) - (loanData?.pagination?.paidRepayments || 0)}
                 </Typography>
               </Grid>
@@ -1796,8 +1825,8 @@ const Installments = () => {
 
           {/* Bulk Actions */}
           {selectedInstallments.length > 0 && permissions.includes("repayments_Post") && (
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "background.paper" }}>
-              <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
+            <Paper sx={{ p: 1.5, mb: 2, borderRadius: 2, bgcolor: "background.paper" }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{gap: 1.5}}>
                 <Typography variant="body2" color="text.secondary">
                   تم اختيار {selectedInstallments.length} دفعة
                 </Typography>
@@ -1810,12 +1839,14 @@ const Installments = () => {
                     <Button
                       variant="contained"
                       size="small"
-                      startIcon={<ApproveIcon sx={{ marginLeft: "10px" }} />}
+                      startIcon={<ApproveIcon sx={{ marginLeft: "6px" }} />}
                       onClick={handleBulkApprove}
                       disabled={isBulkOperationLoading}
                       sx={{
                         bgcolor: "success.main",
                         "&:hover": { bgcolor: "success.dark" },
+                        height: "32px",
+                        fontSize: "13px",
                       }}
                     >
                       إنشاء إيصال سداد مجمع
@@ -1824,13 +1855,15 @@ const Installments = () => {
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<RejectIcon sx={{ marginLeft: "10px" }} />}
+                    startIcon={<RejectIcon sx={{ marginLeft: "6px" }} />}
                     onClick={handleBulkReject}
                     disabled={isBulkOperationLoading}
                     sx={{
                       borderColor: "error.main",
                       color: "error.main",
                       "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                      height: "32px",
+                      fontSize: "13px",
                     }}
                   >
                     رفض الدفعات المحددة
@@ -1840,6 +1873,10 @@ const Installments = () => {
                     size="small"
                     onClick={() => setSelectedInstallments([])}
                     disabled={isBulkOperationLoading}
+                    sx={{
+                      height: "32px",
+                      fontSize: "13px",
+                    }}
                   >
                     إلغاء اختيار الدفعات المحددة
                   </Button>
@@ -1853,34 +1890,6 @@ const Installments = () => {
             </Paper>
           )}
 
-          {/* Export Buttons */}
-          <Box sx={{ display: "flex", gap: 2, mb: 3, justifyContent: "center" }}>
-            <Button
-              variant="contained"
-              startIcon={<PDFIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportPDF}
-              disabled={isExporting}
-              sx={{
-                bgcolor: "error.main",
-                "&:hover": { bgcolor: "error.dark" },
-              }}
-            >
-              تصدير PDF
-            </Button>
-
-            <Button
-              variant="contained"
-              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportExcel}
-              disabled={isExporting}
-              sx={{
-                bgcolor: "success.main",
-                "&:hover": { bgcolor: "success.dark" },
-              }}
-            >
-              تصدير Excel
-            </Button>
-          </Box>
 
           {/* خطوات المراجعة للشاشات الصغيرة */}
           {isSmallScreen && !isSettlementCompleted() && reviewStepsVisible && (
@@ -2402,241 +2411,36 @@ const Installments = () => {
       </Menu>
 
       {/* Partial Payment Modal */}
-      <Dialog
-        maxWidth="md"
+      <PartialPaymentModal
         open={partialPaymentModalOpen}
         onClose={() => setPartialPaymentModalOpen(false)}
-      >
-        <DialogTitle>إضافة دفع جزئي</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            الدفعة: #{selectedActionInstallment?.count} - المبلغ:{" "}
-            {selectedActionInstallment?.amount?.toFixed(2)}
-          </Typography>
-          <TextField
-            fullWidth
-            type="number"
-            label="المبلغ المدفوع"
-            value={paidAmount}
-            onChange={(e) => setPaidAmount(e.target.value)}
-            sx={{ mt: 2 }}
-            InputProps={{
-              inputProps: {
-                min: 0,
-                max: selectedActionInstallment?.remaining,
-                step: 0.01,
-              },
-            }}
-            helperText={`الحد الأقصى: ${selectedActionInstallment?.remaining?.toFixed(
-              2
-            )}`}
-          />
-        </DialogContent>
-        <DialogActions
-          sx={{ px: 3, py: 2, gap: 2, flexDirection: "row-reverse" }}
-        >
-          <Button
-            onClick={() => setPartialPaymentModalOpen(false)}
-            variant="outlined"
-          >
-            إلغاء
-          </Button>
-          <Button
-            onClick={handlePartialPayment}
-            variant="contained"
-            color="primary"
-          >
-            تأكيد الدفع الجزئي
-          </Button>
-        </DialogActions>
-      </Dialog>
+        selectedActionInstallment={selectedActionInstallment}
+        paidAmount={paidAmount}
+        onAmountChange={(e) => setPaidAmount(e.target.value)}
+        onConfirm={handlePartialPayment}
+      />
 
-      <Dialog
-        maxWidth="md"
+      <PostponeModal
         open={postponeModalOpen}
         onClose={() => setPostponeModalOpen(false)}
-      >
-        <DialogTitle>تأجيل الدفعة</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            type="date"
-            label="التاريخ الجديد للاستحقاق"
-            value={newDueDate}
-            onChange={(e) => setNewDueDate(e.target.value)}
-            sx={{ mt: 2 }}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="سبب التأجيل"
-            value={postponeReason}
-            onChange={(e) => setPostponeReason(e.target.value)}
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions
-          sx={{ px: 3, py: 2, gap: 2, flexDirection: "row-reverse" }}
-        >
-          <Button
-            onClick={() => setPostponeModalOpen(false)}
-            variant="outlined"
-          >
-            إلغاء
-          </Button>
-          <Button onClick={handlePostpone} variant="contained">
-            تأجيل
-          </Button>
-        </DialogActions>
-      </Dialog>
+        newDueDate={newDueDate}
+        onDueDateChange={(e) => setNewDueDate(e.target.value)}
+        postponeReason={postponeReason}
+        onReasonChange={(e) => setPostponeReason(e.target.value)}
+        onConfirm={handlePostpone}
+      />
 
-      <Dialog
-        maxWidth="sm"
-        fullWidth
+      <EarlyPaymentModal
         open={earlyPaymentModalOpen}
-        onClose={() => setEarlyPaymentModalOpen(false)}
-      >
-        <DialogTitle
-          sx={{ textAlign: "center" }}
-        >
-          سداد مبكر للدفعة
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Typography variant="body1" color="text.secondary" mb={2}>
-            أنت على وشك إجراء سداد مبكر للدفعات المعلقة فقط
-          </Typography>
-
-          {/* عرض الأقساط المعلقة فقط */}
-          <Box sx={{ mb: 2, p: 2, bgcolor: "background.default", borderRadius: 1 }}>
-            <Typography variant="body2" fontWeight="bold" gutterBottom>
-              الدفعات المعلقة (
-              {
-                sortedInstallments.filter((inst) => inst.status === "PENDING")
-                  .length
-              }
-              ):
-            </Typography>
-            {sortedInstallments
-              .filter((inst) => inst.status === "PENDING")
-              // eslint-disable-next-line no-unused-vars
-              .map((installment, index) => (
-                <Box
-                  key={installment.id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body2">
-                    دفعة #{installment.count} -{" "}
-                    {dayjs(installment.dueDate).format("DD/MM/YYYY")}
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {installment.amount?.toFixed(2)}
-                  </Typography>
-                </Box>
-              ))}
-            <Divider sx={{ my: 1 }} />
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body2" fontWeight="bold">
-                المبلغ الإجمالي للدفعات المعلقة:
-              </Typography>
-              <Typography
-                variant="body2"
-                fontWeight="bold"
-                color="primary.main"
-              >
-                {sortedInstallments
-                  .filter((inst) => inst.status === "PENDING")
-                  .reduce((sum, inst) => sum + (inst.amount || 0), 0)
-                  .toLocaleString()}{" "}
-              </Typography>
-            </Box>
-          </Box>
-
-          <TextField
-            fullWidth
-            type="number"
-            label="قيمة الخصم (اختياري)"
-            value={discountAmount}
-            onChange={(e) => setDiscountAmount(e.target.value)}
-            InputProps={{
-              inputProps: {
-                min: 0,
-                step: 0.01,
-              },
-            }}
-            helperText="ادخل قيمة الخصم إذا كان هناك خصم على السداد المبكر"
-            sx={{ mt: 2 }}
-          />
-
-          {discountAmount > 0 && (
-            <Box
-              sx={{ mt: 2, p: 2, borderRadius: 1 }}
-            >
-              <Typography
-                variant="body2"
-                fontWeight="bold"
-                color="primary.main"
-              >
-                المبلغ بعد الخصم:{" "}
-                {(
-                  sortedInstallments
-                    .filter((inst) => inst.status === "PENDING")
-                    .reduce((sum, inst) => sum + (inst.amount || 0), 0) -
-                  parseFloat(discountAmount || 0)
-                ).toLocaleString()}{" "}  
-              </Typography>
-            </Box>
-          )}
-
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            <Typography variant="body2" fontWeight="bold">
-              تنبيه:
-            </Typography>
-            <Typography variant="body2">
-              بعد السداد المبكر، سيتم تحويل الدفعات المعلقة فقط إلى حالة "مدفوع
-              مسبقاً" وإخفاء أزرار الإجراءات لها. الدفعات المدفوعة مسبقاً لن
-              تتأثر.
-            </Typography>
-          </Alert>
-        </DialogContent>
-        <DialogActions
-          sx={{ px: 3, py: 2, gap: 2, flexDirection: "row-reverse" }}
-        >
-          <Button
-            onClick={() => {
-              setEarlyPaymentModalOpen(false);
-              setDiscountAmount("0");
-            }}
-            variant="outlined"
-          >
-            إلغاء
-          </Button>
-          <Button
-            onClick={handleEarlyPayment}
-            variant="contained"
-            color="success"
-            disabled={
-              sortedInstallments.filter((inst) => inst.status === "PENDING")
-                .length === 0
-            }
-            sx={{
-              bgcolor: "success.main",
-              "&:hover": { bgcolor: "success.dark" },
-              "&:disabled": {
-                bgcolor: "action.disabled",
-                color: "text.disabled",
-              },
-            }}
-          >
-            تأكيد السداد المبكر
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onClose={() => {
+          setEarlyPaymentModalOpen(false);
+          setDiscountAmount("0");
+        }}
+        sortedInstallments={sortedInstallments}
+        discountAmount={discountAmount}
+        onDiscountChange={(e) => setDiscountAmount(e.target.value)}
+        onConfirm={handleEarlyPayment}
+      />
       <PaymentProofGenerator
         ref={paymentProofGeneratorRef}
         installmentData={selectedProofInstallment}
@@ -2689,283 +2493,11 @@ const Installments = () => {
     sortedInstallments[sortedInstallments.length - 1]?.count || ""
   }
 />
-      <Dialog
+      <DocumentsModal
         open={documentsModalOpen}
         onClose={() => setDocumentsModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ textAlign: "center" }}>
-          {" "}
-          دفعة #{selectedDocumentsInstallment?.id}
-        </DialogTitle>
-        <DialogContent>
-          {selectedDocumentsInstallment?.attachments &&
-            selectedDocumentsInstallment.attachments.length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  المستندات المرفوعة:
-                </Typography>
-                {selectedDocumentsInstallment.attachments.map(
-                  (attachment, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        cursor: "pointer",
-                        "&:hover": { bgcolor: "action.hover" },
-                        p: 1,
-                        borderRadius: 1,
-                        mb: 1,
-                      }}
-                      onClick={() => {
-                        window.open(attachment, "_blank");
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ flex: 1 }}>
-                        {extractFileName(attachment)}
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 0.5 }}>
-                        <IconButton
-                          size="small"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              // تحميل الملف وطباعته مباشرة
-                              const response = await fetch(attachment);
-                              const blob = await response.blob();
-                              const url = URL.createObjectURL(blob);
-
-                              // إنشاء iframe مخفي للطباعة
-                              const iframe = document.createElement('iframe');
-                              iframe.style.display = 'none';
-                              iframe.src = url;
-                              document.body.appendChild(iframe);
-
-                              iframe.onload = () => {
-                                iframe.contentWindow.print();
-                                // تنظيف بعد الطباعة
-                                setTimeout(() => {
-                                  document.body.removeChild(iframe);
-                                  URL.revokeObjectURL(url);
-                                }, 1000);
-                              };
-                            } catch (error) {
-                              console.error('Print error:', error);
-                              notifyError("حدث خطأ في الطباعة");
-                            }
-                          }}
-                          title="طباعة"
-                        >
-                          <PrintIcon />
-                        </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        // تحميل الملف أولاً
-                        const response = await fetch(attachment);
-                        const blob = await response.blob();
-                        const file = new File([blob], extractFileName(attachment), { type: blob.type });
-
-                        if (navigator.share && navigator.canShare({ files: [file] })) {
-                          // مشاركة الملف نفسه
-                          await navigator.share({
-                            title: extractFileName(attachment),
-                            files: [file],
-                          });
-                        } else {
-                          // Fallback: نسخ الرابط إلى الحافظة
-                          if (navigator.clipboard && navigator.clipboard.writeText) {
-                            await navigator.clipboard.writeText(attachment);
-                            notifySuccess("تم نسخ رابط الملف إلى الحافظة");
-                          } else {
-                            // Fallback: try to use the older execCommand method
-                            const textArea = document.createElement('textarea');
-                            textArea.value = attachment;
-                            document.body.appendChild(textArea);
-                            textArea.select();
-                            try {
-                              document.execCommand('copy');
-                              notifySuccess("تم نسخ رابط الملف إلى الحافظة");
-                            } catch (err) {
-                              console.warn('Fallback copy method also failed:', err);
-                              notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
-                            } finally {
-                              document.body.removeChild(textArea);
-                            }
-                          }
-                        }
-                      } catch (error) {
-                        console.error('Share error:', error);
-                        notifyError("حدث خطأ في مشاركة الملف");
-                      }
-                    }}
-                    title="مشاركة"
-                  >
-                          <ShareIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadFile(attachment, extractFileName(attachment));
-                          }}
-                          title="تحميل"
-                        >
-                          <Download />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                  )
-                )}
-              </Box>
-            )}
-
-          {selectedDocumentsInstallment?.PaymentProof && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                إيصال الدفع:
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "action.hover" },
-                  p: 1,
-                  borderRadius: 1,
-                }}
-                onClick={() => {
-                  window.open(
-                    selectedDocumentsInstallment.PaymentProof,
-                    "_blank"
-                  );
-                }}
-              >
-                <Typography variant="body2" sx={{ flex: 1 }}>
-                  {extractFileName(selectedDocumentsInstallment.PaymentProof)}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <IconButton
-                    size="small"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        // تحميل الملف وطباعته مباشرة
-                        const response = await fetch(selectedDocumentsInstallment.PaymentProof);
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-
-                        // إنشاء iframe مخفي للطباعة
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        iframe.src = url;
-                        document.body.appendChild(iframe);
-
-                        iframe.onload = () => {
-                          iframe.contentWindow.print();
-                          // تنظيف بعد الطباعة
-                          setTimeout(() => {
-                            document.body.removeChild(iframe);
-                            URL.revokeObjectURL(url);
-                          }, 1000);
-                        };
-                      } catch (error) {
-                        console.error('Print error:', error);
-                        notifyError("حدث خطأ في الطباعة");
-                      }
-                    }}
-                    title="طباعة"
-                  >
-                    <PrintIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        // تحميل الملف أولاً
-                        const response = await fetch(selectedDocumentsInstallment.PaymentProof);
-                        const blob = await response.blob();
-                        const file = new File([blob], extractFileName(selectedDocumentsInstallment.PaymentProof), { type: blob.type });
-
-                        if (navigator.share && navigator.canShare({ files: [file] })) {
-                          // مشاركة الملف نفسه
-                          await navigator.share({
-                            title: extractFileName(selectedDocumentsInstallment.PaymentProof),
-                            files: [file],
-                          });
-                        } else {
-                          // Fallback: نسخ الرابط إلى الحافظة
-                          if (navigator.clipboard && navigator.clipboard.writeText) {
-                            await navigator.clipboard.writeText(selectedDocumentsInstallment.PaymentProof);
-                            notifySuccess("تم نسخ رابط الملف إلى الحافظة");
-                          } else {
-                            // Fallback: try to use the older execCommand method
-                            const textArea = document.createElement('textarea');
-                            textArea.value = selectedDocumentsInstallment.PaymentProof;
-                            document.body.appendChild(textArea);
-                            textArea.select();
-                            try {
-                              document.execCommand('copy');
-                              notifySuccess("تم نسخ رابط الملف إلى الحافظة");
-                            } catch (err) {
-                              console.warn('Fallback copy method also failed:', err);
-                              notifyError("تعذرت نسخ رابط الملف تلقائياً — يرجى نسخه يدوياً");
-                            } finally {
-                              document.body.removeChild(textArea);
-                            }
-                          }
-                        }
-                      } catch (error) {
-                        console.error('Share error:', error);
-                        notifyError("حدث خطأ في مشاركة الملف");
-                      }
-                    }}
-                    title="مشاركة"
-                  >
-                    <ShareIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      downloadFile(
-                        selectedDocumentsInstallment.PaymentProof,
-                        extractFileName(selectedDocumentsInstallment.PaymentProof)
-                      );
-                    }}
-                    title="تحميل"
-                  >
-                    <Download />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Box>
-          )}
-
-          {(!selectedDocumentsInstallment?.attachments ||
-            selectedDocumentsInstallment.attachments.length === 0) &&
-            !selectedDocumentsInstallment?.PaymentProof && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                textAlign="center"
-                sx={{ py: 4 }}
-              >
-                لا توجد مستندات مرفوعة لهذه الدفعة
-              </Typography>
-            )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDocumentsModalOpen(false)}>إغلاق</Button>
-        </DialogActions>
-      </Dialog>
+        selectedDocumentsInstallment={selectedDocumentsInstallment}
+      />
 
       <DeleteModal
         open={rejectModalOpen}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Box,
   Grid,
@@ -28,51 +28,47 @@ import {
   MenuItem,
   Stack,
   FormControl,
-  Select,
-  InputLabel,
-  TablePagination,
   Alert,
+  Skeleton,
 } from "@mui/material";
-import {
-  Add,
-  Edit,
-  Save,
-  Search,
-  Download,
-  CheckCircle,
-  Delete,
-  Share,
-  PictureAsPdf,
-  TableChart,
-  Info,
-  AccountBalanceWallet,
-  Visibility,
-  InsertDriveFile,
-  Warning,
-  Close,
-  Description,
-  TrendingUp,
-  Assessment,
-  Mosque,
-  Savings,
-  KeyboardArrowDown,
-} from "@mui/icons-material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import SearchIcon from "@mui/icons-material/Search";
+import DownloadIcon from "@mui/icons-material/Download";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ShareIcon from "@mui/icons-material/Share";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import InfoIcon from "@mui/icons-material/Info";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import WarningIcon from "@mui/icons-material/Warning";
+import CloseIcon from "@mui/icons-material/Close";
+import DescriptionIcon from "@mui/icons-material/Description";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import MosqueIcon from "@mui/icons-material/Mosque";
+import SavingsIcon from "@mui/icons-material/Savings";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { checkUnpostedOpeningJournals } from "../Journals/journalsApi";
 import { debounce } from '../../utilities/debounce';
 import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
+import TransactionModal from "../../components/modals/TransactionModal";
+import WithdrawModal from "../../components/modals/WithdrawModal";
 import ContractGenerator from "../../components/ContractGenerator";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
-import { saveAs } from 'file-saver';
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { useTheme } from "../../theme/ThemeContext";
-import { exportInvestorsToPDF, exportInvestorsToExcel } from "../../utilities/investorsExporter";
 import { useNavigate } from "react-router-dom";
 
 const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdrawnOnly = false) => {
@@ -228,6 +224,7 @@ export default function Investors() {
     retry: 1,
   });
 
+  // Memoized date formatter function - stable reference to avoid recalculation
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
@@ -485,6 +482,8 @@ export default function Investors() {
         return;
       }
       
+      // Lazy load export function only when needed
+      const { exportInvestorsToPDF } = await import("../../utilities/investorsExporter");
       const partnerData = [partnerDetails];
       await exportInvestorsToPDF(partnerData);
       notifySuccess(`تم تصدير بيانات ${selectedInvestor.name} إلى PDF بنجاح`);
@@ -512,7 +511,8 @@ export default function Investors() {
         return;
       }
       
-      // Convert partner details to array format for exporter
+      // Lazy load export function only when needed
+      const { exportInvestorsToExcel } = await import("../../utilities/investorsExporter");
       const partnerData = [partnerDetails];
       await exportInvestorsToExcel(partnerData);
       notifySuccess(`تم تصدير بيانات ${selectedInvestor.name} إلى Excel بنجاح`);
@@ -524,10 +524,14 @@ export default function Investors() {
     }
   };
 
-  const calculateWithdrawalPreview = (monthlyAmount) => {
-    if (!investorDetails || !monthlyAmount || monthlyAmount <= 0) {
+  // Memoized withdrawal preview calculation to avoid long main-thread tasks
+  const withdrawalPreview = useMemo(() => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !investorDetails) {
       return null;
     }
+
+    const monthlyAmount = parseFloat(Number(withdrawAmount).toFixed(2));
+    if (monthlyAmount <= 0) return null;
 
     const normalizeDecimal = (value) => parseFloat(Number(value).toFixed(2));
 
@@ -576,7 +580,7 @@ export default function Investors() {
       totalMonths: schedule.length,
       schedule: schedule
     };
-  };
+  }, [withdrawAmount, investorDetails, withdrawPreviewData]);
 
   const handleOpenWithdrawModal = async (isEditMode = false) => {
     if (!selectedInvestor) {
@@ -935,7 +939,9 @@ export default function Investors() {
       const extension = originalName.split('.').pop();
       const newFileName = `mudarabah_${investorDetails.name}.${extension}`;
       
-      saveAs(blob, newFileName);
+      // Lazy load file-saver only when needed
+      const fileSaver = await import('file-saver');
+      fileSaver.saveAs(blob, newFileName);
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحميل الملف');
       handleApiError(error);
@@ -960,6 +966,9 @@ export default function Investors() {
           component="img"
           src={fileUrl}
           alt={label}
+          loading="lazy"
+          width="100%"
+          height={180}
           sx={{
             width: '100%',
             height: 180,
@@ -995,7 +1004,7 @@ export default function Investors() {
           }}
           onClick={() => window.open(fileUrl, '_blank')}
         >
-          <InsertDriveFile sx={{ fontSize: 60, color: '#757575' }} />
+          <InsertDriveFileIcon sx={{ fontSize: 60, color: '#757575' }} />
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
             اضغط للعرض
           </Typography>
@@ -1164,10 +1173,10 @@ export default function Investors() {
       {showAlert && openingJournalsCheck?.hasUnpostedOpeningJournals && (
   <Alert
     severity="warning"
-    icon={<Warning />}
+    icon={<WarningIcon />}
     action={
       <IconButton size="small" onClick={() => setShowAlert(false)}>
-        <Close />
+        <CloseIcon />
       </IconButton>
     }
     sx={{
@@ -1241,7 +1250,7 @@ export default function Investors() {
                   fullWidth
                   size="small"
                   variant="contained"
-                  startIcon={<Add sx={{marginLeft: '10px'}} />}
+                  startIcon={<AddIcon sx={{marginLeft: '10px'}} />}
                   onClick={handleAddInvestor}
                   sx={{
                     bgcolor: "primary.main",
@@ -1258,7 +1267,7 @@ export default function Investors() {
                 fullWidth
                 size="small"
                 variant="outlined"
-                startIcon={<Visibility sx={{marginLeft: '10px'}} />}
+                startIcon={<VisibilityIcon sx={{marginLeft: '10px'}} />}
                 onClick={() => navigate('/investors-withdraw')}
                 sx={{
                   color: "text.secondary",
@@ -1283,7 +1292,7 @@ export default function Investors() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search />
+                    <SearchIcon />
                   </InputAdornment>
                 ),
               }}
@@ -1338,8 +1347,19 @@ export default function Investors() {
 
           <Box sx={{ flex: 1, overflowY: 'auto' }}>
             {isInvestorsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 3, minHeight: '200px' }}>
-                <CircularProgress />
+              <Box sx={{ p: 2 }}>
+                {[...Array(5)].map((_, index) => (
+                  <Card key={index} sx={{ mb: 1, mx: 2, mt: index === 0 ? 1 : 0 }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
+                      <Skeleton variant="text" width="40%" height={20} />
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Skeleton variant="rounded" width={80} height={24} />
+                        <Skeleton variant="rounded" width={80} height={24} />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
               </Box>
             ) : !investorsData || !investorsData.partners || investorsData.partners.length === 0 ? (
               <Box sx={{
@@ -1534,8 +1554,8 @@ export default function Investors() {
                 <>
                   <Button
                     variant="text"
-                    startIcon={<Download sx={{marginLeft: '10px'}} />}
-                    endIcon={<KeyboardArrowDown />}
+                    startIcon={<DownloadIcon sx={{marginLeft: '10px'}} />}
+                    endIcon={<KeyboardArrowDownIcon />}
                     onClick={handleExportMenuOpen}
                     disabled={isExporting}
                     sx={{
@@ -1567,7 +1587,7 @@ export default function Investors() {
                       }}
                       disabled={isExporting}
                     >
-                      <TableChart sx={{ mr: 1, fontSize: '18px', color: 'primary.main' }} />
+                      <TableChartIcon sx={{ mr: 1, fontSize: '18px', color: 'primary.main' }} />
                       تصدير Excel
                     </MenuItem>
                     <MenuItem
@@ -1577,7 +1597,7 @@ export default function Investors() {
                       }}
                       disabled={isExporting}
                     >
-                      <PictureAsPdf sx={{ mr: 1, fontSize: '18px', color: 'error.main' }} />
+                      <PictureAsPdfIcon sx={{ mr: 1, fontSize: '18px', color: 'error.main' }} />
                       تصدير PDF
                     </MenuItem>
                   </Menu>
@@ -1587,7 +1607,7 @@ export default function Investors() {
                 <>
                   <Button
                     variant="outlined"
-                    startIcon={<AccountBalanceWallet sx={{marginLeft: '10px'}} />}
+                    startIcon={<AccountBalanceWalletIcon sx={{marginLeft: '10px'}} />}
                     onClick={() => handleOpenWithdrawModal(false)}
                     disabled={isWithdrawing || investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN'}
                     sx={{
@@ -1606,7 +1626,7 @@ export default function Investors() {
                     <Button
                       variant="contained"
                       color="error"
-                      startIcon={<Delete sx={{marginLeft: '10px'}} />}
+                      startIcon={<DeleteIcon sx={{marginLeft: '10px'}} />}
                       onClick={() => openDeleteModal(investorDetails)}
                       sx={{
                         borderColor: "error.main",
@@ -1623,7 +1643,7 @@ export default function Investors() {
                   {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
                     <Button
                       variant="outlined"
-                      startIcon={<Edit sx={{marginLeft: '10px'}} />}
+                      startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
                       onClick={handleOpenEditWithdrawModal}
                       disabled={isWithdrawing}
                       sx={{
@@ -1648,7 +1668,7 @@ export default function Investors() {
                 <Alert 
                   severity="warning" 
                   sx={{ mb: 3 }}
-                  icon={<Info />}
+                  icon={<InfoIcon />}
                 >
                   <Typography variant="body2" fontWeight="bold">
                     تم إنسحاب هذا المستثمر من توزيعات الأرباح
@@ -1690,7 +1710,7 @@ export default function Investors() {
                         {permissions.includes("partners_Update") && (
                         <Button
                           variant="outlined"
-                          startIcon={<Edit sx={{marginLeft: '10px'}} />}
+                          startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
                           onClick={() => setEditMode(!editMode)}
                           size="small"
                         >
@@ -1700,7 +1720,7 @@ export default function Investors() {
                         {permissions.includes("partners_Add") && (
                         <Button
                           variant="contained"
-                          startIcon={<Save sx={{marginLeft: '10px'}} />}
+                          startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
                           sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                           disabled={!editMode}
                           onClick={handleSaveChanges}
@@ -1953,7 +1973,7 @@ export default function Investors() {
                   {/* Investment Group */}
                   <Box sx={{ mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                      <AccountBalanceWallet sx={{ mr: 1, color: 'primary.main' }} />
+                      <AccountBalanceWalletIcon sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
                         الاستثمار
                       </Typography>
@@ -2041,7 +2061,7 @@ export default function Investors() {
                   {/* Profits Group */}
                   <Box sx={{ mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                      <TrendingUp sx={{ mr: 1, color: 'primary.main' }} />
+                      <TrendingUpIcon sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
                         الأرباح والمدخرات
                       </Typography>
@@ -2110,7 +2130,7 @@ export default function Investors() {
                   {/* Savings Details Group */}
                   <Box sx={{ mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                      <Savings sx={{ mr: 1, color: 'primary.main' }} />
+                      <SavingsIcon sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
                         تفاصيل المدخرات
                       </Typography>
@@ -2160,7 +2180,7 @@ export default function Investors() {
                   {/* Ratios Group */}
                   <Box sx={{ mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                      <Assessment sx={{ mr: 1, color: 'primary.main' }} />
+                      <AssessmentIcon sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
                         النسب والمعدلات
                       </Typography>
@@ -2210,7 +2230,7 @@ export default function Investors() {
                   {/* Zakat Group */}
                   <Box sx={{ mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                      <Mosque sx={{ mr: 1, color: 'primary.main' }} />
+                      <MosqueIcon sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'primary.main' }}>
                         الزكاة السنوية
                       </Typography>
@@ -2287,7 +2307,7 @@ export default function Investors() {
                     return (
                       <Alert
                         severity={difference <= 0 ? "success" : "info"}
-                        icon={<Info />}
+                        icon={<InfoIcon />}
                         sx={{ mb: 3, mt: 2 }}
                       >
                         <Typography variant="body2">
@@ -2316,7 +2336,7 @@ export default function Investors() {
                     {permissions.includes("partners_Update") && (
                     <Button
                       variant="outlined"
-                      startIcon={<Edit sx={{marginLeft: '10px'}} />}
+                      startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
                       onClick={() => {
                         const newEditMode = !editMode;
                         setEditMode(newEditMode);
@@ -2343,7 +2363,7 @@ export default function Investors() {
                     {permissions.includes("partners_Add") && (
                     <Button
                       variant="contained"
-                      startIcon={<Save sx={{marginLeft: '10px'}} />}
+                      startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
                       sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
                       disabled={!editMode}
                       onClick={handleSaveChanges}
@@ -2443,7 +2463,7 @@ export default function Investors() {
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                       <Button
                         variant="outlined"
-                        startIcon={<PictureAsPdf sx={{ marginLeft: '10px' }} />}
+                        startIcon={<PictureAsPdfIcon sx={{ marginLeft: '10px' }} />}
                         onClick={() => handleGenerateContractAfterUpdate({
                           ...investorDetails,
                           ...editFormData,
@@ -2468,7 +2488,7 @@ export default function Investors() {
                     {permissions.includes("partners_Add") && (
                     <Button
                       variant="contained"
-                      startIcon={<Add sx={{ marginLeft: '10px' }} />}
+                      startIcon={<AddIcon sx={{ marginLeft: '10px' }} />}
                       onClick={handleAddTransaction}
                       sx={{
                         bgcolor: "primary.main",
@@ -2495,11 +2515,17 @@ export default function Investors() {
                         </TableHead>
                         <TableBody>
                           {isTransactionsLoading ? (
-                            <StyledTableRow>
-                              <StyledTableCell colSpan={5} align="center">
-                                <CircularProgress size={20} />
-                              </StyledTableCell>
-                            </StyledTableRow>
+                            <>
+                              {[...Array(3)].map((_, index) => (
+                                <StyledTableRow key={index}>
+                                  <StyledTableCell><Skeleton height={40} /></StyledTableCell>
+                                  <StyledTableCell><Skeleton height={40} /></StyledTableCell>
+                                  <StyledTableCell><Skeleton height={40} /></StyledTableCell>
+                                  <StyledTableCell><Skeleton height={40} /></StyledTableCell>
+                                  <StyledTableCell><Skeleton height={40} /></StyledTableCell>
+                                </StyledTableRow>
+                              ))}
+                            </>
                           ) : transactionsData?.transactions?.length === 0 ? (
                             <StyledTableRow>
                               <StyledTableCell colSpan={5} align="center">
@@ -2540,7 +2566,7 @@ export default function Investors() {
                                     size="small"
                                     onClick={() => openDeleteTransactionModal(transaction)}
                                   >
-                                    <Delete fontSize="small" />
+                                    <DeleteIcon fontSize="small" />
                                   </IconButton>
                                   )}
                                 </StyledTableCell>
@@ -2600,7 +2626,7 @@ export default function Investors() {
                           <Button
                             variant="outlined"
                             size="small"
-                            startIcon={<Description />}
+                            startIcon={<DescriptionIcon />}
                             onClick={handleOpenContractPreview}
                             sx={{
                               borderColor: 'warning.main',
@@ -2643,7 +2669,7 @@ export default function Investors() {
                                 gap={1}
                                 mb={1}
                               >
-                                <CheckCircle
+                                <CheckCircleIcon
                                   color="success"
                                   fontSize="small"
                                 />
@@ -2660,21 +2686,21 @@ export default function Investors() {
                                     onClick={() => handleDownloadFile(investorDetails.mudarabahFileUrl)}
                                     title="تحميل"
                                   >
-                                    <Download fontSize="small" />
+                                    <DownloadIcon fontSize="small" />
                                   </IconButton>
                                   <IconButton
                                     size="small"
                                     onClick={() => handleShareFile(investorDetails.mudarabahFileUrl)}
                                     title="مشاركة"
                                   >
-                                    <Share fontSize="small" />
+                                    <ShareIcon fontSize="small" />
                                   </IconButton>
                                   <IconButton
                                     size="small"
                                     onClick={() => window.open(investorDetails.mudarabahFileUrl, '_blank')}
                                     title="عرض"
                                   >
-                                    <Visibility fontSize="small" />
+                                    <VisibilityIcon fontSize="small" />
                                   </IconButton>
                                 </Box>
                               )}
@@ -2770,7 +2796,13 @@ export default function Investors() {
             <Typography variant="h6" color="text.secondary">
               {selectedInvestor ? 'جاري تحميل البيانات...' : 'اختر مستثمراً لعرض التفاصيل'}
             </Typography>
-            {selectedInvestor && <CircularProgress size={40} />}
+            {selectedInvestor && (
+              <Box sx={{ width: '100%', p: 2 }}>
+                <Skeleton variant="rectangular" height={200} sx={{ mb: 2, borderRadius: 1 }} />
+                <Skeleton variant="text" width="80%" height={32} sx={{ mb: 1 }} />
+                <Skeleton variant="text" width="60%" height={24} />
+              </Box>
+            )}
           </Box>
         )}
       </Box>
@@ -2818,63 +2850,14 @@ export default function Investors() {
       )}
 
       {/* Add Transaction Modal */}
-      <Dialog 
-        open={isTransactionModalOpen} 
+      <TransactionModal
+        isOpen={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            إضافة عملية مالية
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            <FormControl fullWidth size="small">
-              <TextField
-                select
-                label="نوع العملية"
-                value={transactionForm.type}
-                onChange={(e) => handleTransactionInputChange('type', e.target.value)}
-              >
-                <MenuItem value="DEPOSIT">إيداع</MenuItem>
-                <MenuItem value="WITHDRAWAL">سحب من رأس المال</MenuItem>
-                <MenuItem value="PROFIT_WITHDRAWAL">سحب أرباح</MenuItem>
-                <MenuItem value="SAVING_WITHDRAWAL">سحب ادخار</MenuItem>
-              </TextField>
-            </FormControl>
-            
-            <TextField
-              label="المبلغ"
-              type="number"
-              value={transactionForm.amount}
-              onChange={(e) => handleTransactionInputChange('amount', e.target.value)}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
-          <Button 
-            onClick={() => setIsTransactionModalOpen(false)}
-            color="inherit"
-          >
-            إلغاء
-          </Button>
-          {permissions.includes("partners_Add") && (
-          <Button 
-            onClick={handleSaveTransaction}
-            variant="contained"
-            sx={{
-              bgcolor: "primary.main",
-              "&:hover": { bgcolor: "primary.dark" },
-            }}
-          >
-            حفظ
-          </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+        transactionForm={transactionForm}
+        onInputChange={handleTransactionInputChange}
+        onSave={handleSaveTransaction}
+        permissions={permissions}
+      />
 
       {/* Delete Transaction Modal */}
       <DeleteModal
@@ -2894,346 +2877,27 @@ export default function Investors() {
       />
 
       {/* Withdraw Modal */}
-      <Dialog 
-        open={isWithdrawModalOpen} 
+      <WithdrawModal
+        isOpen={isWithdrawModalOpen}
         onClose={() => {
           setIsWithdrawModalOpen(false);
           setWithdrawAmount("");
           setWithdrawPreviewData(null);
           setIsWithdrawEditMode(false);
         }}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            {isWithdrawEditMode ? 'تعديل مبلغ الانسحاب الشهري' : 'إنسحاب المستثمر من توزيعات الأرباح'}
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            {isLoadingPreview ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : isWithdrawEditMode ? (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Typography variant="body2">
-                  🔔 يمكنك تعديل المبلغ الشهري للانسحاب. سيتم إعادة حساب جدول السداد تلقائياً
-                </Typography>
-              </Alert>
-            ) : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN') && !isWithdrawEditMode ? (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight="bold">
-                  ⚠️ هذا المستثمر في حالة انسحاب بالفعل (الحالة: {
-                    investorDetails?.WithdrawingStatus === 'WITHDRAWING' ? 'جاري السحب' : 'تم الانسحاب'
-                  })
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  لا يمكن إنشاء طلب انسحاب جديد لمستثمر منسحب. يرجى مراجعة صفحة المستثمرين المنسحبين.
-                </Typography>
-              </Alert>
-            ) : (investorDetails?.isActive && !investorDetails?.isFrozen) ? (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight="bold">
-                  هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط
-                </Typography>
-              </Alert>
-            ) : (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Typography variant="body2">
-                  🔔 أدخل المبلغ الشهري وسيتم عرض محاكاة السداد والمعادلات الحسابية
-                </Typography>
-              </Alert>
-            )}
-            
-            {/* Current Information */}
-            <Paper sx={{ p: 2.5, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>رأس المال الأصلي</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="primary">
-                    {investorDetails?.capitalAmount?.toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>نسبة أرباح المنشأة</Typography>
-                  <Typography variant="h6" fontWeight="bold">
-                    {investorDetails?.orgProfitPercent}%
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>المدخرات</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="success.main">
-                    {investorDetails?.totalSaving?.toLocaleString() || 0}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" mb={0.5}>إجمالي الأرباح</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="info.main">
-                    {investorDetails?.totalProfit?.toLocaleString() || 0}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-
-            {isWithdrawEditMode && investorDetails?.withdrawalInfo?.monthlyAmount && (
-              <Paper sx={{ p: 2, bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
-                <Typography variant="body2" color="text.secondary" mb={0.5}>المبلغ الشهري الحالي</Typography>
-                <Typography variant="h6" fontWeight="bold" color="warning.main">
-                  {investorDetails?.withdrawalInfo?.monthlyAmount?.toLocaleString() || "غير محدد"}
-                </Typography>
-              </Paper>
-            )}
-
-            <TextField
-              label={isWithdrawEditMode ? "المبلغ الشهري الجديد للسحب" : "المبلغ الشهري للسحب"}
-              type="number"
-              value={withdrawAmount}
-              onChange={(e) => {
-                const value = e.target.value;
-                // السماح فقط بالأرقام والنقطة العشرية
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                  setWithdrawAmount(value);
-                }
-              }}
-              fullWidth
-              disabled={
-                !isWithdrawEditMode && (
-                  (investorDetails?.isActive && !investorDetails?.isFrozen) || 
-                  investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
-                  investorDetails?.WithdrawingStatus === 'WITHDRAWN'
-                )
-              }
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 }
-              }}
-              helperText={
-                isWithdrawEditMode
-                  ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه"
-                  : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')
-                    ? "المستثمر منسحب بالفعل"
-                    : (investorDetails?.isActive && !investorDetails?.isFrozen) 
-                      ? "لا يمكن تنفيذ الإنسحاب لأن المستثمر نشط" 
-                      : "أدخل المبلغ الشهري الذي يتم سحبه"
-              }
-            />
-
-            {withdrawAmount && parseFloat(withdrawAmount) > 0 && (isWithdrawEditMode || (!(investorDetails?.isActive && !investorDetails?.isFrozen) && 
-             investorDetails?.WithdrawingStatus !== 'WITHDRAWING' && 
-             investorDetails?.WithdrawingStatus !== 'WITHDRAWN')) && (() => {
-              const numAmount = parseFloat(Number(withdrawAmount).toFixed(2));
-              const preview = calculateWithdrawalPreview(numAmount);
-              return preview ? (
-                <>
-                  <Divider sx={{ my: 1 }} />
-                  
-                  {/* Calculation Summary */}
-                  <Paper sx={{ p: 2.5, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
-                    <Typography variant="subtitle2" fontWeight="bold" mb={2} color="success.main">
-                      📊 محاكاة العملية الحسابية :
-                    </Typography>
-                    <Grid container spacing={2}>
-                      {/* Step 1: Original Capital */}
-                      <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            ① رأس المال الأصلي
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {preview.originalCapital.toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Step 2: Total Profit */}
-                      <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            ② إجمالي الأرباح
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold" color="success.main">
-                            + {preview.totalProfit.toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Step 3: Total Amount */}
-                      <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            ③ إجمالي المبلغ
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                            {preview.totalAmount.toLocaleString()}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            = {preview.originalCapital.toLocaleString()} + {preview.totalProfit.toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Step 4: Default Share */}
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            ④ خصم التعثر (يُحسب من النظام)
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold" color={preview.estimatedDefaultShare > 0 ? 'error' : 'success'}>
-                            {preview.estimatedDefaultShare > 0 ? `- ${preview.estimatedDefaultShare.toLocaleString()}` : 'لا يوجد'}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            نسبة تشغيلية = (100 - {investorDetails.orgProfitPercent}%) / 100
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Step 5: Remaining Capital for Schedule */}
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            ⑤ رأس المال للجدول
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="primary">
-                            {preview.remainingCapital.toLocaleString()}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            = {preview.totalAmount.toLocaleString()} - {preview.estimatedDefaultShare.toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Savings (separate from schedule) */}
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: isDarkMode ? 'background.default' : '#fffef0', borderRadius: 1, border: '1px solid #ffd700' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            💰 الادخار (يُصرف منفصل)
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold" color="warning.main">
-                            {preview.savingsAmount.toLocaleString()}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            لا يدخل في حساب الجدول
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Number of payments */}
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                          <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            📅 عدد الدفعات
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight="bold" color="info">
-                            {preview.totalMonths} دفعة
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {(() => {
-                              const years = Math.floor(preview.totalMonths / 12);
-                              const months = preview.totalMonths % 12;
-                              if (years > 0 && months > 0) {
-                                return `${years} سنة و ${months} شهر`;
-                              } else if (years > 0) {
-                                return `${years} سنة`;
-                              } else {
-                                return `${months} شهر`;
-                              }
-                            })()}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-
-                  {/* Schedule Preview */}
-                  <Paper sx={{ p: 2.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200' }}>
-                    <Typography variant="subtitle2" fontWeight="bold" mb={2} color="info.main">
-                      📅 جدول السداد الكامل ({preview.totalMonths} دفعة):
-                    </Typography>
-                    <TableContainer sx={{ maxHeight: 500 }}>
-                      <Table size="small" stickyHeader>
-                        <TableHead sx={{ bgcolor: 'info.100' }}>
-                          <StyledTableRow>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>الدفعة</StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>التاريخ</StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>المبلغ</StyledTableCell>
-                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>المتبقي</StyledTableCell>
-                          </StyledTableRow>
-                        </TableHead>
-                        <TableBody>
-                          {preview.schedule.map((item, index) => (
-                            <StyledTableRow key={index} hover sx={{ 
-                              bgcolor: index % 2 === 0 ? 'transparent' : 'rgba(25, 103, 210, 0.05)',
-                              '&:hover': { bgcolor: 'rgba(25, 103, 210, 0.1)' }
-                            }}>
-                              <StyledTableCell align="center">{item.month}</StyledTableCell>
-                              <StyledTableCell align="center">{item.date}</StyledTableCell>
-                              <StyledTableCell align="center" sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                                {item.amount.toLocaleString('en-US')}
-                              </StyledTableCell>
-                              <StyledTableCell align="center" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                                {item.remaining.toLocaleString('en-US')}
-                              </StyledTableCell>
-                            </StyledTableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
-
-                  <Alert severity="info" icon={<Info />}>
-                    <Typography variant="body2">
-                      ℹ️ <strong> منطق حساب الإنسحاب</strong>
-                    </Typography>
-                    <Typography variant="body2" component="div" sx={{ mt: 1 }}>
-                      • يتم حساب التعثر من القروض المتعثرة (حالة = متعثر) × النسبة التشغيلية<br/>
-                      • رأس المال للجدول = (رأس المال + الأرباح) - خصم التعثر<br/>
-                      • الادخار يُصرف منفصل ولا يدخل في جدول الدفعات<br/>
-                      • عند التنفيذ الفعلي، سيتم حساب التعثر الحقيقي من القروض
-                    </Typography>
-                  </Alert>
-                </>
-              ) : null;
-            })()}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
-          <Button 
-            onClick={() => {
-              setIsWithdrawModalOpen(false);
-              setWithdrawAmount("");
-              setWithdrawPreviewData(null);
-              setIsWithdrawEditMode(false);
-            }}
-            color="inherit"
-            disabled={isWithdrawing}
-          >
-            إلغاء
-          </Button>
-          {permissions.includes("partners_Add") && (
-          <Button 
-            onClick={handleWithdraw}
-            variant="contained"
-            disabled={
-              isWithdrawing || 
-              !withdrawAmount || 
-              parseFloat(withdrawAmount) <= 0 || 
-              (!isWithdrawEditMode && (
-                (investorDetails?.isActive && !investorDetails?.isFrozen) ||
-                investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
-                investorDetails?.WithdrawingStatus === 'WITHDRAWN'
-              ))
-            }
-            sx={{
-              bgcolor: isWithdrawEditMode ? "primary.main" : "#d32f2f",
-              "&:hover": { bgcolor: isWithdrawEditMode ? "primary.dark" : "#b71c1c" },
-            }}
-          >
-            {isWithdrawing ? <CircularProgress size={20} sx={{ color: 'white' }} /> : (isWithdrawEditMode ? 'تأكيد التعديل' : 'تأكيد الإنسحاب')}
-          </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+        isEditMode={isWithdrawEditMode}
+        setIsEditMode={setIsWithdrawEditMode}
+        withdrawAmount={withdrawAmount}
+        setWithdrawAmount={setWithdrawAmount}
+        withdrawalPreview={withdrawalPreview}
+        isLoadingPreview={isLoadingPreview}
+        investorDetails={investorDetails}
+        permissions={permissions}
+        isWithdrawing={isWithdrawing}
+        onWithdraw={handleWithdraw}
+        setWithdrawPreviewData={setWithdrawPreviewData}
+        isDarkMode={isDarkMode}
+      />
 
     </Box>
   );

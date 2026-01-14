@@ -121,6 +121,7 @@ const Loans = () => {
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
+  const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
 
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
@@ -1671,7 +1672,7 @@ const Loans = () => {
         <Box
           sx={{
             flex: 1,
-            p: isSmallScreen ? 2 : 4,
+            p: isSmallScreen ? 2 : isLargeScreen ? 3 : 4,
             bgcolor: 'background.paper',
             overflowY: "auto",
             width: "100%",

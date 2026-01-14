@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Api, { handleApiError } from "../../config/Api";
 import InvestorsWithdrawalTable from "../../components/modals/investorsWithdrawalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
+import PartialPayWithdraw from "../../components/modals/PartialPayWithdraw";
 import WithdrawReceiptGenerator from "../../components/WithdrawReceiptGenerator";
 import WithdrawReceiptPreview from "../../components/WithdrawReceiptPreview";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
@@ -962,79 +963,20 @@ export default function InvestorsWithdrawal() {
       </Box>
 
       {/* Partial Pay Dialog */}
-      <Dialog
+      <PartialPayWithdraw
         open={partialPayDialogOpen}
         onClose={() => {
           setPartialPayDialogOpen(false);
           setPartialAmount("");
           setSelectedScheduleId(null);
         }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            دفع جزئي
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            <TextField
-              label="المبلغ المدفوع"
-              type="number"
-              value={partialAmount}
-              onChange={(e) => setPartialAmount(e.target.value)}
-              fullWidth
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 },
-              }}
-            />
-            {partialAmount && parseFloat(partialAmount) > 0 && withdrawalDetails?.schedule && selectedScheduleId && (
-              <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-                {(() => {
-                  const currentSchedule = withdrawalDetails.schedule.find(s => s.id === selectedScheduleId);
-                  const totalAmount = currentSchedule ? (currentSchedule.amount + (currentSchedule.carryAmount || 0)) : 0;
-                  const remainingAmount = currentSchedule ? (totalAmount - parseFloat(partialAmount)) : 0;
-                  return (
-                    <>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        سيتم دفع مبلغ <strong>{parseFloat(partialAmount).toLocaleString()}</strong>
-                      </Typography>
-                      <Typography variant="body2">
-                        وترحيل مبلغ <strong>{remainingAmount.toLocaleString()}</strong> إلى الدفعة المقبلة
-                      </Typography>
-                    </>
-                  );
-                })()}
-              </Box>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, flexDirection: "row-reverse" }}>
-          <Button
-            onClick={() => {
-              setPartialPayDialogOpen(false);
-              setPartialAmount("");
-              setSelectedScheduleId(null);
-            }}
-            color="inherit"
-            disabled={isProcessing}
-          >
-            إلغاء
-          </Button>
-          <Button
-            onClick={handlePartialPay}
-            variant="contained"
-            disabled={isProcessing || !partialAmount || parseFloat(partialAmount) <= 0}
-            sx={{
-              bgcolor: "warning.main",
-              "&:hover": { bgcolor: "warning.dark" },
-            }}
-          >
-            {isProcessing ? <CircularProgress size={20} sx={{ color: "white" }} /> : "تأكيد"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        partialAmount={partialAmount}
+        onAmountChange={(e) => setPartialAmount(e.target.value)}
+        selectedScheduleId={selectedScheduleId}
+        withdrawalDetails={withdrawalDetails}
+        onConfirm={handlePartialPay}
+        isProcessing={isProcessing}
+      />
 
       {/* Reject Modal */}
       <DeleteModal

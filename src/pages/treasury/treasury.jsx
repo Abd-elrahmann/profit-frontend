@@ -473,7 +473,6 @@ export default function Treasury() {
   return (
     <Box sx={{ 
       minHeight: "100vh", 
-      bgcolor: isDarkMode ? 'background.default' : 'background.default' 
     }}>
       <Helmet>
         <title>الصندوق</title>

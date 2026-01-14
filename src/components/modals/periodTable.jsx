@@ -20,6 +20,7 @@ import {
   Tooltip,
   Checkbox,
   Alert,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Visibility,
@@ -49,6 +50,10 @@ const PeriodTable = ({
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
   const { permissions } = usePermissions();
+
+  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isLargeScreen = useMediaQuery("(min-width: 1200px)");
+  const isSmallScreen = isMobile || isTablet;
 
   // Handle period selection
   const handlePeriodSelect = (periodId, checked) => {
@@ -764,7 +769,7 @@ const PeriodTable = ({
               '& .MuiTablePagination-toolbar': {
                 flexDirection: isMobile ? 'column' : 'row',
                 gap: isMobile ? 1 : 0,
-                padding: isMobile ? 1 : 2
+                padding: isMobile ? 1 : isLargeScreen ? 1.5 : 2
               },
             }}
           />

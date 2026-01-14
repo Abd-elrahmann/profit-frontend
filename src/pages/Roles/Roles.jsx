@@ -334,7 +334,7 @@ export default function Roles() {
   );
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{  minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
         <title>الأدوار</title>
         <meta name="description" content="الأدوار" />
@@ -359,7 +359,6 @@ export default function Roles() {
             onChange={handleSearchChange}
             sx={{
               flex: 1,
-              bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6',
               borderRadius: 2,
               "& fieldset": { border: "none" },
               minWidth: isSmallScreen ? '100%' : 'auto',
