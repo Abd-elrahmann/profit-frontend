@@ -70,19 +70,10 @@ const numberToArabicWords = (num) => {
       const part = Math.floor(num / s.value);
       if (part === 1) result += s.singular + " ";
       else if (part === 2) result += s.dual + " ";
-      else if (part < 11) result += ones[part] + " " + s.plural + " ";
+      else if (part >= 3 && part <= 10) result += ones[part] + " " + s.plural + " ";
       else {
-        if (part >= 20) {
-          const partTens = Math.floor(part / 10);
-          const partOnes = part % 10;
-          if (partOnes > 0) {
-            result += ones[partOnes] + " و" + tens[partTens] + " " + s.singular + " ";
-          } else {
-            result += tens[partTens] + " " + s.singular + " ";
-          }
-        } else {
-          result += numberToArabicWords(part) + " " + s.singular + " ";
-        }
+        // أي رقم أكبر من 10
+        result += numberToArabicWords(part) + " " + s.singular + " ";
       }
 
       num %= s.value;
