@@ -473,7 +473,7 @@ const LoanContractGenerator = React.forwardRef(
             .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
             .replace(
               /{{قيمة_السند_رقما}}/g,
-              `${totalAmount?.toLocaleString("ar-SA") || "0"}`
+              `${totalAmount?.toLocaleString("en-US") || "0"}`
             )
             .replace(/{{قيمة_السند_كتابة}}/g, `${amountInWords}`)
 
