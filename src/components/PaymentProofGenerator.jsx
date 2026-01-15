@@ -54,15 +54,17 @@ const numberToArabicWords = (num) => {
 if (num >= 100) {
   const hundredsPart = Math.floor(num / 100);
 
-  if (hasThousands) {
-    result += "و" + hundreds[hundredsPart]; // ❌ شيل المسافة
-  } else {
-    result += hundreds[hundredsPart];
+  if (hundredsPart > 0) {
+    if (hasThousands) {
+      result += "و" + hundreds[hundredsPart];
+    } else {
+      result += hundreds[hundredsPart];
+    }
   }
 
   num %= 100;
 
-  if (num > 0) result += " ";
+  if (num > 0 && hundredsPart > 0) result += " ";
 }
 
   // العشرات والآحاد مع قواعد نحو عربية صحيحة
@@ -71,8 +73,12 @@ if (num >= 100) {
     const o = num % 10;
     const hasHigherUnits = result.length > 0;
 
-    if (hasHigherUnits && !result.trim().endsWith("و")) {
-      result = result.trim() + " و";
+    if (hasHigherUnits) {
+      result = result.trim();
+      if (!result.endsWith("و")) {
+        result += " و";
+      }
+      result += " ";
     }
 
     if (o > 0) {
@@ -83,15 +89,23 @@ if (num >= 100) {
   } else if (num >= 10) {
     const hasHigherUnits = result.length > 0;
 
-    if (hasHigherUnits && !result.trim().endsWith("و")) {
-      result = result.trim() + " و";
+    if (hasHigherUnits) {
+      result = result.trim();
+      if (!result.endsWith("و")) {
+        result += " و";
+      }
+      result += " ";
     }
     result += teens[num - 10];
   } else if (num > 0) {
     const hasHigherUnits = result.length > 0;
 
-    if (hasHigherUnits && !result.trim().endsWith("و")) {
-      result = result.trim() + " و";
+    if (hasHigherUnits) {
+      result = result.trim();
+      if (!result.endsWith("و")) {
+        result += " و";
+      }
+      result += " ";
     }
     result += ones[num];
   }
