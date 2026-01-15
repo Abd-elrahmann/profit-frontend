@@ -334,6 +334,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                   <Typography variant="body2" fontWeight="medium" sx={{ mt: 0.5 }}>
                     {loan.client?.name}
                   </Typography>
+                  {loan.fromclient && (
+                    <Typography variant="caption" sx={{ fontSize: '12px', color: 'warning.main', fontWeight: 'bold', mt: 0.5, display: 'block' }}>
+                      منقولة من: {loan.fromclient.name}
+                    </Typography>
+                  )}
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
                   <Chip
@@ -564,6 +569,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                     {loan.kafeel?.name && (
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '14px' }}>
                         الكفيل: {loan.kafeel.name}
+                      </Typography>
+                    )}
+                    {loan.fromclient && (
+                      <Typography variant="caption" sx={{ fontSize: '13px', color: 'warning.main', fontWeight: 'bold' }}>
+                        منقولة من: {loan.fromclient.name}
                       </Typography>
                     )}
                   </Stack>
