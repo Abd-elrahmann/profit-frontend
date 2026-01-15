@@ -71,6 +71,7 @@ const IncomeStatement = () => {
   const [fromDate, setFromDate] = useState(dayjs().startOf('month'));
   const [toDate, setToDate] = useState(dayjs().endOf('month'));
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // توليد السنوات من 2020 إلى 2040
   const years = Array.from({ length: 21 }, (_, i) => 2020 + i);
@@ -98,8 +99,13 @@ const IncomeStatement = () => {
           setSelectedPeriodId(latestPeriod.id);
         }
       }
+      // انتهى التهيئة
+      setIsInitializing(false);
+    } else if (accountingPeriods.length === 0 && periodType === "period") {
+      // إذا لم توجد فترات محاسبية، انتهى التهيئة أيضًا
+      setIsInitializing(false);
     }
-  }, [accountingPeriods, selectedPeriodId]);
+  }, [accountingPeriods, selectedPeriodId, periodType]);
 
   // إعداد معلمات الاستعلام بناءً على الفترة المحددة
   const getQueryParams = () => {
@@ -276,6 +282,7 @@ const IncomeStatement = () => {
                         setPeriodType(e.target.value);
                         if (e.target.value !== "period") {
                           setSelectedPeriodId("");
+                          setIsInitializing(false);
                         }
                       }}
                       sx={{
@@ -461,7 +468,7 @@ const IncomeStatement = () => {
           </Grid>
 
           {/* Action Buttons Section */}
-          {!isLoading && !isError && incomeData && (
+          {!isLoading && !isInitializing && !isError && incomeData && (
             <Grid item xs={12} md={3}>
            <Stack direction="row" justifyContent="flex-end" sx={{ gap: 1 }}>
   <Button
@@ -521,7 +528,7 @@ const IncomeStatement = () => {
         </Grid>
 
         {/* Loading State */}
-        {isLoading && (
+        {(isLoading || isInitializing) && (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
             <CircularProgress size={60} />
           </Box>
@@ -543,7 +550,7 @@ const IncomeStatement = () => {
         )}
 
         {/* Net Profit - King Card */}
-        {!isLoading && !isError && incomeData && (
+        {!isLoading && !isInitializing && !isError && incomeData && (
           <>
             {/* Period Info */}
             {periodInfo && (
@@ -1046,7 +1053,7 @@ const IncomeStatement = () => {
         )}
 
         {/* Empty State */}
-        {!isLoading && !isError && !incomeData && (
+        {!isLoading && !isInitializing && !isError && !incomeData && (
           <Paper sx={{ p: 6, textAlign: 'center' }}>
             <Typography variant="h6" color="text.secondary" gutterBottom>
               لا توجد بيانات للفترة المحددة
