@@ -82,10 +82,15 @@ const numberToArabicWords = (num) => {
       result += "ألف ";
     } else if (thousandsPart === 2) {
       result += "ألفان ";
-    } else if (thousandsPart >= 3 && thousandsPart <= 10) {
+    } else if (thousandsPart >= 3 && thousandsPart <= 9) {
       result += ones[thousandsPart] + " آلاف ";
+    } else if (thousandsPart === 10) {
+      result += "عشرة آلاف ";
+    } else if (thousandsPart >= 11 && thousandsPart <= 999) {
+      // أي رقم بين 11 و 999
+      result += numberToArabicWords(thousandsPart) + " ألف ";
     } else {
-      // أي رقم أكبر من 10
+      // أي رقم أكبر من أو يساوي 1000 (مليون أو أكثر)
       result += numberToArabicWords(thousandsPart) + " ألف ";
     }
     num %= 1000;

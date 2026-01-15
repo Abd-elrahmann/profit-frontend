@@ -28,7 +28,8 @@ const numberToArabicWords = (num) => {
       const part = Math.floor(num / s.value);
       if (part === 1) result += s.singular + " ";
       else if (part === 2) result += s.dual + " ";
-      else if (part >= 3 && part <= 10) result += ones[part] + " " + s.plural + " ";
+      else if (part >= 3 && part <= 9) result += ones[part] + " " + s.plural + " ";
+      else if (part === 10) result += "عشرة " + s.plural + " ";
       else {
         // أي رقم أكبر من 10
         result += numberToArabicWords(part) + " " + s.singular + " ";
