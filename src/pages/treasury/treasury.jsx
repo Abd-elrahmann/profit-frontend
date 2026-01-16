@@ -104,7 +104,7 @@ export default function Treasury() {
 
   // استخراج البيانات من response بشكل ديناميكي
   const currentData = bankData;
-  
+
   // حساب القيم من البيانات المسترجعة فقط
   const availableBalance = currentData?.account?.balance || 0;
   const totalDebit = currentData?.account?.debit || 0;
@@ -132,7 +132,7 @@ export default function Treasury() {
   const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
   const animatedTotalDebit = useCountUp(totalDebit, 600, !isLoading);
   const animatedTotalCredit = useCountUp(totalCredit, 600, !isLoading);
-  const animatedLoansBalance = useCountUp(loansBalanceWithInterest, 600, !isLoading);
+  const animatedLoansBalance = useCountUp(loansBalance, 600, !isLoading);
   const animatedLoansInterest = useCountUp(loansInterest, 600, !isLoading);
   const animatedTotal = useCountUp(total, 600, !isLoading);
   const animatedCurrentMonthTotal = useCountUp(currentMonthTotalAmount, 600, !isLoading);
@@ -157,7 +157,7 @@ export default function Treasury() {
   // الحصول على القيود الحالية بناءً على الشهر المحدد
   const getCurrentJournals = () => {
     if (!currentData?.journalsByMonth) return [];
-    
+
     if (selectedMonth && currentData.journalsByMonth[selectedMonth]) {
       return currentData.journalsByMonth[selectedMonth].entries;
     } else {
@@ -230,7 +230,7 @@ export default function Treasury() {
 
   const handleExportPDF = async () => {
     if (!bankData) return;
-    
+
     setIsExporting(true);
     try {
       await exportJournalsToPDF(bankData, 'النقد في الصندوق');
@@ -260,7 +260,7 @@ export default function Treasury() {
 
   const handleExportStatisticsPDF = async () => {
     if (!bankData) return;
-    
+
     setIsExporting(true);
     try {
       await exportStatisticsToPDF(bankData, 'النقد في الصندوق');
@@ -291,10 +291,10 @@ export default function Treasury() {
   const renderMobileJournalCards = () => (
     <Stack spacing={2} sx={{ p: 2 }}>
       {currentJournals.map((journal) => (
-        <Card 
-          key={journal.id} 
-          variant="outlined" 
-          sx={{ 
+        <Card
+          key={journal.id}
+          variant="outlined"
+          sx={{
             borderRadius: 2,
             bgcolor: isDarkMode ? '#2a2a2a' : 'background.paper',
             borderColor: isDarkMode ? '#424242' : '#e0e0e0'
@@ -311,8 +311,8 @@ export default function Treasury() {
                     {dayjs(journal.date).format('DD/MM/YYYY')}
                   </Typography>
                 </Box>
-                <Chip 
-                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
+                <Chip
+                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'}
                   size="small"
                   color={journal.status === 'POSTED' ? 'success' : 'default'}
                   variant="outlined"
@@ -445,8 +445,8 @@ export default function Treasury() {
                 </Typography>
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '100px' }}>
-                <Chip 
-                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'} 
+                <Chip
+                  label={journal.status === 'POSTED' ? 'مرحل' : 'مسودة'}
                   size="small"
                   color={journal.status === 'POSTED' ? 'success' : 'default'}
                   variant="outlined"
@@ -471,8 +471,8 @@ export default function Treasury() {
   }
 
   return (
-    <Box sx={{ 
-      minHeight: "100vh", 
+    <Box sx={{
+      minHeight: "100vh",
     }}>
       <Helmet>
         <title>الصندوق</title>
@@ -480,8 +480,8 @@ export default function Treasury() {
       </Helmet>
 
       <Box sx={{ p: isSmallScreen ? 2 : 3, mb: 3 }}>
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           flexDirection: isSmallScreen ? 'column' : 'row',
           alignItems: isSmallScreen ? 'stretch' : 'center',
           justifyContent: 'space-between',
@@ -530,8 +530,8 @@ export default function Treasury() {
           </Tabs>
 
           {permissions.includes("treasury_Export") && (
-            <Box sx={{ 
-              display: 'flex', 
+            <Box sx={{
+              display: 'flex',
               gap: 1,
               alignItems: 'center',
               justifyContent: isSmallScreen ? 'center' : 'flex-end',
@@ -541,7 +541,7 @@ export default function Treasury() {
                 <>
                   <Button
                     variant="outlined"
-                    startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{marginLeft: '5px'}} />}
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{ marginLeft: '5px' }} />}
                     onClick={handleExportStatisticsPDF}
                     disabled={isExporting || !bankData}
                     size={isSmallScreen ? "small" : "medium"}
@@ -554,7 +554,7 @@ export default function Treasury() {
                   </Button>
                   <Button
                     variant="outlined"
-                    startIcon={isExporting ? <CircularProgress size={16} /> : <TableChart sx={{marginLeft: '5px'}} />}
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <TableChart sx={{ marginLeft: '5px' }} />}
                     onClick={handleExportStatisticsExcel}
                     disabled={isExporting || !bankData}
                     size={isSmallScreen ? "small" : "medium"}
@@ -570,7 +570,7 @@ export default function Treasury() {
                 <>
                   <Button
                     variant="outlined"
-                    startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{marginLeft: '5px'}} />}
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{ marginLeft: '5px' }} />}
                     onClick={handleExportPDF}
                     disabled={isExporting || currentJournals.length === 0}
                     size={isSmallScreen ? "small" : "medium"}
@@ -583,7 +583,7 @@ export default function Treasury() {
                   </Button>
                   <Button
                     variant="outlined"
-                    startIcon={isExporting ? <CircularProgress size={16} /> : <TableChart sx={{marginLeft: '5px'}} />}
+                    startIcon={isExporting ? <CircularProgress size={16} /> : <TableChart sx={{ marginLeft: '5px' }} />}
                     onClick={handleExportExcel}
                     disabled={isExporting || currentJournals.length === 0}
                     size={isSmallScreen ? "small" : "medium"}
@@ -619,9 +619,9 @@ export default function Treasury() {
                   }}>
                     {/* البطاقات الإحصائية لـ tab 0 */}
                     <Box sx={{ flex: isSmallScreen ? '1 1 100%' : '1 1 200px', minWidth: isSmallScreen ? '100%' : '350px', maxWidth: '100%' }}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                      <Card sx={{
+                        borderRadius: 2,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         height: '100%',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                       }}>
@@ -650,9 +650,9 @@ export default function Treasury() {
                     </Box>
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                      <Card sx={{
+                        borderRadius: 2,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         height: '100%',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                       }}>
@@ -681,9 +681,9 @@ export default function Treasury() {
                     </Box>
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                      <Card sx={{
+                        borderRadius: 2,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         height: '100%',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                       }}>
@@ -759,7 +759,7 @@ export default function Treasury() {
                                 {animatedLoansBalance.toLocaleString('en-US')}
                               </Typography>
                               <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                                الرصيد في السوق (مع الأرباح)
+                                الرصيد في السوق
                               </Typography>
                             </Box>
                           </Box>
@@ -969,10 +969,10 @@ export default function Treasury() {
 
                   {/* الرسومات الخاصة بالصندوق العام فقط */}
                   {availableMonths.length > 0 && (
-                    <Paper sx={{ 
-                      p: 2, 
-                      mb: 3, 
-                      borderRadius: 2, 
+                    <Paper sx={{
+                      p: 2,
+                      mb: 3,
+                      borderRadius: 2,
                       boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                       bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                     }}>
@@ -989,7 +989,7 @@ export default function Treasury() {
                               value={selectedMonth}
                               onChange={handleMonthChange}
                               label="تصفية حسب الشهر"
-                              sx={{ 
+                              sx={{
                                 minWidth: 200,
                                 '& .MuiSelect-select': {
                                   color: isDarkMode ? 'text.primary' : 'inherit'
@@ -1013,23 +1013,23 @@ export default function Treasury() {
                   {totalBalance > 0 && (
                     <Grid container spacing={3} sx={{ mb: 4 }}>
                       <Grid item xs={12}>
-                        <Paper sx={{ 
-                          p: isSmallScreen ? 2 : 3, 
-                          borderRadius: 2, 
+                        <Paper sx={{
+                          p: isSmallScreen ? 2 : 3,
+                          borderRadius: 2,
                           boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                           width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                           bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                         }}>
-                          <Typography 
-                            variant="h6" 
-                            fontWeight="bold" 
+                          <Typography
+                            variant="h6"
+                            fontWeight="bold"
                             color={isDarkMode ? 'text.primary' : 'text.primary'}
                             sx={{ mb: 3 }}
                           >
                             رصيد الصندوق
                           </Typography>
-                          
-                          <Box sx={{ 
+
+                          <Box sx={{
                             display: 'flex',
                             flexDirection: isSmallScreen ? 'column' : 'row',
                             alignItems: 'center',
@@ -1037,18 +1037,18 @@ export default function Treasury() {
                             gap: isSmallScreen ? 3 : 6,
                             flexWrap: 'wrap'
                           }}>
-                            <Box sx={{ 
-                              position: 'relative', 
-                              width: isSmallScreen ? 150 : 200, 
+                            <Box sx={{
+                              position: 'relative',
+                              width: isSmallScreen ? 150 : 200,
                               height: isSmallScreen ? 150 : 200,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               flexShrink: 0
                             }}>
-                              <svg 
-                                width={isSmallScreen ? "150" : "200"} 
-                                height={isSmallScreen ? "150" : "200"} 
+                              <svg
+                                width={isSmallScreen ? "150" : "200"}
+                                height={isSmallScreen ? "150" : "200"}
                                 viewBox="0 0 100 100"
                                 style={{ transform: 'rotate(-90deg)' }}
                               >
@@ -1072,26 +1072,26 @@ export default function Treasury() {
                                   style={{ transition: 'stroke-dasharray 0.5s ease' }}
                                 />
                               </svg>
-                              
+
                               <Box sx={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography 
-                                  variant={isSmallScreen ? "h5" : "h4"} 
-                                  fontWeight="bold" 
+                                <Typography
+                                  variant={isSmallScreen ? "h5" : "h4"}
+                                  fontWeight="bold"
                                   color="primary"
                                   sx={{ mb: 0.5 }}
                                 >
-                                  {availableBalance >= 1000000 
+                                  {availableBalance >= 1000000
                                     ? `${(availableBalance / 1000000).toFixed(1)}م`
                                     : availableBalance >= 1000
-                                    ? `${(availableBalance / 1000).toFixed(0)} ألف`
-                                    : availableBalance.toLocaleString('en-US')
+                                      ? `${(availableBalance / 1000).toFixed(0)} ألف`
+                                      : availableBalance.toLocaleString('en-US')
                                   }
                                 </Typography>
                               </Box>
                             </Box>
 
-                            <Box sx={{ 
-                              display: 'flex', 
+                            <Box sx={{
+                              display: 'flex',
                               flexDirection: isSmallScreen ? 'row' : 'row',
                               gap: isSmallScreen ? 3 : 6,
                               flex: 1,
@@ -1106,15 +1106,15 @@ export default function Treasury() {
                                   </Typography>
                                 </Box>
                                 <Typography variant="h6" fontWeight="semibold" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                                  {totalCredit >= 1000000 
+                                  {totalCredit >= 1000000
                                     ? `${(totalCredit / 1000000).toFixed(1)}م`
                                     : totalCredit >= 1000
-                                    ? `${(totalCredit / 1000).toFixed(0)} ألف`
-                                    : `${totalCredit.toLocaleString('en-US')}`
+                                      ? `${(totalCredit / 1000).toFixed(0)} ألف`
+                                      : `${totalCredit.toLocaleString('en-US')}`
                                   }
                                 </Typography>
                               </Box>
-                              
+
                               <Box sx={{ textAlign: 'center', minWidth: 150 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center', mb: 1 }}>
                                   <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: isDarkMode ? '#616161' : 'grey.300' }} />
@@ -1123,11 +1123,11 @@ export default function Treasury() {
                                   </Typography>
                                 </Box>
                                 <Typography variant="h6" fontWeight="semibold" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                                  {availableBalance >= 1000000 
+                                  {availableBalance >= 1000000
                                     ? `${(availableBalance / 1000000).toFixed(1)}م`
                                     : availableBalance >= 1000
-                                    ? `${(availableBalance / 1000).toFixed(0)} ألف`
-                                    : `${availableBalance.toLocaleString('en-US')}`
+                                      ? `${(availableBalance / 1000).toFixed(0)} ألف`
+                                      : `${availableBalance.toLocaleString('en-US')}`
                                   }
                                 </Typography>
                               </Box>
@@ -1142,9 +1142,9 @@ export default function Treasury() {
                   {monthlyBalanceData.length > 0 && (
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                       <Grid item xs={12}>
-                        <Paper sx={{ 
-                          p: isSmallScreen ? 2 : 3, 
-                          borderRadius: 2, 
+                        <Paper sx={{
+                          p: isSmallScreen ? 2 : 3,
+                          borderRadius: 2,
                           boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                           width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                           bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
@@ -1156,20 +1156,20 @@ export default function Treasury() {
                             <ComposedChart data={monthlyBalanceData}>
                               <defs>
                                 <linearGradient id="colorDebit" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/>
-                                  <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1}/>
+                                  <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8} />
+                                  <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1} />
                                 </linearGradient>
                                 <linearGradient id="colorCredit" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8}/>
-                                  <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1}/>
+                                  <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8} />
+                                  <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1} />
                                 </linearGradient>
                               </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#424242" : "#e0e0e0"} />
                               <XAxis dataKey="name" stroke={isDarkMode ? "#ffffff" : "#666"} />
                               <YAxis stroke={isDarkMode ? "#ffffff" : "#666"} />
-                              <Tooltip 
-                                formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
-                                contentStyle={{ 
+                              <Tooltip
+                                formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]}
+                                contentStyle={{
                                   borderRadius: '8px',
                                   backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
                                   border: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0',
@@ -1177,28 +1177,28 @@ export default function Treasury() {
                                 }}
                               />
                               <Legend />
-                              <Area 
-                                type="monotone" 
-                                dataKey="الوارد" 
+                              <Area
+                                type="monotone"
+                                dataKey="الوارد"
                                 stackId="1"
-                                stroke="#00C49F" 
-                                fill="url(#colorDebit)" 
+                                stroke="#00C49F"
+                                fill="url(#colorDebit)"
                                 name="الوارد"
                                 strokeWidth={2}
                               />
-                              <Area 
-                                type="monotone" 
-                                dataKey="الصادر" 
+                              <Area
+                                type="monotone"
+                                dataKey="الصادر"
                                 stackId="1"
-                                stroke="#FF8042" 
-                                fill="url(#colorCredit)" 
+                                stroke="#FF8042"
+                                fill="url(#colorCredit)"
                                 name="الصادر"
                                 strokeWidth={2}
                               />
-                              <Line 
-                                type="monotone" 
-                                dataKey="الرصيد" 
-                                stroke="#1976d2" 
+                              <Line
+                                type="monotone"
+                                dataKey="الرصيد"
+                                stroke="#1976d2"
                                 strokeWidth={3}
                                 name="الرصيد"
                                 dot={{ fill: '#1976d2', r: 5 }}
@@ -1214,9 +1214,9 @@ export default function Treasury() {
                   {/* رسمة Pie Chart لتوزيع المعاملات */}
                   {transactionTypeData.length > 0 && transactionTypeData.some(item => item.value > 0) && (
                     <Box sx={{ mb: 3 }}>
-                      <Paper sx={{ 
-                        p: isSmallScreen ? 2 : 3, 
-                        borderRadius: 2, 
+                      <Paper sx={{
+                        p: isSmallScreen ? 2 : 3,
+                        borderRadius: 2,
                         boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
@@ -1238,17 +1238,17 @@ export default function Treasury() {
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip 
-                              formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
-                              contentStyle={{ 
+                            <Tooltip
+                              formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]}
+                              contentStyle={{
                                 borderRadius: '8px',
                                 backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
                                 border: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0',
                                 color: isDarkMode ? '#ffffff' : '#333'
                               }}
                             />
-                            <Legend 
-                              verticalAlign="bottom" 
+                            <Legend
+                              verticalAlign="bottom"
                               height={36}
                               formatter={(value, entry) => `${value}: ${entry.payload.value.toLocaleString('en-US')}`}
                             />
@@ -1261,9 +1261,9 @@ export default function Treasury() {
                   {/* توزيع حالات القيود */}
                   {statusDistribution.length > 0 && statusDistribution.some(item => item.value > 0) && (
                     <Box sx={{ mb: 4 }}>
-                      <Paper sx={{ 
-                        p: isSmallScreen ? 2 : 3, 
-                        borderRadius: 2, 
+                      <Paper sx={{
+                        p: isSmallScreen ? 2 : 3,
+                        borderRadius: 2,
                         boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
@@ -1285,17 +1285,17 @@ export default function Treasury() {
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
                             </Pie>
-                            <Tooltip 
-                              formatter={(value, name) => [`${value} قيد`, name]} 
-                              contentStyle={{ 
+                            <Tooltip
+                              formatter={(value, name) => [`${value} قيد`, name]}
+                              contentStyle={{
                                 borderRadius: '8px',
                                 backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
                                 border: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0',
                                 color: isDarkMode ? '#ffffff' : '#333'
                               }}
                             />
-                            <Legend 
-                              verticalAlign="bottom" 
+                            <Legend
+                              verticalAlign="bottom"
                               height={36}
                               formatter={(value, entry) => `${value}: ${entry.payload.value} قيد`}
                             />
@@ -1308,9 +1308,9 @@ export default function Treasury() {
                   {/* Repayments Chart */}
                   {totalRepaymentsAmount > 0 && (
                     <Box sx={{ mb: 4 }}>
-                      <Paper sx={{ 
-                        p: isSmallScreen ? 2 : 3, 
-                        borderRadius: 2, 
+                      <Paper sx={{
+                        p: isSmallScreen ? 2 : 3,
+                        borderRadius: 2,
                         boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         width: isSmallScreen ? '100%' : 'calc(100vw - 240px)',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
@@ -1328,29 +1328,29 @@ export default function Treasury() {
                             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#424242" : "#e0e0e0"} />
-                            <XAxis 
-                              dataKey="name" 
+                            <XAxis
+                              dataKey="name"
                               tick={{ fill: isDarkMode ? '#ffffff' : '#666', fontSize: 14 }}
                             />
-                            <YAxis 
+                            <YAxis
                               tick={{ fill: isDarkMode ? '#ffffff' : '#666', fontSize: 14 }}
                               tickFormatter={(value) => `${value.toLocaleString('en-US')}`}
                             />
-                            <Tooltip 
-                              formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]} 
-                              contentStyle={{ 
+                            <Tooltip
+                              formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]}
+                              contentStyle={{
                                 borderRadius: '8px',
                                 backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
                                 border: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0',
                                 color: isDarkMode ? '#ffffff' : '#333'
                               }}
                             />
-                            <Legend 
+                            <Legend
                               verticalAlign="top"
                               height={36}
                             />
-                            <Bar 
-                              dataKey="value" 
+                            <Bar
+                              dataKey="value"
                               name="المبلغ"
                               radius={[8, 8, 0, 0]}
                             >
@@ -1382,9 +1382,9 @@ export default function Treasury() {
                   }}>
                     {/* الصندوق الخاص - فقط البطاقات الإحصائية بدون رسومات */}
                     <Box sx={{ flex: isSmallScreen ? '1 1 100%' : '1 1 200px', minWidth: isSmallScreen ? '100%' : '350px', maxWidth: '100%' }}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                      <Card sx={{
+                        borderRadius: 2,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         height: '100%',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                       }}>
@@ -1413,9 +1413,9 @@ export default function Treasury() {
                     </Box>
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                      <Card sx={{
+                        borderRadius: 2,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         height: '100%',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                       }}>
@@ -1444,9 +1444,9 @@ export default function Treasury() {
                     </Box>
 
                     <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                      <Card sx={{
+                        borderRadius: 2,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                         height: '100%',
                         bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                       }}>
@@ -1476,9 +1476,9 @@ export default function Treasury() {
 
                     {totalRepaymentsAmount > 0 && (
                       <Box sx={{ flex: '1 1 200px', minWidth: '350px', maxWidth: '100%' }}>
-                        <Card sx={{ 
-                          borderRadius: 2, 
-                          boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                        <Card sx={{
+                          borderRadius: 2,
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                           height: '100%',
                           bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                         }}>
@@ -1551,17 +1551,17 @@ export default function Treasury() {
 
               {tab === 2 && (
                 <Box>
-                  <Paper sx={{ 
-                    borderRadius: 2, 
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                  <Paper sx={{
+                    borderRadius: 2,
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                     overflow: 'hidden',
                     bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                   }}>
-                    <Box sx={{ 
-                      display: 'flex', 
+                    <Box sx={{
+                      display: 'flex',
                       flexDirection: isSmallScreen ? 'column' : 'row',
-                      justifyContent: 'space-between', 
-                      alignItems: isSmallScreen ? 'flex-start' : 'center', 
+                      justifyContent: 'space-between',
+                      alignItems: isSmallScreen ? 'flex-start' : 'center',
                       p: isSmallScreen ? 2 : 3,
                       gap: isSmallScreen ? 2 : 0,
                       borderBottom: isDarkMode ? '1px solid #424242' : '1px solid #e0e0e0',
@@ -1577,11 +1577,11 @@ export default function Treasury() {
                           </Typography>
                         )}
                       </Box>
-                      
-                      <Box sx={{ 
-                        display: 'flex', 
+
+                      <Box sx={{
+                        display: 'flex',
                         flexDirection: isSmallScreen ? 'column' : 'row',
-                        alignItems: isSmallScreen ? 'stretch' : 'center', 
+                        alignItems: isSmallScreen ? 'stretch' : 'center',
                         gap: 2,
                         width: isSmallScreen ? '100%' : 'auto'
                       }}>
@@ -1625,7 +1625,7 @@ export default function Treasury() {
                     ) : (
                       <>
                         {isSmallScreen ? renderMobileJournalCards() : renderDesktopJournalTable()}
-                        
+
                         {pagination.totalPages > 1 && (
                           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 3, mb: 2 }}>
                             <Pagination
