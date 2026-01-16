@@ -141,7 +141,7 @@ const PeriodClosing = () => {
         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
           {gregorianDate}
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem',fontWeight: 'bold' }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem', fontWeight: 'bold' }}>
           {hijriText}
         </Typography>
       </Box>
@@ -252,6 +252,12 @@ const PeriodClosing = () => {
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color="primary.main">
               {(periodData?.grossProfit?.companyTotal || 0).toLocaleString()}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
+            <Typography>فارق:</Typography>
+            <Typography fontWeight="bold" color="success.main">
+              {(periodData?.grossProfit?.totalCents || 0).toLocaleString()}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2, mb: 1 }}>
@@ -564,7 +570,7 @@ const PeriodClosing = () => {
           >
             {periodData?.totalPartnerProfit || periodData?.companyProfit
               ? "تم إغلاق الفترة وتوزيعها"
-              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها" 
+              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها"
             }
           </Alert>
           <Button
@@ -636,7 +642,7 @@ const PeriodClosing = () => {
         <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
           قيود الفترة ({periodData?.journals?.length || 0})
         </Typography>
-        
+
         <Stack spacing={2}>
           {periodData?.journals?.map((journal) => (
             <Card key={journal.id} variant="outlined">
@@ -652,11 +658,11 @@ const PeriodClosing = () => {
                       size="small"
                     />
                   </Box>
-                  
+
                   <Typography variant="body2">
                     {journal.description}
                   </Typography>
-                  
+
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="textSecondary">
                       {getJournalTypeText(journal.type)}
@@ -665,7 +671,7 @@ const PeriodClosing = () => {
                       {formatDate(journal.date)}
                     </Typography>
                   </Box>
-                  
+
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2">
                       مدين: {Math.round(journal.totalDebit || 0).toLocaleString()}
@@ -685,8 +691,8 @@ const PeriodClosing = () => {
                         (journal.totalDebit || 0) - (journal.totalCredit || 0) > 0
                           ? "success.main"
                           : (journal.totalDebit || 0) - (journal.totalCredit || 0) < 0
-                          ? "error.main"
-                          : "text.primary"
+                            ? "error.main"
+                            : "text.primary"
                       }
                     >
                       {Math.round((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
@@ -696,7 +702,7 @@ const PeriodClosing = () => {
               </CardContent>
             </Card>
           ))}
-          
+
           {periodData?.journals && periodData.journals.length > 0 && (
             <Card sx={{ bgcolor: "#f5f5f5", border: "2px solid #e0e0e0" }}>
               <CardContent sx={{ p: 2 }}>
@@ -729,11 +735,11 @@ const PeriodClosing = () => {
                       ) > 0
                         ? "success.main"
                         : periodData.journals.reduce(
-                            (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
-                            0
-                          ) < 0
-                        ? "error.main"
-                        : "text.primary"
+                          (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                          0
+                        ) < 0
+                          ? "error.main"
+                          : "text.primary"
                     }
                   >
                     {Math.round(periodData.journals
@@ -821,7 +827,7 @@ const PeriodClosing = () => {
           >
             {periodData?.totalPartnerProfit || periodData?.companyProfit
               ? "تم إغلاق الفترة وتوزيعها"
-              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها" 
+              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها"
             }
           </Alert>
           <Button
@@ -1029,8 +1035,8 @@ const PeriodClosing = () => {
                         (journal.totalDebit || 0) - (journal.totalCredit || 0) > 0
                           ? '#2e7d32'
                           : (journal.totalDebit || 0) - (journal.totalCredit || 0) < 0
-                          ? '#d32f2f'
-                          : 'inherit'
+                            ? '#d32f2f'
+                            : 'inherit'
                     }}
                   >
                     {Math.round((journal.totalDebit || 0) - (journal.totalCredit || 0)).toLocaleString()}
@@ -1071,11 +1077,11 @@ const PeriodClosing = () => {
                       ) > 0
                         ? '#2e7d32'
                         : periodData.journals.reduce(
-                            (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
-                            0
-                          ) < 0
-                        ? '#d32f2f'
-                        : 'inherit'
+                          (sum, journal) => sum + (journal.totalDebit || 0) - (journal.totalCredit || 0),
+                          0
+                        ) < 0
+                          ? '#d32f2f'
+                          : 'inherit'
                   }}
                 >
                   {Math.round(periodData.journals
@@ -1108,7 +1114,7 @@ const PeriodClosing = () => {
         <title>تقفيل الفترات</title>
         <meta name="description" content="تقفيل الفترات المحاسبية" />
       </Helmet>
-      
+
       <Box
         sx={{
           display: "flex",
@@ -1202,9 +1208,9 @@ const PeriodClosing = () => {
             )}
 
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
-              <PeriodTable 
-                onViewDetails={handleViewDetails} 
-                isMobile={isMobile} 
+              <PeriodTable
+                onViewDetails={handleViewDetails}
+                isMobile={isMobile}
                 searchQuery={searchQuery}
               />
             ) : (
