@@ -28,38 +28,35 @@ import { useDropzone } from 'react-dropzone';
 import { Helmet } from 'react-helmet-async';
 import { notifySuccess, notifyError } from '../utilities/toastify';
 import Api from '../config/Api';
+import { useAuth } from '../components/Contexts/AuthContext';
 
 const Profile = () => {
   const theme = useTheme();
+  const { updateUser } = useAuth();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await Api.get('/api/auth/profile');
       setUserData(response.data);
       
-      // Update localStorage with latest user data including profile image
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      localStorage.setItem('user', JSON.stringify({
-        ...currentUser,
-        ...response.data,
-        profileImage: response.data.profileImage
-      }));
+      // ✅ Update user in AuthContext (memory only)
+      updateUser(response.data);
     } catch (error) {
       console.error('Error fetching profile:', error);
       notifyError('حدث خطأ في تحميل البيانات');
     } finally {
       setLoading(false);
     }
-  };
+  }, [updateUser]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -74,13 +71,8 @@ const Profile = () => {
         const response = await Api.patch('/api/auth/update-profile', values);
         setUserData(prev => ({ ...prev, ...response.data.user }));
         
-        // Update localStorage
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const updatedUser = {
-          ...currentUser,
-          ...response.data.user
-        };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // ✅ Update user in AuthContext (memory only)
+        updateUser(response.data.user);
 
         // Trigger global update for navbar
         window.dispatchEvent(new Event('profileUpdated'));
@@ -121,13 +113,8 @@ const Profile = () => {
           profileImage: response.data.profileImage 
         }));
 
-        // Update localStorage
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const updatedUser = {
-          ...currentUser,
-          profileImage: response.data.profileImage
-        };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // ✅ Update user in AuthContext (memory only)
+        updateUser({ profileImage: response.data.profileImage });
 
         // Trigger global update for navbar (multiple events for compatibility)
         window.dispatchEvent(new Event('profileUpdated'));

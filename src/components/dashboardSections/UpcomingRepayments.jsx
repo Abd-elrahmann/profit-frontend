@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -6,7 +6,9 @@ import {
   CardContent,
   TableBody,
   TableHead,
+  TablePagination,
   CircularProgress,
+  Table,
 } from '@mui/material';
 import { Schedule } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +16,9 @@ import { getUpcomingRepayments } from '../../pages/dashboard/dashboardApi';
 import { useTheme } from '@mui/material';
 import { format } from 'date-fns';
 import {StyledTableCell, StyledTableRow, ScrollableTableContainer} from '../layouts/tableLayout';
-const UpcomingRepayments = () => {
+const UpcomingRepayments = React.memo(() => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
 
   const { data: repayments, isLoading } = useQuery({
@@ -32,6 +36,24 @@ const UpcomingRepayments = () => {
 
   const getDueDate = (repayment) => {
     return repayment.newDueDate || repayment.dueDate;
+  };
+
+  // Memoized pagination data
+  const paginatedRepayments = useMemo(() => {
+    if (!repayments) return [];
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return repayments.slice(startIndex, endIndex);
+  }, [repayments, page, rowsPerPage]);
+
+  // Handle pagination changes
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   if (isLoading) {
@@ -54,41 +76,41 @@ const UpcomingRepayments = () => {
 
         {repayments && repayments.length > 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <ScrollableTableContainer 
+            <ScrollableTableContainer
               maxHeight={650}
-              minWidth={1200}
             >
+              <Table stickyHeader sx={{ minWidth: 1000 }}>
                 <TableHead sx={{ bgcolor: theme.palette.grey[50] }}>
                   <StyledTableRow>
-                    <StyledTableCell align="center" sx={{ minWidth: { md: 250, lg: 300 }, width: { md: '25%', lg: '30%' } }}>
+                    <StyledTableCell align="center">
                       اسم العميل
                     </StyledTableCell>
-                    <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
+                    <StyledTableCell align="center">
                       تاريخ الاستحقاق
                     </StyledTableCell>
-                    <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
+                    <StyledTableCell align="center">
                       إجمالي المبلغ
                     </StyledTableCell>
                  
                   </StyledTableRow>
                 </TableHead>
                 <TableBody>
-                  {repayments.map((repayment) => (
+                  {paginatedRepayments.map((repayment) => (
                     <StyledTableRow
                       key={repayment.id}
                       sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}
                     >
-                      <StyledTableCell align="center" sx={{ minWidth: { md: 250, lg: 300 }, width: { md: '25%', lg: '30%' } }}>
+                      <StyledTableCell align="center">
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {repayment.loan?.client?.name || 'غير محدد'}
                         </Box>
                       </StyledTableCell>
-                      <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
+                      <StyledTableCell align="center">
                         <Typography variant="body2">
                           {formatDate(getDueDate(repayment))}
                         </Typography>
                       </StyledTableCell>
-                      <StyledTableCell align="center" sx={{ minWidth: { md: 180, lg: 200 }, width: { md: '15%', lg: '15%' } }}>
+                      <StyledTableCell align="center">
                         <Typography variant="body2" fontWeight="bold">
                           {formatCurrency((repayment.principalAmount || 0) + (repayment.interestAmount || 0))}
                         </Typography>
@@ -96,6 +118,7 @@ const UpcomingRepayments = () => {
                     </StyledTableRow>
                   ))}
                 </TableBody>
+              </Table>
             </ScrollableTableContainer>
           </Box>
         ) : (
@@ -109,9 +132,26 @@ const UpcomingRepayments = () => {
             </Typography>
           </Box>
         )}
+
+        {/* Pagination */}
+        {repayments && repayments.length > rowsPerPage && (
+          <TablePagination
+            component="div"
+            count={repayments.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+            labelRowsPerPage="عدد الصفوف:"
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} من ${count}`
+            }
+          />
+        )}
       </CardContent>
     </Card>
   );
-};
+});
 
 export default UpcomingRepayments;

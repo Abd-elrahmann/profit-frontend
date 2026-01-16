@@ -1,4 +1,4 @@
-import React from "react";
+import  React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -39,11 +39,60 @@ const WithdrawModal = ({
   setWithdrawPreviewData,
   isDarkMode
 }) => {
+  const [amountError, setAmountError] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  const validateAmount = (value) => {
+    if (!value || value.trim() === "") {
+      return "مبلغ السحب مطلوب";
+    }
+
+    const amount = parseFloat(value);
+    if (isNaN(amount)) {
+      return "يرجى إدخال مبلغ صحيح";
+    }
+
+    if (amount <= 0) {
+      return "مبلغ السحب يجب أن يكون أكبر من صفر";
+    }
+
+    if (amount > 1000000) { // 1 million limit for monthly withdrawal
+      return "مبلغ السحب الشهري يجب أن يكون أقل من 1,000,000 ريال";
+    }
+
+    // Check if amount is reasonable compared to capital
+    if (investorDetails?.capitalAmount && amount > investorDetails.capitalAmount * 0.5) {
+      return "مبلغ السحب الشهري يجب أن يكون أقل من 50% من رأس المال";
+    }
+
+    return "";
+  };
+
+  const handleAmountChange = (value) => {
+    // Allow only numbers and decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setWithdrawAmount(value);
+
+      // Clear error when user starts typing
+      if (amountError) {
+        setAmountError("");
+      }
+    }
+  };
+
+  const handleAmountBlur = () => {
+    setTouched(true);
+    const error = validateAmount(withdrawAmount);
+    setAmountError(error);
+  };
+
   const handleClose = () => {
     onClose();
     setWithdrawAmount("");
     setWithdrawPreviewData(null);
     setIsEditMode(false);
+    setAmountError("");
+    setTouched(false);
   };
 
   return (
@@ -140,14 +189,10 @@ const WithdrawModal = ({
             label={isEditMode ? "المبلغ الشهري الجديد للسحب" : "المبلغ الشهري للسحب"}
             type="number"
             value={withdrawAmount}
-            onChange={(e) => {
-              const value = e.target.value;
-              // السماح فقط بالأرقام والنقطة العشرية
-              if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                setWithdrawAmount(value);
-              }
-            }}
+            onChange={(e) => handleAmountChange(e.target.value)}
+            onBlur={handleAmountBlur}
             fullWidth
+            required
             disabled={
               !isEditMode && (
                 (investorDetails?.isActive && !investorDetails?.isFrozen) ||
@@ -155,18 +200,24 @@ const WithdrawModal = ({
                 investorDetails?.WithdrawingStatus === 'WITHDRAWN'
               )
             }
-            InputProps={{
-              inputProps: { min: 0, step: 0.01 }
-            }}
+            error={touched && !!amountError}
             helperText={
+              touched && amountError ? amountError :
               isEditMode
-                ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه"
+                ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه (بالريال السعودي)"
                 : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')
                   ? "المستثمر منسحب بالفعل"
                   : (investorDetails?.isActive && !investorDetails?.isFrozen)
                     ? "لا يمكن تنفيذ الإنسحاب لأن المستثمر نشط"
-                    : "أدخل المبلغ الشهري الذي يتم سحبه"
+                    : "أدخل المبلغ الشهري الذي يتم سحبه (بالريال السعودي)"
             }
+            InputProps={{
+              inputProps: {
+                min: 0,
+                step: 0.01,
+                max: 1000000
+              }
+            }}
           />
 
           {withdrawalPreview && (isEditMode || (!(investorDetails?.isActive && !investorDetails?.isFrozen) &&
@@ -353,12 +404,18 @@ const WithdrawModal = ({
         </Button>
         {permissions.includes("partners_Add") && (
           <Button
-            onClick={onWithdraw}
+            onClick={() => {
+              const error = validateAmount(withdrawAmount);
+              setAmountError(error);
+              setTouched(true);
+
+              if (!error) {
+                onWithdraw();
+              }
+            }}
             variant="contained"
             disabled={
               isWithdrawing ||
-              !withdrawAmount ||
-              parseFloat(withdrawAmount) <= 0 ||
               (!isEditMode && (
                 (investorDetails?.isActive && !investorDetails?.isFrozen) ||
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||

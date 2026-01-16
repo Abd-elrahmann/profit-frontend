@@ -31,8 +31,10 @@ import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { useAuth } from "../../components/Contexts/AuthContext";
 import routes from "../../routes";
 import Logo from "/assets/images/logo.webp";
+
 const validationSchema = Yup.object().shape({
   email: Yup.string()
     .trim()
@@ -48,9 +50,12 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [savedEmail, setSavedEmail] = useState("");
   const { fetchPermissions } = usePermissions();
+  const { login } = useAuth();
+  
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
   useEffect(() => {
+    // Only remember email is safe to store in localStorage
     const savedEmailFromStorage = localStorage.getItem("rememberedEmail");
     if (savedEmailFromStorage) {
       setSavedEmail(savedEmailFromStorage);
@@ -69,40 +74,21 @@ const Login = () => {
       const response = await Api.post("/api/auth/login", cleanedValues);
       const { accessToken, user } = response.data;
 
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-      
-    
-      window.dispatchEvent(new Event("tokenChanged"));
+      // ✅ Store token and user in memory only (via AuthContext)
+      await login(accessToken, user);
 
-      localStorage.removeItem("cached_permissions");
-      localStorage.removeItem("cached_permissions_timestamp");
-
-      const currentUserId = user.id;
-      const keysToRemove = [];
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('cached_permissions_') || key.startsWith('cached_permissions_timestamp_'))) {
-          const userIdMatch = key.match(/cached_permissions_(?:timestamp_)?(\d+)/);
-          if (userIdMatch && userIdMatch[1] !== currentUserId.toString()) {
-            keysToRemove.push(key);
-          }
-        }
-      }
-
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-
+      // Remember email if checkbox is checked (email is not sensitive data)
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", cleanedValues.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
 
+      // Fetch permissions
       let userPermissions = [];
       try {
         const modulesRes = await Api.get("/api/auth/modules");
-          const allPermissions = [];
+        const allPermissions = [];
 
         for (const module of modulesRes.data) {
           const res = await Api.get(`/api/auth/permissions/${module}`);
@@ -138,7 +124,6 @@ const Login = () => {
         notifyError('تم تسجيل الدخول ولكن حدث خطأ في جلب الصلاحيات');
       }
 
-
       const convertModuleToPermission = (module) => {
         switch (module) {
           case "messages-templates":
@@ -164,10 +149,10 @@ const Login = () => {
           }
         }
       }
+      
       notifySuccess("تم تسجيل الدخول بنجاح");  
       navigate(firstPage, { replace: true });
     } catch (error) {
-      // فحص إذا كانت رسالة الخطأ خاصة بعدم وجود دور
       if (error.response?.data?.message?.includes('ليس لديك أي صلاحيات أو أدوار للدخول على النظام')) {
         notifyError(error.response.data.message);
       } else {

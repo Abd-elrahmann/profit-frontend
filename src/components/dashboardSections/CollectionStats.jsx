@@ -20,7 +20,7 @@ import { useTheme } from '@mui/material';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
-const CollectionStats = () => {
+const CollectionStats = React.memo(() => {
   const [filter, setFilter] = useState('all');
   const theme = useTheme();
   const { isDarkMode } = useCustomTheme();
@@ -722,7 +722,7 @@ const CollectionStats = () => {
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             ملخص التحصيل
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={collectionBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -770,7 +770,7 @@ const CollectionStats = () => {
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             حساب البنك
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={bankAccountBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -818,7 +818,7 @@ const CollectionStats = () => {
             <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               ملخص التحصيلات الشهري
             </Typography>
-            <ResponsiveContainer width="100%" height="90%">
+            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
               <BarChart data={repaymentsBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -843,6 +843,6 @@ const CollectionStats = () => {
 
     </Box>
   );
-};
+});
 
 export default CollectionStats;

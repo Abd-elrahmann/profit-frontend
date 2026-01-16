@@ -498,8 +498,9 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   const hasActions = permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete");
 
   const renderDesktopTable = () => (
-    <ScrollableTableContainer maxHeight="100%" minWidth={1200}>
-      <TableHead>
+    <ScrollableTableContainer maxHeight="100%">
+      <Table stickyHeader sx={{ minWidth: 1200 }}>
+        <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               العميل
@@ -717,7 +718,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
             </StyledTableRow>
           )}
         </TableBody>
-      </ScrollableTableContainer>
+      </Table>
+    </ScrollableTableContainer>
   );
 
   const showPagination = loansData && loansData.total > PAGE_SIZE;

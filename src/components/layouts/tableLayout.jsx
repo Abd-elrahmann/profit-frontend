@@ -10,7 +10,7 @@ import Paper from '@mui/material/Paper';
 import { Box, Typography, CircularProgress, TablePagination } from '@mui/material';
 
 // Scrollable Table Container with custom scrollbar styles
-export const ScrollableTableContainer = ({ children, maxHeight = 650, minWidth = 1200 }) => (
+export const ScrollableTableContainer = ({ children, maxHeight = 650 }) => (
   <Box sx={{
     overflowX: 'auto',
     overflowY: 'auto',
@@ -36,9 +36,7 @@ export const ScrollableTableContainer = ({ children, maxHeight = 650, minWidth =
       backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
     },
   }}>
-    <Table stickyHeader sx={{ minWidth }}>
-      {children}
-    </Table>
+    {children}
   </Box>
 );
 

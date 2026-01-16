@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useMemo, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -22,7 +22,7 @@ const CollectionStats = React.lazy(() => import('../../components/dashboardSecti
 const UpcomingRepayments = React.lazy(() => import('../../components/dashboardSections/UpcomingRepayments'));
 const LastActions = React.lazy(() => import('../../components/dashboardSections/LastActions'));
 
-function TabPanel({ children, value, index }) {
+const TabPanel = React.memo(({ children, value, index }) => {
   return (
     <div
       role="tabpanel"
@@ -39,9 +39,9 @@ function TabPanel({ children, value, index }) {
       )}
     </div>
   );
-}
+});
 
-const Dashboard = () => {
+const Dashboard = React.memo(() => {
   const [value, setValue] = useState(0);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -85,7 +85,7 @@ const Dashboard = () => {
   }, [permissions, queryClient]);
 
   // Define all available tabs with their permissions - lazy loaded components
-  const allTabs = [
+  const allTabs = useMemo(() => [
     {
       label: "إحصائيات العملاء",
       Component: ClientStats,
@@ -122,12 +122,15 @@ const Dashboard = () => {
       permission: 'Last-Actions',
       index: 5
     }
-  ];
+  ], []);
 
-  // Filter tabs based on permissions
-  const availableTabs = allTabs.filter(tab =>
-    dashboardPermissions?.some(perm => perm.module === tab.permission && perm.canView)
-  );
+  // Filter tabs based on permissions - memoized for performance
+  const availableTabs = useMemo(() => {
+    if (!dashboardPermissions) return [];
+    return allTabs.filter(tab =>
+      dashboardPermissions.some(perm => perm.module === tab.permission && perm.canView)
+    );
+  }, [dashboardPermissions, allTabs]);
 
   // Adjust selected tab if it's out of bounds after filtering
   useEffect(() => {
@@ -136,9 +139,9 @@ const Dashboard = () => {
     }
   }, [availableTabs.length, value]);
 
-  const handleChange = (event, newValue) => {
+  const handleChange = useCallback((event, newValue) => {
     setValue(newValue);
-  };
+  }, []);
 
   // Show skeleton first for better UX
   if (permissionsLoading || !dashboardPermissions) {
@@ -243,6 +246,6 @@ const Dashboard = () => {
       </Container>
     </Box>
   );
-};
+});
 
 export default Dashboard;

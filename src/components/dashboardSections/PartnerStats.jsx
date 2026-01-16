@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -20,7 +20,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { useCountUp } from '../../hooks/useCountUp';
 import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
-const PartnerStats = () => {
+const PartnerStats = React.memo(() => {
   const [filter, setFilter] = useState('all');
   const theme = useTheme();
   const { isDarkMode } = useCustomTheme();
@@ -77,8 +77,8 @@ const PartnerStats = () => {
 
   const COLORS = [theme.palette.success.main, theme.palette.grey[400]];
 
-  // Prepare data for bar chart
-  const partnerBarData = [
+  // Prepare data for bar chart - memoized for performance
+  const partnerBarData = useMemo(() => [
     {
       name: 'إجمالي الشركاء',
       value: Math.round(stats?.partnersCount || 0),
@@ -94,7 +94,7 @@ const PartnerStats = () => {
       value: Math.round(stats?.inactivePartners || 0),
       color: theme.palette.error.main,
     },
-  ];
+  ], [stats, theme.palette]);
 
   const financialBarData = [
     {
@@ -460,7 +460,7 @@ const PartnerStats = () => {
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             توزيع الشركاء حسب الحالة
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={partnerBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -496,7 +496,7 @@ const PartnerStats = () => {
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             رأس المال والأرباح
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={financialBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -533,7 +533,7 @@ const PartnerStats = () => {
             <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               حالة الشركاء
             </Typography>
-            <ResponsiveContainer width="100%" height="90%">
+            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
               <PieChart>
                 <Pie
                   data={statusData}
@@ -557,6 +557,6 @@ const PartnerStats = () => {
       )}
     </Box>
   );
-};
+});
 
 export default PartnerStats;

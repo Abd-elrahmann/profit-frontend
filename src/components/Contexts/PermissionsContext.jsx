@@ -5,22 +5,10 @@ const PermissionContext = createContext();
 
 export const PermissionProvider = ({ children }) => {
   const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchPermissions = useCallback(async () => {
     try {
-      // Check if user is logged in before fetching
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.warn('No token found, skipping permissions fetch');
-
-
-        setLoading(false);
-        return;
-      }
-
-
-
       setLoading(true);
 
       const modulesRes = await Api.get("/api/auth/modules");
@@ -91,46 +79,31 @@ export const PermissionProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Only fetch permissions if user is logged in
-    const token = localStorage.getItem('token');
-    if (token) {
+    // Don't fetch on initial mount, wait for login or token refresh
+    // fetchPermissions will be called from Login.jsx after successful login
+
+    // Listen for auth state changes
+    const handleAuthFailed = () => {
+      setPermissions([]);
+      setLoading(false);
+    };
+
+    const handleTokenRefreshed = () => {
       fetchPermissions();
-    } else {
-      setLoading(false); // Stop loading if no token
-      setPermissions([]); // Clear permissions when logged out
-    }
-
-    // Listen for storage changes (when user logs in/out in another tab or same tab)
-    const handleStorageChange = (e) => {
-      if (e.key === 'token') {
-        const newToken = localStorage.getItem('token');
-        if (newToken) {
-          fetchPermissions();
-        } else {
-          setPermissions([]);
-          setLoading(false);
-        }
-      }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for custom event when token changes in same tab
-    const handleTokenChange = () => {
-      const newToken = localStorage.getItem('token');
-      if (newToken) {
-        fetchPermissions();
-      } else {
-        setPermissions([]);
-        setLoading(false);
-      }
+    const handleLogin = () => {
+      fetchPermissions();
     };
 
-    window.addEventListener('tokenChanged', handleTokenChange);
+    window.addEventListener('authFailed', handleAuthFailed);
+    window.addEventListener('tokenRefreshed', handleTokenRefreshed);
+    window.addEventListener('userLoggedIn', handleLogin);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('tokenChanged', handleTokenChange);
+      window.removeEventListener('authFailed', handleAuthFailed);
+      window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
+      window.removeEventListener('userLoggedIn', handleLogin);
     };
   }, [fetchPermissions]);
 

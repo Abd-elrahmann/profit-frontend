@@ -248,103 +248,113 @@ const ChartOfAccount = () => {
             } : {},
           }}
         >
-          <CardActionArea onClick={() => handleAccountSelect(account)}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                  {/* دائرة ملونة للمستوى */}
-                  {depth > 0 && (
-                    <Box
+          <Box sx={{ position: 'relative' }}>
+            <CardActionArea onClick={() => handleAccountSelect(account)}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                    {/* دائرة ملونة للمستوى */}
+                    {depth > 0 && (
+                      <Box
+                        sx={{
+                          width: 8 + (depth * 2),
+                          height: 8 + (depth * 2),
+                          borderRadius: '50%',
+                          backgroundColor: colors.icon,
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <AccountIcon
                       sx={{
-                        width: 8 + (depth * 2),
-                        height: 8 + (depth * 2),
-                        borderRadius: '50%',
-                        backgroundColor: colors.icon,
-                        flexShrink: 0,
+                        fontSize: 28 - (depth * 2),
+                        color: isSelected ? 'primary.main' : colors.icon,
                       }}
                     />
-                  )}
-                  <AccountIcon 
-                    sx={{ 
-                      fontSize: 28 - (depth * 2),
-                      color: isSelected ? 'primary.main' : colors.icon,
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography 
-                      variant="h6" 
-                      fontWeight={depth === 0 ? 'bold' : 'medium'}
-                      color={isSelected ? 'primary.main' : 'text.primary'}
-                      sx={{ fontSize: { xs: '0.95rem', sm: (1.1 - depth * 0.05) + 'rem' } }}
-                    >
-                      {account.name}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        color: colors.icon,
-                        fontWeight: 'medium',
-                      }}
-                    >
-                      كود: {account.code}
-                      {depth > 0 && (
-                        <Chip 
-                          label={`المستوى ${depth}`} 
-                          size="small" 
-                          sx={{ 
-                            ml: 1, 
-                            height: 18, 
-                            fontSize: '0.7rem',
-                            backgroundColor: colors.icon,
-                            color: 'white',
-                          }} 
-                        />
-                      )}
-                    </Typography>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant="h6"
+                        fontWeight={depth === 0 ? 'bold' : 'medium'}
+                        color={isSelected ? 'primary.main' : 'text.primary'}
+                        sx={{ fontSize: { xs: '0.95rem', sm: (1.1 - depth * 0.05) + 'rem' } }}
+                      >
+                        {account.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          color: colors.icon,
+                          fontWeight: 'medium',
+                        }}
+                      >
+                        كود: {account.code}
+                        {depth > 0 && (
+                          <Chip
+                            label={`المستوى ${depth}`}
+                            size="small"
+                            sx={{
+                              ml: 1,
+                              height: 18,
+                              fontSize: '0.7rem',
+                              backgroundColor: colors.icon,
+                              color: 'white',
+                            }}
+                          />
+                        )}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
-                
-                {hasChildren && (
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleExpand(account.id);
-                    }}
-                    sx={{ 
-                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.3s ease',
-                      color: colors.icon,
-                    }}
-                  >
-                    <ExpandMore />
-                  </IconButton>
-                )}
-              </Box>
 
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
-                <Chip
-                  label={getAccountTypeLabel(account.type)}
-                  size="small"
-                  color={
-                    account.type === 'ASSET' ? 'primary' :
-                    account.type === 'LIABILITY' ? 'secondary' :
-                    account.type === 'EQUITY' ? 'success' :
-                    account.type === 'REVENUE' ? 'warning' : 'error'
-                  }
-                  sx={{ fontWeight: 'bold' }}
-                />
-                <Chip
-                  label={account.balance.toLocaleString()}
-                  size="small"
-                  variant="outlined"
-                  color={account.balance >= 0 ? 'success' : 'error'}
-                  sx={{ fontWeight: 'bold' }}
-                />
-              </Box>
-            </CardContent>
-          </CardActionArea>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
+                  <Chip
+                    label={getAccountTypeLabel(account.type)}
+                    size="small"
+                    color={
+                      account.type === 'ASSET' ? 'primary' :
+                      account.type === 'LIABILITY' ? 'secondary' :
+                      account.type === 'EQUITY' ? 'success' :
+                      account.type === 'REVENUE' ? 'warning' : 'error'
+                    }
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                  <Chip
+                    label={account.balance.toLocaleString()}
+                    size="small"
+                    variant="outlined"
+                    color={account.balance >= 0 ? 'success' : 'error'}
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                </Box>
+              </CardContent>
+            </CardActionArea>
+
+            {hasChildren && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpand(account.id);
+                }}
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease',
+                  color: colors.icon,
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  },
+                  zIndex: 1,
+                }}
+              >
+                <ExpandMore />
+              </IconButton>
+            )}
+          </Box>
         </Card>
 
         {hasChildren && (

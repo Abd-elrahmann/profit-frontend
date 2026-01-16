@@ -31,6 +31,8 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [previewData, setPreviewData] = useState(null);
+  const [amountError, setAmountError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   // Auto preview when amount changes
   useEffect(() => {
@@ -67,17 +69,65 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
     },
   });
 
+  const validateAmount = (value) => {
+    if (!value || value.trim() === "") {
+      return "مبلغ السحب مطلوب";
+    }
+
+    const numAmount = parseFloat(value);
+    if (isNaN(numAmount)) {
+      return "يرجى إدخال مبلغ صحيح";
+    }
+
+    if (numAmount <= 0) {
+      return "مبلغ السحب يجب أن يكون أكبر من صفر";
+    }
+
+    if (numAmount > 10000000) { // 10 million limit
+      return "مبلغ السحب يجب أن يكون أقل من 10,000,000 ريال";
+    }
+
+    // Check against total available savings if preview data exists
+    if (previewData && numAmount > previewData.totalSaving) {
+      return `مبلغ السحب يجب أن يكون أقل من أو يساوي إجمالي التوفير المتاح (${previewData.totalSaving.toLocaleString()} ريال)`;
+    }
+
+    return "";
+  };
+
+  const handleAmountChange = (value) => {
+    // Allow only numbers and decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+
+      // Clear error when user starts typing
+      if (amountError) {
+        setAmountError("");
+      }
+    }
+  };
+
+  const handleAmountBlur = () => {
+    setTouched(true);
+    const error = validateAmount(amount);
+    setAmountError(error);
+  };
+
   const handleClose = () => {
     setAmount('');
     setDescription('');
     setPreviewData(null);
+    setAmountError('');
+    setTouched(false);
     onClose();
   };
 
   const handleWithdraw = () => {
-    const numAmount = parseFloat(amount);
-    if (!numAmount || numAmount <= 0) {
-      notifyWarning('يرجى إدخال مبلغ صحيح أكبر من صفر');
+    setTouched(true);
+    const error = validateAmount(amount);
+    setAmountError(error);
+
+    if (error) {
       return;
     }
 
@@ -86,6 +136,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
       return;
     }
 
+    const numAmount = parseFloat(amount);
     withdrawMutation.mutate({ amount: numAmount, description });
   };
 
@@ -128,11 +179,16 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
                   label="المبلغ المراد سحبه"
                   type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  onBlur={handleAmountBlur}
+                  required
+                  error={touched && !!amountError}
                   InputProps={{
-                    inputProps: { min: 0, step: 0.01 },
+                    inputProps: { min: 0, step: 0.01, max: 10000000 },
                   }}
-                  helperText="أدخل المبلغ بالريال السعودي"
+                  helperText={
+                    touched && amountError ? amountError : "أدخل المبلغ بالريال السعودي (الحد الأقصى: 10,000,000 ريال)"
+                  }
                   sx={{ width: 250 }}
                 />
               </Grid>

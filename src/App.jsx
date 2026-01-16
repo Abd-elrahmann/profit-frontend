@@ -12,6 +12,7 @@ const PaymentReceipt = React.lazy(() => import('./components/modals/PaymentRecei
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
+import { AuthProvider, useAuth } from './components/Contexts/AuthContext';
 import { notifyError } from './utilities/toastify';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -110,8 +111,6 @@ const ConnectionWatcher = () => {
 };
 
 const AppLayout = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { prefetchCommonPages } = usePrefetch();
 
   // Prefetch common pages on app load
@@ -119,75 +118,8 @@ const AppLayout = () => {
     prefetchCommonPages();
   }, [prefetchCommonPages]);
 
-  // Validate token on app load
-  useEffect(() => {
-    const validateToken = async () => {
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
-      
-      // If there's a token, verify it with the server
-      if (token && userStr) {
-        try {
-          // Try to fetch user profile or any protected endpoint to validate token
-          const response = await Api.get('/api/auth/profile');
-          
-          // If successful, update user data if needed
-          if (response.data) {
-            const currentUser = JSON.parse(userStr);
-            const serverUser = response.data;
-            
-            // If user ID doesn't match, clear auth data
-            if (currentUser.id !== serverUser.id) {
-              console.warn('User ID mismatch. Clearing authentication data...');
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              localStorage.removeItem('profile');
-              localStorage.removeItem('rememberedEmail');
-              
-              // Clear all cached permissions
-              const keysToRemove = [];
-              for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && (key.startsWith('cached_permissions_') || key.startsWith('cached_permissions_timestamp_'))) {
-                  keysToRemove.push(key);
-                }
-              }
-              keysToRemove.forEach(key => localStorage.removeItem(key));
-              
-              if (location.pathname !== '/login') {
-                navigate('/login', { replace: true });
-              }
-            }
-          }
-        } catch (error) {
-          // Token is invalid or user doesn't exist on this server
-          if (error.response?.status === 401 || error.response?.status === 404) {
-            console.warn('Token validation failed. Clearing authentication data...');
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('profile');
-            localStorage.removeItem('rememberedEmail');
-            
-            // Clear all cached permissions
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key && (key.startsWith('cached_permissions_') || key.startsWith('cached_permissions_timestamp_'))) {
-                keysToRemove.push(key);
-              }
-            }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-            
-            if (location.pathname !== '/login') {
-              navigate('/login', { replace: true });
-            }
-          }
-        }
-      }
-    };
-
-    validateToken();
-  }, []); // Run only once on mount
+  // ✅ Token validation is now handled by AuthContext
+  // No need for manual validation here
 
   return (
     <Layout>
@@ -261,7 +193,7 @@ const AppLayout = () => {
 };
 
 const ProtectedRoute = ({ children, route }) => {
-  const token = localStorage.getItem('token');
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { permissions, loading } = usePermissions();
@@ -272,9 +204,9 @@ const ProtectedRoute = ({ children, route }) => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || authLoading) return;
 
-    if (!token) {
+    if (!isAuthenticated) {
       navigate('/login', { replace: true });
       return;
     }
@@ -322,13 +254,17 @@ const ProtectedRoute = ({ children, route }) => {
     } else {
       sessionStorage.setItem('lastValidPath', location.pathname);
     }
-  }, [token, permissions, loading, route, location, navigate]);
+  }, [isAuthenticated, authLoading, permissions, loading, route, location, navigate]);
 
-  if (loading) {
-    return null;
+  if (loading || authLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
-  if (!token) {
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -365,30 +301,30 @@ const ProtectedRoute = ({ children, route }) => {
 };
 
 const DefaultRedirectRoute = () => {
-  const token = localStorage.getItem('token');
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { permissions, loading } = usePermissions();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) {
+    if (authLoading || loading) return;
+
+    if (!isAuthenticated) {
       navigate('/login', { replace: true });
       return;
     }
 
-    if (loading) return;
-
     // Find first accessible page
     const firstPage = getFirstAccessiblePage(permissions);
     navigate(firstPage, { replace: true });
-  }, [token, permissions, loading, navigate]);
+  }, [isAuthenticated, authLoading, permissions, loading, navigate]);
 
   return null;
 };
 
 const PublicRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
+  const { isAuthenticated } = useAuth();
   
-  if (!token) {
+  if (!isAuthenticated) {
     return children;
   }
 
@@ -402,9 +338,11 @@ function App() {
   return (
     <ThemeProviderWrapper>
       <Router>
+        <AuthProvider>
           <PermissionProvider>
             <AppLayout />
           </PermissionProvider>
+        </AuthProvider>
         <Toaster
         position="top-center"
         gutter={8}

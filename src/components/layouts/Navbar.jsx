@@ -1,116 +1,39 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
+  AppBar,
   Toolbar,
-  Typography,
-  Button,
-  Box,
   IconButton,
+  Typography,
+  Box,
   Menu,
   MenuItem,
   Avatar,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  useMediaQuery,
+  useTheme as useMuiTheme,
 } from "@mui/material";
 import {
-  MdMenu as MenuIcon,
-  MdMenuOpen as MenuOpenIcon,
-  MdPerson as Person,
-  MdSettings as SettingsIcon,
-  MdExitToApp as ExitToAppIcon,
-  MdLightMode as LightModeIcon,
-  MdDarkMode as DarkModeIcon,
-} from "react-icons/md";
-import { useNavigate, useLocation } from "react-router-dom";
-import logo from "/assets/images/logo.webp";
-import Api from "../../config/Api";
+  Menu as MenuIcon,
+  AccountCircle,
+  Logout,
+  Brightness4,
+  Brightness7,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../theme/ThemeContext";
+import { useAuth } from "../Contexts/AuthContext";
+import Logo from "/assets/images/logo.webp";
 
 const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
-
-  // Function to validate and update user data
-  const validateUserData = useCallback(() => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    
-    // If there's a token but no user data, clear everything
-    if (token && !userStr) {
-      console.warn('Token exists but no user data found. Clearing auth data...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('profile');
-      if (location.pathname !== '/login') {
-        navigate('/login', { replace: true });
-      }
-      return;
-    }
-    
-    // If there's user data, try to parse it
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        // Validate that user object has required properties
-        if (!user || !user.name) {
-          console.warn('Invalid user data format. Clearing auth data...');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('profile');
-          if (location.pathname !== '/login') {
-            navigate('/login', { replace: true });
-          }
-          return;
-        }
-        setUserData(user);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('profile');
-        if (location.pathname !== '/login') {
-          navigate('/login', { replace: true });
-        }
-      }
-    } else {
-      setUserData(null);
-    }
-  }, [location, navigate]);
-
-  // Validate user data on mount and when location changes
-  useEffect(() => {
-    validateUserData();
-  }, [validateUserData]);
-
-  // Listen for storage changes and custom events to update user data immediately
-  useEffect(() => {
-    // Listen for custom profile update event
-    const handleProfileUpdate = () => {
-      validateUserData();
-    };
-
-    // Listen for storage events (works across tabs)
-    const handleStorageChange = (e) => {
-      if (e.key === 'user' || e.key === null) {
-        validateUserData();
-      }
-    };
-
-    // Listen for custom event dispatched from Profile page
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    window.addEventListener('storage', handleStorageChange);
-
-    // Also listen for custom storage event (for same-tab updates)
-    const handleCustomStorage = () => {
-      validateUserData();
-    };
-    window.addEventListener('userDataUpdated', handleCustomStorage);
-
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('userDataUpdated', handleCustomStorage);
-    };
-  }, [validateUserData]);
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
 
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -127,178 +50,127 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
 
   const handleLogout = async () => {
     handleUserMenuClose();
-    try {
-      await Api.post("/api/auth/logout");
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("profile");
-      localStorage.removeItem("rememberedEmail");
-      navigate("/login", { replace: true });
-    }
+    await logout();
+    navigate("/login", { replace: true });
   };
 
-
-  if (location.pathname === "/login") {
-    return null;
-  }
-
   return (
-    <Box
+    <AppBar
+      position="fixed"
       sx={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1201,
-        backgroundColor: "background.paper",
-        boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 2px 4px rgba(0,0,0,0.1)",
-        borderBottom: isDarkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid #e0e0e0",
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
+        color: isDarkMode ? "#fff" : "#000",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}
     >
-      <Toolbar sx={{ justifyContent: "space-between", direction: "rtl" }}>
-        <div>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              {userData ? (
-              <IconButton
-                edge="start"
-                color="inherit"
-                aria-label="toggle sidebar"
-                onClick={() => {
-                  onMenuToggle();
-                  window.dispatchEvent(new Event("sidebarToggle"));
-                }}
-                sx={{
-                  color: "primary.main",
-                  mr: 1,
-                  transition: "all 0.01s ease",
-                  "&:hover": {
-                    backgroundColor: "rgba(30, 64, 175, 0.1)",
-                    transform: "scale(1.1)",
-                  },
-                }}
-              >
-                {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
-              </IconButton>
-            ) : null}
+      <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={onMenuToggle}
+            sx={{
+              display: { xs: "block", md: isSidebarOpen ? "none" : "block" },
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
 
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap:1 }}>
-            <img src={logo} alt="logo" style={{ width: "30px", height: "30px" }} />
-
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <img
+              src={Logo}
+              alt="Logo"
+              style={{
+                width: isMobile ? 28 : 34,
+                height: isMobile ? 28 : 34,
+              }}
+            />
+            {!isMobile && (
               <Typography
                 variant="h6"
-                component="div"
                 sx={{
                   fontWeight: 700,
                   color: isDarkMode ? "white" : "primary.main",
-                  display: { xs: "none", sm: "flex" },
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontSize: isMobile ? "1rem" : "1.25rem",
                 }}
               >
-                <span>نظام إدارة السلف</span>
+                نظام إدارة السلف
               </Typography>
-
-              <IconButton
-                onClick={toggleTheme}
-                sx={{
-                  color: "primary.main",
-                  ml: 1,
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    backgroundColor: "rgba(30, 64, 175, 0.1)",
-                    transform: "scale(1.1)",
-                  },
-                }}
-                aria-label="toggle theme"
-              >
-                {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
-              </IconButton>
-              </Box>
-            </Box>
-        </div>
+            )}
+          </Box>
+        </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {userData ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Box sx={{ textAlign: "right", mr: 2, display: "block" }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: isDarkMode ? "white" : "primary.main",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  مرحباً
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontWeight: 700,
-                    color: isDarkMode ? "white" : "primary.main",
-                  }}
-                >
-                  {userData.name.split(' ')[0] || 'مستخدم'}
-                </Typography>
-              </Box>
-              <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
-                <Avatar
-                  src={userData?.profileImage || undefined}
-                  sx={{
-                    bgcolor: "primary.main",
-                    width: 40,
-                    height: 40,
-                    fontSize: "1.2rem",
-                  }}
-                >
-                  {!userData?.profileImage && userData?.name?.charAt(0)}
-                </Avatar>
-              </IconButton>
+          <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
+            <IconButton onClick={toggleTheme} color="inherit">
+              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </Tooltip>
 
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleUserMenuClose}
-                transformOrigin={{ horizontal: "right", vertical: "top" }}
-                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-                sx={{
-                  "& .MuiMenuItem-root": {
-                    direction: "rtl",
-                  },
-                }}
-              >
-                <MenuItem onClick={handleProfileClick}>
-                  <Person sx={{ mr: 1, ml: 0 }} />
-                  الملف الشخصي
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>
-                  <ExitToAppIcon style={{ marginLeft: 6 }} />
-                  تسجيل الخروج
-                </MenuItem>
-              </Menu>
-            </div>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Button
-                variant="contained"
-                onClick={() => navigate("/login")}
-                sx={{
-                  backgroundColor: "primary.main",
-                  "&:hover": {
-                    backgroundColor: "primary.dark",
-                  },
-                }}
-              >
-                تسجيل الدخول
-              </Button>
-            </div>
-          )}
+          <Tooltip title="الحساب">
+            <IconButton onClick={handleUserMenuOpen} color="inherit">
+              {user?.profileImage ? (
+                <Avatar
+                  src={user.profileImage}
+                  alt={user.name}
+                  sx={{ width: 32, height: 32 }}
+                />
+              ) : (
+                <AccountCircle />
+              )}
+            </IconButton>
+          </Tooltip>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleUserMenuClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            PaperProps={{
+              sx: {
+                mt: 1.5,
+                minWidth: 200,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+              },
+            }}
+          >
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {user?.name || "مستخدم"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {user?.email || ""}
+              </Typography>
+            </Box>
+            <Divider />
+            <MenuItem onClick={handleProfileClick}>
+              <ListItemIcon>
+                <AccountCircle fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>الملف الشخصي</ListItemText>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <Logout fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>
+                <Typography color="error">تسجيل الخروج</Typography>
+              </ListItemText>
+            </MenuItem>
+          </Menu>
         </Box>
       </Toolbar>
-    </Box>
+    </AppBar>
   );
 };
 

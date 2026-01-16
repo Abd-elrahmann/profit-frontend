@@ -126,8 +126,8 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
 
   const renderDesktopTable = () => (
     <>
-      <ScrollableTableContainer maxHeight={650} minWidth={2000}>
-        <Table>
+      <ScrollableTableContainer maxHeight={650}>
+        <Table stickyHeader sx={{ minWidth: 2000 }}>
           <TableHead>
             <StyledTableRow>
               {visibleColumns.map((column) => (

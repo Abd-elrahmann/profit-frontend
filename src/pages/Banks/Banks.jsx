@@ -473,13 +473,11 @@ const Banks = () => {
           placeholder="ابحث باسم الحساب أو رقم الحساب..."
           value={searchQuery}
           onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
+          startAdornment={
+            <InputAdornment position="start">
+              <Search />
+            </InputAdornment>
+          }
           sx={{
             width: isSmallScreen ? '100%' : "300px",
             borderRadius: "6px",

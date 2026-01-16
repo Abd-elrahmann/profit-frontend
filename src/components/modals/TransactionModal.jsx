@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +10,7 @@ import {
   Stack,
   FormControl,
   MenuItem,
+  Alert,
 } from "@mui/material";
 
 const TransactionModal = ({
@@ -20,10 +21,72 @@ const TransactionModal = ({
   onSave,
   permissions
 }) => {
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validate transaction type
+    if (!transactionForm.type || transactionForm.type.trim() === "") {
+      newErrors.type = "نوع العملية مطلوب";
+    }
+
+    // Validate amount
+    if (!transactionForm.amount || transactionForm.amount.trim() === "") {
+      newErrors.amount = "المبلغ مطلوب";
+    } else {
+      const amount = parseFloat(transactionForm.amount);
+      if (isNaN(amount)) {
+        newErrors.amount = "يرجى إدخال مبلغ صحيح";
+      } else if (amount <= 0) {
+        newErrors.amount = "المبلغ يجب أن يكون أكبر من صفر";
+      } else if (amount > 10000000) { // 10 million limit
+        newErrors.amount = "المبلغ يجب أن يكون أقل من 10,000,000 ريال";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (field, value) => {
+    onInputChange(field, value);
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ""
+      }));
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  const handleSave = () => {
+    setTouched({ type: true, amount: true });
+
+    if (validateForm()) {
+      onSave();
+    }
+  };
+
+  const handleClose = () => {
+    setErrors({});
+    setTouched({});
+    onClose();
+  };
+
   return (
     <Dialog
       open={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
     >
@@ -34,12 +97,22 @@ const TransactionModal = ({
       </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 2 }}>
-          <FormControl fullWidth size="small">
+          {Object.keys(errors).length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              يرجى تصحيح الأخطاء أدناه قبل الحفظ
+            </Alert>
+          )}
+
+          <FormControl fullWidth size="small" error={touched.type && !!errors.type}>
             <TextField
               select
               label="نوع العملية"
               value={transactionForm.type}
-              onChange={(e) => onInputChange('type', e.target.value)}
+              onChange={(e) => handleInputChange('type', e.target.value)}
+              onBlur={() => handleBlur('type')}
+              error={touched.type && !!errors.type}
+              helperText={touched.type && errors.type}
+              required
             >
               <MenuItem value="DEPOSIT">إيداع</MenuItem>
               <MenuItem value="WITHDRAWAL">سحب من رأس المال</MenuItem>
@@ -49,24 +122,42 @@ const TransactionModal = ({
           </FormControl>
 
           <TextField
-            label="المبلغ"
+            label="المبلغ (بالريال السعودي)"
             type="number"
             value={transactionForm.amount}
-            onChange={(e) => onInputChange('amount', e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow only numbers and decimal point
+              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                handleInputChange('amount', value);
+              }
+            }}
+            onBlur={() => handleBlur('amount')}
             fullWidth
+            required
+            error={touched.amount && !!errors.amount}
+            helperText={touched.amount && errors.amount}
+            inputProps={{
+              min: 0,
+              step: 0.01,
+              max: 10000000
+            }}
+            InputProps={{
+              inputProps: { min: 0, step: 0.01 }
+            }}
           />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 3, flexDirection: 'row-reverse' }}>
         <Button
-          onClick={onClose}
+          onClick={handleClose}
           color="inherit"
         >
           إلغاء
         </Button>
         {permissions.includes("partners_Add") && (
           <Button
-            onClick={onSave}
+            onClick={handleSave}
             variant="contained"
             sx={{
               bgcolor: "primary.main",

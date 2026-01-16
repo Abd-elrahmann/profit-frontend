@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -20,7 +20,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { useCountUp } from '../../hooks/useCountUp';
 import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
-const LoanStats = () => {
+const LoanStats = React.memo(() => {
   const [filter, setFilter] = useState('all');
   const theme = useTheme();
   const { isDarkMode } = useCustomTheme();
@@ -73,42 +73,49 @@ const LoanStats = () => {
     return amount?.toLocaleString() || '0';
   };
 
-  // Prepare data for charts
-  const statusData = stats?.loans?.byStatus ? Object.entries(stats.loans.byStatus).map(([status, count]) => ({
-    name: getStatusText(status),
-    value: count,
-    color: getStatusColor(status)
-  })) : [];
+  // Prepare data for charts - memoized for performance
+  const statusData = useMemo(() => {
+    if (!stats?.loans?.byStatus) return [];
 
-  function getStatusText(status) {
-    const statusMap = {
-      'ACTIVE': 'نشط',
-      'COMPLETED': 'مكتمل',
-      'PENDING': 'معلق',
-      'OVERDUE': 'متأخر'
+    const getStatusText = (status) => {
+      const statusMap = {
+        'ACTIVE': 'نشط',
+        'COMPLETED': 'مكتمل',
+        'PENDING': 'معلق',
+        'OVERDUE': 'متأخر'
+      };
+      return statusMap[status] || status;
     };
-    return statusMap[status] || status;
-  }
 
-  function getStatusColor(status) {
-    const colorMap = {
-      'ACTIVE': theme.palette.success.main,
-      'COMPLETED': theme.palette.primary.main,
-      'PENDING': theme.palette.warning.main,
-      'OVERDUE': theme.palette.error.main
+    const getStatusColor = (status) => {
+      const colorMap = {
+        'ACTIVE': theme.palette.success.main,
+        'COMPLETED': theme.palette.primary.main,
+        'PENDING': theme.palette.warning.main,
+        'OVERDUE': theme.palette.error.main
+      };
+      return colorMap[status] || theme.palette.grey[500];
     };
-    return colorMap[status] || theme.palette.grey[500];
-  }
 
-  // Prepare data for bar chart - loans by status (count only)
-  const loanStatusBarData = statusData.length > 0 ? statusData.map(item => ({
-    name: item.name,
-    value: Math.round(item.value),
-    color: item.color
-  })) : [];
+    return Object.entries(stats.loans.byStatus).map(([status, count]) => ({
+      name: getStatusText(status),
+      value: count,
+      color: getStatusColor(status)
+    }));
+  }, [stats?.loans?.byStatus, theme.palette]);
 
-  // Prepare summary data - separate charts for count and amount
-  const summaryCountData = [
+  // Prepare data for bar chart - loans by status (count only) - memoized
+  const loanStatusBarData = useMemo(() => {
+    if (statusData.length === 0) return [];
+    return statusData.map(item => ({
+      name: item.name,
+      value: Math.round(item.value),
+      color: item.color
+    }));
+  }, [statusData]);
+
+  // Prepare summary data - separate charts for count and amount - memoized
+  const summaryCountData = useMemo(() => [
     {
       name: 'إجمالي السلف',
       value: stats?.loans?.count || 0,
@@ -119,9 +126,9 @@ const LoanStats = () => {
       value: stats?.loans?.byStatus?.ACTIVE || 0,
       color: theme.palette.success.main,
     },
-  ];
+  ], [stats?.loans?.count, stats?.loans?.byStatus?.ACTIVE, theme.palette]);
 
-  const summaryAmountData = [
+  const summaryAmountData = useMemo(() => [
     {
       name: 'إجمالي المبلغ',
       value: stats?.loans?.totalAmount || 0,
@@ -132,7 +139,7 @@ const LoanStats = () => {
       value: stats?.bank?.balance || 0,
       color: theme.palette.info.main,
     },
-  ];
+  ], [stats?.loans?.totalAmount, stats?.bank?.balance, theme.palette]);
 
   if (isLoading) {
     return (
@@ -628,7 +635,7 @@ const LoanStats = () => {
             <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               توزيع السلف حسب الحالة
             </Typography>
-            <ResponsiveContainer width="100%" height="90%">
+            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
               <BarChart data={loanStatusBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -663,7 +670,7 @@ const LoanStats = () => {
           <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             ملخص عدد السلف
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={summaryCountData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -697,7 +704,7 @@ const LoanStats = () => {
           <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             ملخص المبالغ المالية
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={summaryAmountData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -735,7 +742,7 @@ const LoanStats = () => {
             <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               حالة السلف
             </Typography>
-            <ResponsiveContainer width="100%" height="90%">
+            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
               <PieChart>
                 <Pie
                   data={statusData}
@@ -759,6 +766,6 @@ const LoanStats = () => {
       )}
     </Box>
   );
-};
+});
 
 export default LoanStats;

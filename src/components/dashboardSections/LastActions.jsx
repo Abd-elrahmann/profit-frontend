@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   History,
-  Person,
   AccountBalance,
   Receipt,
   Business,
@@ -26,13 +25,21 @@ import { getLastActions } from '../../pages/dashboard/dashboardApi';
 import { useTheme } from '@mui/material';
 import { differenceInMinutes, differenceInHours, differenceInDays, format } from 'date-fns';
 
-const LastActions = () => {
+const LastActions = React.memo(() => {
   const theme = useTheme();
 
   const { data: actions, isLoading } = useQuery({
     queryKey: ['last-actions'],
     queryFn: getLastActions,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
+
+  // Memoized pagination data
+  const paginatedActions = useMemo(() => {
+    if (!actions) return [];
+    return actions;
+  }, [actions]);
+
 
   // Get icon based on screen
   const getScreenIcon = (screen) => {
@@ -104,9 +111,9 @@ const LastActions = () => {
           </Typography>
         </Box>
 
-        {actions && actions.length > 0 ? (
+        {paginatedActions && paginatedActions.length > 0 ? (
           <List sx={{ width: '100%' }}>
-            {actions.map((action, index) => (
+            {paginatedActions.map((action, index) => (
               <React.Fragment key={action.id}>
                 <ListItem
                   sx={{
@@ -150,6 +157,7 @@ const LastActions = () => {
               </React.Fragment>
             ))}
           </List>
+
         ) : (
           <Box sx={{ textAlign: 'center', py: 6 }}>
             <History sx={{ fontSize: 64, color: theme.palette.grey[300], mb: 2 }} />
@@ -164,6 +172,6 @@ const LastActions = () => {
       </CardContent>
     </Card>
   );
-};
+});
 
 export default LastActions;

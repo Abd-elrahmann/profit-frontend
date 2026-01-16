@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -20,7 +20,7 @@ import { useTheme } from '@mui/material';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
-const ClientStats = () => {
+const ClientStats = React.memo(() => {
   const [filter, setFilter] = useState('all');
   const theme = useTheme();
   const { isDarkMode } = useCustomTheme();
@@ -66,8 +66,8 @@ const ClientStats = () => {
   const animatedActive = useCountUp(stats?.activeCount || 0, 600, !isLoading);
   const animatedOverdue = useCountUp(stats?.overdueCount || 0, 600, !isLoading);
 
-  // Prepare data for bar chart
-  const clientBarData = [
+  // Prepare data for bar chart - memoized for performance
+  const clientBarData = useMemo(() => [
     {
       name: 'إجمالي العملاء',
       value: Math.round(stats?.count || 0),
@@ -83,7 +83,7 @@ const ClientStats = () => {
       value: Math.round(stats?.overdueCount || 0),
       color: theme.palette.error.main,
     },
-  ];
+  ], [stats, theme.palette]);
 
 
   if (isLoading) {
@@ -351,7 +351,7 @@ const ClientStats = () => {
           <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             توزيع العملاء حسب الحالة
           </Typography>
-          <ResponsiveContainer width="100%" height="90%">
+          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
             <BarChart data={clientBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
@@ -377,6 +377,6 @@ const ClientStats = () => {
 
     </Box>
   );
-};
+});
 
 export default ClientStats;

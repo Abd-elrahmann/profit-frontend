@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -21,7 +21,76 @@ const EarlyPaymentModal = ({
   onDiscountChange,
   onConfirm,
 }) => {
+  const [discountError, setDiscountError] = useState("");
+  const [touched, setTouched] = useState(false);
+
   const pendingInstallments = sortedInstallments.filter((inst) => inst.status === "PENDING");
+
+  useEffect(() => {
+    if (open) {
+      setDiscountError("");
+      setTouched(false);
+    }
+  }, [open]);
+
+  const validateDiscount = (value) => {
+    if (!value || value.trim() === "") {
+      return ""; // Discount is optional
+    }
+
+    const discount = parseFloat(value);
+    if (isNaN(discount)) {
+      return "يرجى إدخال قيمة خصم صحيحة";
+    }
+
+    if (discount < 0) {
+      return "قيمة الخصم لا يمكن أن تكون سالبة";
+    }
+
+    // Calculate total pending amount
+    const totalPending = pendingInstallments.reduce((sum, inst) => sum + (inst.amount || 0), 0);
+
+    if (discount > totalPending) {
+      return `قيمة الخصم لا يمكن أن تتجاوز إجمالي الدفعات المعلقة (${totalPending.toLocaleString()} ريال)`;
+    }
+
+    // Don't allow discount more than 50% of total (reasonable business rule)
+    if (discount > totalPending * 0.5) {
+      return "قيمة الخصم لا يمكن أن تتجاوز 50% من إجمالي الدفعات المعلقة";
+    }
+
+    return "";
+  };
+
+  const handleDiscountChange = (e) => {
+    const value = e.target.value;
+
+    // Allow only numbers and decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      onDiscountChange(e);
+
+      // Clear error when user starts typing
+      if (discountError) {
+        setDiscountError("");
+      }
+    }
+  };
+
+  const handleDiscountBlur = () => {
+    setTouched(true);
+    const error = validateDiscount(discountAmount);
+    setDiscountError(error);
+  };
+
+  const handleConfirmClick = () => {
+    setTouched(true);
+    const error = validateDiscount(discountAmount);
+    setDiscountError(error);
+
+    if (!error) {
+      onConfirm();
+    }
+  };
 
   return (
     <Dialog
@@ -87,14 +156,20 @@ const EarlyPaymentModal = ({
           type="number"
           label="قيمة الخصم (اختياري)"
           value={discountAmount}
-          onChange={onDiscountChange}
+          onChange={handleDiscountChange}
+          onBlur={handleDiscountBlur}
+          error={touched && !!discountError}
           InputProps={{
             inputProps: {
               min: 0,
               step: 0.01,
+              max: pendingInstallments.reduce((sum, inst) => sum + (inst.amount || 0), 0),
             },
           }}
-          helperText="ادخل قيمة الخصم إذا كان هناك خصم على السداد المبكر"
+          helperText={
+            touched && discountError ? discountError :
+            "ادخل قيمة الخصم إذا كان هناك خصم على السداد المبكر (بالريال السعودي)"
+          }
           sx={{ mt: 2 }}
         />
 
@@ -138,7 +213,7 @@ const EarlyPaymentModal = ({
           إلغاء
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={handleConfirmClick}
           variant="contained"
           color="success"
           disabled={pendingInstallments.length === 0}
