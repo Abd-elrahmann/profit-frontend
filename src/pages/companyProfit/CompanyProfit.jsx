@@ -86,7 +86,7 @@ export default function CompanyProfit() {
     if (value && profitData?.availableAmount) {
       const amount = parseFloat(value);
       if (amount > profitData.availableAmount) {
-        setWithdrawError(`المبلغ المدخل (${Math.round(amount).toLocaleString('en-US')}) يتجاوز الرصيد المتاح (${Math.round(profitData.availableAmount).toLocaleString('en-US')})`);
+        setWithdrawError(`المبلغ المدخل (${amount.toLocaleString('en-US')}) يتجاوز الرصيد المتاح (${profitData.availableAmount.toLocaleString('en-US')})`);
       } else if (amount <= 0) {
         setWithdrawError('يجب أن يكون المبلغ أكبر من صفر');
       } else {
@@ -417,6 +417,12 @@ export default function CompanyProfit() {
                             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
                               أرباح الشركة
                             </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              باقي أرباح الشركاء
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              إجمالي أرباح الشركة
+                            </StyledTableCell>
                           </StyledTableRow>
                         </TableHead>
                         <TableBody>
@@ -429,7 +435,7 @@ export default function CompanyProfit() {
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                  {Math.round(period.totalPeriodProfit || 0).toLocaleString('en-US')}
+                                  {(period.totalPeriodProfit || 0).toLocaleString('en-US')}
                                 </Typography>
                               </StyledTableCell>
                               <StyledTableCell align="center">
@@ -439,26 +445,21 @@ export default function CompanyProfit() {
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 <Typography variant="body2" fontWeight="bold" color="primary.main">
-                                  {Math.round(period.companyProfit || 0).toLocaleString('en-US')}
+                                  {(period.companyProfit || 0).toLocaleString('en-US')}
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" fontWeight="bold" color="warning.main">
+                                  {(period.cents || 0).toLocaleString('en-US')}
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                <Typography variant="body2" fontWeight="bold" color="success.main">
+                                  {(period.totalCompany || 0).toLocaleString('en-US')}
                                 </Typography>
                               </StyledTableCell>
                             </StyledTableRow>
                           ))}
-                          {/* Total Row */}
-                          <StyledTableRow sx={{ bgcolor: theme.palette.grey[50] }}>
-                            <StyledTableCell align="center">
-                              <Typography variant="body2" fontWeight="bold">
-                                الإجمالي
-                              </Typography>
-                            </StyledTableCell>
-                            <StyledTableCell align="center">-</StyledTableCell>
-                            <StyledTableCell align="center">-</StyledTableCell>
-                            <StyledTableCell align="center">
-                              <Typography variant="body2" fontWeight="bold" color="primary.main">
-                                {Math.round(profitData.periodsProfit.totalCompanyProfit || 0).toLocaleString('en-US')}
-                              </Typography>
-                            </StyledTableCell>
-                          </StyledTableRow>
                         </TableBody>
                       </Table>
                     </TableContainer>
@@ -518,7 +519,7 @@ export default function CompanyProfit() {
                                 </StyledTableCell>
                                 <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
                                   <Typography variant="body2" fontWeight="bold" color="error.main">
-                                    {Math.round(withdrawal.amount).toLocaleString('en-US')}
+                                    {(withdrawal.amount || 0).toLocaleString('en-US')}
                                   </Typography>
                                 </StyledTableCell>
                               </StyledTableRow>
@@ -563,7 +564,7 @@ export default function CompanyProfit() {
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <Typography variant="body1" color="text.secondary" mb={2} fontWeight="bold">
-              الرصيد المتاح: {Math.round(profitData?.availableAmount || 0).toLocaleString('en-US')}
+              الرصيد المتاح: {(profitData?.availableAmount || 0).toLocaleString('en-US')}
             </Typography>
             <TextField
               fullWidth

@@ -78,14 +78,14 @@ export const exportCompanyProfitToPDF = async (profitData) => {
 
       // Second row of summary
       const summaryText2 = `إجمالي الأرباح: ${totalUpcoming.toLocaleString('en-US')}  |  الرصيد المتاح للسحب: ${availableAmount.toLocaleString('en-US')}`;
-      doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 7, { align: 'center' });
+      doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 10, { align: 'center' });
 
       // Third row of summary
       const totalWithdrawnAmount = withdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
       const summaryText3 = `إجمالي عمليات السحب: ${totalWithdrawals}  |  إجمالي المبالغ المسحوبة: ${totalWithdrawnAmount.toLocaleString('en-US')}`;
-      doc.text(summaryText3, doc.internal.pageSize.width / 2, summaryY + 14, { align: 'center' });
+      doc.text(summaryText3, doc.internal.pageSize.width / 2, summaryY + 20, { align: 'center' });
 
-      let yPosition = summaryY + 20;
+      let yPosition = summaryY + 30;
 
       // Company Profit Sources Table
       if (periodsProfit && periodsProfit.periods && periodsProfit.periods.length > 0) {
@@ -98,32 +98,28 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         const periodsTableData = [];
         periodsProfit.periods.forEach(period => {
           periodsTableData.push([
-            period.companyProfit.toLocaleString('en-US'),
+            (period.totalCompany || 0).toLocaleString('en-US'),
+            (period.cents || 0).toLocaleString('en-US'),
+            (period.companyProfit || 0).toLocaleString('en-US'),
             `${period.companyPercentage || 0}%`,
-            period.totalPeriodProfit.toLocaleString('en-US'),
+            (period.totalPeriodProfit || 0).toLocaleString('en-US'),
             period.periodName || `الفترة ${periodsTableData.length + 1}`
           ]);
         });
 
-        // Add total row
-        periodsTableData.push([
-          periodsProfit.totalCompanyProfit.toLocaleString('en-US'),
-          '-',
-          '-',
-          'الإجمالي'
-        ]);
-
         // Periods table headers (RTL order)
         const periodsHeaders = [
-          ['أرباح الشركة', 'نسبة الشركة', 'إجمالي الأرباح', 'الفترة']
+          ['الإجمالي', 'باقي الشركاء', 'أرباح الشركة', 'النسبة', 'إجمالي الأرباح', 'الفترة']
         ];
 
         // Column widths for periods table
         const periodsColumnWidths = {
-          0: 40, // أرباح الشركة
-          1: 30, // نسبة الشركة
-          2: 50, // إجمالي الأرباح
-          3: 50  // الفترة
+          0: 30, // الإجمالي
+          1: 30, // باقي الشركاء
+          2: 30, // أرباح الشركة
+          3: 25, // النسبة
+          4: 35, // إجمالي الأرباح
+          5: 50  // الفترة
         };
 
         // Calculate periods table width
@@ -139,18 +135,22 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           styles: {
             font: 'Amiri',
             fontSize: 11,
-            cellPadding: 5,
+            cellPadding: 3,
             halign: 'center',
             valign: 'middle',
             direction: 'rtl',
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            overflow: 'linebreak',
+            cellWidth: 'wrap'
           },
           headStyles: {
             fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
             halign: 'center',
-            direction: 'rtl'
+            direction: 'rtl',
+            cellPadding: 2,
+            minCellHeight: 8
           },
           bodyStyles: {
             halign: 'center',
@@ -161,10 +161,12 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             fillColor: [250, 250, 250]
           },
           columnStyles: {
-            0: { cellWidth: periodsColumnWidths[0], halign: 'center', fontStyle: 'bold' }, // أرباح الشركة
-            1: { cellWidth: periodsColumnWidths[1], halign: 'center', fontStyle: 'bold' }, // نسبة الشركة
-            2: { cellWidth: periodsColumnWidths[2], halign: 'center', fontStyle: 'bold' }, // إجمالي الأرباح
-            3: { cellWidth: periodsColumnWidths[3], halign: 'center', fontStyle: 'bold' } // الفترة
+            0: { cellWidth: periodsColumnWidths[0], halign: 'center', fontStyle: 'bold' }, // الإجمالي
+            1: { cellWidth: periodsColumnWidths[1], halign: 'center', fontStyle: 'bold' }, // باقي الشركاء
+            2: { cellWidth: periodsColumnWidths[2], halign: 'center', fontStyle: 'bold' }, // أرباح الشركة
+            3: { cellWidth: periodsColumnWidths[3], halign: 'center', fontStyle: 'bold' }, // النسبة
+            4: { cellWidth: periodsColumnWidths[4], halign: 'center', fontStyle: 'bold' }, // إجمالي الأرباح
+            5: { cellWidth: periodsColumnWidths[5], halign: 'center', fontStyle: 'bold' } // الفترة
           },
           margin: { left: 14, right: 14 },
           tableWidth: periodsTotalColumnWidth,
@@ -221,18 +223,22 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           styles: {
             font: 'Amiri',
             fontSize: 11,
-            cellPadding: 5,
+            cellPadding: 3,
             halign: 'center',
             valign: 'middle',
             direction: 'rtl',
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            overflow: 'linebreak',
+            cellWidth: 'wrap'
           },
           headStyles: {
             fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
             halign: 'center',
-            direction: 'rtl'
+            direction: 'rtl',
+            cellPadding: 2,
+            minCellHeight: 8
           },
           bodyStyles: {
             halign: 'center',
@@ -392,17 +398,11 @@ export const exportCompanyProfitToExcel = async (profitData) => {
         periodsData.push({
           'الفترة': period.periodName || `الفترة ${periodsData.length + 1}`,
           'إجمالي الأرباح': period.totalPeriodProfit || 0,
-          'نسبة الشركة': `${period.companyPercentage || 0}%`,
-          'أرباح الشركة': period.companyProfit || 0
+          'النسبة': `${period.companyPercentage || 0}%`,
+          'أرباح الشركة': period.companyProfit || 0,
+          'باقي الشركاء': period.cents || 0,
+          'الإجمالي': period.totalCompany || 0
         });
-      });
-
-      // Add total row
-      periodsData.push({
-        'الفترة': 'الإجمالي',
-        'إجمالي الأرباح': '-',
-        'نسبة الشركة': '-',
-        'أرباح الشركة': periodsProfit.totalCompanyProfit || 0
       });
 
       periodsSheet = XLSX.utils.json_to_sheet(periodsData);
@@ -410,9 +410,11 @@ export const exportCompanyProfitToExcel = async (profitData) => {
       // Auto-size columns for periods sheet
       const periodsCols = [
         { wch: 25 }, // الفترة
-        { wch: 25 }, // إجمالي الأرباح
-        { wch: 20 }, // نسبة الشركة
-        { wch: 25 }  // أرباح الشركة
+        { wch: 20 }, // إجمالي الأرباح
+        { wch: 15 }, // النسبة
+        { wch: 20 }, // أرباح الشركة
+        { wch: 20 }, // باقي الشركاء
+        { wch: 20 }  // الإجمالي
       ];
       periodsSheet['!cols'] = periodsCols;
     }
