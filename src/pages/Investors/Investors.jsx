@@ -71,7 +71,7 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { useTheme } from "../../theme/ThemeContext";
 import { useNavigate } from "react-router-dom";
 
-const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdrawnOnly = false) => {
+const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdrawnOnly = false, activeStatus = '') => {
   let queryParams = new URLSearchParams();
 
   if (searchQuery.trim()) {
@@ -90,6 +90,15 @@ const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdra
       queryParams.append('isNewPartner', 'true');
     } else if (status.trim() === 'منسحب') {
       queryParams.append('withdrawingStatus', 'WITHDRAWING,WITHDRAWN');
+    }
+  }
+
+  // فلترة حسب حالة النشاط
+  if (activeStatus.trim()) {
+    if (activeStatus.trim() === 'نشط') {
+      queryParams.append('isActive', 'true');
+    } else if (activeStatus.trim() === 'غير نشط') {
+      queryParams.append('isActive', 'false');
     }
   }
 
@@ -146,6 +155,7 @@ export default function Investors() {
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedActiveStatus, setSelectedActiveStatus] = useState("");
   const [selectedInvestor, setSelectedInvestor] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -198,8 +208,8 @@ export default function Investors() {
   const queryClient = useQueryClient();
 
   const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
-    queryKey: ["investors", currentPage, search, selectedStatus, showWithdrawnOnly],
-    queryFn: () => getInvestors(currentPage, search, selectedStatus, showWithdrawnOnly),
+    queryKey: ["investors", currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus],
+    queryFn: () => getInvestors(currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus),
     retry: 1,
   });
 
@@ -354,6 +364,8 @@ export default function Investors() {
         capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
         orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined,
         createdAt: editFormData.createdAt || undefined,
+        // إضافة isActive إذا تم تعديله
+        isActive: editFormData.isActive !== undefined ? editFormData.isActive : undefined,
       };
 
       // إضافة withdrawingStatus فقط إذا كان منسحباً
@@ -1087,6 +1099,7 @@ export default function Investors() {
         capitalAmount: investorDetails.total || '',
         status: getInvestorStatus(investorDetails),
         createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
+        isActive: investorDetails.isActive !== undefined ? investorDetails.isActive : true,
       });
     }
   }, [investorDetails]);
@@ -1335,6 +1348,27 @@ export default function Investors() {
                 }}
               />
             </Box>
+            
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
+              <Chip
+                label="نشط"
+                color={selectedActiveStatus === "نشط" ? "success" : "default"}
+                variant="outlined"
+                onClick={() => {
+                  setSelectedActiveStatus(prev => prev === "نشط" ? "" : "نشط");
+                  setCurrentPage(1);
+                }}
+              />
+              <Chip
+                label="غير نشط"
+                color={selectedActiveStatus === "غير نشط" ? "error" : "default"}
+                variant="outlined"
+                onClick={() => {
+                  setSelectedActiveStatus(prev => prev === "غير نشط" ? "" : "غير نشط");
+                  setCurrentPage(1);
+                }}
+              />
+            </Box>
           </Box>
 
           {investorsData && !isInvestorsLoading && investorsData.partners && investorsData.partners.length > 0 && (
@@ -1418,11 +1452,19 @@ export default function Investors() {
                               />
                             )}
                           </Box>
-                          <Chip
-                            label={getStatusText(investor)}
-                            size="small"
-                            color={getStatusColor(investor)}
-                          />
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-end' }}>
+                            <Chip
+                              label={getStatusText(investor)}
+                              size="small"
+                              color={getStatusColor(investor)}
+                            />
+                            <Chip
+                              label={investor.isActive ? 'نشط' : 'غير نشط'}
+                              size="small"
+                              color={investor.isActive ? 'success' : 'error'}
+                              sx={{ fontSize: '0.8rem', height: '22px' }}
+                            />
+                          </Box>
                         </Box>
 
                         {/* Total Capital - Bold + Fixed Color */}
@@ -1905,8 +1947,8 @@ export default function Investors() {
                           <Box>
                             <TextField
                               select
-                              value={editFormData.status !== undefined ? editFormData.status : getInvestorStatus(investorDetails)}
-                              onChange={(e) => handleInputChange('status', e.target.value)}
+                              value={editFormData.isActive !== undefined ? editFormData.isActive : investorDetails.isActive}
+                              onChange={(e) => handleInputChange('isActive', e.target.value)}
                               fullWidth
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -1915,20 +1957,20 @@ export default function Investors() {
                                 },
                               }}
                             >
-                              <MenuItem value="NEW">جديد</MenuItem>
-                              <MenuItem value="OLD">قديم</MenuItem>
+                              <MenuItem value={true}>نشط</MenuItem>
+                              <MenuItem value={false}>غير نشط</MenuItem>
                             </TextField>
-                            {editFormData.status !== getInvestorStatus(investorDetails) && (
+                            {editFormData.isActive !== investorDetails.isActive && (
                               <Alert severity="info" sx={{ mt: 1, fontSize: '0.85rem' }}>
-                                {editFormData.status === 'NEW' ?
-                                  'سيتم تصنيف المستثمر كجديد' :
-                                  'سيتم تصنيف المستثمر كقديم'}
+                                {editFormData.isActive === true ?
+                                  'سيتم تفعيل المستثمر' :
+                                  'سيتم إلغاء تفعيل المستثمر'}
                               </Alert>
                             )}
                           </Box>
                         ) : (
                           <TextField
-                            value={getStatusText(investorDetails)}
+                            value={investorDetails.isActive ? 'نشط' : 'غير نشط'}
                             fullWidth
                             disabled
                             sx={{

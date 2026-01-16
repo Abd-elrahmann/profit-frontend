@@ -280,9 +280,15 @@ const PeriodClosing = () => {
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
+            <Typography>باقي أرباح الشركاء:</Typography>
+            <Typography fontWeight="bold" color="warning.main">
+              {(periodData?.centCollected || 0).toLocaleString()}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color="primary.main">
-              {((periodData?.companyProfit || 0) + (periodData?.centCollected || 0)).toLocaleString()}
+              {(periodData?.companyProfit || 0).toLocaleString()}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>

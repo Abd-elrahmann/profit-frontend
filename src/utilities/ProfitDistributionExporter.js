@@ -83,24 +83,43 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
 
       const summaryHeaders = [['القيمة', 'البيان']];
 
-      // Calculate profit data
-      const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.totalAfterSaving || partner.totalProfit || 0), 0) || 0;
+      // Calculate profit data - matching the main page logic
+      const totalPartnerProfitBeforeSaving = periodData.partners?.reduce((sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0), 0) || 0;
       const companyProfit = periodData.companyProfit || 0;
-      const savedAmount = enableSaving ? totalPartnerProfit * (savingPercentage / 100) : (periodData.totalSaving || 0);
-      const partnerProfitAfterSaving = totalPartnerProfit - savedAmount;
+      
+      // Calculate saved amount and profit after saving
+      let savedAmount = 0;
+      let partnerProfitAfterSaving = 0;
+      
+      if (enableSaving && savingPercentage > 0) {
+        // When saving is being set
+        savedAmount = totalPartnerProfitBeforeSaving * (savingPercentage / 100);
+        partnerProfitAfterSaving = totalPartnerProfitBeforeSaving - savedAmount;
+      } else if (periodData.totalSaving !== undefined && periodData.totalAfterSaving !== undefined) {
+        // When data already has saving information
+        savedAmount = periodData.totalSaving;
+        partnerProfitAfterSaving = periodData.totalAfterSaving;
+      } else {
+        // No saving
+        savedAmount = 0;
+        partnerProfitAfterSaving = totalPartnerProfitBeforeSaving;
+      }
 
       const summaryData = [
         [companyProfit ? formatNumber(companyProfit) : '0', 'أرباح الشركة'],
-        [formatNumber(totalPartnerProfit), 'إجمالي أرباح الشركاء قبل الخصم'],
-        [formatNumber(partnerProfitAfterSaving), 'إجمالي أرباح الشركاء بعد الخصم'],
-        [formatNumber(savedAmount), 'المبلغ المدخر'],
+        [formatNumber(totalPartnerProfitBeforeSaving), 'إجمالي أرباح الشركاء قبل الادخار'],
+        [formatNumber(partnerProfitAfterSaving), 'إجمالي أرباح الشركاء بعد الادخار'],
         [periodData.partners?.length || 0, 'عدد الشركاء'],
         [periodData.startDate ? dayjs(periodData.startDate).format('DD/MM/YYYY') : '-', 'تاريخ البداية'],
         [periodData.endDate ? dayjs(periodData.endDate).format('DD/MM/YYYY') : '-', 'تاريخ النهاية'],
       ];
 
-      if (enableSaving && savingPercentage > 0) {
-        summaryData.splice(3, 0, [`${savingPercentage}%`, 'نسبة الادخار']);
+      // Add saving info if applicable
+      if (savedAmount > 0) {
+        if (enableSaving && savingPercentage > 0) {
+          summaryData.splice(3, 0, [`${savingPercentage.toFixed(2)}%`, 'نسبة الادخار']);
+        }
+        summaryData.splice(4, 0, [formatNumber(savedAmount), 'المبلغ المدخر']);
       }
 
       autoTable(doc, {
@@ -164,22 +183,53 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
         doc.text('توزيع الأرباح على الشركاء', pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 8;
 
-        // Define headers in logical order (will be reversed for RTL display)
-        const partnersHeaders = [['اسم الشريك', 'الرقم القومي', 'الهاتف', 'الأرباح قبل الخصم', 'نسبة ربح الشركة', 'مبلغ ربح الشركة', 'صافي الأرباح', 'المبلغ المدخر']];
-        const partnersTableData = periodData.partners.map(partner => [
-          partner.partnerName || '-',
-          partner.nationalId || '-',
-          partner.phone || '-',
-          formatNumber(partner.rawProfit) || formatNumber(partner.totalProfit) || '0',
-          `${partner.orgProfitPercent}%`,
-          formatNumber(partner.companyCut) || '0',
-          formatNumber((enableSaving && savingPercentage > 0 ?
-            (partner.finalProfit || partner.totalProfit || 0) * (1 - savingPercentage / 100) :
-            partner.totalAfterSaving || partner.totalProfit || 0)),
-          formatNumber((enableSaving && savingPercentage > 0 ?
-            (partner.finalProfit || partner.totalProfit || 0) * (savingPercentage / 100) :
-            partner.savingAmount || 0))
-        ]);
+        // Check if there's saving data to display
+        const hasSavingData = (enableSaving && savingPercentage > 0) || 
+                             periodData.partners.some(p => p.savingAmount);
+
+        // Define headers based on whether we have saving data
+        let partnersHeaders;
+        let partnersTableData;
+        
+        if (hasSavingData) {
+          partnersHeaders = [['اسم الشريك', 'الرقم القومي', 'الهاتف', 'المبلغ قبل الادخار', 'المبلغ بعد الادخار']];
+          partnersTableData = periodData.partners.map(partner => {
+            const beforeSaving = partner.finalProfit || partner.totalProfit || 0;
+            const afterSaving = enableSaving && savingPercentage > 0 ?
+              beforeSaving * (1 - savingPercentage / 100) :
+              partner.totalAfterSaving || beforeSaving;
+            
+            return [
+              partner.partnerName || '-',
+              partner.nationalId || '-',
+              partner.phone || '-',
+              formatNumber(beforeSaving),
+              formatNumber(afterSaving)
+            ];
+          });
+        } else {
+          partnersHeaders = [['اسم الشريك', 'الرقم القومي', 'الهاتف', 'المبلغ قبل الادخار']];
+          partnersTableData = periodData.partners.map(partner => [
+            partner.partnerName || '-',
+            partner.nationalId || '-',
+            partner.phone || '-',
+            formatNumber(partner.finalProfit || partner.totalProfit || 0)
+          ]);
+        }
+
+        // Define column styles based on number of columns
+        const columnStyles = hasSavingData ? {
+          0: { cellWidth: 'auto', minCellWidth: 30, halign: 'right' }, // المبلغ بعد الادخار
+          1: { cellWidth: 'auto', minCellWidth: 30, halign: 'right' }, // المبلغ قبل الادخار
+          2: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // الهاتف
+          3: { cellWidth: 'auto', minCellWidth: 30, halign: 'right' }, // الرقم القومي
+          4: { cellWidth: 'auto', minCellWidth: 35, halign: 'right' }  // اسم الشريك
+        } : {
+          0: { cellWidth: 'auto', minCellWidth: 35, halign: 'right' }, // المبلغ قبل الادخار
+          1: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // الهاتف
+          2: { cellWidth: 'auto', minCellWidth: 30, halign: 'right' }, // الرقم القومي
+          3: { cellWidth: 'auto', minCellWidth: 40, halign: 'right' }  // اسم الشريك
+        };
 
         autoTable(doc, {
           startY: yPosition,
@@ -189,8 +239,8 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
           styles: {
             font: 'Amiri',
             fontStyle: 'bold',
-            fontSize: 8,
-            cellPadding: { top: 1, bottom: 1, left: 10, right: 1 },
+            fontSize: 9,
+            cellPadding: { top: 3, bottom: 3, left: 5, right: 5 },
             lineColor: [220, 220, 220],
             lineWidth: 0.2,
             halign: 'right',
@@ -202,34 +252,24 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
             fillColor: [240, 240, 240],
             textColor: [46, 139, 69],
             fontStyle: 'bold',
-            fontSize: 7,
+            fontSize: 10,
             halign: 'right',
             valign: 'middle',
-            cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-            overflow: 'hidden',
-            minCellHeight: 15,
-            maxCellHeight: 15,
+            cellPadding: { top: 5, bottom: 5, left: 5, right: 5 },
+            overflow: 'linebreak',
+            minCellHeight: 12,
             direction: 'rtl'
           },
           bodyStyles: {
             fontStyle: 'bold',
             halign: 'right',
             valign: 'middle',
-            cellPadding: 3,
-            overflow: 'hidden',
+            cellPadding: 4,
+            overflow: 'linebreak',
             direction: 'rtl'
           },
-          columnStyles: {
-            0: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // المبلغ المدخر
-            1: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // صافي الأرباح
-            2: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // مبلغ ربح الشركة
-            3: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }, // نسبة ربح الشركة
-            4: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // الأرباح قبل الخصم
-            5: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }, // الهاتف
-            6: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // الرقم القومي
-            7: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }  // اسم الشريك
-          },
-          margin: { top: yPosition, left: 1, right: 1 },
+          columnStyles: columnStyles,
+          margin: { top: yPosition, left: 10, right: 10 },
           tableWidth: 'auto',
           horizontalPageBreak: false,
           pageBreak: 'auto',
@@ -308,11 +348,27 @@ export const exportProfitDistributionToExcel = async (periodData, enableSaving =
 
     const periodName = periodData.name || 'غير محدد';
 
-    // Calculate profit data
-    const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.totalAfterSaving || partner.totalProfit || 0), 0) || 0;
+    // Calculate profit data - matching the main page logic
+    const totalPartnerProfitBeforeSaving = periodData.partners?.reduce((sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0), 0) || 0;
     const companyProfit = periodData.companyProfit || 0;
-    const savedAmount = enableSaving ? totalPartnerProfit * (savingPercentage / 100) : (periodData.totalSaving || 0);
-    const partnerProfitAfterSaving = totalPartnerProfit - savedAmount;
+    
+    // Calculate saved amount and profit after saving
+    let savedAmount = 0;
+    let partnerProfitAfterSaving = 0;
+    
+    if (enableSaving && savingPercentage > 0) {
+      // When saving is being set
+      savedAmount = totalPartnerProfitBeforeSaving * (savingPercentage / 100);
+      partnerProfitAfterSaving = totalPartnerProfitBeforeSaving - savedAmount;
+    } else if (periodData.totalSaving !== undefined && periodData.totalAfterSaving !== undefined) {
+      // When data already has saving information
+      savedAmount = periodData.totalSaving;
+      partnerProfitAfterSaving = periodData.totalAfterSaving;
+    } else {
+      // No saving
+      savedAmount = 0;
+      partnerProfitAfterSaving = totalPartnerProfitBeforeSaving;
+    }
 
     // Summary sheet
     const summaryData = [
@@ -325,14 +381,17 @@ export const exportProfitDistributionToExcel = async (periodData, enableSaving =
       ['البيانات المالية'],
       [''],
       [companyProfit, 'أرباح الشركة'],
-      [totalPartnerProfit, 'إجمالي أرباح الشركاء قبل الخصم'],
-      [partnerProfitAfterSaving, 'إجمالي أرباح الشركاء بعد الخصم'],
-      [savedAmount, 'المبلغ المدخر'],
+      [totalPartnerProfitBeforeSaving, 'إجمالي أرباح الشركاء قبل الادخار'],
+      [partnerProfitAfterSaving, 'إجمالي أرباح الشركاء بعد الادخار'],
       [periodData.partners?.length || 0, 'عدد الشركاء'],
     ];
 
-    if (enableSaving && savingPercentage > 0) {
-      summaryData.splice(10, 0, [savingPercentage, 'نسبة الادخار']);
+    // Add saving info if applicable
+    if (savedAmount > 0) {
+      if (enableSaving && savingPercentage > 0) {
+        summaryData.splice(11, 0, [savingPercentage.toFixed(2) + '%', 'نسبة الادخار']);
+      }
+      summaryData.splice(12, 0, [savedAmount, 'المبلغ المدخر']);
     }
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
@@ -344,50 +403,84 @@ export const exportProfitDistributionToExcel = async (periodData, enableSaving =
 
     // Partners sheet - reversed for RTL
     if (periodData.partners && periodData.partners.length > 0) {
-      const partnersHeaders = ['اسم الشريك', 'الرقم القومي', 'الهاتف', 'الأرباح قبل الخصم', 'نسبة ربح الشركة', 'مبلغ ربح الشركة', 'صافي الأرباح', 'المبلغ المدخر'];
-      const partnersTableData = [
-        reverseRow(partnersHeaders),
-        ...periodData.partners.map(partner => reverseRow([
-          partner.partnerName || '-',
-          partner.nationalId || '-',
-          partner.phone || '-',
-          partner.rawProfit || partner.totalProfit || 0,
-          partner.orgProfitPercent || 0,
-          partner.companyCut || 0,
-          (enableSaving && savingPercentage > 0 ?
-            (partner.finalProfit || partner.totalProfit || 0) * (1 - savingPercentage / 100) :
-            partner.totalAfterSaving || partner.totalProfit || 0),
-          (enableSaving && savingPercentage > 0 ?
-            (partner.finalProfit || partner.totalProfit || 0) * (savingPercentage / 100) :
-            partner.savingAmount || 0)
-        ]))
-      ];
+      // Check if there's saving data to display
+      const hasSavingData = (enableSaving && savingPercentage > 0) || 
+                           periodData.partners.some(p => p.savingAmount);
 
-      // Add totals row
-      const totalsRow = [
-        'الإجمالي',
-        '',
-        '',
-        periodData.partners.reduce((sum, p) => sum + (p.rawProfit || p.totalProfit || 0), 0),
-        '',
-        periodData.partners.reduce((sum, p) => sum + (p.companyCut || 0), 0),
-        enableSaving && savingPercentage > 0 ? partnerProfitAfterSaving : totalPartnerProfit,
-        savedAmount
-      ];
+      let partnersHeaders;
+      let partnersTableData;
+      let columnWidths;
+      
+      if (hasSavingData) {
+        partnersHeaders = ['اسم الشريك', 'الرقم القومي', 'الهاتف', 'المبلغ قبل الادخار', 'المبلغ بعد الادخار'];
+        partnersTableData = [
+          reverseRow(partnersHeaders),
+          ...periodData.partners.map(partner => {
+            const beforeSaving = partner.finalProfit || partner.totalProfit || 0;
+            const afterSaving = enableSaving && savingPercentage > 0 ?
+              beforeSaving * (1 - savingPercentage / 100) :
+              partner.totalAfterSaving || beforeSaving;
+            
+            return reverseRow([
+              partner.partnerName || '-',
+              partner.nationalId || '-',
+              partner.phone || '-',
+              beforeSaving,
+              afterSaving
+            ]);
+          })
+        ];
 
-      partnersTableData.push(reverseRow(totalsRow));
+        // Add totals row
+        const totalBefore = periodData.partners.reduce((sum, p) => sum + (p.finalProfit || p.totalProfit || 0), 0);
+        const totalsRow = [
+          'الإجمالي',
+          '',
+          '',
+          totalBefore,
+          partnerProfitAfterSaving
+        ];
+        partnersTableData.push(reverseRow(totalsRow));
+
+        columnWidths = [
+          { wch: 20 }, // المبلغ بعد الادخار
+          { wch: 20 }, // المبلغ قبل الادخار
+          { wch: 15 }, // الهاتف
+          { wch: 20 }, // الرقم القومي
+          { wch: 30 }  // اسم الشريك
+        ];
+      } else {
+        partnersHeaders = ['اسم الشريك', 'الرقم القومي', 'الهاتف', 'المبلغ قبل الادخار'];
+        partnersTableData = [
+          reverseRow(partnersHeaders),
+          ...periodData.partners.map(partner => reverseRow([
+            partner.partnerName || '-',
+            partner.nationalId || '-',
+            partner.phone || '-',
+            partner.finalProfit || partner.totalProfit || 0
+          ]))
+        ];
+
+        // Add totals row
+        const totalAmount = periodData.partners.reduce((sum, p) => sum + (p.finalProfit || p.totalProfit || 0), 0);
+        const totalsRow = [
+          'الإجمالي',
+          '',
+          '',
+          totalAmount
+        ];
+        partnersTableData.push(reverseRow(totalsRow));
+
+        columnWidths = [
+          { wch: 25 }, // المبلغ قبل الادخار
+          { wch: 15 }, // الهاتف
+          { wch: 20 }, // الرقم القومي
+          { wch: 30 }  // اسم الشريك
+        ];
+      }
 
       const partnersSheet = XLSX.utils.aoa_to_sheet(partnersTableData);
-      partnersSheet['!cols'] = [
-        { wch: 15 }, // المبلغ المدخر
-        { wch: 18 }, // صافي الأرباح
-        { wch: 18 }, // مبلغ ربح الشركة
-        { wch: 18 }, // نسبة ربح الشركة
-        { wch: 18 }, // الأرباح قبل الخصم
-        { wch: 15 }, // الهاتف
-        { wch: 18 }, // الرقم القومي
-        { wch: 25 }  // اسم الشريك
-      ];
+      partnersSheet['!cols'] = columnWidths;
       XLSX.utils.book_append_sheet(workbook, partnersSheet, 'توزيع الأرباح');
     }
 
