@@ -60,7 +60,6 @@ const numberToArabicWords = (num) => {
   let result = "";
   let hasThousands = false;
 
-  // Handle millions
   if (num >= 1000000) {
     const millionsPart = Math.floor(num / 1000000);
     if (millionsPart === 1) {
@@ -75,7 +74,6 @@ const numberToArabicWords = (num) => {
     num %= 1000000;
   }
 
-  // Handle thousands
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
     if (thousandsPart === 1) {
@@ -87,17 +85,15 @@ const numberToArabicWords = (num) => {
     } else if (thousandsPart === 10) {
       result += "عشرة آلاف ";
     } else if (thousandsPart >= 11 && thousandsPart <= 999) {
-      // أي رقم بين 11 و 999
       result += numberToArabicWords(thousandsPart) + " ألف ";
     } else {
-      // أي رقم أكبر من أو يساوي 1000 (مليون أو أكثر)
+  
       result += numberToArabicWords(thousandsPart) + " ألف ";
     }
     num %= 1000;
     hasThousands = true;
   }
 
-// Handle hundreds
 if (num >= 100) {
   const hundredsPart = Math.floor(num / 100);
 
@@ -115,7 +111,6 @@ if (num >= 100) {
 }
 
 
-  // Handle tens and ones with proper Arabic grammar
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
@@ -161,11 +156,9 @@ if (num >= 100) {
   return result.trim();
 };
 const getCurrentDates = () => {
-  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
 
-  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
   const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat(
@@ -182,7 +175,6 @@ const getCurrentDates = () => {
 
   hijriDate = hijriDate.replace(/\s+/g, " ").trim();
   hijriDate = hijriDate.replace(" ", " من ");
-  // Remove هـ if it exists to avoid duplication
   hijriDate = hijriDate.replace(" هـ", "").trim();
 
   const gregorianFormatter = new Intl.DateTimeFormat("ar-SA-u-ca-gregory", {
@@ -265,7 +257,6 @@ const LoanContractGenerator = React.forwardRef(
               : `سند الأمر_${loanDataToUse.id}_${Date.now()}.pdf`;
           formData.append("file", pdfBlob, filename);
 
-          // إضافة أرقام العقود إلى البيانات المرسلة
           console.log('uploadPDFToServer - contractNumbers:', contractNumbers);
           if (contractNumbers.debtAcknowledgmentNumber) {
             formData.append("debtAcknowledgmentNumber", contractNumbers.debtAcknowledgmentNumber);
@@ -309,25 +300,20 @@ const LoanContractGenerator = React.forwardRef(
         try {
           setIsGenerating(true);
 
-          // Regenerate contract with actual numbers for saving if not already provided
           let finalContent = contentToUse;
 
           if (!contractNumbers.debtAcknowledgmentNumber || !contractNumbers.promissoryNoteNumber) {
             finalContent = await generateContract(false, loanDataParam, null, true);
           }
     
-          // إزالة أي div إضافي محيط بالمحتوى
           let cleanedContent = finalContent;
 
-          // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = finalContent;
           
-          // البحث عن contract-wrapper داخل المحتوى
           const contractWrapper = tempDiv.querySelector('.contract-wrapper');
           
           if (contractWrapper) {
-            // أخذ المحتوى الداخلي فقط
             cleanedContent = contractWrapper.outerHTML;
           }
     
@@ -366,7 +352,6 @@ const LoanContractGenerator = React.forwardRef(
           tempElement.innerHTML = cleanedContent;
           document.body.appendChild(tempElement);
           
-          // انتظار قليل لتحميل الخطوط والصور
           await new Promise(resolve => setTimeout(resolve, 500));
     
           const pdfBlob = await html2pdf()
@@ -374,7 +359,6 @@ const LoanContractGenerator = React.forwardRef(
             .set(options)
             .outputPdf("blob");
     
-          // إزالة العنصر المؤقت
           document.body.removeChild(tempElement);
     
           await uploadPDFToServer(pdfBlob, loanDataParam, contractNumbers);
@@ -421,16 +405,12 @@ const LoanContractGenerator = React.forwardRef(
 
           const clientDataToUse = loanDataToUse.client || clientData;
 
-          // توليد أرقام العقود بناءً على ما إذا كنا نحفظ أم نعاين
           let promissoryNoteNumber, debtAcknowledgmentNumber;
 
-          // Use saved numbers if they exist in loanData, otherwise fetch count from backend
           if (loanDataToUse.debtAcknowledgmentNumber && loanDataToUse.promissoryNoteNumber) {
-            // Use the numbers already saved in the database
             promissoryNoteNumber = loanDataToUse.promissoryNoteNumber;
             debtAcknowledgmentNumber = loanDataToUse.debtAcknowledgmentNumber;
           } else {
-            // Fetch count from backend
             try {
               const countResponse = await Api.get(`/api/loans/get/counts/${loanDataToUse.id}`);
               const count = countResponse.data.count;
@@ -444,8 +424,6 @@ const LoanContractGenerator = React.forwardRef(
           }
 
           if (isForSaving) {
-            // حفظ الأرقام في قاعدة البيانات مباشرة
-            // Only save if numbers are not already saved (should not happen with new logic)
             const shouldSaveNumbers = !loanDataToUse.debtAcknowledgmentNumber || !loanDataToUse.promissoryNoteNumber;
 
             if (shouldSaveNumbers) {
@@ -560,8 +538,6 @@ const LoanContractGenerator = React.forwardRef(
     if (autoGenerate) {
       return null;
     }
-
-    // إخفاء المكون تماماً إلا عند الحاجة لعرض رسالة التحميل
     if (!isGenerating) {
       return null;
     }

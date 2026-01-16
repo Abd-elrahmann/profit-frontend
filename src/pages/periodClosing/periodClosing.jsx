@@ -59,9 +59,7 @@ const PeriodClosing = () => {
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
 
-  // Handle view journal details
   const handleViewJournal = (journalId) => {
-    // Navigate to journal entries page with details tab and selected journal, mark origin as period
     navigate('/journal-entries', { state: { journalId: journalId, activeTab: 1, fromPeriod: true } });
   };
 
@@ -74,7 +72,6 @@ const PeriodClosing = () => {
     enabled: !!selectedPeriod && activeTab === 1,
   });
 
-  // Check for draft entries when period data loads
   useEffect(() => {
     if (periodData?.journals) {
       const draftEntries = periodData.journals.filter(journal => journal.status === "DRAFT");
@@ -93,17 +90,15 @@ const PeriodClosing = () => {
   const handleBackToList = () => {
     setActiveTab(0);
     setSelectedPeriod(null);
-    setShowDraftAlert(false); // Reset alert when going back to list
+    setShowDraftAlert(false);
   };
 
   const handleClosePeriod = async () => {
     try {
       await closePeriod(selectedPeriod);
       notifySuccess("تم تقفيل الفترة بنجاح");
-      // Force refetch of current period data
       queryClient.invalidateQueries(["period", selectedPeriod]);
       queryClient.invalidateQueries(["periods"]);
-      // Also refetch the current period data immediately
       await queryClient.refetchQueries(["period", selectedPeriod]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تقفيل الفترة");
@@ -116,7 +111,6 @@ const PeriodClosing = () => {
       notifySuccess("تم إلغاء تقفيل الفترة بنجاح");
       queryClient.invalidateQueries(["period", selectedPeriod]);
       queryClient.invalidateQueries(["periods"]);
-      // Also refetch the current period data immediately
       await queryClient.refetchQueries(["period", selectedPeriod]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء إلغاء التقفيل");
@@ -131,13 +125,11 @@ const PeriodClosing = () => {
     navigate(`/profit-distribution?periodId=${selectedPeriod}&from=period-closing`);
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "لم تنتهي بعد";
     return new Date(dateString).toLocaleDateString('en-US');
   };
 
-  // Format date with Hijri for display
   const formatDateWithHijri = (dateString, hijriDate) => {
     if (!dateString) return "لم تنتهي بعد";
 
@@ -156,7 +148,6 @@ const PeriodClosing = () => {
     );
   };
 
-  // Get journal type in Arabic
   const getJournalTypeText = (type) => {
     switch (type) {
       case "GENERAL":
@@ -172,7 +163,6 @@ const PeriodClosing = () => {
     }
   };
 
-  // Get journal status in Arabic
   const getJournalStatusText = (status) => {
     switch (status) {
       case "DRAFT":
@@ -186,7 +176,6 @@ const PeriodClosing = () => {
     }
   };
 
-  // Render desktop sidebar
   const renderDesktopSidebar = () => (
     <Box
       sx={{
@@ -210,7 +199,6 @@ const PeriodClosing = () => {
             </Typography>
           </Box>
 
-          {/* Journal Totals */}
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي المدين:</Typography>
             <Typography fontWeight="bold" color="success.main">
@@ -251,22 +239,56 @@ const PeriodClosing = () => {
 
           <Divider sx={{ my: 1 }} />
 
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+            <Typography fontWeight="bold">الأرباح الإجمالية (قبل الخصم):</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
             <Typography>أرباح الشركاء:</Typography>
             <Typography fontWeight="bold" color="success.main">
-              {Math.round(periodData?.totalPartnerProfit || 0).toLocaleString()}
+              {(periodData?.grossProfit?.partnerTotal || 0).toLocaleString()}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color="primary.main">
-              {Math.round(periodData?.companyProfit || 0).toLocaleString()}
+              {(periodData?.grossProfit?.companyTotal || 0).toLocaleString()}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2, mb: 1 }}>
             <Typography>الإجمالي:</Typography>
             <Typography fontWeight="bold">
-              {Math.round((periodData?.totalPartnerProfit || 0) + (periodData?.companyProfit || 0)).toLocaleString()}
+              {(periodData?.grossProfit?.total || 0).toLocaleString()}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+            <Typography fontWeight="bold">المصروفات المخصومة:</Typography>
+            <Typography fontWeight="bold" color="error.main">
+              -{(periodData?.expenseDistribution?.totalExpenses || 0).toLocaleString()}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ my: 1 }} />
+
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+            <Typography fontWeight="bold">صافي الأرباح (بعد الخصم):</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
+            <Typography>أرباح الشركاء:</Typography>
+            <Typography fontWeight="bold" color="success.main">
+              {(periodData?.totalPartnerProfit || 0).toLocaleString()}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
+            <Typography>أرباح الشركة:</Typography>
+            <Typography fontWeight="bold" color="primary.main">
+              {((periodData?.companyProfit || 0) + (periodData?.centCollected || 0)).toLocaleString()}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
+            <Typography>الإجمالي:</Typography>
+            <Typography fontWeight="bold">
+              {(periodData?.totalProfit || 0).toLocaleString()}
             </Typography>
           </Box>
         </Stack>
@@ -310,7 +332,6 @@ const PeriodClosing = () => {
     </Box>
   );
 
-  // Render mobile actions
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
       <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
@@ -346,10 +367,8 @@ const PeriodClosing = () => {
     </Paper>
   );
 
-  // Render mobile period details
   const renderMobilePeriodDetails = () => (
     <Box>
-      {/* Draft Entries Alert */}
       {showDraftAlert && !periodData?.isClosed && (
         <Alert
           severity="warning"
@@ -369,7 +388,6 @@ const PeriodClosing = () => {
         </Alert>
       )}
 
-      {/* Summary Cards */}
       <Grid container spacing={2} mb={3}>
         <Grid item xs={6} md={4}>
           <Card sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", textAlign: "center" }}>
@@ -454,20 +472,42 @@ const PeriodClosing = () => {
           <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center" }}>
             <CardContent sx={{ p: 2 }}>
               <Typography variant="body2" color="success.main">
-                أرباح الشركاء
+                إجمالي الأرباح
               </Typography>
               <Typography variant="h6" fontWeight="bold" color="success.main">
-                {Math.round(periodData?.totalPartnerProfit || 0).toLocaleString()}
+                {(periodData?.grossProfit?.total || 0).toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} md={4}>
+          <Card sx={{ bgcolor: "rgba(244, 67, 54, 0.1)", textAlign: "center" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="error.main">
+                المصروفات
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="error.main">
+                -{(periodData?.expenseDistribution?.totalExpenses || 0).toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} md={4}>
+          <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="success.main">
+                صافي أرباح الشركاء
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="success.main">
+                {(periodData?.totalPartnerProfit || 0).toLocaleString()}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Actions */}
       {renderMobileActions()}
 
-      {/* Period Info */}
       <Paper sx={{ p: 3, borderRadius: 2, mb: 2 }}>
         <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
           معلومات الفترة
@@ -510,7 +550,6 @@ const PeriodClosing = () => {
         </Stack>
       </Paper>
 
-      {/* Profit Distribution Link */}
       {periodData?.isClosed && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Alert
@@ -540,27 +579,43 @@ const PeriodClosing = () => {
         </Box>
       )}
 
-      {/* Partner Profits */}
       {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
         <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
           <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
-            أرباح الشركاء
+            تفصيل أرباح الشركاء
           </Typography>
-          
+
           <Stack spacing={2}>
             {periodData.partnerProfits.map((partner) => (
               <Card key={partner.partnerId} variant="outlined">
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
-                    <Typography variant="subtitle2" fontWeight="bold">
+                    <Typography variant="subtitle2" fontWeight="bold" textAlign="center" mb={1}>
                       {partner.partnerName}
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2" color="textSecondary">
-                        الربح:
+                        الربح الإجمالي:
+                      </Typography>
+                      <Typography variant="body2" color="success.main">
+                        {(partner.grossProfit || 0).toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="textSecondary">
+                        حصة المصروفات:
+                      </Typography>
+                      <Typography variant="body2" color="error.main">
+                        -{(partner.expenseShare || 0).toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Divider sx={{ my: 0.5 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" fontWeight="bold" color="textSecondary">
+                        صافي الربح:
                       </Typography>
                       <Typography variant="body2" fontWeight="bold" color="success.main">
-                        {Math.round(partner.totalProfit).toLocaleString()}
+                        {(partner.netProfit || 0).toLocaleString()}
                       </Typography>
                     </Box>
                   </Stack>
@@ -571,7 +626,6 @@ const PeriodClosing = () => {
         </Paper>
       )}
 
-      {/* Journals */}
       <Paper sx={{ p: 2, borderRadius: 2 }}>
         <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
           قيود الفترة ({periodData?.journals?.length || 0})
@@ -698,14 +752,12 @@ const PeriodClosing = () => {
     </Box>
   );
 
-  // Render desktop period details
   const renderDesktopPeriodDetails = () => (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
       <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={"center"}>
         تفاصيل الفترة
       </Typography>
 
-      {/* Draft Entries Alert */}
       {showDraftAlert && !periodData?.isClosed && (
         <Alert
           severity="warning"
@@ -725,7 +777,6 @@ const PeriodClosing = () => {
         </Alert>
       )}
 
-      {/* Period Information */}
       <Grid container spacing={10} mb={4} justifyContent="center" alignItems="center">
         <Grid item xs={12} md={6} justifyContent="center" alignItems="center" spacing={4}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
@@ -756,7 +807,6 @@ const PeriodClosing = () => {
         </Grid>
       </Grid>
 
-      {/* Profit Distribution Link */}
       {periodData?.isClosed && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 3 }}>
           <Alert
@@ -788,53 +838,50 @@ const PeriodClosing = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Partner Profits */}
       {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
         <>
           <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
-            أرباح الشركاء
+            جدول أرباح الشركاء
           </Typography>
           <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
             <Table>
               <TableHead>
                 <StyledTableRow>
                   <StyledTableCell align="center">اسم الشريك</StyledTableCell>
-                  <StyledTableCell align="center">الربح</StyledTableCell>
+                  <StyledTableCell align="center">الربح الإجمالي</StyledTableCell>
+                  <StyledTableCell align="center">حصة المصروفات</StyledTableCell>
+                  <StyledTableCell align="center">صافي الربح</StyledTableCell>
                 </StyledTableRow>
               </TableHead>
               <TableBody>
                 {periodData.partnerProfits.map((partner) => (
                   <StyledTableRow key={partner.partnerId}>
-                    <StyledTableCell align="center">
+                    <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
                       {partner.partnerName}
                     </StyledTableCell>
+                    <StyledTableCell align="center" style={{ color: '#2e7d32' }}>
+                      {(partner.grossProfit || 0).toLocaleString()}
+                    </StyledTableCell>
+                    <StyledTableCell align="center" style={{ color: '#d32f2f' }}>
+                      -{(partner.expenseShare || 0).toLocaleString()}
+                    </StyledTableCell>
                     <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                      {partner.totalProfit}
+                      {(partner.netProfit || 0).toLocaleString()}
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
-                <StyledTableRow style={{ backgroundColor: theme.palette.background.default }}>
-                  <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
-                    إجمالي أرباح الشركاء
-                  </StyledTableCell>
-                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                    {periodData.totalPartnerProfit}
-                  </StyledTableCell>
-                </StyledTableRow>
-                <StyledTableRow style={{ backgroundColor: theme.palette.background.default }}>
-                  <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
-                    أرباح الشركة
-                  </StyledTableCell>
-                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#1976d2' }}>
-                    {periodData.companyProfit || 0}
-                  </StyledTableCell>
-                </StyledTableRow>
                 <StyledTableRow style={{ backgroundColor: theme.palette.grey[100], borderTop: `2px solid ${theme.palette.primary.main}` }}>
                   <StyledTableCell align="center" style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
-                    الإجمالي العام
+                    إجمالي أرباح الشركاء
+                  </StyledTableCell>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.1em' }}>
+                    {(periodData?.grossProfit?.partnerTotal || 0).toLocaleString()}
                   </StyledTableCell>
                   <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1em' }}>
-                    {(periodData.totalPartnerProfit || 0) + (periodData.companyProfit || 0)}
+                    -{(periodData?.expenseDistribution?.partnersShare || 0).toLocaleString()}
+                  </StyledTableCell>
+                  <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.1em' }}>
+                    {(periodData.totalPartnerProfit || 0).toLocaleString()}
                   </StyledTableCell>
                 </StyledTableRow>
               </TableBody>
@@ -844,6 +891,84 @@ const PeriodClosing = () => {
           <Divider sx={{ my: 3 }} />
         </>
       )}
+
+      {/* Company Profits Table */}
+      <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
+        جدول أرباح الشركة
+      </Typography>
+      <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
+        <Table>
+          <TableHead>
+            <StyledTableRow>
+              <StyledTableCell align="center">النوع</StyledTableCell>
+              <StyledTableCell align="center">الربح الإجمالي</StyledTableCell>
+              <StyledTableCell align="center">حصة المصروفات</StyledTableCell>
+              <StyledTableCell align="center">باقي أرباح الشركاء</StyledTableCell>
+              <StyledTableCell align="center">صافي الربح</StyledTableCell>
+              <StyledTableCell align="center">الإجمالي</StyledTableCell>
+            </StyledTableRow>
+          </TableHead>
+          <TableBody>
+            <StyledTableRow>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold' }}>
+                أرباح الشركة
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ color: '#2e7d32' }}>
+                {(periodData?.grossProfit?.companyTotal || 0).toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ color: '#d32f2f' }}>
+                -{(periodData?.expenseDistribution?.companyShare || 0).toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ color: '#ed6c02' }}>
+                +{(periodData?.centCollected || 0).toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#1976d2' }}>
+                {(periodData?.companyProfit || 0).toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1em' }}>
+                {((periodData?.companyProfit || 0) + (periodData?.centCollected || 0)).toLocaleString()}
+              </StyledTableCell>
+            </StyledTableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Total Summary Table */}
+      <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
+        الإجمالي العام
+      </Typography>
+      <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
+        <Table>
+          <TableHead>
+            <StyledTableRow>
+              <StyledTableCell align="center">النوع</StyledTableCell>
+              <StyledTableCell align="center">الأرباح الإجمالية</StyledTableCell>
+              <StyledTableCell align="center">المصروفات المخصومة</StyledTableCell>
+              <StyledTableCell align="center">صافي الأرباح</StyledTableCell>
+            </StyledTableRow>
+          </TableHead>
+          <TableBody>
+            <StyledTableRow style={{ backgroundColor: theme.palette.grey[100], borderTop: `2px solid ${theme.palette.primary.main}` }}>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
+                الإجمالي العام
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1em' }}>
+                {(periodData?.grossProfit?.total || 0).toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1em' }}>
+                -{(periodData?.expenseDistribution?.totalExpenses || 0).toLocaleString()}
+              </StyledTableCell>
+              <StyledTableCell align="center" style={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1em' }}>
+                {(periodData?.totalProfit || 0).toLocaleString()}
+              </StyledTableCell>
+            </StyledTableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Divider sx={{ my: 3 }} />
 
       {/* Journals */}
       <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">

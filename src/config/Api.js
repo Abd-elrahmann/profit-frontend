@@ -3,8 +3,8 @@ import {toast} from 'react-toastify'
 import i18next from 'i18next'
 
 const getBaseURL = () => {
-  //return "http://localhost:3000";
-  return "http://72.61.101.53:3003";
+  return "http://localhost:3000";
+  //return "http://72.61.101.53:3003";
 };
 
 const Api = axios.create({
@@ -14,19 +14,16 @@ const Api = axios.create({
   },
 })
 
-// Check if server changed and clear auth data if needed
 const checkServerChange = () => {
   const currentBaseURL = getBaseURL();
   const savedBaseURL = localStorage.getItem('api_baseURL');
   
   if (savedBaseURL && savedBaseURL !== currentBaseURL) {
-    // Server changed, clear all auth data
     console.warn('Server changed. Clearing authentication data...');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('profile');
     localStorage.removeItem('rememberedEmail');
-    // Clear all cached permissions
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -37,11 +34,9 @@ const checkServerChange = () => {
     keysToRemove.forEach(key => localStorage.removeItem(key));
   }
   
-  // Save current base URL
   localStorage.setItem('api_baseURL', currentBaseURL);
 };
 
-// Check server change on initialization
 checkServerChange();
 
 Api.interceptors.request.use(
@@ -63,13 +58,11 @@ Api.interceptors.response.use(
     const status = error?.response?.status;
     
     if (status === 401) {
-      // Clear all auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('profile');
       localStorage.removeItem('rememberedEmail');
       
-      // Clear all cached permissions
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
