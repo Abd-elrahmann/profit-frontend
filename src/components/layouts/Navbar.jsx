@@ -78,13 +78,13 @@ const Navbar = ({ onMenuToggle }) => {
             <MenuIcon />
           </IconButton>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
             <img
               src={Logo}
               alt="Logo"
               style={{
-                width: isMobile ? 28 : 34,
-                height: isMobile ? 28 : 34,
+                width: isMobile ? 24 : 28,
+                height: isMobile ? 24 : 28,
               }}
             />
             {!isMobile && (
