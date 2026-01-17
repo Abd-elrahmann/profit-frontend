@@ -10,7 +10,37 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Clean up old localStorage-based authentication
+    const cleanupOldAuth = () => {
+      const oldAuthKeys = [
+        'accessToken',
+        'refreshToken', 
+        'token',
+        'user',
+        'userData',
+        'auth',
+        'authToken',
+        'jwt'
+      ];
+      
+      oldAuthKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear sessionStorage as well
+      oldAuthKeys.forEach(key => {
+        if (sessionStorage.getItem(key)) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    };
+
     const initializeAuth = async () => {
+      // Clean up old authentication data first
+      cleanupOldAuth();
+      
       try {
         const response = await Api.post('/api/auth/refresh');
         
@@ -77,10 +107,15 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear all auth data
       setAccessToken(null);
       setApiAccessToken(null); // Clear token in Api.js
       setUser(null);
       setIsAuthenticated(false);
+      
+      // Clear any remaining localStorage/sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
     }
   }, []);
 
