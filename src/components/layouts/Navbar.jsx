@@ -72,7 +72,7 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
             aria-label="menu"
             onClick={onMenuToggle}
             sx={{
-              display: { xs: "block", md: isSidebarOpen ? "none" : "block" },
+              mr: 1,
             }}
           >
             <MenuIcon />
