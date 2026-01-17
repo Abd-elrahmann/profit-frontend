@@ -27,7 +27,7 @@ import { useTheme } from "../../theme/ThemeContext";
 import { useAuth } from "../Contexts/AuthContext";
 import Logo from "/assets/images/logo.webp";
 
-const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
+const Navbar = ({ onMenuToggle }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const { user, logout } = useAuth();
@@ -99,29 +99,56 @@ const Navbar = ({ onMenuToggle, isSidebarOpen }) => {
                 نظام إدارة السلف
               </Typography>
             )}
+            
+            {!isMobile && (
+              <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
+                <IconButton onClick={toggleTheme} color="inherit" size="small">
+                  {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
-            <IconButton onClick={toggleTheme} color="inherit">
-              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-          </Tooltip>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {!isMobile && user?.name && (
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 600,
+                color: isDarkMode ? "white" : "text.primary",
+              }}
+            >
+              {user.name}
+            </Typography>
+          )}
 
           <Tooltip title="الحساب">
             <IconButton onClick={handleUserMenuOpen} color="inherit">
-              {user?.profileImage ? (
-                <Avatar
-                  src={user.profileImage}
-                  alt={user.name}
-                  sx={{ width: 32, height: 32 }}
-                />
-              ) : (
-                <AccountCircle />
-              )}
+              <Avatar
+                src={user?.profileImage}
+                alt={user?.name}
+                sx={{ 
+                  width: 40, 
+                  height: 40,
+                  bgcolor: user?.profileImage ? 'transparent' : 'primary.main',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1.1rem'
+                }}
+              >
+                {!user?.profileImage && user?.name ? user.name.charAt(0).toUpperCase() : ''}
+              </Avatar>
             </IconButton>
           </Tooltip>
+          
+          {isMobile && (
+            <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
+              <IconButton onClick={toggleTheme} color="inherit" size="small">
+                {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+              </IconButton>
+            </Tooltip>
+          )}
 
           <Menu
             anchorEl={anchorEl}
