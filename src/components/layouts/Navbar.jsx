@@ -102,8 +102,8 @@ const Navbar = ({ onMenuToggle }) => {
             
             {!isMobile && (
               <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
-                <IconButton onClick={toggleTheme} color="inherit" size="small">
-                  {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+                <IconButton onClick={toggleTheme} color="inherit" size="small" sx={{ p: 0.5 }}>
+                  {isDarkMode ? <Brightness7 sx={{ fontSize: 20 }} /> : <Brightness4 sx={{ fontSize: 20 }} />}
                 </IconButton>
               </Tooltip>
             )}
@@ -112,15 +112,29 @@ const Navbar = ({ onMenuToggle }) => {
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {!isMobile && user?.name && (
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 600,
-                color: isDarkMode ? "white" : "text.primary",
-              }}
-            >
-              {user.name}
-            </Typography>
+            <Box sx={{ textAlign: 'right', mr: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: isDarkMode ? "rgba(255,255,255,0.7)" : "text.secondary",
+                  fontSize: '0.85rem',
+                  lineHeight: 1.2,
+                }}
+              >
+                مرحباً
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: 600,
+                  color: 'primary.main',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.2,
+                }}
+              >
+                {user.name}
+              </Typography>
+            </Box>
           )}
 
           <Tooltip title="الحساب">
@@ -144,8 +158,8 @@ const Navbar = ({ onMenuToggle }) => {
           
           {isMobile && (
             <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
-              <IconButton onClick={toggleTheme} color="inherit" size="small">
-                {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+              <IconButton onClick={toggleTheme} color="inherit" size="small" sx={{ p: 0.5 }}>
+                {isDarkMode ? <Brightness7 sx={{ fontSize: 20 }} /> : <Brightness4 sx={{ fontSize: 20 }} />}
               </IconButton>
             </Tooltip>
           )}
