@@ -26,7 +26,6 @@ const LoanStats = React.memo(() => {
   const { isDarkMode } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Custom tooltip for dark mode compatibility
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -60,7 +59,6 @@ const LoanStats = React.memo(() => {
     queryFn: () => getLoanStats(filter),
   });
 
-  // Animated counters
   const animatedLoansCount = useCountUp(stats?.loans?.count || 0, 600, !isLoading);
   const animatedTotalAmount = useCountUp(stats?.loans?.totalAmount || 0, 600, !isLoading);
   const animatedActiveLoans = useCountUp(stats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
@@ -68,12 +66,10 @@ const LoanStats = React.memo(() => {
   const animatedOverdueLoans = useCountUp(stats?.loans?.byStatus?.OVERDUE || 0, 600, !isLoading);
   const animatedBankBalance = useCountUp(stats?.bank?.balance || 0, 600, !isLoading);
 
-  // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || '0';
   };
 
-  // Prepare data for charts - memoized for performance
   const statusData = useMemo(() => {
     if (!stats?.loans?.byStatus) return [];
 
@@ -104,7 +100,6 @@ const LoanStats = React.memo(() => {
     }));
   }, [stats?.loans?.byStatus, theme.palette]);
 
-  // Prepare data for bar chart - loans by status (count only) - memoized
   const loanStatusBarData = useMemo(() => {
     if (statusData.length === 0) return [];
     return statusData.map(item => ({
@@ -114,7 +109,6 @@ const LoanStats = React.memo(() => {
     }));
   }, [statusData]);
 
-  // Prepare summary data - separate charts for count and amount - memoized
   const summaryCountData = useMemo(() => [
     {
       name: 'إجمالي السلف',
@@ -157,7 +151,6 @@ const LoanStats = React.memo(() => {
       flexDirection: 'column', 
       alignItems: 'center',
     }}>
-      {/* Filter */}
       <Box sx={{
         display: 'flex',
         justifyContent: 'center',
@@ -191,9 +184,7 @@ const LoanStats = React.memo(() => {
         </FormControl>
       </Box>
 
-      {/* Summary Cards */}
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
-        {/* إجمالي السلف */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -264,7 +255,6 @@ const LoanStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* سلف نشطة */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -335,7 +325,6 @@ const LoanStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* سلف مكتملة */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -406,7 +395,6 @@ const LoanStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* سلف متأخرة */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -477,7 +465,6 @@ const LoanStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* إجمالي مبلغ السلف */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -548,7 +535,6 @@ const LoanStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* رصيد البنك */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -620,7 +606,6 @@ const LoanStats = React.memo(() => {
         </Grid>
       </Grid>
 
-      {/* Bar Charts with 100vw width */}
       {loanStatusBarData.length > 0 && (
         <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
           <Card sx={{
@@ -727,7 +712,6 @@ const LoanStats = React.memo(() => {
         </Card>
       </Box>
 
-      {/* Pie Chart with 100vw width */}
       {statusData.length > 0 && (
         <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
           <Card sx={{

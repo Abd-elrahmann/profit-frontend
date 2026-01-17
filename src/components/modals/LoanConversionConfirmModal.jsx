@@ -24,7 +24,7 @@ const LoanConversionConfirmModal = ({
   selectedKafeel,
   remainingAmount,
   isLoading,
-  transferType = "full", // "full" or "partial"
+  transferType = "full",
   partialAmount,
   onPartialAmountChange,
   maxPartialAmount,
@@ -50,10 +50,8 @@ const LoanConversionConfirmModal = ({
 
   const isPartialValid = transferType === "full" || (localPartialAmount && parseFloat(localPartialAmount.replace(/,/g, "")) > 0);
 
-  // Calculate reference amount (remaining amount for both partial and full transfer)
   const referenceAmount = parseFloat(String(remainingAmount || "0").replace(/,/g, ""));
 
-  // Calculate actual remaining amount after partial transfer
   const actualRemainingAmount = transferType === "partial" && localPartialAmount
     ? referenceAmount - parseFloat(localPartialAmount.replace(/,/g, ""))
     : referenceAmount;
@@ -89,9 +87,7 @@ const LoanConversionConfirmModal = ({
             </Typography>
           </Alert>
 
-          {/* Current and New Client Info - Same Row */}
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2, mb: 3, flexWrap: "wrap" }}>
-            {/* Current Client Info */}
             <Paper
               sx={{
                 p: 2,
@@ -131,12 +127,10 @@ const LoanConversionConfirmModal = ({
               </Grid>
             </Paper>
 
-            {/* Arrow */}
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: 1 }}>
               <FaExchangeAlt size={32} color="#1976d2" />
             </Box>
 
-            {/* New Client Info */}
             <Paper
               sx={{
                 p: 2,
@@ -177,7 +171,6 @@ const LoanConversionConfirmModal = ({
             </Paper>
           </Box>
 
-          {/* Selected Kafeel Info - Show if kafeel is selected */}
           {selectedKafeel && (
             <Paper
               sx={{
@@ -219,7 +212,6 @@ const LoanConversionConfirmModal = ({
             </Paper>
           )}
 
-          {/* Partial Amount Input - Only show for partial transfer */}
           {transferType === "partial" && (
             <Paper
               sx={{
@@ -258,7 +250,6 @@ const LoanConversionConfirmModal = ({
             </Paper>
           )}
 
-          {/* Loan and Amount Info */}
           <Paper
             sx={{
               p: 2,
@@ -299,8 +290,7 @@ const LoanConversionConfirmModal = ({
               )}
             </Grid>
           </Paper>
-
-          {/* Important Notes */}
+              
           <Alert severity="info" sx={{ minWidth: 800, maxWidth: 800, width: '100%' }}>
             <Typography variant="body2" fontWeight="bold" mb={1}>
               ملاحظات مهمة:

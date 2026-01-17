@@ -5,7 +5,6 @@ import Api, { handleApiError } from '../config/Api';
 import { notifySuccess, notifyError } from '../utilities/toastify';
 
 const numberToArabicWords = (num) => {
-  // Handle null, undefined, or invalid numbers
   if (num === null || num === undefined || isNaN(num)) {
     return 'صفر';
   }
@@ -21,7 +20,6 @@ const numberToArabicWords = (num) => {
   let result = '';
   let hasThousands = false;
 
-  // الملايين
   if (num >= 1000000) {
     const millionsPart = Math.floor(num / 1000000);
     if (millionsPart === 1) {
@@ -36,7 +34,6 @@ const numberToArabicWords = (num) => {
     num %= 1000000;
   }
 
-  // الآلاف
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
     if (thousandsPart === 1) {
@@ -48,17 +45,14 @@ const numberToArabicWords = (num) => {
     } else if (thousandsPart === 10) {
       result += 'عشرة آلاف ';
     } else if (thousandsPart >= 11 && thousandsPart <= 999) {
-      // أي رقم بين 11 و 999
       result += numberToArabicWords(thousandsPart) + ' ألف ';
     } else {
-      // أي رقم أكبر من أو يساوي 1000 (مليون أو أكثر)
       result += numberToArabicWords(thousandsPart) + ' ألف ';
     }
     num %= 1000;
     hasThousands = true;
   }
 
-// Handle hundreds
 if (num >= 100) {
   const hundredsPart = Math.floor(num / 100);
 
@@ -75,7 +69,6 @@ if (num >= 100) {
   if (num > 0 && hundredsPart > 0) result += " ";
 }
 
-  // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
@@ -122,21 +115,17 @@ if (num >= 100) {
 };
 
 const getCurrentDates = () => {
-  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
 
-  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
   const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
-  // التاريخ الميلادي
   const gregorianDate = today.toLocaleDateString('ar-EG', {
     day: 'numeric',
     month: 'numeric',
     year: 'numeric'
   });
 
-  // التاريخ الهجري
   const hijriDate = today.toLocaleDateString('ar-SA-u-ca-islamic-umalqura', {
     day: 'numeric',
     month: 'numeric',
@@ -157,7 +146,6 @@ const ContractGenerator = React.forwardRef(({
   const [contractHtml, setContractHtml] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Generate filled contract from template
   const generateContract = useCallback(async (forPDF = false) => {
     if (!investorData || !templateContent) {
       const errorMsg = 'بيانات المستثمر أو قالب العقد غير متوفر';
@@ -167,7 +155,6 @@ const ContractGenerator = React.forwardRef(({
       return forPDF ? '' : undefined;
     }
 
-    // Validate required fields
     if (!investorData.name || investorData.capitalAmount === undefined || investorData.capitalAmount === null) {
       const errorMsg = 'بيانات المستثمر غير كاملة (الاسم أو رأس المال مفقود)';
       if (!forPDF) {
@@ -181,17 +168,14 @@ const ContractGenerator = React.forwardRef(({
       const capitalAmount = Number(investorData.capitalAmount) || 0;
       const capitalInWords = `${numberToArabicWords(capitalAmount)} ريال`;
     
-      // حساب النسب الديناميكية
       const orgProfitPercent = investorData.orgProfitPercent || 0;
       const partnerProfitPercent = 100 - orgProfitPercent;
-      // إصلاح النقطة الرابعة: إزالة العلامة العشرية إذا كان الرقم صحيح
       const orgProfitDivided = (orgProfitPercent / 2);
       const formattedOrgProfitDivided = orgProfitDivided % 1 === 0 ? 
         orgProfitDivided.toString() : 
         orgProfitDivided.toFixed(1);
 
       let filledTemplate = templateContent
-        // معلومات المستثمر الأساسية
         .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
         .replace(/{{اسم_رب_المال_النسبة}}/g, investorData.name || '')
         .replace(/{{هوية_رب_المال}}/g, investorData.nationalId || '')
@@ -202,27 +186,21 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{هاتف_العميل}}/g, investorData.phone || '')
         .replace(/{{بريد_العميل}}/g, investorData.email || '')
 
-        // المعلومات المالية - إصلاح النقطة الثالثة
-        // تحويل المبلغ إلى تنسيق إنجليزي
         .replace(/{{رأس_المال}}/g, capitalAmount.toLocaleString('en-US') || '0')
         .replace(/{{المبلغ_رقما}}/g, capitalAmount.toLocaleString('en-US') || '0')
         
-        // إصلاح النقطة الثالثة: تحويل "مائة" إلى "مئة"
         .replace(/{{رأس_المال_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
         .replace(/{{المبلغ_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
         
-        // النسب الديناميكية - إصلاح النقطة الرابعة
         .replace(/{{نسبة_أرباح_المنشأة}}/g, String(orgProfitPercent || '0'))
         .replace(/{{نسبة_أرباح_المستثمر}}/g, String(partnerProfitPercent || '0'))
         .replace(/{{نسبة_أرباح_المنشأة_مقسمة}}/g, String(formattedOrgProfitDivided))
 
-        // بقية الاستبدالات...
         .replace(/{{التاريخ_الهجري}}/g, hijriDate)
         .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
         .replace(/{{تاريخ_العقد_هجري}}/g, hijriDate)
         .replace(/{{تاريخ_العقد_ميلادي}}/g, gregorianDate)
 
-        // معلومات المضاربين (ثابتة)
         .replace(/{{اسم_المضارب_1}}/g, 'ربيش سالم ناصر الهمامي')
         .replace(/{{هوية_المضارب_1}}/g, '1116369545')
         .replace(/{{عنوان_المضارب_1}}/g, 'المملكة العربية السعودية - شرورة')
@@ -232,7 +210,6 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{مدينة_العقد}}/g, investorData.city || 'الرياض')
         .replace(/{{مدينة_العقد_الثابتة}}/g, 'الرياض')
 
-        // معلومات إضافية للعقود الأخرى
         .replace(/{{اسم_الدائن}}/g, investorData.name || '')
         .replace(/{{اسم_المدين}}/g, investorData.name || '')
         .replace(/{{رقم_السند}}/g, '')
@@ -244,12 +221,10 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{قيمة_السند_رقما}}/g, capitalAmount.toLocaleString('en-US') || '0')
         .replace(/{{قيمة_السند_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'));
 
-      // إذا كان للـ PDF، ارجع HTML مباشرة
       if (forPDF) {
         return filledTemplate;
       }
 
-      // وإلا قم بتحديث state وعرض المعاينة
       setContractHtml(filledTemplate);
       setShowPreview(true);
       return filledTemplate;
@@ -260,7 +235,6 @@ const ContractGenerator = React.forwardRef(({
     }
   }, [investorData, templateContent]);
 
-  // Upload PDF to server
   const uploadPDFToServer = useCallback(async (pdfBlob) => {
     if (!investorData || !investorData.id) {
       throw new Error('بيانات المستثمر غير كاملة');
@@ -272,7 +246,6 @@ const ContractGenerator = React.forwardRef(({
       formData.append('investorId', investorData.id);
       formData.append('contractType', contractType);
 
-      // Include profit percentages for reference
       formData.append('partnerProfitPercent', 100 - (investorData.orgProfitPercent || 0));
       formData.append('orgProfitPercent', investorData.orgProfitPercent || 0);
 
@@ -289,7 +262,6 @@ const ContractGenerator = React.forwardRef(({
     }
   }, [investorData, contractType]);
 
-  // Generate PDF from HTML
   const generatePDF = useCallback(async () => {
     if (!investorData || !templateContent) {
       notifyError('بيانات المستثمر أو قالب العقد غير متوفر');
@@ -298,7 +270,6 @@ const ContractGenerator = React.forwardRef(({
 
     setLoading(true);
     try {
-      // Regenerate contract HTML for PDF generation
       const finalContractHtml = await generateContract(true);
       
       if (!finalContractHtml || finalContractHtml.trim() === '') {
@@ -312,11 +283,9 @@ const ContractGenerator = React.forwardRef(({
         throw new Error('عنصر معاينة العقد غير موجود');
       }
 
-      // Update the preview with the final contract HTML
       element.innerHTML = finalContractHtml;
 
 
-      // PDF generation options
       const options = {
         margin: 0,
         filename: `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`,
@@ -337,13 +306,11 @@ const ContractGenerator = React.forwardRef(({
         }
       };
 
-      // Generate PDF blob
       const pdfBlob = await html2pdf()
         .from(element)
         .set(options)
         .outputPdf('blob');
 
-      // Upload PDF to server
       await uploadPDFToServer(pdfBlob);
 
       notifySuccess('تم إنشاء وحفظ العقد بنجاح');
@@ -359,9 +326,9 @@ const ContractGenerator = React.forwardRef(({
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer, generateContract]);
-
-  // Expose generateContract method through ref
+ 
   React.useImperativeHandle(ref, () => ({
     generateContract
   }));
@@ -371,8 +338,7 @@ const ContractGenerator = React.forwardRef(({
       <ContractPreview
         open={showPreview}
         onClose={() => {
-          setShowPreview(false);
-          // استدعاء callback لإغلاق dialog إضافة المستثمر إذا كان موجوداً
+          setShowPreview(false);  
           if (onPreviewClose) {
             onPreviewClose();
           }

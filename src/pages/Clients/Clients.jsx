@@ -186,10 +186,8 @@ export default function Clients() {
     return response.data;
   };
 
-  // Add this state with other states
   const [loansPage, setLoansPage] = useState(1);
 
-  // Add this query with other queries
   const { data: clientLoans } = useQuery({
     queryKey: ["client-loans", selectedClient?.id, loansPage],
     queryFn: () =>
@@ -198,7 +196,6 @@ export default function Clients() {
     retry: 1,
   });
 
-  // Add this function with other handlers
   const handleLoansPageChange = (event, newPage) => {
     setLoansPage(newPage);
   };
@@ -217,7 +214,6 @@ export default function Clients() {
       case "DEFAULTED":
         return "error";
       default:
-        // Arabic labels fallback
         switch (normalized) {
           case "نشط":
             return "success";
@@ -294,7 +290,7 @@ export default function Clients() {
     } else if (field === "to") {
       setToDate(value);
     }
-    setStatementPage(1); // Reset to first page when filtering
+    setStatementPage(1);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -305,8 +301,8 @@ export default function Clients() {
     setSelectedClient(client);
     setEditMode(false);
     setSelectedKafeelId(null);
-    setStatementPage(1); // Reset statement pagination when selecting new client
-    setFromDate(""); // Reset date filters
+    setStatementPage(1);
+    setFromDate("");
     setToDate("");
   };
 
@@ -339,7 +335,6 @@ export default function Clients() {
         const kafeelIdToUse =
           kafeelIdOverride !== null ? kafeelIdOverride : selectedKafeelId;
         if (kafeelIdToUse) {
-          // Update specific kafeel
           const kafeelIdToUpdate = Number(kafeelIdToUse);
 
           await Api.patch(
@@ -348,7 +343,6 @@ export default function Clients() {
           );
           notifySuccess("تم تحديث بيانات الكفيل بنجاح");
         } else if (clientDetails.kafeel) {
-          // Update single kafeel (old format)
           await Api.patch(
             `/api/clients/${selectedClient.id}/kafeel-data`,
             kafeelFormData
@@ -357,18 +351,15 @@ export default function Clients() {
         }
       }
 
-      // Reset form data after successful save
       setKafeelFormData({});
       setEditMode(false);
       setSelectedKafeelId(null);
 
-      // Invalidate and refetch client details to get updated data
       queryClient.invalidateQueries({
         queryKey: ["client-details", selectedClient.id],
       });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
 
-      // Refetch client details immediately
       if (selectedClient?.id) {
         await refetchClientDetails();
       }
@@ -417,18 +408,15 @@ export default function Clients() {
       setIsDeleteKafeelModalOpen(false);
       setKafeelToDelete(null);
 
-      // Invalidate and refetch client details to get updated data
       queryClient.invalidateQueries({
         queryKey: ["client-details", selectedClient.id],
       });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
 
-      // Refetch client details immediately
       if (selectedClient?.id) {
         await refetchClientDetails();
       }
 
-      // Reset edit mode if we were editing this kafeel
       if (selectedKafeelId === kafeelId) {
         setEditMode(false);
         setSelectedKafeelId(null);
@@ -460,7 +448,6 @@ export default function Clients() {
     }
   };
 
-  // دالة للتحقق إذا كان الملف صورة
   const isImageFile = (url) => {
     if (!url) return false;
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
@@ -468,7 +455,6 @@ export default function Clients() {
     return imageExtensions.some(ext => lowerUrl.includes(ext));
   };
 
-  // دالة لعرض المعاينة المصغرة
   const renderFileThumbnail = (fileUrl, label) => {
     if (!fileUrl) return null;
     
@@ -493,7 +479,6 @@ export default function Clients() {
         />
       );
     } else {
-      // عرض أيقونة للملفات غير الصور (PDF, etc.)
       return (
         <Box
           sx={{
@@ -537,12 +522,10 @@ export default function Clients() {
           files: [file],
         });
       } else {
-        // Check if clipboard API is available before using it
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(fileUrl);
           notifySuccess("تم نسخ رابط الملف لأن المشاركة غير مدعومة");
         } else {
-          // Fallback: try to use the older execCommand method
           const textArea = document.createElement('textarea');
           textArea.value = fileUrl;
           document.body.appendChild(textArea);
@@ -869,7 +852,6 @@ export default function Clients() {
             })
           )}
 
-          {/* Pagination */}
           {clientsData && clientsData.totalPages > 1 && (
             <Box
               sx={{
@@ -881,7 +863,6 @@ export default function Clients() {
                 bgcolor: isDarkMode ? 'background.paper' : '#fafafa',
               }}
             >
-              {/* Previous Button */}
               <Button
                 variant="outlined"
                 size="small"
@@ -898,7 +879,6 @@ export default function Clients() {
                 السابق
               </Button>
 
-              {/* Page Numbers */}
               <Pagination
                 count={clientsData.totalPages}
                 page={currentPage}
@@ -914,7 +894,6 @@ export default function Clients() {
                 }}
               />
 
-              {/* Next Button */}
               <Button
                 variant="outlined"
                 size="small"
@@ -1006,7 +985,6 @@ export default function Clients() {
               <Tab label="كشف حساب" />
               <Tab label="السلفات" />
             </Tabs>
-            {/* الملف الشخصي */}
             {tab === 0 && (
               <Box>
                 <Paper sx={{ p: 3, mb: 3 }}>
@@ -2150,16 +2128,14 @@ export default function Clients() {
                     {clientDetails.documents &&
                     clientDetails.documents.length > 0 ? (
                       (() => {
-                        // تصنيف المرفقات حسب نوعها
                         const clientGeneralDocs = [];
                         const loanDocsById = {};
 
                         clientDetails.documents.forEach((doc, docIndex) => {
                           Object.entries(doc).forEach(([key, value]) => {
                             if (value) {
-                              if (key === 'loanId') return; // تجاهل loanId نفسه
+                              if (key === 'loanId') return;
 
-                              // مرفقات العميل العامة
                               if (['clientIdImage', 'clientWorkCard', 'salaryReport', 'simaReport'].includes(key)) {
                                 clientGeneralDocs.push({
                                   key,
@@ -2168,7 +2144,6 @@ export default function Clients() {
                                   index: docIndex
                                 });
                               }
-                              // مرفقات السلفات
                               else if (['DEBT_ACKNOWLEDGMENT', 'PROMISSORY_NOTE', 'SETTLEMENT'].includes(key)) {
                                 const loanId = doc.loanId || 'unknown';
                                 if (!loanDocsById[loanId]) {
@@ -2208,10 +2183,8 @@ export default function Clients() {
                               }}
                               elevation={2}
                             >
-                              {/* معاينة الملف */}
                               {renderFileThumbnail(doc.value, clientDocumentTypes[docType])}
 
-                              {/* اسم المستند وأزرار العمليات */}
                               <Box sx={{ mt: 2 }}>
                                 <Box
                                   display="flex"
@@ -2228,7 +2201,6 @@ export default function Clients() {
                                   </Typography>
                                 </Box>
 
-                                {/* أزرار العمليات */}
                                 {permissions.includes("clients_Export") && (
                                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
                                     <IconButton
@@ -2275,7 +2247,6 @@ export default function Clients() {
 
                         return (
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {/* مرفقات العميل العامة */}
                             {clientGeneralDocs.length > 0 && (
                               <Box>
                                 <Typography variant="h6" color="primary" mb={3} textAlign="center" fontWeight="bold">
@@ -2287,7 +2258,6 @@ export default function Clients() {
                               </Box>
                             )}
 
-                            {/* مرفقات السلفات */}
                             {Object.keys(loanDocsById).length > 0 && (
                               <Box>
                                 <Typography variant="h6" color="primary" mb={3} textAlign="center" fontWeight="bold">
@@ -2332,7 +2302,6 @@ export default function Clients() {
                   </Box>
                 )}
 
-                {/* Kafeel Documents Tab */}
                 {documentsTab === 1 && (
                   <Box>
                     {clientDetails.kafeels &&
@@ -2401,10 +2370,8 @@ export default function Clients() {
                                         }}
                                         elevation={2}
                                       >
-                                        {/* معاينة الملف */}
                                         {renderFileThumbnail(doc.value, doc.label)}
                                         
-                                        {/* اسم المستند وأزرار العمليات */}
                                         <Box sx={{ mt: 2 }}>
                                           <Box
                                             display="flex"
@@ -2421,7 +2388,6 @@ export default function Clients() {
                                             </Typography>
                                           </Box>
 
-                                          {/* أزرار العمليات */}
                                           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
                                             <IconButton
                                               size="small"

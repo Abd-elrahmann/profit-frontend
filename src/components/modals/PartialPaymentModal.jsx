@@ -47,7 +47,6 @@ const PartialPaymentModal = ({
       return `مبلغ الدفع يجب أن يكون أقل من أو يساوي المبلغ المتبقي (${remaining.toFixed(2)} ريال)`;
     }
 
-    // Don't allow payment less than 1 riyal for partial payments
     if (remaining > 1 && amount < 1) {
       return "مبلغ الدفع الجزئي يجب أن يكون على الأقل 1 ريال";
     }
@@ -58,11 +57,9 @@ const PartialPaymentModal = ({
   const handleAmountChange = (e) => {
     const value = e.target.value;
 
-    // Allow only numbers and decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       onAmountChange(e);
-
-      // Clear error when user starts typing
+      
       if (amountError) {
         setAmountError("");
       }

@@ -18,7 +18,6 @@ const CheckConnection = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Sync initial state in case the browser was already offline
     setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
     return () => {

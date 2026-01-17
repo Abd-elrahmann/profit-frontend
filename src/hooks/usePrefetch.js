@@ -1,11 +1,9 @@
 import { useCallback, useRef } from 'react';
 
-// Prefetch hook for better UX - caches prefetched modules
 export const usePrefetch = () => {
   const prefetchedPages = useRef(new Set());
 
   const prefetchPage = useCallback(async (pageName) => {
-    // Don't prefetch if already prefetched
     if (prefetchedPages.current.has(pageName)) {
       return;
     }
@@ -88,7 +86,6 @@ export const usePrefetch = () => {
           break;
       }
 
-      // Mark as prefetched
       prefetchedPages.current.add(pageName);
 
     } catch (error) {
@@ -96,14 +93,12 @@ export const usePrefetch = () => {
     }
   }, []);
 
-  // Prefetch common pages on app start
   const prefetchCommonPages = useCallback(() => {
-    // Prefetch most commonly used pages after a delay
     setTimeout(() => {
       prefetchPage('dashboard');
       prefetchPage('clients');
       prefetchPage('loans');
-    }, 2000); // Wait 2 seconds after app load
+    }, 2000);
   }, [prefetchPage]);
 
   return { prefetchPage, prefetchCommonPages };

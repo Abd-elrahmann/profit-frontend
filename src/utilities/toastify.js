@@ -28,14 +28,11 @@ export const notifyError = (msg) => {
 }
 export const notifyWarning = (msg) => {
   toast(msg, {
-    icon: '⚠️', // You can use any suitable warning icon
+    icon: '⚠️',
     duration: 3000,
     position: 'top-center',
     style: {
-      // border: '1px solid var(--warning-color)', // Customize the color variable as needed
       padding: '16px',
-      // color: 'var(--warning-color)', // Make sure this color matches your theme
-      // backgroundColor: '#FFFBEA', // Light yellow or any background color you prefer for warnings
     },
   });
 };

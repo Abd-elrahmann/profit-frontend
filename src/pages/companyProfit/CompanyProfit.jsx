@@ -58,7 +58,7 @@ export default function CompanyProfit() {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      .format("D [من] MMMM [الساعة] h:mm")
       + " "
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };

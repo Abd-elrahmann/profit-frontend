@@ -78,15 +78,13 @@ import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportRepaymentsToPDF, exportRepaymentsToExcel } from "../../utilities/repaymentsExporter";
 
-// Helper function to download files properly
 const downloadFile = async (url, filename) => {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = blobUrl;
-    // Decode URL encoded filename for proper download
+    link.href = blobUrl;  
     try {
       link.download = decodeURIComponent(filename);
     } catch {
@@ -107,7 +105,6 @@ const handleShareFile = async (fileUrl, filename) => {
     const response = await fetch(fileUrl);
     const blob = await response.blob();
 
-    // Decode filename for proper display
     const decodedFilename = decodeURIComponent(filename);
     const file = new File([blob], decodedFilename, { type: blob.type });
 
@@ -118,7 +115,6 @@ const handleShareFile = async (fileUrl, filename) => {
         files: [file],
       });
     } else {
-      // Fallback: copy URL to clipboard
       await navigator.clipboard.writeText(fileUrl);
       notifySuccess('تم نسخ رابط الملف إلى الحافظة');
     }
@@ -178,10 +174,9 @@ const Installments = () => {
 
   const handleChangePage = (event, value) => {
     setPage(value);
-    setSelectedInstallments([]); // Clear selection when changing page
+    setSelectedInstallments([]);
   };
 
-  // Handle individual installment selection
   const handleInstallmentSelect = (installmentId) => {
     setSelectedInstallments(prev =>
       prev.includes(installmentId)
@@ -190,7 +185,6 @@ const Installments = () => {
     );
   };
 
-  // Handle select all installments
   const handleSelectAll = () => {
     if (selectedInstallments.length === sortedInstallments.length) {
       setSelectedInstallments([]);
@@ -199,14 +193,12 @@ const Installments = () => {
     }
   };
 
-  // Bulk approve installments - now generates single payment proof
   const handleBulkApprove = async () => {
     if (selectedInstallments.length === 0) {
       notifyError("يرجى اختيار الدفعات المراد اعتمادها");
       return;
     }
 
-    // Check if any selected installments are already paid or completed
     const installmentsToApprove = sortedInstallments.filter(installment =>
       selectedInstallments.includes(installment.id)
     );
@@ -218,11 +210,9 @@ const Installments = () => {
     }
 
     try {
-      // Fetch receipt number from backend for preview
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
 
-      // Generate bulk payment proof HTML first
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const bulkProofHtml = await paymentProofGeneratorRef.current.generateContract(
@@ -244,14 +234,12 @@ const Installments = () => {
     }
   };
 
-  // Bulk reject installments
   const handleBulkReject = async () => {
     if (selectedInstallments.length === 0) {
       notifyError("يرجى اختيار الدفعات المراد رفضها");
       return;
     }
 
-    // Check if any selected installments are completed (can't reject completed ones)
     const installmentsToReject = sortedInstallments.filter(installment =>
       selectedInstallments.includes(installment.id)
     );
@@ -346,12 +334,10 @@ const Installments = () => {
     return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
   });
 
-  // Handle row click
   const handleRowClick = (installment) => {
     setSelectedInstallment(installment);
     setActiveInstallmentId(installment.id);
 
-    // Set active step based on installment status and attachments
     if (installment.status === "PAID") {
       setActiveStep(2);
     } else if (installment.attachments && installment.attachments.length > 0) {
@@ -361,7 +347,6 @@ const Installments = () => {
     }
   };
 
-  // Auto-select installment with pending documents for review
   useEffect(() => {
     const installmentWithDocuments = sortedInstallments.find(
       (inst) =>
@@ -376,12 +361,10 @@ const Installments = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
 
-  // Reset settlement flag when loan changes
   useEffect(() => {
     setSettlementJustSaved(false);
   }, [loanId]);
 
-  // Auto-open settlement preview when all installments are paid
   useEffect(() => {
     if (
       sortedInstallments.length > 0 &&
@@ -409,7 +392,6 @@ const Installments = () => {
       setDiscountModalOpen(false);
       setSelectedProofInstallment(discountInstallment);
 
-      // Fetch receipt number from backend for preview
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
 
@@ -439,7 +421,6 @@ const Installments = () => {
     try {
       setIsGeneratingProof(true);
 
-      // Fetch receipt number from backend
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
 
@@ -453,7 +434,7 @@ const Installments = () => {
           employeeName: defaultEmployeeName,
           discount: confirmedDiscount.discount,
           receiptNumber: receiptNumber,
-        }, true); // true = isForSaving
+        }, true);
 
       await paymentProofGeneratorRef.current.generatePDF(finalProofHtml);
 
@@ -470,19 +451,17 @@ const Installments = () => {
       setSelectedProofInstallment(null);
       setActiveStep(2);
 
-      // Reset after successful approval
       setTimeout(() => {
         setActiveStep(0);
         setSelectedInstallment(null);
         setActiveInstallmentId(null);
       }, 2000);
 
-      // إعادة تحميل البيانات للتأكد من عرض الملف المحدث
       setTimeout(() => {
         queryClient.invalidateQueries(["loan", loanId]);
         queryClient.invalidateQueries(["repayments", loanId]);
         queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
-      }, 400); // انتظار ثانية واحدة للتأكد من حفظ الملف والخصم
+      }, 400);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال");
     } finally {
@@ -494,7 +473,6 @@ const Installments = () => {
     try {
       setIsGeneratingBulkProof(true);
 
-      // Fetch receipt number from backend
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
 
@@ -511,17 +489,16 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
           receiptNumber: receiptNumber,
-        }, true); // true = isForSaving
+        }, true);
 
       await paymentProofGeneratorRef.current.generatePDF(
         finalBulkProofHtml,
-        true, // isBulkOperation
-        selectedInstallments // installmentIds
+        true,
+        selectedInstallments
       );
 
       notifySuccess("تم حفظ إيصال السداد المجمع بنجاح");
 
-      // Now approve all selected installments
       await approveMultipleRepayments(selectedInstallments, null, "تمت الموافقة على الدفعات المجمعة");
 
       setBulkPaymentProofModalOpen(false);
@@ -669,33 +646,27 @@ const Installments = () => {
   };
 
   const allInstallmentsPaid = () => {
-    // Check using pagination data from API to ensure ALL repayments across ALL pages are paid
     const totalRepayments = loanData?.pagination?.totalRepayments || 0;
     const paidRepayments = loanData?.pagination?.paidRepayments || 0;
     
-    // If we have pagination data, use it to check if all repayments are paid
     if (totalRepayments > 0) {
       return paidRepayments === totalRepayments;
     }
     
-    // Fallback to checking current page only (for backward compatibility)
     return sortedInstallments.every(
       (installment) => installment.status === "PAID" || installment.status === "EARLY_PAID"
     );
   };
 
-  // Check if settlement is already completed
   const isSettlementCompleted = () => {
     return loanData?.SETTLEMENT !== null && loanData?.SETTLEMENT !== undefined;
   };
-  // Check if there's early payment
   const hasEarlyPayment = () => {
     return sortedInstallments.some(
       (installment) =>
         installment.status === "PENDING" && installment.status === "EARLY_PAID"
     );
   };
-  // Check if actions should be disabled
   const shouldDisableActions = () => {
     return isSettlementCompleted() || hasEarlyPayment();
   };
@@ -708,7 +679,6 @@ const Installments = () => {
 
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
-      // حساب المبلغ من الدفعات المدفوعة
       const paidInstallments = sortedInstallments.filter(
         inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
       );
@@ -722,7 +692,6 @@ const Installments = () => {
           installmentData: lastInstallment,
           loanData: {
             ...loanData,
-            // إضافة المبلغ المحسوب من الدفعات إذا كانت البيانات غير محدثة
             calculatedSettlementAmount: totalPaidFromInstallments,
             allInstallments: sortedInstallments,
           },
@@ -732,7 +701,6 @@ const Installments = () => {
 
       setSettlementHtml(settlementHtml);
       setSettlementModalOpen(true);
-      // إعادة تعيين علامة الإغلاق اليدوي عند فتح المودال تلقائياً
       setSettlementManuallyClosed(false);
 
       setIsGeneratingSettlement(false);
@@ -750,7 +718,6 @@ const Installments = () => {
       const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
   
-      // حساب المبلغ من الدفعات المدفوعة
       const paidInstallments = sortedInstallments.filter(
         inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
       );
@@ -764,32 +731,28 @@ const Installments = () => {
           installmentData: lastInstallment,
           loanData: {
             ...loanData,
-            // إضافة المبلغ المحسوب من الدفعات إذا كانت البيانات غير محدثة
             calculatedSettlementAmount: totalPaidFromInstallments,
             allInstallments: sortedInstallments,
           },
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
-        }, true); // true = isForSaving
+        }, true);
   
       await settlementReceiptRef.current.generatePDF(finalSettlementHtml);
   
       notifySuccess("تم حفظ سند التسوية بنجاح");
   
-      // إغلاق الدايلوج فوراً بعد الحفظ الناجح
+    
       setSettlementModalOpen(false);
 
-      // تعيين علامة منع إعادة فتح الموديل تلقائياً
-      setSettlementJustSaved(true);
+      setSettlementJustSaved(true); 
 
-      // إظهار رسالة النجاح الثانية بعد إغلاق الموديل
       setTimeout(() => {
         notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
       }, 300);
 
       queryClient.invalidateQueries(["loan", loanId]);
 
-      // إعادة تعيين العلامة بعد تحديث البيانات
       setTimeout(() => {
         setSettlementJustSaved(false);
       }, 2000);
@@ -804,7 +767,6 @@ const Installments = () => {
     }
   };
 
-  // Export functions - Fetch all repayments from all pages
   const fetchAllRepayments = async () => {
     const allRepayments = [];
     let currentPage = 1;
@@ -814,7 +776,6 @@ const Installments = () => {
     while (hasMorePages) {
       const pageData = await getLoanById(loanId, currentPage, limit);
       
-      // Store loan info from first page
       if (currentPage === 1) {
         loanInfo = pageData;
       }
@@ -822,7 +783,6 @@ const Installments = () => {
       if (Array.isArray(pageData?.repayments) && pageData.repayments.length > 0) {
         allRepayments.push(...pageData.repayments);
         
-        // Check if there are more pages
         const totalPages = pageData?.pagination?.totalPages || 
           (pageData?.pagination?.totalRepayments && limit
             ? Math.ceil(pageData.pagination.totalRepayments / limit)
@@ -846,7 +806,6 @@ const Installments = () => {
       setIsExporting(true);
       notifySuccess("جاري جلب جميع البيانات...");
       
-      // Fetch all repayments from all pages
       const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
       
       const sortedAllRepayments = [...allRepayments].sort((a, b) => {
@@ -868,7 +827,6 @@ const Installments = () => {
       setIsExporting(true);
       notifySuccess("جاري جلب جميع البيانات...");
       
-      // Fetch all repayments from all pages
       const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
       
       const sortedAllRepayments = [...allRepayments].sort((a, b) => {
@@ -960,7 +918,6 @@ const Installments = () => {
     const parts = url.split("/");
     const encodedFileName = parts[parts.length - 1] || "ملف غير معروف";
 
-    // Decode URL encoded filename
     try {
       return decodeURIComponent(encodedFileName);
     } catch {
@@ -983,7 +940,6 @@ const Installments = () => {
     );
   };
 
-  // Render mobile installment cards
   const renderMobileInstallmentCards = () => {
     const paidCount = sortedInstallments.filter(
       (inst) => inst.status === "PAID" || inst.status === "EARLY_PAID"
@@ -1279,7 +1235,6 @@ const Installments = () => {
     );
   };
 
-  // Render desktop table
   const renderDesktopTable = () => (
     <ScrollableTableContainer>
       <Table stickyHeader>
@@ -2481,7 +2436,6 @@ const Installments = () => {
   open={settlementModalOpen}
   onClose={() => {
     setSettlementModalOpen(false);
-    // تعيين علامة الإغلاق اليدوي لمنع إعادة فتح المودال تلقائياً
     setSettlementManuallyClosed(true);
   }}
   settlementHtml={settlementHtml}

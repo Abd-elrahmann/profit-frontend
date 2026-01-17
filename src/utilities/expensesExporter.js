@@ -5,7 +5,6 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
-// Register Arabic fonts when available; falls back gracefully
 const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
@@ -15,12 +14,6 @@ const registerArabicFonts = (doc) => {
   }
 };
 
-// دالة جديدة لإنشاء تفاصيل المصروفات كنص
-const generateExpensesDetails = (expense) => {
-  return expense.description || '-';
-};
-
-// دالة جديدة لإنشاء صفوف Excel مع تفاصيل المصروفات
 const generateExcelRows = (expenses) => {
   const rows = [];
 
@@ -57,20 +50,17 @@ export const exportExpensesToPDF = async (expenses) => {
 
       doc.setFont('Amiri', 'bold');
 
-      // Logo
       const logoWidth = 10;
       const logoHeight = 10;
       const logoX = doc.internal.pageSize.width - logoWidth - 5;
       const logoY = 5;
       doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
-      // Title
       doc.setFontSize(18);
       doc.text('تقرير المصروفات', doc.internal.pageSize.width / 2, 30, {
         align: 'center',
       });
 
-      // حساب إجمالي المصاريف
       const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
       doc.setFontSize(11);
@@ -79,7 +69,6 @@ export const exportExpensesToPDF = async (expenses) => {
         align: 'center',
       });
 
-      // Table data
       const headers = [['النوع', 'المبلغ', 'الوصف', 'الموظف', 'التاريخ']];
       const body = expenses.map((expense) => {
         return [
@@ -129,8 +118,8 @@ export const exportExpensesToPDF = async (expenses) => {
           direction: 'rtl',
         },
         columnStyles: {
-          2: { cellWidth: 'auto', minCellWidth: 60 }, // الوصف
-          3: { cellWidth: 'auto', minCellWidth: 40 }, // الموظف
+          2: { cellWidth: 'auto', minCellWidth: 60 }, 
+          3: { cellWidth: 'auto', minCellWidth: 40 }, 
         },
         margin: { top: 60, left: 10, right: 10 },
         tableWidth: 'auto',
@@ -139,7 +128,6 @@ export const exportExpensesToPDF = async (expenses) => {
         showHead: 'everyPage',
       });
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
@@ -189,38 +177,31 @@ export const exportExpensesToExcel = async (expenses) => {
       throw new Error('لا توجد بيانات للتصدير');
     }
 
-    // Lazy load XLSX library
     const XLSX = await import('xlsx');
 
     const workbook = XLSX.utils.book_new();
     
-    // حساب إجمالي المصاريف
     const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
-    // إنشاء صفوف البيانات
     const rows = generateExcelRows(expenses);
 
-    // إضافة إجمالي المصاريف في الأعلى
     rows.unshift(['', '', '', '', '']);
     rows.unshift(['إجمالي المصاريف:', totalAmount, '', '', '']);
     rows.unshift(['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm'), '', '', '']);
     rows.unshift(['', '', '', '', '']);
 
-    // إضافة الهيدر
     rows.unshift(['النوع', 'المبلغ', 'الوصف', 'الموظف', 'التاريخ']);
     
     const sheet = XLSX.utils.aoa_to_sheet(rows);
     
-    // تعيين أبعاد الأعمدة
     sheet['!cols'] = [
-      { wch: 20 },  // النوع
-      { wch: 15 },  // المبلغ
-      { wch: 40 },  // الوصف
-      { wch: 20 },  // الموظف
-      { wch: 15 },  // التاريخ
+      { wch: 20 },  
+      { wch: 15 },  
+      { wch: 40 },  
+      { wch: 20 },  
+      { wch: 15 },  
     ];
 
-    // إضافة التنسيق للهيدر
     const range = XLSX.utils.decode_range(sheet['!ref']);
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
@@ -232,9 +213,8 @@ export const exportExpensesToExcel = async (expenses) => {
       };
     }
 
-    // تنسيق خلايا المبالغ (يبدأ من الصف 5 حيث توجد البيانات الفعلية)
     for (let R = 5; R <= range.e.r; ++R) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 1 }); // عمود المبلغ (العمود 1)
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 1 }); 
       if (sheet[cellAddress] && typeof sheet[cellAddress].v === 'number') {
         sheet[cellAddress].s = {
           numFmt: '#,##0.00'
@@ -244,7 +224,6 @@ export const exportExpensesToExcel = async (expenses) => {
 
     XLSX.utils.book_append_sheet(workbook, sheet, 'المصروفات');
 
-    // إضافة ورقة ملخص
     const summaryData = [
       ['ملخص المصروفات'],
       [],

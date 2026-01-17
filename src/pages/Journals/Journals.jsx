@@ -107,7 +107,6 @@ const Journals = () => {
   const fromInvestorsWithdrawal = location.state?.fromInvestorsWithdrawal;
   const investorId = location.state?.investorId;
 
-  // Helper function to flatten nested tree structure
   const flattenAccountsTree = (accounts) => {
     if (!accounts || !Array.isArray(accounts)) return [];
 
@@ -116,11 +115,9 @@ const Journals = () => {
     const traverse = (account) => {
       if (!account) return;
 
-      // Add current account (without children for the flat list)
       const { children: _children, ...accountWithoutChildren } = account;
       flattened.push(accountWithoutChildren);
 
-      // Recursively process children
       if (account.children && Array.isArray(account.children)) {
         account.children.forEach((child) => traverse(child));
       }
@@ -137,7 +134,6 @@ const Journals = () => {
     enabled: !!selectedJournal && activeTab === 1,
   });
 
-  // تحديث البيانات عند تغيير journalData
   useEffect(() => {
     if (journalData && selectedJournal) {
       setEditForm({
@@ -145,7 +141,6 @@ const Journals = () => {
         date: journalData.date ? journalData.date.split("T")[0] : "",
         type: journalData.type || "",
       });
-      // تحويل بيانات ال lines للتعديل
       if (journalData.lines && Array.isArray(journalData.lines)) {
         setJournalLines(
           journalData.lines.map((line) => ({
@@ -162,17 +157,14 @@ const Journals = () => {
         setJournalLines([]);
       }
     } else if (!selectedJournal) {
-      // إعادة تعيين عند إلغاء التحديد فقط
       setJournalLines([]);
     }
   }, [journalData, selectedJournal]);
 
-  // جلب حسابات الدليل المحاسبي
   useEffect(() => {
     const fetchChartAccounts = async () => {
       try {
         const accountsTree = await getChartOfAccounts();
-        // Flatten the tree structure to get all accounts
         const flattenedAccounts = flattenAccountsTree(accountsTree || []);
         setChartAccounts(flattenedAccounts);
       } catch (error) {
@@ -183,7 +175,6 @@ const Journals = () => {
     fetchChartAccounts();
   }, []);
 
-  // Handle navigation state for journal details
   useEffect(() => {
     if (location.state) {
       const { journalId, activeTab: targetTab } = location.state;
@@ -546,7 +537,7 @@ const Journals = () => {
 
   const handleAdvancedSearch = (filters) => {
     setSearchFilters(filters);
-    setSearchQuery(""); // Clear simple search when using advanced search
+      setSearchQuery("");
   };
 
   const handleClearSearch = () => {
@@ -607,7 +598,6 @@ const Journals = () => {
       return journalData.totals;
     }
 
-    // Fallback calculation if totals not provided
     const totalDebit = journalLines.reduce(
       (sum, line) => sum + (line.debit || 0),
       0
@@ -626,7 +616,6 @@ const Journals = () => {
       return journalData.totals;
     }
 
-    // Fallback calculation for editing mode
     let totalDebit = 0;
     let totalCredit = 0;
 
@@ -670,7 +659,6 @@ const Journals = () => {
   const totals = calculateTotals();
   const totalsForTable = calculateTotalsForTable();
 
-  // Render mobile lines cards
   const renderMobileLinesCards = () => (
     <Stack spacing={2}>
       {journalLines.map((line, index) => {
@@ -678,7 +666,6 @@ const Journals = () => {
           <Card key={line.id || index} variant="outlined" sx={{ borderRadius: 2 }}>
             <CardContent sx={{ p: 2 }}>
               <Stack spacing={1.5}>
-                {/* Header */}
                 <Box
                   sx={{
                     display: "flex",
@@ -716,7 +703,6 @@ const Journals = () => {
                   )}
                 </Box>
 
-                  {/* Line Details */}
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography variant="caption" color="text.secondary">
@@ -773,7 +759,6 @@ const Journals = () => {
         );
       })}
 
-      {/* Summary Card */}
       <Card
         variant="outlined"
         sx={{
@@ -824,7 +809,6 @@ const Journals = () => {
     </Stack>
   );
 
-  // Render desktop table
   const renderDesktopLinesTable = () => (
     <TableContainer>
       <Table>
@@ -1105,7 +1089,7 @@ const Journals = () => {
           الإجراءات
         </Typography>
         <Stack spacing={2}>
-          {/* Export buttons - always show when viewing journal details */}
+
           {!isAddMode && journalData && permissions.includes("journals_Export") && (
             <>
               <Button
@@ -1260,14 +1244,12 @@ const Journals = () => {
     </Box>
   );
   
-  // Update mobile actions to include export buttons
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
         الإجراءات
       </Typography>
       <Stack spacing={1}>
-        {/* Export buttons for mobile */}
         {!isAddMode && journalData && permissions.includes("journals_Export") && (
           <>
             <Button
@@ -1396,10 +1378,8 @@ const Journals = () => {
       </Stack>
     </Paper>
   );
-  // Render journal details for mobile
   const renderMobileJournalDetails = () => (
     <Box>
-      {/* Summary Cards */}
       <Grid container spacing={2} mb={3}>
         <Grid item xs={4}>
           <Card sx={{ bgcolor: "rgba(211, 47, 47, 0.1)", textAlign: "center" }}>
@@ -1441,10 +1421,8 @@ const Journals = () => {
         </Grid>
       </Grid>
 
-      {/* Actions */}
       {renderMobileActions()}
 
-      {/* Journal Info */}
       <Paper sx={{ p: 3, borderRadius: 2, mb: 2, bgcolor: 'background.paper' }}>
         <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
           معلومات القيد
@@ -1585,15 +1563,12 @@ const Journals = () => {
         </Stack>
       </Paper>
 
-      {/* Lines Form */}
       {(isEditMode || isAddMode) && renderLinesForm()}
 
-      {/* Journal Lines */}
       {renderLinesList()}
     </Box>
   );
 
-  // Render desktop journal details
   const renderDesktopJournalDetails = () => (
     <Paper sx={{ p: 4, borderRadius: 2, bgcolor: 'background.paper' }}>
       <Typography
@@ -1769,7 +1744,6 @@ const Journals = () => {
           width: "100%",
         }}
       >
-        {/* Sidebar for desktop */}
         {!isSmallScreen &&
           activeTab === 1 &&
           (journalData || isAddMode) &&
@@ -1784,8 +1758,7 @@ const Journals = () => {
             width: "100%",
           }}
         >
-          <Box sx={{ width: "100%" }}>
-            {/* Tabs for desktop, simple navigation for mobile */}
+          <Box sx={{ width: "100%" }}>  
             {!isSmallScreen ? (
               <Box
                 sx={{
@@ -1844,7 +1817,7 @@ const Journals = () => {
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
                         if (e.target.value) {
-                          setSearchFilters({}); // Clear advanced filters when using simple search
+                          setSearchFilters({});
                         }
                       }}
                       sx={{
@@ -2005,7 +1978,7 @@ const Journals = () => {
                         onChange={(e) => {
                           setSearchQuery(e.target.value);
                           if (e.target.value) {
-                            setSearchFilters({}); // Clear advanced filters when using simple search
+                              setSearchFilters({});
                           }
                         }}
                         sx={{

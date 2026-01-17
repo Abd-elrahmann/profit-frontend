@@ -1,6 +1,5 @@
 import Api, { handleApiError } from '../../config/Api';
 
-// Get banks with pagination and search
 export const getBanks = async (page = 1, search = '') => {
   try {
     const url = search 
@@ -14,7 +13,6 @@ export const getBanks = async (page = 1, search = '') => {
   }
 };
 
-// Create new bank account
 export const createBank = async (bankData) => {
   try {
     const response = await Api.post('/api/bank', bankData);
@@ -25,7 +23,6 @@ export const createBank = async (bankData) => {
   }
 };
 
-// Update bank account
 export const updateBank = async (bankId, bankData) => {
   try {
     const response = await Api.patch(`/api/bank/${bankId}`, bankData);
@@ -36,7 +33,6 @@ export const updateBank = async (bankId, bankData) => {
   }
 };
 
-// Delete bank account
 export const deleteBank = async (bankId) => {
   try {
     const response = await Api.delete(`/api/bank/${bankId}`);
@@ -47,7 +43,6 @@ export const deleteBank = async (bankId) => {
   }
 };
 
-// Get all banks for dropdown (without pagination)
 export const getBankById = async (bankId) => {
   try {
     const response = await Api.get(`/api/bank/${bankId}`);

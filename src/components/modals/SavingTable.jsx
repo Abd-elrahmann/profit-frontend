@@ -36,12 +36,10 @@ const SavingTable = ({ isLoading, savingData }) => {
     setPage(0);
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || '0';
   };
 
-  // Render desktop table
   const renderDesktopTable = () => (
     <TableContainer component={Paper} sx={{ boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
       <Table>
@@ -162,16 +160,13 @@ const SavingTable = ({ isLoading, savingData }) => {
                       </StyledTableRow>
                     );
                   })}
-                  {/* Total Row */}
                   <StyledTableRow sx={{ bgcolor: 'primary.50', '&:hover': { bgcolor: 'primary.50' } }}>
                     <StyledTableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'primary.main' }}>
                       الإجمالي
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {/* Empty cell for periods count */}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {/* Empty cell for last period */}
                     </StyledTableCell>
                     <StyledTableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'success.main' }}>
                       {formatCurrency(
@@ -217,7 +212,6 @@ const SavingTable = ({ isLoading, savingData }) => {
     </TableContainer>
   );
 
-  // Render mobile cards
   const renderMobileCards = () => (
     <Box sx={{ p: 1 }}>
       {isLoading ? (
@@ -249,7 +243,6 @@ const SavingTable = ({ isLoading, savingData }) => {
                 >
                   <CardContent sx={{ p: 2 }}>
                     <Stack spacing={2}>
-                      {/* Header */}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
                           {partner.partnerName}
@@ -261,7 +254,6 @@ const SavingTable = ({ isLoading, savingData }) => {
                         />
                       </Box>
 
-                      {/* Savings Summary */}
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="body2" color={theme.palette.primary.main}>
@@ -300,7 +292,6 @@ const SavingTable = ({ isLoading, savingData }) => {
                         </Box>
                       </Box>
 
-                      {/* Withdrawals Info */}
                       {lastPeriod.totalWithdrawals > 0 && (
                         <Box sx={{ textAlign: 'center', pt: 1 }}>
                           <Typography variant="body2" color={theme.palette.warning.main}>
@@ -308,8 +299,7 @@ const SavingTable = ({ isLoading, savingData }) => {
                           </Typography>
                         </Box>
                       )}
-
-                      {/* Last Period */}
+  
                       {lastPeriod && (
                         <Box sx={{ p: 1, bgcolor: theme.palette.background.default, borderRadius: 1 }}>
                           <Typography variant="body2" color={theme.palette.primary.main}>

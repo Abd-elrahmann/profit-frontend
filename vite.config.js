@@ -2,14 +2,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync } from "fs";
 
-// قراءة version من package.json
 const packageJson = JSON.parse(readFileSync("./package.json", "utf-8"));
 const buildVersion = `${packageJson.version}-${Date.now()}`;
 
 export default defineConfig({
   plugins: [
     react(),
-    // Plugin لإضافة version في HTML
     {
       name: "html-version",
       transformIndexHtml(html) {
@@ -35,8 +33,7 @@ export default defineConfig({
     minify: "esbuild",
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
-      output: {
-        // إضافة hash للأسماء الملفات لمنع مشاكل الـ cache
+      output: { 
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash].[ext]`,

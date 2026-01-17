@@ -1,11 +1,9 @@
 import Api, { handleApiError } from '../../config/Api';
 
-// Get all journals with pagination and advanced search
 export const getJournals = async (page = 1, params = {}) => {
   try {
     const { search, status, type, sourceType, postedByName, reference, description, dateFrom, dateTo } = params;
 
-    // Build query parameters
     const queryParams = new URLSearchParams();
 
     if (search) queryParams.append('search', search);
@@ -31,7 +29,6 @@ export const getJournals = async (page = 1, params = {}) => {
   }
 };
 
-// Get specific journal by ID
 export const getJournalById = async (journalId) => {
   try {
     const response = await Api.get(`/api/journals/${journalId}`);
@@ -42,7 +39,6 @@ export const getJournalById = async (journalId) => {
   }
 };
 
-// Create new journal
 export const createJournal = async (journalData) => {
   try {
     const response = await Api.post('/api/journals', journalData);
@@ -53,7 +49,6 @@ export const createJournal = async (journalData) => {
   }
 };
 
-// Update journal
 export const updateJournal = async (journalId, journalData) => {
   try {
     const response = await Api.put(`/api/journals/${journalId}`, journalData);
@@ -64,7 +59,6 @@ export const updateJournal = async (journalId, journalData) => {
   }
 };
 
-// Delete journal
 export const deleteJournal = async (journalId) => {
   try {
     const response = await Api.delete(`/api/journals/${journalId}`);
@@ -75,7 +69,6 @@ export const deleteJournal = async (journalId) => {
   }
 };
 
-// Post journal
 export const postJournal = async (journalId) => {
   try {
     const response = await Api.post(`/api/journals/${journalId}/post`);
@@ -86,7 +79,6 @@ export const postJournal = async (journalId) => {
   }
 };
 
-// Unpost journal
 export const unpostJournal = async (journalId) => {
   try {
     const response = await Api.post(`/api/journals/${journalId}/unpost`);
@@ -97,7 +89,6 @@ export const unpostJournal = async (journalId) => {
   }
 };
 
-// Post multiple journals
 export const postMultipleJournals = async (journalIds) => {
   try {
     const response = await Api.post('/api/journals/post-multiple', { ids: journalIds });
@@ -108,7 +99,6 @@ export const postMultipleJournals = async (journalIds) => {
   }
 };
 
-// Unpost multiple journals
 export const unpostMultipleJournals = async (journalIds) => {
   try {
     const response = await Api.post('/api/journals/unpost-multiple', { ids: journalIds });
@@ -119,7 +109,6 @@ export const unpostMultipleJournals = async (journalIds) => {
   }
 };
 
-// Get chart of accounts for dropdown
 export const getChartOfAccounts = async () => {
   try {
     const response = await Api.get('/api/accounts/tree');
@@ -130,7 +119,6 @@ export const getChartOfAccounts = async () => {
   }
 };
 
-// Check for unposted opening journals
 export const checkUnpostedOpeningJournals = async () => {
   try {
     const response = await Api.get('/api/journals/check-opening-journals');

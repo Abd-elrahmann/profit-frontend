@@ -47,7 +47,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
       setExpenses([{ type: "", amount: "", description: "", userId: null }]);
       setErrors([]);
       
-      // جلب قائمة المستخدمين عند فتح المودال
       const fetchUsers = async () => {
         try {
           setUsersLoading(true);
@@ -85,14 +84,12 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
     const newExpenses = [...expenses];
     newExpenses[index][field] = value;
 
-    // إذا تم تغيير النوع إلى غير "مصروف رواتب"، مسح userId
     if (field === 'type' && value !== 'مصروف رواتب') {
       newExpenses[index].userId = null;
     }
 
     setExpenses(newExpenses);
 
-    // مسح الأخطاء
     if (errors[index]?.[field]) {
       const newErrors = [...errors];
       if (newErrors[index]) {
@@ -223,7 +220,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
                       newExpenses[index].userId = value;
                       setExpenses(newExpenses);
 
-                      // مسح الأخطاء
                       if (errors[index]?.userId) {
                         const newErrors = [...errors];
                         if (newErrors[index]) {

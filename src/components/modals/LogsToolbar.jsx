@@ -61,7 +61,6 @@ const LogsToolbar = ({
     onResetFilters();
   };
 
-  // Check if any filters are active
   const hasActiveFilters = search || screen || action || from || to || userName;
 
   const screenOptions = [
@@ -81,7 +80,6 @@ const LogsToolbar = ({
     { value: "Expenses", label: "المصروفات" },
   ];
 
-  // Action options with Arabic translations
   const actionOptions = [
     { value: "CREATE", label: "إنشاء" },
     { value: "UPDATE", label: "تعديل" },
@@ -91,10 +89,8 @@ const LogsToolbar = ({
     { value: "logout", label: "تسجيل خروج" },
   ];
 
-  // Render for large screens
   const renderDesktopView = () => (
     <>
-      {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <FilterList color="primary" />
@@ -113,14 +109,12 @@ const LogsToolbar = ({
         )}
       </Box>
 
-      {/* All filters in one row */}
       <Stack 
         direction="row"
         spacing={2}
         alignItems="center"
         justifyContent="space-between"
       >
-        {/* Action and Screen Filters */}
         <Stack 
           direction="row" 
           spacing={2}
@@ -162,7 +156,6 @@ const LogsToolbar = ({
           </FormControl>
         </Stack>
 
-        {/* Date Range Filters */}
         <Stack 
           direction="row" 
           spacing={2}
@@ -206,7 +199,6 @@ const LogsToolbar = ({
           />
         </Stack>
 
-        {/* Reset Button */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           {hasActiveFilters && (
             <Button
@@ -224,7 +216,6 @@ const LogsToolbar = ({
     </>
   );
 
-  // Render for mobile screens
   const renderMobileView = () => (
     <Accordion 
       sx={{ 
@@ -261,7 +252,6 @@ const LogsToolbar = ({
       
       <AccordionDetails sx={{ p: 2 }}>
         <Stack spacing={2}>
-          {/* Action Filter */}
           <FormControl fullWidth size="small">
             <InputLabel>نوع الإجراء</InputLabel>
             <Select
@@ -278,7 +268,6 @@ const LogsToolbar = ({
             </Select>
           </FormControl>
 
-          {/* Screen Filter */}
           <FormControl fullWidth size="small">
             <InputLabel>الشاشة</InputLabel>
             <Select
@@ -295,7 +284,6 @@ const LogsToolbar = ({
             </Select>
           </FormControl>
 
-          {/* Date Range Filters */}
           <DatePicker
             label="من تاريخ"
             value={from ? dayjs(from) : null}
@@ -322,7 +310,6 @@ const LogsToolbar = ({
             format="DD/MM/YYYY"
           />
 
-          {/* Reset Button */}
           {hasActiveFilters && (
             <Button
               variant="outlined"
@@ -352,8 +339,7 @@ const LogsToolbar = ({
       }}
     >
       {isMobile ? renderMobileView() : renderDesktopView()}
-
-      {/* Active Filters Summary - Show for both views */}
+      
       {hasActiveFilters && (
         <Box sx={{ 
           p: isMobile ? 1.5 : 2, 

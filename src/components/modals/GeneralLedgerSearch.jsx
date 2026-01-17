@@ -17,7 +17,6 @@ import { Search, RestartAlt, Close as CloseIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 
-// Responsive modal styles
 const getModalStyle = (isSmallScreen) => ({
   position: 'absolute',
   top: '50%',
@@ -34,7 +33,6 @@ const getModalStyle = (isSmallScreen) => ({
   overflow: 'auto',
 });
 
-// API functions
 const getAccounts = async (page = 1, searchQuery = '') => {
   const params = new URLSearchParams();
   if (searchQuery) {
@@ -61,7 +59,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
 
-  // Fetch initial accounts
   useEffect(() => {
     const fetchInitialAccounts = async () => {
       if (open) {
@@ -83,7 +80,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
     fetchInitialAccounts();
   }, [open]);
 
-  // Handle account search
   useEffect(() => {
     const searchAccountsData = async () => {
       if (searchInput.trim().length > 2) {
@@ -118,7 +114,7 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
         fromDate: values.fromDate ? values.fromDate.format('YYYY-MM-DD') : null,
         toDate: values.toDate ? values.toDate.format('YYYY-MM-DD') : null,
       });
-      onClose(); // Close modal after search
+      onClose();
     },
   });
 
@@ -153,7 +149,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
       }}
     >
       <Box sx={getModalStyle(isSmallScreen)}>
-        {/* Header */}
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -189,7 +184,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
 
         <form onSubmit={formik.handleSubmit}>
           <Stack spacing={isSmallScreen ? 2 : 3}>
-            {/* Account Selection */}
             <Autocomplete
               id="account-autocomplete"
               options={options}
@@ -239,7 +233,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
               size={isSmallScreen ? "small" : "medium"}
             />
 
-            {/* Date Range */}
             <DatePicker
               label="من تاريخ"
               value={formik.values.fromDate}
@@ -295,7 +288,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
               }}
             />
 
-            {/* Action Buttons */}
             <Stack 
               direction={isSmallScreen ? "column" : "row"} 
               gap={2}
@@ -340,7 +332,6 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
               </Button>
             </Stack>
 
-            {/* Selected Account Info (when account is selected) */}
             {formik.values.account && (
               <Box 
                 sx={{ 
@@ -365,8 +356,7 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
             )}
           </Stack>
         </form>
-
-        {/* Footer Help Text */}
+            
         <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #f0f0f0' }}>
           <Typography variant="caption" color="black" align="center" display="block">
             اختر الحساب وتاريخ البداية والنهاية لعرض القيود المحاسبية

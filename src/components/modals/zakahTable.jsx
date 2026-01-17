@@ -97,8 +97,8 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
         return;
       }
       await exportZakahToExcel(allData, filters);
-    } catch {
-      // exporter already logs errors
+    } catch (error) {
+      console.error('Error exporting zakah:', error);
     } finally {
       setIsExporting(false);
     }

@@ -80,7 +80,6 @@ export default function InvestorsWithdrawal() {
   const { permissions } = usePermissions();
   const withdrawReceiptGeneratorRef = useRef(null);
 
-  // Handle navigation state when returning from journal details
   useEffect(() => {
     if (location.state) {
       const { investorId: stateInvestorId, activeTab: targetTab } = location.state;
@@ -130,7 +129,6 @@ export default function InvestorsWithdrawal() {
     }
 
     try {
-      // Fetch receipt number from backend
       const { data: countData } = await Api.get('/api/partner-withdraw/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
 
@@ -152,14 +150,12 @@ export default function InvestorsWithdrawal() {
     if (withdrawalDetails?.schedule) {
       const allPaid = withdrawalDetails.schedule.every(s => s.status === "PAID");
       setAllSchedulesPaid(allPaid);
-      // Reset auto-open flag when schedules change
       if (!allPaid) {
         setHasAutoOpenedPreview(false);
       }
     }
   }, [withdrawalDetails]);
 
-  // Automatically open preview when all schedules are PAID but no receipt exists
   useEffect(() => {
     if (
       allSchedulesPaid &&
@@ -170,7 +166,6 @@ export default function InvestorsWithdrawal() {
       withdrawReceiptGeneratorRef.current &&
       !withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT
     ) {
-      // Small delay to ensure component is ready
       const timer = setTimeout(() => {
         if (withdrawReceiptGeneratorRef.current && withdrawReceiptTemplate) {
           handleOpenPreview();
@@ -195,7 +190,6 @@ export default function InvestorsWithdrawal() {
   const handleViewDetails = (investorId) => {
     setSelectedInvestorId(investorId);
     setActiveTab(1);
-    // Reset auto-open flag when viewing new investor details
     setHasAutoOpenedPreview(false);
   };
 
@@ -209,7 +203,6 @@ export default function InvestorsWithdrawal() {
       setIsProcessing(true);
       await approveWithdrawal(scheduleId);
       
-      // Find schedule to get month information
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === scheduleId);
       const monthName = schedule?.month || "الدفعة";
       
@@ -239,7 +232,6 @@ export default function InvestorsWithdrawal() {
       setIsProcessing(true);
       await rejectWithdrawal(selectedScheduleId);
       
-      // Find schedule to get month information
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
       const monthName = schedule?.month || "الدفعة";
       
@@ -283,7 +275,6 @@ export default function InvestorsWithdrawal() {
       setIsProcessing(true);
       await partialPayWithdrawal(selectedScheduleId, parseFloat(partialAmount));
       
-      // Find schedule to get month information
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
       const monthName = schedule?.month || "الدفعة";
       
@@ -311,7 +302,6 @@ export default function InvestorsWithdrawal() {
     try {
       setIsSavingReceipt(true);
       
-      // Fetch receipt number from backend
       const { data: countData } = await Api.get('/api/partner-withdraw/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
 
@@ -330,10 +320,8 @@ export default function InvestorsWithdrawal() {
 
       notifySuccess("تم حفظ المخالصة بنجاح");
 
-      // Refresh the partner details to show the updated withdrawal receipt
       queryClient.invalidateQueries({ queryKey: ['investor-details', withdrawalDetails.partner.id] });
       queryClient.invalidateQueries({ queryKey: ['investors'] });
-      // Immediately refetch withdrawal details to update the UI
       queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestorId] });
       await refetchDetails();
 
@@ -722,7 +710,6 @@ export default function InvestorsWithdrawal() {
                   </Paper>
                 )}
 
-                {/* Schedule Table */}
                 {withdrawalDetails.schedule && withdrawalDetails.schedule.length > 0 && (
                   <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -884,7 +871,6 @@ export default function InvestorsWithdrawal() {
                   </Paper>
                 )}
 
-                {/* Journals */}
                 {withdrawalDetails.journals && withdrawalDetails.journals.length > 0 && (
                   <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
@@ -962,7 +948,6 @@ export default function InvestorsWithdrawal() {
         )}
       </Box>
 
-      {/* Partial Pay Dialog */}
       <PartialPayWithdraw
         open={partialPayDialogOpen}
         onClose={() => {
@@ -978,7 +963,6 @@ export default function InvestorsWithdrawal() {
         isProcessing={isProcessing}
       />
 
-      {/* Reject Modal */}
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={handleCloseRejectModal}
@@ -989,7 +973,6 @@ export default function InvestorsWithdrawal() {
         ButtonText="رفض"
       />
 
-      {/* Withdraw Receipt Generator */}
       {withdrawReceiptTemplate && (
         <WithdrawReceiptGenerator
           ref={withdrawReceiptGeneratorRef}
@@ -998,12 +981,10 @@ export default function InvestorsWithdrawal() {
         />
       )}
 
-      {/* Withdraw Receipt Preview */}
       <WithdrawReceiptPreview
         open={isPreviewOpen}
         onClose={() => {
           setIsPreviewOpen(false);
-          // Don't reset hasAutoOpenedPreview here - user can manually reopen if needed
         }}
         receiptHtml={previewReceiptHtml}
         onSaveReceipt={handleSaveReceipt}

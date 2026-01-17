@@ -1,4 +1,4 @@
-// components/contracts/DebtAcknowledgment.jsx
+
 import React from "react";
 
 const DebtAcknowledgment = () => {

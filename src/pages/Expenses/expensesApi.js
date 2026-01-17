@@ -1,6 +1,5 @@
 import Api, { handleApiError } from '../../config/Api';
 
-// Get expenses with pagination
 export const getExpenses = async (page = 1) => {
   try {
     const response = await Api.get(`/api/expenses/records/${page}`);
@@ -11,7 +10,6 @@ export const getExpenses = async (page = 1) => {
   }
 };
 
-// Create new expense
 export const createExpense = async (expensesData) => {
   try {
     const response = await Api.post('/api/expenses', expensesData);
@@ -22,7 +20,6 @@ export const createExpense = async (expensesData) => {
   }
 };
 
-// Update expense - يستخدم journalId كما هو محدد في الـ backend
 export const updateExpense = async (journalId, expensesData) => {
   try {
     const response = await Api.patch(`/api/expenses/${journalId}`, expensesData);
@@ -33,7 +30,6 @@ export const updateExpense = async (journalId, expensesData) => {
   }
 };
 
-// Delete expense - يستخدم journalId كما هو محدد في الـ backend
 export const deleteExpense = async (journalId) => {
   try {
     const response = await Api.delete(`/api/expenses/${journalId}`);
@@ -44,7 +40,6 @@ export const deleteExpense = async (journalId) => {
   }
 };
 
-// Get users list for expenses
 export const getUsersForExpenses = async (searchTerm = '') => {
   try {
     const params = searchTerm ? { name: searchTerm } : {};

@@ -22,8 +22,7 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useQueryClient } from '@tanstack/react-query';
-
-// Dashboard sections based on dashboard.controller.ts
+  
 const dashboardSections = [
   {
     module: 'client-stats',
@@ -83,19 +82,16 @@ const DashboardPermissions = ({
     }))
   });
 
-  // Fetch current dashboard permissions for this role (prefer dedicated endpoint; fallback to /roles?id=)
   useEffect(() => {
     if (open && roleId) {
       const fetchCurrentPermissions = async () => {
         try {
-          // 1) Try dedicated dashboard-permissions endpoint (persists sections separately)
           let permissionsPayload = null;
 
           try {
             const dashRes = await Api.get(`/api/roles/${roleId}/dashboard-permissions`);
             if (dashRes?.data) {
               const data = dashRes.data;
-              // accept both { permissions: [...] } or [...] directly
               if (Array.isArray(data?.permissions)) {
                 permissionsPayload = data.permissions;
               } else if (Array.isArray(data)) {

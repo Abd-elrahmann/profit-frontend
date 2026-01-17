@@ -1,6 +1,5 @@
 import Api, { handleApiError } from '../../config/Api';
 
-// Decode payment token
 export const decodePaymentToken = async (token) => {
   try {
     const response = await Api.post('/api/notifications/decode-token', { token });
@@ -11,7 +10,6 @@ export const decodePaymentToken = async (token) => {
   }
 };
 
-// Get loan by ID with installments
 export const getLoanById = async (loanId, page = 1, limit = 10) => {
   try {
     const response = await Api.get(`/api/loans/${loanId}/${page}?limit=${limit}`);
@@ -22,7 +20,6 @@ export const getLoanById = async (loanId, page = 1, limit = 10) => {
   }
 };
 
-// Get repayment by ID
 export const getRepaymentById = async (repaymentId) => {
   try {
     const response = await Api.get(`/api/repayments/repayment/${repaymentId}`);
@@ -33,7 +30,6 @@ export const getRepaymentById = async (repaymentId) => {
   }
 };
 
-// Upload payment proof
 export const uploadAttachment = async (installmentId, files) => {
   try {
     const formData = new FormData();
@@ -54,7 +50,6 @@ export const uploadAttachment = async (installmentId, files) => {
   }
 };
 
-// Upload payment proof
 export const uploadPaymentProof = async (installmentId, file) => {
   try {
     const formData = new FormData();
@@ -72,7 +67,6 @@ export const uploadPaymentProof = async (installmentId, file) => {
   }
 };
 
-// Approve repayment
 export const approveRepayment = async (installmentId, amount, reason, discount = 0) => {
   try {
     const response = await Api.patch(`/api/repayments/approve/${installmentId}`, {
@@ -87,7 +81,6 @@ export const approveRepayment = async (installmentId, amount, reason, discount =
   }
 };
 
-// Reject repayment
 export const rejectRepayment = async (installmentId) => {
   try {
     const response = await Api.patch(`/api/repayments/reject/${installmentId}`);
@@ -98,7 +91,6 @@ export const rejectRepayment = async (installmentId) => {
   }
 };
 
-// Postpone repayment
 export const postponeRepayment = async (installmentId, newDueDate, reason) => {
   try {
     const response = await Api.patch(`/api/repayments/postpone/${installmentId}`, {
@@ -112,7 +104,6 @@ export const postponeRepayment = async (installmentId, newDueDate, reason) => {
   }
 };
 
-// Mark as partial paid
 export const markAsPartialPaid = async (installmentId, paidAmount) => {
   try {
     const response = await Api.patch(`/api/repayments/partial-paid/${installmentId}`, {
@@ -137,7 +128,6 @@ export const earlyPayment = async (loanId, discount = 0) => {
   }
 };
 
-// Approve multiple repayments
 export const approveMultipleRepayments = async (repaymentIds, reason) => {
   try {
     const response = await Api.post('/api/repayments/approve-many', {
@@ -151,7 +141,6 @@ export const approveMultipleRepayments = async (repaymentIds, reason) => {
   }
 };
 
-// Reject multiple repayments
 export const rejectMultipleRepayments = async (repaymentIds) => {
   try {
     const response = await Api.post('/api/repayments/reject-many', {

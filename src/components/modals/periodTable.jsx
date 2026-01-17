@@ -43,7 +43,7 @@ const PeriodTable = ({
   onSelectionChange,
   showSelection = false,
   onPeriodsDataChange,
-  onComparePeriods, // Prop جديد للمقارنة
+  onComparePeriods,
 }) => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
@@ -51,30 +51,24 @@ const PeriodTable = ({
   const [localSearch, setLocalSearch] = useState("");
   const { permissions } = usePermissions();
 
-  const isTablet = useMediaQuery("(max-width: 768px)");
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
-  const isSmallScreen = isMobile || isTablet;
 
-  // Handle period selection
   const handlePeriodSelect = (periodId, checked) => {
     if (!onSelectionChange) return;
 
     let newSelected = [...selectedPeriods];
 
     if (checked) {
-      // Add period if not already selected and we have less than 2
       if (!newSelected.includes(periodId) && newSelected.length < 2) {
         newSelected.push(periodId);
       }
     } else {
-      // Remove period
       newSelected = newSelected.filter(id => id !== periodId);
     }
 
     onSelectionChange(newSelected);
   };
 
-  // Handle select all (only if we have exactly 0 or 1 selected periods)
   const handleSelectAll = (checked) => {
     if (!onSelectionChange || !checked) return;
 
@@ -91,7 +85,6 @@ const PeriodTable = ({
     onSelectionChange(newSelected);
   };
 
-  // Check if all visible periods are selected (considering the 2 period limit)
   const isAllSelected = () => {
     if (!periodsData?.periods) return false;
     const currentPagePeriods = periodsData.periods;
@@ -103,7 +96,6 @@ const PeriodTable = ({
            );
   };
 
-  // Check if a period is selected
   const isPeriodSelected = (periodId) => selectedPeriods.includes(periodId);
 
   const { data: periodsData, isLoading } = useQuery({
@@ -111,7 +103,6 @@ const PeriodTable = ({
     queryFn: () => getPeriods(page, filters),
   });
 
-  // Send periods data to parent when it changes
   useEffect(() => {
     if (periodsData?.periods && onPeriodsDataChange) {
       onPeriodsDataChange(periodsData.periods);
@@ -122,20 +113,17 @@ const PeriodTable = ({
     setPage(newPage + 1);
   };
 
-  // Handle applying advanced filters
   const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);
-    setPage(1); // Reset to first page when filters change
+    setPage(1);
   };
 
-  // Handle clearing all filters
   const handleClearFilters = () => {
     setFilters({});
     setLocalSearch("");
     setPage(1);
   };
 
-  // Handle quick search (name only)
   const handleQuickSearch = (e) => {
     const value = e.target.value;
     setLocalSearch(value);
@@ -148,7 +136,6 @@ const PeriodTable = ({
     setPage(1);
   };
 
-  // Get active filter count for badge
   const getActiveFilterCount = () => {
     return Object.keys(filters).filter(key => 
       filters[key] !== undefined && 
@@ -157,7 +144,6 @@ const PeriodTable = ({
     ).length;
   };
 
-  // Period Status Arabic translations
   const getStatusColor = (isClosed) => {
     return isClosed ? "success" : "warning";
   };
@@ -166,13 +152,11 @@ const PeriodTable = ({
     return isClosed ? "مقفلة" : "مفتوحة";
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "مستمرة";
     return dayjs(dateString).format("DD/MM/YYYY");
   };
 
-  // Format date with Hijri for display
   const formatDateWithHijri = (period, dateType) => {
     const dateString = dateType === 'start' ? period.startDate : period.endDate;
     const hijriDate = dateType === 'start' ? period.startDateHijri : period.endDateHijri;
@@ -194,7 +178,6 @@ const PeriodTable = ({
     );
   };
 
-  // Render compare button
   const renderCompareButton = () => {
     if (!showSelection || selectedPeriods.length !== 2 || !onComparePeriods) return null;
 
@@ -225,7 +208,6 @@ const PeriodTable = ({
     );
   };
 
-  // Render selection info
   const renderSelectionInfo = () => {
     if (!showSelection || selectedPeriods.length === 0) return null;
 
@@ -261,7 +243,6 @@ const PeriodTable = ({
     );
   };
 
-  // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
       <Table stickyHeader sx={{ width: "100%" }}>
@@ -405,11 +386,9 @@ const PeriodTable = ({
     </TableContainer>
   );
 
-  // Render search bar and filters
   const renderSearchBar = () => (
     <Box sx={{ p: 2, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
       <Grid container spacing={2} alignItems="center">
-        {/* Quick Search */}
         <Grid item xs={12} md={6}>
           <InputBase
             fullWidth
@@ -444,7 +423,6 @@ const PeriodTable = ({
           />
         </Grid>
 
-        {/* Filter Actions */}
         <Grid item xs={12} md={6}>
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <Button
@@ -479,7 +457,6 @@ const PeriodTable = ({
         </Grid>
       </Grid>
 
-      {/* Active Filters Display */}
       {getActiveFilterCount() > 0 && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
@@ -520,10 +497,8 @@ const PeriodTable = ({
     </Box>
   );
 
-  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: 1 }}>
-      {/* Search Bar for Mobile */}
       <Box sx={{ mb: 2 }}>
         <InputBase
           fullWidth
@@ -573,7 +548,6 @@ const PeriodTable = ({
         </Stack>
       </Box>
 
-      {/* Period Cards */}
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={30} />
@@ -617,7 +591,6 @@ const PeriodTable = ({
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
-                    {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {showSelection && (
@@ -656,7 +629,6 @@ const PeriodTable = ({
                       />
                     </Box>
 
-                    {/* Period Details */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary">
@@ -683,7 +655,6 @@ const PeriodTable = ({
                       </Box>
                     </Box>
 
-                    {/* Additional Info */}
                     <Box>
                       <Typography variant="body2" color="textSecondary">
                         تاريخ الإنشاء:
@@ -693,7 +664,6 @@ const PeriodTable = ({
                       </Typography>
                     </Box>
 
-                    {/* Action Button */}
                     {permissions.includes("period_View") && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
                         <IconButton
@@ -728,7 +698,6 @@ const PeriodTable = ({
         height: "100%",
       }}
     >
-      {/* Advanced Search Modal */}
       <PeriodsAdvancedSearch
         open={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
@@ -736,20 +705,15 @@ const PeriodTable = ({
         initialFilters={filters}
       />
 
-      {/* زر المقارنة (يظهر عند اختيار فترتين) */}
       {renderCompareButton()}
 
-      {/* معلومات الاختيار */}
       {renderSelectionInfo()}
 
-      {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
-        {/* Search Bar (only for desktop in table mode) */}
         {!isMobile && renderSearchBar()}
 
         {isMobile ? renderCards() : renderTable()}
 
-        {/* Pagination */}
         {periodsData && (
           <TablePagination
             component="div"

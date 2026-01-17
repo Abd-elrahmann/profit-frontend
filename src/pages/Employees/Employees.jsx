@@ -33,7 +33,7 @@ import {
 } from "@mui/icons-material";
 
 import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
-import Api from "../../config/Api";
+import Api, { handleApiError } from "../../config/Api";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -82,7 +82,7 @@ export default function Employees() {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      .format("D [من] MMMM [الساعة] h:mm")
       + " " 
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
@@ -97,7 +97,7 @@ export default function Employees() {
       notifySuccess("تم تصدير بيانات الموظفين إلى PDF بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير PDF");
-      console.error('PDF export error:', error);
+      handleApiError(error);
     }
   };
 
@@ -112,7 +112,7 @@ export default function Employees() {
       notifySuccess("تم تصدير بيانات الموظفين إلى Excel بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير Excel");
-      console.error('Excel export error:', error);
+      handleApiError(error);
     }
   };
 
@@ -172,7 +172,6 @@ export default function Employees() {
     setIsDeleteModalOpen(true);
   };
 
-  // Render table for large screens
   const renderTable = () => (
     <TableContainer  sx={{ borderRadius: 2 }}>
       <Table stickyHeader>
@@ -288,7 +287,6 @@ export default function Employees() {
     </TableContainer>
   );
 
-  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: isMobile ? 1 : 2 }}>
       {isLoading ? (
@@ -312,7 +310,6 @@ export default function Employees() {
               >
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Stack spacing={2}>
-                    {/* Header Row - User Name and Actions */}
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
@@ -374,7 +371,6 @@ export default function Employees() {
 
                     <Divider />
 
-                    {/* User Details */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
@@ -400,7 +396,6 @@ export default function Employees() {
                       </Box>
                     </Box>
 
-                    {/* Status and Role */}
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'flex-start',
@@ -446,9 +441,7 @@ export default function Employees() {
         <meta name="description" content="الموظفين" />
       </Helmet>
       
-      {/* Main Content */}
       <Box sx={{ p: isMobile ? 2 : 3 }}>
-        {/* Search and Add Button */}
         <Box
           sx={{
             display: "flex",
@@ -484,7 +477,6 @@ export default function Employees() {
             spacing={1}
             sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
           >
-            {/* Export Buttons */}
             {permissions.includes("users_Export") && (
             <Stack direction="row" spacing={1}>
               <Button
@@ -543,7 +535,6 @@ export default function Employees() {
           </Stack>
         </Box>
 
-        {/* Table for large screens, Cards for small screens */}
         <Paper sx={{ 
           width: "100%", 
           overflow: "hidden", 
@@ -552,7 +543,6 @@ export default function Employees() {
         }}>
           {isSmallScreen ? renderCards() : renderTable()}
 
-          {/* Pagination for cards view */}
           {isSmallScreen && usersData && (
             <TablePagination
               component="div"

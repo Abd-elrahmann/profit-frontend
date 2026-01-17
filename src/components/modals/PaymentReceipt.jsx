@@ -36,19 +36,15 @@ const PaymentReceipt = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
 
-  // Prevent route changes - block all navigation attempts
   useEffect(() => {
     const currentPath = location.pathname + location.search;
     
-    // Always prevent navigation away from payment receipt page
     if (currentPath !== initialPathRef.current) {
-      // Prevent navigation by replacing with current route
       navigate(initialPathRef.current, { replace: true });
       notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
     }
   }, [location.pathname, location.search, navigate]);
 
-  // Prevent browser back/forward navigation
   useEffect(() => {
     const handlePopState = (event) => {
       event.preventDefault();
@@ -56,7 +52,6 @@ const PaymentReceipt = () => {
       notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
     };
 
-    // Push current state to prevent back navigation
     window.history.pushState(null, '', initialPathRef.current);
     window.addEventListener('popstate', handlePopState);
 
@@ -65,7 +60,6 @@ const PaymentReceipt = () => {
     };
   }, []);
 
-  // Prevent page unload/close
   useEffect(() => {
     const handleBeforeUnload = (event) => {
       event.preventDefault();
@@ -80,15 +74,12 @@ const PaymentReceipt = () => {
     };
   }, []);
 
-  // Prevent keyboard navigation shortcuts
   useEffect(() => {
     const handleKeyDown = (event) => {
-      // Prevent Alt+Arrow (browser navigation)
       if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
         event.preventDefault();
         notifyError("لا يمكن تغيير الصفحة أثناء عملية الدفع");
       }
-      // Prevent Ctrl/Cmd + R (refresh)
       if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
         event.preventDefault();
         notifyError("يرجى عدم تحديث الصفحة أثناء عملية الدفع");
@@ -102,7 +93,6 @@ const PaymentReceipt = () => {
     };
   }, []);
 
-  // Prevent link clicks that would navigate away
   useEffect(() => {
     const handleClick = (event) => {
       const target = event.target.closest('a');
@@ -110,7 +100,6 @@ const PaymentReceipt = () => {
         const currentOrigin = window.location.origin;
         const linkOrigin = new URL(target.href).origin;
         
-        // Always prevent navigation away from payment receipt page
         if (linkOrigin === currentOrigin && !target.href.includes('/payment-receipt')) {
           event.preventDefault();
           event.stopPropagation();
@@ -126,7 +115,6 @@ const PaymentReceipt = () => {
     };
   }, []);
 
-  // Decode the token to get the actual data
   const { data: decodedData, isLoading: isDecoding, error: decodeError } = useQuery({
     queryKey: ["decodeToken", token],
     queryFn: () => decodePaymentToken(token),
@@ -196,7 +184,6 @@ const PaymentReceipt = () => {
     setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
-  // Container styles with responsive height
   const containerStyles = {
     minHeight: isLargeScreen ? "80vh" : "100vh",
     height: isLargeScreen ? "auto" : "100vh",
@@ -210,7 +197,6 @@ const PaymentReceipt = () => {
     background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.light}15 100%)`
   };
 
-  // Paper styles with responsive padding
   const paperStyles = {
     p: isSmallScreen ? 3 : 5,
     borderRadius: 4,
@@ -220,8 +206,7 @@ const PaymentReceipt = () => {
     boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
     border: `1px solid ${theme.palette.primary.light}30`
   };
-
-  // Check if there are server-side attachments (not local blob URLs)
+  
   const hasServerAttachments = repaymentData?.attachments &&
     repaymentData?.attachments.length > 0 &&
     !repaymentData.attachments.some(attachment => attachment.startsWith('blob:'));

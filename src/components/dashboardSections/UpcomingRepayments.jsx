@@ -38,7 +38,6 @@ const UpcomingRepayments = React.memo(() => {
     return repayment.newDueDate || repayment.dueDate;
   };
 
-  // Memoized pagination data
   const paginatedRepayments = useMemo(() => {
     if (!repayments) return [];
     const startIndex = page * rowsPerPage;
@@ -46,7 +45,6 @@ const UpcomingRepayments = React.memo(() => {
     return repayments.slice(startIndex, endIndex);
   }, [repayments, page, rowsPerPage]);
 
-  // Handle pagination changes
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -132,8 +130,7 @@ const UpcomingRepayments = React.memo(() => {
             </Typography>
           </Box>
         )}
-
-        {/* Pagination */}
+  
         {repayments && repayments.length > rowsPerPage && (
           <TablePagination
             component="div"

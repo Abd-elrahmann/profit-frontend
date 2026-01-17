@@ -9,30 +9,24 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Try to get user profile using refresh token (from cookie)
         const response = await Api.post('/api/auth/refresh');
         
         if (response.data) {
           const { accessToken: token, user: userData } = response.data;
           
-          // Update Api.js token FIRST
           const { setAccessToken: setApiToken } = await import('../../config/Api');
           setApiToken(token);
           
-          // Then update state
           setAccessToken(token);
           setUser(userData);
           setIsAuthenticated(true);
           
-          // Notify permissions context
           window.dispatchEvent(new Event('userLoggedIn'));
         }
       } catch {
-        // No valid refresh token, user needs to login
         console.log('No valid session found');
         setIsAuthenticated(false);
         setUser(null);
@@ -44,7 +38,6 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    // Listen for token refresh events from Api.js
     const handleTokenRefresh = (event) => {
       const { accessToken: token, user: userData } = event.detail;
       setAccessToken(token);
@@ -53,7 +46,6 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    // Listen for auth failure events
     const handleAuthFailed = () => {
       setAccessToken(null);
       setUser(null);
@@ -70,16 +62,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback(async (token, userData) => {
-    // Update Api.js token FIRST before updating state
     const { setAccessToken: setApiToken } = await import('../../config/Api');
     setApiToken(token);
     
-    // Then update state
     setAccessToken(token);
     setUser(userData);
     setIsAuthenticated(true);
     
-    // Notify other contexts
     window.dispatchEvent(new Event('userLoggedIn'));
   }, []);
 

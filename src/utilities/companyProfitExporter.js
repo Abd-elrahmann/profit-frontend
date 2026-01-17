@@ -5,7 +5,6 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
-// Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
@@ -18,18 +17,14 @@ const registerArabicFonts = (doc) => {
 export const exportCompanyProfitToPDF = async (profitData) => {
   return new Promise((resolve, reject) => {
     try {
-      // Validate data
       if (!profitData) {
         throw new Error('لا توجد بيانات للتصدير');
       }
 
-      // Create new PDF document
       const doc = new jsPDF();
 
-      // Register Arabic fonts
       registerArabicFonts(doc);
 
-      // Set document properties
       doc.setProperties({
         title: 'تقرير أرباح الشركة',
         subject: 'تقرير أرباح الشركة وسجل السحوبات',
@@ -38,27 +33,22 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
       doc.setFont('Amiri', 'bold');
 
-      // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
       const logoHeight = 10;
       const logoX = doc.internal.pageSize.width - logoWidth - 5;
       const logoY = 5;
       doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
-      // Title section - start after logo
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
       doc.text('تقرير أرباح الشركة', doc.internal.pageSize.width / 2, 25, { align: 'center' });
 
-      // Summary section
       doc.setFontSize(13);
       doc.setFont('Amiri', 'bold');
       doc.text('ملخص أرباح الشركة', doc.internal.pageSize.width / 2, 40, { align: 'center' });
 
-      // Profit summary data
       const availableAmount = profitData.availableAmount || 0;
       const upcomingProfit = profitData.upcomingProfit || 0;
       const cents = profitData.cents || 0;
@@ -67,34 +57,28 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       const withdrawals = profitData.data || [];
       const periodsProfit = profitData.periodsProfit || null;
 
-      // Summary cards data
       doc.setFontSize(10);
       doc.setFont('Amiri', 'bold');
       const summaryY = 50;
 
-      // First row of summary
       const summaryText1 = `صافي الأرباح القادمة للشركة: ${upcomingProfit.toLocaleString('en-US')}  |  باقي أرباح الشركاء: ${cents.toLocaleString('en-US')}`;
       doc.text(summaryText1, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
 
-      // Second row of summary
       const summaryText2 = `إجمالي الأرباح: ${totalUpcoming.toLocaleString('en-US')}  |  الرصيد المتاح للسحب: ${availableAmount.toLocaleString('en-US')}`;
       doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 10, { align: 'center' });
 
-      // Third row of summary
       const totalWithdrawnAmount = withdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
       const summaryText3 = `إجمالي عمليات السحب: ${totalWithdrawals}  |  إجمالي المبالغ المسحوبة: ${totalWithdrawnAmount.toLocaleString('en-US')}`;
       doc.text(summaryText3, doc.internal.pageSize.width / 2, summaryY + 20, { align: 'center' });
 
       let yPosition = summaryY + 30;
 
-      // Company Profit Sources Table
       if (periodsProfit && periodsProfit.periods && periodsProfit.periods.length > 0) {
         doc.setFontSize(13);
         doc.setFont('Amiri', 'bold');
         doc.text('مصادر أرباح الشركة', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
         yPosition += 10;
 
-        // Prepare periods table data
         const periodsTableData = [];
         periodsProfit.periods.forEach(period => {
           periodsTableData.push([
@@ -107,22 +91,19 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           ]);
         });
 
-        // Periods table headers (RTL order)
         const periodsHeaders = [
           ['الإجمالي', 'باقي الشركاء', 'أرباح الشركة', 'النسبة', 'إجمالي الأرباح', 'الفترة']
         ];
 
-        // Column widths for periods table
         const periodsColumnWidths = {
-          0: 30, // الإجمالي
-          1: 30, // باقي الشركاء
-          2: 30, // أرباح الشركة
-          3: 25, // النسبة
-          4: 35, // إجمالي الأرباح
-          5: 50  // الفترة
+          0: 30, 
+          1: 30, 
+          2: 30, 
+          3: 25, 
+          4: 35, 
+          5: 50  
         };
 
-        // Calculate periods table width
         const periodsTotalColumnWidth = Object.values(periodsColumnWidths).reduce((sum, width) => sum + width, 0);
         const periodsTableStartX = (doc.internal.pageSize.width - periodsTotalColumnWidth) / 2;
 
@@ -161,12 +142,12 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             fillColor: [250, 250, 250]
           },
           columnStyles: {
-            0: { cellWidth: periodsColumnWidths[0], halign: 'center', fontStyle: 'bold' }, // الإجمالي
-            1: { cellWidth: periodsColumnWidths[1], halign: 'center', fontStyle: 'bold' }, // باقي الشركاء
-            2: { cellWidth: periodsColumnWidths[2], halign: 'center', fontStyle: 'bold' }, // أرباح الشركة
-            3: { cellWidth: periodsColumnWidths[3], halign: 'center', fontStyle: 'bold' }, // النسبة
-            4: { cellWidth: periodsColumnWidths[4], halign: 'center', fontStyle: 'bold' }, // إجمالي الأرباح
-            5: { cellWidth: periodsColumnWidths[5], halign: 'center', fontStyle: 'bold' } // الفترة
+            0: { cellWidth: periodsColumnWidths[0], halign: 'center', fontStyle: 'bold' }, 
+            1: { cellWidth: periodsColumnWidths[1], halign: 'center', fontStyle: 'bold' }, 
+            2: { cellWidth: periodsColumnWidths[2], halign: 'center', fontStyle: 'bold' }, 
+            3: { cellWidth: periodsColumnWidths[3], halign: 'center', fontStyle: 'bold' }, 
+            4: { cellWidth: periodsColumnWidths[4], halign: 'center', fontStyle: 'bold' }, 
+            5: { cellWidth: periodsColumnWidths[5], halign: 'center', fontStyle: 'bold' } 
           },
           margin: { left: 14, right: 14 },
           tableWidth: periodsTotalColumnWidth,
@@ -179,13 +160,11 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         yPosition = doc.lastAutoTable.finalY + 15;
       }
 
-      // Check if there are withdrawals to display
       if (withdrawals.length === 0) {
         doc.setFontSize(14);
         doc.setFont('Amiri', 'bold');
         doc.text('لا توجد عمليات سحب حتى الآن', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
       } else {
-        // Prepare table data (RTL order)
         const tableData = [];
         withdrawals.forEach(withdrawal => {
           tableData.push([
@@ -195,28 +174,24 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           ]);
         });
 
-        // Table headers (RTL order)
         const headers = [
           ['المبلغ المسحوب', 'الوصف', 'التاريخ']
         ];
 
-        // Create table with RTL support - centered and larger, no extra borders
         const pageWidth = doc.internal.pageSize.width;
 
-        // Optimize column widths to fit on one page - expanded for better readability
         const columnWidths = {
-          0: 35, // المبلغ المسحوب
-          1: 80, // الوصف
-          2: 55  // التاريخ
+          0: 35, 
+          1: 80, 
+          2: 55  
         };
 
-        // Calculate table width to center it properly
         const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
         const tableStartX = (pageWidth - totalColumnWidth) / 2;
 
         autoTable(doc, {
           startY: yPosition,
-          startX: tableStartX, // Center the table
+          startX: tableStartX, 
           head: headers,
           body: tableData,
           theme: 'striped',
@@ -249,9 +224,9 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             fillColor: [250, 250, 250]
           },
           columnStyles: {
-            0: { cellWidth: columnWidths[0], halign: 'center', fontStyle: 'bold' }, // المبلغ المسحوب
-            1: { cellWidth: columnWidths[1], halign: 'center', fontStyle: 'bold' }, // الوصف
-            2: { cellWidth: columnWidths[2], halign: 'center', fontStyle: 'bold' }  // التاريخ
+            0: { cellWidth: columnWidths[0], halign: 'center', fontStyle: 'bold' }, 
+            1: { cellWidth: columnWidths[1], halign: 'center', fontStyle: 'bold' }, 
+            2: { cellWidth: columnWidths[2], halign: 'center', fontStyle: 'bold' }  
           },
           margin: { left: 14, right: 14 },
           tableWidth: totalColumnWidth,
@@ -260,9 +235,8 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           rowPageBreak: 'avoid',
           showHead: 'everyPage',
           didParseCell: function (data) {
-            // Prevent cell content from being too wide
             if (data.cell.text && data.cell.text.length > 0) {
-              const maxLength = data.column.index === 1 ? 60 : 25; // Longer for description (index 1)
+              const maxLength = data.column.index === 1 ? 60 : 25; 
               if (data.cell.text[0].length > maxLength) {
                 data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
               }
@@ -271,13 +245,11 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         });
       }
 
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
 
-        // Draw footer line
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.5);
         doc.line(
@@ -287,12 +259,10 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           doc.internal.pageSize.height - 15
         );
 
-        // Footer text
         doc.setFontSize(9);
         doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
 
-        // Page number - centered
         doc.text(
           `صفحة ${i} من ${pageCount}`,
           doc.internal.pageSize.width / 2,
@@ -300,7 +270,6 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           { align: 'center' }
         );
 
-        // Creation date - right aligned
         const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
         doc.text(
           `تم الإنشاء في: ${creationDate}`,
@@ -309,11 +278,9 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           { align: 'right' }
         );
 
-        // Reset text color
         doc.setTextColor(0, 0, 0);
       }
 
-      // Save PDF
       const fileName = `تقرير_أرباح_الشركة_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
@@ -325,19 +292,15 @@ export const exportCompanyProfitToPDF = async (profitData) => {
 };
 
 export const exportCompanyProfitToExcel = async (profitData) => {
-  try {
-    // Validate data
+  try { 
     if (!profitData) {
       throw new Error('لا توجد بيانات للتصدير');
     }
 
-    // Lazy load XLSX library
     const XLSX = await import('xlsx');
 
-    // Create workbook
     const workbook = XLSX.utils.book_new();
 
-    // Summary data
     const availableAmount = profitData.availableAmount || 0;
     const upcomingProfit = profitData.upcomingProfit || 0;
     const cents = profitData.cents || 0;
@@ -361,7 +324,6 @@ export const exportCompanyProfitToExcel = async (profitData) => {
       ['تفاصيل السحوبات']
     ];
 
-    // Withdrawals data
     const withdrawalsData = [];
     withdrawals.forEach(withdrawal => {
       withdrawalsData.push({
@@ -372,25 +334,21 @@ export const exportCompanyProfitToExcel = async (profitData) => {
       });
     });
 
-    // Create summary sheet
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
 
-    // Create withdrawals sheet (if there are withdrawals)
     let withdrawalsSheet;
     if (withdrawalsData.length > 0) {
       withdrawalsSheet = XLSX.utils.json_to_sheet(withdrawalsData);
 
-      // Auto-size columns for better Excel display
       const wscols = [
-        { wch: 15 }, // التاريخ الميلادي
-        { wch: 15 }, // التاريخ الهجري
-        { wch: 60 }, // الوصف
-        { wch: 25 }  // المبلغ المسحوب
+        { wch: 15 }, 
+        { wch: 15 }, 
+        { wch: 60 }, 
+        { wch: 25 }  
       ];
       withdrawalsSheet['!cols'] = wscols;
     }
 
-    // Create periods profit sheet (if there are periods)
     let periodsSheet;
     if (periodsProfit && periodsProfit.periods && periodsProfit.periods.length > 0) {
       const periodsData = [];
@@ -407,19 +365,17 @@ export const exportCompanyProfitToExcel = async (profitData) => {
 
       periodsSheet = XLSX.utils.json_to_sheet(periodsData);
 
-      // Auto-size columns for periods sheet
       const periodsCols = [
-        { wch: 25 }, // الفترة
-        { wch: 20 }, // إجمالي الأرباح
-        { wch: 15 }, // النسبة
-        { wch: 20 }, // أرباح الشركة
-        { wch: 20 }, // باقي الشركاء
-        { wch: 20 }  // الإجمالي
+        { wch: 25 }, 
+        { wch: 20 }, 
+        { wch: 15 }, 
+        { wch: 20 }, 
+        { wch: 20 }, 
+        { wch: 20 }  
       ];
       periodsSheet['!cols'] = periodsCols;
     }
 
-    // Add sheets to workbook
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص الأرباح');
 
     if (periodsSheet) {
@@ -429,8 +385,7 @@ export const exportCompanyProfitToExcel = async (profitData) => {
     if (withdrawalsSheet) {
       XLSX.utils.book_append_sheet(workbook, withdrawalsSheet, 'سجل السحوبات');
     }
-
-    // Generate Excel file
+    
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array',

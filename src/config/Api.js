@@ -12,23 +12,19 @@ const Api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // ✅ مهم جداً لإرسال cookies
+  withCredentials: true,
 });
 
-// Variable to store access token in memory only
 let accessToken = null;
 
-// Function to set access token (called from AuthContext)
 export const setAccessToken = (token) => {
   accessToken = token;
 };
 
-// Function to get access token
 export const getAccessToken = () => {
   return accessToken;
 };
 
-// Flag to prevent multiple refresh requests
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -49,7 +45,6 @@ Api.interceptors.request.use(
     config.headers["Accept-Language"] = i18next.language;
     config.headers["page"] = window.location.pathname.split('/').pop();
     
-    // Get token from memory (not localStorage)
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -66,10 +61,8 @@ Api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error?.response?.status;
     
-    // If 401 and not already retrying
     if (status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -86,16 +79,13 @@ Api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Try to refresh token using refresh token from cookie
         const response = await Api.post('/api/auth/refresh');
         
         if (response.data && response.data.accessToken) {
           const newToken = response.data.accessToken;
           
-          // Update token in memory
           setAccessToken(newToken);
           
-          // Dispatch event to update AuthContext
           window.dispatchEvent(new CustomEvent('tokenRefreshed', { 
             detail: { 
               accessToken: newToken,
@@ -103,24 +93,18 @@ Api.interceptors.response.use(
             } 
           }));
           
-          // Process queued requests
           processQueue(null, newToken);
           
-          // Retry original request with new token
           originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
           return Api(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh token failed, user needs to login again
-        processQueue(refreshError, null);
+          processQueue(refreshError, null);
         
-        // Clear auth state
         setAccessToken(null);
         
-        // Dispatch logout event
         window.dispatchEvent(new Event('authFailed'));
         
-        // Redirect to login if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }

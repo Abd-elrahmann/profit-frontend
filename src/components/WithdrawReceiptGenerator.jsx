@@ -59,7 +59,6 @@ const numberToArabicWords = (num) => {
   let result = "";
   let hasThousands = false;
 
-  // Handle millions
   if (num >= 1000000) {
     const millionsPart = Math.floor(num / 1000000);
     if (millionsPart === 1) {
@@ -74,7 +73,6 @@ const numberToArabicWords = (num) => {
     num %= 1000000;
   }
 
-  // Handle thousands
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
     if (thousandsPart === 1) {
@@ -86,17 +84,14 @@ const numberToArabicWords = (num) => {
     } else if (thousandsPart === 10) {
       result += "عشرة آلاف ";
     } else if (thousandsPart >= 11 && thousandsPart <= 999) {
-      // أي رقم بين 11 و 999
       result += numberToArabicWords(thousandsPart) + " ألف ";
     } else {
-      // أي رقم أكبر من أو يساوي 1000 (مليون أو أكثر)
       result += numberToArabicWords(thousandsPart) + " ألف ";
     }
     num %= 1000;
     hasThousands = true;
   }
 
-// Handle hundreds
 if (num >= 100) {
   const hundredsPart = Math.floor(num / 100);
 
@@ -112,7 +107,6 @@ if (num >= 100) {
 
   if (num > 0 && hundredsPart > 0) result += " ";
 }
-  // Handle tens and ones with proper Arabic grammar
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
@@ -159,11 +153,9 @@ if (num >= 100) {
 };
 
 const getCurrentDates = () => {
-  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
 
-  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
   const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat(
@@ -205,7 +197,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
       templateContent,
       onReceiptGenerated,
       autoGenerate = false,
-      receiptNumber = null, // Add receiptNumber prop from backend
+      receiptNumber = null, 
     },
     ref
   ) => {
@@ -332,20 +324,15 @@ const WithdrawReceiptGenerator = React.forwardRef(
         try {
           const { gregorianDate, hijriDate, fullDate } = getCurrentDates();
           
-          // Use receipt number from props or parameter (passed from backend)
           const receiptNum = receiptNumberToUse || 'غير محدد';
           
           const totalCapital = withdrawalDataToUse.withdrawal?.totalCapital || 0;
-          // خصم نصيب المساهم من الخسائر
           const defaultShare = withdrawalDataToUse.withdrawal?.defaultShare || 0;
 
-          // المدخرات المستحقة للمساهم
           const savingsAmount = withdrawalDataToUse.partner?.savings || withdrawalDataToUse.withdrawal?.savingAmount || 0;
 
-          // Calculate net amount due: رأس المال + المدخرات - الخسائر
           const netAmountDue = totalCapital + savingsAmount - defaultShare;
 
-          // Calculate number of installments from schedule
           const numberOfInstallments = withdrawalDataToUse.schedule?.length || 9;
           
           const totalCapitalWords = `${numberToArabicWords(totalCapital)} ريال`;
@@ -355,8 +342,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
             ? new Date(withdrawalDataToUse.withdrawal.createdAt).toISOString().split("T")[0]
             : new Date().toISOString().split("T")[0];
 
-          let filledTemplate = templateContent
-            // Basic Information
+          let filledTemplate = templateContent  
             .replace(/{{رقم_المرجع}}/g, receiptNum)
             .replace(/{{اسم_المضارب}}/g, "المضارب (الإدارة)")
             .replace(/{{رقم_هوية_المضارب}}/g, "")
@@ -367,17 +353,14 @@ const WithdrawReceiptGenerator = React.forwardRef(
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{تاريخ_الإنشاء}}/g, gregorianDate)
             
-            // Financial Details - استخدام en-US لتنسيق الأرقام
             .replace(/{{رأس_مال_المساهم}}/g, totalCapital?.toLocaleString("en-US") || "0")
             .replace(/{{خصم_نصيب_المساهم_من_الخسائر}}/g, defaultShare?.toLocaleString("en-US") || "0")
             .replace(/{{المدخرات_المستحقة_للمساهم}}/g, savingsAmount?.toLocaleString("en-US") || "0")
             .replace(/{{صافي_المبلغ_المستحق_بعد_الخصم}}/g, netAmountDue?.toLocaleString("en-US") || "0")
             
-            // Amount in Words
             .replace(/{{رأس_مال_المساهم_كتابة}}/g, totalCapitalWords)
             .replace(/{{صافي_المبلغ_المستحق_كتابة}}/g, netAmountDueWords)
 
-            // Terms
             .replace(/{{طريقة_السداد}}/g, "دفعات حسب السيولة والوضع الفعلي")
             .replace(/{{الحد_الأقصى_للدفعة}}/g, "5,000")
             .replace(/{{مدة_السداد}}/g, numberOfInstallments.toString())
@@ -428,7 +411,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
           border: "1px solid #ddd",
           marginBottom: "20px",
           padding: "10px",
-          display: "none", // Hidden component
+            display: "none", 
         }}
       >
         {isGenerating && (
