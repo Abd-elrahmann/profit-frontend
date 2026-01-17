@@ -16,10 +16,9 @@ export const AuthProvider = ({ children }) => {
         
         if (response.data) {
           const { accessToken: token, user: userData } = response.data;
-          
-          const { setAccessToken: setApiToken } = await import('../../config/Api');
-          setApiToken(token);
-          
+
+          setAccessToken(token);
+
           setAccessToken(token);
           setUser(userData);
           setIsAuthenticated(true);
@@ -62,9 +61,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback(async (token, userData) => {
-    const { setAccessToken: setApiToken } = await import('../../config/Api');
-    setApiToken(token);
-    
+    setAccessToken(token);
+
     setAccessToken(token);
     setUser(userData);
     setIsAuthenticated(true);
