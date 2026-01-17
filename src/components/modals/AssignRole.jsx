@@ -1,4 +1,4 @@
-// AssignRole.jsx - مودال تعيين الأدوار
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -188,8 +188,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
             </Alert>
           </Box>
         )}
-
-        {/* Remove Current Role Button */}
+  
         {hasCurrentRole && (
           <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
             <Button

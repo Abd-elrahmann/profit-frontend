@@ -1,4 +1,4 @@
-// LogsTable.jsx - مودال سجلات الأنشطة
+
 import React, { useState } from "react";
 import {
   Box,
@@ -41,8 +41,7 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
   };
-
-  // Action type Arabic translations
+  
   const getActionText = (action) => {
     switch (action) {
       case "CREATE":
@@ -83,7 +82,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
     }
   };
 
-  // Screen Arabic translations
   const getScreenText = (screen) => {
     const screenTranslations = {
       "Auth": "المصادقة",
@@ -100,7 +98,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
     return screenTranslations[screen] || screen;
   };
 
-  // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
       <Table stickyHeader sx={{ width: "100%" }}>
@@ -177,7 +174,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
     </TableContainer>
   );
 
-  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: 1 }}>
       {isLoading ? (
@@ -197,7 +193,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
               <Card sx={{ border: '1px solid #e0e0e0', borderRadius: 2 }}>
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={2}>
-                    {/* Header - User Info */}
                     <Box>
                       <Typography variant="subtitle1" fontWeight="bold">
                         {log.user?.name}
@@ -209,7 +204,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
 
                     <Divider />
 
-                    {/* Action and Screen */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Chip
                         label={getActionText(log.action)}
@@ -221,7 +215,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
                       </Typography>
                     </Box>
 
-                    {/* Description */}
                     <Box>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                         الوصف:
@@ -231,7 +224,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
                       </Typography>
                     </Box>
 
-                    {/* Date */}
                     <Typography variant="caption" color="textSecondary" align="center">
                       {dayjs(log.createdAt).format("DD/MM/YYYY HH:mm")}
                     </Typography>
@@ -278,12 +270,10 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
       
       <DialogContent sx={{ p: 0 }}>
         <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
-          {/* Table or Cards */}
           <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 0 }}>
             {isMobile ? renderCards() : renderTable()}
           </Paper>
-
-          {/* Pagination */}
+      
           {logsData && (
             <TablePagination
               component="div"

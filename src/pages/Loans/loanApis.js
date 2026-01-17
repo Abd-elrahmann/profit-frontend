@@ -1,6 +1,5 @@
 import Api, { handleApiError } from '../../config/Api';
 
-// Get clients with pagination and search
 export const getClients = async (page = 1, search = '') => {
   try {
     const url = search 
@@ -14,7 +13,6 @@ export const getClients = async (page = 1, search = '') => {
   }
 };
 
-// Get partners with pagination and search
 export const getPartners = async (page = 1, search = '') => {
   try {
     const url = search
@@ -28,7 +26,6 @@ export const getPartners = async (page = 1, search = '') => {
   }
 };
 
-// Create new loan
 export const createLoan = async (loanData) => {
   try {
     const response = await Api.post('/api/loans', loanData);
@@ -39,7 +36,6 @@ export const createLoan = async (loanData) => {
   }
 };
 
-// Update loan
 export const updateLoan = async (loanId, loanData) => {
   try {
     const response = await Api.patch(`/api/loans/${loanId}`, loanData);
@@ -50,7 +46,6 @@ export const updateLoan = async (loanId, loanData) => {
   }
 };
 
-// Activate loan
 export const activateLoan = async (loanId) => {
   try {
     const response = await Api.patch(`/api/loans/${loanId}/activate`);
@@ -61,7 +56,6 @@ export const activateLoan = async (loanId) => {
   }
 };
 
-// Deactivate loan
 export const deactivateLoan = async (loanId) => {
   try {
     const response = await Api.patch(`/api/loans/${loanId}/deactivate`);
@@ -72,7 +66,6 @@ export const deactivateLoan = async (loanId) => {
   }
 };
 
-// Get all loans with pagination and limit
 export const getLoans = async (page = 1, search = '', limit = 15, status = null) => {
   try {
     const params = new URLSearchParams();
@@ -89,7 +82,6 @@ export const getLoans = async (page = 1, search = '', limit = 15, status = null)
   }
 };
 
-// Get loan by ID (supports optional pagination for repayments)
 export const getLoanById = async (loanId, page, limit) => {
   try {
     const params = new URLSearchParams();
@@ -106,7 +98,6 @@ export const getLoanById = async (loanId, page, limit) => {
   }
 };
 
-// Delete loan
 export const deleteLoan = async (loanId) => {
   try {
     const response = await Api.delete(`/api/loans/${loanId}`);
@@ -117,9 +108,6 @@ export const deleteLoan = async (loanId) => {
   }
 };
 
-// Small Loans API functions
-
-// Create small loan
 export const createSmallLoan = async (smallLoanData) => {
   try {
     const response = await Api.post('/api/small-loans', smallLoanData);
@@ -130,7 +118,6 @@ export const createSmallLoan = async (smallLoanData) => {
   }
 };
 
-// Pay small loan
 export const paySmallLoan = async (loanId, paymentData) => {
   try {
     const response = await Api.post(`/api/small-loans/pay/${loanId}`, paymentData);
@@ -141,7 +128,6 @@ export const paySmallLoan = async (loanId, paymentData) => {
   }
 };
 
-// Update small loan
 export const updateSmallLoan = async (loanId, updateData) => {
   try {
     const response = await Api.patch(`/api/small-loans/${loanId}`, updateData);
@@ -152,7 +138,6 @@ export const updateSmallLoan = async (loanId, updateData) => {
   }
 };
 
-// Get small loans with pagination
 export const getSmallLoans = async (page = 1, search = '', limit = 20) => {
   try {
     const params = new URLSearchParams();
@@ -168,7 +153,6 @@ export const getSmallLoans = async (page = 1, search = '', limit = 20) => {
   }
 };
 
-// Delete small loan
 export const deleteSmallLoan = async (loanId) => {
   try {
     const response = await Api.delete(`/api/small-loans/${loanId}`);
@@ -179,7 +163,6 @@ export const deleteSmallLoan = async (loanId) => {
   }
 };
 
-// Convert loan client
 export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeelId) => {
   try {
     const response = await Api.patch(`/api/loans/convert-client/${loanId}`, {
@@ -193,8 +176,7 @@ export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeel
     throw error;
   }
 };
-
-// Transfer partial loan amount to another client
+  
 export const transferPartialLoanAmount = async (fromClientId, toClientId, loanId, amount, kafeelId) => {
   try {
     const response = await Api.patch(`/api/loans/convert-partial/${loanId}`, {

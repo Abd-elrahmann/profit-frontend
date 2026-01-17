@@ -1,4 +1,13 @@
 
+/**
+ * PaymentProofPreview
+ *
+ * Displays legally approved payment proof receipt templates.
+ * HTML templates are internally seeded and trusted from the database.
+ * Dynamic values are sanitized before injection to prevent XSS attacks.
+ * All templates undergo validation to ensure they contain no malicious content.
+ */
+
 import React from 'react';
 import {
   Dialog,
@@ -13,6 +22,7 @@ import {
   Divider,
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
+import { isValidTemplate, injectContractData } from '../utilities/sanitize';
 
 const PaymentProofPreview = ({
   open,
@@ -23,9 +33,28 @@ const PaymentProofPreview = ({
   clientName = "",
   installmentAmount = 0,
   discount = 0,
+  paymentData = {} // Additional dynamic data for template injection
 }) => {
-
   const finalAmount = Math.max(0, installmentAmount - discount);
+
+  // Safely process payment proof HTML with XSS protection
+  const safePaymentProofHtml = React.useMemo(() => {
+    if (!paymentProofHtml) return '';
+
+    try {
+      // Validate template safety
+      if (!isValidTemplate(paymentProofHtml)) {
+        console.error('Invalid payment proof template: contains potentially dangerous content');
+        return '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب إيصال السداد غير آمن</div>';
+      }
+
+      // Inject additional sanitized data if provided
+      return injectContractData(paymentProofHtml, paymentData);
+    } catch (error) {
+      console.error('Error processing payment proof template:', error);
+      return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب إيصال السداد</div>';
+    }
+  }, [paymentProofHtml, paymentData]);
 
   return (
     <Dialog 
@@ -101,9 +130,9 @@ const PaymentProofPreview = ({
             }
           }}
         >
-          {paymentProofHtml ? (
+          {safePaymentProofHtml ? (
             <Box
-              dangerouslySetInnerHTML={{ __html: paymentProofHtml }}
+              dangerouslySetInnerHTML={{ __html: safePaymentProofHtml }}
               sx={{
                 '& *': {
                   fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',

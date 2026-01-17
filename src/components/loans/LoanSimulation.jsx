@@ -17,7 +17,6 @@ const LoanSimulation = ({
   formatAmount,
 }) => {
   if (!isSmallScreen) {
-    // Desktop version - sidebar simulation
     return (
       <Box
         sx={{
@@ -138,7 +137,6 @@ const LoanSimulation = ({
     );
   }
 
-  // Mobile version - inline simulation
   return (
     <Box
       sx={{

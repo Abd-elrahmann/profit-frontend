@@ -31,17 +31,15 @@ const LastActions = React.memo(() => {
   const { data: actions, isLoading } = useQuery({
     queryKey: ['last-actions'],
     queryFn: getLastActions,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 
-  // Memoized pagination data
   const paginatedActions = useMemo(() => {
     if (!actions) return [];
     return actions;
   }, [actions]);
 
 
-  // Get icon based on screen
   const getScreenIcon = (screen) => {
     switch (screen) {
       case 'Loans':
@@ -59,7 +57,6 @@ const LastActions = React.memo(() => {
     }
   };
 
-  // Get screen display name in Arabic
   const getScreenDisplayName = (screen) => {
     switch (screen) {
       case 'Loans':
@@ -77,7 +74,6 @@ const LastActions = React.memo(() => {
     }
   };
 
-  // Format relative time
   const formatRelativeTime = (date) => {
     const now = new Date();
     const actionTime = new Date(date);

@@ -1,4 +1,4 @@
-// Separate sidebar configuration for better performance
+
 import React from 'react';
 import {
   Dashboard as DashboardIcon,
@@ -58,18 +58,17 @@ export const parentIcons = {
 };
 
 export const parentColors = {
-  'إدارة الموظفين': '#D84315', // Dark Orange
-  'إدارة العملاء': '#00897B', // Dark Teal
-  'إدارة المستثمرين': '#1565C0', // Dark Blue
-  'ادارة المصروفات': '#F57C00', // Dark Orange-Yellow
-  'المحاسبة المالية': '#7B1FA2', // Dark Purple
-  'العمليات المالية': '#C62828', // Dark Red
-  'القوائم المالية': '#2E7D32', // Dark Green
-  'الزكاة والادخار': '#6A1B9A', // Dark Purple
-  'القوالب': '#424242', // Dark Gray
+  'إدارة الموظفين': '#D84315', 
+  'إدارة العملاء': '#00897B', 
+  'إدارة المستثمرين': '#1565C0', 
+  'ادارة المصروفات': '#F57C00', 
+  'المحاسبة المالية': '#7B1FA2', 
+  'العمليات المالية': '#C62828', 
+  'القوائم المالية': '#2E7D32', 
+  'الزكاة والادخار': '#6A1B9A', 
+  'القوالب': '#424242', 
 };
-
-// Sidebar items configuration
+  
 export const sidebarItems = [
   {
     path: '/dashboard',
@@ -77,7 +76,7 @@ export const sidebarItems = [
     icon: DashboardIcon,
     module: 'dashboard',
     requiresPermissions: true,
-    color: '#2196F3', // Blue
+    color: '#2196F3', 
     parent: null
   },
   {
@@ -86,7 +85,7 @@ export const sidebarItems = [
     module: 'logs',
     requiresPermissions: true,
     icon: HistoryIcon,
-    color: '#FF9800', // Orange
+    color: '#FF9800', 
     parent: null
   },
   {

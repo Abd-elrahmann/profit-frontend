@@ -44,7 +44,6 @@ const DiscountModal = ({
       notes: notes.trim() || 'تم تطبيق خصم على الدفعة'
     });
 
-    // Reset form
     setDiscount('');
     setNotes('');
   };

@@ -26,7 +26,6 @@ const PartnerStats = React.memo(() => {
   const { isDarkMode } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Custom tooltip for dark mode compatibility
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -59,13 +58,11 @@ const PartnerStats = React.memo(() => {
     queryFn: () => getPartnerStats(filter),
   });
 
-  // Animated counters
   const animatedPartnersCount = useCountUp(stats?.partnersCount || 0, 600, !isLoading);
   const animatedActivePartners = useCountUp(stats?.activePartners || 0, 600, !isLoading);
   const animatedCapital = useCountUp(stats?.totalCapitalAmount || 0, 600, !isLoading);
   const animatedProfit = useCountUp(stats?.totalProfit || 0, 600, !isLoading);
 
-  // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || '0';
   };
@@ -77,7 +74,6 @@ const PartnerStats = React.memo(() => {
 
   const COLORS = [theme.palette.success.main, theme.palette.grey[400]];
 
-  // Prepare data for bar chart - memoized for performance
   const partnerBarData = useMemo(() => [
     {
       name: 'إجمالي الشركاء',
@@ -125,7 +121,6 @@ const PartnerStats = React.memo(() => {
       flexDirection: 'column', 
       alignItems: 'center',
     }}>
-      {/* Filter */}
       <Box sx={{
         display: 'flex',
         justifyContent: 'center',
@@ -159,9 +154,7 @@ const PartnerStats = React.memo(() => {
         </FormControl>
       </Box>
 
-      {/* Summary Cards */}
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
-        {/* إجمالي الشركاء */}
         <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -232,7 +225,6 @@ const PartnerStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* شركاء نشطين */}
         <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -303,7 +295,6 @@ const PartnerStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* إجمالي رأس المال */}
         <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -374,7 +365,6 @@ const PartnerStats = React.memo(() => {
           </Card>
         </Grid>
 
-        {/* إجمالي الأرباح */}
         <Grid item xs={3} sm={3} md={3}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -446,7 +436,6 @@ const PartnerStats = React.memo(() => {
         </Grid>
       </Grid>
 
-      {/* Bar Charts */}
       <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
         <Card sx={{
           p: { xs: 1.5, sm: 2, md: 3 },
@@ -517,8 +506,7 @@ const PartnerStats = React.memo(() => {
           </ResponsiveContainer>
         </Card>
       </Box>
-
-      {/* Pie Chart */}
+                
       {statusData.some(item => item.value > 0) && (
         <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
           <Card sx={{

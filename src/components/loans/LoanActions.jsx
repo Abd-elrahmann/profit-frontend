@@ -26,7 +26,6 @@ const LoanActions = ({
   isConverting,
   onCancelConversion,
 }) => {
-  // Mobile version - inline actions
   return (
     <Paper
       sx={{
@@ -40,7 +39,6 @@ const LoanActions = ({
         الإجراءات
       </Typography>
       <Stack spacing={1.5}>
-        {/* Client Conversion Actions */}
         {isClientConversion && selectedClient && (
           <>
             <Button
@@ -80,7 +78,6 @@ const LoanActions = ({
           </>
         )}
 
-        {/* Alert for active loans that cannot be edited */}
         {isViewMode && selectedLoan?.status === "ACTIVE" && (
           <Alert
             severity="warning"

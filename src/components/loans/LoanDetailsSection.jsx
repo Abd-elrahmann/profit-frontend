@@ -256,7 +256,7 @@ const LoanDetailsSection = ({
             type="number"
             label="معدل الفائدة السنوي (%)"
             value={loanForm.interestRate}
-            disabled={true} // Always read-only, calculated automatically
+            disabled={true}
             InputLabelProps={{
               shrink: true,
             }}
@@ -264,7 +264,7 @@ const LoanDetailsSection = ({
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: "background.paper", // Always disabled appearance
+                backgroundColor: "background.paper",
               },
             }}
           />

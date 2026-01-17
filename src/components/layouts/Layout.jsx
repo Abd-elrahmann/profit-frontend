@@ -14,7 +14,6 @@ const Layout = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Initialize sidebar state
   useEffect(() => {
     const initializeSidebar = () => {
       try {
@@ -35,7 +34,6 @@ const Layout = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check login status
   useEffect(() => {
     const checkLoginStatus = () => {
       const token = localStorage.getItem('token');
@@ -67,7 +65,6 @@ const Layout = ({ children }) => {
       setIsSyncing(true);
       const response = await Api.get('/api');
       if (response.data && response.data.refresh === true) {
-        // Refresh the page
         window.location.reload();
         notifySuccess('تم تحديث البيانات بنجاح');
       } else {
@@ -81,17 +78,14 @@ const Layout = ({ children }) => {
     }
   };
 
-  // Check if current page is an auth page
   const isAuthPage = location.pathname === '/login' 
     || location.pathname === '/register'
     || location.pathname === '/forgot-password'
     || location.pathname === '/reset-password';
 
-  // Check if current page is a payment receipt page
   const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt');
   const isCheckConnectionPage = location.pathname === '/check-connection';
 
-  // For auth pages and payment receipt pages, render children without layout
   if (isAuthPage || isPaymentReceiptPage || isCheckConnectionPage) {
     return <>{children}</>;
   }
@@ -103,13 +97,11 @@ const Layout = ({ children }) => {
       minHeight: '100vh',
       overflow: 'hidden' 
     }}>
-      {/* Navbar */}
       <Navbar 
         onMenuToggle={handleMenuToggle} 
         isSidebarOpen={isSidebarOpen} 
       />
     
-      {/* Main content area */}
       <Box sx={{ 
         display: 'flex', 
         flex: 1, 
@@ -118,7 +110,6 @@ const Layout = ({ children }) => {
         overflow: 'hidden',
         maxWidth: '100vw' 
       }}>
-        {/* Main content */}
         <Box 
           component="main" 
           sx={{ 
@@ -147,7 +138,6 @@ const Layout = ({ children }) => {
         </Box>
       </Box>
       
-      {/* Sidebar */}
       {isLoggedIn && isInitialized && (
         <Sidebar
           isOpen={isSidebarOpen}
@@ -156,7 +146,6 @@ const Layout = ({ children }) => {
         />
       )}
 
-      {/* Sync/Refresh Button - only for logged in users and not auth pages */}
       {isLoggedIn && !isAuthPage && !isPaymentReceiptPage && (
         <IconButton
           onClick={handleSync}

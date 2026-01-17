@@ -1,3 +1,12 @@
+/**
+ * ContractPreview
+ *
+ * Displays legally approved contract templates for mudarabah agreements.
+ * HTML templates are internally seeded and trusted from the database.
+ * Dynamic values are sanitized before injection to prevent XSS attacks.
+ * All templates undergo validation to ensure they contain no malicious content.
+ */
+
 import React from 'react';
 import {
   Dialog,
@@ -12,15 +21,33 @@ import {
   Divider,
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
+import { isValidTemplate, injectContractData } from '../utilities/sanitize';
 
-const ContractPreview = ({ 
-  open, 
-  onClose, 
-  contractHtml, 
-  onGeneratePDF, 
+const ContractPreview = ({
+  open,
+  onClose,
+  contractHtml,
+  onGeneratePDF,
   loading = false,
-  contractTitle = "معاينة العقد"
+  contractTitle = "معاينة العقد",
+  contractData = {} 
 }) => {
+  const safeContractHtml = React.useMemo(() => {
+    if (!contractHtml) return '';
+
+    try {
+      if (!isValidTemplate(contractHtml)) {
+        console.error('Invalid contract template: contains potentially dangerous content');
+        return '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب العقد غير آمن</div>';
+      }
+
+      return injectContractData(contractHtml, contractData);
+    } catch (error) {
+      console.error('Error processing contract template:', error);
+      return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب العقد</div>';
+    }
+  }, [contractHtml, contractData]);
+
   return (
     <Dialog 
       open={open} 
@@ -84,17 +111,15 @@ const ContractPreview = ({
             }
           }}
         >
-          {contractHtml ? (
+          {safeContractHtml ? (
             <Box
-              dangerouslySetInnerHTML={{ __html: contractHtml }}
+              dangerouslySetInnerHTML={{ __html: safeContractHtml }}
               sx={{
-                // Base styles
                 '& *': {
                   wordSpacing: 'normal',
                   letterSpacing: 'normal'
                 },
 
-                // Contract wrapper
                 '& .contract-wrapper': {
                   background: '#f8f9fc',
                   padding: '15px',
@@ -103,7 +128,6 @@ const ContractPreview = ({
                   textAlign: 'right'
                 },
 
-                // Contract container
                 '& .contract-container': {
                   maxWidth: '900px',
                   margin: 'auto',
@@ -114,7 +138,6 @@ const ContractPreview = ({
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                 },
 
-                // Contract header
                 '& .contract-header': {
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -156,7 +179,6 @@ const ContractPreview = ({
                   margin: '5px 0'
                 },
 
-                // Section title
                 '& .section-title': {
                   fontSize: '18px',
                   fontWeight: 'bold',
@@ -167,7 +189,6 @@ const ContractPreview = ({
                   pageBreakInside: 'avoid'
                 },
 
-                // Parties grid
                 '& .parties-grid': {
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
@@ -176,7 +197,6 @@ const ContractPreview = ({
                   pageBreakInside: 'avoid'
                 },
 
-                // Party card
                 '& .party-card': {
                   background: '#ffffff',
                   padding: '20px',
@@ -247,7 +267,6 @@ const ContractPreview = ({
                   borderTop: '1px solid rgba(46, 139, 69, 0.2)'
                 },
 
-                // Preamble
                 '& .preamble-box': {
                   background: '#ffffff',
                   padding: '20px',
@@ -273,7 +292,6 @@ const ContractPreview = ({
                   textAlign: 'justify'
                 },
 
-                // Clauses
                 '& .clause': {
                   background: '#ffffff',
                   padding: '20px',
@@ -372,7 +390,6 @@ const ContractPreview = ({
                   color: '#2E8B45 !important'
                 },
 
-                // Signatures
                 '& .signatures-section': {
                   marginTop: '40px',
                   paddingTop: '20px',
@@ -443,14 +460,12 @@ const ContractPreview = ({
                   margin: '5px 0'
                 },
 
-                // English numbers
                 '& .english-number': {
                   fontFamily: "'Arial', sans-serif",
                   direction: 'ltr',
                   unicodeBidi: 'embed'
                 },
 
-                // Responsive design
                 '@media (max-width: 768px)': {
                   '& .parties-grid, & .signatures-grid': {
                     gridTemplateColumns: '1fr'
@@ -464,8 +479,7 @@ const ContractPreview = ({
                     textAlign: 'right'
                   }
                 },
-
-                // Print styles
+                
                 '@media print': {
                   '@page': {
                     size: 'A4',
@@ -622,7 +636,7 @@ const ContractPreview = ({
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
           onClick={onGeneratePDF}
-          disabled={loading || !contractHtml}
+          disabled={loading || !safeContractHtml}
           sx={{
             bgcolor: "primary.main",
             "&:hover": { bgcolor: "#1b5e20" },

@@ -29,7 +29,6 @@ export const getLogs = async (page = 1, params = {}) => {
   }
 };
 
-// Get all logs for export (without pagination)
 export const getAllLogsForExport = async (params = {}) => {
   try {
     const { search, screen, action, from, to, userName, ...otherFilters } = params;
@@ -49,16 +48,14 @@ export const getAllLogsForExport = async (params = {}) => {
       }
     });
 
-    // Fetch first page to get total count
     const firstPageUrl = `/api/logs/1?${queryParams.toString()}`;
     const firstResponse = await Api.get(firstPageUrl);
     
     const allLogs = [...(firstResponse.data.data || [])];
     const total = firstResponse.data.total || allLogs.length;
-    const limit = firstResponse.data.limit || 50; // Use limit from response or default to 50
+    const limit = firstResponse.data.limit || 50;
     const totalPages = Math.ceil(total / limit);
     
-    // Fetch remaining pages if there are more
     if (totalPages > 1) {
       for (let page = 2; page <= totalPages; page++) {
         queryParams.set('page', page);

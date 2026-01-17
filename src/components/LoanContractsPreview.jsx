@@ -1,4 +1,12 @@
-// components/contracts/LoanContractsPreview.jsx
+/**
+ * LoanContractsPreview
+ *
+ * Displays legally approved contract templates for loan agreements.
+ * HTML templates are internally seeded and trusted from the database.
+ * Dynamic values are sanitized before injection to prevent XSS attacks.
+ * All templates undergo validation to ensure they contain no malicious content.
+ */
+
 import React from 'react';
 import {
   Dialog,
@@ -16,16 +24,18 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Close as CloseIcon, Download, Print } from '@mui/icons-material';
+import { isValidTemplate, injectContractData } from '../utilities/sanitize';
 
-const LoanContractsPreview = ({ 
-  open, 
-  onClose, 
-  debtAckHtml, 
-  promissoryNoteHtml, 
-  onSaveContracts, 
+const LoanContractsPreview = ({
+  open,
+  onClose,
+  debtAckHtml,
+  promissoryNoteHtml,
+  onSaveContracts,
   loading = false,
   clientName = "",
-  loanAmount = 0
+  loanAmount = 0,
+  contractData = {} 
 }) => {
   const [activeTab, setActiveTab] = React.useState(0);
 
@@ -33,20 +43,45 @@ const LoanContractsPreview = ({
     setActiveTab(newValue);
   };
 
+  const safeContracts = React.useMemo(() => {
+    const contracts = [
+      {
+        name: 'إقرار الدين',
+        html: debtAckHtml,
+        id: 'debt-acknowledgment'
+      },
+      {
+        name: 'سند الأمر',
+        html: promissoryNoteHtml,
+        id: 'promissory-note'
+      }
+    ];
 
+    return contracts.map(contract => {
+      try {
+        if (!isValidTemplate(contract.html)) {
+          console.error(`Invalid contract template for ${contract.name}: contains potentially dangerous content`);
+          return {
+            ...contract,
+            html: '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب العقد غير آمن</div>'
+          };
+        }
 
-  const contracts = [
-    { 
-      name: 'إقرار الدين', 
-      html: debtAckHtml,
-      id: 'debt-acknowledgment'
-    },
-    { 
-      name: 'سند الأمر', 
-      html: promissoryNoteHtml,
-      id: 'promissory-note'
-    }
-  ];
+        const safeHtml = injectContractData(contract.html, contractData);
+
+        return {
+          ...contract,
+          html: safeHtml
+        };
+      } catch (error) {
+        console.error(`Error processing contract template for ${contract.name}:`, error);
+        return {
+          ...contract,
+          html: '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب العقد</div>'
+        };
+      }
+    });
+  }, [debtAckHtml, promissoryNoteHtml, contractData]);
 
   return (
     <Dialog 
@@ -137,7 +172,7 @@ const LoanContractsPreview = ({
           backgroundColor: 'white'
         }
       }}>
-        {contracts.map((contract, index) => (
+        {safeContracts.map((contract, index) => (
           <Box
             key={contract.id}
             id={`contract-tab-${index}`}
@@ -163,7 +198,7 @@ const LoanContractsPreview = ({
                   width: '100%',
                   maxWidth: '900px',
                   minHeight: '600px',
-                  maxHeight: 'calc(100vh - 300px)', // Prevent it from being too tall
+                  maxHeight: 'calc(100vh - 300px)', 
                   bgcolor: 'white',
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                   border: '1px solid #e0e0e0',

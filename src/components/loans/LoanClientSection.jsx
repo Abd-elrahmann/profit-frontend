@@ -24,7 +24,6 @@ const LoanClientSection = ({
   selectedKafeel,
   handleKafeelSelect,
 }) => {
-  // Get all kafeels for the selected client
   const getAvailableKafeels = () => {
     if (!selectedClient?.kafeels) return [];
     return selectedClient.kafeels;

@@ -44,7 +44,6 @@ const Profile = () => {
       const response = await Api.get('/api/auth/profile');
       setUserData(response.data);
       
-      // ✅ Update user in AuthContext (memory only)
       updateUser(response.data);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -71,10 +70,8 @@ const Profile = () => {
         const response = await Api.patch('/api/auth/update-profile', values);
         setUserData(prev => ({ ...prev, ...response.data.user }));
         
-        // ✅ Update user in AuthContext (memory only)
         updateUser(response.data.user);
 
-        // Trigger global update for navbar
         window.dispatchEvent(new Event('profileUpdated'));
         window.dispatchEvent(new Event('userDataUpdated'));
         window.dispatchEvent(new StorageEvent('storage', { key: 'user' }));
@@ -113,13 +110,10 @@ const Profile = () => {
           profileImage: response.data.profileImage 
         }));
 
-        // ✅ Update user in AuthContext (memory only)
         updateUser({ profileImage: response.data.profileImage });
 
-        // Trigger global update for navbar (multiple events for compatibility)
         window.dispatchEvent(new Event('profileUpdated'));
         window.dispatchEvent(new Event('userDataUpdated'));
-        // Also trigger storage event for cross-tab updates
         window.dispatchEvent(new StorageEvent('storage', { key: 'user' }));
         
         notifySuccess('تم تحديث الصورة الشخصية بنجاح');
@@ -171,7 +165,6 @@ const Profile = () => {
         <meta name="description" content="الملف الشخصي للمستخدم" />
       </Helmet>
 
-      {/* Main Container */}
       <Box 
         sx={{ 
           width: '100%',
@@ -181,7 +174,6 @@ const Profile = () => {
           alignItems: 'center',
         }}
       >
-        {/* Page Title */}
         <Typography 
           variant="h4" 
           fontWeight="bold" 
@@ -205,7 +197,6 @@ const Profile = () => {
             justifyContent: 'center',
           }}
         >
-          {/* Profile Image Section */}
           <Grid item xs={12} sm={12} md={6} sx={{width: '1000px'}}>
             <Card
               sx={{
@@ -255,7 +246,6 @@ const Profile = () => {
                   </Avatar>
                 </Box>
 
-                {/* User Name */}
                 <Typography 
                   variant="h6" 
                   fontWeight="600" 
@@ -268,7 +258,6 @@ const Profile = () => {
                   {userData?.name || 'مستخدم'}
                 </Typography>
 
-                {/* Status Chip */}
                 <Chip
                   icon={userData?.isActive ? <CheckCircleIcon /> : <CancelIcon />}
                   label={userData?.isActive ? 'نشط' : 'غير نشط'}
@@ -277,7 +266,6 @@ const Profile = () => {
                   sx={{ mb: 3, fontWeight: 500 }}
                 />
 
-                {/* Upload Area */}
                 <Box
                   {...getRootProps()}
                   sx={{
@@ -339,7 +327,6 @@ const Profile = () => {
             </Card>
           </Grid>
 
-          {/* Profile Information Section */}
           <Grid item xs={12} sm={12} md={6}>
             <Card
               sx={{
@@ -491,8 +478,7 @@ const Profile = () => {
                     borderColor: 'divider'
                   }} 
                 />
-
-                {/* Additional Info */}
+  
                 <Box>
                   <Typography 
                     variant="subtitle1" 

@@ -36,19 +36,16 @@ const PeriodsAdvancedSearch = ({
   onApplyFilters,
   initialFilters = {},
 }) => {
-  // State for filters
   const [filters, setFilters] = useState({
     name: '',
     startDate: null,
     endDate: null,
-    isClosed: null, // null means "all", true for closed, false for open
+    isClosed: null,
     limit: 10,
   });
 
-  // Active filters chips
   const [activeFilters, setActiveFilters] = useState([]);
 
-  // Initialize with provided filters
   useEffect(() => {
     if (open) {
       const newFilters = {
@@ -63,7 +60,6 @@ const PeriodsAdvancedSearch = ({
     }
   }, [open, initialFilters]);
 
-  // Update active filters chips
   const updateActiveFilters = (filterValues) => {
     const active = [];
     
@@ -93,21 +89,17 @@ const PeriodsAdvancedSearch = ({
     setActiveFilters(active);
   };
 
-  // Handle filter changes
   const handleFilterChange = (field, value) => {
     const updatedFilters = { ...filters, [field]: value };
     setFilters(updatedFilters);
     
-    // Update active filters chips
     if (['name', 'startDate', 'endDate', 'isClosed'].includes(field)) {
       const filterForChips = { ...filters, [field]: value };
       updateActiveFilters(filterForChips);
     }
   };
 
-  // Handle apply filters
   const handleApply = () => {
-    // Convert dayjs objects to ISO strings for API
     const apiFilters = {
       ...filters,
       startDate: filters.startDate ? filters.startDate.format('YYYY-MM-DD') : undefined,
@@ -116,7 +108,6 @@ const PeriodsAdvancedSearch = ({
       limit: filters.limit,
     };
     
-    // Remove undefined values
     Object.keys(apiFilters).forEach(key => {
       if (apiFilters[key] === undefined || apiFilters[key] === '') {
         delete apiFilters[key];
@@ -127,7 +118,6 @@ const PeriodsAdvancedSearch = ({
     onClose();
   };
 
-  // Handle clear all filters
   const handleClearAll = () => {
     const clearedFilters = {
       name: '',
@@ -140,7 +130,6 @@ const PeriodsAdvancedSearch = ({
     setActiveFilters([]);
   };
 
-  // Handle remove single filter
   const handleRemoveFilter = (filterKey) => {
     const updatedFilters = { ...filters };
     
@@ -163,12 +152,10 @@ const PeriodsAdvancedSearch = ({
     
     setFilters(updatedFilters);
     
-    // Update active filters
     const newActiveFilters = activeFilters.filter(filter => filter.key !== filterKey);
     setActiveFilters(newActiveFilters);
   };
 
-  // Handle reset to initial
   const handleReset = () => {
     const initialFilterValues = {
       name: initialFilters.name || '',
@@ -181,7 +168,6 @@ const PeriodsAdvancedSearch = ({
     updateActiveFilters(initialFilterValues);
   };
 
-  // Get filter count
   const getFilterCount = () => {
     let count = 0;
     if (filters.name) count++;
@@ -213,7 +199,6 @@ const PeriodsAdvancedSearch = ({
             p: 3,
           }}
         >
-          {/* Header */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
             <FilterListIcon sx={{ mr: 1, color: 'primary.main' }} />
             <Typography variant="h6" fontWeight="bold">
@@ -227,7 +212,6 @@ const PeriodsAdvancedSearch = ({
 
           <Divider sx={{ mb: 3 }} />
 
-          {/* Active Filters Chips */}
           {activeFilters.length > 0 && (
             <Paper
               variant="outlined"
@@ -262,9 +246,7 @@ const PeriodsAdvancedSearch = ({
             </Paper>
           )}
 
-          {/* Search Form */}
           <Stack spacing={3}>
-            {/* Name Search */}
             <TextField
               fullWidth
               label="اسم الفترة"
@@ -280,7 +262,6 @@ const PeriodsAdvancedSearch = ({
               }}
             />
 
-            {/* Date Range */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" mb={2}>
                 نطاق التاريخ
@@ -327,7 +308,6 @@ const PeriodsAdvancedSearch = ({
               </Grid>
             </Box>
 
-            {/* Status Filter */}
             <Box>
               <FormControl component="fieldset">
                 <FormLabel component="legend" sx={{ mb: 1, fontWeight: 'bold' }}>
@@ -366,7 +346,6 @@ const PeriodsAdvancedSearch = ({
               </FormControl>
             </Box>
 
-            {/* Results Limit */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" mb={1}>
                 عدد النتائج في الصفحة
@@ -388,8 +367,7 @@ const PeriodsAdvancedSearch = ({
               </TextField>
             </Box>
           </Stack>
-
-          {/* Actions */}
+                
           <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
             <Button
               variant="outlined"

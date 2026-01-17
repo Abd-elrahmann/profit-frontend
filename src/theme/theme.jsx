@@ -1,29 +1,27 @@
 import { createTheme } from '@mui/material';
 
-// قيم الثيم المشتركة
 const commonPalette = {
   primary: {
-    main: '#2E8B45',       // green
-    light: '#63947F',    // green light
-    dark: '#2E8B45',     // green dark
+    main: '#2E8B45',       
+    light: '#63947F',    
+    dark: '#2E8B45',     
     contrastText: '#ffffff'
   },
   error: {
-    main: '#D91656',     // red
+    main: '#D91656',     
     light: '#e44479',
     dark: '#970f3c',
     contrastText: '#ffffff'
   }
 };
 
-// ثيم الوضع الفاتح
 const lightTheme = createTheme({
   direction: 'rtl',
   palette: {
     mode: 'light',
     ...commonPalette,
     secondary: {
-      main: '#f0f0f0',     // gray
+      main: '#f0f0f0',     
       light: '#ffffff',
       dark: '#cccccc',
       contrastText: '#2a2a2a'
@@ -104,20 +102,19 @@ const lightTheme = createTheme({
   }
 });
 
-// ثيم الوضع المظلم
 const darkTheme = createTheme({
   direction: 'rtl',
   palette: {
     mode: 'dark',
     ...commonPalette,
     secondary: {
-      main: '#424242',     // gray
+      main: '#424242',     
       light: '#616161',
       dark: '#212121',
       contrastText: '#ffffff'
     },
     background: {
-      default: '#1a1a1a', // خلفية سوداء أفتح قليلاً
+      default: '#1a1a1a', 
       main: '#1E40AF',
       paper: '#1e1e1e'
     },
@@ -201,7 +198,6 @@ const darkTheme = createTheme({
   }
 });
 
-// دالة للحصول على الثيم المناسب
 export const getTheme = (isDarkMode) => {
   return isDarkMode ? darkTheme : lightTheme;
 };

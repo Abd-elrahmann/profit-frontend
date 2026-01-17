@@ -108,7 +108,6 @@ export default function Roles() {
       setIsDeleteModalOpen(false);
       setSelectedRoleId(null);
 
-      // Refresh permissions to update sidebar immediately after deletion
       await refreshPermissions();
     } catch (error) {
       console.error("Error deleting role:", error);
@@ -125,7 +124,6 @@ export default function Roles() {
     setIsDeleteModalOpen(true);
   };
 
-  // Render table for large screens
   const renderTable = () => (
     <TableContainer  sx={{ borderRadius: 2 }}>
       <Table stickyHeader>
@@ -213,7 +211,6 @@ export default function Roles() {
     </TableContainer>
   );
 
-  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: isMobile ? 1 : 2 }}>
       {isLoading ? (
@@ -237,7 +234,6 @@ export default function Roles() {
               >
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Stack spacing={2}>
-                    {/* Header Row - Role Name and Actions */}
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
@@ -299,7 +295,6 @@ export default function Roles() {
 
                     <Divider />
 
-                    {/* Description */}
                     <Box>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                         الوصف:
@@ -309,7 +304,6 @@ export default function Roles() {
                       </Typography>
                     </Box>
 
-                    {/* Date */}
                     <Box>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                         تاريخ الإنشاء:
@@ -340,9 +334,7 @@ export default function Roles() {
         <meta name="description" content="الأدوار" />
       </Helmet>
       
-      {/* Main Content */}
       <Box sx={{ p: isMobile ? 2 : 3 }}>
-        {/* Search and Add Button */}
         <Box
           sx={{
             display: "flex",
@@ -393,7 +385,6 @@ export default function Roles() {
           )}
         </Box>
 
-        {/* Table for large screens, Cards for small screens */}
         <Paper sx={{ 
           width: "100%", 
           overflow: "hidden", 
@@ -402,7 +393,6 @@ export default function Roles() {
         }}>
           {isSmallScreen ? renderCards() : renderTable()}
 
-          {/* Pagination for cards view */}
           {isSmallScreen && rolesData && (
             <TablePagination
               component="div"

@@ -52,7 +52,6 @@ const ChartOfAccount = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  // Fetch accounts tree
   const {
     data: accountsTree = [],
     isLoading,
@@ -189,22 +188,19 @@ const ChartOfAccount = () => {
     const isExpanded = expandedItems.has(account.id);
     const isSelected = selectedAccount?.id === account.id;
 
-    // ألوان حلزونية متدرجة لكل مستوى
     const spiralColors = [
-      { bg: '#ffffff', border: '#e0e0e0', icon: '#757575' }, // المستوى 0 - أبيض
-      { bg: '#e3f2fd', border: '#90caf9', icon: '#1976d2' }, // المستوى 1 - أزرق فاتح
-      { bg: '#f3e5f5', border: '#ce93d8', icon: '#9c27b0' }, // المستوى 2 - بنفسجي فاتح
-      { bg: '#e8f5e9', border: '#a5d6a7', icon: '#388e3c' }, // المستوى 3 - أخضر فاتح
-      { bg: '#fff3e0', border: '#ffb74d', icon: '#f57c00' }, // المستوى 4 - برتقالي فاتح
-      { bg: '#fce4ec', border: '#f48fb1', icon: '#c2185b' }, // المستوى 5 - وردي فاتح
-      { bg: '#e0f2f1', border: '#80cbc4', icon: '#00796b' }, // المستوى 6 - تركواز
+      { bg: '#ffffff', border: '#e0e0e0', icon: '#757575' },
+      { bg: '#e3f2fd', border: '#90caf9', icon: '#1976d2' },
+      { bg: '#f3e5f5', border: '#ce93d8', icon: '#9c27b0' },
+      { bg: '#e8f5e9', border: '#a5d6a7', icon: '#388e3c' },
+      { bg: '#fff3e0', border: '#ffb74d', icon: '#f57c00' },
+      { bg: '#fce4ec', border: '#f48fb1', icon: '#c2185b' },
+      { bg: '#e0f2f1', border: '#80cbc4', icon: '#00796b' },
     ];
 
-    // الحصول على اللون بناءً على العمق (مع التكرار للمستويات العميقة)
     const colorIndex = depth % spiralColors.length;
     const colors = spiralColors[colorIndex];
 
-    // تحديد لون الخلفية بناءً على العمق والتحديد
     const getBackgroundColor = () => {
       if (isSelected) {
         return depth === 0 ? 'rgba(25, 118, 210, 0.08)' : colors.bg;
@@ -212,7 +208,6 @@ const ChartOfAccount = () => {
       return colors.bg;
     };
 
-    // تحديد سمك الحدود بناءً على العمق
     const getBorderWidth = () => {
       if (isSelected) return 3;
       return depth === 0 ? 2 : 1;
@@ -235,7 +230,6 @@ const ChartOfAccount = () => {
               transform: 'translateY(-2px)',
               boxShadow: 4,
             },
-            // خط متصل من الأعلى للحسابات الفرعية
             '&::before': depth > 0 ? {
               content: '""',
               position: 'absolute',

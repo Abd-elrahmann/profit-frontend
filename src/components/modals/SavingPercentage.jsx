@@ -47,7 +47,6 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
       return;
     }
 
-    // حساب النسبة من المبلغ
     const percentage = totalProfit > 0 ? (numericAmount / totalProfit) * 100 : 0;
 
     onApply(percentage);

@@ -58,7 +58,7 @@ const Logs = () => {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm") // format without A
+      .format("D [من] MMMM [الساعة] h:mm")
       + " " 
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
@@ -124,7 +124,6 @@ const Logs = () => {
     setPage(newPage + 1);
   };
 
-  // Action type Arabic translations
   const getActionText = (action) => {
     switch (action) {
       case "CREATE":
@@ -171,7 +170,6 @@ const Logs = () => {
     }
   };
 
-  // Screen Arabic translations
   const getScreenText = (screen) => {
     const screenTranslations = {
       "Auth": "المصادقة",
@@ -207,8 +205,6 @@ const Logs = () => {
     return screenTranslations[screen] || screen;
   };
 
-  // Render table for large screens
-  // Render table for large screens
   const renderTable = () => (
     <TableContainer>
       <Table stickyHeader>
@@ -285,7 +281,6 @@ const Logs = () => {
     </TableContainer>
   );
 
-  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: isMobile ? 1 : 2 }}>
       {isLoading ? (
@@ -314,7 +309,6 @@ const Logs = () => {
               >
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Stack spacing={2}>
-                    {/* Header Row - User and Action */}
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
@@ -334,7 +328,6 @@ const Logs = () => {
 
                     <Divider />
 
-                    {/* Screen and Date Row */}
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between',
@@ -378,7 +371,6 @@ const Logs = () => {
                       </Box>
                     </Box>
 
-                    {/* Description */}
                     <Box>
                       <Typography 
                         variant="body2" 
@@ -424,9 +416,7 @@ const Logs = () => {
         <meta name="description" content="سجلات النشاطات" />
       </Helmet>
       
-      {/* Main Content */}
       <Box sx={{ p: isMobile ? 2 : 5 }}>
-        {/* Export Buttons */}
         {permissions.includes("logs_Export") && (
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <MuiStack direction="row" spacing={1}>
@@ -466,7 +456,6 @@ const Logs = () => {
           </Box>
         )}
 
-        {/* Logs Toolbar */}
         <LogsToolbar
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -474,7 +463,6 @@ const Logs = () => {
           isMobile={isMobile}
         />
 
-        {/* Table for large screens, Cards for small screens */}
         <Paper sx={{ 
           width: "100%", 
           overflow: "hidden", 
@@ -482,8 +470,7 @@ const Logs = () => {
           minHeight: 400
         }}>
           {isSmallScreen ? renderCards() : renderTable()}
-
-          {/* Pagination */}
+        
           {logsData && (
             <TablePagination
               component="div"

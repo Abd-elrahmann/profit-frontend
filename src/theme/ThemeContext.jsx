@@ -3,10 +3,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { getTheme } from './theme';
 
-// إنشاء السياق
 const ThemeContext = createContext();
 
-// Hook لاستخدام السياق
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -15,25 +14,20 @@ export const useTheme = () => {
   return context;
 };
 
-// Provider للثيم
 export const ThemeProviderWrapper = ({ children }) => {
-  // قراءة الوضع من localStorage أو افتراضي فاتح
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode ? JSON.parse(savedMode) : false;
   });
 
-  // الحصول على الثيم الحالي
   const theme = getTheme(isDarkMode);
 
-  // تبديل الوضع
   const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     localStorage.setItem('darkMode', JSON.stringify(newMode));
   };
 
-  // حفظ الوضع في localStorage عند التغيير
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);

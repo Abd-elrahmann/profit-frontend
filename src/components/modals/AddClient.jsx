@@ -32,8 +32,7 @@ import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useTheme } from '../../theme/ThemeContext';
-
-// قائمة رموز الدول الشائعة
+  
 const countryCodes = [
   { code: '+20', country: 'مصر', flag: '🇪🇬' },
   { code: '+966', country: 'السعودية', flag: '🇸🇦' },
@@ -115,14 +114,14 @@ const AddClient = ({ open, onClose }) => {
     employer: '',
     salary: '',
     obligations: '',
-    phoneCode: '+966', // السعودية كقيمة افتراضية للكفيل
+    phoneCode: '+966',
     phone: '',
     email: '',
   });
 
   const initialValues = {
     name: '',
-    phoneCode: '+966', // السعودية كقيمة افتراضية للعميل
+    phoneCode: '+966',
     phone: '',
     email: '',
     nationalId: '',
@@ -249,14 +248,11 @@ const AddClient = ({ open, onClose }) => {
         if (key === 'hasKafeel') {
           formData.append(key, values[key]);
         } else if (key === 'email' && (!values[key] || values[key].trim() === '')) {
-          // Skip empty email instead of sending empty string
           return;
         } else if (key === 'phone') {
-          // دمج رمز الدولة مع رقم الهاتف
           const fullPhone = values.phoneCode + values.phone;
           formData.append('phone', fullPhone);
         } else if (key === 'phoneCode') {
-          // لا نحتاج إلى إرسال phoneCode بشكل منفصل
           return;
         } else if (key !== 'kafeels' && !key.startsWith('kafeel')) {
           formData.append(key, values[key]);
@@ -267,14 +263,11 @@ const AddClient = ({ open, onClose }) => {
         values.kafeels.forEach((kafeel, index) => {
           Object.keys(kafeel).forEach(key => {
             if (key === 'email' && (!kafeel[key] || kafeel[key].trim() === '')) {
-              // Skip empty email instead of sending empty string
               return;
             } else if (key === 'phone') {
-              // دمج رمز الدولة مع رقم هاتف الكفيل
               const fullPhone = kafeel.phoneCode + kafeel.phone;
               formData.append(`kafeel[${index}][phone]`, fullPhone);
             } else if (key === 'phoneCode') {
-              // لا نحتاج إلى إرسال phoneCode بشكل منفصل
               return;
             } else if (kafeel[key] !== '' && key !== 'kafeelIdImage' && key !== 'kafeelWorkCard') {
               formData.append(`kafeel[${index}][${key}]`, kafeel[key]);

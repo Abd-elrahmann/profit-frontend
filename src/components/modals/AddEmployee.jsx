@@ -1,4 +1,4 @@
-// AddEmployee.jsx - مودال إضافة/تعديل الموظفين
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -20,8 +20,7 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useTheme } from '../../theme/ThemeContext';
-
-// Create dynamic validation schema based on mode
+  
 const createValidationSchema = (mode) => {
   return Yup.object().shape({
     name: Yup.string()
@@ -267,7 +266,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                   }}
                 />
 
-                {/* Password Change Section - Only in Edit Mode */}
                 {mode === 'edit' && (
                   <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

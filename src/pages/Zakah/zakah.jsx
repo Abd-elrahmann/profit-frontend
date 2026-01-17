@@ -60,11 +60,9 @@ const Zakah = () => {
 
   const { permissions } = usePermissions();
 
-  // Debounced values to prevent excessive API calls
   const [debouncedMonth, setDebouncedMonth] = useState(selectedFilterMonth);
   const [debouncedYear, setDebouncedYear] = useState(selectedFilterYear);
 
-  // Update debounced values after delay
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedMonth(selectedFilterMonth);
@@ -77,7 +75,6 @@ const Zakah = () => {
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
 
-  // Data for autocomplete options
   const monthOptions = [
     { value: 1, label: "يناير" },
     { value: 2, label: "فبراير" },
@@ -100,22 +97,20 @@ const Zakah = () => {
 
   const queryClient = useQueryClient();
 
-  // Query for partner zakah details
   const { data: partnerZakahData, isLoading: isPartnerLoading } = useQuery({
     queryKey: ["partner-zakah", selectedPartner],
     queryFn: () => getPartnerZakah(selectedPartner),
     enabled: !!selectedPartner && activeTab === 1,
   });
 
-  // Query for zakat account report
   const { data: accountReport, isLoading: isAccountLoading, error: accountError } = useQuery({
     queryKey: ["zakat-account", debouncedMonth, debouncedYear],
     queryFn: () => getZakatAccountReport(`${debouncedYear}-${debouncedMonth.toString().padStart(2, '0')}`),
     enabled: activeTab === 2,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
@@ -147,14 +142,12 @@ const Zakah = () => {
     let exportData, filters;
 
     if (activeTab === 2 && accountReport) {
-      // صندوق الزكاة
       exportData = accountReport;
       filters = {
         month: selectedFilterMonth.toString().padStart(2, '0'),
         year: selectedFilterYear
       };
     } else if (activeTab === 1 && partnerZakahData) {
-      // زكاة محددة
       exportData = partnerZakahData;
       filters = {
         partner: selectedPartner,
@@ -180,14 +173,12 @@ const Zakah = () => {
     let exportData, filters;
 
     if (activeTab === 2 && accountReport) {
-      // صندوق الزكاة
       exportData = accountReport;
       filters = {
         month: selectedFilterMonth.toString().padStart(2, '0'),
         year: selectedFilterYear
       };
     } else if (activeTab === 1 && partnerZakahData) {
-      // زكاة محددة
       exportData = partnerZakahData;
       filters = {
         partner: selectedPartner,
@@ -209,7 +200,6 @@ const Zakah = () => {
     }
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || "0";
   };
@@ -217,11 +207,10 @@ const Zakah = () => {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm") // format without A
+        .format("D [من] MMMM [الساعة] h:mm")
       + " " 
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
-  // Helpers to control export buttons availability
   const hasAccountExportData = (() => {
     if (!accountReport?.journalsByMonth) return false;
     return Object.values(accountReport.journalsByMonth).some(
@@ -235,7 +224,6 @@ const Zakah = () => {
     return false;
   })();
 
-  // Get month name in Arabic
   const getMonthName = (month) => {
     const months = [
       "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
@@ -246,7 +234,6 @@ const Zakah = () => {
 
 
 
-  // Get status chip
   const getStatusChip = (status) => {
     if (status === 'PAID') {
       return <Chip icon={<PaidIcon />} label="مدفوع" color="success" size="small" />;
@@ -254,7 +241,6 @@ const Zakah = () => {
     return <Chip icon={<PendingIcon />} label="غير مدفوع" color="default" size="small" />;
   };
 
-  // Render desktop sidebar for partner details
   const renderDesktopSidebar = () => {
     const currentYearData = Array.isArray(partnerZakahData) 
       ? partnerZakahData.find(item => item.year === selectedYear) 
@@ -357,7 +343,6 @@ const Zakah = () => {
     );
   };
 
-  // Render account summary for financial operations tab
   const renderAccountSummary = () => (
     <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.default,width:"300px" }}>
       <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={3}>
@@ -402,7 +387,6 @@ const Zakah = () => {
     </Box>
   );
 
-  // Render mobile actions for partner details
   const renderMobileActions = () => (
     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
       <Typography variant="h6" color={theme.palette.primary.main} fontWeight="bold" mb={2}>
@@ -434,7 +418,6 @@ const Zakah = () => {
     </Paper>
   );
 
-  // Render mobile partner details
   const renderMobilePartnerDetails = () => {
     const currentYearData = Array.isArray(partnerZakahData) 
       ? partnerZakahData.find(item => item.year === selectedYear) 
@@ -442,7 +425,6 @@ const Zakah = () => {
 
     return (
       <Box>
-        {/* Summary Cards */}
         <Grid container spacing={2} mb={3} justifyContent="center">
           <Grid item xs={6}>
             <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
@@ -525,10 +507,8 @@ const Zakah = () => {
           </Grid>
         </Grid>
 
-        {/* Years */}
         {renderMobileActions()}
 
-        {/* Partner Info */}
         <Paper sx={{ p: 3, borderRadius: 2, mb: 2 }}>
           <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center" color={theme.palette.primary.main}>
             معلومات الزكاة
@@ -582,7 +562,6 @@ const Zakah = () => {
           </Stack>
         </Paper>
 
-        {/* Monthly Breakdown */}
         {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
           <Paper sx={{ p: 2, borderRadius: 2 }}>
             <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center" color={theme.palette.primary.main}>
@@ -617,7 +596,6 @@ const Zakah = () => {
     );
   };
 
-  // Render desktop partner details
   const renderDesktopPartnerDetails = () => {
     const currentYearData = Array.isArray(partnerZakahData) 
       ? partnerZakahData.find(item => item.year === selectedYear) 
@@ -629,7 +607,6 @@ const Zakah = () => {
           تفاصيل زكاة الشريك
         </Typography>
 
-        {/* Zakat Summary */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={4}>
             <Card sx={{ bgcolor: theme.palette.primary[50], p: 3, textAlign: "center",width: "350px" }}>
@@ -681,7 +658,6 @@ const Zakah = () => {
           </Grid>
         </Grid>
 
-        {/* Monthly Breakdown Table */}
         {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
           <>
             <Divider sx={{ my: 3 }} />
@@ -716,7 +692,6 @@ const Zakah = () => {
     );
   };
 
-  // Render financial operations tab
   const renderFinancialOperations = () => {
     if (isAccountLoading) {
       return (
@@ -728,7 +703,6 @@ const Zakah = () => {
 
     return (
       <Box sx={{ textAlign: "center" }}>
-        {/* Filters */}
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={8}>
             <Autocomplete
@@ -760,7 +734,6 @@ const Zakah = () => {
           </Grid>
         </Grid>
 
-        {/* Export Buttons - At the top */}
         {!isAccountLoading && !accountError && accountReport && activeTab === 2 && permissions.includes("zakat_Export") && (
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
             <Button
@@ -782,7 +755,6 @@ const Zakah = () => {
           </Box>
         )}
 
-        {/* Loading Message */}
         {isAccountLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4, width: "100%" }}>
             <CircularProgress sx={{ mr: 2 }} />
@@ -790,14 +762,12 @@ const Zakah = () => {
           </Box>
         )}
 
-        {/* Error Message */}
         {accountError && !isAccountLoading && (
           <Alert severity="error" sx={{ mb: 4, width: "100%" }}>
             فشل في تحميل بيانات الزكاة: {accountError.message || "حدث خطأ غير متوقع"}
           </Alert>
         )}
 
-        {/* Account Summary */}
         {!isAccountLoading && !accountError && (
           <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={2.4}>
@@ -858,7 +828,6 @@ const Zakah = () => {
         </Grid>
         )}
 
-        {/* Journal Entries */}
         {accountReport?.journalsByMonth && Object.keys(accountReport.journalsByMonth).length > 0 ? (
           <Paper sx={{ p: 3, borderRadius: 2, mb: 4 }}>
             <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
@@ -957,7 +926,6 @@ const Zakah = () => {
           width: "100%",
         }}
       >
-        {/* Sidebar for desktop */}
         {!isSmallScreen && activeTab === 1 && partnerZakahData && renderDesktopSidebar()}
         {!isSmallScreen && activeTab === 2 && accountReport && renderAccountSummary()}
 
@@ -971,7 +939,6 @@ const Zakah = () => {
           }}
         >
           <Box sx={{ width: "100%" }}>
-            {/* Tabs for desktop, simple navigation for mobile */}
             {!isSmallScreen ? (
               <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
                 <Tabs
@@ -1011,10 +978,8 @@ const Zakah = () => {
                 </Tabs>
               </Box>
             ) : (
-              // Mobile header
               <Box sx={{ mb: 3 }}>
                 {activeTab === 1 ? (
-                  // Back button for mobile details view
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <IconButton onClick={handleBackToList} size="small">
                       <ArrowBackIcon />
@@ -1028,7 +993,6 @@ const Zakah = () => {
                     صندوق الزكاة
                   </Typography>
                 ) : (
-                  // Title for mobile list view
                   <Typography variant="h6" fontWeight="bold" mb={2}>
                     الزكاة
                   </Typography>
@@ -1052,8 +1016,7 @@ const Zakah = () => {
                     <CircularProgress size={20} />
                   </Box>
                 ) : partnerZakahData ? (
-                  <>
-                    {/* Export Buttons for Partner Zakah - At the top */}
+                  <>  
                     {permissions.includes("zakat_Export") && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, mt: 2 }}>
                         <Button
@@ -1082,14 +1045,12 @@ const Zakah = () => {
                 )}
               </Box>
             ) : (
-              // Financial Operations Tab
               renderFinancialOperations()
             )}
           </Box>
         </Box>
       </Box>
-
-      {/* Withdraw Dialog */}
+            
       <WithdrawZakah
         open={withdrawDialogOpen}
         onClose={() => setWithdrawDialogOpen(false)}

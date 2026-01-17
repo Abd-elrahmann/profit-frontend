@@ -56,11 +56,10 @@ const WithdrawModal = ({
       return "مبلغ السحب يجب أن يكون أكبر من صفر";
     }
 
-    if (amount > 1000000) { // 1 million limit for monthly withdrawal
+    if (amount > 1000000) {
       return "مبلغ السحب الشهري يجب أن يكون أقل من 1,000,000 ريال";
     }
 
-    // Check if amount is reasonable compared to capital
     if (investorDetails?.capitalAmount && amount > investorDetails.capitalAmount * 0.5) {
       return "مبلغ السحب الشهري يجب أن يكون أقل من 50% من رأس المال";
     }
@@ -69,11 +68,9 @@ const WithdrawModal = ({
   };
 
   const handleAmountChange = (value) => {
-    // Allow only numbers and decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setWithdrawAmount(value);
 
-      // Clear error when user starts typing
       if (amountError) {
         setAmountError("");
       }
@@ -146,7 +143,6 @@ const WithdrawModal = ({
             </Alert>
           )}
 
-          {/* Current Information */}
           <Paper sx={{ p: 2.5, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -226,13 +222,11 @@ const WithdrawModal = ({
               <>
                 <Divider sx={{ my: 1 }} />
 
-                {/* Calculation Summary */}
                 <Paper sx={{ p: 2.5, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
                   <Typography variant="subtitle2" fontWeight="bold" mb={2} color="success.main">
                     📊 محاكاة العملية الحسابية :
                   </Typography>
                   <Grid container spacing={2}>
-                    {/* Step 1: Original Capital */}
                     <Grid item xs={12} sm={4}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -244,7 +238,6 @@ const WithdrawModal = ({
                       </Box>
                     </Grid>
 
-                    {/* Step 2: Total Profit */}
                     <Grid item xs={12} sm={4}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -256,7 +249,6 @@ const WithdrawModal = ({
                       </Box>
                     </Grid>
 
-                    {/* Step 3: Total Amount */}
                     <Grid item xs={12} sm={4}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -271,7 +263,6 @@ const WithdrawModal = ({
                       </Box>
                     </Grid>
 
-                    {/* Step 4: Default Share */}
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -286,7 +277,6 @@ const WithdrawModal = ({
                       </Box>
                     </Grid>
 
-                    {/* Step 5: Remaining Capital for Schedule */}
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -301,7 +291,6 @@ const WithdrawModal = ({
                       </Box>
                     </Grid>
 
-                    {/* Savings (separate from schedule) */}
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: isDarkMode ? 'background.default' : '#fffef0', borderRadius: 1, border: '1px solid #ffd700' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -316,7 +305,6 @@ const WithdrawModal = ({
                       </Box>
                     </Grid>
 
-                    {/* Number of payments */}
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -343,7 +331,6 @@ const WithdrawModal = ({
                   </Grid>
                 </Paper>
 
-                {/* Schedule Preview */}
                 <Paper sx={{ p: 2.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200' }}>
                   <Typography variant="subtitle2" fontWeight="bold" mb={2} color="info.main">
                     📅 جدول السداد الكامل ({withdrawalPreview.totalMonths} دفعة):

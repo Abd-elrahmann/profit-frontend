@@ -904,7 +904,6 @@ const PeriodClosing = () => {
         </>
       )}
 
-      {/* Company Profits Table */}
       <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
         جدول أرباح الشركة
       </Typography>
@@ -947,7 +946,6 @@ const PeriodClosing = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Total Summary Table */}
       <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
         الإجمالي العام
       </Typography>
@@ -982,7 +980,6 @@ const PeriodClosing = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Journals */}
       <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
         قيود الفترة ({periodData?.journals?.length || 0})
       </Typography>
@@ -1124,7 +1121,6 @@ const PeriodClosing = () => {
           width: "100%",
         }}
       >
-        {/* Sidebar for desktop */}
         {!isSmallScreen && activeTab === 1 && periodData && renderDesktopSidebar()}
 
         <Box
@@ -1136,8 +1132,7 @@ const PeriodClosing = () => {
             width: "100%",
           }}
         >
-          <Box sx={{ width: "100%" }}>
-            {/* Tabs for desktop, simple navigation for mobile */}
+          <Box sx={{ width: "100%" }}>  
             {!isSmallScreen ? (
               <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
                 <Tabs
@@ -1170,10 +1165,8 @@ const PeriodClosing = () => {
                 </Tabs>
               </Box>
             ) : (
-              // Mobile header
               <Box sx={{ mb: 3 }}>
                 {activeTab === 1 ? (
-                  // Back button for mobile details view
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <IconButton onClick={handleBackToList} size="small">
                       <ArrowBackIcon />
@@ -1183,7 +1176,6 @@ const PeriodClosing = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  // Title for mobile list view
                   <Box>
                     <Typography variant="h6" fontWeight="bold" mb={2}>
                       تقفيل الفترات

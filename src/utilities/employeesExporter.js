@@ -5,7 +5,6 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
-// Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
@@ -18,13 +17,10 @@ const registerArabicFonts = (doc) => {
 export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
   return new Promise((resolve, reject) => {
     try {
-      // Create new PDF document
       const doc = new jsPDF();
       
-      // Register Arabic fonts
       registerArabicFonts(doc);
       
-      // Set document properties
       doc.setProperties({
         title: 'الموظفين',
         subject: 'قائمة الموظفين',
@@ -32,30 +28,24 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         keywords: 'موظفين, إدارة, سلف',
         creator: 'نظام إدارة السلف'
       });
-
-      // Set Arabic as primary font
       doc.setFont('Amiri', 'bold');
       
-      // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
       const logoHeight = 10;
       const logoX = doc.internal.pageSize.width - logoWidth - 5;
       const logoY = 5;
       doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
       
-      // Title section - start after logo
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
       doc.text('قائمة الموظفين', doc.internal.pageSize.width / 2, 25, { align: 'center' });
       
-      // Search query info if exists
       if (searchQuery) {
         doc.setFontSize(11);
         doc.setFont('Amiri', 'bold');
         doc.text(`نتائج البحث عن: "${searchQuery}"`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       }
       
-      // Summary section
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = searchQuery ? 45 : 35;
@@ -68,7 +58,6 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
       
       let yPosition = summaryY + 12;
       
-      // Prepare table data (RTL order)
       const tableData = employeesData.map(employee => [
         dayjs(employee.createdAt).format('DD/MM/YYYY'),
         employee.role?.name || 'بدون دور',
@@ -79,26 +68,22 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         employee.id.toString()
       ]);
       
-      // Table headers (RTL order)
       const headers = [
         ['تاريخ الإنشاء', 'الدور', 'الحالة', 'رقم الهاتف', 'البريد الإلكتروني', 'الاسم', '#']
       ];
       
-      // Create table with RTL support
       const pageWidth = doc.internal.pageSize.width;
       
-      // Optimize column widths to fit on one page
       const columnWidths = {
-        0: 22, // تاريخ الإنشاء
-        1: 25, // الدور
-        2: 18, // الحالة
-        3: 25, // رقم الهاتف
-        4: 45, // البريد الإلكتروني
-        5: 35, // الاسم
-        6: 12  // #
+        0: 22, 
+        1: 25, 
+        2: 18, 
+        3: 25, 
+        4: 45, 
+        5: 35, 
+        6: 12  
       };
       
-      // Calculate table width to center it properly
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
       const tableStartX = (pageWidth - totalColumnWidth) / 2;
       
@@ -137,13 +122,13 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
           fillColor: [250, 250, 250]
         },
         columnStyles: {
-          0: { cellWidth: columnWidths[0], fontSize: 7 }, // تاريخ الإنشاء
-          1: { cellWidth: columnWidths[1], fontSize: 8 }, // الدور
-          2: { cellWidth: columnWidths[2], fontSize: 8 }, // الحالة
-          3: { cellWidth: columnWidths[3], fontSize: 8 }, // رقم الهاتف
-          4: { cellWidth: columnWidths[4], fontSize: 7 }, // البريد الإلكتروني
-          5: { cellWidth: columnWidths[5], fontSize: 8 }, // الاسم
-          6: { cellWidth: columnWidths[6], fontSize: 8 }  // #
+            0: { cellWidth: columnWidths[0], fontSize: 7 }, 
+          1: { cellWidth: columnWidths[1], fontSize: 8 }, 
+          2: { cellWidth: columnWidths[2], fontSize: 8 }, 
+          3: { cellWidth: columnWidths[3], fontSize: 8 }, 
+          4: { cellWidth: columnWidths[4], fontSize: 7 }, 
+          5: { cellWidth: columnWidths[5], fontSize: 8 }, 
+          6: { cellWidth: columnWidths[6], fontSize: 8 }  
         },
         margin: { top: yPosition, bottom: 20 },
         tableWidth: totalColumnWidth,
@@ -153,13 +138,11 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
        
       });
       
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         
-        // Draw footer line
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.5);
         doc.line(
@@ -169,12 +152,10 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
           doc.internal.pageSize.height - 15
         );
         
-        // Footer text
         doc.setFontSize(9);
         doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
-        // Page number - centered
         doc.text(
           `صفحة ${i} من ${pageCount}`,
           doc.internal.pageSize.width / 2,
@@ -182,7 +163,6 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
           { align: 'center' }
         );
         
-        // Creation date - right aligned
         const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
         doc.text(
           `تم الإنشاء في: ${creationDate}`,
@@ -191,11 +171,9 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
           { align: 'right' }
         );
         
-        // Reset text color
         doc.setTextColor(0, 0, 0);
       }
       
-      // Save PDF
       const fileName = `الموظفين_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
@@ -208,18 +186,14 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
 
 export const exportEmployeesToExcel = async (employeesData, searchQuery = '') => {
   try {
-    // Lazy load XLSX library
     const XLSX = await import('xlsx');
 
-    // Create workbook
     const workbook = XLSX.utils.book_new();
     
-    // Calculate summary statistics
     const activeEmployees = employeesData.filter(emp => emp.isActive).length;
     const inactiveEmployees = employeesData.filter(emp => !emp.isActive).length;
     const totalEmployees = employeesData.length;
 
-    // Summary data
     const summaryData = [
       ['قائمة الموظفين'],
       [''],
@@ -231,12 +205,10 @@ export const exportEmployeesToExcel = async (employeesData, searchQuery = '') =>
       ['']
     ];
     
-    // Add search query if exists
     if (searchQuery) {
       summaryData.splice(2, 0, [`نتائج البحث عن: "${searchQuery}"`]);
     }
     
-    // Employees data
     const employeesSheetData = employeesData.map(employee => ({
       '#': employee.id,
       'الاسم': employee.name,
@@ -247,29 +219,24 @@ export const exportEmployeesToExcel = async (employeesData, searchQuery = '') =>
       'تاريخ الإنشاء': dayjs(employee.createdAt).format('DD/MM/YYYY')
     }));
     
-    // Create summary sheet
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     
-    // Create employees sheet
     const employeesSheet = XLSX.utils.json_to_sheet(employeesSheetData);
     
-    // Auto-size columns for better Excel display
     const wscols = [
-      { wch: 8 },  // #
-      { wch: 25 }, // الاسم
-      { wch: 30 }, // البريد الإلكتروني
-      { wch: 15 }, // رقم الهاتف
-      { wch: 12 }, // الحالة
-      { wch: 20 }, // الدور
-      { wch: 15 }  // تاريخ الإنشاء
+      { wch: 8 },  
+      { wch: 25 }, 
+      { wch: 30 }, 
+      { wch: 15 }, 
+      { wch: 12 }, 
+      { wch: 20 }, 
+      { wch: 15 }  
     ];
     employeesSheet['!cols'] = wscols;
     
-    // Add sheets to workbook
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص');
     XLSX.utils.book_append_sheet(workbook, employeesSheet, 'الموظفين');
-    
-    // Generate Excel file
+      
     const excelBuffer = XLSX.write(workbook, { 
       bookType: 'xlsx', 
       type: 'array',

@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import Api from '../../config/Api';
+import Api, { handleApiError } from '../../config/Api';
 import dayjs from 'dayjs';
 import "dayjs/locale/ar";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
@@ -53,7 +53,7 @@ const getAccountLedger = async (accountId, fromDate = null, toDate = null, page 
 const formatArabicDate = (date) => {
   return dayjs(date)
     .locale("ar")
-    .format("D [من] MMMM [الساعة] h:mm") // format without A
+    .format("D [من] MMMM [الساعة] h:mm")
     + " "
     + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
 };
@@ -70,7 +70,6 @@ export default function GeneralLedger() {
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();
-  // Query for account ledger data
   const { data: ledgerData, isLoading: isLoadingLedger, error } = useQuery({
     queryKey: ['account-ledger', searchParams?.account?.id, searchParams?.fromDate, searchParams?.toDate, currentPage, pageLimit],
     queryFn: () => 
@@ -83,7 +82,7 @@ export default function GeneralLedger() {
 
   const handleSearch = (params) => {
     setSearchParams(params);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
   const handleReset = () => {
@@ -104,7 +103,7 @@ export default function GeneralLedger() {
       notifySuccess("تم تصدير دفتر الأستاذ بصيغة PDF بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير PDF");
-      console.error("PDF Export Error:", error);
+      handleApiError(error);
     } finally {
       setExportLoading(prev => ({ ...prev, pdf: false }));
     }
@@ -119,7 +118,7 @@ export default function GeneralLedger() {
       notifySuccess("تم تصدير دفتر الأستاذ بصيغة Excel بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير Excel");
-      console.error("Excel Export Error:", error);
+      handleApiError(error);
     } finally {
       setExportLoading(prev => ({ ...prev, excel: false }));
     }
@@ -135,7 +134,6 @@ export default function GeneralLedger() {
   
   const closingBalance = ledgerData?.account?.balance || 0;
 
-  // Render mobile journal cards
   const renderMobileJournalCards = () => (
     <Stack spacing={2}>
       {ledgerData.journals?.map((journal) => 
@@ -143,7 +141,6 @@ export default function GeneralLedger() {
           <Card key={`${journal.id}-${line.id}`} variant="outlined" sx={{ borderRadius: 2, bgcolor: 'background.paper' }}>
             <CardContent sx={{ p: 2 }}>
               <Stack spacing={1.5}>
-                {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Box>
                     <Typography variant="subtitle2" fontWeight="bold" color="primary">
@@ -160,7 +157,6 @@ export default function GeneralLedger() {
                   </Box>
                 </Box>
 
-                {/* Description */}
                 <Box>
                   <Typography variant="body2" sx={{ mb: 0.5 }} fontWeight="medium">
                     {line.description}
@@ -172,7 +168,6 @@ export default function GeneralLedger() {
                   )}
                 </Box>
 
-                {/* Amounts */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                   <Box sx={{ textAlign: 'center', flex: 1 }}>
                     <Typography variant="caption" color="text.secondary" display="block">
@@ -221,7 +216,6 @@ export default function GeneralLedger() {
     </Stack>
   );
 
-  // Render desktop table
   const renderDesktopTable = () => (
     <TableContainer>
       <Table>
@@ -327,9 +321,7 @@ export default function GeneralLedger() {
           p: isSmallScreen ? 2 : 3,
         }}
       >
-        {/* Header */}
         <Box sx={{ mb: 3 }}>
-          {/* Toolbar */}
           <Box sx={{ 
             display: 'flex', 
             flexDirection: isSmallScreen ? 'column' : 'row',
@@ -337,7 +329,6 @@ export default function GeneralLedger() {
             justifyContent: 'space-between',
             alignItems: isSmallScreen ? 'stretch' : 'center',
           }}>
-            {/* Export Buttons */}
             {permissions.includes("general-ledger_Export") && (
               <Box sx={{
                 display: 'flex',
@@ -389,7 +380,6 @@ export default function GeneralLedger() {
                 </Button>
               </Box>
             )}
-            {/* Search and Reset Buttons */}
             <Box sx={{ 
               display: 'flex', 
               gap: 1,
@@ -429,7 +419,6 @@ export default function GeneralLedger() {
             </Box>
           </Box>
 
-          {/* Selected Account Info */}
           {searchParams && (
             <Paper sx={{ 
               mt: 2, 
@@ -470,10 +459,8 @@ export default function GeneralLedger() {
           )}
         </Box>
 
-        {/* Main Content */}
         <Box sx={{ flex: 1 }}>
           {!searchParams ? (
-            // Empty State
             <Paper sx={{ 
               borderRadius: 2, 
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
@@ -487,19 +474,15 @@ export default function GeneralLedger() {
               </Typography>
             </Paper>
           ) : isLoadingLedger ? (
-            // Loading State
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
               <CircularProgress size={60} />
             </Box>
           ) : error ? (
-            // Error State
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               حدث خطأ في تحميل بيانات الحساب: {error.message}
             </Alert>
           ) : (
-            // Data State
             <Box>
-              {/* Summary Cards */}
               <Grid container spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 3 }}>
                 <Grid item xs={6} md={3} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                   <Card sx={{ 
@@ -583,7 +566,6 @@ export default function GeneralLedger() {
                 </Grid>
               </Grid>
 
-              {/* Journals Table/Cards */}
               <Paper sx={{ 
                 borderRadius: 2, 
                 boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
@@ -603,7 +585,6 @@ export default function GeneralLedger() {
                   </Box>
                 )}
 
-                {/* Pagination */}
                 {ledgerData.totalPages > 1 && (
                   <Box sx={{ display: 'flex', justifyContent: 'center', pt: 3 }}>
                     <Pagination
@@ -623,7 +604,6 @@ export default function GeneralLedger() {
         </Box>
       </Box>
 
-      {/* Search Modal */}
       <GeneralLedgerSearch
         open={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}

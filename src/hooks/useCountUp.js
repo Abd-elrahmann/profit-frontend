@@ -6,11 +6,11 @@ export const useCountUp = (end = 0, duration = 400, enabled = true) => {
   const [displayValue, setDisplayValue] = useState(0);
   const motionValue = useMotionValue(0);
   
-  // إعدادات سبرنج محسنة للسرعة مع الحفاظ على السلاسة
+
   const spring = useSpring(motionValue, {
-    stiffness: 120, // زيادة الصلابة للسرعة
-    damping: 25,    // تقليل التخميد للسرعة
-    mass: 0.5,      // تقليل الكتلة للاستجابة الأسرع
+    stiffness: 120,
+    damping: 25,
+    mass: 0.5,
     restDelta: 0.001,
   });
 
@@ -25,7 +25,6 @@ export const useCountUp = (end = 0, duration = 400, enabled = true) => {
       return;
     }
 
-    // بدء الأنيميشن فوراً بدون تأخير
     motionValue.set(0);
     motionValue.set(end);
 
