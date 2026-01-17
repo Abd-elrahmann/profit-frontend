@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import Api from '../../config/Api';
+import Api, { setAccessToken as setApiAccessToken } from '../../config/Api';
 
 const AuthContext = createContext(null);
 
@@ -18,8 +18,7 @@ export const AuthProvider = ({ children }) => {
           const { accessToken: token, user: userData } = response.data;
 
           setAccessToken(token);
-
-          setAccessToken(token);
+          setApiAccessToken(token); // Set token in Api.js
           setUser(userData);
           setIsAuthenticated(true);
           
@@ -30,6 +29,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setUser(null);
         setAccessToken(null);
+        setApiAccessToken(null); // Clear token in Api.js
       } finally {
         setIsLoading(false);
       }
@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
     const handleTokenRefresh = (event) => {
       const { accessToken: token, user: userData } = event.detail;
       setAccessToken(token);
+      setApiAccessToken(token); // Set token in Api.js
       if (userData) {
         setUser(userData);
       }
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }) => {
 
     const handleAuthFailed = () => {
       setAccessToken(null);
+      setApiAccessToken(null); // Clear token in Api.js
       setUser(null);
       setIsAuthenticated(false);
     };
@@ -62,8 +64,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (token, userData) => {
     setAccessToken(token);
-
-    setAccessToken(token);
+    setApiAccessToken(token); // Set token in Api.js
     setUser(userData);
     setIsAuthenticated(true);
     
@@ -77,6 +78,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout error:', error);
     } finally {
       setAccessToken(null);
+      setApiAccessToken(null); // Clear token in Api.js
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -88,6 +90,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateAccessToken = useCallback((token) => {
     setAccessToken(token);
+    setApiAccessToken(token); // Set token in Api.js
   }, []);
 
   const value = {
