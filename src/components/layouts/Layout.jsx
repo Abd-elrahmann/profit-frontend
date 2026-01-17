@@ -36,15 +36,29 @@ const Layout = ({ children }) => {
 
   useEffect(() => {
     const checkLoginStatus = () => {
-      const token = localStorage.getItem('token');
-      setIsLoggedIn(!!token);
+      // Check if user is on a protected route (not auth pages)
+      const isProtectedRoute = location.pathname !== '/login' 
+        && location.pathname !== '/register'
+        && location.pathname !== '/forgot-password'
+        && location.pathname !== '/reset-password'
+        && location.pathname !== '/check-connection'
+        && !location.pathname.startsWith('/payment-receipt');
+      
+      setIsLoggedIn(isProtectedRoute);
     };
 
     checkLoginStatus();
-    window.addEventListener('storage', checkLoginStatus);
+    
+    // Listen for login/logout events
+    const handleUserLogin = () => setIsLoggedIn(true);
+    const handleAuthFailed = () => setIsLoggedIn(false);
+    
+    window.addEventListener('userLoggedIn', handleUserLogin);
+    window.addEventListener('authFailed', handleAuthFailed);
     
     return () => {
-      window.removeEventListener('storage', checkLoginStatus);
+      window.removeEventListener('userLoggedIn', handleUserLogin);
+      window.removeEventListener('authFailed', handleAuthFailed);
     };
   }, [location]);
 
