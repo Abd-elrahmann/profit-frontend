@@ -51,12 +51,14 @@ const Saving = () => {
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
   const theme = useTheme();
+  // Query for all partners savings
   const { data: savingData, isLoading: isSavingLoading } = useQuery({
     queryKey: ["partners-savings", page],
     retry: 1,
     queryFn: () => getAllPartnerSavings(page, limit),
   });
 
+  // Query for saving account report
   const { data: accountReport, isLoading: isAccountLoading, refetch: refetchAccountReport } = useQuery({
     queryKey: ["saving-account"],
     retry: 1,
@@ -64,11 +66,18 @@ const Saving = () => {
     enabled: activeTab === 1,
   });
 
+  // Handle successful withdrawal
   const handleWithdrawSuccess = () => {
+    // Refetch both saving data and account report
     refetchAccountReport();
+    // If we're on the first tab, we might want to refetch saving data too
+    if (activeTab === 0) {
+      // The saving data query will refetch automatically since it's enabled
+    }
   };
 
 
+  // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || "0";
   };
@@ -76,11 +85,12 @@ const Saving = () => {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
       + " "
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
 
+  // Render saving account summary
   const renderAccountSummary = () => (
     <Box sx={{ display: 'flex', gap: 2, mb: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
       <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
@@ -124,6 +134,7 @@ const Saving = () => {
 
 
 
+  // Render account journal entries
   const renderAccountJournals = () => {
     if (!accountReport?.journalsByMonth || Object.keys(accountReport.journalsByMonth).length === 0) {
       return (
@@ -175,6 +186,7 @@ const Saving = () => {
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}
+                  {/* Total Row */}
                   <StyledTableRow sx={{ bgcolor: 'grey.100', '& .MuiTableCell-root': { fontWeight: 'bold' } }}>
                     <StyledTableCell align="center" colSpan={2}>
                       الإجمالي
@@ -201,6 +213,7 @@ const Saving = () => {
 
 
 
+  // Render saving account tab
   const renderSavingAccountTab = () => {
     if (isAccountLoading) {
       return (
@@ -241,6 +254,7 @@ const Saving = () => {
         }}
       >
         <Box sx={{ width: "100%" }}>
+          {/* Tabs for desktop, simple navigation for mobile */}
           {!isSmallScreen ? (
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
               <Tabs
@@ -268,12 +282,14 @@ const Saving = () => {
               </Tabs>
             </Box>
           ) : (
+            // Mobile header
             <Box sx={{ mb: 3 }}>
               {activeTab === 1 ? (
                 <Typography variant="h6" fontWeight="bold" mb={2}>
                   صندوق الادخار
                 </Typography>
               ) : (
+                // Title for mobile list view
                 <Typography variant="h6" fontWeight="bold" mb={2}>
                   إدارة المدخرات
                 </Typography>
@@ -290,6 +306,7 @@ const Saving = () => {
                 borderRadius: 2,
               }}
             >
+              {/* Action Buttons */}
               <Box sx={{ p: 2, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
@@ -326,11 +343,13 @@ const Saving = () => {
               />
             </Paper>
           ) : (
+            // Saving Account Tab
             renderSavingAccountTab()
           )}
         </Box>
       </Box>
 
+      {/* Withdraw Modal */}
       <SavingWithdrawModal
         open={withdrawModalOpen}
         onClose={() => setWithdrawModalOpen(false)}

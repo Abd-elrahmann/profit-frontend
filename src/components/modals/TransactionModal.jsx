@@ -27,10 +27,12 @@ const TransactionModal = ({
   const validateForm = () => {
     const newErrors = {};
 
+    // Validate transaction type
     if (!transactionForm.type || transactionForm.type.trim() === "") {
       newErrors.type = "نوع العملية مطلوب";
     }
 
+    // Validate amount
     if (!transactionForm.amount || transactionForm.amount.trim() === "") {
       newErrors.amount = "المبلغ مطلوب";
     } else {
@@ -39,7 +41,7 @@ const TransactionModal = ({
         newErrors.amount = "يرجى إدخال مبلغ صحيح";
       } else if (amount <= 0) {
         newErrors.amount = "المبلغ يجب أن يكون أكبر من صفر";
-      } else if (amount > 10000000) {
+      } else if (amount > 10000000) { // 10 million limit
         newErrors.amount = "المبلغ يجب أن يكون أقل من 10,000,000 ريال";
       }
     }
@@ -51,6 +53,7 @@ const TransactionModal = ({
   const handleInputChange = (field, value) => {
     onInputChange(field, value);
 
+    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -123,7 +126,8 @@ const TransactionModal = ({
             type="number"
             value={transactionForm.amount}
             onChange={(e) => {
-              const value = e.target.value; 
+              const value = e.target.value;
+              // Allow only numbers and decimal point
               if (value === '' || /^\d*\.?\d*$/.test(value)) {
                 handleInputChange('amount', value);
               }

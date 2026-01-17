@@ -186,10 +186,12 @@ const EditKafeelDocuments = ({ open, onClose, kafeelId, kafeel }) => {
     try {
       const formData = new FormData();
 
+      // Add files
       Object.keys(uploadedFiles).forEach(key => {
         formData.append(key, uploadedFiles[key]);
       });
 
+      // Add delete fields - set to null to delete
       deleteFields.forEach(fieldName => {
         formData.append(fieldName, '');
       });

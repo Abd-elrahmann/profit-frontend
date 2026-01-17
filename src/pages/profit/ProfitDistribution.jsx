@@ -73,7 +73,7 @@ const ProfitDistribution = () => {
     open: false,
     periodId: null,
     periodName: "",
-    action: "",
+    action: "", // 'post' or 'unpost'
   });
   const [savingDialog, setSavingDialog] = useState({
     open: false,
@@ -91,6 +91,7 @@ const ProfitDistribution = () => {
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
 
+  // Check for periodId in URL query parameters
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const periodIdParam = searchParams.get('periodId');
@@ -102,11 +103,12 @@ const ProfitDistribution = () => {
         setSelectedPeriod(periodId);
         setActiveTab(1);
         
+        // Check if coming from period closing page
         if (fromParam === 'period-closing') {
           setCameFromPeriodClosing(true);
           setCameFromSaving(false);
         } else {
-          setCameFromSaving(true);
+          setCameFromSaving(true); // Mark that user came from saving page
           setCameFromPeriodClosing(false);
         }
       }
@@ -121,17 +123,20 @@ const ProfitDistribution = () => {
     navigate('/period-closing');
   };
 
+  // Query for closed periods
   const { data: closedPeriods, isLoading: isPeriodsLoading } = useQuery({
     queryKey: ["closed-periods"],
     queryFn: () => getClosedPeriods(),
   });
 
+  // Query for period details when selected
   const { data: periodDetailsData, isLoading: isPeriodLoading } = useQuery({
     queryKey: ["closed-periods", selectedPeriod],
     queryFn: () => getClosedPeriods(selectedPeriod),
     enabled: !!selectedPeriod && activeTab === 1,
   });
 
+  // Extract period data from the array response
   const periodData = periodDetailsData && periodDetailsData.length > 0 
     ? periodDetailsData[0] 
     : null;
@@ -191,6 +196,7 @@ const ProfitDistribution = () => {
     try {
       setIsDistributing(true);
       if (action === "post") {
+        // إرسال مبلغ الادخار إذا كان مفعل
         const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0), 0) || 0;
         const savingAmount = enableSaving ? totalPartnerProfit * (savingPercentage / 100) : 0;
         await postDistribution(periodId, savingAmount);
@@ -200,6 +206,7 @@ const ProfitDistribution = () => {
       queryClient.invalidateQueries(["closed-periods"]);
       handleCloseDistributionDialog();
       
+      // إعادة تعيين إعدادات الادخار
       setEnableSaving(false);
       setSavingPercentage(0);
     } catch (error) {
@@ -250,7 +257,9 @@ const ProfitDistribution = () => {
     }
   };
 
+  // Handle view journal details
   const handleViewJournal = (journalId) => {
+    // Navigate to journals page with details tab and selected journal
     navigate('/journal-entries', {
       state: {
         journalId: journalId,
@@ -260,6 +269,7 @@ const ProfitDistribution = () => {
     });
   };
 
+  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
     return new Date(dateString).toLocaleDateString("en-US");
@@ -268,11 +278,12 @@ const ProfitDistribution = () => {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-        .format("D [من] MMMM [الساعة] h:mm")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
       + " " 
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
 
+  // Format number with decimals (no rounding)
   const formatNumber = (num) => {
     if (!num) return "0";
     return Number(num).toLocaleString('en-US', {
@@ -280,7 +291,8 @@ const ProfitDistribution = () => {
       maximumFractionDigits: 0
     });
   };
-  
+
+  // Get journal status in Arabic
   const getJournalStatusText = (status) => {
     switch (status) {
       case "DRAFT":

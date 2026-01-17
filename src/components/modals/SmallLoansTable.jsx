@@ -61,7 +61,8 @@ const SmallLoansTable = ({ onEditLoan }) => {
   const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
-  const isSmallScreen = isMobile;
+  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isSmallScreen = isMobile || isTablet;
 
   const PAGE_SIZE = 15;
 
@@ -74,7 +75,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM")
+      .format("D [من] MMMM") // format without A
       + " " ;
   };
 
@@ -216,11 +217,13 @@ const SmallLoansTable = ({ onEditLoan }) => {
     return amount.toLocaleString();
   };
 
+  // Render mobile loan cards
   const renderMobileLoanCards = () => (
     <Stack spacing={2} sx={{ p: 2 }}>
       {smallLoansData?.data?.map((loan) => (
         <Paper key={loan.id} variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
           <Stack spacing={1.5}>
+            {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Box>
                 <Typography variant="subtitle2" fontWeight="bold" color="primary">
@@ -240,6 +243,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
               </Box>
             </Box>
 
+            {/* Loan Details */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="caption" color="text.secondary">
@@ -296,6 +300,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
               </Box>
             </Box>
 
+            {/* Actions */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
               <IconButton
                 size="small"
@@ -310,6 +315,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
     </Stack>
   );
 
+  // Render desktop table
   const renderDesktopTable = () => (
     <Table>
       <TableHead>
@@ -422,6 +428,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         height: "100%",
       }}
     >
+      {/* Search Bar */}
       <Box
         sx={{
           p: isSmallScreen ? 1.5 : 2,
@@ -442,6 +449,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         />
       </Box>
 
+      {/* Table/Cards */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden" }}>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
@@ -467,6 +475,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         )}
       </Paper>
 
+      {/* Pagination */}
       {showPagination && (
         <Box sx={{
           display: 'flex',
@@ -505,6 +514,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         </Box>
       )}
 
+      {/* Delete Confirmation Modal */}
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {
@@ -517,6 +527,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         ButtonText="حذف"
       />
 
+      {/* Payment Modal */}
       <Dialog
         open={isPayModalOpen}
         onClose={handleClosePayModal}
@@ -618,11 +629,13 @@ const SmallLoansTable = ({ onEditLoan }) => {
       </Dialog>
 
 
+      {/* Actions Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
+        {/* Edit Loan - Only for OPEN loans */}
         {selectedLoanForMenu?.status === "OPEN" && (
           <MenuItem
             onClick={() => {
@@ -639,6 +652,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
         )}
 
 
+        {/* Pay Loan - Always visible but disabled for PAID loans */}
         <MenuItem
           onClick={() => {
             if (selectedLoanForMenu?.status === "PAID") return;
@@ -658,6 +672,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
           سداد الدفعة
         </MenuItem>
 
+        {/* Delete Loan - Only for OPEN loans */}
           <MenuItem
             onClick={() => {
               setLoanToDelete(selectedLoanForMenu);

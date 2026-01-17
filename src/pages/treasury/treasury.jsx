@@ -96,19 +96,23 @@ export default function Treasury() {
     enabled: tab === 0 || tab === 1 || tab === 2,
   });
 
+  // اكتشاف الوضع المظلم تلقائياً
   useEffect(() => {
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     console.log('System prefers dark mode:', prefersDarkMode);
   }, []);
 
+  // استخراج البيانات من response بشكل ديناميكي
   const currentData = bankData;
 
+  // حساب القيم من البيانات المسترجعة فقط
   const availableBalance = currentData?.account?.balance || 0;
   const totalDebit = currentData?.account?.debit || 0;
   const totalCredit = currentData?.account?.credit || 0;
   const totalTransactions = currentData?.totalJournalEntries || 0;
   const loansBalance = currentData?.loansBalance || 0;
   const loansInterest = currentData?.loansInterest || 0;
+  const loansBalanceWithInterest = loansBalance + loansInterest;
   const total = currentData?.total || 0;
   
   const totalRepaymentsAmount = currentData?.repayments?.totalAmount || 0;
@@ -133,6 +137,7 @@ export default function Treasury() {
   const animatedTotal = useCountUp(total, 600, !isLoading);
   const animatedCurrentMonthTotal = useCountUp(currentMonthTotalAmount, 600, !isLoading);
 
+  // الرسومات تظهر فقط في الصندوق العام (tab === 0)
   const monthlyBalanceData = tab === 0 && currentData?.journalsByMonth ?
     Object.entries(currentData.journalsByMonth)
       .map(([month, data]) => ({
@@ -149,15 +154,17 @@ export default function Treasury() {
     { name: 'الصادر', value: totalCredit, color: '#FF8042' },
   ] : [];
 
+  // الحصول على القيود الحالية بناءً على الشهر المحدد
   const getCurrentJournals = () => {
     if (!currentData?.journalsByMonth) return [];
 
     if (selectedMonth && currentData.journalsByMonth[selectedMonth]) {
       return currentData.journalsByMonth[selectedMonth].entries;
     } else {
+      // إذا لم يكن هناك شهر محدد، نرجع جميع القييدات من جميع الأشهر
       return Object.values(currentData.journalsByMonth)
         .flatMap(month => month.entries)
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+        .sort((a, b) => new Date(b.date) - new Date(a.date)); // ترتيب تنازلي حسب التاريخ
     }
   };
 
@@ -177,7 +184,7 @@ export default function Treasury() {
 
   const availableMonths = currentData?.journalsByMonth ?
     Object.keys(currentData.journalsByMonth)
-        .sort((a, b) => b.localeCompare(a))
+      .sort((a, b) => b.localeCompare(a)) // ترتيب تنازلي
       .filter(month => {
         const monthData = currentData.journalsByMonth[month];
         return monthData && monthData.entries && monthData.entries.length > 0;

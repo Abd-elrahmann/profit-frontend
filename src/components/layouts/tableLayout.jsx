@@ -9,6 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Box, Typography, CircularProgress, TablePagination } from '@mui/material';
 
+// Scrollable Table Container with custom scrollbar styles
 export const ScrollableTableContainer = ({ children, maxHeight = 650 }) => (
   <Box sx={{
     overflowX: 'auto',
@@ -62,8 +63,8 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
 export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(even)': {
     backgroundColor: theme.palette.mode === 'dark'
-      ? theme.palette.action.hover 
-      : theme.palette.background.paper, 
+      ? theme.palette.action.hover // Subtle hover color for dark mode
+      : theme.palette.background.paper, // Paper color for light mode
   },
   '&:nth-of-type(odd)': {
     backgroundColor: theme.palette.background.paper,
@@ -78,8 +79,8 @@ export const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 const TableLayout = ({
-  columns = [], 
-  data = [], 
+  columns = [], // Add default empty array
+  data = [], // Add default empty array
   isLoading = false,
   page = 0,
   setPage = () => {},

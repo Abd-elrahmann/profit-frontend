@@ -1,4 +1,4 @@
-
+// components/contracts/PaymentVoucher.jsx
 import React from 'react';
 
 const PaymentVoucher = () => {

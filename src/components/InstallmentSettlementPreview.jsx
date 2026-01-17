@@ -1,12 +1,3 @@
-/**
- * InstallmentSettlementPreview
- *
- * Displays legally approved installment settlement receipt templates.
- * HTML templates are internally seeded and trusted from the database.
- * Dynamic values are sanitized before injection to prevent XSS attacks.
- * All templates undergo validation to ensure they contain no malicious content.
- */
-
 import React from 'react';
 import {
   Dialog,
@@ -21,7 +12,6 @@ import {
   Divider,
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
-import { isValidTemplate, injectContractData } from '../utilities/sanitize';
 
 const InstallmentSettlementPreview = ({
   open,
@@ -31,33 +21,22 @@ const InstallmentSettlementPreview = ({
   loading = false,
   clientName = "",
   installmentAmount = 0,
-  settlementData = {} 
 }) => {
-  const safeSettlementHtml = React.useMemo(() => {
-    if (!settlementHtml) return '';
 
-    try {
-      if (!isValidTemplate(settlementHtml)) {
-        console.error('Invalid settlement template: contains potentially dangerous content');
-        return '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب التسوية غير آمن</div>';
-      }
 
-      return injectContractData(settlementHtml, settlementData);
-    } catch (error) {
-      console.error('Error processing settlement template:', error);
-      return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب التسوية</div>';
-    }
-  }, [settlementHtml, settlementData]);
 
+  // دالة للإغلاق
   const handleClose = () => {
     if (onClose) {
       onClose();
     }
   };
 
+  // دالة للحفظ ثم الإغلاق
   const handleSaveAndClose = async () => {
     if (onSaveSettlement) {
       await onSaveSettlement();
+      // بعد الحفظ الناجح، إغلاق الدايلوج
       handleClose();
     }
   };
@@ -130,9 +109,9 @@ const InstallmentSettlementPreview = ({
             }
           }}
         >
-          {safeSettlementHtml ? (
+          {settlementHtml ? (
             <Box
-              dangerouslySetInnerHTML={{ __html: safeSettlementHtml }}
+              dangerouslySetInnerHTML={{ __html: settlementHtml }}
               sx={{
                 '& *': {
                   fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
@@ -206,7 +185,7 @@ const InstallmentSettlementPreview = ({
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
-          onClick={handleSaveAndClose} 
+          onClick={handleSaveAndClose} // استخدام الدالة المعدلة
           disabled={loading || !settlementHtml}
           sx={{
             bgcolor: "primary.main",

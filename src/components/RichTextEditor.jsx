@@ -111,6 +111,7 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
         variableSpan.textContent = variable;
         variableSpan.title = 'متغير - لا تقم بتغييره';
         
+        // Add info icon
         const infoIcon = document.createElement('span');
         infoIcon.textContent = ' ⓘ';
         infoIcon.style.cssText = `
@@ -123,9 +124,11 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
         variableSpan.appendChild(infoIcon);
         range.insertNode(variableSpan);
         
+        // Add space after variable
         const space = document.createTextNode(' ');
         range.insertNode(space);
         
+        // Move cursor after the space
         range.setStartAfter(space);
         range.collapse(true);
         selection.removeAllRanges();
@@ -136,6 +139,7 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
     }
   };
 
+  // Add event listeners for variable tooltips
   useEffect(() => {
     const handleMouseOver = (e) => {
       if (e.target.classList.contains('template-variable')) {
@@ -163,6 +167,7 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
 
   return (
     <Box sx={{ height }}>
+      {/* Variables Bar */}
       <Paper sx={{ p: 2, mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
         <Typography variant="subtitle2">إدراج متغير:</Typography>
         {variables.map((variable, index) => (
@@ -180,6 +185,7 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
         ))}
       </Paper>
 
+      {/* Editor Area */}
       <Paper 
         sx={{ 
           border: '1px solid #e0e0e0', 
@@ -188,6 +194,7 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
           position: 'relative'
         }}
       >
+        {/* Active Tooltip */}
         {activeTooltip && (
           <Box
             sx={{
@@ -226,6 +233,7 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
         />
       </Paper>
 
+      {/* Simple Toolbar */}
       <Paper sx={{ p: 1, mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
         <Button
           size="small"

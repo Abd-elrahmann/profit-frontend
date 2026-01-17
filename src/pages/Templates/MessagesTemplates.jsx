@@ -1,11 +1,3 @@
-/**
- * MessagesTemplates
- *
- * Administrative interface for managing message templates.
- * Uses static CSS styles for editor theming - no dynamic content injection.
- * Templates are edited by authorized users through ReactQuill interface.
- */
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -14,17 +6,23 @@ import {
   Typography,
   Button,
   Paper,
+  Chip,
+  TextField,
+  InputAdornment,
+  Tooltip,
   useTheme,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import ReactQuillWrapper from "../../components/ReactQuillWrapper";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 
+// CSS لتخصيص ReactQuill ليبدو مثل المعاينة
 const messageEditorStyles = `
   .message-editor .ql-editor {
     font-family: "Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important;
@@ -107,6 +105,7 @@ export default function MessagesTemplates() {
         const templateName = templateNameMap[key];
         const stateKey = getStateKey(key);
 
+        // Use default templates directly without API calls
         newTemplates[stateKey] = getDefaultTemplate(templateName);
       });
 
@@ -326,6 +325,10 @@ export default function MessagesTemplates() {
           </Paper>
         </Box>
       </Box>
+
+
+
+
       </Box>
     </>
   );

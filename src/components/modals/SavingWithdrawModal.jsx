@@ -34,6 +34,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
   const [amountError, setAmountError] = useState('');
   const [touched, setTouched] = useState(false);
 
+  // Auto preview when amount changes
   useEffect(() => {
     const numAmount = parseFloat(amount);
     if (numAmount && numAmount > 0) {
@@ -44,6 +45,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount]);
 
+  // Preview mutation
   const previewMutation = useMutation({
     mutationFn: previewGlobalSavingWithdrawal,
     onSuccess: (data) => {
@@ -54,6 +56,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
     },
   });
 
+  // Withdraw mutation
   const withdrawMutation = useMutation({
     mutationFn: ({ amount, description }) => withdrawFromAllPartnersSavings(amount, description),
     onSuccess: (data) => {
@@ -80,10 +83,11 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
       return "مبلغ السحب يجب أن يكون أكبر من صفر";
     }
 
-      if (numAmount > 10000000) {
+    if (numAmount > 10000000) { // 10 million limit
       return "مبلغ السحب يجب أن يكون أقل من 10,000,000 ريال";
     }
 
+    // Check against total available savings if preview data exists
     if (previewData && numAmount > previewData.totalSaving) {
       return `مبلغ السحب يجب أن يكون أقل من أو يساوي إجمالي التوفير المتاح (${previewData.totalSaving.toLocaleString()} ريال)`;
     }
@@ -92,9 +96,11 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
   };
 
   const handleAmountChange = (value) => {
+    // Allow only numbers and decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setAmount(value);
 
+      // Clear error when user starts typing
       if (amountError) {
         setAmountError("");
       }
@@ -164,6 +170,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
 
       <DialogContent>
         <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {/* Input Section */}
           <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
             <Grid container spacing={3} justifyContent="center">
               <Grid item xs={12} md={6}>
@@ -199,6 +206,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
               </Grid>
             </Grid>
 
+            {/* Loading indicator for auto preview */}
             {previewMutation.isPending && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                 <CircularProgress size={24} />
@@ -207,10 +215,12 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
             )}
           </Box>
 
+          {/* Preview Results */}
           {previewData && (
             <Box sx={{ mt: 3 }}>
               <Divider sx={{ mb: 3 }} />
 
+              {/* Summary Cards */}
           <Box sx={{ width: '100%', maxWidth: 800, mb: 4 }}>
             <Grid container spacing={2} justifyContent="center">
               <Grid item xs={12} sm={4}>
@@ -252,6 +262,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
             </Grid>
           </Box>
 
+              {/* Distribution Table */}
               <Box sx={{ width: '100%', maxWidth: 1400 }}>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, textAlign: 'center' }}>
                   تفاصيل التوزيع على الشركاء
@@ -305,6 +316,7 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
                 </TableContainer>
               </Box>
 
+              {/* Validation Alert */}
               {previewData.amount > previewData.totalSaving && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
                   المبلغ المطلوب أكبر من إجمالي التوفير المتاح. سيتم سحب كل الرصيد المتاح.

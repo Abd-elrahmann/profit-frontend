@@ -113,9 +113,13 @@ const ConnectionWatcher = () => {
 const AppLayout = () => {
   const { prefetchCommonPages } = usePrefetch();
 
+  // Prefetch common pages on app load
   useEffect(() => {
     prefetchCommonPages();
   }, [prefetchCommonPages]);
+
+  // ✅ Token validation is now handled by AuthContext
+  // No need for manual validation here
 
   return (
     <Layout>
@@ -284,11 +288,12 @@ const ProtectedRoute = ({ children, route }) => {
     const hasPermission = permissions.includes(`${moduleKey}_View`);
 
     if (!hasPermission) {
+      // If trying to access dashboard without permission, find first accessible page
       if (location.pathname === '/dashboard' || location.pathname === '/') {
         const firstPage = getFirstAccessiblePage(permissions);
         navigate(firstPage, { replace: true });
       }
-      return null;
+      return null; // Don't render, will redirect in useEffect
     }
   }
 
@@ -308,6 +313,7 @@ const DefaultRedirectRoute = () => {
       return;
     }
 
+    // Find first accessible page
     const firstPage = getFirstAccessiblePage(permissions);
     navigate(firstPage, { replace: true });
   }, [isAuthenticated, authLoading, permissions, loading, navigate]);
@@ -322,6 +328,7 @@ const PublicRoute = ({ children }) => {
     return children;
   }
 
+  // If user is logged in, redirect to dashboard (ProtectedRoute will handle finding first accessible page)
   return <Navigate to="/dashboard" replace />;
 };
 

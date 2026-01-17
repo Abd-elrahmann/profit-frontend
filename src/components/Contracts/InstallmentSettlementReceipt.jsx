@@ -1,4 +1,4 @@
-
+// components/contracts/InstallmentSettlementReceipt.jsx
 import React from "react";
 
 const InstallmentSettlementReceipt = () => {
@@ -211,7 +211,8 @@ return `
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
     }
-  
+
+    /* منع أي انقسام للصفحات داخل المحتوى */
     .details-box,
     .content-box,
     .text-box,
@@ -220,11 +221,13 @@ return `
       break-inside: avoid !important;
     }
 
+    /* ضبط أقصى ارتفاع ليكون صفحة واحدة فقط */
     * {
       max-height: none !important;
       overflow: visible !important;
     }
 
+    /* ضمان التمركز والعرض الصحيح */
     html, body {
       margin: 0 !important;
       padding: 0 !important;

@@ -55,6 +55,7 @@ const Login = () => {
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
   useEffect(() => {
+    // Only remember email is safe to store in localStorage
     const savedEmailFromStorage = localStorage.getItem("rememberedEmail");
     if (savedEmailFromStorage) {
       setSavedEmail(savedEmailFromStorage);
@@ -73,14 +74,17 @@ const Login = () => {
       const response = await Api.post("/api/auth/login", cleanedValues);
       const { accessToken, user } = response.data;
 
+      // ✅ Store token and user in memory only (via AuthContext)
       await login(accessToken, user);
 
+      // Remember email if checkbox is checked (email is not sensitive data)
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", cleanedValues.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-      
+
+      // Fetch permissions
       let userPermissions = [];
       try {
         const modulesRes = await Api.get("/api/auth/modules");

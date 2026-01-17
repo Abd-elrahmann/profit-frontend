@@ -25,7 +25,8 @@ const CollectionStats = React.memo(() => {
   const theme = useTheme();
   const { isDarkMode } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
+  // Custom tooltip for dark mode compatibility
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -59,17 +60,21 @@ const CollectionStats = React.memo(() => {
     queryFn: () => getMonthlyCollection(filter),
   });
 
+  // Animated counters
   const animatedPercentage = useCountUp(stats?.currentMonth?.collectionPercentage || 0, 600, !isLoading);
   
+  // New animated counters for bank account
   const animatedBankDebit = useCountUp(stats?.bankAccount?.debit || 0, 600, !isLoading);
   const animatedBankCredit = useCountUp(stats?.bankAccount?.credit || 0, 600, !isLoading);
   const animatedBankBalance = useCountUp(stats?.bankAccount?.balance || 0, 600, !isLoading);
   const animatedLoansBalance = useCountUp(stats?.loansBalance || 0, 600, !isLoading);
 
+  // Format currency
   const formatCurrency = (amount) => {
     return amount?.toLocaleString() || '0';
   };
 
+  // Prepare data for bar chart - Collection
   const collectionBarData = [
     {
       name: 'إجمالي المستحق',
@@ -88,6 +93,7 @@ const CollectionStats = React.memo(() => {
     },
   ];
 
+  // Prepare data for bank account bar chart
   const bankAccountBarData = [
     {
       name: 'الوارد',
@@ -106,6 +112,7 @@ const CollectionStats = React.memo(() => {
     },
   ];
 
+  // Prepare data for repayments summary chart
   const repaymentsBarData = [
     {
       name: 'إجمالي التحصيلات',
@@ -134,6 +141,7 @@ const CollectionStats = React.memo(() => {
 
   return (
     <Box sx={{ width: '100vw', maxWidth: '100%', p: { xs: 1.5, sm: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Header and Filter */}
       <Box sx={{
         display: 'flex',
         justifyContent: 'center',
@@ -168,7 +176,9 @@ const CollectionStats = React.memo(() => {
         </FormControl>
       </Box>
 
+      {/* Summary Cards - Row 1: حساب البنك */}
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
+        {/* الوارد */}
         <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -239,6 +249,7 @@ const CollectionStats = React.memo(() => {
           </Card>
         </Grid>
 
+        {/* الصادر */}
         <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },
@@ -309,6 +320,7 @@ const CollectionStats = React.memo(() => {
           </Card>
         </Grid>
 
+        {/* الرصيد */}
         <Grid item xs={2.4} sm={2.4} md={2.4}>
           <Card sx={{
             height: { xs: '200px', sm: '100%', md: '200px' },

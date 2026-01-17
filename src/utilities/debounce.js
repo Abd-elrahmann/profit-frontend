@@ -1,4 +1,4 @@
-
+// Simple debounce utility to replace lodash with cancel functionality
 export const debounce = (func, wait) => {
   let timeout;
   const executedFunction = function (...args) {

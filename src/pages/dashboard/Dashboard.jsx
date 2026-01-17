@@ -11,9 +11,10 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
-import Api, { handleApiError } from '../../config/Api';
+import Api from '../../config/Api';
 import PageSkeleton from '../../components/PageSkeleton';
 
+// Lazy load dashboard components for better performance
 const ClientStats = React.lazy(() => import('../../components/dashboardSections/ClientStats'));
 const PartnerStats = React.lazy(() => import('../../components/dashboardSections/PartnerStats'));
 const LoanStats = React.lazy(() => import('../../components/dashboardSections/LoanStats'));
@@ -47,6 +48,7 @@ const Dashboard = React.memo(() => {
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
 
+  // Fetch dashboard permissions - deferred loading for better performance
   const { data: dashboardPermissions, isLoading: permissionsLoading } = useQuery({
     queryKey: ['dashboard-permissions', permissions?.length || 0],
     queryFn: async () => {
@@ -62,16 +64,17 @@ const Dashboard = React.memo(() => {
           'Last-Actions'
         ].includes(p.module));
       } catch (error) {
-        handleApiError(error);
+        console.error('Error fetching dashboard permissions:', error);
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnMount: false, // Don't refetch on mount for better initial load
     refetchOnWindowFocus: false,
-    enabled: !!permissions?.length,
+    enabled: !!permissions?.length, // Only run when permissions are available
   });
 
+  // تحديث تلقائي عند تغيير الصلاحيات
   const prevPermissionsLength = useRef(permissions?.length || 0);
   useEffect(() => {
     const currentLength = permissions?.length || 0;
@@ -81,6 +84,7 @@ const Dashboard = React.memo(() => {
     }
   }, [permissions, queryClient]);
 
+  // Define all available tabs with their permissions - lazy loaded components
   const allTabs = useMemo(() => [
     {
       label: "إحصائيات العملاء",
@@ -120,6 +124,7 @@ const Dashboard = React.memo(() => {
     }
   ], []);
 
+  // Filter tabs based on permissions - memoized for performance
   const availableTabs = useMemo(() => {
     if (!dashboardPermissions) return [];
     return allTabs.filter(tab =>
@@ -127,6 +132,7 @@ const Dashboard = React.memo(() => {
     );
   }, [dashboardPermissions, allTabs]);
 
+  // Adjust selected tab if it's out of bounds after filtering
   useEffect(() => {
     if (availableTabs.length > 0 && value >= availableTabs.length) {
       setValue(0);
@@ -137,6 +143,7 @@ const Dashboard = React.memo(() => {
     setValue(newValue);
   }, []);
 
+  // Show skeleton first for better UX
   if (permissionsLoading || !dashboardPermissions) {
     return (
       <Box sx={{ bgcolor: theme.palette.background.default, minHeight: '100vh', py: 1 }}>

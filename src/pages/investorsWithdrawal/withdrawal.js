@@ -1,5 +1,6 @@
 import Api, { handleApiError } from '../../config/Api';
 
+// Get all withdrawing investors
 export const getWithdrawingInvestors = async (page = 1) => {
   try {
     const response = await Api.get(`/api/partner-withdraw/all-withdrawing/${page}?limit=10`);
@@ -10,6 +11,7 @@ export const getWithdrawingInvestors = async (page = 1) => {
   }
 };
 
+// Get withdrawal details for a specific investor
 export const getWithdrawalDetails = async (partnerId) => {
   try {
     const response = await Api.get(`/api/partner-withdraw/details/${partnerId}`);
@@ -20,6 +22,7 @@ export const getWithdrawalDetails = async (partnerId) => {
   }
 };
 
+// Approve withdrawal payment
 export const approveWithdrawal = async (scheduleId) => {
   try {
     const response = await Api.post(`/api/partner-withdraw/approve/${scheduleId}`);
@@ -30,6 +33,7 @@ export const approveWithdrawal = async (scheduleId) => {
   }
 };
 
+// Reject withdrawal payment
 export const rejectWithdrawal = async (scheduleId) => {
   try {
     const response = await Api.post(`/api/partner-withdraw/reject/${scheduleId}`);
@@ -40,6 +44,7 @@ export const rejectWithdrawal = async (scheduleId) => {
   }
 };
 
+// Partial pay withdrawal
 export const partialPayWithdrawal = async (scheduleId, paidAmount) => {
   try {
     const response = await Api.post(`/api/partner-withdraw/partial/${scheduleId}`, {
@@ -52,6 +57,7 @@ export const partialPayWithdrawal = async (scheduleId, paidAmount) => {
   }
 };
 
+// Upload withdrawal receipt
 export const uploadWithdrawalReceipt = async (withdrawalId, formData) => {
   try {
     const response = await Api.post(

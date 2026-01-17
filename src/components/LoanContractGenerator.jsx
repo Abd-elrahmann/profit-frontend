@@ -1,4 +1,4 @@
-
+// components/contracts/LoanContractGenerator.jsx
 import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../config/Api";
@@ -376,6 +376,7 @@ const LoanContractGenerator = React.forwardRef(
           setIsGenerating(false);
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [contractType, uploadPDFToServer, onContractGenerated, loanData]
     );
 

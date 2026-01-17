@@ -22,6 +22,7 @@ const numberToArabicWords = (num) => {
     { value: 1e3, singular: "ألف", dual: "ألفان", plural: "آلاف" },
   ];
 
+  // معالجة المليارات والملايين والآلاف
   for (let s of scale) {
     if (num >= s.value) {
       const part = Math.floor(num / s.value);
@@ -30,6 +31,7 @@ const numberToArabicWords = (num) => {
       else if (part >= 3 && part <= 9) result += ones[part] + " " + s.plural + " ";
       else if (part === 10) result += "عشرة " + s.plural + " ";
       else {
+        // أي رقم أكبر من 10
         result += numberToArabicWords(part) + " " + s.singular + " ";
       }
 
@@ -38,6 +40,7 @@ const numberToArabicWords = (num) => {
     }
   }
 
+// Handle hundreds
 if (num >= 100) {
   const hundredsPart = Math.floor(num / 100);
 
@@ -54,6 +57,7 @@ if (num >= 100) {
   if (num > 0 && hundredsPart > 0) result += " ";
 }
 
+  // العشرات والآحاد مع قواعد نحو عربية صحيحة
   if (num >= 20) {
     const t = Math.floor(num / 10);
     const o = num % 10;
@@ -100,9 +104,11 @@ if (num >= 100) {
 };
 
 const getCurrentDates = () => {
+  // إنشاء تاريخ اليوم في توقيت السعودية لضمان الدقة
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
 
+  // إنشاء تاريخ بداية اليوم (منتصف الليل) في توقيت السعودية
   const today = new Date(saudiDate.getFullYear(), saudiDate.getMonth(), saudiDate.getDate());
 
   const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
@@ -115,6 +121,7 @@ const getCurrentDates = () => {
   let hijriDate = hijriFormatter.format(today);
   hijriDate = hijriDate.replace(/\s+/g, ' ').trim();
   hijriDate = hijriDate.replace(' ', ' من ');
+  // Remove 'هـ' if it exists, since template will add it
   hijriDate = hijriDate.replace(' هـ', '');
 
   const gregorianFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-gregory', {
@@ -134,7 +141,7 @@ const getCurrentDates = () => {
 
 const PaymentProofGenerator = React.forwardRef(({
   installmentData,
-  installmentsData = [], 
+  installmentsData = [], // Array of installments for bulk operations
   loanData,
   clientData,
   investorData,
@@ -143,7 +150,7 @@ const PaymentProofGenerator = React.forwardRef(({
   employeeName = "",
   autoGenerate = false,
   discount = 0,
-  receiptNumber = null 
+  receiptNumber = null // Add receiptNumber prop from backend
 }, ref) => {
   const [contractHtml, setContractHtml] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -155,6 +162,7 @@ const PaymentProofGenerator = React.forwardRef(({
       let filename, endpoint;
       if (isBulkOperation) {
         filename = `إيصال_سداد_الدفعات_المجمع_${Date.now()}.pdf`;
+        // Send repaymentIds as array
         repaymentIds.forEach(id => {
           formData.append('repaymentIds[]', id);
         });
@@ -190,14 +198,18 @@ const PaymentProofGenerator = React.forwardRef(({
     try {
       setIsGenerating(true);
 
+      // إزالة أي div إضافي محيط بالمحتوى
       let cleanedContent = contentToUse;
 
+      // إذا كان المحتوى يحتوي على div إضافي من template، نستخرجه
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = contentToUse;
 
+      // البحث عن contract-wrapper داخل المحتوى
       const contractWrapper = tempDiv.querySelector('.contract-wrapper');
 
       if (contractWrapper) {
+        // أخذ المحتوى الداخلي فقط
         cleanedContent = contractWrapper.outerHTML;
       }
 
@@ -225,6 +237,7 @@ const PaymentProofGenerator = React.forwardRef(({
         }
       };
 
+      // إنشاء عنصر مؤقت بدون أي div إضافي
       const tempElement = document.createElement('div');
       tempElement.style.width = '794px';
       tempElement.style.backgroundColor = 'white';
@@ -232,8 +245,10 @@ const PaymentProofGenerator = React.forwardRef(({
       tempElement.style.padding = '0';
       tempElement.innerHTML = cleanedContent;
 
+      // إضافة العنصر مؤقتاً إلى body
       document.body.appendChild(tempElement);
 
+      // انتظار قليل لتحميل الخطوط والصور
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const pdfBlob = await html2pdf()
@@ -241,6 +256,7 @@ const PaymentProofGenerator = React.forwardRef(({
         .set(options)
         .outputPdf('blob');
 
+      // إزالة العنصر المؤقت
       document.body.removeChild(tempElement);
 
       await uploadPDFToServer(pdfBlob, isBulkOperation, repaymentIds);
@@ -263,16 +279,20 @@ const PaymentProofGenerator = React.forwardRef(({
   const generateContract = useCallback(async (generatePdf = autoGenerate, customData = null) => {
     const dataToUse = customData || { installmentData, installmentsData, loanData, clientData, investorData, employeeName, discount };
 
+    // Check if we have multiple installments or single installment
     const isBulkOperation = dataToUse.installmentsData && dataToUse.installmentsData.length > 0;
 
+    // Extract repayment IDs for bulk operation
     const repaymentIds = isBulkOperation ? dataToUse.installmentsData.map(inst => inst.id).filter(id => id) : [];
 
     if (isBulkOperation) {
+      // For bulk operations
       if (!dataToUse.installmentsData || !dataToUse.clientData || !templateContent) {
         notifyError('بيانات الدفعات أو العميل أو قالب الإيصال غير متوفر');
         return;
       }
     } else {
+      // For single installment
       if (!dataToUse.installmentData || !dataToUse.clientData || !templateContent) {
         notifyError('بيانات الدفعة أو العميل أو قالب الإيصال غير متوفر');
         return;
@@ -284,14 +304,17 @@ const PaymentProofGenerator = React.forwardRef(({
       const { gregorianDate, hijriDate } = getCurrentDates();
       const finalDate = `${hijriDate}\n${gregorianDate}`;
 
+      // Use receipt number from customData (for preview/save) or props (default)
       const receiptNum = dataToUse.receiptNumber || receiptNumber || 'غير محدد';
 
       let filledTemplate = templateContent;
 
       if (isBulkOperation) {
+        // Bulk operation: multiple installments
         const totalAmount = dataToUse.installmentsData.reduce((sum, inst) => sum + (inst.amount || 0), 0);
         const totalAmountInWords = `${numberToArabicWords(totalAmount)} ريال`;
 
+        // Generate installments table HTML
         const installmentsTable = `
           <table style="width: 100%; border-collapse: collapse; margin: 15px 0; border: 1px solid #ddd;">
             <thead>
@@ -317,53 +340,64 @@ const PaymentProofGenerator = React.forwardRef(({
 
         filledTemplate = templateContent
 
+          // Client data
           .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
           .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
           .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
           .replace(/{{اسم_رب_المال}}/g, dataToUse.investorData?.name || dataToUse.clientData?.name || '')
 
+          // Bulk operation data
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: block;')
           .replace(/{{عرض_نص_فردي}}/g, 'display: none;')
           .replace(/{{عرض_نص_مجمع}}/g, 'display: block;')
           .replace(/{{رقم_الايصال}}/g, receiptNum)
           .replace(/{{جدول_الدفعات}}/g, installmentsTable)
 
+          // Amount data
           .replace(/{{المبلغ_رقما}}/g, `${totalAmount?.toLocaleString('en-US') || '0'}`)
           .replace(/{{المبلغ_كتابة}}/g, `${totalAmountInWords}`)
 
+          // Dates
           .replace(/{{التاريخ_الهجري}}/g, hijriDate)
           .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
           .replace(/{{تاريخ_السداد}}/g, finalDate)
 
+          // Employee data
           .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
 
       } else {
+        // Single installment operation
         const originalAmount = dataToUse.installmentData.amount || 0;
         const discount = dataToUse.discount || 0;
         const finalAmount = Math.max(0, originalAmount - discount);
         const amountInWords = `${numberToArabicWords(finalAmount)} ريال`;
 
         filledTemplate = templateContent
+          // Client data
           .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
           .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
           .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
           .replace(/{{اسم_رب_المال}}/g, dataToUse.investorData?.name || dataToUse.clientData?.name || '')
 
+          // Single operation data
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: none;')
           .replace(/{{عرض_نص_فردي}}/g, 'display: block;')
           .replace(/{{عرض_نص_مجمع}}/g, 'display: none;')
           .replace(/{{رقم_الدفعة}}/g, dataToUse.installmentData.count || 'N/A')
           .replace(/{{رقم_الايصال}}/g, receiptNum)
 
+          // Amount data
           .replace(/{{المبلغ_رقما}}/g, `${finalAmount?.toLocaleString('en-US') || '0'} ريال`)
           .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
 
+          // Dates
           .replace(/{{التاريخ_الهجري}}/g, hijriDate)
           .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
           .replace(/{{تاريخ_السداد}}/g, finalDate)
 
+          // Employee data
           .replace(/{{اسم_الموظف}}/g, dataToUse.employeeName || 'ربيش سالم ناصر الهمامي');
       }
 

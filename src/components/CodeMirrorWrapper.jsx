@@ -11,17 +11,20 @@ const CodeMirrorWrapper = ({
   const editorRef = useRef(null);
   const [extensions, setExtensions] = useState([]);
 
+  // Load CodeMirror extensions dynamically
   useEffect(() => {
     const loadExtensions = async () => {
       const extensionsList = [];
       
+      // Try to load HTML language support
       try {
         const htmlModule = await import('@codemirror/lang-html');
         extensionsList.push(htmlModule.html());
-      } catch {
+      } catch (e) {
         console.warn('@codemirror/lang-html not found, HTML syntax highlighting disabled');
       }
       
+      // Try to load EditorView
       try {
         const viewModule = await import('@codemirror/view');
         extensionsList.push(
@@ -51,7 +54,7 @@ const CodeMirrorWrapper = ({
             }
           })
         );
-      } catch {
+      } catch (e) {
         console.warn('@codemirror/view not found, using basic setup');
       }
       

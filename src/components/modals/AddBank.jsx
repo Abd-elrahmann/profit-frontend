@@ -108,18 +108,21 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
     try {
       const updatedData = { ...formData, limit: parseInt(formData.limit) };
 
+      // تحديد الحالة بناءً على الحد
       const status = updatedData.limit > 0 ? 'Active' : 'Expired';
 
       if (isEditMode && bank) {
         await updateBank(bank.id, updatedData);
         notifySuccess("تم تعديل الحساب البنكي بنجاح");
 
+        // تمرير البيانات المحدثة مع الحالة الجديدة ونوع العملية
         onSuccess({ ...bank, ...updatedData, status }, 'update');
       } else {
         const newBankData = { ...updatedData, status };
         const result = await createBank(newBankData);
         notifySuccess("تم إضافة الحساب البنكي بنجاح");
 
+        // تمرير البيانات الجديدة ونوع العملية
         onSuccess(result.data, 'create');
       }
     } catch (error) {

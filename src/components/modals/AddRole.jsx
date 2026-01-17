@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -28,6 +28,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../Contexts/PermissionsContext';
 import { useTheme } from '../../theme/ThemeContext';
 
+// تعريف ثابت لحقول الصلاحيات (مصدر واحد للحقيقة)
 const PERMISSION_FIELDS = [
   { field: 'canView', label: 'عرض' },
   { field: 'canAdd', label: 'إضافة' },
@@ -57,13 +58,16 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
   const { isDarkMode } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Memoize available modules to avoid recalculating on every render
   const availableModules = useMemo(() => getAvailableModules(), []);
 
+  // Memoize initial values to avoid heavy calculations on every render
   const initialValues = useMemo(() => {
     if (mode === 'edit' && editData) {
       const formattedPermissions = availableModules.map(module => {
         const existingPermission = editData.permissions?.find(p => p.module === module.value);
 
+        // إنشاء كائن الإذن مع جميع الحقول المطلوبة
         const permissionObj = { module: module.value };
         PERMISSION_FIELDS.forEach(({ field }) => {
           permissionObj[field] = existingPermission?.[field] || false;
@@ -115,6 +119,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         queryClient.invalidateQueries({ queryKey: ['employees'] });
       }
       
+      // Refresh permissions to update sidebar immediately
       await refreshPermissions();
       
       resetForm();
@@ -178,6 +183,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
     return module?.label || moduleValue;
   };
 
+  // Render permissions section for desktop
   const renderDesktopPermissions = (values, setFieldValue) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -199,6 +205,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         </Button>
       </Box>
       
+      {/* Header with Select All checkboxes */}
       <Box sx={{ 
         display: 'grid', 
         gridTemplateColumns: '1fr repeat(6, auto)',
@@ -242,6 +249,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         })}
       </Box>
 
+      {/* Permissions List */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 400, overflow: 'auto' }}>
         {values.permissions?.map((permission, index) => (
           <Box
@@ -290,6 +298,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
     </Box>
   );
 
+  // Render permissions section for mobile
   const renderMobilePermissions = (values, setFieldValue) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -395,6 +404,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           <Form>
             <DialogContent sx={{ pb: 1 }}>
               <Stack spacing={3}>
+                {/* Role Name and Description */}
                 <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 2 }}>
                   <TextField
                     name="name"
@@ -441,6 +451,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                 
                 <Divider />
 
+                {/* Permissions Section */}
                 {isMobile ? renderMobilePermissions(values, setFieldValue) : renderDesktopPermissions(values, setFieldValue)}
               </Stack>
             </DialogContent>

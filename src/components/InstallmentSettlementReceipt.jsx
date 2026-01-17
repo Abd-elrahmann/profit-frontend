@@ -72,6 +72,7 @@ const numberToArabicWords = (num) => {
       else if (part === 2) result += s.dual + " ";
       else if (part >= 3 && part <= 10) result += ones[part] + " " + s.plural + " ";
       else {
+        // أي رقم أكبر من 10
         result += numberToArabicWords(part) + " " + s.singular + " ";
       }
 
@@ -80,6 +81,7 @@ const numberToArabicWords = (num) => {
     }
   }
 
+// Handle hundreds
 if (num >= 100) {
   const hundredsPart = Math.floor(num / 100);
 
@@ -339,72 +341,89 @@ const InstallmentSettlementReceipt = React.forwardRef(
           const earlyPaidAmount = Number(dataToUse.loanData?.earlyPaidAmount || 0);
           const earlyPaymentDiscount = Number(dataToUse.loanData?.earlyPaymentDiscount || 0);
           
-          let calculatedFromInstallments = 0; 
-          let totalFromAllInstallments = 0; 
-          let totalDiscounts = 0; 
+          // حساب المبلغ من الدفعات إذا كانت متوفرة
+          let calculatedFromInstallments = 0; // المبلغ بعد خصم الخصومات
+          let totalFromAllInstallments = 0; // مجموع جميع الدفعات قبل الخصومات
+          let totalDiscounts = 0; // إجمالي الخصومات
           let allInstallmentsPaid = false;
           if (dataToUse.loanData?.allInstallments && Array.isArray(dataToUse.loanData.allInstallments)) {
             const paidInstallments = dataToUse.loanData.allInstallments.filter(
               inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
             );
+            // حساب المبلغ بعد خصم الخصومات من الدفعات المدفوعة
             calculatedFromInstallments = paidInstallments.reduce(
               (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
               0
             );
+            // حساب مجموع جميع الدفعات قبل الخصومات
             totalFromAllInstallments = dataToUse.loanData.allInstallments.reduce(
               (sum, inst) => sum + (Number(inst.amount) || 0),
               0
             );
+            // حساب إجمالي الخصومات من جميع الدفعات المدفوعة
             totalDiscounts = paidInstallments.reduce(
               (sum, inst) => sum + (Number(inst.discount) || 0),
               0
             );
+            // التحقق إذا كانت جميع الدفعات مدفوعة
             allInstallmentsPaid = dataToUse.loanData.allInstallments.length > 0 && 
                                   dataToUse.loanData.allInstallments.every(
                                     inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
                                   );
           }
           
+          // استخدام المبلغ المحسوب مسبقاً إذا كان متوفراً
           if (dataToUse.loanData?.calculatedSettlementAmount !== undefined && 
               dataToUse.loanData.calculatedSettlementAmount > 0) {
             amount = Number(dataToUse.loanData.calculatedSettlementAmount);
           }
+          // إذا كانت جميع الدفعات مدفوعة، استخدم المبلغ بعد خصم الخصومات
           else if (allInstallmentsPaid) {
+            // أولوية: المبلغ المحسوب من الدفعات بعد خصم الخصومات
             if (calculatedFromInstallments > 0) {
               amount = calculatedFromInstallments;
             }
+            // إذا لم يكن متوفراً، احسب من المبلغ الإجمالي مطروحاً منه الخصومات
             else if (totalAmount > 0) {
               amount = Math.max(0, totalAmount - totalDiscounts);
             } 
+            // أو استخدم مجموع الدفعات مطروحاً منه الخصومات
             else if (totalFromAllInstallments > 0) {
               amount = Math.max(0, totalFromAllInstallments - totalDiscounts);
             }
           }
+          // استخدام المبلغ المحسوب من الدفعات
           else if (calculatedFromInstallments > 0) {
             amount = calculatedFromInstallments;
           }
+          // استخدام earlyPaidAmount إذا كان متوفراً
           else if (earlyPaidAmount > 0 && earlyPaymentDiscount >= 0) {
             amount = Math.max(0, earlyPaidAmount - earlyPaymentDiscount);
           }
+          // استخدام totalRemainingAmount من pagination
           else if (dataToUse.loanData?.pagination?.totalRemainingAmount !== undefined && 
                    dataToUse.loanData.pagination.totalRemainingAmount !== null &&
                    dataToUse.loanData.pagination.totalRemainingAmount > 0) {
             amount = Number(dataToUse.loanData.pagination.totalRemainingAmount);
           } 
+          // استخدام totalRemainingAmount مباشرة
           else if (dataToUse.loanData?.totalRemainingAmount !== undefined && 
                    dataToUse.loanData.totalRemainingAmount !== null &&
                    dataToUse.loanData.totalRemainingAmount > 0) {
             amount = Number(dataToUse.loanData.totalRemainingAmount);
           } 
+          // استخدام remainingBalance
           else if (dataToUse.loanData?.remainingBalance !== undefined && 
                    dataToUse.loanData.remainingBalance !== null &&
                    dataToUse.loanData.remainingBalance > 0) {
             amount = Number(dataToUse.loanData.remainingBalance);
-          }   
+          } 
+          // حساب من totalPaidAmount
           else if (dataToUse.loanData?.pagination?.totalPaidAmount !== undefined) {
             const totalPaidAmount = Number(dataToUse.loanData.pagination.totalPaidAmount);
             amount = Math.max(0, totalAmount - totalPaidAmount);
           }
+          // استخدام totalAmount كحل أخير
           else {
             amount = totalAmount;
           }

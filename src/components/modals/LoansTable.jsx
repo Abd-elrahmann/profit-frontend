@@ -58,6 +58,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   const [page, setPage] = useState(1);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
+  // Debounce search query - wait 500ms after user stops typing before making API call
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -66,6 +67,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Reset page to 1 when search query or status filter changes
   React.useEffect(() => {
     setPage(1);
   }, [searchQuery, statusFilter]);
@@ -224,10 +226,12 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
         return;
       }
 
+      // Check if clipboard API is available before using it
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(fileUrl);
         notifySuccess("تم نسخ رابط الملف إلى الحافظة");
       } else {
+        // Fallback: try to use the older execCommand method
         const textArea = document.createElement('textarea');
         textArea.value = fileUrl;
         document.body.appendChild(textArea);
@@ -314,6 +318,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
     }
   };
 
+  // Render mobile loan cards
   const renderMobileLoanCards = () => (
     <Stack spacing={2} sx={{ p: 2 }}>
       {loansData?.data?.map((loan) => (
@@ -489,6 +494,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
     </Stack>
   );
 
+  // Render desktop table
   const hasActions = permissions.includes("loans_Post") || permissions.includes("loans_Add") || permissions.includes("loans_Delete");
 
   const renderDesktopTable = () => (

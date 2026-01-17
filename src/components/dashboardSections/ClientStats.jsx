@@ -26,6 +26,7 @@ const ClientStats = React.memo(() => {
   const { isDarkMode } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Custom tooltip for dark mode compatibility
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -59,11 +60,13 @@ const ClientStats = React.memo(() => {
     queryFn: () => getClientStats(filter),
   });
 
+  // Animated counters
   const animatedCount = useCountUp(stats?.count || 0, 600, !isLoading);
   const animatedNewClients = useCountUp(stats?.newClientsToday || 0, 600, !isLoading);
   const animatedActive = useCountUp(stats?.activeCount || 0, 600, !isLoading);
   const animatedOverdue = useCountUp(stats?.overdueCount || 0, 600, !isLoading);
 
+  // Prepare data for bar chart - memoized for performance
   const clientBarData = useMemo(() => [
     {
       name: 'إجمالي العملاء',
@@ -99,6 +102,7 @@ const ClientStats = React.memo(() => {
       flexDirection: 'column', 
       alignItems: 'center',
     }}>
+      {/* Filter */}
       <Box sx={{
         display: 'flex',
         justifyContent: 'center',
@@ -132,7 +136,9 @@ const ClientStats = React.memo(() => {
         </FormControl>
       </Box>
 
+      {/* Summary Cards - Row 1: إجمالي العملاء + حالة العملاء */}
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
+        {/* إجمالي العملاء + عملاء جدد */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '180px', sm: '100%', md: '300px' },
@@ -224,6 +230,7 @@ const ClientStats = React.memo(() => {
           </Card>
         </Grid>
 
+        {/* حالة العملاء */}
         <Grid item xs={6} sm={12} md={3}>
           <Card sx={{
             height: { xs: '180px', sm: '100%', md: '300px' },
@@ -317,6 +324,7 @@ const ClientStats = React.memo(() => {
       </Grid>
 
 
+      {/* Bar Charts */}
       <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
         <Card sx={{
           p: { xs: 1.5, sm: 2, md: 3 },

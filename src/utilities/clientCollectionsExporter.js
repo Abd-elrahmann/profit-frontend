@@ -5,6 +5,7 @@ import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
+// Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
@@ -14,10 +15,12 @@ const registerArabicFonts = (doc) => {
   }
 };
 
+// Format currency
 const formatCurrency = (amount) => {
   return amount?.toLocaleString('en-US') || '0';
 };
 
+// Get column value for export
 const getExportColumnValue = (client, columnId, index) => {
   switch(columnId) {
     case 'id':
@@ -45,17 +48,20 @@ const getExportColumnValue = (client, columnId, index) => {
     case 'remaining':
       return Math.abs(client.financials?.remaining) || 0;
     case 'note':
-      return '-'; 
+      return '-'; // ملاحظات فارغة
     default:
       return '';
   }
 };
 
+// Get formatted column value for display
 const getFormattedColumnValue = (client, columnId, index) => {
+  // For client column, return the already formatted value with line breaks
   if (columnId === 'client') {
     return getExportColumnValue(client, columnId, index);
   }
 
+  // For individual columns, format currency values
   const value = getExportColumnValue(client, columnId, index);
   if (['totalDebit', 'totalPaid', 'totalInterest', 'totalDiscounts', 'remaining', 'monthlyInstallment'].includes(columnId)) {
     return formatCurrency(value);
@@ -66,10 +72,12 @@ const getFormattedColumnValue = (client, columnId, index) => {
 export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE', visibleColumns = []) => {
   return new Promise((resolve, reject) => {
     try {
+      // Validate data
       if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
         throw new Error('لا توجد بيانات للتصدير');
       }
 
+      // إذا لم يتم تحديد أعمدة، استخدم جميع الأعمدة
       const columnsToExport = visibleColumns.length > 0 ? visibleColumns : [
         { id: 'id', label: 'م' },
         { id: 'client', label: 'العميل' },
@@ -86,12 +94,17 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         { id: 'note', label: 'ملاحظات' },
       ];
 
-      const doc = new jsPDF('landscape'); 
+      // Create new PDF document
+      const doc = new jsPDF('landscape'); // Landscape for wider table
+      
+      // Register Arabic fonts
       registerArabicFonts(doc);
       
+      // Determine title based on status
       const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
       const documentTitle = `كشف تحصيل ${statusTitle}`;
       
+      // Set document properties
       doc.setProperties({
         title: documentTitle,
         subject: 'تقرير تحصيل العملاء',
@@ -100,14 +113,17 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         creator: 'نظام إدارة السلف'
       });
 
+      // Set Arabic as primary font
       doc.setFont('Amiri', 'bold');
       
+      // Logo positioned on the right - small and at the very top
       const logoWidth = 10;
       const logoHeight = 10;
       const logoX = doc.internal.pageSize.width - logoWidth - 5;
       const logoY = 5;
       doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
       
+      // Title section
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
       doc.text(documentTitle, doc.internal.pageSize.width / 2, 25, { align: 'center' });
@@ -117,10 +133,12 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
       const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, 35, { align: 'center' });
       
+      // حساب ملخص المديونيات
       const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
       const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
       const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
       
+      // عرض ملخص المديونيات
       doc.setFontSize(10);
       doc.setFont('Amiri', 'bold');
       const financialSummary = `إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | إجمالي المتبقي: ${formatCurrency(totalRemaining)}`;
@@ -129,15 +147,19 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
       const pageWidth = doc.internal.pageSize.width;
       let yPosition = 52;
 
+      // Prepare table data
       const tableData = clientsData.data.map((client, index) => 
         columnsToExport.map(column => getFormattedColumnValue(client, column.id, index))
       );
 
+      // Table headers (RTL order - reverse the columns array)
       const headers = [columnsToExport.map(col => col.label).reverse()];
 
+      // Column widths - استخدام كامل عرض الصفحة مع توزيع ديناميكي
       const columnCount = columnsToExport.length;
-      const availableWidth = pageWidth - 16; 
+      const availableWidth = pageWidth - 16; // هامش صغير جداً 8 من كل جانب
       
+      // تحديد العرض الأساسي لكل عمود
       const baseWidths = {};
       columnsToExport.forEach((col) => {
         if (col.id === 'id') baseWidths[col.id] = 10;
@@ -147,9 +169,11 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         else baseWidths[col.id] = 16;
       });
       
+      // حساب العرض الإجمالي المستخدم
       const usedWidth = columnsToExport.reduce((sum, col) => sum + baseWidths[col.id], 0);
       const remainingWidth = availableWidth - usedWidth;
       
+      // توزيع المساحة المتبقية - الأولوية للملاحظات ثم العميل والعنوان
       const columnWidths = {};
       const noteExists = columnsToExport.some(col => col.id === 'note');
       const clientExists = columnsToExport.some(col => col.id === 'client');
@@ -161,6 +185,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
       
       if (remainingWidth > 0) {
         if (noteExists) {
+          // الملاحظات تأخذ 60% من المساحة المتبقية
           extraForNote = remainingWidth * 0.6;
           const leftover = remainingWidth * 0.4;
           if (clientExists && addressExists) {
@@ -188,17 +213,18 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         if (col.id === 'note') width += extraForNote;
         else if (col.id === 'client') width += extraForClient;
         else if (col.id === 'address') width += extraForAddress;
-        columnWidths[columnCount - 1 - index] = width; 
+        columnWidths[columnCount - 1 - index] = width; // عكس الفهرس لأن الجدول RTL
       });
 
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
       const tableStartX = (pageWidth - totalColumnWidth) / 2;
 
+      // Create table
       autoTable(doc, {
         startY: yPosition,
         startX: tableStartX,
         head: headers,
-          body: tableData.map(row => row.reverse()), 
+        body: tableData.map(row => row.reverse()), // عكس الصفوف لتناسب RTL
         theme: 'striped',
         styles: {
           font: 'Amiri',
@@ -213,8 +239,8 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [240, 240, 240], 
-          textColor: [46, 139, 69], 
+          fillColor: [240, 240, 240], // خلفية فاتحة
+          textColor: [46, 139, 69], // نص أخضر داكن
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'right',
@@ -239,11 +265,13 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         showHead: 'everyPage'
       });
       
+      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
       const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         
+        // Draw footer line
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.5);
         doc.line(
@@ -253,10 +281,12 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           doc.internal.pageSize.height - 15
         );
         
+        // Footer text
         doc.setFontSize(9);
         doc.setFont('Amiri', 'bold');
         doc.setTextColor(100, 100, 100);
         
+        // Page number - centered
         doc.text(
           `صفحة ${i} من ${pageCount}`,
           doc.internal.pageSize.width / 2,
@@ -264,6 +294,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           { align: 'center' }
         );
         
+        // Creation date - right aligned
         const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
         doc.text(
           `تم الإنشاء في: ${creationDate}`,
@@ -272,9 +303,11 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           { align: 'right' }
         );
         
+        // Reset text color
         doc.setTextColor(0, 0, 0);
       }
       
+      // Save PDF
       const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
       const fileName = `كشف_تحصيل_العملاء_${statusSuffix}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
@@ -288,10 +321,12 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
 
 export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTIVE', visibleColumns = []) => {
   try {
+    // Validate data
     if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
       throw new Error('لا توجد بيانات للتصدير');
     }
 
+    // إذا لم يتم تحديد أعمدة، استخدم جميع الأعمدة
     const columnsToExport = visibleColumns.length > 0 ? visibleColumns : [
       { id: 'id', label: 'م' },
       { id: 'client', label: 'العميل' },
@@ -307,12 +342,16 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       { id: 'note', label: 'ملاحظات' },
     ];
 
+    // Lazy load XLSX library
     const XLSX = await import('xlsx');
 
+    // Create workbook
     const workbook = XLSX.utils.book_new();
     
+    // Determine title based on status
     const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
     
+    // Summary data
     const summaryData = [
       [`كشف تحصيل ${statusTitle}`],
       [`تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`],
@@ -331,8 +370,10 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       ['']
     ];
     
+    // Headers
     const headersRow = columnsToExport.map(col => col.label);
     
+    // Clients data
     const clientsTableData = [headersRow];
     
     clientsData.data.forEach((client, index) => {
@@ -340,20 +381,24 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       clientsTableData.push(rowData);
     });
     
+    // Combine summary and table data
     const allData = [...summaryData, ...clientsTableData];
     
+    // Create sheet
     const sheet = XLSX.utils.aoa_to_sheet(allData);
     
+    // Auto-size columns
     const columnWidths = columnsToExport.map(col => {
       if (col.id === 'id') return { wch: 6 };
-      if (col.id === 'client') return { wch: 25 }; 
-      if (col.id === 'address') return { wch: 20 }; 
-      if (col.id === 'note') return { wch: 30 }; 
-      return { wch: 12 }; 
+      if (col.id === 'client') return { wch: 25 }; // عرض مناسب للعميل
+      if (col.id === 'address') return { wch: 20 }; // عرض مناسب للعنوان
+      if (col.id === 'note') return { wch: 30 }; // عرض أوسع للملاحظات
+      return { wch: 12 }; // عرض افتراضي للباقي
     });
     
     sheet['!cols'] = columnWidths;
     
+    // Style header row
     const headerRowIndex = summaryData.length;
     if (!sheet['!rows']) sheet['!rows'] = [];
     for (let col = 0; col < headersRow.length; col++) {
@@ -365,8 +410,10 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       sheet[cellAddress].s.alignment = { horizontal: "center", vertical: "center" };
     }
     
+    // Add sheet to workbook
     XLSX.utils.book_append_sheet(workbook, sheet, 'كشف التحصيل');
     
+    // Generate Excel file
     const excelBuffer = XLSX.write(workbook, { 
       bookType: 'xlsx', 
       type: 'array',
@@ -387,13 +434,16 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
   }
 };
 
+// دالة الطباعة
 export const printClientCollections = async (clientsData, status = 'ACTIVE', visibleColumns = []) => {
   return new Promise((resolve, reject) => {
     try {
+      // Validate data
       if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
         throw new Error('لا توجد بيانات للطباعة');
       }
 
+      // إذا لم يتم تحديد أعمدة، استخدم جميع الأعمدة
       const columnsToExport = visibleColumns.length > 0 ? visibleColumns : [
         { id: 'id', label: 'م' },
         { id: 'client', label: 'العميل' },
@@ -410,15 +460,20 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         { id: 'note', label: 'ملاحظات' },
       ];
 
+      // Create new PDF document للطباعة
       const doc = new jsPDF('landscape');
       
+      // Register Arabic fonts
       registerArabicFonts(doc);
       
+      // Determine title based on status
       const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
       const documentTitle = `كشف تحصيل ${statusTitle}`;
       
-        doc.setFont('Amiri', 'bold');
+      // Set Arabic as primary font
+      doc.setFont('Amiri', 'bold');
       
+      // Title section
       doc.setFontSize(16);
       doc.setFont('Amiri', 'bold');
       doc.text(documentTitle, doc.internal.pageSize.width / 2, 20, { align: 'center' });
@@ -428,10 +483,12 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
       const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ الطباعة: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, 28, { align: 'center' });
       
+      // حساب ملخص المديونيات
       const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
       const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
       const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
       
+      // عرض ملخص المديونيات
       doc.setFontSize(9);
       doc.setFont('Amiri', 'bold');
       const financialSummary = `إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | إجمالي المتبقي: ${formatCurrency(totalRemaining)}`;
@@ -440,15 +497,19 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
       const pageWidth = doc.internal.pageSize.width;
       let yPosition = 42;
 
+      // Prepare table data
       const tableData = clientsData.data.map((client, index) => 
         columnsToExport.map(column => getFormattedColumnValue(client, column.id, index))
       );
 
+      // Table headers
       const headers = [columnsToExport.map(col => col.label).reverse()];
 
+      // Column widths - استخدام كامل عرض الصفحة مع توزيع ديناميكي
       const columnCount = columnsToExport.length;
-      const availableWidth = pageWidth - 16; 
+      const availableWidth = pageWidth - 16; // هامش صغير جداً 8 من كل جانب
       
+      // تحديد العرض الأساسي لكل عمود
       const baseWidths = {};
       columnsToExport.forEach((col) => {
         if (col.id === 'id') baseWidths[col.id] = 10;
@@ -458,9 +519,11 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         else baseWidths[col.id] = 16;
       });
       
+      // حساب العرض الإجمالي المستخدم
       const usedWidth = columnsToExport.reduce((sum, col) => sum + baseWidths[col.id], 0);
       const remainingWidth = availableWidth - usedWidth;
       
+      // توزيع المساحة المتبقية - الأولوية للملاحظات ثم العميل والعنوان
       const columnWidths = {};
       const noteExists = columnsToExport.some(col => col.id === 'note');
       const clientExists = columnsToExport.some(col => col.id === 'client');
@@ -472,6 +535,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
       
       if (remainingWidth > 0) {
         if (noteExists) {
+          // الملاحظات تأخذ 60% من المساحة المتبقية
           extraForNote = remainingWidth * 0.6;
           const leftover = remainingWidth * 0.4;
           if (clientExists && addressExists) {
@@ -499,12 +563,13 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         if (col.id === 'note') width += extraForNote;
         else if (col.id === 'client') width += extraForClient;
         else if (col.id === 'address') width += extraForAddress;
-        columnWidths[columnCount - 1 - index] = width; 
+        columnWidths[columnCount - 1 - index] = width; // عكس الفهرس لأن الجدول RTL
       });
 
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
       const tableStartX = (pageWidth - totalColumnWidth) / 2;
 
+      // Create table
       autoTable(doc, {
         startY: yPosition,
         startX: tableStartX,
@@ -524,8 +589,8 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [240, 240, 240], 
-          textColor: [46, 139, 69], 
+          fillColor: [240, 240, 240], // خلفية فاتحة
+          textColor: [46, 139, 69], // نص أخضر داكن
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'right',
@@ -548,7 +613,8 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         showHead: 'everyPage'
       });
       
-        const pdfBlob = doc.output('blob');
+      // فتح نافذة الطباعة
+      const pdfBlob = doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const printWindow = window.open(pdfUrl);
       

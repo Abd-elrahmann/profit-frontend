@@ -16,6 +16,7 @@ import {
 } from "@mui/icons-material";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 
+// Helper function to download files properly
 const downloadFile = async (url, filename) => {
   try {
     const response = await fetch(url);
@@ -23,6 +24,7 @@ const downloadFile = async (url, filename) => {
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
+    // Decode URL encoded filename for proper download
     try {
       link.download = decodeURIComponent(filename);
     } catch {
@@ -49,6 +51,7 @@ const extractFileName = (url) => {
   const parts = url.split("/");
   const encodedFileName = parts[parts.length - 1] || "ملف غير معروف";
 
+  // Decode URL encoded filename
   try {
     return decodeURIComponent(encodedFileName);
   } catch {
@@ -106,10 +109,12 @@ const DocumentsModal = ({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
+                            // تحميل الملف وطباعته مباشرة
                             const response = await fetch(attachment);
                             const blob = await response.blob();
                             const url = URL.createObjectURL(blob);
 
+                            // إنشاء iframe مخفي للطباعة
                             const iframe = document.createElement('iframe');
                             iframe.style.display = 'none';
                             iframe.src = url;
@@ -117,6 +122,7 @@ const DocumentsModal = ({
 
                             iframe.onload = () => {
                               iframe.contentWindow.print();
+                              // تنظيف بعد الطباعة
                               setTimeout(() => {
                                 document.body.removeChild(iframe);
                                 URL.revokeObjectURL(url);
@@ -136,20 +142,24 @@ const DocumentsModal = ({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
+                            // تحميل الملف أولاً
                             const response = await fetch(attachment);
                             const blob = await response.blob();
                             const file = new File([blob], extractFileName(attachment), { type: blob.type });
 
                             if (navigator.share && navigator.canShare({ files: [file] })) {
+                              // مشاركة الملف نفسه
                               await navigator.share({
                                 title: extractFileName(attachment),
                                 files: [file],
                               });
                             } else {
+                              // Fallback: نسخ الرابط إلى الحافظة
                               if (navigator.clipboard && navigator.clipboard.writeText) {
                                 await navigator.clipboard.writeText(attachment);
                                 notifySuccess("تم نسخ رابط الملف إلى الحافظة");
                               } else {
+                                // Fallback: try to use the older execCommand method
                                 const textArea = document.createElement('textarea');
                                 textArea.value = attachment;
                                 document.body.appendChild(textArea);
@@ -222,10 +232,12 @@ const DocumentsModal = ({
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
+                      // تحميل الملف وطباعته مباشرة
                       const response = await fetch(selectedDocumentsInstallment.PaymentProof);
                       const blob = await response.blob();
                       const url = URL.createObjectURL(blob);
 
+                      // إنشاء iframe مخفي للطباعة
                       const iframe = document.createElement('iframe');
                       iframe.style.display = 'none';
                       iframe.src = url;
@@ -233,6 +245,7 @@ const DocumentsModal = ({
 
                       iframe.onload = () => {
                         iframe.contentWindow.print();
+                        // تنظيف بعد الطباعة
                         setTimeout(() => {
                           document.body.removeChild(iframe);
                           URL.revokeObjectURL(url);
@@ -252,20 +265,24 @@ const DocumentsModal = ({
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
+                      // تحميل الملف أولاً
                       const response = await fetch(selectedDocumentsInstallment.PaymentProof);
                       const blob = await response.blob();
                       const file = new File([blob], extractFileName(selectedDocumentsInstallment.PaymentProof), { type: blob.type });
 
                       if (navigator.share && navigator.canShare({ files: [file] })) {
+                        // مشاركة الملف نفسه
                         await navigator.share({
                           title: extractFileName(selectedDocumentsInstallment.PaymentProof),
                           files: [file],
                         });
                       } else {
+                        // Fallback: نسخ الرابط إلى الحافظة
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                           await navigator.clipboard.writeText(selectedDocumentsInstallment.PaymentProof);
                           notifySuccess("تم نسخ رابط الملف إلى الحافظة");
-                        } else {  
+                        } else {
+                          // Fallback: try to use the older execCommand method
                           const textArea = document.createElement('textarea');
                           textArea.value = selectedDocumentsInstallment.PaymentProof;
                           document.body.appendChild(textArea);

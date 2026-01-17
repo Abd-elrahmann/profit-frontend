@@ -186,10 +186,12 @@ const EditDocuments = ({ open, onClose, clientId, documents, hasKafeel = false }
     try {
       const formData = new FormData();
 
+      // Add files
       Object.keys(uploadedFiles).forEach(key => {
         formData.append(key, uploadedFiles[key]);
       });
 
+      // Add delete fields
       if (deleteFields.length > 0) {
         formData.append('deleteFields', JSON.stringify(deleteFields));
       }

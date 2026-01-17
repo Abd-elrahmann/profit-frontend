@@ -34,6 +34,7 @@ const LoanClientConversion = ({
     enabled: !!permissions.includes("loans_Add"),
   });
 
+  // Create loanForm from loan data for LoanDetailsSection
   const loanForm = {
     amount: loan?.amount?.toString() || "",
     totalInterest: loan?.interestAmount?.toString() || "",
@@ -47,7 +48,8 @@ const LoanClientConversion = ({
     repaymentDay: loan?.repaymentDay ? new Date(loan.repaymentDay).toISOString().split("T")[0] : "",
   };
 
-  const handleInputChange = () => {};
+  // Mock functions for LoanDetailsSection (since all fields are disabled)
+  const handleInputChange = () => {}; // No-op since all fields are disabled
   const handleBankSelect = () => {};
   const handleBanksSearchChange = () => {};
   const handlePartnerSelect = () => {};
@@ -69,6 +71,7 @@ const LoanClientConversion = ({
     setClientsPage(1);
   };
 
+  // Filter out the current loan client from available options
   const availableClients = clientsData?.clients?.filter(
     (clientOption) => clientOption.client.id !== loan.clientId
   ) || [];
@@ -88,6 +91,7 @@ const LoanClientConversion = ({
         </Box>
       </Typography>
 
+      {/* Current Client Info */}
       <Paper
         sx={{
           p: 3,
@@ -141,6 +145,7 @@ const LoanClientConversion = ({
         </Grid>
       </Paper>
 
+      {/* Current Client Kafeel Info - Show if current client has kafeel */}
       {loan.kafeel && (
         <Paper
           sx={{
@@ -212,6 +217,7 @@ const LoanClientConversion = ({
         </Paper>
       )}
 
+      {/* New Client Selection */}
       <Paper
         sx={{
           p: isSmallScreen ? 2 : 4,
@@ -280,6 +286,7 @@ const LoanClientConversion = ({
         </Grid>
       </Paper>
 
+      {/* New Client Kafeel Selection - Show if new client is selected */}
       {selectedClient && (
         <Paper
           sx={{
@@ -379,6 +386,7 @@ const LoanClientConversion = ({
         </Paper>
       )}
 
+      {/* Selected New Client Kafeel Info - Show if kafeel is selected */}
       {selectedKafeel && (
         <Paper
           sx={{
@@ -450,16 +458,17 @@ const LoanClientConversion = ({
         </Paper>
       )}
 
+      {/* Loan Details - Same as Edit Mode */}
       <LoanDetailsSection
         isSmallScreen={isSmallScreen}
         isMobile={false}
-        isViewMode={true}
+        isViewMode={true} // Show as view mode (all fields disabled)
         isEditMode={false}
         isAdditionalLoan={false}
-        customTitle="تفاصيل السلفة"
+        customTitle="تفاصيل السلفة" // Fixed title for conversion mode
         loanForm={loanForm}
         handleInputChange={handleInputChange}
-        isReadOnlyMode={true}
+        isReadOnlyMode={true} // All fields disabled
         banksData={{ data: [] }}
         isBanksLoading={false}
         selectedBank={loan?.bankAccount || null}

@@ -65,7 +65,7 @@ const MONTHS = [
 
 const IncomeStatement = () => {
   const theme = useTheme();
-  const [periodType, setPeriodType] = useState("period");
+  const [periodType, setPeriodType] = useState("period"); // الفترة المحاسبية كافتراضي
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month());
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [fromDate, setFromDate] = useState(dayjs().startOf('month'));
@@ -73,15 +73,19 @@ const IncomeStatement = () => {
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // توليد السنوات من 2020 إلى 2040
   const years = Array.from({ length: 21 }, (_, i) => 2020 + i);
 
+  // جلب الفترات المحاسبية
   const { data: accountingPeriods = [] } = useQuery({
     queryKey: ["accountingPeriods"],
     queryFn: () => incomeStatementApi.getAccountingPeriods(1, 1),
   });
 
+  // تحديد الفترة المحاسبية النشطة (المفتوحة) تلقائيًا عند تحميل البيانات
   useEffect(() => {
     if (accountingPeriods.length > 0 && !selectedPeriodId) {
+      // البحث عن الفترة النشطة (المفتوحة) - الفترة التي ليس لها تاريخ نهاية أو حالتها "open"
       const activePeriod = accountingPeriods.find(
         (period) => period.status === "open" || period.isActive || !period.endDate
       );
@@ -89,28 +93,36 @@ const IncomeStatement = () => {
       if (activePeriod) {
         setSelectedPeriodId(activePeriod.id);
       } else {
+        // إذا لم توجد فترة نشطة، اختر أحدث فترة
         const latestPeriod = accountingPeriods[0];
         if (latestPeriod) {
           setSelectedPeriodId(latestPeriod.id);
         }
       }
+      // انتهى التهيئة
       setIsInitializing(false);
     } else if (accountingPeriods.length === 0 && periodType === "period") {
+      // إذا لم توجد فترات محاسبية، انتهى التهيئة أيضًا
       setIsInitializing(false);
     }
   }, [accountingPeriods, selectedPeriodId, periodType]);
 
+  // إعداد معلمات الاستعلام بناءً على الفترة المحددة
   const getQueryParams = () => {
     if (periodType === "period") {
+      // استخدام معرف الفترة المحاسبية
       return { periodId: selectedPeriodId };
     } else if (periodType === "custom") {
+      // استخدام التواريخ المخصصة
       return {
         from: fromDate.format('YYYY-MM-DD'),
         to: toDate.format('YYYY-MM-DD')
       };
     } else if (periodType === "monthly") {
+      // استخدام فلترة الشهر والسنة
       return { month: selectedMonth + 1, year: selectedYear };
     } else {
+      // سنوي
       return { year: selectedYear };
     }
   };
@@ -174,6 +186,7 @@ const IncomeStatement = () => {
     }).format(Math.abs(amount || 0));
   };
 
+  // دالة لتنسيق الأرقام بدون تقريب لجدول رأس المال
   const formatCapitalNumber = (amount) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
@@ -244,7 +257,9 @@ const IncomeStatement = () => {
 
      
 
+        {/* Filters and Action Buttons */}
         <Grid container spacing={3} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+          {/* Filters Section */}
           <Grid item xs={12} md={8}>
             <Paper
               elevation={0}
@@ -257,6 +272,7 @@ const IncomeStatement = () => {
               }}
             >
               <Grid container spacing={2} alignItems="center">
+                {/* Period Type */}
                 <Grid item xs={12} md={2}>
                     <Select
                       fullWidth
@@ -285,6 +301,7 @@ const IncomeStatement = () => {
                   </Select>
                 </Grid>
 
+                {/* Accounting Period Selection */}
                 {periodType === "period" && (
                   <Grid item xs={12} md={3}>
                     <Autocomplete
@@ -293,6 +310,7 @@ const IncomeStatement = () => {
                       value={accountingPeriods.find(p => p.id === selectedPeriodId) || null}
                       onChange={(event, newValue) => {
                         setSelectedPeriodId(newValue?.id || "");
+                        // إذا تم اختيار فترة محاسبية، غير نوع الفترة إلى "period"
                         if (newValue?.id) {
                           setPeriodType("period");
                         }
@@ -328,6 +346,7 @@ const IncomeStatement = () => {
                   </Grid>
                 )}
 
+                {/* Month Selection */}
                 {periodType === "monthly" && (
                   <Grid item xs={12} md={3}>
                     <Select
@@ -358,6 +377,7 @@ const IncomeStatement = () => {
                   </Grid>
                 )}
 
+                {/* Year Selection */}
                 {periodType === "monthly" || periodType === "yearly" ? (
                   <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
                     <Autocomplete
@@ -396,6 +416,7 @@ const IncomeStatement = () => {
                 ) : null}
 
 
+                {/* Custom Date Range */}
                 {periodType === "custom" && (
                   <>
                     <Grid item xs={12} md={3}>
@@ -446,6 +467,7 @@ const IncomeStatement = () => {
             </Paper>
           </Grid>
 
+          {/* Action Buttons Section */}
           {!isLoading && !isInitializing && !isError && incomeData && (
             <Grid item xs={12} md={3}>
            <Stack direction="row" justifyContent="flex-end" sx={{ gap: 1 }}>
@@ -505,12 +527,14 @@ const IncomeStatement = () => {
           )}
         </Grid>
 
+        {/* Loading State */}
         {(isLoading || isInitializing) && (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
             <CircularProgress size={60} />
           </Box>
         )}
 
+        {/* Error State */}
         {isError && (
           <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'error.light', mb: 3 }}>
             <Typography color="error" variant="h6">
@@ -525,8 +549,10 @@ const IncomeStatement = () => {
           </Paper>
         )}
 
+        {/* Net Profit - King Card */}
         {!isLoading && !isInitializing && !isError && incomeData && (
           <>
+            {/* Period Info */}
             {periodInfo && (
               <Box sx={{ mb: 3, textAlign: 'center' }}>
                 <Chip
@@ -538,6 +564,7 @@ const IncomeStatement = () => {
               </Box>
             )}
 
+            {/* Net Profit - King Card */}
             <Grid container justifyContent="center" sx={{ mb: 4, width: '100%' }}>
               <Grid item xs={12} md={8}>
                 <Paper

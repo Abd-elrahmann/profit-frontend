@@ -61,7 +61,7 @@ const Expenses = () => {
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
       + " "
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
@@ -83,6 +83,7 @@ const Expenses = () => {
     },
   });
 
+  // دالة لتجميع المصروفات حسب journalId
   const groupExpensesByJournal = (expenses) => {
     if (!expenses) return [];
     
@@ -107,6 +108,7 @@ const Expenses = () => {
       grouped[journalId].types.add(expense.type);
     });
     
+    // تحويل إلى مصفوفة وترتيب حسب التاريخ
     return Object.values(grouped)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .map((group, index) => ({
@@ -156,12 +158,12 @@ const Expenses = () => {
 
   const handleSuccess = () => {
     queryClient.invalidateQueries(["expenses"]);
-    setExpandedRows([]);
+    setExpandedRows([]); // إعادة تعيين الصفوف المفتوحة
   };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
-    setExpandedRows([]);
+    setExpandedRows([]); // إعادة تعيين عند تغيير الصفحة
   };
 
   const handleExportPDF = async () => {
@@ -192,6 +194,7 @@ const Expenses = () => {
     );
   };
 
+  // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ maxHeight: 600, borderRadius: 2 }}>
       <Table stickyHeader>
@@ -286,6 +289,7 @@ const Expenses = () => {
                   </StyledTableCell>
                 </StyledTableRow>
                 
+                {/* Expanded row for details */}
                 <TableRow>
                   <TableCell colSpan={7} sx={{ p: 0 }}>
                     <Collapse in={expandedRows.includes(group.journalId)} timeout="auto" unmountOnExit>
@@ -350,6 +354,7 @@ const Expenses = () => {
     </TableContainer>
   );
 
+  // Render cards for mobile screens
   const renderCards = () => (
     <Box sx={{ p: isMobile ? 1 : 2 }}>
       {isLoading ? (
@@ -525,6 +530,7 @@ const Expenses = () => {
         <title>المصروفات - نظام إدارة السلف</title>
       </Helmet>
       <Box sx={{ p: isMobile ? 2 : 3 }}>
+        {/* Header with Summary Boxes */}
         <Box
           sx={{
             display: "flex",
@@ -536,6 +542,7 @@ const Expenses = () => {
             width: "100%",
           }}
         >
+          {/* Action Buttons */}
           <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1 }}>
             <Stack direction="row" spacing={1}>
               {permissions.includes("expenses_Add") && (
@@ -578,6 +585,7 @@ const Expenses = () => {
             )}
           </Box>
 
+          {/* Summary Boxes */}
           {!isLoading && expensesData?.expenses && expensesData.expenses.length > 0 ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', flex: 1 }}>
               <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 200, maxWidth: 300 }}>
@@ -606,8 +614,10 @@ const Expenses = () => {
           )}
         </Box>
 
+        {/* Table or Cards */}
         {isSmallScreen ? renderCards() : renderTable()}
 
+        {/* Pagination */}
         {expensesData && expensesData.total > 0 && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
             <TablePagination
@@ -631,6 +641,7 @@ const Expenses = () => {
         )}
       </Box>
 
+      {/* Modals */}
       <AddExpense
         open={isAddModalOpen}
         onClose={handleCloseModal}

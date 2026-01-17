@@ -40,6 +40,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
     return amount?.toLocaleString() || '0';
   };
 
+  // حساب الإجماليات
   const totals = useMemo(() => {
     if (!clientsData?.data || clientsData.data.length === 0) {
       return { totalDebit: 0, totalPaid: 0, remaining: 0, totalInterest: 0, averageMonthlyInstallment: 0 };
@@ -53,6 +54,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
     };
   }, [clientsData]);
 
+  // دالة لاستخراج قيمة العمود بناءً على عمود الزبون
   const getColumnValue = (client, columnId, index) => {
     switch(columnId) {
       case 'id':
@@ -80,12 +82,13 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
       case 'remaining':
         return formatCurrency(Math.abs(client.financials.remaining));
       case 'note':
-        return '-';
+        return '-'; // ملاحظات فارغة دائماً
       default:
         return '';
     }
   };
 
+  // دالة لعرض عدد السلف مع الـ Chips
   const renderLoansCountWithChips = (client) => {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
@@ -177,6 +180,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
                   </StyledTableRow>
                 ))
             )}
+            {/* صف الإجمالي */}
             {!isLoading && clientsData?.data?.length > 0 && (
               <StyledTableRow sx={{ backgroundColor: '#e8f5e9' }}>
                 {visibleColumns.map((column) => (
@@ -263,18 +267,21 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={2}>
+                    {/* عرض ID */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="body2" color="textSecondary">
                         رقم: {index + 1 + (page * rowsPerPage)}
                       </Typography>
                     </Box>
 
+                    {/* الاسم والهاتف */}
                     <Box>
                       <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ whiteSpace: 'pre-line' }}>
                         {client.name}\n📞 {client.phone}
                       </Typography>
                     </Box>
 
+                    {/* العناوين الأخرى بناءً على الأعمدة المرئية */}
                     {visibleColumns.map(column => {
                       if (['id', 'client'].includes(column.id)) return null;
                       
@@ -341,7 +348,8 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
                         </Box>
                       );
                     })}
-  
+
+                    {/* ملاحظات فارغة */}
                     <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0', textAlign: 'right' }}>
                       <Typography variant="body2" color="textSecondary">
                         ملاحظات: -

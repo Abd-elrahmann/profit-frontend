@@ -1,4 +1,4 @@
-
+// components/contracts/PromissoryNote.jsx
 import React from "react";
 
 const PromissoryNote = () => {
@@ -231,6 +231,7 @@ return `
       margin: 10mm;
     }
 
+    /* ضمان التمركز والعرض الصحيح */
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -249,6 +250,7 @@ return `
       box-shadow: none !important;
       border: none !important;
     }
+    /* منع أي انقسام للصفحات داخل المحتوى */
     .grid-wrapper,
     .parties-grid,
     .text-box,
@@ -257,6 +259,7 @@ return `
       break-inside: avoid !important;
     }
 
+    /* ضبط أقصى ارتفاع ليكون صفحة واحدة فقط */
     * {
       max-height: none !important;
       overflow: visible !important;

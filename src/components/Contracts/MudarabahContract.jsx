@@ -1,4 +1,4 @@
-
+// components/Contracts/MudarabahContract.jsx
 import React from 'react';
 
 const MudarabahContract = () => {
@@ -77,6 +77,7 @@ const MudarabahContract = () => {
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
   }
 
+  /* إجبار بدء صفحة جديدة عند بنود العقد */
   .clauses-section {
     page-break-before: always !important;
     page-break-inside: avoid !important;
@@ -200,7 +201,7 @@ const MudarabahContract = () => {
   }
 
   .clause:last-child {
-    margin-bottom: 10px; 
+    margin-bottom: 10px; /* تقليل المسافة لتكون التوقيعات قريبة */
   }
 
   .clause-title {
@@ -288,16 +289,18 @@ const MudarabahContract = () => {
     color: #2E8B45 !important;
   }
 
+  /* تحسينات قسم التوقيعات - بدون صفحة جديدة */
   .signatures-section {
-    margin-top: 30px; 
+    margin-top: 30px; /* تقليل المسافة */
     padding-top: 20px;
     border-top: 2px solid rgba(46, 139, 69, 0.2);
     page-break-inside: avoid;
+    /* تم إزالة page-break-before: always */
   }
 
   .signatures-header {
     text-align: center;
-    margin-bottom: 20px; 
+    margin-bottom: 20px; /* تقليل المسافة */
     page-break-inside: avoid;
   }
 
@@ -310,11 +313,12 @@ const MudarabahContract = () => {
   .signatures-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 25px; 
-    margin-bottom: 15px; 
+    gap: 25px; /* تقليل المسافة */
+    margin-bottom: 15px; /* تقليل المسافة */
     page-break-inside: avoid;
   }
 
+  /* إزالة البوكس والحدود من التوقيعات */
   .signature-box {
     text-align: center;
     padding: 0;
@@ -327,19 +331,19 @@ const MudarabahContract = () => {
     font-size: 16px;
     font-weight: bold;
     color: #000;
-      margin-bottom: 15px; 
+    margin-bottom: 15px; /* تقليل المسافة */
   }
 
   .signature-details {
-    margin-bottom: 15px; 
+    margin-bottom: 15px; /* تقليل المسافة */
     page-break-inside: avoid;
   }
 
   .signature-name {
     color: #555;
     font-size: 15px;
-    margin-top: 15px; 
-    margin-bottom: 20px; 
+    margin-top: 15px; /* تقليل المسافة */
+    margin-bottom: 20px; /* تقليل المسافة */
     font-weight: 600;
   }
 
@@ -347,17 +351,17 @@ const MudarabahContract = () => {
     width: 80%;
     height: 1px;
     background: #222;
-    margin: 20px auto; 
+    margin: 20px auto; /* تقليل المسافة */
   }
 
   .signature-fields {
     color: #666;
     font-size: 14px;
-    margin-top: 20px; 
+    margin-top: 20px; /* تقليل المسافة */
   }
 
   .signature-fields p {
-    margin: 8px 0; 
+    margin: 8px 0; /* تقليل المسافة */
   }
 
   .english-number {
@@ -412,19 +416,24 @@ const MudarabahContract = () => {
       color-adjust: exact !important;
     }
     
+    /* إجبار بدء صفحة جديدة عند بنود العقد في الطباعة */
     .clauses-section {
       page-break-before: always !important;
       break-before: page !important;
     }
     
+    /* منع انقسام التمهيد عن البنود */
     .preamble-box {
       page-break-after: avoid !important;
     }
     
-    .signatures-section { 
+    /* إزالة بدء صفحة جديدة للتوقيعات في الطباعة */
+    .signatures-section {
+      /* تم إزالة page-break-before: always */
       page-break-inside: avoid !important;
     }
     
+    /* منع انقسام العناصر بين الصفحات */
     .contract-header,
     .section-title,
     .party-card,
@@ -435,6 +444,7 @@ const MudarabahContract = () => {
       break-inside: avoid !important;
     }
     
+    /* تقليل المسافات في الطباعة */
     .parties-grid {
       margin-bottom: 10px;
     }
@@ -467,6 +477,7 @@ const MudarabahContract = () => {
       padding-top: 15px !important;
     }
     
+    /* منع انقسام الفقرات */
     .clause-content p,
     .preamble-text,
     .clause-text,
@@ -476,16 +487,19 @@ const MudarabahContract = () => {
       page-break-inside: avoid;
     }
     
+    /* تحسين عرض القوائم */
     .clause-list li {
       page-break-inside: avoid;
     }
     
+    /* إصلاح مشكلة الحدود في الطباعة */
     .detail-row,
     .clause-list li,
     .signature-line {
       border-color: #000 !important;
     }
     
+    /* إزالة البوكس والحدود من التوقيعات في الطباعة */
     .signature-box {
       background: transparent !important;
       border: none !important;
@@ -504,7 +518,7 @@ const MudarabahContract = () => {
       color: #000 !important;
     }
     
-  
+    /* الألوان في الطباعة */
     .section-title,
     .party-title,
     .preamble-title,
@@ -528,6 +542,7 @@ const MudarabahContract = () => {
       color: #2E8B45 !important;
     }
     
+    /* تحسين التوقيعات في الطباعة */
     .signature-name {
       color: #000 !important;
       font-weight: 700 !important;
@@ -539,6 +554,7 @@ const MudarabahContract = () => {
       height: 1px !important;
     }
     
+    /* منع انقسام آخر بند عن التوقيعات */
     .clause:last-child {
       page-break-after: avoid !important;
     }
@@ -552,6 +568,7 @@ const MudarabahContract = () => {
 <div class="contract-wrapper">
   <div class="contract-container">
     
+    <!-- Header -->
     <div class="contract-header">
       <div class="header-left">
         <img src="/assets/images/logo.webp" alt="شعار الشركة" class="contract-logo" />
@@ -563,9 +580,11 @@ const MudarabahContract = () => {
       </div>
     </div>
 
+    <!-- أطراف العقد -->
     <section class="contract-section">
       <h2 class="section-title">أطراف العقد</h2>
       <div class="parties-grid">
+        <!-- الطرف الأول -->
         <div class="party-card">
           <h3 class="party-title">الطرف الأول (رب المال)</h3>
           <div class="party-details">
@@ -585,6 +604,7 @@ const MudarabahContract = () => {
           <p class="party-reference">ويشار إليه في هذا العقد ب "رب المال"</p>
         </div>
 
+        <!-- الطرف الثاني -->
         <div class="party-card">
           <h3 class="party-title">الطرف الثاني (المضاربون)</h3>
           
@@ -629,6 +649,7 @@ const MudarabahContract = () => {
       </div>
     </section>
 
+    <!-- التمهيد -->
     <section class="contract-section">
       <div class="preamble-box">
         <h3 class="preamble-title">تمهيد</h3>
@@ -640,10 +661,12 @@ const MudarabahContract = () => {
       </div>
     </section>
 
+    <!-- بنود العقد - إجبار بدء صفحة جديدة -->
     <section class="contract-section clauses-section">
       <h2 class="section-title">بنود العقد</h2>
       
       <div class="clauses-container">
+        <!-- البند الأول -->
         <div class="clause">
           <h4 class="clause-title">البند الأول: موضوع العقد</h4>
           <p class="clause-text">
@@ -653,6 +676,7 @@ const MudarabahContract = () => {
           </p>
         </div>
 
+        <!-- البند الثاني -->
         <div class="clause">
           <h4 class="clause-title">البند الثاني: رأس المال</h4>
           <div class="clause-content">
@@ -662,6 +686,7 @@ const MudarabahContract = () => {
           </div>
         </div>
 
+        <!-- البند الثالث -->
         <div class="clause">
           <h4 class="clause-title">البند الثالث: طبيعة العمل</h4>
           <div class="clause-content">
@@ -671,6 +696,7 @@ const MudarabahContract = () => {
           </div>
         </div>
 
+        <!-- البند الرابع -->
         <div class="clause">
           <h4 class="clause-title">البند الرابع: مدة العقد</h4>
           <p class="clause-text">
@@ -678,6 +704,7 @@ const MudarabahContract = () => {
           </p>
         </div>
 
+        <!-- البند الخامس -->
         <div class="clause">
           <h4 class="clause-title">البند الخامس: قسمة الأرباح</h4>
           <div class="clause-content">
@@ -690,6 +717,7 @@ const MudarabahContract = () => {
           </div>
         </div>
 
+        <!-- البند السادس -->
         <div class="clause">
           <h4 class="clause-title">البند السادس: الخسارة</h4>
           <div class="clause-content">
@@ -698,6 +726,7 @@ const MudarabahContract = () => {
           </div>
         </div>
 
+        <!-- البند السابع -->
         <div class="clause">
           <h4 class="clause-title">البند السابع: نفقات المضاربة</h4>
           <p class="clause-text">
@@ -705,6 +734,7 @@ const MudarabahContract = () => {
           </p>
         </div>
 
+        <!-- البند الثامن -->
         <div class="clause">
           <h4 class="clause-title">البند الثامن: إنهاء العقد</h4>
           <div class="clause-content">

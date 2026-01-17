@@ -76,6 +76,7 @@ const ResetPassword = () => {
       notifySuccess("تم إعادة تعيين كلمة المرور بنجاح");
       resetForm();
       
+      // Redirect to login after successful reset
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 2000);

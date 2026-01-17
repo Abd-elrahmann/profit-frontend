@@ -39,7 +39,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
       + " "
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
@@ -52,9 +52,10 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
-    setSelectedJournals([]);
+    setSelectedJournals([]); // Clear selection when changing page
   };
 
+  // Handle individual journal selection
   const handleJournalSelect = (journalId) => {
     setSelectedJournals(prev =>
       prev.includes(journalId)
@@ -63,6 +64,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     );
   };
 
+  // Handle select all journals
   const handleSelectAll = () => {
     if (selectedJournals.length === journalsData?.journals?.length) {
       setSelectedJournals([]);
@@ -71,12 +73,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     }
   };
 
+  // Bulk post journals
   const handleBulkPost = async () => {
     if (selectedJournals.length === 0) {
       notifyError("يرجى اختيار القيود المراد اعتمادها");
       return;
     }
 
+    // Check if any selected journals are already posted
     const journalsToPost = journalsData?.journals?.filter(journal =>
       selectedJournals.includes(journal.id)
     );
@@ -100,12 +104,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     }
   };
 
+  // Bulk unpost journals
   const handleBulkUnpost = async () => {
     if (selectedJournals.length === 0) {
       notifyError("يرجى اختيار القيود المراد إلغاء اعتمادها");
       return;
     }
 
+    // Check if any selected journals are not posted
     const journalsToUnpost = journalsData?.journals?.filter(journal =>
       selectedJournals.includes(journal.id)
     );
@@ -129,6 +135,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     }
   };
 
+  // Journal Type Arabic translations
   const getJournalTypeText = (type) => {
     switch (type) {
       case "GENERAL":
@@ -144,6 +151,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     }
   };
 
+  // Journal Source Type Arabic translations
   const getJournalSourceTypeText = (sourceType) => {
     switch (sourceType) {
       case "LOAN":
@@ -181,6 +189,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     }
   };
 
+  // Journal Status Arabic translations
   const getStatusColor = (status) => {
     switch (status) {
       case "DRAFT":
@@ -239,6 +248,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     }
   };
 
+  // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
       <Table stickyHeader sx={{ width: "100%" }}>
@@ -369,6 +379,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     </TableContainer>
   );
 
+  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: 1 }}>
       {isLoading ? (
@@ -383,6 +394,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         </Box>
       ) : (
         <>
+          {/* Select All for Mobile */}
           {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && journalsData?.journals?.length > 0 && (
             <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <Checkbox
@@ -422,6 +434,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
               >
                 <CardContent sx={{ p: 2 }}>
                   <Stack spacing={1}>
+                    {/* Header with Checkbox */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
@@ -451,6 +464,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                       />
                     </Box>
 
+                    {/* Journal Details */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary">
@@ -471,6 +485,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                       </Box>
                     </Box>
 
+                    {/* Additional Info */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary">
@@ -496,6 +511,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                       </Box>
                     </Box>
 
+                    {/* Action Button */}
                     {permissions.includes("journals_Update") && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
                         <IconButton
@@ -531,6 +547,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         height: "100%",
       }}
     >
+      {/* Export buttons and Summary Boxes in same line */}
       {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
         <Box
           sx={{
@@ -542,6 +559,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
             flexWrap: 'wrap'
           }}
         >
+          {/* Summary Boxes */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
               <CardContent sx={{ textAlign: 'center', py: 1 }}>
@@ -575,6 +593,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
             </Card>
           </Box>
 
+          {/* Export buttons */}
           {canExport && (
             <Box sx={{ display: "flex", gap: 1 }}>
               <Button
@@ -599,7 +618,8 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
           )}
         </Box>
       )}
-  
+
+      {/* Bulk Actions */}
       {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
         <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: "#f5f5f5" }}>
           <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
@@ -656,9 +676,11 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         </Paper>
       )}
 
+      {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
         {isMobile ? renderCards() : renderTable()}
 
+        {/* Pagination */}
         {journalsData && (
           <TablePagination
             component="div"

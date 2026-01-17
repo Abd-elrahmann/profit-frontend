@@ -1,3 +1,4 @@
+// components/contracts/InstallmentPaymentReceipt.jsx
 import React from "react";
 
 const InstallmentPaymentReceipt = () => {
@@ -176,6 +177,7 @@ return `
     .grid-wrapper {
       grid-template-columns: 1fr;
     }
+    /* Signatures remain centered on mobile */
   }
 
   @media print {
@@ -197,6 +199,7 @@ return `
       border: none !important;
     }
 
+    /* منع أي انقسام للصفحات داخل المحتوى */
     .grid-wrapper,
     .details-box,
     .content-box,
@@ -206,11 +209,13 @@ return `
       break-inside: avoid !important;
     }
 
+    /* ضبط أقصى ارتفاع ليكون صفحة واحدة فقط */
     * {
       max-height: none !important;
       overflow: visible !important;
     }
 
+    /* ضمان التمركز والعرض الصحيح */
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -249,6 +254,7 @@ return `
 
     </div>
 
+    <!-- Installments Table for Bulk Operations -->
     <div id="installments-table-container" style="{{عرض_جدول_الدفعات}}">
       <div class="section-title">تفاصيل الدفعات المعتمدة</div>
       {{جدول_الدفعات}}
@@ -256,10 +262,12 @@ return `
 
     <div class="section-title">تفاصيل السداد</div>
     <div class="text-box">
+      <!-- Single installment text -->
       <p style="{{عرض_نص_فردي}}">
         أقرّ أنا {{اسم_رب_المال}} باستلام مبلغ وقدره {{المبلغ_رقما}}،
         كدفعة سداد من العميل المذكور أعلاه.
       </p>
+      <!-- Bulk installments text -->
       <p style="{{عرض_نص_مجمع}}">
         أقرّ أنا {{اسم_رب_المال}} باستلام مبلغ وقدره {{المبلغ_رقما}}،
         كدفعات سداد من العميل المذكور أعلاه للدفعات الموضحة في الجدول أعلاه.

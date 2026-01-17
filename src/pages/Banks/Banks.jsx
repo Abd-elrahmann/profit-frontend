@@ -135,6 +135,7 @@ const Banks = () => {
     handleCloseModal();
 
     if (updatedBankData && operationType === 'update') {
+      // تحديث البيانات محليًا في الـ cache بدلاً من إعادة جلب كل شيء
       queryClient.setQueryData(["banks", page, searchQuery], (oldData) => {
         if (!oldData) return oldData;
 
@@ -146,10 +147,12 @@ const Banks = () => {
         };
       });
     } else {
+      // إعادة جلب البيانات للعمليات الأخرى (إنشاء أو غير محدد)
       queryClient.invalidateQueries(["banks"]);
     }
   };
 
+  // Render table for large screens
   const renderTable = () => (
     <TableContainer sx={{ maxHeight: 600 }}>
       <Table stickyHeader>
@@ -292,6 +295,7 @@ const Banks = () => {
     </TableContainer>
   );
 
+  // Render cards for small screens
   const renderCards = () => (
     <Box sx={{ p: isMobile ? 1 : 2 }}>
       {isLoading ? (
@@ -321,6 +325,7 @@ const Banks = () => {
               >
                 <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                   <Stack spacing={2}>
+                    {/* Header Row - Bank Name and Actions */}
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
@@ -365,6 +370,7 @@ const Banks = () => {
 
                     <Divider />
 
+                    {/* Bank Details */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
@@ -385,6 +391,7 @@ const Banks = () => {
                       </Box>
                     </Box>
 
+                    {/* IBAN and Limit */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
@@ -405,6 +412,7 @@ const Banks = () => {
                       </Box>
                     </Box>
 
+                    {/* Status */}
                     <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                       <Chip
                         label={
@@ -449,6 +457,7 @@ const Banks = () => {
         <meta name="description" content="الحسابات البنكية" />
       </Helmet>
       
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -459,6 +468,7 @@ const Banks = () => {
           gap: 1,
         }}
       >
+        {/* Search Bar */}
         <InputBase
           placeholder="ابحث باسم الحساب أو رقم الحساب..."
           value={searchQuery}
@@ -480,6 +490,7 @@ const Banks = () => {
           spacing={1}
           sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
         >
+          {/* Export Buttons */}
           {(permissions.includes("banks_Export")) && (
           <Stack direction="row" spacing={1}>
             <Button
@@ -547,9 +558,11 @@ const Banks = () => {
         </Stack>
       </Box>
 
+      {/* Table for large screens, Cards for small screens */}
       <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 2 }}>
         {isSmallScreen ? renderCards() : renderTable()}
 
+        {/* Pagination */}
         {banksData && (
           <TablePagination
             component="div"
@@ -576,6 +589,7 @@ const Banks = () => {
         )}
       </Paper>
 
+      {/* Delete Confirmation Modal */}
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {
@@ -587,7 +601,8 @@ const Banks = () => {
         message={`هل أنت متأكد من حذف الحساب البنكي ${bankToDelete?.name}؟`}
         ButtonText="حذف"
       />
-  
+
+      {/* Add/Edit Bank Modal */}
       <AddBank
         open={isAddBankOpen}
         onClose={handleCloseModal}

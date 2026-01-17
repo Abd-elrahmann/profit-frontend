@@ -28,7 +28,7 @@ const FileUploadDropzone = ({
     'image/jpeg': ['.jpg', '.jpeg'],
     'image/png': ['.png'],
   },
-  maxFileSize = 10 * 1024 * 1024, 
+  maxFileSize = 10 * 1024 * 1024, // 10MB
   multiple = false,
   uploadEndpoint = `/api/partners/upload/${investorId}`,
   title = "رفع المستندات",
@@ -42,6 +42,7 @@ const FileUploadDropzone = ({
   const onDrop = useCallback(async (acceptedFiles, rejectedFiles) => {
     setUploadError('');
     
+    // Handle rejected files
     if (rejectedFiles.length > 0) {
       const errors = rejectedFiles.map(file => {
         const errorMessages = file.errors.map(error => {
@@ -94,6 +95,7 @@ const FileUploadDropzone = ({
 
       const results = await Promise.all(uploadPromises);
       
+      // Update uploaded files list
       const successfulUploads = results.filter(result => result.status === 'success');
       setUploadedFiles(prev => [...prev, ...successfulUploads]);
       
@@ -144,6 +146,7 @@ const FileUploadDropzone = ({
         {title}
       </Typography>
 
+      {/* Dropzone Area */}
       <Paper
         {...getRootProps()}
         sx={{
@@ -196,6 +199,7 @@ const FileUploadDropzone = ({
         )}
       </Paper>
 
+      {/* Error Display */}
       {uploadError && (
         <Alert 
           severity="error" 
@@ -206,6 +210,7 @@ const FileUploadDropzone = ({
         </Alert>
       )}
 
+      {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>

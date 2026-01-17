@@ -1,7 +1,9 @@
 import React, { useState, useRef } from "react";
 
+// Utility function to format numbers with commas
 const formatNumberWithCommas = (value) => {
   if (!value) return '';
+  // Remove any existing commas and format
   const numValue = value.toString().replace(/,/g, '');
   if (isNaN(numValue) || numValue === '') return value;
   return Number(numValue).toLocaleString('en-US');
@@ -60,8 +62,10 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
     }
   };
 
+  // Special handler for capitalAmount with number formatting
   const handleCapitalAmountChange = (event) => {
     const value = event.target.value;
+    // Allow typing with commas, but clean the value for storage
     const cleanValue = value.replace(/,/g, '').replace(/[^0-9]/g, '');
     setFormData(prev => ({
       ...prev,
@@ -74,7 +78,8 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
       }));
     }
   };
-  
+
+  // Handler for isNewPartner checkbox
   const handleIsNewPartnerChange = (value) => {
     setFormData(prev => ({
       ...prev,

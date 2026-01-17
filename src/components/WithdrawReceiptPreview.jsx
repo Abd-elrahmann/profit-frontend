@@ -1,12 +1,3 @@
-/**
- * WithdrawReceiptPreview
- *
- * Displays legally approved withdrawal receipt templates.
- * HTML templates are internally seeded and trusted from the database.
- * Dynamic values are sanitized before injection to prevent XSS attacks.
- * All templates undergo validation to ensure they contain no malicious content.
- */
-
 import React from 'react';
 import {
   Dialog,
@@ -22,41 +13,23 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Close as CloseIcon, Download, Print } from '@mui/icons-material';
-import { isValidTemplate, injectContractData } from '../utilities/sanitize';
 
-const WithdrawReceiptPreview = ({
-  open,
-  onClose,
-  receiptHtml,
-  onSaveReceipt,
+const WithdrawReceiptPreview = ({ 
+  open, 
+  onClose, 
+  receiptHtml, 
+  onSaveReceipt, 
   loading = false,
   investorName = "",
-  totalAmount = 0,
-  receiptData = {} 
+  totalAmount = 0
 }) => {
   const [isPrinting, setIsPrinting] = React.useState(false);
-
-  const safeReceiptHtml = React.useMemo(() => {
-    if (!receiptHtml) return '';
-
-    try {
-      if (!isValidTemplate(receiptHtml)) {
-        console.error('Invalid receipt template: contains potentially dangerous content');
-        return '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب المخالصة غير آمن</div>';
-      }
-
-      return injectContractData(receiptHtml, receiptData);
-    } catch (error) {
-      console.error('Error processing receipt template:', error);
-      return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب المخالصة</div>';
-    }
-  }, [receiptHtml, receiptData]);
 
   const handlePrint = async () => {
     try {
       setIsPrinting(true);
       
-      if (!safeReceiptHtml) {
+      if (!receiptHtml) {
         console.error('No receipt content available for printing');
         return;
       }
@@ -88,7 +61,7 @@ const WithdrawReceiptPreview = ({
           </style>
         </head>
         <body>
-          ${safeReceiptHtml}
+          ${receiptHtml}
           <script>
             window.onload = function() {
               window.print();
@@ -184,7 +157,7 @@ const WithdrawReceiptPreview = ({
             }
           }}
         >
-          {safeReceiptHtml ? (
+          {receiptHtml ? (
             <Paper
               sx={{
                 width: '100%',
@@ -210,7 +183,7 @@ const WithdrawReceiptPreview = ({
               }}
             >
               <Box
-                dangerouslySetInnerHTML={{ __html: safeReceiptHtml }}
+                dangerouslySetInnerHTML={{ __html: receiptHtml }}
                 sx={{
                   '& *': {
                     fontFamily: '"Cairo", "Noto Sans Arabic", sans-serif !important',

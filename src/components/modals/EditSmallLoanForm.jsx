@@ -24,7 +24,9 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
   const isSmallScreen = isMobile || isTablet;
 
   useEffect(() => {
+    // Check if we're switching from edit mode to create mode
     if (lastSelectedLoan && !selectedLoan) {
+      // Clear form when switching from edit to create mode
       setFormData({
         Name: "",
         amount: "",
@@ -33,6 +35,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
     }
 
     if (selectedLoan) {
+      // Format amount with commas for display
       const formattedAmount = selectedLoan.amount.toLocaleString();
       setFormData({
         Name: selectedLoan.Name,
@@ -40,6 +43,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
         notes: selectedLoan.notes || "",
       });
     } else if (!lastSelectedLoan) {
+      // Reset form when no loan is selected and we weren't in edit mode
       setFormData({
         Name: "",
         amount: "",
@@ -52,6 +56,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
 
   const handleInputChange = (field, value) => {
     if (field === "amount") {
+      // Only allow numbers and format with commas
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue) && rawValue !== "") {
         const numValue = parseFloat(rawValue);
@@ -99,12 +104,14 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
         notifySuccess("تم إنشاء السلفة الصغيرة بنجاح");
       }
 
+      // Reset form
       setFormData({
         Name: "",
         amount: "",
         notes: "",
       });
-      
+
+      // Call callback to notify parent component
       if (onLoanUpdated) {
         onLoanUpdated();
       }

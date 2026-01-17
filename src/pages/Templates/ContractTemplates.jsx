@@ -1,11 +1,3 @@
-/**
- * ContractTemplates
- *
- * Administrative interface for managing contract templates.
- * Templates are loaded from trusted component functions and edited by authorized users.
- * Basic validation is applied to prevent template corruption during editing.
- */
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -23,7 +15,6 @@ import EditIcon from "@mui/icons-material/Edit";
 
 
 import RichTextEditor from "../../components/RichTextEditor";
-import { isValidTemplate } from "../../utilities/sanitize";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import MudarabahContract from "../../components/Contracts/MudarabahContract";
 import PromissoryNote from "../../components/Contracts/PromissoryNote";
@@ -61,7 +52,7 @@ export default function ContractTemplates() {
   const [viewMode, setViewMode] = useState("preview");
   const { permissions } = usePermissions();
   const theme = useTheme();
-
+  // Map tab values to API template names
   const templateNameMap = React.useMemo(() => ({
     "mudarabah": "MUDARABAH",
     "promissory-note": "PROMISSORY_NOTE",
@@ -120,6 +111,7 @@ export default function ContractTemplates() {
         const templateName = templateNameMap[key];
         const stateKey = getStateKey(key);
 
+        // Use default templates directly without API calls
         newTemplates[stateKey] = getDefaultTemplate(templateName);
         newStyles[stateKey] = "";
       });
@@ -175,16 +167,6 @@ export default function ContractTemplates() {
 
 
   const getStyledContent = (content, styles) => {
-    if (content && !isValidTemplate(content)) {
-      console.error('Template content contains potentially dangerous elements');
-      return '<div style="color: red; text-align: center; padding: 20px;">القالب يحتوي على محتوى غير آمن</div>';
-    }
-    
-    if (styles && styles.trim() !== "" && !isValidTemplate(`<style>${styles}</style>`)) {
-      console.error('Template styles contain potentially dangerous content');
-      return content;
-    }
-
     if (!styles || styles.trim() === "") {
       return content;
     }

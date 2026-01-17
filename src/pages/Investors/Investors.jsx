@@ -82,6 +82,7 @@ const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdra
     }
   }
 
+  // استخدام تصنيف المستثمرين الجديد
   if (status.trim()) {
     if (status.trim() === 'قديم') {
       queryParams.append('isNewPartner', 'false');
@@ -92,7 +93,8 @@ const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdra
     }
   }
 
-  if (activeStatus.trim()) {  
+  // فلترة حسب حالة النشاط
+  if (activeStatus.trim()) {
     if (activeStatus.trim() === 'نشط') {
       queryParams.append('isActive', 'true');
     } else if (activeStatus.trim() === 'غير نشط') {
@@ -100,6 +102,7 @@ const getInvestors = async (page = 1, searchQuery = '', status = '', showWithdra
     }
   }
 
+  // إضافة فلترة للمنسحبين فقط
   if (showWithdrawnOnly) {
     queryParams.append('withdrawingStatus', 'WITHDRAWING,WITHDRAWN');
   }
@@ -224,16 +227,18 @@ export default function Investors() {
     retry: 1,
   });
 
+  // Check for unposted opening journals
   const { data: openingJournalsCheck } = useQuery({
     queryKey: ["opening-journals-check"],
     queryFn: () => checkUnpostedOpeningJournals(),
     retry: 1,
   });
 
+  // Memoized date formatter function - stable reference to avoid recalculation
   const formatArabicDate = (date) => {
     return dayjs(date)
       .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm")
+      .format("D [من] MMMM [الساعة] h:mm") // format without A
       + " "
       + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
   };
@@ -297,8 +302,10 @@ export default function Investors() {
 
   const handleGenerateContractAfterUpdate = async (updatedInvestorData) => {
     try {
+      // إعادة جلب بيانات المستثمر بشكل صريح لضمان الحصول على أحدث البيانات
       const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
       
+      // التعامل مع مختلف أشكال الاستجابة من الـ API
       let freshInvestorData;
       if (freshInvestorResponse.partner) {
         freshInvestorData = freshInvestorResponse.partner;
@@ -308,6 +315,7 @@ export default function Investors() {
         freshInvestorData = freshInvestorResponse;
       }
 
+      // دمج البيانات المحدثة مع البيانات الطازجة
       const mergedData = {
         ...freshInvestorData,
         ...updatedInvestorData,
@@ -335,6 +343,7 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
+      // تحويل status إلى القيم المناسبة
       let isNewPartner = false;
       let withdrawingStatus = null;
       if (editFormData.status === 'NEW') {
@@ -344,6 +353,7 @@ export default function Investors() {
         isNewPartner = false;
         withdrawingStatus = null;
       } else if (editFormData.status === 'WITHDRAWN') {
+        // للمنسحبين نحتاج للحفاظ على القيمة الحالية أو تعيينها لـ WITHDRAWN
         withdrawingStatus = 'WITHDRAWN';
       }
 
@@ -353,10 +363,12 @@ export default function Investors() {
         isNewPartner,
         capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
         orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined,
-          createdAt: editFormData.createdAt || undefined,
+        createdAt: editFormData.createdAt || undefined,
+        // إضافة isActive إذا تم تعديله
         isActive: editFormData.isActive !== undefined ? editFormData.isActive : undefined,
       };
 
+      // إضافة withdrawingStatus فقط إذا كان منسحباً
       if (withdrawingStatus) {
         dataToSend.withdrawingStatus = withdrawingStatus;
       }
@@ -366,6 +378,7 @@ export default function Investors() {
       queryClient.invalidateQueries({ queryKey: ['investors'] });
       notifySuccess('تم تحديث بيانات المستثمر بنجاح');
       
+      // إعادة جلب البيانات المحدثة
       const updatedInvestorResponse = await getInvestorDetails(selectedInvestor.id);
       let updatedInvestorData;
       if (updatedInvestorResponse.partner) {
@@ -436,10 +449,13 @@ export default function Investors() {
       setIsDeleteModalOpen(false);
       setInvestorToDelete(null);
       
+      // Refetch data
       const refetchedData = await refetch();
       
+      // إعادة تحميل فحص القيود الافتتاحية
       queryClient.invalidateQueries({ queryKey: ["opening-journals-check"] });
       
+      // اختيار المستثمر التالي للعرض فقط (بدون تغيير حالته في قاعدة البيانات)
       if (selectedInvestor?.id === investorId) {
         if (nextInvestorId) {
           const nextInvestor = refetchedData.data?.partners?.find(inv => inv.id === nextInvestorId);
@@ -506,7 +522,8 @@ export default function Investors() {
         notifyError("لا توجد بيانات للتصدير");
         return;
       }
-
+      
+      // Lazy load export function only when needed
       const { exportInvestorsToExcel } = await import("../../utilities/investorsExporter");
       const partnerData = [partnerDetails];
       await exportInvestorsToExcel(partnerData);
@@ -519,6 +536,7 @@ export default function Investors() {
     }
   };
 
+  // Memoized withdrawal preview calculation to avoid long main-thread tasks
   const withdrawalPreview = useMemo(() => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !investorDetails) {
       return null;
@@ -529,6 +547,7 @@ export default function Investors() {
 
     const normalizeDecimal = (value) => parseFloat(Number(value).toFixed(2));
 
+    // استخدام قيمة التعثرات من الـ API
     let partnerDefaultShare = withdrawPreviewData?.partnerDefaultShare || 0;
     
     if (partnerDefaultShare < 0) partnerDefaultShare = 0;
@@ -676,6 +695,7 @@ export default function Investors() {
     handleOpenWithdrawModal(true);
   };
 
+  // Handle opening contract preview for missing mudarabah contract
   const handleOpenContractPreview = async () => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
@@ -683,8 +703,10 @@ export default function Investors() {
     }
 
     try {
+      // إعادة جلب بيانات المستثمر بشكل صريح لضمان الحصول على أحدث البيانات
       const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
       
+      // التعامل مع مختلف أشكال الاستجابة من الـ API
       let freshInvestorData;
       if (freshInvestorResponse.partner) {
         freshInvestorData = freshInvestorResponse.partner;
@@ -696,8 +718,11 @@ export default function Investors() {
         freshInvestorData = freshInvestorResponse;
       }
 
+      // الحصول على رأس المال من مصادر مختلفة مع الأولوية للبيانات الطازجة
+      // للمستثمرين الجدد، رأس المال موجود في newCapitalAmount أو PartnerNewCapital
       let capitalAmount = null;
-        
+      
+      // 1. جرب newCapitalAmount أولاً (للمستثمرين الجدد) - الأولوية الأولى
       if (freshInvestorData.newCapitalAmount !== null && freshInvestorData.newCapitalAmount !== undefined) {
         const newCapitalValue = Number(freshInvestorData.newCapitalAmount);
         if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
@@ -822,10 +847,12 @@ export default function Investors() {
         });
       }
 
-      
+      // Fetch mudarabah template
       const templateResponse = await Api.get('/api/templates/mudarabah');
       setMudarabahTemplate(templateResponse.data.content || '');
 
+      // Prepare investor data for contract generation مع التأكد من تحويل جميع القيم الرقمية
+      // استخدام البيانات من freshInvestorData أولاً (البيانات الطازجة من API)، ثم selectedInvestor كبديل
       const investorData = {
         id: freshInvestorData.id || selectedInvestor.id,
         name: freshInvestorData.name || selectedInvestor.name || '',
@@ -834,7 +861,7 @@ export default function Investors() {
         city: freshInvestorData.city || selectedInvestor.city || '',
         phone: freshInvestorData.phone || selectedInvestor.phone || '',
         email: freshInvestorData.email || selectedInvestor.email || '',
-        capitalAmount: capitalAmount,
+        capitalAmount: capitalAmount, // استخدام القيمة المحولة (من API أولاً)
         orgProfitPercent: Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent || 0),
         investorProfitPercent: (freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent) 
           ? (100 - Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent)) 
@@ -843,6 +870,7 @@ export default function Investors() {
       setContractInvestorData(investorData);
       setIsContractModalOpen(true);
 
+      // Generate contract after a short delay
       setTimeout(() => {
         if (contractGeneratorRef.current) {
           contractGeneratorRef.current.generateContract();

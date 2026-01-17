@@ -166,6 +166,7 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
     try {
       const formData = new FormData();
 
+      // Add required string fields
       formData.append('name', String(values.name || ''));
       formData.append('nationalId', String(values.nationalId || ''));
       formData.append('phone', String(values.phone || ''));
@@ -173,15 +174,19 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
       formData.append('city', String(values.city || ''));
       formData.append('district', String(values.district || ''));
       
+      // Add required date field (ISO 8601 format)
       formData.append('birthDate', String(values.birthDate || ''));
       
+      // Add required number fields (FormData will convert to string, backend will parse)
       formData.append('salary', String(values.salary || ''));
       formData.append('obligations', String(values.obligations || ''));
 
+      // Add optional email field
       if (values.email) {
         formData.append('email', String(values.email));
       }
 
+      // Add documents
       Object.keys(uploadedFiles).forEach(key => {
         formData.append(key, uploadedFiles[key]);
       });
@@ -249,6 +254,7 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
         {({ values, errors, touched, handleChange, handleBlur, submitForm }) => (
           <Form onSubmit={(e) => e.preventDefault()}>
             <DialogContent sx={{ pb: 1, minHeight: 400 }}>
+              {/* Step 1: Kafeel Information */}
               {activeStep === 0 && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>معلومات الكفيل</Typography>
@@ -384,7 +390,8 @@ const AddAdditionalKafeel = ({ open, onClose, clientId }) => {
                   </Grid>
                 </Box>
               )}
-  
+
+              {/* Step 2: Documents */}
               {activeStep === 1 && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <Typography variant="h6">مستندات الكفيل</Typography>

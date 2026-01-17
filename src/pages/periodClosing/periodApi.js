@@ -1,10 +1,13 @@
 import Api from '../../config/Api';
 
+// Get all periods with filters
 export const getPeriods = async (page = 1, filters = {}) => {
   const params = new URLSearchParams();
   
+  // Add page parameter
   params.append('page', page.toString());
   
+  // Add filter parameters
   if (filters.name) {
     params.append('name', filters.name);
   }
@@ -30,21 +33,25 @@ export const getPeriods = async (page = 1, filters = {}) => {
   return response.data;
 };
 
+// Get period by ID
 export const getPeriodById = async (periodId) => {
   const response = await Api.get(`/api/periods/${periodId}`);
   return response.data;
 };
 
+// Close period
 export const closePeriod = async (periodId) => {
   const response = await Api.post(`/api/periods/${periodId}/close`);
   return response.data;
 };
 
+// Unpost closing (reverse close)
 export const unpostClosing = async (periodId) => {
   const response = await Api.patch(`/api/periods/reverse-close/${periodId}`);
   return response.data;
 };
-    
+
+// Compare two periods
 export const comparePeriods = async (periodId1, periodId2) => {
   const response = await Api.post('/api/periods/compare', {
     periodId1,

@@ -13,6 +13,7 @@ export const PermissionProvider = ({ children }) => {
 
       const modulesRes = await Api.get("/api/auth/modules");
 
+      // Use Promise.all to fetch all permissions in parallel instead of sequentially
       const permissionPromises = modulesRes.data.map(module =>
         Api.get(`/api/auth/permissions/${module}`).then(res => ({
           module,
@@ -28,6 +29,7 @@ export const PermissionProvider = ({ children }) => {
         perms.forEach((perm) => {
           const cleanName = perm.replace("can", "");
 
+          // Handle special module names
           let moduleKey = module;
           switch (module) {
             case "messages-templates":
@@ -52,6 +54,7 @@ export const PermissionProvider = ({ children }) => {
 
       setPermissions(allPermissions);
 
+      // No caching: always pull latest permissions so UI reflects changes immediately
     } catch (err) {
       console.error("Error fetching permissions:", err);
     } finally {
@@ -59,7 +62,9 @@ export const PermissionProvider = ({ children }) => {
     }
   }, []);
 
+  // Function to refresh permissions manually
   const refreshPermissions = async () => {
+    // Clear cache before refreshing
     localStorage.removeItem('cached_permissions');
     localStorage.removeItem('cached_permissions_timestamp');
 
@@ -74,6 +79,10 @@ export const PermissionProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    // Don't fetch on initial mount, wait for login or token refresh
+    // fetchPermissions will be called from Login.jsx after successful login
+
+    // Listen for auth state changes
     const handleAuthFailed = () => {
       setPermissions([]);
       setLoading(false);

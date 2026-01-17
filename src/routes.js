@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Lazy load all pages
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Employees = React.lazy(() => import('./pages/Employees/Employees'));
@@ -26,6 +27,7 @@ const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProf
 const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
 const InvestorsWithdrawal = React.lazy(() => import('./pages/investorsWithdrawal/investorsWithdrawal'));
 const IncomeStatement = React.lazy(() => import('./pages/incomeStatement/incomeStatement'));
+// Clean routes configuration - only routing logic
 const routes = [
   {
     path: '/login',
@@ -242,6 +244,7 @@ const routes = [
   }
 ];
 
+// Re-export sidebar functions from sidebar.config.js
 export { getSidebarMenuItems } from './sidebar.config.js';
 import { sidebarItems } from './sidebar.config.js';
 

@@ -105,7 +105,7 @@ const Loans = () => {
   const [selectedClientForConversion, setSelectedClientForConversion] = useState(null);
   const [selectedKafeelForConversion, setSelectedKafeelForConversion] = useState(null);
   const [showConversionConfirmModal, setShowConversionConfirmModal] = useState(false);
-  const [conversionType, setConversionType] = useState("full");
+  const [conversionType, setConversionType] = useState("full"); // "full" or "partial"
   const [partialTransferAmount, setPartialTransferAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [bankBalance, setBankBalance] = useState(null);
@@ -149,6 +149,7 @@ const Loans = () => {
     queryKey: ["client-loans", selectedClient?.client?.id],
     queryFn: async () => {
       if (!selectedClient?.client?.id) return [];
+      // Get all loans for this client with pagination
       const allLoans = [];
       let page = 1;
       let hasMore = true;
@@ -174,6 +175,7 @@ const Loans = () => {
   const { data: loansNeedingContracts } = useQuery({
     queryKey: ["loans-needing-contracts"],
     queryFn: async () => {
+      // Get all loans with pagination to find those needing contracts
       const allLoans = [];
       let page = 1;
       let hasMore = true;
@@ -200,6 +202,7 @@ const Loans = () => {
   });
 
   useEffect(() => {
+    // Reset loan-related states when changing tabs to prevent stale state
     if (activeTab !== 1) {
       setIsViewMode(false);
       setIsEditMode(false);
@@ -260,6 +263,7 @@ const Loans = () => {
     activeTab,
   ]);
 
+  // Recalculate simulation whenever relevant loan data changes
   useEffect(() => {
     if (activeTab === 1 || activeTab === 6) {
       calculateInstallments();
@@ -273,6 +277,7 @@ const Loans = () => {
     activeTab,
   ]);
 
+  // Fetch bank balance when source changes
   useEffect(() => {
     if (activeTab === 1 && loanForm.source) {
       fetchBankBalance();
@@ -280,6 +285,7 @@ const Loans = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source, activeTab]);
 
+  // Reset amount field when source changes
   useEffect(() => {
     if (activeTab === 1 && loanForm.source && previousSourceRef.current !== loanForm.source && previousSourceRef.current !== null) {
       setLoanForm((prev) => ({
@@ -297,20 +303,23 @@ const Loans = () => {
     setSelectedClientForConversion(null);
     setSelectedKafeelForConversion(null);
     setShowConversionConfirmModal(false);
-    setActiveTab(0);
+    setActiveTab(0); // Return to main tab
     queryClient.invalidateQueries(["loans"]);
   }, [queryClient]);
 
   const calculateRemainingAmount = (loan) => {
+    // Use pagination.totalRemainingAmount if available (most accurate)
     if (loan?.pagination?.totalRemainingAmount !== undefined) {
       return loan.pagination.totalRemainingAmount;
     }
+    // Use totalRemainingAmount if available, otherwise fallback to remainingBalance
     if (loan?.totalRemainingAmount !== undefined) {
       return loan.totalRemainingAmount;
     }
     if (loan?.remainingBalance !== undefined) {
       return loan.remainingBalance;
     }
+    // Fallback to calculating from repayments if available
     if (!loan?.repayments) return 0;
     return loan.repayments
       .filter(repayment => !["PAID", "EARLY_PAID"].includes(repayment.status))
@@ -381,6 +390,7 @@ const Loans = () => {
     setIsConverting(true);
     try {
       if (conversionType === "partial") {
+        // Partial transfer
         const amount = parseFloat(partialAmount.replace(/,/g, ""));
         await transferPartialLoanAmount(
           loanForConversion.clientId,
@@ -391,15 +401,19 @@ const Loans = () => {
         );
         notifySuccess("تم نقل جزء من المديونية بنجاح");
       } else {
-          await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id, selectedKafeelForConversion?.id || null);
+        // Full transfer
+        await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id, selectedKafeelForConversion?.id || null);
 
+        // Get updated loan data after conversion
         const updatedLoan = await getLoanById(loanForConversion.id);
 
+        // Get full client data for the new client
         const newClientResponse = await getClients(1, selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name);
         const fullNewClientData = newClientResponse?.clients?.find(
           (c) => c.client.id === selectedClientForConversion.client.id
         );
 
+        // Create loan data for preview with new client information
         const loanDataForPreview = {
           ...updatedLoan,
           client: fullNewClientData?.client || selectedClientForConversion.client,
@@ -407,10 +421,12 @@ const Loans = () => {
           kafeel: updatedLoan.kafeel || null,
         };
 
+        // Set the loan data for contracts generation
         setSavedLoanData(loanDataForPreview);
 
         notifySuccess("تم نقل المديونية بنجاح");
 
+        // Open preview with new client data
         setTimeout(async () => {
           try {
             await handleOpenPreview(loanDataForPreview);
@@ -520,6 +536,7 @@ const Loans = () => {
       setIsLoadingBankBalance(true);
 
       if (loanForm.source === "MIX") {
+        // Fetch both balances for MIX source
         const [generalResponse, newCapitalResponse] = await Promise.all([
           Api.get(`/api/accounts/bank/1?limit=1`),
           Api.get(`/api/accounts/NewBank/1`)
@@ -529,14 +546,16 @@ const Loans = () => {
         const newCapitalBalance = newCapitalResponse?.data?.account?.balance || 0;
 
         setMixBalances({ general: generalBalance, newCapital: newCapitalBalance });
-        setBankBalance(null);
+        setBankBalance(null); // Clear single balance for MIX
       } else {
         let balance = 0;
 
         if (loanForm.source === "NEW_CAPITAL") {
+          // Use new endpoint for NEW_CAPITAL source
           const response = await Api.get(`/api/accounts/NewBank/1`);
           balance = response?.data?.account?.balance || 0;
         } else {
+          // Use existing endpoint for other sources
           const params = new URLSearchParams();
           params.append('limit', '1');
           const queryString = params.toString();
@@ -545,7 +564,7 @@ const Loans = () => {
         }
 
         setBankBalance(balance);
-        setMixBalances({ general: null, newCapital: null });
+        setMixBalances({ general: null, newCapital: null }); // Clear mix balances for single source
       }
     } catch (error) {
       handleApiError(error);
@@ -580,12 +599,15 @@ const Loans = () => {
         return;
       }
 
+      // Fetch loan count from backend and save contract numbers first
       if (contractType === "both" || contractType === "debt-acknowledgment" || contractType === "promissory-note") {
         try {
+          // Fetch count from backend
           const countResponse = await Api.get(`/api/loans/get/counts/${loanDataToUse.id}`);
           const count = countResponse.data.count;
           const contractNumber = count.toString();
 
+          // Determine which numbers to save based on contract type
           const numbersToSave = {};
           if (contractType === "both" || contractType === "debt-acknowledgment") {
             numbersToSave.debtAcknowledgmentNumber = contractNumber;
@@ -594,8 +616,10 @@ const Loans = () => {
             numbersToSave.promissoryNoteNumber = contractNumber;
           }
 
+          // Save the numbers to database immediately
           await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, numbersToSave);
 
+          // Update loanDataToUse with the saved numbers so generators can use them
           if (numbersToSave.debtAcknowledgmentNumber) {
             loanDataToUse.debtAcknowledgmentNumber = contractNumber;
           }
@@ -623,6 +647,7 @@ const Loans = () => {
 
       notifySuccess("تم حفظ العقود بنجاح");
 
+      // إعادة جلب البيانات لتحديث الأرقام المحفوظة
       queryClient.invalidateQueries(["loans"]);
       if (loanDataToUse?.id) {
         queryClient.invalidateQueries(["loan", loanDataToUse.id]);
@@ -1119,16 +1144,18 @@ const Loans = () => {
   const handleEditSmallLoan = (loan) => {
     setSelectedLoanForEdit(loan);
     setIsSmallLoanEditMode(true);
-    setActiveTab(2);
+    setActiveTab(2); // Switch to edit tab
   };
 
   const handleConvertClient = async (loan) => {
     try {
+      // Get full loan details including repayments for accurate remaining amount calculation
       const fullLoanData = await getLoanById(loan.id);
+      // Merge with original loan data to ensure amount is available
       const mergedLoanData = { ...fullLoanData, amount: loan.amount };
       setLoanForConversion(mergedLoanData);
       setIsClientConversion(true);
-      setActiveTab(1);
+      setActiveTab(1); // Switch to loan creation tab
     } catch (error) {
       handleApiError(error);
       notifyError("حدث خطأ في تحميل بيانات السلفة");
@@ -1140,7 +1167,7 @@ const Loans = () => {
     setLoanForConversion(null);
     setSelectedClientForConversion(null);
     setSelectedKafeelForConversion(null);
-    setActiveTab(0);
+    setActiveTab(0); // Return to main tab
   };
 
   const handleCreateAdditionalLoan = async (client) => {
@@ -1222,10 +1249,13 @@ const Loans = () => {
         [field]: value,
       };
 
+      // Handle promissoryNoteType change
       if (field === "promissoryNoteType") {
         if (value === "inspection") {
+          // Clear the date when switching to inspection mode
           updatedForm.promissoryNoteDate = "";
         } else if (value === "manual" && !prev.promissoryNoteDate) {
+          // Initialize empty date when switching to manual mode
           updatedForm.promissoryNoteDate = "";
         }
       }
@@ -1246,6 +1276,7 @@ const Loans = () => {
       return updatedForm;
     });
     
+    // Note: calculateInstallments() is now handled automatically by useEffect when relevant fields change
   };
 
   const handleSaveLoan = () => {
@@ -1259,12 +1290,17 @@ const Loans = () => {
   const simulationSummary = getSimulationSummary();
 
   const isFormValid = useMemo(() => {
+    // Check promissory note validity:
+    // - Must have a type selected
+    // - If type is "manual", must have a date
+    // - If type is "inspection", date is optional
     const isPromissoryNoteValid = 
       loanForm.promissoryNoteType && 
       loanForm.promissoryNoteType.trim() !== "" &&
       (loanForm.promissoryNoteType === "inspection" ||
         (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate && loanForm.promissoryNoteDate.trim() !== ""));
 
+    // Check if totalInterest and interestRate have valid values (including 0)
     const totalInterestValue = loanForm.totalInterest === "" ? null : parseFloat(String(loanForm.totalInterest).replace(/,/g, ""));
     const interestRateValue = loanForm.interestRate === "" ? null : parseFloat(String(loanForm.interestRate));
     
@@ -1454,6 +1490,7 @@ const Loans = () => {
                 الإجراءات
               </Typography>
               <Stack spacing={2}>
+                {/* Client Conversion Actions */}
                 {isClientConversion && (
                   <>
                     <Button
@@ -1536,7 +1573,8 @@ const Loans = () => {
                     </Button>
                   </>
                 )}
-  
+
+                {/* Alert for active loans that cannot be edited */}
                 {isViewMode && selectedLoan?.status === "ACTIVE" && (
                   <Alert
                     severity="warning"
@@ -1711,6 +1749,7 @@ const Loans = () => {
                   />
                 )}
 
+                {/* Kafeel Information Section - Show when kafeel is selected or exists in view mode */}
                 {((!isViewMode && selectedKafeel) ||
                   (isViewMode && selectedLoan?.kafeel)) && (
                   <LoanKafeelSection
@@ -1748,6 +1787,7 @@ const Loans = () => {
                   />
                 )}
 
+                {/* محاكاة السلفة على الشاشات الصغيرة */}
                 {activeTab === 1 && isSmallScreen && (
                   <LoanSimulation
                     isSmallScreen={isSmallScreen}
@@ -1759,6 +1799,7 @@ const Loans = () => {
                   />
                 )}
 
+                {/* أزرار الإجراءات على الشاشات الصغيرة */}
                 {activeTab === 1 && isSmallScreen && (
                   <LoanActions
                     isSmallScreen={isSmallScreen}
@@ -1790,7 +1831,7 @@ const Loans = () => {
                   onLoanUpdated={() => {
                     setSelectedLoanForEdit(null);
                     setIsSmallLoanEditMode(false);
-                    setActiveTab(3);
+                    setActiveTab(3); // Switch back to view tab
                   }}
                 />
               </Box>
@@ -1820,6 +1861,7 @@ const Loans = () => {
           setIsAddKafeelOpen(false);
           queryClient.invalidateQueries(["clients"]);
 
+          // Refresh the appropriate client data based on context
           if (isClientConversion && selectedClientForConversion?.client?.id) {
             try {
               const clientsResponse = await getClients(

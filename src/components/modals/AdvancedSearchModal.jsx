@@ -32,9 +32,10 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  // Fetch users when modal opens
   useEffect(() => {
     if (open) {
-      setSelectedUser(null);
+      setSelectedUser(null); // Clear selected user when modal opens
       if (users.length === 0) {
         fetchUsers();
       }
@@ -44,11 +45,13 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
   const fetchUsers = async (searchQuery = '') => {
     try {
       setLoadingUsers(true);
+      // Clear previous results before any search
       setUsers([]);
 
       const response = await Api.get(`/api/users/1?name=${encodeURIComponent(searchQuery)}`);
       const userResults = response.data.users || [];
 
+      // Set the results from the API response
       setUsers(userResults);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -58,12 +61,14 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     }
   };
 
+  // Debounced search function using useRef to avoid dependency issues
   const debouncedFetchUsers = useRef(
     debounce((searchQuery) => {
       fetchUsers(searchQuery);
     }, 300)
   ).current;
 
+  // Cleanup debounced function on unmount
   useEffect(() => {
     return () => {
       debouncedFetchUsers.cancel();
@@ -77,7 +82,8 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     }));
   };
 
-  const handleSearch = () => {  
+  const handleSearch = () => {
+    // Remove empty filters
     const filters = Object.fromEntries(
       // eslint-disable-next-line no-unused-vars
       Object.entries(searchFilters).filter(([_, value]) => value !== "")

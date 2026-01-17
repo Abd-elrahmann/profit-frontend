@@ -51,9 +51,11 @@ const PeriodComparisonModal = ({ open, onClose, comparison, isLoading }) => {
       );
     }
 
+    // Handle both formats: direct comparison object or wrapped in comparison property
     const comparisonData = comparison.comparison || comparison;
     const { period1, period2, changes, performance } = comparisonData;
 
+    // Additional check for required properties
     if (!period1 || !period2 || !changes || !performance) {
       return (
         <Box sx={{ textAlign: "center", py: 4 }}>
@@ -78,9 +80,11 @@ const PeriodComparisonModal = ({ open, onClose, comparison, isLoading }) => {
     return (
       <Stack spacing={3}>
     
+        {/* Periods Comparison - Side by Side */}
         <Paper elevation={0} sx={{ p: 4, border: "1px solid #e0e0e0", borderRadius: 2, width: '95%', maxWidth: '1400px', mx: 'auto', textAlign: 'center' }}>
          
           <Grid container spacing={4} justifyContent="center">
+            {/* Period 1 */}
             <Grid item xs={12} lg={5}>
               <Paper
                 elevation={0}
@@ -154,6 +158,7 @@ const PeriodComparisonModal = ({ open, onClose, comparison, isLoading }) => {
               </Paper>
             </Grid>
 
+            {/* Period 2 */}
             <Grid item xs={12} lg={5}>
               <Paper
                 elevation={0}
@@ -229,12 +234,14 @@ const PeriodComparisonModal = ({ open, onClose, comparison, isLoading }) => {
           </Grid>
         </Paper>
 
+        {/* Changes Section */}
         <Paper elevation={0} sx={{ p: 4, border: "1px solid #e0e0e0", borderRadius: 2, width: '95%', maxWidth: '1400px', mx: 'auto', textAlign: 'center' }}>
           <Typography variant="h5" fontWeight="bold" mb={3}>
             تحليل التغيرات
           </Typography>
 
           <Grid container spacing={4} justifyContent="center">
+            {/* Net Profit Change */}
             <Grid item xs={12} lg={5} sx={{width:'400px'}}>
               <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: "#f8f9fa", textAlign: 'center' }}>
                 <Stack spacing={1} alignItems="center">
@@ -272,6 +279,7 @@ const PeriodComparisonModal = ({ open, onClose, comparison, isLoading }) => {
               </Paper>
             </Grid>
 
+            {/* Delinquency Change */}
             <Grid item xs={12} lg={5} sx={{width:'400px'}}>
               <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: "#f8f9fa", textAlign: 'center' }}>
                 <Stack spacing={2} alignItems="center">
@@ -310,7 +318,8 @@ const PeriodComparisonModal = ({ open, onClose, comparison, isLoading }) => {
             </Grid>
           </Grid>
         </Paper>
-                      
+
+        {/* Performance Assessment */}
         <Paper elevation={0} sx={{ p: 4, border: "1px solid #e0e0e0", borderRadius: 2, width: '95%', maxWidth: '1400px', mx: 'auto', textAlign: 'center' }}>
           <Typography variant="h5" fontWeight="bold" mb={3}>
             تقييم الأداء

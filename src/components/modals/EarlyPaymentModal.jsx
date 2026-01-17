@@ -35,7 +35,7 @@ const EarlyPaymentModal = ({
 
   const validateDiscount = (value) => {
     if (!value || value.trim() === "") {
-      return "";
+      return ""; // Discount is optional
     }
 
     const discount = parseFloat(value);
@@ -47,12 +47,14 @@ const EarlyPaymentModal = ({
       return "قيمة الخصم لا يمكن أن تكون سالبة";
     }
 
+    // Calculate total pending amount
     const totalPending = pendingInstallments.reduce((sum, inst) => sum + (inst.amount || 0), 0);
 
     if (discount > totalPending) {
       return `قيمة الخصم لا يمكن أن تتجاوز إجمالي الدفعات المعلقة (${totalPending.toLocaleString()} ريال)`;
     }
 
+    // Don't allow discount more than 50% of total (reasonable business rule)
     if (discount > totalPending * 0.5) {
       return "قيمة الخصم لا يمكن أن تتجاوز 50% من إجمالي الدفعات المعلقة";
     }
@@ -63,9 +65,11 @@ const EarlyPaymentModal = ({
   const handleDiscountChange = (e) => {
     const value = e.target.value;
 
+    // Allow only numbers and decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       onDiscountChange(e);
 
+      // Clear error when user starts typing
       if (discountError) {
         setDiscountError("");
       }
@@ -105,13 +109,14 @@ const EarlyPaymentModal = ({
           أنت على وشك إجراء سداد مبكر للدفعات المعلقة فقط
         </Typography>
 
+        {/* عرض الأقساط المعلقة فقط */}
         <Box sx={{ mb: 2, p: 2, bgcolor: "background.default", borderRadius: 1 }}>
           <Typography variant="body2" fontWeight="bold" gutterBottom>
             الدفعات المعلقة (
             {pendingInstallments.length}
             ):
           </Typography>
-          {pendingInstallments.map((installment) => (
+          {pendingInstallments.map((installment, index) => (
             <Box
               key={installment.id}
               sx={{
