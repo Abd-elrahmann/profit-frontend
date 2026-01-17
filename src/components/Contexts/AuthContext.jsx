@@ -102,20 +102,22 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
+    // Clear all auth data first
+    setAccessToken(null);
+    setApiAccessToken(null); // Clear token in Api.js
+    setUser(null);
+    setIsAuthenticated(false);
+    
+    // Clear any remaining localStorage/sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Try to call logout endpoint (but don't fail if it errors)
     try {
       await Api.post('/api/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Clear all auth data
-      setAccessToken(null);
-      setApiAccessToken(null); // Clear token in Api.js
-      setUser(null);
-      setIsAuthenticated(false);
-      
-      // Clear any remaining localStorage/sessionStorage
-      localStorage.clear();
-      sessionStorage.clear();
+    } catch {
+      // Ignore logout errors - user is already logged out locally
+      console.log('Logout endpoint call failed (already logged out)');
     }
   }, []);
 

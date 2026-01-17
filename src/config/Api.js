@@ -61,7 +61,11 @@ Api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error?.response?.status;
     
-    if (status === 401 && !originalRequest._retry) {
+    // Don't retry refresh or logout endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/api/auth/refresh') || 
+                          originalRequest.url?.includes('/api/auth/logout');
+    
+    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -112,6 +116,16 @@ Api.interceptors.response.use(
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
+      }
+    }
+    
+    // If it's an auth endpoint that failed, redirect to login
+    if (status === 401 && isAuthEndpoint) {
+      setAccessToken(null);
+      window.dispatchEvent(new Event('authFailed'));
+      
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
     }
     
