@@ -316,13 +316,24 @@ const DefaultRedirectRoute = () => {
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { permissions, loading } = usePermissions();
+  
+  if (authLoading || loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
   
   if (!isAuthenticated) {
     return children;
   }
 
-  return <Navigate to="/dashboard" replace />;
+  // If authenticated, redirect to first accessible page
+  const firstPage = getFirstAccessiblePage(permissions);
+  return <Navigate to={firstPage} replace />;
 };
 
 

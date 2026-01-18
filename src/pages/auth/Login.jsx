@@ -30,9 +30,7 @@ import * as Yup from "yup";
 import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { useAuth } from "../../components/Contexts/AuthContext";
-import routes from "../../routes";
 import Logo from "/assets/images/logo.webp";
 
 const validationSchema = Yup.object().shape({
@@ -49,7 +47,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [savedEmail, setSavedEmail] = useState("");
-  const { fetchPermissions } = usePermissions();
   const { login } = useAuth();
   
   const handleTogglePassword = () => setShowPassword(!showPassword);
@@ -81,73 +78,9 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
       
-      let userPermissions = [];
-      try {
-        const modulesRes = await Api.get("/api/auth/modules");
-        const allPermissions = [];
-
-        for (const module of modulesRes.data) {
-          const res = await Api.get(`/api/auth/permissions/${module}`);
-          res.data.forEach((perm) => {
-            const cleanName = perm.replace("can", "");
-            
-            let moduleKey = module;
-            switch (module) {
-              case "messages-templates":
-                moduleKey = "messagesTemplates";
-                break;
-              case "journal-entries":
-                moduleKey = "journalEntries";
-                break;
-              case "contract-templates":
-                moduleKey = "contractTemplates";
-                break;
-              default:
-                moduleKey = module;
-            }
-            
-            allPermissions.push(`${moduleKey}_${cleanName}`);
-          });
-        }
-        
-        userPermissions = allPermissions;
-        
-        if (fetchPermissions && typeof fetchPermissions === 'function') {
-          await fetchPermissions();
-        }
-      } catch (permissionsError) {
-        console.error('Error fetching permissions:', permissionsError);
-        notifyError('تم تسجيل الدخول ولكن حدث خطأ في جلب الصلاحيات');
-      }
-
-      const convertModuleToPermission = (module) => {
-        switch (module) {
-          case "messages-templates":
-            return "messagesTemplates";
-          case "journal-entries":
-            return "journalEntries";
-          case "contract-templates":
-            return "contractTemplates";
-          default:
-            return module;
-        }
-      };
-
-      let firstPage = '/dashboard';
-      for (const route of routes) {
-        if (route.protected && route.requiresPermissions && route.module) {
-          const moduleKey = convertModuleToPermission(route.module);
-          const hasPermission = userPermissions.includes(`${moduleKey}_View`);
-          
-          if (hasPermission) {
-            firstPage = route.path;
-            break;
-          }
-        }
-      }
-      
       notifySuccess("تم تسجيل الدخول بنجاح");  
-      navigate(firstPage, { replace: true });
+      // Redirect to root, which will automatically redirect to first accessible page
+      navigate('/', { replace: true });
     } catch (error) {
       if (error.response?.data?.message?.includes('ليس لديك أي صلاحيات أو أدوار للدخول على النظام')) {
         notifyError(error.response.data.message);
