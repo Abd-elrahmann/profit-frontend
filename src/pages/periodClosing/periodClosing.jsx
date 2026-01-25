@@ -254,12 +254,6 @@ const PeriodClosing = () => {
               {(periodData?.grossProfit?.companyTotal || 0).toLocaleString()}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2 }}>
-            <Typography>فارق:</Typography>
-            <Typography fontWeight="bold" color="success.main">
-              {(periodData?.grossProfit?.totalCents || 0).toLocaleString()}
-            </Typography>
-          </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", ml: 2, mb: 1 }}>
             <Typography>الإجمالي:</Typography>
             <Typography fontWeight="bold">
