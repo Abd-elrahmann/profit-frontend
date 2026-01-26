@@ -1631,79 +1631,8 @@ const Installments = () => {
               <Typography variant="h6" fontWeight="bold">
                 دفعات السلفة - {loanData?.client?.name}
               </Typography>
-              <Button
-                variant="contained"
-                startIcon={<PDFIcon sx={{ marginLeft: "8px" }} />}
-                onClick={handleExportPDF}
-                disabled={isExporting}
-                sx={{
-                  bgcolor: "#d32f2f",
-                  "&:hover": { bgcolor: "#b71c1c" },
-                  height: "36px",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  px: 2.5,
-                  borderRadius: 2,
-                }}
-              >
-                تصدير PDF
-                {isExporting && (
-                  <CircularProgress
-                    size={14}
-                    color="inherit"
-                    style={{ marginRight: 8 }}
-                  />
-                )}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ExcelIcon sx={{ marginLeft: "8px" }} />}
-                onClick={handleExportExcel}
-                disabled={isExporting}
-                sx={{
-                  borderColor: "success.main",
-                  color: "success.main",
-                  "&:hover": { 
-                    bgcolor: "success.50",
-                    borderColor: "success.dark",
-                  },
-                  height: "36px",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  px: 2.5,
-                  borderRadius: 2,
-                }}
-              >
-                تصدير Excel
-                {isExporting && (
-                  <CircularProgress
-                    size={14}
-                    color="inherit"
-                    style={{ marginRight: 8 }}
-                  />
-                )}
-              </Button>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {!isSettlementCompleted() &&
-                sortedInstallments.some((inst) => inst.status === "PENDING") &&
-                permissions.includes("repayments_Post") && (
-                <Button
-                  variant="contained"
-                  onClick={() => setEarlyPaymentModalOpen(true)}
-                  sx={{
-                    bgcolor: "success.main",
-                    "&:hover": { bgcolor: "success.dark" },
-                    height: "36px",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  px: 2.5,
-                  borderRadius: 2,
-                  }}
-                >
-                  سداد مبكر
-                </Button>
-              )}
               {!isSettlementCompleted() && (
                 <IconButton
                   onClick={() => setReviewStepsVisible(!reviewStepsVisible)}
@@ -1720,6 +1649,81 @@ const Installments = () => {
                 </IconButton>
               )}
             </Box>
+          </Box>
+
+          {/* أزرار التصدير والسداد المبكر */}
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<PDFIcon sx={{ marginLeft: "8px" }} />}
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              sx={{
+                bgcolor: "#d32f2f",
+                "&:hover": { bgcolor: "#b71c1c" },
+                height: "36px",
+                fontSize: "14px",
+                fontWeight: "bold",
+                minWidth: "150px",
+                borderRadius: 2,
+              }}
+            >
+              تصدير PDF
+              {isExporting && (
+                <CircularProgress
+                  size={14}
+                  color="inherit"
+                  style={{ marginRight: 8 }}
+                />
+              )}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ExcelIcon sx={{ marginLeft: "8px" }} />}
+              onClick={handleExportExcel}
+              disabled={isExporting}
+              sx={{
+                borderColor: "success.main",
+                color: "success.main",
+                "&:hover": { 
+                  bgcolor: "success.50",
+                  borderColor: "success.dark",
+                },
+                height: "36px",
+                fontSize: "14px",
+                fontWeight: "bold",
+                minWidth: "150px",
+                borderRadius: 2,
+              }}
+            >
+              تصدير Excel
+              {isExporting && (
+                <CircularProgress
+                  size={14}
+                  color="inherit"
+                  style={{ marginRight: 8 }}
+                />
+              )}
+            </Button>
+            {!isSettlementCompleted() &&
+              sortedInstallments.some((inst) => inst.status === "PENDING") &&
+              permissions.includes("repayments_Post") && (
+              <Button
+                variant="contained"
+                onClick={() => setEarlyPaymentModalOpen(true)}
+                sx={{
+                  bgcolor: "success.main",
+                  "&:hover": { bgcolor: "success.dark" },
+                  height: "36px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  minWidth: "150px",
+                  borderRadius: 2,
+                }}
+              >
+                سداد مبكر
+              </Button>
+            )}
           </Box>
 
           <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
