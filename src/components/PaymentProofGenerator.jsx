@@ -315,13 +315,17 @@ const PaymentProofGenerator = React.forwardRef(({
           </table>
         `;
 
+        const investorName = dataToUse.investorData?.name || 
+                             dataToUse.loanData?.partner?.name || 
+                             'ربيش سالم ناصر الهمامي';
+
         filledTemplate = templateContent
 
           .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
           .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
           .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
-          .replace(/{{اسم_رب_المال}}/g, dataToUse.investorData?.name || dataToUse.clientData?.name || '')
+          .replace(/{{اسم_رب_المال}}/g, investorName)
 
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: block;')
           .replace(/{{عرض_نص_فردي}}/g, 'display: none;')
@@ -344,12 +348,16 @@ const PaymentProofGenerator = React.forwardRef(({
         const finalAmount = Math.max(0, originalAmount - discount);
         const amountInWords = `${numberToArabicWords(finalAmount)} ريال`;
 
+        const investorName = dataToUse.investorData?.name || 
+                             dataToUse.loanData?.partner?.name || 
+                             'ربيش سالم ناصر الهمامي';
+
         filledTemplate = templateContent
           .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || '')
           .replace(/{{رقم_هوية_العميل}}/g, dataToUse.clientData.nationalId || '')
           .replace(/{{عنوان_العميل}}/g, dataToUse.clientData.address || '')
           .replace(/{{هاتف_العميل}}/g, dataToUse.clientData.phone || '')
-          .replace(/{{اسم_رب_المال}}/g, dataToUse.investorData?.name || dataToUse.clientData?.name || '')
+          .replace(/{{اسم_رب_المال}}/g, investorName)
 
           .replace(/{{عرض_جدول_الدفعات}}/g, 'display: none;')
           .replace(/{{عرض_نص_فردي}}/g, 'display: block;')
