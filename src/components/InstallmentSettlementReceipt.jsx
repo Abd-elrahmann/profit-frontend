@@ -437,6 +437,10 @@ const InstallmentSettlementReceipt = React.forwardRef(
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
 
             .replace(
+              /{{اسم_المستثمر}}/g,
+              dataToUse.loanData?.partner?.name || "ربيش سالم ناصر الهمامي"
+            )
+            .replace(
             /{{توقيع_الدائن}}/g,
               dataToUse.loanData?.partner?.name || "ربيش سالم ناصر الهمامي"
             )

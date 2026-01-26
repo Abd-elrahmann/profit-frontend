@@ -1327,69 +1327,78 @@ const ProfitDistribution = () => {
           >
             توزيع الأرباح على الشركاء
           </Typography>
-          <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-            <ScrollableTableContainer maxHeight="100%" minWidth={800}>
-              <TableHead>
-                <StyledTableRow>
-                  <StyledTableCell align="center">اسم الشريك</StyledTableCell>
-                  <StyledTableCell align="center">الرقم القومي</StyledTableCell>
-                  <StyledTableCell align="center">الهاتف</StyledTableCell>
-                  <StyledTableCell align="center">
-                    المبلغ قبل الادخار
-                  </StyledTableCell>
-                  {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
-                    <StyledTableCell align="center">المبلغ بعد الادخار</StyledTableCell>
-                  )}
-                </StyledTableRow>
-              </TableHead>
-              <TableBody>
-                {periodData.partners.map((partner) => (
-                  <StyledTableRow key={partner.partnerId}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+            <TableContainer 
+              component={Paper} 
+              variant="outlined" 
+              sx={{ 
+                maxWidth: (periodData.partners.some(p => p.savingAmount) || enableSaving) ? '900px' : '700px',
+                width: '100%'
+              }}
+            >
+              <ScrollableTableContainer maxHeight="100%">
+                <TableHead>
+                  <StyledTableRow>
+                    <StyledTableCell align="center">اسم الشريك</StyledTableCell>
+                    <StyledTableCell align="center">الرقم القومي</StyledTableCell>
+                    <StyledTableCell align="center">الهاتف</StyledTableCell>
                     <StyledTableCell align="center">
-                      {partner.partnerName}
+                      المبلغ قبل الادخار
+                    </StyledTableCell>
+                    {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
+                      <StyledTableCell align="center">المبلغ بعد الادخار</StyledTableCell>
+                    )}
+                  </StyledTableRow>
+                </TableHead>
+                <TableBody>
+                  {periodData.partners.map((partner) => (
+                    <StyledTableRow key={partner.partnerId}>
+                      <StyledTableCell align="center">
+                        {partner.partnerName}
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        {partner.nationalId || "-"}
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        {partner.phone || "-"}
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        {formatNumber(partner.finalProfit) || 0}
+                      </StyledTableCell>
+                      {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
+                        <StyledTableCell align="center">
+                          {formatNumber((enableSaving && savingPercentage > 0 ?
+                            partner.finalProfit * (1 - savingPercentage / 100) :
+                            partner.totalAfterSaving || partner.finalProfit || 0
+                          ))}
+                        </StyledTableCell>
+                      )}
+                    </StyledTableRow>
+                  ))}
+                  <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                    <StyledTableCell colSpan={3} align="center">
+                      <Typography fontWeight="bold">الإجمالي</Typography>
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {partner.nationalId || "-"}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {partner.phone || "-"}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {formatNumber(partner.finalProfit) || 0}
+                      <Typography fontWeight="bold" color="primary.main">
+                        {formatNumber(periodData?.partners?.reduce((sum, p) => sum + (p.finalProfit || 0), 0) || 0)}
+                      </Typography>
                     </StyledTableCell>
                     {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
                       <StyledTableCell align="center">
-                        {formatNumber((enableSaving && savingPercentage > 0 ?
-                          partner.finalProfit * (1 - savingPercentage / 100) :
-                          partner.totalAfterSaving || partner.finalProfit || 0
-                        ))}
+                        <Typography fontWeight="bold" color="success.main">
+                          {enableSaving && savingPercentage > 0 ?
+                            formatNumber(profitAfterSaving.partnerProfit) :
+                            formatNumber(periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || 0), 0) || 0)
+                          }
+                        </Typography>
                       </StyledTableCell>
                     )}
                   </StyledTableRow>
-                ))}
-                <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <StyledTableCell colSpan={3} align="center">
-                    <Typography fontWeight="bold">الإجمالي</Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Typography fontWeight="bold" color="primary.main">
-                      {formatNumber(periodData?.partners?.reduce((sum, p) => sum + (p.finalProfit || 0), 0) || 0)}
-                    </Typography>
-                  </StyledTableCell>
-                  {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
-                    <StyledTableCell align="center">
-                      <Typography fontWeight="bold" color="success.main">
-                        {enableSaving && savingPercentage > 0 ?
-                          formatNumber(profitAfterSaving.partnerProfit) :
-                          formatNumber(periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || 0), 0) || 0)
-                        }
-                      </Typography>
-                    </StyledTableCell>
-                  )}
-                </StyledTableRow>
-              </TableBody>
-            </ScrollableTableContainer>
-          </TableContainer>
+                </TableBody>
+              </ScrollableTableContainer>
+            </TableContainer>
+          </Box>
         </>
       )}
 
@@ -1405,52 +1414,61 @@ const ProfitDistribution = () => {
           >
             قيد توزيع الأرباح
           </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-            <TableHead>
-              <StyledTableRow>
-                <StyledTableCell align="center">
-                  الرقم المرجعي
-                </StyledTableCell>
-                <StyledTableCell align="center">الوصف</StyledTableCell>
-                <StyledTableCell align="center">الحالة</StyledTableCell>
-                <StyledTableCell align="center">التاريخ</StyledTableCell>
-                <StyledTableCell align="center">الإجراءات</StyledTableCell>
-              </StyledTableRow>
-            </TableHead>
-              <TableBody>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <TableContainer 
+              component={Paper} 
+              variant="outlined"
+              sx={{ 
+                maxWidth: '900px',
+                width: '100%'
+              }}
+            >
+              <Table>
+              <TableHead>
                 <StyledTableRow>
                   <StyledTableCell align="center">
-                    {periodData.distributionJournal.reference}
+                    الرقم المرجعي
                   </StyledTableCell>
-                  <StyledTableCell align="center">
-                    {periodData.distributionJournal.description}
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Chip
-                      label={getJournalStatusText(periodData.distributionJournal.status)}
-                      color={
-                        periodData.distributionJournal.status === "POSTED" ? "success" : "default"
-                      }
-                      size="small"
-                    />
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    {formatDate(periodData.distributionJournal.date)}
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleViewJournal(periodData.distributionJournal.id)}
-                      title="عرض تفاصيل القيد"
-                    >
-                      <VisibilityIcon color="primary" style={{ fontSize: '20px' }} />
-                    </IconButton>
-                  </StyledTableCell>
+                  <StyledTableCell align="center">الوصف</StyledTableCell>
+                  <StyledTableCell align="center">الحالة</StyledTableCell>
+                  <StyledTableCell align="center">التاريخ</StyledTableCell>
+                  <StyledTableCell align="center">الإجراءات</StyledTableCell>
                 </StyledTableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </TableHead>
+                <TableBody>
+                  <StyledTableRow>
+                    <StyledTableCell align="center">
+                      {periodData.distributionJournal.reference}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {periodData.distributionJournal.description}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      <Chip
+                        label={getJournalStatusText(periodData.distributionJournal.status)}
+                        color={
+                          periodData.distributionJournal.status === "POSTED" ? "success" : "default"
+                        }
+                        size="small"
+                      />
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      {formatDate(periodData.distributionJournal.date)}
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewJournal(periodData.distributionJournal.id)}
+                        title="عرض تفاصيل القيد"
+                      >
+                        <VisibilityIcon color="primary" style={{ fontSize: '20px' }} />
+                      </IconButton>
+                    </StyledTableCell>
+                  </StyledTableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
         </>
       )}
     </Paper>
