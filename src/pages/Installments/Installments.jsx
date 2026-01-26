@@ -1633,33 +1633,55 @@ const Installments = () => {
               </Typography>
               <Button
                 variant="contained"
-                size="small"
-                startIcon={<PDFIcon sx={{ marginLeft: "6px" }} />}
+                startIcon={<PDFIcon sx={{ marginLeft: "8px" }} />}
                 onClick={handleExportPDF}
                 disabled={isExporting}
                 sx={{
-                  bgcolor: "error.main",
-                  "&:hover": { bgcolor: "error.dark" },
-                  height: "32px",
-                  fontSize: "13px",
+                  bgcolor: "#d32f2f",
+                  "&:hover": { bgcolor: "#b71c1c" },
+                  minHeight: "40px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  px: 3,
+                  borderRadius: 2,
                 }}
               >
                 تصدير PDF
+                {isExporting && (
+                  <CircularProgress
+                    size={16}
+                    color="inherit"
+                    style={{ marginRight: 8 }}
+                  />
+                )}
               </Button>
               <Button
-                variant="contained"
-                size="small"
-                startIcon={<ExcelIcon sx={{ marginLeft: "6px" }} />}
+                variant="outlined"
+                startIcon={<ExcelIcon sx={{ marginLeft: "8px" }} />}
                 onClick={handleExportExcel}
                 disabled={isExporting}
                 sx={{
-                  bgcolor: "success.main",
-                  "&:hover": { bgcolor: "success.dark" },
-                  height: "32px",
-                  fontSize: "13px",
+                  borderColor: "success.main",
+                  color: "success.main",
+                  "&:hover": { 
+                    bgcolor: "success.50",
+                    borderColor: "success.dark",
+                  },
+                  minHeight: "40px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  px: 3,
+                  borderRadius: 2,
                 }}
               >
                 تصدير Excel
+                {isExporting && (
+                  <CircularProgress
+                    size={16}
+                    color="inherit"
+                    style={{ marginRight: 8 }}
+                  />
+                )}
               </Button>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
