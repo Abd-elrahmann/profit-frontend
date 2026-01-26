@@ -1639,17 +1639,17 @@ const Installments = () => {
                 sx={{
                   bgcolor: "#d32f2f",
                   "&:hover": { bgcolor: "#b71c1c" },
-                  minHeight: "40px",
+                  height: "30px",
                   fontSize: "14px",
                   fontWeight: "bold",
-                  px: 3,
+                  px: 2.5,
                   borderRadius: 2,
                 }}
               >
                 تصدير PDF
                 {isExporting && (
                   <CircularProgress
-                    size={16}
+                    size={14}
                     color="inherit"
                     style={{ marginRight: 8 }}
                   />
@@ -1667,17 +1667,17 @@ const Installments = () => {
                     bgcolor: "success.50",
                     borderColor: "success.dark",
                   },
-                  minHeight: "40px",
+                  height: "30px",
                   fontSize: "14px",
                   fontWeight: "bold",
-                  px: 3,
+                  px: 2.5,
                   borderRadius: 2,
                 }}
               >
                 تصدير Excel
                 {isExporting && (
                   <CircularProgress
-                    size={16}
+                    size={14}
                     color="inherit"
                     style={{ marginRight: 8 }}
                   />
