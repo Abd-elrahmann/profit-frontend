@@ -1639,7 +1639,7 @@ const Installments = () => {
                 sx={{
                   bgcolor: "#d32f2f",
                   "&:hover": { bgcolor: "#b71c1c" },
-                  height: "30px",
+                  height: "36px",
                   fontSize: "14px",
                   fontWeight: "bold",
                   px: 2.5,
@@ -1667,7 +1667,7 @@ const Installments = () => {
                     bgcolor: "success.50",
                     borderColor: "success.dark",
                   },
-                  height: "30px",
+                  height: "36px",
                   fontSize: "14px",
                   fontWeight: "bold",
                   px: 2.5,
@@ -1694,11 +1694,11 @@ const Installments = () => {
                   sx={{
                     bgcolor: "success.main",
                     "&:hover": { bgcolor: "success.dark" },
-                    fontWeight: "bold",
-                    borderRadius: 2,
-                    width: "120px",
                     height: "36px",
-                    fontSize: "14px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  px: 2.5,
+                  borderRadius: 2,
                   }}
                 >
                   سداد مبكر
