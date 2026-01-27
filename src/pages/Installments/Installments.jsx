@@ -145,6 +145,10 @@ const Installments = () => {
 
   const [partialPaymentModalOpen, setPartialPaymentModalOpen] = useState(false);
   const [paidAmount, setPaidAmount] = useState("");
+  const [partialPaymentProofModalOpen, setPartialPaymentProofModalOpen] = useState(false);
+  const [partialPaymentProofHtml, setPartialPaymentProofHtml] = useState("");
+  const [isGeneratingPartialProof, setIsGeneratingPartialProof] = useState(false);
+  const [partialPaymentInstallment, setPartialPaymentInstallment] = useState(null);
 
   const [activeInstallmentId, setActiveInstallmentId] = useState(null);
 
@@ -554,18 +558,134 @@ const Installments = () => {
     }
 
     try {
-      await markAsPartialPaid(selectedActionInstallment.id, paidAmountNum);
-      notifySuccess("تم تسجيل الدفع الجزئي بنجاح");
-      queryClient.invalidateQueries(["loan", loanId]);
-      queryClient.invalidateQueries(["repayments", loanId]);
+      const { data: countData } = await Api.get('/api/repayments/next-count');
+      const receiptNumber = countData?.toString() || 'غير محدد';
+
+      const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
+
+      const partialInstallmentData = {
+        ...selectedActionInstallment, 
+        amount: paidAmountNum,
+        isPartialPayment: true  
+      };
+
+      setPartialPaymentInstallment({
+        ...partialInstallmentData,
+        paidAmountNum: paidAmountNum,
+        receiptNumber: receiptNumber
+      });
+
+      // توليد HTML للمعاينة
+      const proofHtml = await paymentProofGeneratorRef.current.generateContract(
+        false,
+        {
+          installmentData: partialInstallmentData,
+          loanData,
+          clientData: loanData?.client,
+          employeeName: defaultEmployeeName,
+          discount: 0,
+          receiptNumber: receiptNumber,
+        }
+      );
+
+      setPartialPaymentProofHtml(proofHtml);
       setPartialPaymentModalOpen(false);
-      setPaidAmount("");
+      setPartialPaymentProofModalOpen(true);
     } catch (error) {
+      console.error("Partial payment error:", error);
       notifyError(
-        error.response?.data?.message || "حدث خطأ أثناء تسجيل الدفع الجزئي"
+        error.message || error.response?.data?.message || "حدث خطأ أثناء توليد سند الدفع الجزئي"
       );
     }
     setAnchorEl(null);
+  };
+
+  const handleSavePartialPaymentProof = async () => {
+    try {
+      setIsGeneratingPartialProof(true);
+
+      // إنشاء PDF من HTML
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = partialPaymentProofHtml;
+      
+      const contractWrapper = tempDiv.querySelector('.contract-wrapper');
+      const cleanedContent = contractWrapper ? contractWrapper.outerHTML : partialPaymentProofHtml;
+
+      const filename = `payment_proof_partial_${partialPaymentInstallment.id}_${Date.now()}.pdf`;
+
+      const options = {
+        margin: 0,
+        filename: filename,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait',
+          compress: true,
+        }
+      };
+
+      const tempElement = document.createElement('div');
+      tempElement.style.width = '794px';
+      tempElement.style.backgroundColor = 'white';
+      tempElement.style.margin = '0 auto';
+      tempElement.style.padding = '0';
+      tempElement.innerHTML = cleanedContent;
+
+      document.body.appendChild(tempElement);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const pdfBlob = await html2pdf()
+        .from(tempElement)
+        .set(options)
+        .outputPdf('blob');
+
+      document.body.removeChild(tempElement);
+
+      // رفع PDF إلى السيرفر
+      const formData = new FormData();
+      const pdfFilename = `إيصال_سداد_جزئي_الدفعة_${partialPaymentInstallment.id}_${Date.now()}.pdf`;
+      formData.append('file', pdfBlob, pdfFilename);
+
+      await Api.post(`/api/repayments/PaymentProof/${partialPaymentInstallment.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // تسجيل الدفع الجزئي
+      await markAsPartialPaid(
+        partialPaymentInstallment.id,
+        partialPaymentInstallment.paidAmountNum
+      );
+
+      notifySuccess("تم حفظ سند الدفع الجزئي بنجاح");
+
+      setPartialPaymentProofModalOpen(false);
+      setPartialPaymentInstallment(null);
+      setPaidAmount("");
+
+      queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["repayments", loanId]);
+    } catch (error) {
+      console.error("Partial payment proof error:", error);
+      notifyError(
+        error.message || error.response?.data?.message || "حدث خطأ أثناء حفظ سند الدفع الجزئي"
+      );
+    } finally {
+      setIsGeneratingPartialProof(false);
+    }
   };
 
   const handlePostpone = async () => {
@@ -2504,6 +2624,23 @@ const Installments = () => {
           .reduce((sum, inst) => sum + (inst.amount || 0), 0)}
         discount={0}
         installmentNumber={`مجمع (${selectedInstallments.length} دفعات)`}
+      />
+
+      {/* Partial Payment Proof Preview */}
+      <PaymentProofPreview
+        open={partialPaymentProofModalOpen}
+        onClose={() => {
+          setPartialPaymentProofModalOpen(false);
+          setPartialPaymentProofHtml("");
+          setPartialPaymentInstallment(null);
+        }}
+        paymentProofHtml={partialPaymentProofHtml}
+        onSaveProof={handleSavePartialPaymentProof}
+        loading={isGeneratingPartialProof}
+        clientName={loanData?.client?.name}
+        installmentAmount={partialPaymentInstallment?.amount || 0}
+        discount={0}
+        installmentNumber={`دفعة #${partialPaymentInstallment?.count || ""} (دفع جزئي)`}
       />
 
       {/* Pagination */}
