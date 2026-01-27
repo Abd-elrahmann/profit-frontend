@@ -26,6 +26,7 @@ const LogsToolbar = ({
   onFilterChange,
   onResetFilters,
   isMobile = false,
+  exportButtons = null,
 }) => {
   const {
     search,
@@ -65,19 +66,30 @@ const LogsToolbar = ({
 
   const screenOptions = [
     { value: "Auth", label: "المصادقة" },
-    { value: "Bank Accounts", label: "الحسابات البنكية" },
+    { value: "Dashboard", label: "لوحة التحكم" },
+    { value: "Employees", label: "الموظفين" },
+    { value: "Roles", label: "الصلاحيات" },
     { value: "Clients", label: "العملاء" },
-    { value: "Journals", label: "القيود" },
-    { value: "Loans", label: "السلف" },
-    { value: "Partners", label: "الشركاء" },
-    { value: "Repayments", label: "الأقساط" },
-    { value: "Roles", label: "الأدوار" },
-    { value: "Templates", label: "القوالب" },
-    { value: "Users", label: "المستخدمين" },
-    { value: "Company Profit", label: "أرباح الشركة" },
-    { value: "Distribution", label: "توزيع الأرباح" },
-    { value: "Small Loans", label: "السلف الصغيرة" },
+    { value: "Client Collections", label: "كشف التحصيلات" },
+    { value: "Investors", label: "المستثمرين" },
+    { value: "PartnerWithdrawals", label: "الانسحابات" },
     { value: "Expenses", label: "المصروفات" },
+    { value: "Income Statement", label: "قائمة الدخل" },
+    { value: "Chart of Accounts", label: "شجرة الحسابات" },
+    { value: "Journal Entries", label: "القيود اليومية" },
+    { value: "General Ledger", label: "دفتر الأستاذ العام" },
+    { value: "Period", label: "إقفال الفترات" },
+    { value: "Loans", label: "السلف" },
+    { value: "Banks", label: "الحسابات البنكية" },
+    { value: "Repayments", label: "الدفعات" },
+    { value: "Treasury", label: "الصندوق" },
+    { value: "Company Profit", label: "أرباح الشركة" },
+    { value: "Profit Distribution", label: "توزيع الأرباح" },
+    { value: "Zakah", label: "الزكاة" },
+    { value: "Saving", label: "الادخار" },
+    { value: "Contract Templates", label: "القوالب العقدية" },
+    { value: "Messages Templates", label: "قوالب الرسائل" },
+    { value: "Profile", label: "الملف الشخصي" },
   ];
 
   const actionOptions = [
@@ -98,6 +110,12 @@ const LogsToolbar = ({
             فلترة السجلات
           </Typography>
         </Box>
+        
+        {exportButtons && (
+          <Box>
+            {exportButtons}
+          </Box>
+        )}
         
         {hasActiveFilters && (
           <Chip
@@ -145,6 +163,30 @@ const LogsToolbar = ({
               onChange={handleScreenChange}
               label="الشاشة"
               notched
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: 'auto',
+                  },
+                  sx: {
+                    '&::-webkit-scrollbar': {
+                      width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: '#f1f1f1',
+                      borderRadius: '10px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#888',
+                      borderRadius: '10px',
+                      '&:hover': {
+                        backgroundColor: '#555',
+                      },
+                    },
+                  },
+                },
+              }}
             >
               <MenuItem value="">كل الشاشات</MenuItem>
               {screenOptions.map((option) => (
@@ -217,38 +259,45 @@ const LogsToolbar = ({
   );
 
   const renderMobileView = () => (
-    <Accordion 
-      sx={{ 
-        boxShadow: 'none',
-        border: '1px solid',
-        borderColor: 'divider',
-        '&:before': { display: 'none' }
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMore />}
-        sx={{
-          bgcolor: 'background.paper',
-          borderBottom: hasActiveFilters ? '2px solid' : 'none',
-          borderColor: 'primary.main',
-          minHeight: '60px !important',
+    <>
+      {exportButtons && (
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+          {exportButtons}
+        </Box>
+      )}
+      
+      <Accordion 
+        sx={{ 
+          boxShadow: 'none',
+          border: '1px solid',
+          borderColor: 'divider',
+          '&:before': { display: 'none' }
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-          <FilterList color="primary" />
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            فلترة السجلات
-          </Typography>
-          {hasActiveFilters && (
-            <Chip
-              label="مفعل"
-              color="primary"
-              size="small"
-              sx={{ ml: 'auto' }}
-            />
-          )}
-        </Box>
-      </AccordionSummary>
+        <AccordionSummary
+          expandIcon={<ExpandMore />}
+          sx={{
+            bgcolor: 'background.paper',
+            borderBottom: hasActiveFilters ? '2px solid' : 'none',
+            borderColor: 'primary.main',
+            minHeight: '60px !important',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+            <FilterList color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              فلترة السجلات
+            </Typography>
+            {hasActiveFilters && (
+              <Chip
+                label="مفعل"
+                color="primary"
+                size="small"
+                sx={{ ml: 'auto' }}
+              />
+            )}
+          </Box>
+        </AccordionSummary>
       
       <AccordionDetails sx={{ p: 2 }}>
         <Stack spacing={2}>
@@ -274,6 +323,30 @@ const LogsToolbar = ({
               value={screen || ""}
               onChange={handleScreenChange}
               label="الشاشة"
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: 'auto',
+                  },
+                  sx: {
+                    '&::-webkit-scrollbar': {
+                      width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: '#f1f1f1',
+                      borderRadius: '10px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#888',
+                      borderRadius: '10px',
+                      '&:hover': {
+                        backgroundColor: '#555',
+                      },
+                    },
+                  },
+                },
+              }}
             >
               <MenuItem value="">كل الشاشات</MenuItem>
               {screenOptions.map((option) => (
@@ -325,6 +398,7 @@ const LogsToolbar = ({
         </Stack>
       </AccordionDetails>
     </Accordion>
+    </>
   );
 
   return (

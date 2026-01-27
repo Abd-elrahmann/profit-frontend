@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -14,6 +14,8 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme as useMuiTheme,
+  Badge,
+  alpha,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -21,6 +23,7 @@ import {
   Logout,
   Brightness4,
   Brightness7,
+  Person,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../theme/ThemeContext";
@@ -30,10 +33,20 @@ import Logo from "/assets/images/logo.webp";
 const Navbar = ({ onMenuToggle }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -57,14 +70,32 @@ const Navbar = ({ onMenuToggle }) => {
   return (
     <AppBar
       position="fixed"
+      elevation={scrolled ? 4 : 0}
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        backgroundColor: isDarkMode ? "#1e1e1e" : "#fff",
+        background: isDarkMode
+          ? scrolled
+            ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+            : 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%)'
+          : scrolled
+          ? 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+          : '#ffffff',
         color: isDarkMode ? "#fff" : "#000",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: scrolled
+          ? isDarkMode
+            ? '0 4px 20px rgba(0, 0, 0, 0.5)'
+            : '0 4px 20px rgba(0, 0, 0, 0.08)'
+          : 'none',
+        backdropFilter: 'blur(10px)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        borderBottom: scrolled
+          ? 'none'
+          : isDarkMode
+          ? '1px solid rgba(255, 255, 255, 0.1)'
+          : '1px solid rgba(0, 0, 0, 0.08)',
       }}
     >
-      <Toolbar sx={{ justifyContent: "space-between" }}>
+      <Toolbar sx={{ justifyContent: "space-between", minHeight: { xs: 64, sm: 70 } }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton
             edge="start"
@@ -73,27 +104,55 @@ const Navbar = ({ onMenuToggle }) => {
             onClick={onMenuToggle}
             sx={{
               mr: 1,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1) rotate(90deg)',
+                bgcolor: isDarkMode
+                  ? alpha('#fff', 0.1)
+                  : alpha('#000', 0.05),
+              },
             }}
           >
             <MenuIcon />
           </IconButton>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-            <img
-              src={Logo}
-              alt="Logo"
-              style={{
-                width: isMobile ? 24 : 28,
-                height: isMobile ? 24 : 28,
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
               }}
-            />
+            >
+              <img
+                src={Logo}
+                alt="Logo"
+                style={{
+                  width: isMobile ? 32 : 38,
+                  height: isMobile ? 32 : 38,
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+
             {!isMobile && (
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 700,
-                  color: isDarkMode ? "white" : "primary.main",
-                  fontSize: isMobile ? "1rem" : "1.25rem",
+                  fontWeight: 800,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontSize: '1.3rem',
+                  letterSpacing: '-0.5px',
                 }}
               >
                 نظام إدارة السلف
@@ -101,9 +160,31 @@ const Navbar = ({ onMenuToggle }) => {
             )}
             
             {!isMobile && (
-              <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
-                <IconButton onClick={toggleTheme} color="inherit" size="small" sx={{ p: 0.5 }}>
-                  {isDarkMode ? <Brightness7 sx={{ fontSize: 20 }} /> : <Brightness4 sx={{ fontSize: 20 }} />}
+              <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"} arrow>
+                <IconButton
+                  onClick={toggleTheme}
+                  sx={{
+                    ml: 2,
+                    width: 40,
+                    height: 40,
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode
+                      ? alpha('#fff', 0.1)
+                      : alpha('#000', 0.05),
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      bgcolor: isDarkMode
+                        ? alpha('#fff', 0.15)
+                        : alpha('#000', 0.1),
+                      transform: 'rotate(180deg)',
+                    },
+                  }}
+                >
+                  {isDarkMode ? (
+                    <Brightness7 sx={{ fontSize: 22, color: '#ffa726' }} />
+                  ) : (
+                    <Brightness4 sx={{ fontSize: 22, color: '#5e35b1' }} />
+                  )}
                 </IconButton>
               </Tooltip>
             )}
@@ -112,22 +193,46 @@ const Navbar = ({ onMenuToggle }) => {
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {!isMobile && user?.name && (
-            <Box sx={{ textAlign: 'right', mr: 1 }}>
+            <Box
+              sx={{
+                textAlign: 'right',
+                mr: 1,
+                px: 2,
+                py: 1,
+                borderRadius: '12px',
+                bgcolor: isDarkMode
+                  ? alpha('#fff', 0.05)
+                  : alpha('#667eea', 0.05),
+                border: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#667eea', 0.2)}`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: isDarkMode
+                    ? alpha('#fff', 0.08)
+                    : alpha('#667eea', 0.08),
+                },
+              }}
+            >
               <Typography
                 variant="body2"
                 sx={{
-                  color: isDarkMode ? "rgba(255,255,255,0.7)" : "text.secondary",
-                  fontSize: '0.85rem',
+                  color: isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
+                  fontSize: '0.75rem',
                   lineHeight: 1.2,
+                  fontWeight: 500,
                 }}
               >
-                مرحباً
+                مرحباً بك
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  fontWeight: 600,
-                  color: 'primary.main',
+                  fontWeight: 700,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                   fontSize: '0.95rem',
                   lineHeight: 1.2,
                 }}
@@ -137,29 +242,104 @@ const Navbar = ({ onMenuToggle }) => {
             </Box>
           )}
 
-          <Tooltip title="الحساب">
-            <IconButton onClick={handleUserMenuOpen} color="inherit">
-              <Avatar
-                src={user?.profileImage}
-                alt={user?.name}
-                sx={{ 
-                  width: 40, 
-                  height: 40,
-                  bgcolor: user?.profileImage ? 'transparent' : 'primary.main',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '1.1rem'
+          <Tooltip title="الحساب" arrow>
+            <IconButton
+              onClick={handleUserMenuOpen}
+              sx={{
+                p: 0,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
+              }}
+            >
+              <Badge
+                overlap="circular"
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                variant="dot"
+                sx={{
+                  '& .MuiBadge-badge': {
+                    backgroundColor: '#44b700',
+                    color: '#ffc107',
+                    boxShadow: `0 0 0 2px ${isDarkMode ? '#1a1a2e' : '#fff'}`,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    '&::after': {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      animation: 'ripple 1.2s infinite ease-in-out',
+                      border: '1px solid currentColor',
+                      content: '""',
+                    },
+                  },
+                  '@keyframes ripple': {
+                    '0%': {
+                      transform: 'scale(.8)',
+                      opacity: 1,
+                    },
+                    '100%': {
+                      transform: 'scale(2.4)',
+                      opacity: 0,
+                    },
+                  },
                 }}
               >
-                {!user?.profileImage && user?.name ? user.name.charAt(0).toUpperCase() : ''}
-              </Avatar>
+                <Avatar
+                  src={user?.profileImage}
+                  alt={user?.name}
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    background: user?.profileImage
+                      ? 'transparent'
+                      : '#f59e0b',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    border: `3px solid #f59e0b`,
+                    boxShadow: isDarkMode
+                      ? '0 4px 15px rgba(245, 158, 11, 0.4)'
+                      : '0 4px 15px rgba(245, 158, 11, 0.3)',
+                  }}
+                >
+                  {!user?.profileImage && user?.name
+                    ? user.name.charAt(0).toUpperCase()
+                    : ''}
+                </Avatar>
+              </Badge>
             </IconButton>
           </Tooltip>
           
           {isMobile && (
-            <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"}>
-              <IconButton onClick={toggleTheme} color="inherit" size="small" sx={{ p: 0.5 }}>
-                {isDarkMode ? <Brightness7 sx={{ fontSize: 20 }} /> : <Brightness4 sx={{ fontSize: 20 }} />}
+            <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"} arrow>
+              <IconButton
+                onClick={toggleTheme}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  bgcolor: isDarkMode
+                    ? alpha('#fff', 0.1)
+                    : alpha('#000', 0.05),
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: isDarkMode
+                      ? alpha('#fff', 0.15)
+                      : alpha('#000', 0.1),
+                    transform: 'rotate(180deg)',
+                  },
+                }}
+              >
+                {isDarkMode ? (
+                  <Brightness7 sx={{ fontSize: 20, color: '#ffa726' }} />
+                ) : (
+                  <Brightness4 sx={{ fontSize: 20, color: '#5e35b1' }} />
+                )}
               </IconButton>
             </Tooltip>
           )}
@@ -179,33 +359,121 @@ const Navbar = ({ onMenuToggle }) => {
             PaperProps={{
               sx: {
                 mt: 1.5,
-                minWidth: 200,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                minWidth: 240,
+                borderRadius: '16px',
+                boxShadow: isDarkMode
+                  ? '0 8px 32px rgba(0, 0, 0, 0.5)'
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                bgcolor: isDarkMode ? '#1a1a2e' : '#ffffff',
+                border: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
+                overflow: 'visible',
+                '&::before': {
+                  content: '""',
+                  display: 'block',
+                  position: 'absolute',
+                  top: 0,
+                  right: 14,
+                  width: 12,
+                  height: 12,
+                  bgcolor: isDarkMode ? '#1a1a2e' : '#ffffff',
+                  transform: 'translateY(-50%) rotate(45deg)',
+                  zIndex: 0,
+                  borderTop: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
+                  borderLeft: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
+                },
               },
             }}
           >
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
-                {user?.name || "مستخدم"}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user?.email || ""}
-              </Typography>
+            <Box
+              sx={{
+                px: 2.5,
+                py: 2,
+                borderBottom: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <Avatar
+                  src={user?.profileImage}
+                  alt={user?.name}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    background: user?.profileImage
+                      ? 'transparent'
+                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  }}
+                >
+                  {!user?.profileImage && user?.name
+                    ? user.name.charAt(0).toUpperCase()
+                    : ''}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
+                    {user?.name || "مستخدم"}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    {user?.email || ""}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
-            <Divider />
-            <MenuItem onClick={handleProfileClick}>
+
+            <MenuItem
+              onClick={handleProfileClick}
+              sx={{
+                mx: 1,
+                my: 1,
+                borderRadius: '10px',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: isDarkMode
+                    ? alpha('#667eea', 0.2)
+                    : alpha('#667eea', 0.1),
+                  transform: 'translateX(-4px)',
+                },
+              }}
+            >
               <ListItemIcon>
-                <AccountCircle fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>الملف الشخصي</ListItemText>
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <Logout fontSize="small" color="error" />
+                <Person
+                  fontSize="small"
+                  sx={{
+                    color: isDarkMode ? '#667eea' : '#667eea',
+                  }}
+                />
               </ListItemIcon>
               <ListItemText>
-                <Typography color="error">تسجيل الخروج</Typography>
+                <Typography fontWeight={500}>الملف الشخصي</Typography>
+              </ListItemText>
+            </MenuItem>
+
+            <Divider sx={{ mx: 1 }} />
+
+            <MenuItem
+              onClick={handleLogout}
+              sx={{
+                mx: 1,
+                my: 1,
+                borderRadius: '10px',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: alpha('#f44336', 0.1),
+                  transform: 'translateX(-4px)',
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Logout fontSize="small" sx={{ color: '#f44336' }} />
+              </ListItemIcon>
+              <ListItemText>
+                <Typography color="#f44336" fontWeight={500}>
+                  تسجيل الخروج
+                </Typography>
               </ListItemText>
             </MenuItem>
           </Menu>

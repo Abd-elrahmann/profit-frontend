@@ -173,34 +173,38 @@ const Logs = () => {
   const getScreenText = (screen) => {
     const screenTranslations = {
       "Auth": "المصادقة",
-      "Bank Accounts": "الحسابات البنكية",
-      "Banks": "البنوك",
-      "Clients": "العملاء",
       "Dashboard": "لوحة التحكم",
-      "Journals": "القيود اليومية",
-      "Journal Entries": "القيود اليومية",
-      "Loans": "السلف",
+      "Logs": "السجلات",
+      "Users": "الموظفين",
+      "Employees": "الموظفين",
+      "Roles": "الصلاحيات",
+      "Clients": "العملاء",
+      "Client Collections": "كشف التحصيلات",
       "Partners": "المستثمرين",
       "Investors": "المستثمرين",
-      "Repayments": "الأقساط",
-      "Installments": "الدفعات",
-      "Roles": "الأدوار",
-      "Templates": "القوالب",
-      "Contract Templates": "القوالب العقدية",
-      "Messages Templates": "قوالب الرسائل",
-      "Users": "المستخدمين",
-      "Employees": "الموظفين",
-      "Profile": "الملف الشخصي",
+      "PartnerWithdrawals": "الانسحابات",
+      "Expenses": "المصروفات",
+      "Income Statement": "قائمة الدخل",
+      "Chart of Accounts": "شجرة الحسابات",
+      "Journals": "القيود اليومية",
+      "Journal Entries": "القيود اليومية",
       "General Ledger": "دفتر الأستاذ العام",
-      "Period": "تقفيل الفترات",
-      "Profit Distribution": "توزيع الأرباح",
+      "Period": "إقفال الفترات",
+      "Loans": "السلف",
+      "Banks": "الحسابات البنكية",
+      "Bank Accounts": "الحسابات البنكية",
+      "Repayments": "الدفعات",
+      "Installments": "الدفعات",
       "Treasury": "الصندوق",
-      "Logs": "السجلات",
       "Company Profit": "أرباح الشركة",
       "Distribution": "توزيع الأرباح",
-      "PartnerWithdrawals": "سحب الشركاء",
-      "Small Loans": "السلف الصغيرة",
-      "Expenses": "المصروفات",
+      "Profit Distribution": "توزيع الأرباح",
+      "Zakah": "الزكاة",
+      "Saving": "الادخار",
+      "Templates": "القوالب العقدية",
+      "Contract Templates": "القوالب العقدية",
+      "Messages Templates": "قوالب الرسائل",
+      "Profile": "الملف الشخصي",
     };
     return screenTranslations[screen] || screen;
   };
@@ -416,51 +420,50 @@ const Logs = () => {
         <meta name="description" content="سجلات النشاطات" />
       </Helmet>
       
-      <Box sx={{ p: isMobile ? 2 : 5 }}>
-        {permissions.includes("logs_Export") && (
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <MuiStack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleExportPDF}
-                disabled={!logsData?.data || logsData.data.length === 0}
-                sx={{
-                  borderColor: "#d32f2f",
-                  color: "#d32f2f",
-                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: "bold",
-                }}
-              >
-                PDF
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleExportExcel}
-                disabled={!logsData?.data || logsData.data.length === 0}
-                sx={{
-                  borderColor: "#2e7d32",
-                  color: "#2e7d32",
-                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: "bold",
-                }}
-              >
-                Excel
-              </Button>
-            </MuiStack>
-          </Box>
-        )}
-
+      <Box sx={{ p: isMobile ? 2 : 3 }}>
         <LogsToolbar
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
           isMobile={isMobile}
+          exportButtons={
+            permissions.includes("logs_Export") && (
+              <MuiStack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
+                  onClick={handleExportPDF}
+                  disabled={!logsData?.data || logsData.data.length === 0}
+                  sx={{
+                    borderColor: "#d32f2f",
+                    color: "#d32f2f",
+                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: "bold",
+                  }}
+                >
+                  PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+                  onClick={handleExportExcel}
+                  disabled={!logsData?.data || logsData.data.length === 0}
+                  sx={{
+                    borderColor: "#2e7d32",
+                    color: "#2e7d32",
+                    "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Excel
+                </Button>
+              </MuiStack>
+            )
+          }
         />
 
         <Paper sx={{ 

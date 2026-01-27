@@ -191,7 +191,6 @@ const AppLayout = () => {
 const ProtectedRoute = ({ children, route }) => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const { permissions, loading } = usePermissions();
   const permissionErrorShownRef = useRef(false);
 
@@ -199,59 +198,7 @@ const ProtectedRoute = ({ children, route }) => {
     permissionErrorShownRef.current = false;
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (loading || authLoading) return;
-
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    if (route?.requiresPermissions && route?.module) {
-      let moduleKey = route.module;
-      switch (route.module) {
-        case "messages-templates":
-          moduleKey = "messagesTemplates";
-          break;
-        case "journal-entries":
-          moduleKey = "journalEntries";
-          break;
-        case "contract-templates":
-          moduleKey = "contractTemplates";
-          break;
-        default:
-          moduleKey = route.module;
-      }
-
-      const hasPermission = permissions.includes(`${moduleKey}_View`);
-
-      if (!hasPermission) {
-        if (!permissionErrorShownRef.current) {
-          notifyError('ليس لديك صلاحية للوصول إلى هذه الصفحة');
-          permissionErrorShownRef.current = true;
-        }
-
-        if (location.pathname === '/dashboard' || location.pathname === '/') {
-          const firstPage = getFirstAccessiblePage(permissions);
-          navigate(firstPage, { replace: true });
-        } else {
-          const lastValidPath = sessionStorage.getItem('lastValidPath');
-          if (lastValidPath) {
-            navigate(lastValidPath, { replace: true });
-          } else {
-            const firstPage = getFirstAccessiblePage(permissions);
-            navigate(firstPage, { replace: true });
-          }
-        }
-        return;
-      } else {
-        sessionStorage.setItem('lastValidPath', location.pathname);
-      }
-    } else {
-      sessionStorage.setItem('lastValidPath', location.pathname);
-    }
-  }, [isAuthenticated, authLoading, permissions, loading, route, location, navigate]);
-
+  // Show loading while checking authentication
   if (loading || authLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
@@ -260,11 +207,12 @@ const ProtectedRoute = ({ children, route }) => {
     );
   }
 
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
-
+  // Check permissions if required
   if (route?.requiresPermissions && route?.module) {
     let moduleKey = route.module;
     switch (route.module) {
@@ -284,12 +232,18 @@ const ProtectedRoute = ({ children, route }) => {
     const hasPermission = permissions.includes(`${moduleKey}_View`);
 
     if (!hasPermission) {
-      if (location.pathname === '/dashboard' || location.pathname === '/') {
-        const firstPage = getFirstAccessiblePage(permissions);
-        navigate(firstPage, { replace: true });
+      if (!permissionErrorShownRef.current) {
+        notifyError('ليس لديك صلاحية للوصول إلى هذه الصفحة');
+        permissionErrorShownRef.current = true;
       }
-      return null;
+
+      const firstPage = getFirstAccessiblePage(permissions);
+      return <Navigate to={firstPage} replace />;
+    } else {
+      sessionStorage.setItem('lastValidPath', location.pathname);
     }
+  } else {
+    sessionStorage.setItem('lastValidPath', location.pathname);
   }
 
   return children;
