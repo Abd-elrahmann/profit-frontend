@@ -66,12 +66,12 @@ import { useTheme } from '../../theme/ThemeContext';
 
 const getBankAccountData = async (accountType = 'bank', month = null, year = null, page = 1, limit = 20) => {
   const params = new URLSearchParams();
-  if (month) {
-    params.append('month', month);
-  }
+
   if (year) {
-    params.append('year', year);
+    const formatted = month ? month : year;
+    params.append('month', formatted);
   }
+
   params.append('limit', limit.toString());
 
   const queryString = params.toString();
@@ -85,12 +85,12 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 export default function Treasury() {
   const [tab, setTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
-  
+
   // تعيين القيم الافتراضية للشهر والسنة الحالية
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1; // getMonth() يعيد 0-11
-  
+
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [page, setPage] = useState(1);
@@ -105,8 +105,8 @@ export default function Treasury() {
   const { permissions } = usePermissions();
 
   // تجهيز قيمة month لإرسالها للـ API
-  const monthParam = selectedYear && selectedMonth 
-    ? `${selectedYear}-${String(selectedMonth).padStart(2, '0')}` 
+  const monthParam = selectedYear && selectedMonth
+    ? `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`
     : null;
 
   const { data: bankData, isLoading, error } = useQuery({
@@ -130,7 +130,7 @@ export default function Treasury() {
   const loansBalance = currentData?.loansBalance || 0;
   const loansInterest = currentData?.loansInterest || 0;
   const total = currentData?.total || 0;
-  
+
   const totalRepaymentsAmount = currentData?.repayments?.totalAmount || 0;
   const paidRepaymentsUntilNow = currentData?.repayments?.paidUntilNow || 0;
   const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
@@ -651,9 +651,9 @@ export default function Treasury() {
                     bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                   }}>
                     {showFilterAlert && (
-                      <Alert 
-                        severity="info" 
-                        sx={{ 
+                      <Alert
+                        severity="info"
+                        sx={{
                           mb: 2,
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -685,11 +685,11 @@ export default function Treasury() {
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} md={3}>
                         <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ mb: isSmallScreen ? 1 : 0 }}>
-                          {selectedYear && selectedMonth 
-                            ? `عرض بيانات ${allMonths.find(m => m.value === selectedMonth)?.label} ${selectedYear}` 
-                            : selectedYear 
-                            ? `عرض بيانات سنة ${selectedYear}`
-                            : 'عرض جميع البيانات'}
+                          {selectedYear && selectedMonth
+                            ? `عرض بيانات ${allMonths.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
+                            : selectedYear
+                              ? `عرض بيانات سنة ${selectedYear}`
+                              : 'عرض جميع البيانات'}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={4.5}>
@@ -1658,9 +1658,9 @@ export default function Treasury() {
                     bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                   }}>
                     {showFilterAlert && (
-                      <Alert 
-                        severity="info" 
-                        sx={{ 
+                      <Alert
+                        severity="info"
+                        sx={{
                           mb: 2,
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -1692,11 +1692,11 @@ export default function Treasury() {
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} md={3}>
                         <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ mb: isSmallScreen ? 1 : 0 }}>
-                          {selectedYear && selectedMonth 
-                            ? `عرض بيانات ${allMonths.find(m => m.value === selectedMonth)?.label} ${selectedYear}` 
-                            : selectedYear 
-                            ? `عرض بيانات سنة ${selectedYear}`
-                            : 'عرض جميع البيانات'}
+                          {selectedYear && selectedMonth
+                            ? `عرض بيانات ${allMonths.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
+                            : selectedYear
+                              ? `عرض بيانات سنة ${selectedYear}`
+                              : 'عرض جميع البيانات'}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={4}>
