@@ -1945,7 +1945,7 @@ const Installments = () => {
                   {/* Show approve button only if no paid installments are selected */}
                   {!selectedInstallments.some(id => {
                     const installment = sortedInstallments.find(inst => inst.id === id);
-                    return installment && (installment.status === "PAID" || installment.status === "EARLY_PAID" || installment.status === "COMPLETED");
+                    return installment && (installment.status === "PAID" || installment.status === "PARTIAL_PAID" || installment.status === "EARLY_PAID" || installment.status === "COMPLETED");
                   }) && (
                       <Button
                         variant="contained"
@@ -2222,7 +2222,7 @@ const Installments = () => {
                                   );
                                 }}
                               >
-                                <ShareIcon />
+                                {/* share icon */}
                               </IconButton>
                             </Box>
                           ))}
@@ -2575,7 +2575,9 @@ const Installments = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
+        
         {selectedActionInstallment?.status !== "PAID" &&
+          selectedActionInstallment?.status !== "PARTIAL_PAID" &&
           !shouldDisableActions() &&
           permissions.includes("repayments_Post") && (
             <MenuItem
