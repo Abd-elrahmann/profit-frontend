@@ -84,7 +84,7 @@ const downloadFile = async (url, filename) => {
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = blobUrl;  
+    link.href = blobUrl;
     try {
       link.download = decodeURIComponent(filename);
     } catch {
@@ -318,11 +318,11 @@ const Installments = () => {
 
   const totalPages =
     loanData?.pagination?.totalPages
-      ?? (loanData?.pagination?.totalRepayments && limit
-        ? Math.max(1, Math.ceil(loanData.pagination.totalRepayments / limit))
-        : loanData?.repayments?.length && limit
-          ? Math.max(1, Math.ceil(loanData.repayments.length / limit))
-          : 1);
+    ?? (loanData?.pagination?.totalRepayments && limit
+      ? Math.max(1, Math.ceil(loanData.pagination.totalRepayments / limit))
+      : loanData?.repayments?.length && limit
+        ? Math.max(1, Math.ceil(loanData.repayments.length / limit))
+        : 1);
 
   const steps = [
     "بإنتظار رفع الإيصال",
@@ -394,15 +394,15 @@ const Installments = () => {
     try {
       setConfirmedDiscount({ discount, notes });
       setDiscountModalOpen(false);
-      
+
       // إذا كانت الدفعة مدفوعة جزئياً، استخدم المبلغ المتبقي بدلاً من المبلغ الأصلي
       const installmentDataForProof = {
         ...discountInstallment,
-        amount: discountInstallment.status === 'PARTIAL_PAID' 
-          ? discountInstallment.remaining 
+        amount: discountInstallment.status === 'PARTIAL_PAID'
+          ? discountInstallment.remaining
           : discountInstallment.amount
       };
-      
+
       setSelectedProofInstallment(installmentDataForProof);
 
       const { data: countData } = await Api.get('/api/repayments/next-count');
@@ -574,9 +574,9 @@ const Installments = () => {
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const partialInstallmentData = {
-        ...selectedActionInstallment, 
+        ...selectedActionInstallment,
         amount: paidAmountNum,
-        isPartialPayment: true  
+        isPartialPayment: true
       };
 
       setPartialPaymentInstallment({
@@ -616,10 +616,10 @@ const Installments = () => {
 
       // إنشاء PDF من HTML
       const html2pdf = (await import('html2pdf.js')).default;
-      
+
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = partialPaymentProofHtml;
-      
+
       const contractWrapper = tempDiv.querySelector('.contract-wrapper');
       const cleanedContent = contractWrapper ? contractWrapper.outerHTML : partialPaymentProofHtml;
 
@@ -778,11 +778,11 @@ const Installments = () => {
   const allInstallmentsPaid = () => {
     const totalRepayments = loanData?.pagination?.totalRepayments || 0;
     const paidRepayments = loanData?.pagination?.paidRepayments || 0;
-    
+
     if (totalRepayments > 0) {
       return paidRepayments === totalRepayments;
     }
-    
+
     return sortedInstallments.every(
       (installment) => installment.status === "PAID" || installment.status === "EARLY_PAID"
     );
@@ -844,10 +844,10 @@ const Installments = () => {
   const handleSaveSettlement = async () => {
     try {
       setIsGeneratingSettlement(true);
-  
+
       const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-  
+
       const paidInstallments = sortedInstallments.filter(
         inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
       );
@@ -855,7 +855,7 @@ const Installments = () => {
         (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
         0
       );
-  
+
       const finalSettlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
@@ -867,15 +867,15 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
         }, true);
-  
+
       await settlementReceiptRef.current.generatePDF(finalSettlementHtml);
-  
+
       notifySuccess("تم حفظ سند التسوية بنجاح");
-  
-    
+
+
       setSettlementModalOpen(false);
 
-      setSettlementJustSaved(true); 
+      setSettlementJustSaved(true);
 
       setTimeout(() => {
         notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
@@ -886,7 +886,7 @@ const Installments = () => {
       setTimeout(() => {
         setSettlementJustSaved(false);
       }, 2000);
-      
+
       return true;
     } catch (error) {
       handleApiError(error);
@@ -905,19 +905,19 @@ const Installments = () => {
 
     while (hasMorePages) {
       const pageData = await getLoanById(loanId, currentPage, limit);
-      
+
       if (currentPage === 1) {
         loanInfo = pageData;
       }
-      
+
       if (Array.isArray(pageData?.repayments) && pageData.repayments.length > 0) {
         allRepayments.push(...pageData.repayments);
-        
-        const totalPages = pageData?.pagination?.totalPages || 
+
+        const totalPages = pageData?.pagination?.totalPages ||
           (pageData?.pagination?.totalRepayments && limit
             ? Math.ceil(pageData.pagination.totalRepayments / limit)
             : 1);
-        
+
         hasMorePages = currentPage < totalPages;
         currentPage++;
       } else {
@@ -935,13 +935,13 @@ const Installments = () => {
     try {
       setIsExporting(true);
       notifySuccess("جاري جلب جميع البيانات...");
-      
+
       const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
-      
+
       const sortedAllRepayments = [...allRepayments].sort((a, b) => {
         return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
       });
-      
+
       await exportRepaymentsToPDF(sortedAllRepayments, allLoanData);
       notifySuccess("تم تصدير تقرير PDF بنجاح");
     } catch (error) {
@@ -956,13 +956,13 @@ const Installments = () => {
     try {
       setIsExporting(true);
       notifySuccess("جاري جلب جميع البيانات...");
-      
+
       const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
-      
+
       const sortedAllRepayments = [...allRepayments].sort((a, b) => {
         return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
       });
-      
+
       await exportRepaymentsToExcel(sortedAllRepayments, allLoanData);
       notifySuccess("تم تصدير تقرير Excel بنجاح");
     } catch (error) {
@@ -980,8 +980,8 @@ const Installments = () => {
 
     const effectiveStatus =
       status === "PENDING" &&
-      installment.attachments &&
-      installment.attachments.length > 0
+        installment.attachments &&
+        installment.attachments.length > 0
         ? "PENDING_REVIEW"
         : status;
 
@@ -1012,8 +1012,8 @@ const Installments = () => {
 
     const effectiveStatus =
       status === "PENDING" &&
-      installment.attachments &&
-      installment.attachments.length > 0
+        installment.attachments &&
+        installment.attachments.length > 0
         ? "PENDING_REVIEW"
         : status;
 
@@ -1127,16 +1127,16 @@ const Installments = () => {
                   activeInstallmentId === installment.id
                     ? "action.selected"
                     : hasPendingDocuments(installment)
-                    ? "action.selected"
-                    : "inherit",
+                      ? "action.selected"
+                      : "inherit",
                 cursor: "pointer",
                 "&:hover": {
                   backgroundColor:
                     activeInstallmentId === installment.id
                       ? "action.hover"
                       : hasPendingDocuments(installment)
-                      ? "action.selected"
-                      : "background.default",
+                        ? "action.selected"
+                        : "background.default",
                 },
               }}
               onClick={() => handleRowClick(installment)}
@@ -1165,8 +1165,8 @@ const Installments = () => {
                       )}
                       {(installment.status === "PAID" ||
                         installment.status === "EARLY_PAID") && (
-                        <Checkbox checked size="small" />
-                      )}
+                          <Checkbox checked size="small" />
+                        )}
                       <Box>
                         <Typography variant="subtitle2" fontWeight="bold" color="primary">
                           دفعة #{installment.count}
@@ -1381,8 +1381,8 @@ const Installments = () => {
                 />
               </StyledTableCell>
             )}
-            <StyledTableCell align="center" style={{maxWidth: "100px"}}>
-            المدفوع
+            <StyledTableCell align="center" style={{ maxWidth: "100px" }}>
+              المدفوع
             </StyledTableCell>
             <StyledTableCell align="center">رقم الدفعة</StyledTableCell>
             <StyledTableCell align="center">
@@ -1430,15 +1430,15 @@ const Installments = () => {
                   activeInstallmentId === installment.id
                     ? "action.selected"
                     : hasPendingDocuments(installment)
-                    ? "action.selected"
-                    : "inherit",
+                      ? "action.selected"
+                      : "inherit",
                 "&:hover": {
                   backgroundColor:
                     activeInstallmentId === installment.id
                       ? "action.hover"
                       : hasPendingDocuments(installment)
-                      ? "action.selected"
-                      : "background.default",
+                        ? "action.selected"
+                        : "background.default",
                 },
               }}
             >
@@ -1452,11 +1452,11 @@ const Installments = () => {
                   />
                 </StyledTableCell>
               )}
-              <StyledTableCell align="center" style={{maxWidth: "100px"}}>
+              <StyledTableCell align="center" style={{ maxWidth: "100px" }}>
                 {(installment.status === "PAID" ||
                   installment.status === "EARLY_PAID") && (
-                  <Checkbox checked size="small" />
-                )}
+                    <Checkbox checked size="small" />
+                  )}
               </StyledTableCell>
               <StyledTableCell align="center">
                 {installment.count}
@@ -1591,9 +1591,9 @@ const Installments = () => {
                 }}
               >
                 {permissions.includes("repayments_Post") && (
-                  <StyledTableCell align="center" sx={{width: "50px"}}></StyledTableCell>
+                  <StyledTableCell align="center" sx={{ width: "50px" }}></StyledTableCell>
                 )}
-                <StyledTableCell align="center" sx={{width: "70px"}}>
+                <StyledTableCell align="center" sx={{ width: "70px" }}>
                   {paidCount > 0 && (
                     <Typography variant="body2" fontWeight="bold">
                       {paidCount}
@@ -1749,7 +1749,7 @@ const Installments = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button
                 variant="outlined"
-                startIcon={<ArrowBackIcon sx={{marginLeft: '8px'}} />}
+                startIcon={<ArrowBackIcon sx={{ marginLeft: '8px' }} />}
                 onClick={() => navigate('/loans')}
                 sx={{
                   color: "primary.main",
@@ -1815,7 +1815,7 @@ const Installments = () => {
               sx={{
                 borderColor: "success.main",
                 color: "success.main",
-                "&:hover": { 
+                "&:hover": {
                   bgcolor: "success.50",
                   borderColor: "success.dark",
                 },
@@ -1838,22 +1838,22 @@ const Installments = () => {
             {!isSettlementCompleted() &&
               sortedInstallments.some((inst) => inst.status === "PENDING") &&
               permissions.includes("repayments_Post") && (
-              <Button
-                variant="contained"
-                onClick={() => setEarlyPaymentModalOpen(true)}
-                sx={{
-                  bgcolor: "success.main",
-                  "&:hover": { bgcolor: "success.dark" },
-                  height: "36px",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  minWidth: "150px",
-                  borderRadius: 2,
-                }}
-              >
-                سداد مبكر
-              </Button>
-            )}
+                <Button
+                  variant="contained"
+                  onClick={() => setEarlyPaymentModalOpen(true)}
+                  sx={{
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
+                    height: "36px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    minWidth: "150px",
+                    borderRadius: 2,
+                  }}
+                >
+                  سداد مبكر
+                </Button>
+              )}
           </Box>
 
           <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
@@ -1937,7 +1937,7 @@ const Installments = () => {
           {/* Bulk Actions */}
           {selectedInstallments.length > 0 && permissions.includes("repayments_Post") && (
             <Paper sx={{ p: 1.5, mb: 2, borderRadius: 2, bgcolor: "background.paper" }}>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{gap: 1.5}}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ gap: 1.5 }}>
                 <Typography variant="body2" color="text.secondary">
                   تم اختيار {selectedInstallments.length} دفعة
                 </Typography>
@@ -1947,22 +1947,22 @@ const Installments = () => {
                     const installment = sortedInstallments.find(inst => inst.id === id);
                     return installment && (installment.status === "PAID" || installment.status === "EARLY_PAID" || installment.status === "COMPLETED");
                   }) && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<ApproveIcon sx={{ marginLeft: "6px" }} />}
-                      onClick={handleBulkApprove}
-                      disabled={isBulkOperationLoading}
-                      sx={{
-                        bgcolor: "success.main",
-                        "&:hover": { bgcolor: "success.dark" },
-                        height: "32px",
-                        fontSize: "13px",
-                      }}
-                    >
-                      إنشاء إيصال سداد مجمع
-                    </Button>
-                  )}
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<ApproveIcon sx={{ marginLeft: "6px" }} />}
+                        onClick={handleBulkApprove}
+                        disabled={isBulkOperationLoading}
+                        sx={{
+                          bgcolor: "success.main",
+                          "&:hover": { bgcolor: "success.dark" },
+                          height: "32px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        إنشاء إيصال سداد مجمع
+                      </Button>
+                    )}
                   <Button
                     variant="outlined"
                     size="small"
@@ -2115,7 +2115,7 @@ const Installments = () => {
                         )}
 
                       {/* Display payment proof */}
-                      {selectedInstallment?.PaymentProof && (
+                      {/* {selectedInstallment?.PaymentProof && (
                         <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
                           <Typography
                             variant="body2"
@@ -2170,7 +2170,65 @@ const Installments = () => {
                             </IconButton>
                           </Box>
                         </Box>
+                      )} */}
+
+                      {/* Display payment proofs */}
+                      {selectedInstallment?.RepaymentPayment?.length > 0 && (
+                        <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
+                          <Typography variant="body2" fontWeight="bold" gutterBottom>
+                            إيصالات الدفع:
+                          </Typography>
+
+                          {selectedInstallment.RepaymentPayment.map((payment, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                cursor: "pointer",
+                                "&:hover": { bgcolor: "action.hover" },
+                                p: 1,
+                                borderRadius: 1,
+                              }}
+                              onClick={() => {
+                                window.open(payment.proofUrl, "_blank");
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ flex: 1 }}>
+                                {extractFileName(payment.proofUrl)}
+                              </Typography>
+
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  downloadFile(
+                                    payment.proofUrl,
+                                    extractFileName(payment.proofUrl)
+                                  );
+                                }}
+                              >
+                                <Download />
+                              </IconButton>
+
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShareFile(
+                                    payment.proofUrl,
+                                    extractFileName(payment.proofUrl)
+                                  );
+                                }}
+                              >
+                                <ShareIcon />
+                              </IconButton>
+                            </Box>
+                          ))}
+                        </Box>
                       )}
+
                     </Box>
                   ) : (
                     <Alert severity="info" sx={{ mt: 2 }}>
@@ -2248,185 +2306,243 @@ const Installments = () => {
               flexShrink: 0,
             }}
           >
-          <Box sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight="bold" mb={3}>
-              خطوات المراجعة
-            </Typography>
+            <Box sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" mb={3}>
+                خطوات المراجعة
+              </Typography>
 
-            <Stepper
-              orientation="vertical"
-              activeStep={activeStep}
-              sx={{ mb: 3 }}
-            >
-              {steps.map((label, index) => (
-                <Step key={index}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+              <Stepper
+                orientation="vertical"
+                activeStep={activeStep}
+                sx={{ mb: 3 }}
+              >
+                {steps.map((label, index) => (
+                  <Step key={index}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
 
-            <Divider sx={{ my: 3 }} />
+              <Divider sx={{ my: 3 }} />
 
-            {activeInstallmentId ? (
-              <Box>
-                <Typography variant="body2" color="text.secondary" mb={1}>
-                  الدفعة المحددة: #{selectedInstallment?.count}
-                </Typography>
-
-                {selectedInstallment && (
-                  <Typography variant="body2" color="text.secondary" mb={2}>
-                    المبلغ: {selectedInstallment.amount?.toFixed(2)}
+              {activeInstallmentId ? (
+                <Box>
+                  <Typography variant="body2" color="text.secondary" mb={1}>
+                    الدفعة المحددة: #{selectedInstallment?.count}
                   </Typography>
-                )}
 
-                {activeStep === 0 && (
-                  <Alert severity="info" sx={{ mb: 2, ml: 2 }}>
-                    في انتظار رفع الإيصال من العميل
-                  </Alert>
-                )}
-
-                {activeStep === 1 && (
-                  <Alert severity="warning" sx={{ mb: 2, ml: 2 }}>
-                    جاري مراجعة الإيصال المرفوع
-                  </Alert>
-                )}
-
-                {activeStep === 2 && (
-                  <Alert severity="success" sx={{ mb: 2, ml: 2 }}>
-                    تم إتمام العملية بنجاح
-                  </Alert>
-                )}
-
-                {/* Display files if they exist */}
-                {hasFiles(selectedInstallment) ? (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      الملفات المرفوعة:
+                  {selectedInstallment && (
+                    <Typography variant="body2" color="text.secondary" mb={2}>
+                      المبلغ: {selectedInstallment.amount?.toFixed(2)}
                     </Typography>
+                  )}
 
-                    {/* Display attachments */}
-                    {selectedInstallment?.attachments &&
-                      selectedInstallment.attachments.length > 0 && (
-                        <Box
-                          sx={{
-                            mb: 2,
-                            p: 2,
-                            bgcolor: "background.paper",
-                            borderRadius: 1,
-                          }}
-                        >
+                  {activeStep === 0 && (
+                    <Alert severity="info" sx={{ mb: 2, ml: 2 }}>
+                      في انتظار رفع الإيصال من العميل
+                    </Alert>
+                  )}
+
+                  {activeStep === 1 && (
+                    <Alert severity="warning" sx={{ mb: 2, ml: 2 }}>
+                      جاري مراجعة الإيصال المرفوع
+                    </Alert>
+                  )}
+
+                  {activeStep === 2 && (
+                    <Alert severity="success" sx={{ mb: 2, ml: 2 }}>
+                      تم إتمام العملية بنجاح
+                    </Alert>
+                  )}
+
+                  {/* Display files if they exist */}
+                  {hasFiles(selectedInstallment) ? (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        الملفات المرفوعة:
+                      </Typography>
+
+                      {/* Display attachments */}
+                      {selectedInstallment?.attachments &&
+                        selectedInstallment.attachments.length > 0 && (
+                          <Box
+                            sx={{
+                              mb: 2,
+                              p: 2,
+                              bgcolor: "background.paper",
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight="bold"
+                              gutterBottom
+                            >
+                              المستندات:
+                            </Typography>
+                            {selectedInstallment.attachments.map(
+                              (attachment, index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    cursor: "pointer",
+                                    "&:hover": { bgcolor: "action.hover" },
+                                    p: 1,
+                                    borderRadius: 1,
+                                    mb: 1,
+                                  }}
+                                  onClick={() => {
+                                    window.open(attachment, "_blank");
+                                  }}
+                                >
+                                  <Typography variant="body2" sx={{ flex: 1 }}>
+                                    {extractFileName(attachment)}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      downloadFile(attachment, extractFileName(attachment));
+                                    }}
+                                  >
+                                    <Download />
+                                  </IconButton>
+                                </Box>
+                              )
+                            )}
+                          </Box>
+                        )}
+
+                      {/* Display payment proof */}
+                      {/* {selectedInstallment?.PaymentProof && (
+                        <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
                           <Typography
                             variant="body2"
                             fontWeight="bold"
                             gutterBottom
                           >
-                            المستندات:
+                            إيصال الدفع:
                           </Typography>
-                          {selectedInstallment.attachments.map(
-                            (attachment, index) => (
-                              <Box
-                                key={index}
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                  cursor: "pointer",
-                                  "&:hover": { bgcolor: "action.hover" },
-                                  p: 1,
-                                  borderRadius: 1,
-                                  mb: 1,
-                                }}
-                                onClick={() => {
-                                  window.open(attachment, "_blank");
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              cursor: "pointer",
+                              "&:hover": { bgcolor: "action.hover" },
+                              p: 1,
+                              borderRadius: 1,
+                            }}
+                            onClick={() => {
+                              window.open(
+                                selectedInstallment.PaymentProof,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ flex: 1 }}>
+                              {extractFileName(selectedInstallment.PaymentProof)}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadFile(
+                                  selectedInstallment.PaymentProof,
+                                  extractFileName(selectedInstallment.PaymentProof)
+                                );
+                              }}
+                            >
+                              <Download />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareFile(
+                                  selectedInstallment.PaymentProof,
+                                  extractFileName(selectedInstallment.PaymentProof)
+                                );
+                              }}
+                            >
+                              <ShareIcon />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      )} */}
+
+                      {/* Display payment proofs */}
+                      {selectedInstallment?.RepaymentPayment?.length > 0 && (
+                        <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
+                          <Typography variant="body2" fontWeight="bold" gutterBottom>
+                            إيصالات الدفع:
+                          </Typography>
+
+                          {selectedInstallment.RepaymentPayment.map((payment, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                cursor: "pointer",
+                                "&:hover": { bgcolor: "action.hover" },
+                                p: 1,
+                                borderRadius: 1,
+                              }}
+                              onClick={() => {
+                                window.open(payment.proofUrl, "_blank");
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ flex: 1 }}>
+                                {extractFileName(payment.proofUrl)}
+                              </Typography>
+
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  downloadFile(
+                                    payment.proofUrl,
+                                    extractFileName(payment.proofUrl)
+                                  );
                                 }}
                               >
-                                <Typography variant="body2" sx={{ flex: 1 }}>
-                                  {extractFileName(attachment)}
-                                </Typography>
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    downloadFile(attachment, extractFileName(attachment));
-                                  }}
-                                >
-                                  <Download />
-                                </IconButton>
-                              </Box>
-                            )
-                          )}
+                                <Download />
+                              </IconButton>
+
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShareFile(
+                                    payment.proofUrl,
+                                    extractFileName(payment.proofUrl)
+                                  );
+                                }}
+                              >
+                                <ShareIcon />
+                              </IconButton>
+                            </Box>
+                          ))}
                         </Box>
                       )}
 
-                    {/* Display payment proof */}
-                    {selectedInstallment?.PaymentProof && (
-                      <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight="bold"
-                          gutterBottom
-                        >
-                          إيصال الدفع:
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            cursor: "pointer",
-                            "&:hover": { bgcolor: "action.hover" },
-                            p: 1,
-                            borderRadius: 1,
-                          }}
-                          onClick={() => {
-                            window.open(
-                              selectedInstallment.PaymentProof,
-                              "_blank"
-                            );
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ flex: 1 }}>
-                            {extractFileName(selectedInstallment.PaymentProof)}
-                          </Typography>
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              downloadFile(
-                                selectedInstallment.PaymentProof,
-                                extractFileName(selectedInstallment.PaymentProof)
-                              );
-                            }}
-                          >
-                            <Download />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShareFile(
-                                selectedInstallment.PaymentProof,
-                                extractFileName(selectedInstallment.PaymentProof)
-                              );
-                            }}
-                          >
-                            <ShareIcon />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                ) : (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    هذه الدفعة لا يحتوي على أي ملفات
-                  </Alert>
-                )}
-              </Box>
-            ) : (
-              <Alert severity="info">اختر دفعة لعرض التفاصيل</Alert>
-            )}
+                    </Box>
+                  ) : (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                      هذه الدفعة لا يحتوي على أي ملفات
+                    </Alert>
+                  )}
+                </Box>
+              ) : (
+                <Alert severity="info">اختر دفعة لعرض التفاصيل</Alert>
+              )}
+            </Box>
           </Box>
-        </Box>
         )}
 
         {/* رسالة التسوية المكتملة للشاشات الكبيرة */}
@@ -2588,21 +2704,21 @@ const Installments = () => {
         autoGenerate={false}
       />
 
-<InstallmentSettlementPreview
-  open={settlementModalOpen}
-  onClose={() => {
-    setSettlementModalOpen(false);
-    setSettlementManuallyClosed(true);
-  }}
-  settlementHtml={settlementHtml}
-  onSaveSettlement={handleSaveSettlement}
-  loading={isGeneratingSettlement}
-  clientName={loanData?.client?.name}
-  installmentAmount={loanData?.totalAmount || 0}
-  installmentNumber={
-    sortedInstallments[sortedInstallments.length - 1]?.count || ""
-  }
-/>
+      <InstallmentSettlementPreview
+        open={settlementModalOpen}
+        onClose={() => {
+          setSettlementModalOpen(false);
+          setSettlementManuallyClosed(true);
+        }}
+        settlementHtml={settlementHtml}
+        onSaveSettlement={handleSaveSettlement}
+        loading={isGeneratingSettlement}
+        clientName={loanData?.client?.name}
+        installmentAmount={loanData?.totalAmount || 0}
+        installmentNumber={
+          sortedInstallments[sortedInstallments.length - 1]?.count || ""
+        }
+      />
       <DocumentsModal
         open={documentsModalOpen}
         onClose={() => setDocumentsModalOpen(false)}
