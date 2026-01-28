@@ -23,6 +23,9 @@ import {
   Stack,
   Button,
   Pagination,
+  Autocomplete,
+  TextField,
+  IconButton,
 } from "@mui/material";
 import {
   AccountBalance,
@@ -31,6 +34,7 @@ import {
   PictureAsPdf,
   TableChart,
   CheckCircle,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
@@ -60,10 +64,13 @@ import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useTheme } from '../../theme/ThemeContext';
 
-const getBankAccountData = async (accountType = 'bank', month = null, page = 1, limit = 20) => {
+const getBankAccountData = async (accountType = 'bank', month = null, year = null, page = 1, limit = 20) => {
   const params = new URLSearchParams();
   if (month) {
     params.append('month', month);
+  }
+  if (year) {
+    params.append('year', year);
   }
   params.append('limit', limit.toString());
 
@@ -78,9 +85,17 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 export default function Treasury() {
   const [tab, setTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('');
+  
+  // تعيين القيم الافتراضية للشهر والسنة الحالية
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1; // getMonth() يعيد 0-11
+  
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
+  const [showFilterAlert, setShowFilterAlert] = useState(true);
   const { isDarkMode } = useTheme();
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -89,9 +104,14 @@ export default function Treasury() {
 
   const { permissions } = usePermissions();
 
+  // تجهيز قيمة month لإرسالها للـ API
+  const monthParam = selectedYear && selectedMonth 
+    ? `${selectedYear}-${String(selectedMonth).padStart(2, '0')}` 
+    : null;
+
   const { data: bankData, isLoading, error } = useQuery({
-    queryKey: ["bank-account", tab, selectedMonth, page, limit],
-    queryFn: () => getBankAccountData(tab === 1 ? 'capital' : 'bank', selectedMonth, page, limit),
+    queryKey: ["bank-account", tab, monthParam, selectedYear, page, limit],
+    queryFn: () => getBankAccountData(tab === 1 ? 'capital' : 'bank', monthParam, selectedYear, page, limit),
     retry: 1,
     enabled: tab === 0 || tab === 1 || tab === 2,
   });
@@ -152,8 +172,8 @@ export default function Treasury() {
   const getCurrentJournals = () => {
     if (!currentData?.journalsByMonth) return [];
 
-    if (selectedMonth && currentData.journalsByMonth[selectedMonth]) {
-      return currentData.journalsByMonth[selectedMonth].entries;
+    if (monthParam && currentData.journalsByMonth[monthParam]) {
+      return currentData.journalsByMonth[monthParam].entries;
     } else {
       return Object.values(currentData.journalsByMonth)
         .flatMap(month => month.entries)
@@ -175,20 +195,35 @@ export default function Treasury() {
     totalPages: 1,
   };
 
-  const availableMonths = currentData?.journalsByMonth ?
-    Object.keys(currentData.journalsByMonth)
-        .sort((a, b) => b.localeCompare(a))
-      .filter(month => {
-        const monthData = currentData.journalsByMonth[month];
-        return monthData && monthData.entries && monthData.entries.length > 0;
-      }) : [];
-
   const currentTotalTransactions = pagination.totalJournals || totalTransactions;
 
   const totalBalance = availableBalance + totalCredit;
   const balancePercentage = totalBalance > 0 ? (availableBalance / totalBalance) * 100 : 0;
   const circumference = 2 * Math.PI * 45;
   const strokeDasharray = `${(balancePercentage / 100) * circumference} ${circumference}`;
+
+  // قائمة الأشهر
+  const allMonths = [
+    { value: 1, label: 'يناير' },
+    { value: 2, label: 'فبراير' },
+    { value: 3, label: 'مارس' },
+    { value: 4, label: 'أبريل' },
+    { value: 5, label: 'مايو' },
+    { value: 6, label: 'يونيو' },
+    { value: 7, label: 'يوليو' },
+    { value: 8, label: 'أغسطس' },
+    { value: 9, label: 'سبتمبر' },
+    { value: 10, label: 'أكتوبر' },
+    { value: 11, label: 'نوفمبر' },
+    { value: 12, label: 'ديسمبر' },
+  ];
+
+  // إنشاء قائمة السنوات (من 2020 إلى السنة الحالية + 1)
+  const maxYear = new Date().getFullYear();
+  const allYears = [];
+  for (let year = 2020; year <= maxYear + 1; year++) {
+    allYears.push({ value: year, label: year.toString() });
+  }
 
   function getMonthName(monthKey) {
     try {
@@ -212,8 +247,13 @@ export default function Treasury() {
     setTab(newValue);
   };
 
-  const handleMonthChange = (event) => {
-    setSelectedMonth(event.target.value);
+  const handleMonthChange = (event, newValue) => {
+    setSelectedMonth(newValue?.value || null);
+    setPage(1);
+  };
+
+  const handleYearChange = (event, newValue) => {
+    setSelectedYear(newValue?.value || null);
     setPage(1);
   };
 
@@ -602,6 +642,113 @@ export default function Treasury() {
             <>
               {tab === 0 && (
                 <Box>
+                  {/* الفلتر في أعلى الصفحة */}
+                  <Paper sx={{
+                    p: 2,
+                    mb: 3,
+                    borderRadius: 2,
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                    bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
+                  }}>
+                    {showFilterAlert && (
+                      <Alert 
+                        severity="info" 
+                        sx={{ 
+                          mb: 2,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start'
+                        }}
+                        action={
+                          <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => setShowFilterAlert(false)}
+                          >
+                            <CloseIcon fontSize="inherit" />
+                          </IconButton>
+                        }
+                      >
+                        <Typography variant="body2" fontWeight="bold" gutterBottom>
+                          كيفية استخدام الفلتر:
+                        </Typography>
+                        <Typography variant="body2" component="div">
+                          • <strong>اختيار السنة فقط:</strong> يعرض جميع بيانات السنة (من يناير إلى ديسمبر)
+                          <br />
+                          • <strong>اختيار السنة + الشهر:</strong> يعرض بيانات الشهر المحدد فقط
+                          <br />
+                          • <strong>بدون اختيار:</strong> يعرض جميع البيانات من جميع السنوات
+                        </Typography>
+                      </Alert>
+                    )}
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ mb: isSmallScreen ? 1 : 0 }}>
+                          {selectedYear && selectedMonth 
+                            ? `عرض بيانات ${allMonths.find(m => m.value === selectedMonth)?.label} ${selectedYear}` 
+                            : selectedYear 
+                            ? `عرض بيانات سنة ${selectedYear}`
+                            : 'عرض جميع البيانات'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={4.5}>
+                        <Autocomplete
+                          value={allYears.find(y => y.value === selectedYear) || null}
+                          onChange={handleYearChange}
+                          options={allYears}
+                          getOptionLabel={(option) => option.label}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="اختر السنة"
+                              size="small"
+                              sx={{
+                                '& .MuiInputLabel-root': {
+                                  color: isDarkMode ? 'text.secondary' : 'inherit'
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                  '& input': {
+                                    color: isDarkMode ? 'text.primary' : 'inherit'
+                                  }
+                                }
+                              }}
+                            />
+                          )}
+                          sx={{ width: '100%', minWidth: '200px' }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4.5}>
+                        <Autocomplete
+                          value={allMonths.find(m => m.value === selectedMonth) || null}
+                          onChange={handleMonthChange}
+                          options={allMonths}
+                          getOptionLabel={(option) => option.label}
+                          disabled={!selectedYear}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="اختر الشهر"
+                              size="small"
+                              placeholder={!selectedYear ? "اختر السنة أولاً" : "اختر الشهر"}
+                              sx={{
+                                '& .MuiInputLabel-root': {
+                                  color: isDarkMode ? 'text.secondary' : 'inherit'
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                  '& input': {
+                                    color: isDarkMode ? 'text.primary' : 'inherit'
+                                  }
+                                }
+                              }}
+                            />
+                          )}
+                          sx={{ width: '100%', minWidth: '200px' }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
+
                   <Box sx={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -959,48 +1106,6 @@ export default function Treasury() {
                       </Box>
                     )}
                   </Box>
-
-                  {/* الرسومات الخاصة بالصندوق العام فقط */}
-                  {availableMonths.length > 0 && (
-                    <Paper sx={{
-                      p: 2,
-                      mb: 3,
-                      borderRadius: 2,
-                      boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                      bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
-                    }}>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={2}>
-                          <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                            {selectedMonth ? `عرض بيانات ${getMonthName(selectedMonth)}` : 'عرض جميع البيانات'}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={8}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel sx={{ color: isDarkMode ? 'text.secondary' : 'inherit' }}>تصفية حسب الشهر</InputLabel>
-                            <Select
-                              value={selectedMonth}
-                              onChange={handleMonthChange}
-                              label="تصفية حسب الشهر"
-                              sx={{
-                                minWidth: 200,
-                                '& .MuiSelect-select': {
-                                  color: isDarkMode ? 'text.primary' : 'inherit'
-                                }
-                              }}
-                            >
-                              <MenuItem value="">جميع الأشهر</MenuItem>
-                              {availableMonths.map(month => (
-                                <MenuItem key={month} value={month}>
-                                  {getMonthName(month)}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  )}
 
                   {/* رسمة رصيد الصندوق الدائرية */}
                   {totalBalance > 0 && (
@@ -1544,6 +1649,118 @@ export default function Treasury() {
 
               {tab === 2 && (
                 <Box>
+                  {/* الفلتر في أعلى سجل القيود */}
+                  <Paper sx={{
+                    p: 2,
+                    mb: 3,
+                    borderRadius: 2,
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                    bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
+                  }}>
+                    {showFilterAlert && (
+                      <Alert 
+                        severity="info" 
+                        sx={{ 
+                          mb: 2,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start'
+                        }}
+                        action={
+                          <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => setShowFilterAlert(false)}
+                          >
+                            <CloseIcon fontSize="inherit" />
+                          </IconButton>
+                        }
+                      >
+                        <Typography variant="body2" fontWeight="bold" gutterBottom>
+                          كيفية استخدام الفلتر:
+                        </Typography>
+                        <Typography variant="body2" component="div">
+                          • <strong>اختيار السنة فقط:</strong> يعرض جميع بيانات السنة (من يناير إلى ديسمبر)
+                          <br />
+                          • <strong>اختيار السنة + الشهر:</strong> يعرض بيانات الشهر المحدد فقط
+                          <br />
+                          • <strong>بدون اختيار:</strong> يعرض جميع البيانات من جميع السنوات
+                        </Typography>
+                      </Alert>
+                    )}
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ mb: isSmallScreen ? 1 : 0 }}>
+                          {selectedYear && selectedMonth 
+                            ? `عرض بيانات ${allMonths.find(m => m.value === selectedMonth)?.label} ${selectedYear}` 
+                            : selectedYear 
+                            ? `عرض بيانات سنة ${selectedYear}`
+                            : 'عرض جميع البيانات'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Autocomplete
+                          value={allYears.find(y => y.value === selectedYear) || null}
+                          onChange={handleYearChange}
+                          options={allYears}
+                          getOptionLabel={(option) => option.label}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="اختر السنة"
+                              size="small"
+                              sx={{
+                                '& .MuiInputLabel-root': {
+                                  color: isDarkMode ? 'text.secondary' : 'inherit'
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                  '& input': {
+                                    color: isDarkMode ? 'text.primary' : 'inherit'
+                                  }
+                                }
+                              }}
+                            />
+                          )}
+                          sx={{ width: '100%', minWidth: '200px' }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Autocomplete
+                          value={allMonths.find(m => m.value === selectedMonth) || null}
+                          onChange={handleMonthChange}
+                          options={allMonths}
+                          getOptionLabel={(option) => option.label}
+                          disabled={!selectedYear}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="اختر الشهر"
+                              size="small"
+                              placeholder={!selectedYear ? "اختر السنة أولاً" : "اختر الشهر"}
+                              sx={{
+                                '& .MuiInputLabel-root': {
+                                  color: isDarkMode ? 'text.secondary' : 'inherit'
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                  '& input': {
+                                    color: isDarkMode ? 'text.primary' : 'inherit'
+                                  }
+                                }
+                              }}
+                            />
+                          )}
+                          sx={{ width: '100%', minWidth: '200px' }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={1}>
+                        <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ textAlign: 'center' }}>
+                          {currentTotalTransactions} قيد
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+
                   <Paper sx={{
                     borderRadius: 2,
                     boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
@@ -1564,44 +1781,11 @@ export default function Treasury() {
                         <Typography variant={isSmallScreen ? "subtitle1" : "h6"} fontWeight="bold" color="primary">
                           سجل القيود المحاسبية
                         </Typography>
-                        {selectedMonth && (
+                        {monthParam && (
                           <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
-                            عرض بيانات شهر {getMonthName(selectedMonth)}
+                            عرض بيانات شهر {getMonthName(monthParam)}
                           </Typography>
                         )}
-                      </Box>
-
-                      <Box sx={{
-                        display: 'flex',
-                        flexDirection: isSmallScreen ? 'column' : 'row',
-                        alignItems: isSmallScreen ? 'stretch' : 'center',
-                        gap: 2,
-                        width: isSmallScreen ? '100%' : 'auto'
-                      }}>
-                        <FormControl size="small" sx={{ minWidth: isSmallScreen ? '100%' : 250 }}>
-                          <InputLabel sx={{ color: isDarkMode ? 'text.secondary' : 'inherit' }}>الشهر</InputLabel>
-                          <Select
-                            value={selectedMonth}
-                            onChange={handleMonthChange}
-                            label="الشهر"
-                            sx={{
-                              '& .MuiSelect-select': {
-                                color: isDarkMode ? 'text.primary' : 'inherit'
-                              }
-                            }}
-                          >
-                            <MenuItem value="">جميع الأشهر</MenuItem>
-                            {availableMonths.map(month => (
-                              <MenuItem key={month} value={month}>
-                                {getMonthName(month)}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-                        <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ alignSelf: isSmallScreen ? 'center' : 'auto' }}>
-                          إجمالي {currentTotalTransactions} قيد
-                        </Typography>
                       </Box>
                     </Box>
 

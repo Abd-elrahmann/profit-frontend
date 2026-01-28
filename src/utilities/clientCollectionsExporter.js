@@ -144,7 +144,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         else if (col.id === 'client') baseWidths[col.id] = 32;
         else if (col.id === 'address') baseWidths[col.id] = 28;
         else if (col.id === 'note') baseWidths[col.id] = 55;
-        else baseWidths[col.id] = 16;
+        else baseWidths[col.id] = 22; // زيادة من 16 إلى 22 لمنع تقسيم النص
       });
       
       const usedWidth = columnsToExport.reduce((sum, col) => sum + baseWidths[col.id], 0);
@@ -209,7 +209,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           lineWidth: 0.1,
           halign: 'right',
           valign: 'middle',
-          overflow: 'linebreak',
+          overflow: 'ellipsize',
           direction: 'rtl'
         },
         headStyles: {
@@ -220,7 +220,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           halign: 'right',
           valign: 'middle',
           cellPadding: 3,
-          overflow: 'hidden',
+          overflow: 'ellipsize',
           direction: 'rtl'
         },
         bodyStyles: {
@@ -455,7 +455,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         else if (col.id === 'client') baseWidths[col.id] = 32;
         else if (col.id === 'address') baseWidths[col.id] = 28;
         else if (col.id === 'note') baseWidths[col.id] = 55;
-        else baseWidths[col.id] = 16;
+        else baseWidths[col.id] = 22; // زيادة من 16 إلى 22 لمنع تقسيم النص
       });
       
       const usedWidth = columnsToExport.reduce((sum, col) => sum + baseWidths[col.id], 0);
@@ -520,7 +520,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           lineWidth: 0.1,
           halign: 'right',
           valign: 'middle',
-          overflow: 'linebreak',
+          overflow: 'ellipsize',
           direction: 'rtl'
         },
         headStyles: {
@@ -531,6 +531,7 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           halign: 'right',
           valign: 'middle',
           cellPadding: 3,
+          overflow: 'ellipsize',
           direction: 'rtl'
         },
         bodyStyles: {

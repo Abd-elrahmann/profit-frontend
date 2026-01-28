@@ -394,7 +394,16 @@ const Installments = () => {
     try {
       setConfirmedDiscount({ discount, notes });
       setDiscountModalOpen(false);
-      setSelectedProofInstallment(discountInstallment);
+      
+      // إذا كانت الدفعة مدفوعة جزئياً، استخدم المبلغ المتبقي بدلاً من المبلغ الأصلي
+      const installmentDataForProof = {
+        ...discountInstallment,
+        amount: discountInstallment.status === 'PARTIAL_PAID' 
+          ? discountInstallment.remaining 
+          : discountInstallment.amount
+      };
+      
+      setSelectedProofInstallment(installmentDataForProof);
 
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
@@ -404,7 +413,7 @@ const Installments = () => {
       const proofHtml = await paymentProofGeneratorRef.current.generateContract(
         false,
         {
-          installmentData: discountInstallment,
+          installmentData: installmentDataForProof,
           loanData,
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
@@ -444,6 +453,7 @@ const Installments = () => {
 
       notifySuccess("تم حفظ إيصال السداد بنجاح");
 
+      // استخدم المبلغ من selectedProofInstallment الذي تم تعديله في handleDiscountConfirm
       await approveRepayment(
         selectedProofInstallment.id,
         selectedProofInstallment.amount,
