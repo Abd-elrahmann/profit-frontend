@@ -10,14 +10,13 @@ import {
   Box,
   Alert,
 } from '@mui/material';
-import {CircularProgress} from '@mui/material';
+import { CircularProgress } from '@mui/material';
 
 const DiscountModal = ({
   open,
   onClose,
   onConfirm,
   installmentAmount = 0,
-  installmentInterest = 0,
   loading = false,
   title = "تطبيق خصم على الدفعة"
 }) => {
@@ -33,8 +32,8 @@ const DiscountModal = ({
       return;
     }
 
-    if (discountValue > installmentInterest) {
-      setError(`الخصم لا يمكن أن يتجاوز مبلغ الفائدة (${installmentInterest.toLocaleString()})`);
+    if (discountValue > installmentAmount) {
+      setError(`الخصم لا يمكن أن يتجاوز مبلغ الدفعة (${installmentAmount.toLocaleString()})`);
       return;
     }
 
@@ -76,14 +75,11 @@ const DiscountModal = ({
           <Typography variant="body1" gutterBottom>
             مبلغ الدفعة: <strong>{installmentAmount.toLocaleString()}</strong>
           </Typography>
-          <Typography variant="body1" gutterBottom>
-            الفائدة: <strong>{installmentInterest.toLocaleString()}</strong>
-          </Typography>
         </Box>
 
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            ملاحظة: مبلغ الخصم يجب ألا يتعدى مبلغ الفائدة لهذه الدفعة ({installmentInterest.toLocaleString()})
+            ملاحظة: مبلغ الخصم يجب ألا يتعدى مبلغ الدفعة ({installmentAmount.toLocaleString()})
           </Typography>
         </Alert>
 
@@ -125,7 +121,7 @@ const DiscountModal = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, gap: 1, display: 'flex', justifyContent: 'space-between' ,flexDirection: 'row-reverse'}}>
+      <DialogActions sx={{ p: 3, gap: 1, display: 'flex', justifyContent: 'space-between', flexDirection: 'row-reverse' }}>
         <Button
           onClick={handleClose}
           disabled={loading}

@@ -2797,7 +2797,6 @@ const Installments = () => {
         onClose={() => setDiscountModalOpen(false)}
         onConfirm={handleDiscountConfirm}
         installmentAmount={discountInstallment?.amount || 0}
-        installmentInterest={discountInstallment?.interestAmount || 0}
         loading={false}
       />
     </Box>
