@@ -175,9 +175,7 @@ const AppLayout = () => {
         
         <Route 
           path="/" 
-          element={
-            <DefaultRedirectRoute />
-          } 
+          element={<Navigate to="/login" replace />} 
         />
 
         <Route path="/installments/:loanId" element={<Installments />} />
@@ -247,26 +245,6 @@ const ProtectedRoute = ({ children, route }) => {
   }
 
   return children;
-};
-
-const DefaultRedirectRoute = () => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { permissions, loading } = usePermissions();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (authLoading || loading) return;
-
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    const firstPage = getFirstAccessiblePage(permissions);
-    navigate(firstPage, { replace: true });
-  }, [isAuthenticated, authLoading, permissions, loading, navigate]);
-
-  return null;
 };
 
 const PublicRoute = ({ children }) => {

@@ -75,8 +75,8 @@ const Navbar = ({ onMenuToggle }) => {
         zIndex: (theme) => theme.zIndex.drawer + 1,
         background: isDarkMode
           ? scrolled
-            ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
-            : 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%)'
+            ? 'linear-gradient(135deg, #2a2a3e 0%, #26263e 100%)'
+            : 'linear-gradient(135deg, #1f1f2e 0%, #2a2a3e 100%)'
           : scrolled
           ? 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
           : '#ffffff',
@@ -145,12 +145,7 @@ const Navbar = ({ onMenuToggle }) => {
                 variant="h6"
                 sx={{
                   fontWeight: 800,
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  color: (theme) => theme.palette.primary.main,
                   fontSize: '1.3rem',
                   letterSpacing: '-0.5px',
                 }}
