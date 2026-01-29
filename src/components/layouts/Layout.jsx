@@ -95,7 +95,8 @@ const Layout = ({ children }) => {
   const isAuthPage = location.pathname === '/login' 
     || location.pathname === '/register'
     || location.pathname === '/forgot-password'
-    || location.pathname === '/reset-password';
+    || location.pathname === '/reset-password'
+    || location.pathname === '/';
 
   const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt');
   const isCheckConnectionPage = location.pathname === '/check-connection';
