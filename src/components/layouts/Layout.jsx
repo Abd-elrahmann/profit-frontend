@@ -6,9 +6,11 @@ import Api from '../../config/Api';
 import { notifyError, notifySuccess } from '../../utilities/toastify';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import { useAuth } from '../Contexts/AuthContext';
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const { isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -100,6 +102,22 @@ const Layout = ({ children }) => {
 
   const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt');
   const isCheckConnectionPage = location.pathname === '/check-connection';
+
+  // أثناء تحميل حالة الدخول لا نعرض النافبار أو السايدبار
+  if (authLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (isAuthPage || isPaymentReceiptPage || isCheckConnectionPage) {
     return <>{children}</>;
