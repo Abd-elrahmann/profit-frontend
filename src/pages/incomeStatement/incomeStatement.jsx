@@ -805,7 +805,7 @@ const IncomeStatement = () => {
                             <TableCell sx={{ textAlign: 'center', fontWeight: 500 }}>
                               {partner.partnerName}
                             </TableCell>
-                            <TableCell sx={{ textAlign: 'center', fontWeight: 500 }}>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.text.secondary }}>
                               {formatCapitalNumber(partner.totalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
