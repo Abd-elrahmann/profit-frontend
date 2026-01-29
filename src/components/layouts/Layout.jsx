@@ -10,9 +10,8 @@ import { useAuth } from '../Contexts/AuthContext';
 
 const Layout = ({ children }) => {
   const location = useLocation();
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -36,34 +35,7 @@ const Layout = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      // Check if user is on a protected route (not auth pages)
-      const isProtectedRoute = location.pathname !== '/login' 
-        && location.pathname !== '/register'
-        && location.pathname !== '/forgot-password'
-        && location.pathname !== '/reset-password'
-        && location.pathname !== '/check-connection'
-        && !location.pathname.startsWith('/payment-receipt');
-      
-      setIsLoggedIn(isProtectedRoute);
-    };
-
-    checkLoginStatus();
-    
-    // Listen for login/logout events
-    const handleUserLogin = () => setIsLoggedIn(true);
-    const handleAuthFailed = () => setIsLoggedIn(false);
-    
-    window.addEventListener('userLoggedIn', handleUserLogin);
-    window.addEventListener('authFailed', handleAuthFailed);
-    
-    return () => {
-      window.removeEventListener('userLoggedIn', handleUserLogin);
-      window.removeEventListener('authFailed', handleAuthFailed);
-    };
-  }, [location]);
-
+  // لم نعد نعتمد على location لتحديد حالة الدخول؛ نستخدم isAuthenticated من السياق بدلاً من ذلك
   const handleMenuToggle = () => {
     const newState = !isSidebarOpen;
     setIsSidebarOpen(newState);
@@ -132,7 +104,7 @@ const Layout = ({ children }) => {
     }}>
       <Navbar 
         onMenuToggle={handleMenuToggle} 
-        isSidebarOpen={isSidebarOpen} 
+        isSidebarOpen={isSidebarOpen}
       />
     
       <Box sx={{ 
@@ -147,19 +119,19 @@ const Layout = ({ children }) => {
           component="main" 
           sx={{ 
             flexGrow: 1,
-            p: isLoggedIn ? 3 : 0,
+            p: isAuthenticated ? 3 : 0,
             transition: 'margin-right 0.2s ease-out, width 0.2s ease-out', 
             marginRight: { 
               xs: 0, 
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? '240px' : '0' 
+              md: (isAuthenticated && isInitialized && isSidebarOpen) ? '240px' : '0' 
             },
             width: {
               xs: '100%',
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100% - 240px)' : '100%'
+              md: (isAuthenticated && isInitialized && isSidebarOpen) ? 'calc(100% - 240px)' : '100%'
             },
             maxWidth: {
               xs: '100vw',
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100vw - 240px)' : '100vw'
+              md: (isAuthenticated && isInitialized && isSidebarOpen) ? 'calc(100vw - 240px)' : '100vw'
             },
             backgroundColor: 'background.paper',
             minHeight: 'calc(100vh - 64px)',
@@ -171,7 +143,7 @@ const Layout = ({ children }) => {
         </Box>
       </Box>
       
-      {isLoggedIn && isInitialized && (
+      {isAuthenticated && isInitialized && (
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={handleSidebarClose}
@@ -179,7 +151,7 @@ const Layout = ({ children }) => {
         />
       )}
 
-      {isLoggedIn && !isAuthPage && !isPaymentReceiptPage && (
+      {isAuthenticated && !isAuthPage && !isPaymentReceiptPage && (
         <IconButton
           onClick={handleSync}
           disabled={isSyncing}
