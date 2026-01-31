@@ -85,7 +85,7 @@ const IncomeStatement = () => {
       const activePeriod = accountingPeriods.find(
         (period) => period.status === "open" || period.isActive || !period.endDate
       );
-      
+
       if (activePeriod) {
         setSelectedPeriodId(activePeriod.id);
       } else {
@@ -236,13 +236,13 @@ const IncomeStatement = () => {
         <title>قائمة الدخل - نظام المحاسبة</title>
       </Helmet>
 
-      <Box sx={{ 
+      <Box sx={{
         maxWidth: 1200,
         margin: '0 auto',
         padding: { xs: 2, md: 3, lg: 1 },
       }}>
 
-     
+
 
         <Grid container spacing={3} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
           <Grid item xs={12} md={8}>
@@ -258,26 +258,26 @@ const IncomeStatement = () => {
             >
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={2}>
-                    <Select
-                      fullWidth
-                      size="small"
-                      value={periodType}
-                      onChange={(e) => {
-                        setPeriodType(e.target.value);
-                        if (e.target.value !== "period") {
-                          setSelectedPeriodId("");
-                          setIsInitializing(false);
-                        }
-                      }}
-                      sx={{
-                        bgcolor: theme.palette.background.default,
-                        '& .MuiSelect-select': {
-                          fontWeight: 500,
-                          color: theme.palette.text.primary,
-                          textAlign: 'center'
-                        }
-                      }}
-                    >
+                  <Select
+                    fullWidth
+                    size="small"
+                    value={periodType}
+                    onChange={(e) => {
+                      setPeriodType(e.target.value);
+                      if (e.target.value !== "period") {
+                        setSelectedPeriodId("");
+                        setIsInitializing(false);
+                      }
+                    }}
+                    sx={{
+                      bgcolor: theme.palette.background.default,
+                      '& .MuiSelect-select': {
+                        fontWeight: 500,
+                        color: theme.palette.text.primary,
+                        textAlign: 'center'
+                      }
+                    }}
+                  >
                     <MenuItem value="monthly" sx={{ textAlign: 'center' }}>شهري</MenuItem>
                     <MenuItem value="yearly" sx={{ textAlign: 'center' }}>سنوي</MenuItem>
                     <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
@@ -448,58 +448,58 @@ const IncomeStatement = () => {
 
           {!isLoading && !isInitializing && !isError && incomeData && (
             <Grid item xs={12} md={3}>
-           <Stack direction="row" justifyContent="flex-end" sx={{ gap: 1 }}>
-  <Button
-    variant="outlined"
-    startIcon={<Print />}
-    onClick={handlePrint}
-    size="small"
-    sx={{
-      borderColor: '#F97316',
-      color: '#F97316',
-      fontWeight: 600,
-      '&:hover': {
-        borderColor: '#EA580C',
-        bgcolor: '#FEF3C7',
-        color: '#EA580C'
-      }
-    }}
-  >
-    طباعة
-  </Button>
+              <Stack direction="row" justifyContent="flex-end" sx={{ gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<Print />}
+                  onClick={handlePrint}
+                  size="small"
+                  sx={{
+                    borderColor: '#F97316',
+                    color: '#F97316',
+                    fontWeight: 600,
+                    '&:hover': {
+                      borderColor: '#EA580C',
+                      bgcolor: '#FEF3C7',
+                      color: '#EA580C'
+                    }
+                  }}
+                >
+                  طباعة
+                </Button>
 
-  <Button
-    variant="contained"
-    startIcon={<TableChart />}
-    onClick={handleExportExcel}
-    size="small"
-    sx={{
-      bgcolor: '#DC2626',
-      fontWeight: 600,
-      '&:hover': {
-        bgcolor: '#B91C1C'
-      }
-    }}
-  >
-    Excel
-  </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<TableChart />}
+                  onClick={handleExportExcel}
+                  size="small"
+                  sx={{
+                    bgcolor: '#DC2626',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: '#B91C1C'
+                    }
+                  }}
+                >
+                  Excel
+                </Button>
 
-  <Button
-    variant="contained"
-    startIcon={<FileUpload />}
-    onClick={handleExportPDF}
-    size="small"
-    sx={{
-      bgcolor: '#2E8B45',
-      fontWeight: 600,
-      '&:hover': {
-        bgcolor: '#257239'
-      }
-    }}
-  >
-    PDF
-  </Button>
-</Stack>
+                <Button
+                  variant="contained"
+                  startIcon={<FileUpload />}
+                  onClick={handleExportPDF}
+                  size="small"
+                  sx={{
+                    bgcolor: '#2E8B45',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: '#257239'
+                    }
+                  }}
+                >
+                  PDF
+                </Button>
+              </Stack>
 
             </Grid>
           )}
@@ -582,7 +582,7 @@ const IncomeStatement = () => {
                     </Box>
                     <Typography sx={{
                       fontSize: '3rem',
-                      color:incomeData.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main,
+                      color: incomeData.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main,
                       fontWeight: 900,
                       mb: 1
                     }}>
@@ -793,6 +793,7 @@ const IncomeStatement = () => {
                       <TableHead>
                         <TableRow sx={{ bgcolor: theme.palette.primary.main + '05' }}>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الشريك</TableCell>
+                          <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال المدفوع </TableCell>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال الأصلي</TableCell>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>رأس المال الجديد</TableCell>
                           <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>الأرباح</TableCell>
@@ -803,6 +804,9 @@ const IncomeStatement = () => {
                           <TableRow key={index} sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 500 }}>
                               {partner.partnerName}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.text.secondary }}>
+                              {formatCapitalNumber(partner.totalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
                               {formatCapitalNumber(partner.capitalAmount)}
