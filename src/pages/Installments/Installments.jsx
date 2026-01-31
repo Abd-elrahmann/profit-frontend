@@ -275,6 +275,8 @@ const Installments = () => {
   const [rejectLoading, setRejectLoading] = useState(false);
   const [earlyPaymentModalOpen, setEarlyPaymentModalOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("0");
+  const [allInstallmentsForEarlyPayment, setAllInstallmentsForEarlyPayment] = useState(null);
+  const [isLoadingAllForEarlyPayment, setIsLoadingAllForEarlyPayment] = useState(false);
   const paymentProofGeneratorRef = useRef(null);
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -383,6 +385,23 @@ const Installments = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments, settlementTemplate, settlementJustSaved, settlementManuallyClosed]);
+
+  // عند فتح مودال السداد المبكر: جلب كل الدفعات (كل الصفحات) لظهور جميع الدفعات المعلقة
+  useEffect(() => {
+    if (!earlyPaymentModalOpen || !loanId) return;
+    setIsLoadingAllForEarlyPayment(true);
+    setAllInstallmentsForEarlyPayment(null);
+    fetchAllRepayments()
+      .then(({ repayments }) => {
+        const sorted = [...(repayments || [])].sort(
+          (a, b) => a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate)
+        );
+        setAllInstallmentsForEarlyPayment(sorted);
+      })
+      .catch(() => setAllInstallmentsForEarlyPayment([]))
+      .finally(() => setIsLoadingAllForEarlyPayment(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchAllRepayments يستخدم loanId و limit من النطاق
+  }, [earlyPaymentModalOpen, loanId]);
 
   const handleApprove = (installment) => {
     setDiscountInstallment(installment);
@@ -751,7 +770,8 @@ const Installments = () => {
         return;
       }
 
-      const pendingInstallments = sortedInstallments.filter(
+      const installmentsForEarly = allInstallmentsForEarlyPayment ?? sortedInstallments;
+      const pendingInstallments = installmentsForEarly.filter(
         (inst) => inst.status === "PENDING"
       );
 
@@ -2684,8 +2704,10 @@ const Installments = () => {
         onClose={() => {
           setEarlyPaymentModalOpen(false);
           setDiscountAmount("0");
+          setAllInstallmentsForEarlyPayment(null);
         }}
-        sortedInstallments={sortedInstallments}
+        sortedInstallments={isLoadingAllForEarlyPayment ? [] : (allInstallmentsForEarlyPayment ?? sortedInstallments)}
+        isLoadingAllRepayments={isLoadingAllForEarlyPayment}
         discountAmount={discountAmount}
         onDiscountChange={(e) => setDiscountAmount(e.target.value)}
         onConfirm={handleEarlyPayment}

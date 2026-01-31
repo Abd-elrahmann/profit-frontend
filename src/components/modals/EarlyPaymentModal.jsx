@@ -10,6 +10,7 @@ import {
   Box,
   Alert,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 import dayjs from "dayjs";
 
@@ -17,6 +18,7 @@ const EarlyPaymentModal = ({
   open,
   onClose,
   sortedInstallments,
+  isLoadingAllRepayments = false,
   discountAmount,
   onDiscountChange,
   onConfirm,
@@ -24,7 +26,7 @@ const EarlyPaymentModal = ({
   const [discountError, setDiscountError] = useState("");
   const [touched, setTouched] = useState(false);
 
-  const pendingInstallments = sortedInstallments.filter((inst) => inst.status === "PENDING");
+  const pendingInstallments = (sortedInstallments || []).filter((inst) => inst.status === "PENDING");
 
   useEffect(() => {
     if (open) {
@@ -105,6 +107,14 @@ const EarlyPaymentModal = ({
           أنت على وشك إجراء سداد مبكر للدفعات المعلقة فقط
         </Typography>
 
+        {isLoadingAllRepayments ? (
+          <Box sx={{ mb: 2, p: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+            <CircularProgress size={24} />
+            <Typography variant="body2" color="text.secondary">
+              جاري تحميل جميع الدفعات المعلقة...
+            </Typography>
+          </Box>
+        ) : (
         <Box sx={{ mb: 2, p: 2, bgcolor: "background.default", borderRadius: 1 }}>
           <Typography variant="body2" fontWeight="bold" gutterBottom>
             الدفعات المعلقة (
@@ -145,6 +155,7 @@ const EarlyPaymentModal = ({
             </Typography>
           </Box>
         </Box>
+        )}
 
         <TextField
           fullWidth
@@ -211,7 +222,7 @@ const EarlyPaymentModal = ({
           onClick={handleConfirmClick}
           variant="contained"
           color="success"
-          disabled={pendingInstallments.length === 0}
+          disabled={isLoadingAllRepayments || pendingInstallments.length === 0}
           sx={{
             bgcolor: "success.main",
             "&:hover": { bgcolor: "success.dark" },
