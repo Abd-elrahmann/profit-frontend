@@ -396,11 +396,31 @@ const Installments = () => {
       setDiscountModalOpen(false);
 
       // إذا كانت الدفعة مدفوعة جزئياً، استخدم المبلغ المتبقي بدلاً من المبلغ الأصلي
+      const installmentAmount = discountInstallment.status === 'PARTIAL_PAID'
+        ? discountInstallment.remaining
+        : discountInstallment.amount;
+      const isFullDiscount = Number(discount) >= Number(installmentAmount);
+
+      // خصم كامل للدفعة: لا يُفتح سند قبض، فقط موافقة وإشعار نجاح (اشعار خصم لدفعة)
+      if (isFullDiscount) {
+        await approveRepayment(
+          discountInstallment.id,
+          installmentAmount,
+          notes?.trim() || 'اشعار خصم لدفعة',
+          discount
+        );
+        notifySuccess("تم تطبيق خصم على الدفعة بنجاح");
+        queryClient.invalidateQueries(["loan", loanId]);
+        queryClient.invalidateQueries(["repayments", loanId]);
+        queryClient.invalidateQueries(["repayment", discountInstallment.id]);
+        setDiscountInstallment(null);
+        setConfirmedDiscount({ discount: 0, notes: '' });
+        return;
+      }
+
       const installmentDataForProof = {
         ...discountInstallment,
-        amount: discountInstallment.status === 'PARTIAL_PAID'
-          ? discountInstallment.remaining
-          : discountInstallment.amount
+        amount: installmentAmount
       };
 
       setSelectedProofInstallment(installmentDataForProof);

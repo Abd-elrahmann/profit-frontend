@@ -40,7 +40,7 @@ const DiscountModal = ({
     setError('');
     onConfirm({
       discount: discountValue,
-      notes: notes.trim() || 'تم تطبيق خصم على الدفعة'
+      notes: notes.trim() || (discountValue > 0 ? 'تم تطبيق خصم على الدفعة' : 'تمت الموافقة على الدفعة')
     });
 
     setDiscount('');
@@ -55,6 +55,7 @@ const DiscountModal = ({
   };
 
   const finalAmount = Math.max(0, installmentAmount - (parseFloat(discount) || 0));
+  const hasDiscount = (parseFloat(discount) || 0) > 0;
 
   return (
     <Dialog
@@ -136,7 +137,7 @@ const DiscountModal = ({
           color="primary"
           disabled={loading}
         >
-          تطبيق الخصم
+          {hasDiscount ? 'تطبيق الخصم' : 'الموافقة علي الدفعة'}
           {loading && <CircularProgress size={20} />}
         </Button>
       </DialogActions>
