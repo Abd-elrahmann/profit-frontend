@@ -181,7 +181,12 @@ const IncomeStatement = () => {
     }).format(Math.abs(amount || 0));
   };
 
-
+  const negformatCapitalNumber = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount || 0);
+  };
 
   const getChipColor = (expenseType) => {
     switch (expenseType) {
@@ -809,7 +814,7 @@ const IncomeStatement = () => {
                               {formatCapitalNumber(partner.totalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
-                              {formatCapitalNumber(partner.capitalAmount)}
+                              {negformatCapitalNumber(partner.capitalAmount)}
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 600, color: theme.palette.warning.main }}>
                               {formatCapitalNumber(partner.newCapitalAmount)}

@@ -168,9 +168,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           tableData = allEntries.map(entry => [
             formatInt(entry.remaining),
             formatInt(entry.totalPaid),
-            formatInt(entry.monthlyZakat),
             formatInt(entry.annualZakat),
-            formatInt(entry.currentMonthlyZakat),
             formatInt(entry.currentAnnualZakat),
             formatInt(entry.capitalAmount),
             entry.year || filters.year || '-',
@@ -180,19 +178,15 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           const totals = allEntries.reduce((acc, entry) => ({
             capitalAmount: acc.capitalAmount + Number(entry.capitalAmount || 0),
             annualZakat: acc.annualZakat + Number(entry.annualZakat || 0),
-            monthlyZakat: acc.monthlyZakat + Number(entry.monthlyZakat || 0),
             currentAnnualZakat: acc.currentAnnualZakat + Number(entry.currentAnnualZakat || 0),
-            currentMonthlyZakat: acc.currentMonthlyZakat + Number(entry.currentMonthlyZakat || 0),
             totalPaid: acc.totalPaid + Number(entry.totalPaid || 0),
             remaining: acc.remaining + Number(entry.remaining || 0),
-          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, currentAnnualZakat: 0, currentMonthlyZakat: 0, totalPaid: 0, remaining: 0 });
+          }), { capitalAmount: 0, annualZakat: 0, currentAnnualZakat: 0, totalPaid: 0, remaining: 0 });
 
           tableData.push([
             formatInt(totals.remaining),
             formatInt(totals.totalPaid),
-            formatInt(totals.monthlyZakat),
             formatInt(totals.annualZakat),
-            formatInt(totals.currentMonthlyZakat),
             formatInt(totals.currentAnnualZakat),
             formatInt(totals.capitalAmount),
             filters.year || allEntries[0]?.year || '-',
@@ -200,7 +194,7 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           ]);
 
           headers = [
-            ['المتبقي', 'المدفوع', 'الزكاة الشهرية', 'الزكاة السنوية', 'الزكاة الشهرية الحالية', 'الزكاة السنوية الحالية', 'رأس المال', 'السنة', 'اسم الشريك']
+            ['المتبقي', 'المدفوع', 'الزكاة السنوية', 'الزكاة السنوية الحالية', 'رأس المال', 'السنة', 'اسم الشريك']
           ];
         }
 
@@ -373,9 +367,7 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
         summaryData.push(['اسم الشريك', partnerData.partnerName || '-']);
         summaryData.push(['رأس المال', partnerData.capitalAmount || 0]);
         summaryData.push(['الزكاة السنوية', partnerData.annualZakat || 0]);
-        summaryData.push(['الزكاة الشهرية', partnerData.monthlyZakat || 0]);
         summaryData.push(['الزكاة السنوية الحالية', partnerData.currentAnnualZakat || 0]);
-        summaryData.push(['الزكاة الشهرية الحالية', partnerData.currentMonthlyZakat || 0]);
         summaryData.push(['المدفوع', partnerData.totalPaid || 0]);
         summaryData.push(['المتبقي', partnerData.remaining || 0]);
         summaryData.push(['تاريخ التصدير', dayjs().format('DD/MM/YYYY HH:mm')]);
@@ -457,9 +449,7 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
           excelData = allEntries.map(entry => ({
             'المتبقي': Number(entry.remaining) || 0,
             'المدفوع': Number(entry.totalPaid) || 0,
-            'الزكاة الشهرية': Number(entry.monthlyZakat) || 0,
             'الزكاة السنوية': Number(entry.annualZakat) || 0,
-            'الزكاة الشهرية الحالية': Number(entry.currentMonthlyZakat) || 0,
             'الزكاة السنوية الحالية': Number(entry.currentAnnualZakat) || 0,
             'رأس المال': Number(entry.capitalAmount) || 0,
             'السنة': entry.year || filters.year || '-',
@@ -469,19 +459,15 @@ export const exportZakahToExcel = async (zakahData, filters = {}) => {
           const totals = allEntries.reduce((acc, entry) => ({
             capitalAmount: acc.capitalAmount + Number(entry.capitalAmount || 0),
             annualZakat: acc.annualZakat + Number(entry.annualZakat || 0),
-            monthlyZakat: acc.monthlyZakat + Number(entry.monthlyZakat || 0),
             currentAnnualZakat: acc.currentAnnualZakat + Number(entry.currentAnnualZakat || 0),
-            currentMonthlyZakat: acc.currentMonthlyZakat + Number(entry.currentMonthlyZakat || 0),
             totalPaid: acc.totalPaid + Number(entry.totalPaid || 0),
             remaining: acc.remaining + Number(entry.remaining || 0),
-          }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, currentAnnualZakat: 0, currentMonthlyZakat: 0, totalPaid: 0, remaining: 0 });
+          }), { capitalAmount: 0, annualZakat: 0, currentAnnualZakat: 0, totalPaid: 0, remaining: 0 });
 
           excelData.push({
             'المتبقي': totals.remaining,
             'المدفوع': totals.totalPaid,
-            'الزكاة الشهرية': totals.monthlyZakat,
             'الزكاة السنوية': totals.annualZakat,
-            'الزكاة الشهرية الحالية': totals.currentMonthlyZakat,
             'الزكاة السنوية الحالية': totals.currentAnnualZakat,
             'رأس المال': totals.capitalAmount,
             'السنة': filters.year || allEntries[0]?.year || '-',

@@ -275,21 +275,9 @@ const Zakah = () => {
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography>الزكاة الشهرية:</Typography>
-              <Typography fontWeight="bold" color={theme.palette.text.primary}>
-                {formatCurrency(currentYearData?.monthlyZakat)}
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>الزكاة السنوية الحالية:</Typography>
               <Typography fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.currentAnnualZakat)}
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography>الزكاة الشهرية الحالية:</Typography>
-              <Typography fontWeight="bold" color={theme.palette.primary.main}>
-                {formatCurrency(currentYearData?.currentMonthlyZakat)}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -362,7 +350,7 @@ const Zakah = () => {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography>الزكاة المتبقية:</Typography>
+          <Typography>الزكاة المسحوبة:</Typography>
           <Typography fontWeight="bold" color={theme.palette.text.primary}>
             {formatCurrency(accountReport?.account?.debit)}
           </Typography>
@@ -493,18 +481,6 @@ const Zakah = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={6}>
-            <Card sx={{ bgcolor: theme.palette.primary[50], textAlign: "center" }}>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="body2" color={theme.palette.primary.main}>
-                  الزكاة الشهرية الحالية
-                </Typography>
-                <Typography variant="h6" fontWeight="bold" color={theme.palette.primary.main}>
-                  {formatCurrency(currentYearData?.currentMonthlyZakat)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
         </Grid>
 
         {renderMobileActions()}
@@ -535,34 +511,16 @@ const Zakah = () => {
 
             <Box>
               <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
-                الزكاة الشهرية
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {formatCurrency(currentYearData?.monthlyZakat)}
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
                 الزكاة السنوية الحالية
               </Typography>
               <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>
                 {formatCurrency(currentYearData?.currentAnnualZakat)}
               </Typography>
             </Box>
-
-            <Box>
-              <Typography variant="body2" color={theme.palette.text.secondary} gutterBottom>
-                الزكاة الشهرية الحالية
-              </Typography>
-              <Typography variant="body1" fontWeight="bold" color={theme.palette.primary.main}>
-                {formatCurrency(currentYearData?.currentMonthlyZakat)}
-              </Typography>
-            </Box>
           </Stack>
         </Paper>
 
-        {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
+        {/* {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
           <Paper sx={{ p: 2, borderRadius: 2 }}>
             <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center" color={theme.palette.primary.main}>
               التفصيل الشهري
@@ -591,7 +549,7 @@ const Zakah = () => {
               ))}
             </Stack>
           </Paper>
-        )}
+        )} */}
       </Box>
     );
   };
@@ -658,7 +616,7 @@ const Zakah = () => {
           </Grid>
         </Grid>
 
-        {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
+        {/* {currentYearData?.monthlyBreakdown && currentYearData.monthlyBreakdown.length > 0 && (
           <>
             <Divider sx={{ my: 3 }} />
             <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign="center">
@@ -687,7 +645,7 @@ const Zakah = () => {
               </Table>
             </TableContainer>
           </>
-        )}
+        )} */}
       </Paper>
     );
   };
@@ -799,7 +757,7 @@ const Zakah = () => {
                 {formatCurrency(accountReport?.account?.debit)}
               </Typography>
               <Typography variant="body1" color="warning.900">
-                الزكاة المتبقية
+                الزكاة المسحوبة
               </Typography>
             </Card>
           </Grid>
@@ -814,7 +772,7 @@ const Zakah = () => {
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} md={2.4}>
+          {/* <Grid item xs={12} md={2.4}>
             <Card sx={{ bgcolor: "secondary.100", p: 3, textAlign: "center",width: "400px" }}>
               <VolunteerActivismIcon sx={{ fontSize: 40, mb: 1, color: "#616161" }} />
               <Typography variant="h5" fontWeight="bold" color="secondary.900">
@@ -824,7 +782,7 @@ const Zakah = () => {
                 الزكاة المطلوبة لهذا الشهر
               </Typography>
             </Card>
-          </Grid>
+          </Grid> */}
         </Grid>
         )}
 

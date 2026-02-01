@@ -130,7 +130,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
             size="small"
             disabled={isExporting || zakahData.length === 0}
             onClick={() => handleExport('pdf')}
-            sx={{fontWeight: 'bold'}}
+            sx={{ fontWeight: 'bold' }}
           >
             {isExporting ? 'جاري التصدير...' : 'تصدير PDF للسنة'}
           </Button>
@@ -140,7 +140,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
             size="small"
             disabled={isExporting || zakahData.length === 0}
             onClick={() => handleExport('excel')}
-            sx={{fontWeight: 'bold'}}
+            sx={{ fontWeight: 'bold' }}
           >
             {isExporting ? 'جاري التصدير...' : 'تصدير Excel للسنة'}
           </Button>
@@ -158,9 +158,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                 الزكاة السنوية
-              </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                الزكاة الشهرية
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                 المدفوع
@@ -196,8 +193,8 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               </StyledTableRow>
             ) : (
               zakahData?.map((zakah) => (
-                <StyledTableRow 
-                  key={zakah.partnerId} 
+                <StyledTableRow
+                  key={zakah.partnerId}
                 >
                   <StyledTableCell align="center">
                     {zakah.partnerName}
@@ -211,16 +208,13 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                    {formatInt(zakah.monthlyZakat)}
-                  </StyledTableCell>
-                  <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                     <Typography fontWeight="bold" color="success.main">
                       {formatInt(zakah.totalPaid)}
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                    <Typography 
-                      fontWeight="bold" 
+                    <Typography
+                      fontWeight="bold"
                       color={zakah.remaining > 0 ? "error" : "success.main"}
                     >
                       {formatInt(zakah.remaining)}
@@ -246,7 +240,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                 </StyledTableRow>
               ))
             )}
-            
+
             {zakahData && zakahData.length > 0 && (
               <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
                 <StyledTableCell align="center">
@@ -263,18 +257,13 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
-                  <Typography fontWeight="bold" color="info.main">
-                    {formatInt(totals.monthlyZakat)}
-                  </Typography>
-                </StyledTableCell>
-                <StyledTableCell align="center">
                   <Typography fontWeight="bold" color="success.main">
                     {formatInt(totals.totalPaid)}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center">
-                  <Typography 
-                    fontWeight="bold" 
+                  <Typography
+                    fontWeight="bold"
                     color={totals.remaining > 0 ? "error" : "success.main"}
                   >
                     {formatInt(totals.remaining)}
@@ -326,8 +315,8 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
         <Grid container spacing={2} justifyContent="center">
           {zakahData?.map((zakah) => (
             <Grid item xs={12} key={zakah.partnerId} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   border: '1px solid #e0e0e0',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -362,7 +351,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                           {formatInt(zakah.capitalAmount)}
                         </Typography>
                       </Box>
-                      
+
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           الزكاة السنوية:
@@ -374,15 +363,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     </Box>
 
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                      <Box>
-                        <Typography variant="body2" color="textSecondary">
-                          الزكاة الشهرية:
-                        </Typography>
-                        <Typography variant="body2" fontWeight="medium">
-                          {formatInt(zakah.monthlyZakat)}
-                        </Typography>
-                      </Box>
-                      
+
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           المدفوع:
@@ -397,8 +378,8 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                       <Typography variant="body2" color="textSecondary">
                         المتبقي:
                       </Typography>
-                      <Typography 
-                        variant="body1" 
+                      <Typography
+                        variant="body1"
                         fontWeight="bold"
                         color={zakah.remaining > 0 ? "error" : "success.main"}
                       >
@@ -472,14 +453,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                   </Typography>
                   <Typography variant="body2" fontWeight="bold" color="primary.main">
                     {totals.annualZakat.toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    إجمالي الزكاة الشهرية:
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold" color="info.main">
-                    {totals.monthlyZakat.toLocaleString()}
                   </Typography>
                 </Grid>
                 <Grid item xs={4}>

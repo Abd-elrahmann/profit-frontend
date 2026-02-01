@@ -21,21 +21,21 @@ const InvestorsList = ({
   isLoading,
   selectedInvestor,
   showWithdrawnOnly,
-  
+
   search,
   selectedStatus,
   selectedActiveStatus,
   onSearchChange,
   onStatusChange,
   onActiveStatusChange,
-  
+
   currentPage,
   onPageChange,
-  
+
   onInvestorSelect,
   onAddInvestor,
   onViewWithdrawn,
-  
+
   permissions,
   isDarkMode,
 }) => {
@@ -58,7 +58,7 @@ const InvestorsList = ({
               fullWidth
               size="small"
               variant="contained"
-              startIcon={<AddIcon sx={{marginLeft: '10px'}} />}
+              startIcon={<AddIcon sx={{ marginLeft: '10px' }} />}
               onClick={onAddInvestor}
               sx={{
                 bgcolor: "primary.main",
@@ -75,7 +75,7 @@ const InvestorsList = ({
             fullWidth
             size="small"
             variant="outlined"
-            startIcon={<VisibilityIcon sx={{marginLeft: '10px'}} />}
+            startIcon={<VisibilityIcon sx={{ marginLeft: '10px' }} />}
             onClick={onViewWithdrawn}
             sx={{
               color: "text.secondary",
@@ -133,7 +133,7 @@ const InvestorsList = ({
             onClick={() => onStatusChange("منسحب")}
           />
         </Box>
-        
+
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
           <Chip
             label="نشط"
@@ -296,9 +296,9 @@ const InvestorsList = ({
                 </Card>
               );
             })}
-            
+
             {investorsData && investorsData.totalPages > 1 && (
-              <Box sx={{ 
+              <Box sx={{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
