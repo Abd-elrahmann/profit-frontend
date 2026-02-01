@@ -849,20 +849,21 @@ const Installments = () => {
 
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
-      const paidInstallments = sortedInstallments.filter(
-        inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
-      );
-      const totalPaidFromInstallments = paidInstallments.reduce(
-        (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
+      // مبلغ التسوية = (مبلغ السلفة + الفائدة) - إجمالي الخصومات (خصم سداد مبكر + خصم الموافقة على الدفعات)
+      const totalContractAmount = Number(loanData?.totalAmount) ||
+        (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
+      const totalDiscounts = sortedInstallments.reduce(
+        (sum, inst) => sum + (Number(inst.discount) || 0),
         0
       );
+      const calculatedSettlementAmount = Math.max(0, totalContractAmount - totalDiscounts);
 
       const settlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
           loanData: {
             ...loanData,
-            calculatedSettlementAmount: totalPaidFromInstallments,
+            calculatedSettlementAmount,
             allInstallments: sortedInstallments,
           },
           clientData: loanData?.client,
@@ -888,20 +889,21 @@ const Installments = () => {
       const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
-      const paidInstallments = sortedInstallments.filter(
-        inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
-      );
-      const totalPaidFromInstallments = paidInstallments.reduce(
-        (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
+      // مبلغ التسوية = (مبلغ السلفة + الفائدة) - إجمالي الخصومات (خصم سداد مبكر + خصم الموافقة على الدفعات)
+      const totalContractAmount = Number(loanData?.totalAmount) ||
+        (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
+      const totalDiscounts = sortedInstallments.reduce(
+        (sum, inst) => sum + (Number(inst.discount) || 0),
         0
       );
+      const calculatedSettlementAmount = Math.max(0, totalContractAmount - totalDiscounts);
 
       const finalSettlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
           loanData: {
             ...loanData,
-            calculatedSettlementAmount: totalPaidFromInstallments,
+            calculatedSettlementAmount,
             allInstallments: sortedInstallments,
           },
           clientData: loanData?.client,

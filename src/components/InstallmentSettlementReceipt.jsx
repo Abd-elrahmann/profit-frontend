@@ -334,79 +334,49 @@ const InstallmentSettlementReceipt = React.forwardRef(
           const { gregorianDate, hijriDate } = getCurrentDates();
 
           let amount = 0;
-          
-          const totalAmount = Number(dataToUse.loanData?.totalAmount || 0);
+          // إجمالي العقد = مبلغ السلفة + الفائدة (كما في عقود إنشاء السلفة)
+          const totalContractAmount = Number(dataToUse.loanData?.totalAmount || 0) ||
+            (Number(dataToUse.loanData?.amount) || 0) + (Number(dataToUse.loanData?.interestAmount) || 0);
           const earlyPaidAmount = Number(dataToUse.loanData?.earlyPaidAmount || 0);
           const earlyPaymentDiscount = Number(dataToUse.loanData?.earlyPaymentDiscount || 0);
-          
-          let calculatedFromInstallments = 0; 
-          let totalFromAllInstallments = 0; 
-          let totalDiscounts = 0; 
-          let allInstallmentsPaid = false;
+
+          // إجمالي الخصومات = كل الخصومات (خصم سداد مبكر + خصم الموافقة على الدفعات كاملة أو جزئية)
+          let totalDiscountsAll = 0;
           if (dataToUse.loanData?.allInstallments && Array.isArray(dataToUse.loanData.allInstallments)) {
-            const paidInstallments = dataToUse.loanData.allInstallments.filter(
-              inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
-            );
-            calculatedFromInstallments = paidInstallments.reduce(
-              (sum, inst) => sum + (Number(inst.amount) || 0) - (Number(inst.discount) || 0),
-              0
-            );
-            totalFromAllInstallments = dataToUse.loanData.allInstallments.reduce(
-              (sum, inst) => sum + (Number(inst.amount) || 0),
-              0
-            );
-            totalDiscounts = paidInstallments.reduce(
+            totalDiscountsAll = dataToUse.loanData.allInstallments.reduce(
               (sum, inst) => sum + (Number(inst.discount) || 0),
               0
             );
-            allInstallmentsPaid = dataToUse.loanData.allInstallments.length > 0 && 
-                                  dataToUse.loanData.allInstallments.every(
-                                    inst => inst.status === 'PAID' || inst.status === 'EARLY_PAID' || inst.status === 'COMPLETED'
-                                  );
           }
-          
-          if (dataToUse.loanData?.calculatedSettlementAmount !== undefined && 
-              dataToUse.loanData.calculatedSettlementAmount > 0) {
+          // مبلغ التسوية = إجمالي العقد - إجمالي الخصومات
+          const settlementByFormula = totalContractAmount > 0
+            ? Math.max(0, totalContractAmount - totalDiscountsAll)
+            : 0;
+
+          if (dataToUse.loanData?.calculatedSettlementAmount !== undefined &&
+              dataToUse.loanData.calculatedSettlementAmount >= 0) {
             amount = Number(dataToUse.loanData.calculatedSettlementAmount);
-          }
-          else if (allInstallmentsPaid) {
-            if (calculatedFromInstallments > 0) {
-              amount = calculatedFromInstallments;
-            }
-            else if (totalAmount > 0) {
-              amount = Math.max(0, totalAmount - totalDiscounts);
-            } 
-            else if (totalFromAllInstallments > 0) {
-              amount = Math.max(0, totalFromAllInstallments - totalDiscounts);
-            }
-          }
-          else if (calculatedFromInstallments > 0) {
-            amount = calculatedFromInstallments;
-          }
-          else if (earlyPaidAmount > 0 && earlyPaymentDiscount >= 0) {
+          } else if (settlementByFormula > 0) {
+            amount = settlementByFormula;
+          } else if (earlyPaidAmount > 0 && earlyPaymentDiscount >= 0) {
             amount = Math.max(0, earlyPaidAmount - earlyPaymentDiscount);
-          }
-          else if (dataToUse.loanData?.pagination?.totalRemainingAmount !== undefined && 
+          } else if (dataToUse.loanData?.pagination?.totalRemainingAmount !== undefined &&
                    dataToUse.loanData.pagination.totalRemainingAmount !== null &&
                    dataToUse.loanData.pagination.totalRemainingAmount > 0) {
             amount = Number(dataToUse.loanData.pagination.totalRemainingAmount);
-          } 
-          else if (dataToUse.loanData?.totalRemainingAmount !== undefined && 
+          } else if (dataToUse.loanData?.totalRemainingAmount !== undefined &&
                    dataToUse.loanData.totalRemainingAmount !== null &&
                    dataToUse.loanData.totalRemainingAmount > 0) {
             amount = Number(dataToUse.loanData.totalRemainingAmount);
-          } 
-          else if (dataToUse.loanData?.remainingBalance !== undefined && 
+          } else if (dataToUse.loanData?.remainingBalance !== undefined &&
                    dataToUse.loanData.remainingBalance !== null &&
                    dataToUse.loanData.remainingBalance > 0) {
             amount = Number(dataToUse.loanData.remainingBalance);
-          }   
-          else if (dataToUse.loanData?.pagination?.totalPaidAmount !== undefined) {
+          } else if (dataToUse.loanData?.pagination?.totalPaidAmount !== undefined) {
             const totalPaidAmount = Number(dataToUse.loanData.pagination.totalPaidAmount);
-            amount = Math.max(0, totalAmount - totalPaidAmount);
-          }
-          else {
-            amount = totalAmount;
+            amount = Math.max(0, totalContractAmount - totalPaidAmount);
+          } else {
+            amount = totalContractAmount;
           }
           
           const amountInWords = `${numberToArabicWords(amount)} ريال`;
