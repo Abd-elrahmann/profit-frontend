@@ -84,45 +84,13 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Fetch permissions
-      let userPermissions = [];
-      try {
-        const modulesRes = await Api.get("/api/auth/modules");
-        const allPermissions = [];
-
-        for (const module of modulesRes.data) {
-          const res = await Api.get(`/api/auth/permissions/${module}`);
-          res.data.forEach((perm) => {
-            const cleanName = perm.replace("can", "");
-            
-            let moduleKey = module;
-            switch (module) {
-              case "messages-templates":
-                moduleKey = "messagesTemplates";
-                break;
-              case "journal-entries":
-                moduleKey = "journalEntries";
-                break;
-              case "contract-templates":
-                moduleKey = "contractTemplates";
-                break;
-              default:
-                moduleKey = module;
-            }
-            
-            allPermissions.push(`${moduleKey}_${cleanName}`);
-          });
-        }
-        
-        userPermissions = allPermissions;
-        
-        if (fetchPermissions && typeof fetchPermissions === 'function') {
-          await fetchPermissions();
-        }
-      } catch (permissionsError) {
-        console.error('Error fetching permissions:', permissionsError);
-        notifyError('تم تسجيل الدخول ولكن حدث خطأ في جلب الصلاحيات');
+      // Wait for permissions to be fetched
+      if (fetchPermissions && typeof fetchPermissions === 'function') {
+        await fetchPermissions();
       }
+
+      // Get user permissions after fetching
+      const userPermissions = permissions || [];
 
       const convertModuleToPermission = (module) => {
         switch (module) {
@@ -137,6 +105,7 @@ const Login = () => {
         }
       };
 
+      // Find first accessible page based on permissions
       let firstPage = '/dashboard';
       for (const route of routes) {
         if (route.protected && route.requiresPermissions && route.module) {
@@ -149,7 +118,7 @@ const Login = () => {
           }
         }
       }
-      
+
       notifySuccess("تم تسجيل الدخول بنجاح");  
       navigate(firstPage, { replace: true });
     } catch (error) {
