@@ -141,11 +141,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (token, userData) => {
     console.log('AuthContext: User logging in');
-    setAccessToken(token);
-    setApiAccessToken(token);
-    setUser(userData);
-    setIsAuthenticated(true);
-
+    // Dispatch event - the listener will handle state updates
     window.dispatchEvent(new CustomEvent('userLoggedIn', {
       detail: { accessToken: token, user: userData }
     }));
