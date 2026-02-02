@@ -66,10 +66,24 @@ Api.interceptors.response.use(
     const status = error?.response?.status;
 
     if (status === 401 && !originalRequest._retry) {
+      // If on login page, silently reject without attempting refresh
+      if (window.location.pathname === '/login') {
+        return Promise.reject(error);
+      }
+
+      // If this is the refresh endpoint itself failing, redirect immediately
+      if (originalRequest.url?.includes('/api/auth/refresh')) {
+        lastRefreshFailTime = Date.now();
+        setAccessToken(null);
+        window.dispatchEvent(new Event('authFailed'));
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
       const now = Date.now();
       if (lastRefreshFailTime && (now - lastRefreshFailTime) < 3000) {
-        console.log('Recent refresh failed, redirecting to login');
-        window.dispatchEvent(new Event('authFailed'));
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }

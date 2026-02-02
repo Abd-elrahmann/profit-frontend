@@ -51,17 +51,6 @@ export const AuthProvider = ({ children }) => {
       // Clean up old authentication data first
       cleanupOldAuth();
 
-      // Skip refresh attempt if we're on login page - no need to check session
-      if (window.location.pathname === '/login') {
-        console.log('AuthContext: On login page, skipping session check');
-        setIsAuthenticated(false);
-        setUser(null);
-        setAccessToken(null);
-        setApiAccessToken(null);
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const response = await Promise.race([
           Api.post('/api/auth/refresh'),
