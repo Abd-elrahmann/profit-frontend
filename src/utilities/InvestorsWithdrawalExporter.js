@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -205,6 +206,7 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
         },
         margin: { left: 15, right: 15 },
         tableWidth: 'auto',
+        didDrawTable: createDidDrawTable(doc)
       });
 
       yPosition = doc.lastAutoTable.finalY + 15;
@@ -259,6 +261,7 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
           },
           margin: { left: 15, right: 15 },
           tableWidth: 'auto',
+          didDrawTable: createDidDrawTable(doc)
         });
 
         yPosition = doc.lastAutoTable.finalY + 15;
@@ -328,6 +331,7 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
           margin: { left: 15, right: 15 },
           pageBreak: 'auto',
           showHead: 'everyPage',
+          didDrawTable: createDidDrawTable(doc)
         });
       }
 

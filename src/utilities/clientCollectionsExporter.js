@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -198,45 +199,19 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         startY: yPosition,
         startX: tableStartX,
         head: headers,
-          body: tableData.map(row => row.reverse()), 
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 7,
-          cellPadding: 2,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1,
-          halign: 'right',
-          valign: 'middle',
-          overflow: 'ellipsize',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240], 
-          textColor: [46, 139, 69], 
-          fontStyle: 'bold',
-          fontSize: 8,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 3,
-          overflow: 'ellipsize',
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 2,
-          direction: 'rtl',
-          fontSize: 7,
-        },
+        body: tableData.map(row => row.reverse()),
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 7, cellPadding: 2, overflow: 'ellipsize' },
+          headStyles: { halign: 'right', fontSize: 8, cellPadding: 3, overflow: 'ellipsize' },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 2, fontSize: 7 }
+        }),
         columnStyles: columnWidths,
         margin: { left: 8, right: 8, top: yPosition, bottom: 15 },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
-        showHead: 'everyPage'
+        showHead: 'everyPage',
+        didDrawTable: createDidDrawTable(doc)
       });
       
       const pageCount = doc.internal.getNumberOfPages();
@@ -510,43 +485,17 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         startX: tableStartX,
         head: headers,
         body: tableData.map(row => row.reverse()),
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 7,
-          cellPadding: 2,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1,
-          halign: 'right',
-          valign: 'middle',
-          overflow: 'ellipsize',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240], 
-          textColor: [46, 139, 69], 
-          fontStyle: 'bold',
-          fontSize: 8,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 3,
-          overflow: 'ellipsize',
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 2,
-          direction: 'rtl',
-          fontSize: 7,
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 7, cellPadding: 2, overflow: 'ellipsize' },
+          headStyles: { halign: 'right', fontSize: 8, cellPadding: 3, overflow: 'ellipsize' },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 2, fontSize: 7 }
+        }),
         columnStyles: columnWidths,
         margin: { left: 8, right: 8, top: yPosition, bottom: 15 },
         tableWidth: totalColumnWidth,
         pageBreak: 'auto',
-        showHead: 'everyPage'
+        showHead: 'everyPage',
+        didDrawTable: createDidDrawTable(doc)
       });
       
         const pdfBlob = doc.output('blob');

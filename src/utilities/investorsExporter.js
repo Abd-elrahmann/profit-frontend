@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
+import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -270,7 +271,8 @@ fillColor: [240, 240, 240],
           },
           margin: { top: yPosition, left: 15, right: 15 },
           tableWidth: 'auto',
-          horizontalPageBreak: false
+          horizontalPageBreak: false,
+          didDrawTable: createDidDrawTable(doc)
         });
 
         yPosition = doc.lastAutoTable.finalY + 12;
@@ -344,7 +346,8 @@ fillColor: [240, 240, 240],
           },
           margin: { top: yPosition, left: 15, right: 15 },
           tableWidth: 'auto',
-          horizontalPageBreak: false
+          horizontalPageBreak: false,
+          didDrawTable: createDidDrawTable(doc)
         });
 
         yPosition = doc.lastAutoTable.finalY + 12;
@@ -447,7 +450,8 @@ fillColor: [240, 240, 240],
                 data.table.startY = 20;
                 data.table.margin.top = 20;
               }
-            }
+            },
+            didDrawTable: createDidDrawTable(doc)
           });
 
           yPosition = doc.lastAutoTable.finalY + 12;
@@ -523,7 +527,8 @@ fillColor: [240, 240, 240],
             tableWidth: 'auto',
             horizontalPageBreak: false,
             pageBreak: 'auto',
-            showHead: 'everyPage'
+            showHead: 'everyPage',
+            didDrawTable: createDidDrawTable(doc)
           });
 
           yPosition = doc.lastAutoTable.finalY + 8;

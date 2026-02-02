@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -84,39 +85,11 @@ export const exportExpensesToPDF = async (expenses) => {
         startY: 60,
         head: headers,
         body,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.2,
-          halign: 'right',
-          valign: 'top',
-          overflow: 'linebreak',
-          direction: 'rtl',
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 9,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-          overflow: 'visible',
-          minCellHeight: 15,
-          maxCellHeight: 15,
-          direction: 'rtl',
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'top',
-          cellPadding: 4,
-          direction: 'rtl',
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', valign: 'top', fontStyle: 'bold', fontSize: 8 },
+          headStyles: { halign: 'right' },
+          bodyStyles: { halign: 'right', valign: 'top', fontStyle: 'bold', cellPadding: 4 }
+        }),
         columnStyles: {
           2: { cellWidth: 'auto', minCellWidth: 60 }, 
           3: { cellWidth: 'auto', minCellWidth: 40 }, 
@@ -126,6 +99,7 @@ export const exportExpensesToPDF = async (expenses) => {
         horizontalPageBreak: false,
         pageBreak: 'auto',
         showHead: 'everyPage',
+        didDrawTable: createDidDrawTable(doc)
       });
 
       const pageCount = doc.internal.getNumberOfPages();

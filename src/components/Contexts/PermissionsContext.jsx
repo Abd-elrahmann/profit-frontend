@@ -1,23 +1,51 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Api from "../../config/Api";
 
-const PermissionContext = createContext();
+const defaultPermissionValue = {
+  permissions: [],
+  loading: false,
+  fetchPermissions: () => {},
+  refreshPermissions: async () => {},
+};
+
+const PermissionContext = createContext(defaultPermissionValue);
 
 export const PermissionProvider = ({ children }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const PERMISSIONS_TIMEOUT = 10000; // 10 seconds - prevents infinite loading
+
   const fetchPermissions = useCallback(async () => {
     try {
       setLoading(true);
 
-      const modulesRes = await Api.get("/api/auth/modules");
+      const modulesRes = await Promise.race([
+        Api.get("/api/auth/modules"),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Modules fetch timeout')), PERMISSIONS_TIMEOUT)
+        ),
+      ]);
+
+      if (!modulesRes.data || modulesRes.data.length === 0) {
+        console.log('No modules found - user may have no permissions assigned');
+        setPermissions([]);
+        return;
+      }
 
       const permissionPromises = modulesRes.data.map(module =>
-        Api.get(`/api/auth/permissions/${module}`).then(res => ({
-          module,
-          permissions: res.data
-        }))
+        Promise.race([
+          Api.get(`/api/auth/permissions/${module}`).then(res => ({
+            module,
+            permissions: res.data
+          })),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Permission fetch timeout for ${module}`)), PERMISSIONS_TIMEOUT)
+          ),
+        ]).catch(err => {
+          console.warn(`Failed to fetch permissions for module ${module}:`, err.message);
+          return { module, permissions: [] };
+        })
       );
 
       const permissionResults = await Promise.all(permissionPromises);
@@ -25,6 +53,8 @@ export const PermissionProvider = ({ children }) => {
       const allPermissions = [];
 
       permissionResults.forEach(({ module, permissions: perms }) => {
+        if (!perms || perms.length === 0) return;
+        
         perms.forEach((perm) => {
           const cleanName = perm.replace("can", "");
 
@@ -39,9 +69,6 @@ export const PermissionProvider = ({ children }) => {
             case "contract-templates":
               moduleKey = "contractTemplates";
               break;
-
-
-
             default:
               moduleKey = module;
           }
@@ -53,7 +80,18 @@ export const PermissionProvider = ({ children }) => {
       setPermissions(allPermissions);
 
     } catch (err) {
-      console.error("Error fetching permissions:", err);
+      const status = err?.response?.status;
+      
+      // إذا 401 أو 403 → الجلسة منتهية (authFailed سيتم إطلاقه من Api.js)
+      if (status === 401 || status === 403) {
+        console.log('Session expired during permission fetch');
+        setPermissions([]);
+      } 
+      // أخطاء شبكة أو سيرفر → نحتفظ بالـ permissions القديمة إن وجدت
+      else {
+        console.warn('Permission fetch failed (network/server error):', err.message);
+        // لا نمسح الـ permissions - نبقيها كما هي
+      }
     } finally {
       setLoading(false);
     }
@@ -74,16 +112,23 @@ export const PermissionProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    // عند انتهاء الجلسة الفعلية (authFailed من Api.js): نمسح الصلاحيات فقط
+    // AuthContext هو المسؤول عن تسجيل الخروج
     const handleAuthFailed = () => {
+      console.log('PermissionContext: Auth failed - clearing permissions');
       setPermissions([]);
       setLoading(false);
     };
 
+    // عند تحديث التوكن بنجاح: نجلب الصلاحيات من جديد
     const handleTokenRefreshed = () => {
+      console.log('PermissionContext: Token refreshed - fetching permissions');
       fetchPermissions();
     };
 
+    // عند تسجيل دخول جديد: نجلب الصلاحيات
     const handleLogin = () => {
+      console.log('PermissionContext: User logged in - fetching permissions');
       fetchPermissions();
     };
 

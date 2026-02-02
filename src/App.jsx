@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, Suspense } from 'react';
+import React, { useEffect, useRef, Suspense, useState } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -76,6 +76,31 @@ const RestrictedNavigationRoute = ({ children }) => {
 };
 
 const LoadingFallback = () => <PageLoader message="جاري تحميل الصفحة..." />;
+
+const RootRedirect = () => {
+  const { authStatus } = useAuth();
+  const navigate = useNavigate();
+  const hasRedirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (authStatus === 'checking') return;
+    if (authStatus === 'unauthenticated') {
+      hasRedirectedRef.current = false;
+      navigate('/login', { replace: true });
+      return;
+    }
+    // authenticated: توجيه مرة واحدة لـ /dashboard (مش على تغيير الـ permissions)
+    if (authStatus === 'authenticated' && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authStatus, navigate]);
+
+  if (authStatus === 'checking') {
+    return <PageLoader message="جاري التحقق من جلستك..." />;
+  }
+  return null;
+};
 
 const ConnectionWatcher = () => {
   const navigate = useNavigate();
@@ -175,7 +200,7 @@ const AppLayout = () => {
         
         <Route 
           path="/" 
-          element={<Navigate to="/login" replace />} 
+          element={<RootRedirect />} 
         />
 
         <Route path="/installments/:loanId" element={<Installments />} />
@@ -187,17 +212,29 @@ const AppLayout = () => {
 };
 
 const ProtectedRoute = ({ children, route }) => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { authStatus } = useAuth();
   const location = useLocation();
-  const { permissions, loading } = usePermissions();
+  const navigate = useNavigate();
+  const { permissions, loading: permissionsLoading } = usePermissions();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [redirectPath, setRedirectPath] = useState(null);
   const permissionErrorShownRef = useRef(false);
 
   useEffect(() => {
     permissionErrorShownRef.current = false;
+    setShouldRedirect(false);
   }, [location.pathname]);
 
-  // Show loading while checking authentication
-  if (loading || authLoading) {
+  useEffect(() => {
+    if (shouldRedirect && redirectPath) {
+      notifyError('ليس لديك صلاحية للوصول إلى هذه الصفحة');
+      navigate(redirectPath, { replace: true });
+    }
+  }, [shouldRedirect, redirectPath, navigate]);
+
+  // 1) Auth فقط: تحقق الجلسة يمنع التقديم حتى ينتهي
+  if (authStatus === 'checking') {
+    console.log('ProtectedRoute: Checking auth status...');
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <CircularProgress />
@@ -205,13 +242,21 @@ const ProtectedRoute = ({ children, route }) => {
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (authStatus === 'unauthenticated') {
+    console.log('ProtectedRoute: User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  // Check permissions if required
+  // 2) صلاحيات: فشلها = توجيه داخلي فقط (بدون logout)
   if (route?.requiresPermissions && route?.module) {
+    if (permissionsLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
     let moduleKey = route.module;
     switch (route.module) {
       case "messages-templates":
@@ -230,42 +275,43 @@ const ProtectedRoute = ({ children, route }) => {
     const hasPermission = permissions.includes(`${moduleKey}_View`);
 
     if (!hasPermission) {
-      if (!permissionErrorShownRef.current) {
-        notifyError('ليس لديك صلاحية للوصول إلى هذه الصفحة');
+      if (!permissionErrorShownRef.current && !shouldRedirect) {
         permissionErrorShownRef.current = true;
+        const firstPage = getFirstAccessiblePage(permissions);
+        setRedirectPath(firstPage);
+        setShouldRedirect(true);
       }
-
-      const firstPage = getFirstAccessiblePage(permissions);
-      return <Navigate to={firstPage} replace />;
-    } else {
-      sessionStorage.setItem('lastValidPath', location.pathname);
+      return null;
     }
-  } else {
-    sessionStorage.setItem('lastValidPath', location.pathname);
   }
 
+  sessionStorage.setItem('lastValidPath', location.pathname);
   return children;
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { permissions, loading } = usePermissions();
-  
-  if (authLoading || loading) {
+  const { authStatus, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
+  // صفحة الدخول: النموذج مباشرة، التحقق من الجلسة في الخلفية؛ لو مسجل فعلاً نوجّه لـ /dashboard
+  if (isLoginPage) {
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+  }
+
+  // صفحات عامة أخرى: ننتظر Auth فقط (مش الـ permissions)
+  if (authStatus === 'checking') {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <CircularProgress />
       </Box>
     );
   }
-  
-  if (!isAuthenticated) {
-    return children;
-  }
-
-  // If authenticated, redirect to first accessible page
-  const firstPage = getFirstAccessiblePage(permissions);
-  return <Navigate to={firstPage} replace />;
+  if (!isAuthenticated) return children;
+  return <Navigate to="/dashboard" replace />;
 };
 
 

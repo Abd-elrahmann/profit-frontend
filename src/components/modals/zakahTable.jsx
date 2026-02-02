@@ -19,8 +19,9 @@ import {
   Alert,
   TablePagination,
   Button,
+  Tooltip,
 } from '@mui/material';
-import { Visibility } from '@mui/icons-material';
+import { Visibility, PictureAsPdf, TableChart } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getZakahByYear } from '../../pages/Zakah/zakahApi';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
@@ -31,7 +32,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isExporting, setIsExporting] = useState({ pdf: false, excel: false });
   const { permissions } = usePermissions();
 
   const currentYear = new Date().getFullYear();
@@ -84,23 +85,28 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
   };
 
   const handleExport = async (type) => {
-    if (!zakahData || zakahData.length === 0) return;
-    setIsExporting(true);
+    if (!zakahData || zakahData.length === 0) {
+      alert('لا توجد بيانات للتصدير');
+      return;
+    }
+    
+    setIsExporting(prev => ({ ...prev, [type]: true }));
+    
     try {
       const totalPartners = zakahResponse?.pagination?.totalPartners || zakahData.length;
-      const allData =
-        zakahData.length < totalPartners ? await fetchAllZakahByYear() : zakahData;
+      const allData = zakahData.length < totalPartners ? await fetchAllZakahByYear() : zakahData;
 
       const filters = { year: selectedYear };
       if (type === 'pdf') {
         await exportZakahToPDF(allData, filters);
-        return;
+      } else if (type === 'excel') {
+        await exportZakahToExcel(allData, filters);
       }
-      await exportZakahToExcel(allData, filters);
     } catch (error) {
       console.error('Error exporting zakah:', error);
+      alert(`خطأ في التصدير: ${error.message}`);
     } finally {
-      setIsExporting(false);
+      setIsExporting(prev => ({ ...prev, [type]: false }));
     }
   };
 
@@ -120,32 +126,51 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     return num.toLocaleString();
   };
 
+  const renderExportButtons = () => (
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+      <Tooltip title="تصدير إلى PDF">
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          disabled={isExporting.pdf || zakahData.length === 0}
+          onClick={() => handleExport('pdf')}
+          startIcon={<PictureAsPdf />}
+          sx={{ 
+            fontWeight: 'bold',
+            minWidth: '120px'
+          }}
+        >
+          {isExporting.pdf ? (
+            <CircularProgress size={20} sx={{ color: 'white', mr: 1 }} />
+          ) : 'PDF'}
+        </Button>
+      </Tooltip>
+      
+      <Tooltip title="تصدير إلى Excel">
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          disabled={isExporting.excel || zakahData.length === 0}
+          onClick={() => handleExport('excel')}
+          startIcon={<TableChart />}
+          sx={{ 
+            fontWeight: 'bold',
+            minWidth: '120px'
+          }}
+        >
+          {isExporting.excel ? (
+            <CircularProgress size={20} sx={{ color: 'white', mr: 1 }} />
+          ) : 'Excel'}
+        </Button>
+      </Tooltip>
+    </Box>
+  );
+
   const renderTable = () => (
     <Box>
-      {permissions.includes("zakat_Export") && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            disabled={isExporting || zakahData.length === 0}
-            onClick={() => handleExport('pdf')}
-            sx={{ fontWeight: 'bold' }}
-          >
-            {isExporting ? 'جاري التصدير...' : 'تصدير PDF للسنة'}
-          </Button>
-          <Button
-            variant="outlined"
-            color="success"
-            size="small"
-            disabled={isExporting || zakahData.length === 0}
-            onClick={() => handleExport('excel')}
-            sx={{ fontWeight: 'bold' }}
-          >
-            {isExporting ? 'جاري التصدير...' : 'تصدير Excel للسنة'}
-          </Button>
-        </Box>
-      )}
+      {permissions.includes("zakat_Export") && renderExportButtons()}
       <TableContainer sx={{ height: "100%", width: "100%" }}>
         <Table stickyHeader sx={{ width: "100%" }}>
           <TableHead>
@@ -193,9 +218,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               </StyledTableRow>
             ) : (
               zakahData?.map((zakah) => (
-                <StyledTableRow
-                  key={zakah.partnerId}
-                >
+                <StyledTableRow key={zakah.partnerId}>
                   <StyledTableCell align="center">
                     {zakah.partnerName}
                   </StyledTableCell>
@@ -223,17 +246,18 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                   <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                     <Stack direction="row" spacing={1} justifyContent="center">
                       {permissions.includes("zakat_View") && (
-                        <IconButton
-                          title="عرض التفاصيل"
-                          size="small"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewDetails(zakah.partnerId, selectedYear);
-                          }}
-                        >
-                          <Visibility fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="عرض التفاصيل">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewDetails(zakah.partnerId, selectedYear);
+                            }}
+                          >
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       )}
                     </Stack>
                   </StyledTableCell>
@@ -301,6 +325,33 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
 
   const renderCards = () => (
     <Box sx={{ p: 1 }}>
+      {permissions.includes("zakat_Export") && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            disabled={isExporting.pdf || zakahData.length === 0}
+            onClick={() => handleExport('pdf')}
+            startIcon={<PictureAsPdf />}
+            sx={{ fontWeight: 'bold', mb: 1 }}
+          >
+            {isExporting.pdf ? 'جاري التصدير...' : 'PDF'}
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            disabled={isExporting.excel || zakahData.length === 0}
+            onClick={() => handleExport('excel')}
+            startIcon={<TableChart />}
+            sx={{ fontWeight: 'bold', mb: 1 }}
+          >
+            {isExporting.excel ? 'جاري التصدير...' : 'Excel'}
+          </Button>
+        </Box>
+      )}
+      
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={30} />
@@ -363,7 +414,6 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                     </Box>
 
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           المدفوع:
@@ -372,31 +422,31 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                           {formatInt(zakah.totalPaid)}
                         </Typography>
                       </Box>
-                    </Box>
-
-                    <Box>
-                      <Typography variant="body2" color="textSecondary">
-                        المتبقي:
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        fontWeight="bold"
-                        color={zakah.remaining > 0 ? "error" : "success.main"}
-                      >
-                        {formatInt(zakah.remaining)}
-                      </Typography>
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">
+                          المتبقي:
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight="bold"
+                          color={zakah.remaining > 0 ? "error" : "success.main"}
+                        >
+                          {formatInt(zakah.remaining)}
+                        </Typography>
+                      </Box>
                     </Box>
 
                     {permissions.includes("zakat_View") && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
-                        <IconButton
-                          title="عرض التفاصيل"
-                          size="small"
-                          color="primary"
-                          onClick={() => onViewDetails(zakah.partnerId, selectedYear)}
-                        >
-                          <Visibility fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="عرض التفاصيل">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => onViewDetails(zakah.partnerId, selectedYear)}
+                          >
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     )}
                   </Stack>
@@ -411,7 +461,14 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 2,
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
         <Autocomplete
           options={years}
           value={selectedYear}
@@ -423,10 +480,15 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               {...params}
               label="اختر السنة"
               size="small"
-              sx={{ width: '250px' }}
+              sx={{ width: '200px' }}
             />
           )}
+          sx={{ flexShrink: 0 }}
         />
+        
+        <Typography variant="body2" color="textSecondary">
+          عدد الشركاء: {zakahData?.length || 0}
+        </Typography>
       </Box>
 
       <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>

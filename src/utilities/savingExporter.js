@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -83,23 +84,29 @@ export const exportSavingsToPDF = async (savingData) => {
         return sum + (lastPeriod?.currentBalance || 0);
       }, 0);
 
-      // Summary data
+      // Summary data with better spacing
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryY = 50;
+      let currentY = summaryY;
+      
       const summaryText1 = `إجمالي الشركاء: ${totalPartners}  |  شركاء لديهم مدخرات: ${partnersWithSavings.length}`;
-      doc.text(summaryText1, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
+      doc.text(summaryText1, doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+      currentY += 8;
 
       const summaryText2 = `إجمالي فترات الادخار: ${totalPeriods}`;
-      doc.text(summaryText2, doc.internal.pageSize.width / 2, summaryY + 6, { align: 'center' });
+      doc.text(summaryText2, doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+      currentY += 8;
 
       const summaryText3 = `إجمالي المدخرات الأساسية: ${totalSavingsAmount.toLocaleString('en-US')}  |  إجمالي السحوبات: ${totalWithdrawals.toLocaleString('en-US')}`;
-      doc.text(summaryText3, doc.internal.pageSize.width / 2, summaryY + 12, { align: 'center' });
+      doc.text(summaryText3, doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+      currentY += 8;
 
       const summaryText4 = `إجمالي الرصيد الحالي: ${totalCurrentBalance.toLocaleString('en-US')}`;
-      doc.text(summaryText4, doc.internal.pageSize.width / 2, summaryY + 18, { align: 'center' });
+      doc.text(summaryText4, doc.internal.pageSize.width / 2, currentY, { align: 'center' });
+      currentY += 10;
 
-      let yPosition = summaryY + 20;
+      let yPosition = currentY;
 
       // Check if there are partners to display
       if (partners.length === 0) {
@@ -128,68 +135,40 @@ export const exportSavingsToPDF = async (savingData) => {
           ['الرصيد الحالي', 'إجمالي السحوبات', 'إجمالي المدخرات', 'آخر فترة', 'عدد فترات الادخار', 'اسم الشريك']
         ];
 
-        // Create table with RTL support - centered and larger, no extra borders
+        // Create table with RTL support - full width with margins
         const pageWidth = doc.internal.pageSize.width;
+        const pageMargin = 15;
+        const availableWidth = pageWidth - (pageMargin * 2);
 
-        // Optimize column widths to fit on one page
+        // Wider column widths for better readability
         const columnWidths = {
-          0: 25, // الرصيد الحالي
-          1: 25, // إجمالي السحوبات
-          2: 25, // إجمالي المدخرات
+          0: 30, // الرصيد الحالي
+          1: 30, // إجمالي السحوبات
+          2: 30, // إجمالي المدخرات
           3: 35, // آخر فترة
-          4: 25, // عدد فترات الادخار
-          5: 35  // اسم الشريك
+          4: 28, // عدد فترات الادخار
+          5: 37  // اسم الشريك
         };
 
-        // Calculate table width to center it properly
+        // Calculate table width
         const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-        const tableStartX = (pageWidth - totalColumnWidth) / 2;
+        const tableStartX = pageMargin;
 
         autoTable(doc, {
           startY: yPosition,
-          startX: tableStartX, // Center the table
+          startX: tableStartX,
           head: headers,
           body: tableData,
-          theme: 'striped', // Simpler theme without heavy borders
-          styles: {
-            font: 'Amiri',
-            fontStyle: 'bold',
-            fontSize: 8,
-            cellPadding: 3,
-            lineColor: [200, 200, 200], // Lighter borders
-            lineWidth: 0.1,
-            halign: 'center',
-            valign: 'middle'
-          },
-          headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
-            fontStyle: 'bold',
-            fontSize: 9,
-            halign: 'center',
-            valign: 'middle',
-            cellPadding: 4,
-            lineColor: [13, 64, 165],
-            lineWidth: 0.1
-          },
-          bodyStyles: {
-            fontStyle: 'bold',
-            halign: 'center',
-            valign: 'middle',
-            cellPadding: 2,
-            lineColor: [220, 220, 220],
-            lineWidth: 0.1
-          },
-          alternateRowStyles: {
-            fillColor: [250, 250, 250]
-          },
+          ...pdfTableBaseStyles,
+          styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 3 },
           columnStyles: {
-            0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد الحالي
-            1: { cellWidth: columnWidths[1], fontSize: 8 }, // إجمالي السحوبات
-            2: { cellWidth: columnWidths[2], fontSize: 8 }, // إجمالي المدخرات
-            3: { cellWidth: columnWidths[3], fontSize: 8, halign: 'right' }, // آخر فترة
-            4: { cellWidth: columnWidths[4], fontSize: 8 }, // عدد فترات الادخار
-            5: { cellWidth: columnWidths[5], fontSize: 9, halign: 'right' } // اسم الشريك
+            0: { cellWidth: columnWidths[0], fontSize: 9 }, // الرصيد الحالي
+            1: { cellWidth: columnWidths[1], fontSize: 9 }, // إجمالي السحوبات
+            2: { cellWidth: columnWidths[2], fontSize: 9 }, // إجمالي المدخرات
+            3: { cellWidth: columnWidths[3], fontSize: 9, halign: 'right' }, // آخر فترة
+            4: { cellWidth: columnWidths[4], fontSize: 9 }, // عدد فترات الادخار
+            5: { cellWidth: columnWidths[5], fontSize: 10, halign: 'right' } // اسم الشريك
           },
           margin: { top: yPosition, bottom: 20 },
           tableWidth: totalColumnWidth,
@@ -209,7 +188,8 @@ export const exportSavingsToPDF = async (savingData) => {
                 data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
               }
             }
-          }
+          },
+          didDrawTable: createDidDrawTable(doc)
         });
       }
 

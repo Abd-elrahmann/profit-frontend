@@ -608,6 +608,9 @@ const ProfitDistribution = () => {
               إجمالي أرباح الشركاء
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              المبلغ المدخر
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               حالة التوزيع
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -618,13 +621,13 @@ const ProfitDistribution = () => {
         <TableBody>
           {isPeriodsLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={6} align="center">
+              <StyledTableCell colSpan={8} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : closedPeriods?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={7} align="center">
+              <StyledTableCell colSpan={8} align="center">
                 <Typography>لا توجد فترات مقفلة</Typography>
               </StyledTableCell>
             </StyledTableRow>
@@ -662,6 +665,11 @@ const ProfitDistribution = () => {
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Typography fontWeight="bold" color="success.main">
                     {formatNumber(period.totalAfterSaving) || 0}
+                  </Typography>
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  <Typography fontWeight="bold" color="warning.main">
+                    {formatNumber(period.totalSaving) || 0}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -856,49 +864,77 @@ const ProfitDistribution = () => {
 
   const renderMobilePeriodDetails = () => (
     <Box>
-      <Grid container spacing={2} mb={3}>
-        <Grid item xs={6}>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 2,
+          mb: 3,
+          justifyContent: "center",
+        }}
+      >
+        <Card
+          sx={{
+            flex: 1,
+            minWidth: 120,
+            bgcolor: "rgba(25, 118, 210, 0.1)",
+            textAlign: "center",
+          }}
+        >
+          <CardContent sx={{ p: 2 }}>
+            <Typography variant="body2" color="primary.main">
+              أرباح الشركة
+            </Typography>
+            <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ wordBreak: "break-all" }}>
+              {formatNumber(periodData?.companyProfit) || 0}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card
+          sx={{
+            flex: 1,
+            minWidth: 120,
+            bgcolor: "rgba(46, 125, 50, 0.1)",
+            textAlign: "center",
+          }}
+        >
+          <CardContent sx={{ p: 2 }}>
+            <Typography variant="body2" color="success.main">
+              أرباح الشركاء
+            </Typography>
+            <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ wordBreak: "break-all" }}>
+              {enableSaving && savingPercentage > 0 ?
+                formatNumber(profitAfterSaving.partnerProfit) :
+                formatNumber((periodData?.totalAfterSaving ||
+                 periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
+                ))
+              }
+            </Typography>
+          </CardContent>
+        </Card>
+        {((enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) || periodData?.partners?.some(p => (p.savingAmount || 0) > 0)) && (
           <Card
             sx={{
-              bgcolor: "rgba(25, 118, 210, 0.1)",
+              flex: 1,
+              minWidth: 120,
+              bgcolor: "rgba(237, 108, 2, 0.1)",
               textAlign: "center",
-              justifyContent: "center",
             }}
           >
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="primary.main">
-                أرباح الشركة
+              <Typography variant="body2" color="warning.main">
+                المبلغ المدخر
               </Typography>
-              <Typography variant="h6" fontWeight="bold" color="primary.main">
-                {formatNumber(periodData?.companyProfit) || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6}>
-          <Card
-            sx={{
-              bgcolor: "rgba(46, 125, 50, 0.1)",
-              textAlign: "center",
-              justifyContent: "center",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="success.main">
-                أرباح الشركاء
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="success.main">
-                {enableSaving && savingPercentage > 0 ?
-                  formatNumber(profitAfterSaving.partnerProfit) :
-                  formatNumber((periodData?.totalAfterSaving ||
-                   periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
-                  ))
-                }
+              <Typography variant="h6" fontWeight="bold" color="warning.main" sx={{ wordBreak: "break-all" }}>
+                {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
+                  (periodData?.totalSaving ||
+                   periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0)
+                )) || 0}
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        )}
+      </Box>
 
       {renderMobileActions()}
 
@@ -1238,46 +1274,59 @@ const ProfitDistribution = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      <Grid
-        container
-        spacing={3}
-        mb={4}
-        justifyContent="center"
-        alignItems="center"
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 2,
+          mb: 4,
+          justifyContent: "center",
+          alignItems: "stretch",
+        }}
       >
-        <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: "primary.50", p: 3, textAlign: "center",width: "350px" }}>
-            <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h5" fontWeight="bold" color="primary.main">
-              {formatNumber(periodData?.companyProfit) || 0}
+        <Card sx={{ flex: 1, minWidth: 200, bgcolor: "primary.50", p: 3, textAlign: "center" }}>
+          <BalanceIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+          <Typography variant="h5" fontWeight="bold" color="primary.main" sx={{ wordBreak: "break-all" }}>
+            {formatNumber(periodData?.companyProfit) || 0}
+          </Typography>
+          <Typography variant="body1" color="primary.main">
+            أرباح الشركة
+          </Typography>
+        </Card>
+        <Card sx={{ flex: 1, minWidth: 200, bgcolor: "success.50", p: 3, textAlign: "center" }}>
+          <BalanceIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
+          <Typography variant="h5" fontWeight="bold" color="success.main" sx={{ wordBreak: "break-all" }}>
+            {enableSaving && savingPercentage > 0 ?
+              formatNumber(profitAfterSaving.partnerProfit) :
+              formatNumber((periodData?.totalAfterSaving ||
+               periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
+              ))
+            }
+          </Typography>
+          <Typography variant="body1" color="success.main">
+            إجمالي أرباح الشركاء
+          </Typography>
+          {enableSaving && (
+            <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+              (بعد ادخار {savingPercentage.toFixed(2)}%)
             </Typography>
-            <Typography variant="body1" color="primary.main">
-              أرباح الشركة
+          )}
+        </Card>
+        {((enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) || periodData?.partners?.some(p => (p.savingAmount || 0) > 0)) && (
+          <Card sx={{ flex: 1, minWidth: 200, bgcolor: "warning.50", p: 3, textAlign: "center" }}>
+            <SavingsIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="h5" fontWeight="bold" color="warning.main" sx={{ wordBreak: "break-all" }}>
+              {formatNumber((enableSaving && savingPercentage > 0 ? profitAfterSaving.savedAmount :
+                (periodData?.totalSaving ||
+                 periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) || 0)
+              )) || 0}
+            </Typography>
+            <Typography variant="body1" color="warning.main">
+              المبلغ المدخر
             </Typography>
           </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: "success.50", p: 3, textAlign: "center",width: "350px" }}>
-            <BalanceIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h5" fontWeight="bold" color="success.main">
-              {enableSaving && savingPercentage > 0 ?
-                formatNumber(profitAfterSaving.partnerProfit) :
-                formatNumber((periodData?.totalAfterSaving ||
-                 periodData?.partners?.reduce((sum, p) => sum + (p.totalAfterSaving || p.totalProfit || 0), 0) || 0
-                ))
-              }
-            </Typography>
-            <Typography variant="body1" color="success.main">
-              إجمالي أرباح الشركاء
-            </Typography>
-            {enableSaving && (
-              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                (بعد ادخار {savingPercentage.toFixed(2)}%)
-              </Typography>
-            )}
-          </Card>
-        </Grid>
-      </Grid>
+        )}
+      </Box>
 
       {(enableSaving && savingPercentage > 0) || periodData?.totalSaving > 0 ? (
         <Alert severity="info" sx={{ mb: 3 }}>
@@ -1327,7 +1376,7 @@ const ProfitDistribution = () => {
           >
             توزيع الأرباح على الشركاء
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: 4 }}>
             <TableContainer 
               component={Paper} 
               variant="outlined" 
@@ -1336,21 +1385,22 @@ const ProfitDistribution = () => {
                 width: '100%'
               }}
             >
-              <ScrollableTableContainer maxHeight="100%">
-                <TableHead>
-                  <StyledTableRow>
-                    <StyledTableCell align="center">اسم الشريك</StyledTableCell>
-                    <StyledTableCell align="center">الرقم القومي</StyledTableCell>
-                    <StyledTableCell align="center">الهاتف</StyledTableCell>
-                    <StyledTableCell align="center">
-                      المبلغ قبل الادخار
-                    </StyledTableCell>
-                    {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
-                      <StyledTableCell align="center">المبلغ بعد الادخار</StyledTableCell>
-                    )}
-                  </StyledTableRow>
-                </TableHead>
-                <TableBody>
+              <ScrollableTableContainer maxHeight={400}>
+                <Table sx={{ minWidth: 500 }}>
+                  <TableHead>
+                    <StyledTableRow>
+                      <StyledTableCell align="center">اسم الشريك</StyledTableCell>
+                      <StyledTableCell align="center">الرقم القومي</StyledTableCell>
+                      <StyledTableCell align="center">الهاتف</StyledTableCell>
+                      <StyledTableCell align="center">
+                        المبلغ قبل الادخار
+                      </StyledTableCell>
+                      {(periodData.partners.some(p => p.savingAmount) || enableSaving) && (
+                        <StyledTableCell align="center">المبلغ بعد الادخار</StyledTableCell>
+                      )}
+                    </StyledTableRow>
+                  </TableHead>
+                  <TableBody>
                   {periodData.partners.map((partner) => (
                     <StyledTableRow key={partner.partnerId}>
                       <StyledTableCell align="center">
@@ -1396,6 +1446,7 @@ const ProfitDistribution = () => {
                     )}
                   </StyledTableRow>
                 </TableBody>
+                </Table>
               </ScrollableTableContainer>
             </TableContainer>
           </Box>

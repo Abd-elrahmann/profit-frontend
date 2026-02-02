@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -92,35 +93,9 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         startX: tableStartX,
         head: headers,
         body: tableData,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 3,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1,
-          halign: 'center',
-          valign: 'middle'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 9,
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 4
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 2
-        },
-        alternateRowStyles: {
-          fillColor: [250, 250, 250]
-        },
+        ...pdfTableBaseStyles,
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
         columnStyles: {
             0: { cellWidth: columnWidths[0], fontSize: 7 }, 
           1: { cellWidth: columnWidths[1], fontSize: 8 }, 
@@ -135,7 +110,7 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         horizontalPageBreak: false,
         pageBreak: 'auto',
         showHead: 'everyPage',
-       
+        didDrawTable: createDidDrawTable(doc)
       });
       
       const pageCount = doc.internal.getNumberOfPages();

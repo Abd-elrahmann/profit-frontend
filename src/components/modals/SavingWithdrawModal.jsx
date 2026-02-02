@@ -35,12 +35,26 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
-    const numAmount = parseFloat(amount);
-    if (numAmount && numAmount > 0) {
-      previewMutation.mutate(numAmount);
-    } else {
+    if (open) {
+      setAmount('');
+      setDescription('');
       setPreviewData(null);
+      setAmountError('');
+      setTouched(false);
     }
+  }, [open]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const numAmount = parseFloat(amount);
+      if (numAmount && numAmount > 0) {
+        previewMutation.mutate(numAmount);
+      } else {
+        setPreviewData(null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount]);
 
@@ -80,12 +94,8 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
       return "مبلغ السحب يجب أن يكون أكبر من صفر";
     }
 
-      if (numAmount > 10000000) {
-      return "مبلغ السحب يجب أن يكون أقل من 10,000,000 ريال";
-    }
-
     if (previewData && numAmount > previewData.totalSaving) {
-      return `مبلغ السحب يجب أن يكون أقل من أو يساوي إجمالي التوفير المتاح (${previewData.totalSaving.toLocaleString()} ريال)`;
+      return `مبلغ السحب يجب أن يكون أقل من أو يساوي إجمالي التوفير المتاح (${previewData.totalSaving.toLocaleString()})`;
     }
 
     return "";
@@ -177,10 +187,14 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
                   required
                   error={touched && !!amountError}
                   InputProps={{
-                    inputProps: { min: 0, step: 0.01, max: 10000000 },
+                    inputProps: { min: 0, step: 0.01, max: previewData?.totalSaving || 10000000 },
                   }}
                   helperText={
-                    touched && amountError ? amountError : "أدخل المبلغ بالريال السعودي (الحد الأقصى: 10,000,000 ريال)"
+                    touched && amountError 
+                      ? amountError 
+                      : previewData 
+                        ? `الحد الأقصى: ${previewData.totalSaving.toLocaleString()}`
+                        : "أدخل المبلغ"
                   }
                   sx={{ width: 250 }}
                 />
@@ -211,13 +225,13 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
             <Box sx={{ mt: 3 }}>
               <Divider sx={{ mb: 3 }} />
 
-          <Box sx={{ width: '100%', maxWidth: 800, mb: 4 }}>
-            <Grid container spacing={2} justifyContent="center">
-              <Grid item xs={12} sm={4}>
-                <Card sx={{ bgcolor: 'primary.50', textAlign: 'center', minHeight: 80 }}>
-                    <CardContent>
-                      <Typography variant="h6" color="primary" fontWeight="bold">
-                        {previewData.amount}
+          <Box sx={{ width: '100%', mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Grid container spacing={2} justifyContent="center" sx={{ maxWidth: 1200 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: 'primary.50', textAlign: 'center', minHeight: 80, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
+                      <Typography variant="h6" color="primary" fontWeight="bold" sx={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        {previewData.amount.toLocaleString()}
                       </Typography>
                       <Typography variant="body2" color="primary">
                         المبلغ المطلوب
@@ -225,11 +239,11 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
                     </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={12} sm={4}>
-                <Card sx={{ bgcolor: 'success.50', textAlign: 'center', minHeight: 80 }}>
-                    <CardContent>
-                      <Typography variant="h6" color="success.main" fontWeight="bold">
-                        {previewData.totalSaving}
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: 'success.50', textAlign: 'center', minHeight: 80, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
+                      <Typography variant="h6" color="success.main" fontWeight="bold" sx={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        {previewData.totalSaving.toLocaleString()}
                       </Typography>
                       <Typography variant="body2" color="success.main">
                         إجمالي التوفير المتاح
@@ -237,10 +251,22 @@ const SavingWithdrawModal = ({ open, onClose, onSuccess }) => {
                     </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={12} sm={4}>
-                <Card sx={{ bgcolor: 'info.50', textAlign: 'center', minHeight: 80 }}>
-                    <CardContent>
-                      <Typography variant="h6" color="info.main" fontWeight="bold">
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: 'warning.50', textAlign: 'center', minHeight: 80, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
+                      <Typography variant="h6" color="warning.main" fontWeight="bold" sx={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        {previewData.newBalance.toLocaleString()}
+                      </Typography>
+                      <Typography variant="body2" color="warning.main">
+                        المتبقي بعد السحب
+                      </Typography>
+                    </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: 'info.50', textAlign: 'center', minHeight: 80, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
+                      <Typography variant="h6" color="info.main" fontWeight="bold" sx={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                         {previewData.partnersCount}
                       </Typography>
                       <Typography variant="body2" color="info.main">

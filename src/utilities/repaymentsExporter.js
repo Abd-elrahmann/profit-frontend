@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 
 // Register Arabic fonts
@@ -85,45 +86,19 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
         startY: yPosition,
         head: summaryHeaders,
         body: summaryData,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 9,
-          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.2,
-          halign: 'right',
-          valign: 'middle',
-          overflow: 'linebreak',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 10,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-          overflow: 'linebreak',
-          minCellHeight: 10,
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 4,
-          direction: 'rtl'
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold' },
+          headStyles: { halign: 'right' },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
+        }),
         columnStyles: {
           0: { cellWidth: 'auto', halign: 'right' },
           1: { cellWidth: 'auto', halign: 'right' }
         },
         margin: { top: yPosition, left: tableMargin, right: tableMargin },
         tableWidth: 'auto',
-        horizontalPageBreak: false
+        horizontalPageBreak: false,
+        didDrawTable: createDidDrawTable(doc)
       });
 
       yPosition = doc.lastAutoTable.finalY + 15;
@@ -166,39 +141,11 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
         startY: yPosition,
         head: [reverseRow(repaymentsHeaders[0])],
         body: repaymentsTableData.map(row => reverseRow(row)),
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 9,
-          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.2,
-          halign: 'right',
-          valign: 'middle',
-          overflow: 'linebreak',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 9,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-          overflow: 'linebreak',
-          minCellHeight: 15,
-          maxCellHeight: 15,
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 4,
-          direction: 'rtl'
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold' },
+          headStyles: { halign: 'right', cellPadding: 4 },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
+        }),
         columnStyles: {
           0: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // حالة الدفع (الأول من اليمين)
           1: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // المبلغ المدفوع
@@ -213,7 +160,8 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
         tableWidth: 'auto',
         horizontalPageBreak: false,
         pageBreak: 'auto',
-        showHead: 'everyPage'
+        showHead: 'everyPage',
+        didDrawTable: createDidDrawTable(doc)
       });
 
       // Footer - Professional styling

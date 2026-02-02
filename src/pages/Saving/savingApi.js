@@ -8,7 +8,7 @@ export const getAllPartnerSavings = async (page = 1, limit = 10, filters = {}) =
   if (filters.nationalId) params.append('nationalId', filters.nationalId);
   if (filters.phone) params.append('phone', filters.phone);
   
-  const response = await Api.get(`/api/saving/${page}?${params.toString()}`);
+  const response = await Api.get(`/api/saving/partners/${page}?${params.toString()}`);
   return response.data;
 };
 
@@ -24,7 +24,7 @@ export const getSavingAccountReport = async (month = null) => {
 };
 
 export const previewGlobalSavingWithdrawal = async (amount) => {
-  const response = await Api.get(`/api/saving/preview/withdraw?amount=${amount}`);
+  const response = await Api.get(`/api/saving/withdraw-preview?amount=${amount}`);
   return response.data;
 };
 

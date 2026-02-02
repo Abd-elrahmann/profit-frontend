@@ -1,18 +1,26 @@
-
+/**
+ * دالة debounce مبسطة وفعالة
+ */
 export const debounce = (func, wait) => {
-  let timeout;
-  const executedFunction = function (...args) {
-    const later = () => {
+  let timeout = null;
+  
+  const debounced = (...args) => {
+    if (timeout) {
       clearTimeout(timeout);
+    }
+    
+    timeout = setTimeout(() => {
       func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+      timeout = null;
+    }, wait);
   };
-
-  executedFunction.cancel = () => {
-    clearTimeout(timeout);
+  
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
   };
-
-  return executedFunction;
+  
+  return debounced;
 };

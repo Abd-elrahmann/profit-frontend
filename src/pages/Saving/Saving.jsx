@@ -51,7 +51,7 @@ const Saving = () => {
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
   const theme = useTheme();
-  const { data: savingData, isLoading: isSavingLoading } = useQuery({
+  const { data: savingData, isLoading: isSavingLoading, refetch: refetchSavingData } = useQuery({
     queryKey: ["partners-savings", page],
     retry: 1,
     queryFn: () => getAllPartnerSavings(page, limit),
@@ -65,6 +65,7 @@ const Saving = () => {
   });
 
   const handleWithdrawSuccess = () => {
+    refetchSavingData();
     refetchAccountReport();
   };
 

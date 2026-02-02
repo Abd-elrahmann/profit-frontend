@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
+import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -376,27 +377,9 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
       head: [['المبلغ', 'البند والتفاصيل', 'ملاحظات إضافية']],
       body: tableRows,
       startY: tableStartY,
-      styles: {
-        font: 'Amiri',
-        fontSize: 10,
-        cellPadding: 4,
-        halign: 'center',
-        valign: 'middle',
-        direction: 'rtl',
-        fontStyle: 'bold'
-      },
-      headStyles: {
-        fillColor: [240, 240, 240],
-        textColor: [46, 139, 69],
-        fontStyle: 'bold',
-        halign: 'center',
-        direction: 'rtl'
-      },
-      bodyStyles: {
-        halign: 'center',
-        direction: 'rtl',
-        fontStyle: 'bold'
-      },
+      ...pdfTableBaseStyles,
+      styles: { ...pdfTableBaseStyles.styles, fontSize: 10, fontStyle: 'bold' },
+      bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
       columnStyles: {
         0: {
           cellWidth: 45,
@@ -444,7 +427,8 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
             data.cell.styles.textColor = [220, 38, 38];
           }
         }
-      }
+      },
+      didDrawTable: createDidDrawTable(doc)
     });
 
   return doc.lastAutoTable.finalY;
@@ -512,27 +496,9 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
         head: [['المبلغ', 'البيان']],
         body: summaryData.slice(1),
         startY: 60,
-        styles: {
-          font: 'Amiri',
-          fontSize: 11,
-          cellPadding: 5,
-          halign: 'center',
-          valign: 'middle',
-          direction: 'rtl',
-          fontStyle: 'bold'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          halign: 'center',
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          halign: 'center',
-          direction: 'rtl',
-          fontStyle: 'bold'
-        },
+        ...pdfTableBaseStyles,
+        styles: { ...pdfTableBaseStyles.styles, fontSize: 11, cellPadding: 5, fontStyle: 'bold' },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
         columnStyles: {
           0: {
             cellWidth: 60,
@@ -545,6 +511,7 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
         },
         margin: { left: 14, right: 14 },
         pageBreak: 'avoid',
+        didDrawTable: createDidDrawTable(doc),
         rowPageBreak: 'avoid'
       });
 

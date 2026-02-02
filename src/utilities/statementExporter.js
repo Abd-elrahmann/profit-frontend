@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -106,42 +107,12 @@ export const exportStatementToPDF = async (statementData, clientName) => {
       // Create table with RTL support - centered and larger, no extra borders
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX, // Center the table
+        startX: tableStartX,
         head: headers,
         body: tableData,
-        theme: 'striped', // Simpler theme without heavy borders
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 3,
-          lineColor: [200, 200, 200], // Lighter borders
-          lineWidth: 0.1,
-          halign: 'center',
-          valign: 'middle'
-        },
-        headStyles: {
-fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 9,
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 4,
-          lineColor: [13, 64, 165],
-          lineWidth: 0.1
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 2,
-          lineColor: [220, 220, 220],
-          lineWidth: 0.1
-        },
-        alternateRowStyles: {
-          fillColor: [250, 250, 250]
-        },
+        ...pdfTableBaseStyles,
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
         columnStyles: {
           0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد
           1: { cellWidth: columnWidths[1], fontSize: 8 }, // دائن
@@ -163,7 +134,8 @@ fillColor: [240, 240, 240],
               data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
             }
           }
-        }
+        },
+        didDrawTable: createDidDrawTable(doc)
       });
       
       // Footer - Professional styling

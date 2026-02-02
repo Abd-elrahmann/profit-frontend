@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -112,35 +113,10 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           startX: periodsTableStartX,
           head: periodsHeaders,
           body: periodsTableData,
-          theme: 'striped',
-          styles: {
-            font: 'Amiri',
-            fontSize: 11,
-            cellPadding: 3,
-            halign: 'center',
-            valign: 'middle',
-            direction: 'rtl',
-            fontStyle: 'bold',
-            overflow: 'linebreak',
-            cellWidth: 'wrap'
-          },
-          headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
-            fontStyle: 'bold',
-            halign: 'center',
-            direction: 'rtl',
-            cellPadding: 2,
-            minCellHeight: 8
-          },
-          bodyStyles: {
-            halign: 'center',
-            direction: 'rtl',
-            fontStyle: 'bold'
-          },
-          alternateRowStyles: {
-            fillColor: [250, 250, 250]
-          },
+          ...pdfTableBaseStyles,
+          styles: { ...pdfTableBaseStyles.styles, fontSize: 11, cellPadding: 3, fontStyle: 'bold' },
+          headStyles: { ...pdfTableBaseStyles.headStyles, cellPadding: 2 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: periodsColumnWidths[0], halign: 'center', fontStyle: 'bold' }, 
             1: { cellWidth: periodsColumnWidths[1], halign: 'center', fontStyle: 'bold' }, 
@@ -154,7 +130,8 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           horizontalPageBreak: false,
           pageBreak: 'auto',
           rowPageBreak: 'avoid',
-          showHead: 'everyPage'
+          showHead: 'everyPage',
+          didDrawTable: createDidDrawTable(doc)
         });
 
         yPosition = doc.lastAutoTable.finalY + 15;
@@ -194,35 +171,10 @@ export const exportCompanyProfitToPDF = async (profitData) => {
           startX: tableStartX, 
           head: headers,
           body: tableData,
-          theme: 'striped',
-          styles: {
-            font: 'Amiri',
-            fontSize: 11,
-            cellPadding: 3,
-            halign: 'center',
-            valign: 'middle',
-            direction: 'rtl',
-            fontStyle: 'bold',
-            overflow: 'linebreak',
-            cellWidth: 'wrap'
-          },
-          headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
-            fontStyle: 'bold',
-            halign: 'center',
-            direction: 'rtl',
-            cellPadding: 2,
-            minCellHeight: 8
-          },
-          bodyStyles: {
-            halign: 'center',
-            direction: 'rtl',
-            fontStyle: 'bold'
-          },
-          alternateRowStyles: {
-            fillColor: [250, 250, 250]
-          },
+          ...pdfTableBaseStyles,
+          styles: { ...pdfTableBaseStyles.styles, fontSize: 11, cellPadding: 3, fontStyle: 'bold' },
+          headStyles: { ...pdfTableBaseStyles.headStyles, cellPadding: 2 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: columnWidths[0], halign: 'center', fontStyle: 'bold' }, 
             1: { cellWidth: columnWidths[1], halign: 'center', fontStyle: 'bold' }, 
@@ -241,7 +193,8 @@ export const exportCompanyProfitToPDF = async (profitData) => {
                 data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
               }
             }
-          }
+          },
+          didDrawTable: createDidDrawTable(doc)
         });
       }
 

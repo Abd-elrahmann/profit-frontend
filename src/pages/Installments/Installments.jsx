@@ -849,7 +849,6 @@ const Installments = () => {
 
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
-      // مبلغ التسوية = (مبلغ السلفة + الفائدة) - إجمالي الخصومات (خصم سداد مبكر + خصم الموافقة على الدفعات)
       const totalContractAmount = Number(loanData?.totalAmount) ||
         (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
       const totalDiscounts = sortedInstallments.reduce(
@@ -889,7 +888,6 @@ const Installments = () => {
       const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
-      // مبلغ التسوية = (مبلغ السلفة + الفائدة) - إجمالي الخصومات (خصم سداد مبكر + خصم الموافقة على الدفعات)
       const totalContractAmount = Number(loanData?.totalAmount) ||
         (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
       const totalDiscounts = sortedInstallments.reduce(

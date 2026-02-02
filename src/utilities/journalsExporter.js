@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { pdfTableBaseStyles, getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
 
@@ -73,32 +74,11 @@ export const exportJournalToPDF = async (journalData) => {
         startY: headerTableY,
         head: headerTableHeaders,
         body: headerTableData,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 9,
-          cellPadding: 3,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1,
-          halign: 'right',
-          valign: 'middle'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 10,
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 4
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 3
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold' },
+          headStyles: { halign: 'center' },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3 }
+        }),
         columnStyles: {
           0: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }, // المعلومة
           1: { cellWidth: 60, halign: 'right' }  // القيمة
@@ -110,7 +90,8 @@ export const exportJournalToPDF = async (journalData) => {
           bottom: 5 
         },
         tableWidth: headerTableWidth,
-        horizontalPageBreak: false
+        horizontalPageBreak: false,
+        didDrawTable: createDidDrawTable(doc)
       });
       
       let yPosition = doc.lastAutoTable.finalY + 8;
@@ -173,35 +154,9 @@ export const exportJournalToPDF = async (journalData) => {
         startX: tableStartX,
         head: headers,
         body: tableData,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 3,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1,
-          halign: 'center',
-          valign: 'middle'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 9,
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 4
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-          cellPadding: 2
-        },
-        alternateRowStyles: {
-          fillColor: [250, 250, 250]
-        },
+        ...pdfTableBaseStyles,
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
         columnStyles: {
           0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد
           1: { cellWidth: columnWidths[1], fontSize: 8 }, // دائن
@@ -236,7 +191,8 @@ export const exportJournalToPDF = async (journalData) => {
             data.cell.styles.cellPadding = 3;
             data.cell.styles.halign = 'right';
           }
-        }
+        },
+        didDrawTable: createDidDrawTable(doc)
       });
       
       // Footer - Professional styling
@@ -507,38 +463,11 @@ export const exportJournalsTableToPDF = async (journals) => {
         startY: 45,
         head: headers,
         body,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 9,
-          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.2,
-          halign: 'right',
-          valign: 'middle',
-          overflow: 'linebreak',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 10,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-          overflow: 'linebreak',
-          minCellHeight: 10,
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 4,
-          direction: 'rtl'
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold' },
+          headStyles: { halign: 'right' },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
+        }),
         margin: { top: 45, left: 10, right: 10 },
         tableWidth: 'auto',
         horizontalPageBreak: false,
@@ -551,6 +480,7 @@ export const exportJournalsTableToPDF = async (journals) => {
           3: { cellWidth: 'auto' }, // الحالة
           4: { cellWidth: 32 }, // النوع (أعرض)
         },
+        didDrawTable: createDidDrawTable(doc)
       });
 
       // Footer

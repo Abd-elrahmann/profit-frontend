@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
+import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 
 // Register Arabic fonts
@@ -126,45 +127,19 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
         startY: yPosition,
         head: summaryHeaders,
         body: summaryData,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 9,
-          cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.2,
-          halign: 'right',
-          valign: 'middle',
-          overflow: 'linebreak',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
-          fontStyle: 'bold',
-          fontSize: 10,
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-          overflow: 'linebreak',
-          minCellHeight: 10,
-          direction: 'rtl'
-        },
-        bodyStyles: {
-          fontStyle: 'bold',
-          halign: 'right',
-          valign: 'middle',
-          cellPadding: 4,
-          direction: 'rtl'
-        },
+        ...getPdfTableStyles({
+          styles: { halign: 'right', fontStyle: 'bold' },
+          headStyles: { halign: 'right' },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
+        }),
         columnStyles: {
           0: { cellWidth: 'auto', halign: 'right' },
           1: { cellWidth: 'auto', halign: 'right' }
         },
         margin: { top: yPosition, left: tableMargin, right: tableMargin },
         tableWidth: 'auto',
-        horizontalPageBreak: false
+        horizontalPageBreak: false,
+        didDrawTable: createDidDrawTable(doc)
       });
 
       yPosition = doc.lastAutoTable.finalY + 15;
@@ -235,45 +210,18 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
           startY: yPosition,
           head: [reverseRow(partnersHeaders[0])],
           body: partnersTableData.map(row => reverseRow(row)),
-          theme: 'striped',
-          styles: {
-            font: 'Amiri',
-            fontStyle: 'bold',
-            fontSize: 9,
-            cellPadding: { top: 3, bottom: 3, left: 5, right: 5 },
-            lineColor: [220, 220, 220],
-            lineWidth: 0.2,
-            halign: 'right',
-            valign: 'middle',
-            overflow: 'linebreak',
-            direction: 'rtl'
-          },
-          headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
-            fontStyle: 'bold',
-            fontSize: 10,
-            halign: 'right',
-            valign: 'middle',
-            cellPadding: { top: 5, bottom: 5, left: 5, right: 5 },
-            overflow: 'linebreak',
-            minCellHeight: 12,
-            direction: 'rtl'
-          },
-          bodyStyles: {
-            fontStyle: 'bold',
-            halign: 'right',
-            valign: 'middle',
-            cellPadding: 4,
-            overflow: 'linebreak',
-            direction: 'rtl'
-          },
+          ...getPdfTableStyles({
+            styles: { halign: 'right', fontStyle: 'bold' },
+            headStyles: { halign: 'right', cellPadding: 5 },
+            bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
+          }),
           columnStyles: columnStyles,
           margin: { top: yPosition, left: 10, right: 10 },
           tableWidth: 'auto',
           horizontalPageBreak: false,
           pageBreak: 'auto',
-          showHead: 'everyPage'
+          showHead: 'everyPage',
+          didDrawTable: createDidDrawTable(doc)
         });
 
         yPosition = doc.lastAutoTable.finalY + 15;
