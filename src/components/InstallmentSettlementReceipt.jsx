@@ -404,7 +404,8 @@ const InstallmentSettlementReceipt = React.forwardRef(
 
             .replace(
               /{{المبلغ_رقما}}/g, `${amount?.toLocaleString("en-US") || "0"} ريال`)
-            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ${discountInfo}`)
+            .replace(/{{المبلغ_كتابة}}/g, amountInWords)
+            .replace(/{{معلومات_الخصم}}/g, discountInfo)
 
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
