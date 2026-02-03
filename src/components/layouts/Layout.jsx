@@ -51,6 +51,13 @@ const Layout = ({ children }) => {
 
     checkLoginStatus();
     
+    // Check if we should show refresh success message
+    const showRefreshSuccess = sessionStorage.getItem('showRefreshSuccess');
+    if (showRefreshSuccess === 'true') {
+      sessionStorage.removeItem('showRefreshSuccess');
+      notifySuccess('تم تحديث البيانات بنجاح');
+    }
+    
     // Listen for login/logout events
     const handleUserLogin = () => setIsLoggedIn(true);
     const handleAuthFailed = () => setIsLoggedIn(false);
@@ -81,8 +88,8 @@ const Layout = ({ children }) => {
       setIsSyncing(true);
       const response = await Api.get('/api');
       if (response.data && response.data.refresh === true) {
+        sessionStorage.setItem('showRefreshSuccess', 'true');
         window.location.reload();
-        notifySuccess('تم تحديث البيانات بنجاح');
       } else {
         notifyError('فشل في تحديث البيانات');
       }
