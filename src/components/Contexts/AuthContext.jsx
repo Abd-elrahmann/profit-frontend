@@ -101,15 +101,6 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    const handleUserLoggedIn = (event) => {
-      const { accessToken: token, user: userData } = event.detail;
-      console.log('AuthContext: User logged in from Login page');
-      setAccessToken(token);
-      setApiAccessToken(token);
-      setUser(userData);
-      setIsAuthenticated(true);
-    };
-
     const handleTokenRefresh = (event) => {
       const { accessToken: token, user: userData } = event.detail;
       console.log('AuthContext: Token refreshed successfully');
@@ -128,12 +119,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
     };
 
-    window.addEventListener('userLoggedIn', handleUserLoggedIn);
     window.addEventListener('tokenRefreshed', handleTokenRefresh);
     window.addEventListener('authFailed', handleAuthFailed);
 
     return () => {
-      window.removeEventListener('userLoggedIn', handleUserLoggedIn);
       window.removeEventListener('tokenRefreshed', handleTokenRefresh);
       window.removeEventListener('authFailed', handleAuthFailed);
     };
@@ -141,10 +130,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (token, userData) => {
     console.log('AuthContext: User logging in');
-    // Dispatch event - the listener will handle state updates
-    window.dispatchEvent(new CustomEvent('userLoggedIn', {
-      detail: { accessToken: token, user: userData }
-    }));
+    
+    // Update state directly
+    setAccessToken(token);
+    setApiAccessToken(token);
+    setUser(userData);
+    setIsAuthenticated(true);
   }, []);
 
   const logout = useCallback(async () => {
