@@ -84,12 +84,20 @@ export const PermissionProvider = ({ children }) => {
       fetchPermissions();
     };
 
+    // عند تسجيل الدخول أو استرجاع الجلسة: نجلب الصلاحيات
+    const handleUserLoggedIn = () => {
+      console.log('PermissionContext: User logged in - fetching permissions');
+      fetchPermissions();
+    };
+
     window.addEventListener('authFailed', handleAuthFailed);
     window.addEventListener('tokenRefreshed', handleTokenRefreshed);
+    window.addEventListener('userLoggedIn', handleUserLoggedIn);
 
     return () => {
       window.removeEventListener('authFailed', handleAuthFailed);
       window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
+      window.removeEventListener('userLoggedIn', handleUserLoggedIn);
     };
   }, [fetchPermissions]);
 
