@@ -91,9 +91,9 @@ const Login = () => {
       let userPermissions = [];
       try {
         if (fetchPermissions && typeof fetchPermissions === 'function') {
-          await fetchPermissions();
+          const fetchedPermissions = await fetchPermissions();
+          userPermissions = fetchedPermissions || [];
         }
-        userPermissions = permissions || [];
       } catch (permError) {
         console.warn('Permissions fetch failed, navigating to dashboard:', permError);
         // Continue with empty permissions - will navigate to dashboard

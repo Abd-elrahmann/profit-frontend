@@ -78,6 +78,7 @@ export const PermissionProvider = ({ children }) => {
       });
 
       setPermissions(allPermissions);
+      return allPermissions;
 
     } catch (err) {
       const status = err?.response?.status;
@@ -92,6 +93,7 @@ export const PermissionProvider = ({ children }) => {
         console.warn('Permission fetch failed (network/server error):', err.message);
         // لا نمسح الـ permissions - نبقيها كما هي
       }
+      return [];
     } finally {
       setLoading(false);
     }
