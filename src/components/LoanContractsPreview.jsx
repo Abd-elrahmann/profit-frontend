@@ -60,7 +60,6 @@ const LoanContractsPreview = ({
     return contracts.map(contract => {
       try {
         if (!isValidTemplate(contract.html)) {
-          console.error(`Invalid contract template for ${contract.name}: contains potentially dangerous content`);
           return {
             ...contract,
             html: '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب العقد غير آمن</div>'
@@ -74,7 +73,6 @@ const LoanContractsPreview = ({
           html: safeHtml
         };
       } catch (error) {
-        console.error(`Error processing contract template for ${contract.name}:`, error);
         return {
           ...contract,
           html: '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب العقد</div>'

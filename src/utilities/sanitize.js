@@ -38,9 +38,23 @@ export const isValidTemplate = (html) => {
     /<select/i,
     /<button/i,
     /<meta/i,
-    /<link/i,
-    /<style[^>]*>[^<]*(?:@import|url\s*\(|expression\s*\(|javascript:)[^<]*<\/style>/i
+    /<link/i
   ];
+
+  // Check for dangerous CSS patterns inside style tags
+  if (/<style/i.test(html)) {
+    const dangerousCssPatterns = [
+      /@import/i,
+      /url\s*\(/i,
+      /expression\s*\(/i,
+      /javascript:/i,
+      /vbscript:/i
+    ];
+    
+    if (dangerousCssPatterns.some(pattern => pattern.test(html))) {
+      return false;
+    }
+  }
 
   return !dangerousPatterns.some(pattern => pattern.test(html));
 };

@@ -1035,7 +1035,7 @@ const IncomeStatement = () => {
         )}
 
         {/* Empty State */}
-        {!isLoading && !isInitializing && !isError && !incomeData && (
+        {!isLoading && !isInitializing && !isError && !incomeData && (periodType !== "period" || selectedPeriodId) && (
           <Paper sx={{ p: 6, textAlign: 'center' }}>
             <Typography variant="h6" color="text.secondary" gutterBottom>
               لا توجد بيانات للفترة المحددة
