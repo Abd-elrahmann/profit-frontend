@@ -133,16 +133,22 @@ export default function Treasury() {
 
   const totalRepaymentsAmount = currentData?.repayments?.totalAmount || 0;
   const paidRepaymentsUntilNow = currentData?.repayments?.paidUntilNow || 0;
+  const totalRemaining = currentData?.repayments?.remaining || 0;
+  const totalDiscount = currentData?.repayments?.discount || 0;
   const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
+  const totalPaid = paidRepaymentsUntilNow + totalDiscount;
   const repaymentsProgress = totalRepaymentsAmount > 0
-    ? Math.min(100, Math.max(0, (paidRepaymentsUntilNow / totalRepaymentsAmount) * 100))
+    ? Math.min(100, Math.max(0, (totalPaid / totalRepaymentsAmount) * 100))
     : 0;
 
   const currentMonthTotalAmount = currentData?.currentMonth?.totalAmount || 0;
   const currentMonthPaidUntilNow = currentData?.currentMonth?.paidUntilNow || 0;
+  const currentMonthRemainingRepayment = currentData?.currentMonth?.remaining || 0;
+  const currentMonthDiscount = currentData?.currentMonth?.discount || 0;
   const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
+  const currentTotalPaid = paidRepaymentsUntilNow + totalDiscount;
   const currentMonthProgress = currentMonthTotalAmount > 0
-    ? Math.min(100, Math.max(0, (currentMonthPaidUntilNow / currentMonthTotalAmount) * 100))
+    ? Math.min(100, Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100))
     : 0;
 
   const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
@@ -988,6 +994,14 @@ export default function Treasury() {
                                   {currentMonthRemaining.toLocaleString('en-US')}
                                 </Typography>
                               </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
+                                  خصم
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="error.main">
+                                  {currentMonthDiscount.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
 
                               <Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -1065,6 +1079,14 @@ export default function Treasury() {
                                 </Typography>
                                 <Typography variant="body2" fontWeight="bold" color="warning.main">
                                   {remainingRepayments.toLocaleString('en-US')}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color={isDarkMode ? 'text.secondary' : 'text.secondary'}>
+                                  خصم
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="error.main">
+                                  {totalDiscount.toLocaleString('en-US')}
                                 </Typography>
                               </Box>
 

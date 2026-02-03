@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import i18next from 'i18next';
 
 const getBaseURL = () => {
- // return "http://localhost:3000";
-  return "http://72.61.101.53:3003";
+  return "http://localhost:3000";
+  //return "http://72.61.101.53:3003";
 };
 
 const Api = axios.create({
@@ -48,12 +48,12 @@ Api.interceptors.request.use(
   (config) => {
     config.headers["Accept-Language"] = i18next.language;
     config.headers["page"] = window.location.pathname.split('/').pop();
-    
+
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => Promise.reject(error),
@@ -99,12 +99,12 @@ Api.interceptors.response.use(
             }
             reject(new Error('Request queue timeout'));
           }, 8000); // 8s timeout for queued requests
-          
-          failedQueue.push({ 
+
+          failedQueue.push({
             resolve: (token) => {
               clearTimeout(timeoutId);
               resolve(token);
-            }, 
+            },
             reject: (err) => {
               clearTimeout(timeoutId);
               reject(err);
@@ -131,43 +131,43 @@ Api.interceptors.response.use(
 
       const REFRESH_TIMEOUT_MS = 5000;
 
-        try {
+      try {
         const response = await Promise.race([
           Api.post('/api/auth/refresh'),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Refresh token timeout')), REFRESH_TIMEOUT_MS)
           ),
         ]);
-        
+
         if (response.data && response.data.accessToken) {
           const newToken = response.data.accessToken;
-          
+
           setAccessToken(newToken);
 
-          window.dispatchEvent(new CustomEvent('tokenRefreshed', { 
-            detail: { 
+          window.dispatchEvent(new CustomEvent('tokenRefreshed', {
+            detail: {
               accessToken: newToken,
-              user: response.data.user 
-            } 
+              user: response.data.user
+            }
           }));
-          
+
           processQueue(null, newToken);
-          
+
           originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
           return Api(originalRequest);
         }
       } catch (refreshError) {
         lastRefreshFailTime = Date.now();
         processQueue(refreshError, null);
-        
+
         setAccessToken(null);
-        
+
         window.dispatchEvent(new Event('authFailed'));
-        
+
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-        
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -182,11 +182,11 @@ export const handleApiError = (error) => {
   try {
     const status = error?.response?.status;
     const responseBody = error?.response?.data;
-    
+
     if (status === 500) {
       return toast.error('Unexpected Error Happen');
     }
-    
+
     if (Array.isArray(responseBody)) {
       responseBody.map((e) => toast.error(e.message));
     } else if (Array.isArray(responseBody?.message)) {
