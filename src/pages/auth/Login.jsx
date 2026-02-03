@@ -84,13 +84,20 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Wait for permissions to be fetched
-      if (fetchPermissions && typeof fetchPermissions === 'function') {
-        await fetchPermissions();
-      }
+      // Show success message immediately after login
+      notifySuccess("تم تسجيل الدخول بنجاح");
 
-      // Get user permissions after fetching
-      const userPermissions = permissions || [];
+      // Wait for permissions to be fetched (don't let errors propagate)
+      let userPermissions = [];
+      try {
+        if (fetchPermissions && typeof fetchPermissions === 'function') {
+          await fetchPermissions();
+        }
+        userPermissions = permissions || [];
+      } catch (permError) {
+        console.warn('Permissions fetch failed, navigating to dashboard:', permError);
+        // Continue with empty permissions - will navigate to dashboard
+      }
 
       const convertModuleToPermission = (module) => {
         switch (module) {
@@ -119,7 +126,6 @@ const Login = () => {
         }
       }
 
-      notifySuccess("تم تسجيل الدخول بنجاح");  
       navigate(firstPage, { replace: true });
     } catch (error) {
       if (error.response?.data?.message?.includes('ليس لديك أي صلاحيات أو أدوار للدخول على النظام')) {

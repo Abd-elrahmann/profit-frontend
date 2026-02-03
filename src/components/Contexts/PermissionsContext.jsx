@@ -126,20 +126,12 @@ export const PermissionProvider = ({ children }) => {
       fetchPermissions();
     };
 
-    // عند تسجيل دخول جديد: نجلب الصلاحيات
-    const handleLogin = () => {
-      console.log('PermissionContext: User logged in - fetching permissions');
-      fetchPermissions();
-    };
-
     window.addEventListener('authFailed', handleAuthFailed);
     window.addEventListener('tokenRefreshed', handleTokenRefreshed);
-    window.addEventListener('userLoggedIn', handleLogin);
 
     return () => {
       window.removeEventListener('authFailed', handleAuthFailed);
       window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
-      window.removeEventListener('userLoggedIn', handleLogin);
     };
   }, [fetchPermissions]);
 
