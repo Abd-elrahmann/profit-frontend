@@ -70,8 +70,9 @@ const numberToArabicWords = (num) => {
       const part = Math.floor(num / s.value);
       if (part === 1) result += s.singular + " ";
       else if (part === 2) result += s.dual + " ";
-      else if (part >= 3 && part <= 10) result += ones[part] + " " + s.plural + " ";
-      else {
+      else if (part >= 3 && part <= 10) {
+        result += ones[part] + " " + s.plural + " ";
+      } else {
         result += numberToArabicWords(part) + " " + s.singular + " ";
       }
 
@@ -80,21 +81,21 @@ const numberToArabicWords = (num) => {
     }
   }
 
-if (num >= 100) {
-  const hundredsPart = Math.floor(num / 100);
+  if (num >= 100) {
+    const hundredsPart = Math.floor(num / 100);
 
-  if (hundredsPart > 0) {
-    if (hasThousands) {
-      result += "و" + hundreds[hundredsPart];
-    } else {
-      result += hundreds[hundredsPart];
+    if (hundredsPart > 0) {
+      if (hasThousands && result.trim().length > 0) {
+        result += "و" + hundreds[hundredsPart];
+      } else {
+        result += hundreds[hundredsPart];
+      }
     }
+
+    num %= 100;
+
+    if (num > 0 && hundredsPart > 0) result += " ";
   }
-
-  num %= 100;
-
-  if (num > 0 && hundredsPart > 0) result += " ";
-}
 
   if (num >= 20) {
     const t = Math.floor(num / 10);
@@ -379,7 +380,11 @@ const InstallmentSettlementReceipt = React.forwardRef(
             amount = totalContractAmount;
           }
           
-          const amountInWords = `${numberToArabicWords(amount)} ريال`;
+          const amountInWords = amount > 0 ? numberToArabicWords(amount) : "صفر";
+
+          const discountInfo = totalDiscountsAll > 0 
+            ? `(بعد خصم قدره ${totalDiscountsAll.toLocaleString("en-US")} ريال من إجمالي العقد ${totalContractAmount.toLocaleString("en-US")} ريال)`
+            : "";
 
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || "")
@@ -398,10 +403,8 @@ const InstallmentSettlementReceipt = React.forwardRef(
             )
 
             .replace(
-              /{{المبلغ_رقما}}/g,
-              `${amount?.toLocaleString("en-US") || "0"}`
-            )
-            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
+              /{{المبلغ_رقما}}/g, `${amount?.toLocaleString("en-US") || "0"} ريال`)
+            .replace(/{{المبلغ_كتابة}}/g, `${amountInWords} ${discountInfo}`)
 
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)

@@ -303,7 +303,7 @@ const getScreenText = (screen) => {
     "Journals": "القيود اليومية",
     "Loans": "السلف",
     "Partners": "المستثمرين",
-    "Repayments": "الأقساط",
+    "Repayments": "الدفعات",
     "Roles": "الأدوار",
     "Templates": "القوالب",
     "Users": "المستخدمين",

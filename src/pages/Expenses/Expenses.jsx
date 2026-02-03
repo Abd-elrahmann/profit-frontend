@@ -20,8 +20,12 @@ import {
   Collapse,
   TableRow,
   TableCell,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
-import { Add, PictureAsPdf, FileDownload, Edit, Delete, ExpandMore, ExpandLess } from "@mui/icons-material";
+import { Add, PictureAsPdf, FileDownload, Edit, Delete, ExpandMore, ExpandLess, FilterList } from "@mui/icons-material";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { getExpenses, deleteExpense } from "./expensesApi";
 import { Helmet } from "react-helmet-async";
@@ -49,6 +53,18 @@ const Expenses = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [expandedRows, setExpandedRows] = useState([]);
+  const [selectedExpenseType, setSelectedExpenseType] = useState("");
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+
+  const EXPENSE_TYPES = [
+    "مصروف رواتب",
+    "مصروف بنزين",
+    "مصروفات انترنت",
+    "مصروفات ورقية",
+    "مصروفات كهرباء",
+    "مصروفات تشغيلية",
+    "مصروفات اخرى"
+  ];
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -164,24 +180,38 @@ const Expenses = () => {
     setExpandedRows([]);
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (expenseType = "") => {
     const rows = expensesData?.expenses || [];
     if (!rows.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
     
-    await exportExpensesToPDF(rows);
+    const filteredRows = expenseType ? rows.filter(exp => exp.type === expenseType) : rows;
+    
+    if (!filteredRows.length) {
+      notifyError(`لا توجد مصاريف من نوع "${expenseType}"`);
+      return;
+    }
+    
+    await exportExpensesToPDF(filteredRows, expenseType);
   };
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = async (expenseType = "") => {
     const rows = expensesData?.expenses || [];
     if (!rows.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
     
-    await exportExpensesToExcel(rows);
+    const filteredRows = expenseType ? rows.filter(exp => exp.type === expenseType) : rows;
+    
+    if (!filteredRows.length) {
+      notifyError(`لا توجد مصاريف من نوع "${expenseType}"`);
+      return;
+    }
+    
+    await exportExpensesToExcel(filteredRows, expenseType);
   };
 
   const toggleRowExpansion = (journalId) => {
@@ -555,12 +585,27 @@ const Expenses = () => {
             </Stack>
 
             {canExport && (
-              <Stack direction="row" spacing={1}>
+              <Stack direction={isMobile ? "column" : "row"} spacing={1}>
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>نوع المصروف</InputLabel>
+                  <Select
+                    value={selectedExpenseType}
+                    label="نوع المصروف"
+                    onChange={(e) => setSelectedExpenseType(e.target.value)}
+                  >
+                    <MenuItem value="">الكل</MenuItem>
+                    {EXPENSE_TYPES.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <Button
                   variant="outlined"
                   color="error"
                   startIcon={<PictureAsPdf />}
-                  onClick={handleExportPDF}
+                  onClick={() => handleExportPDF(selectedExpenseType)}
                   disabled={!groupedExpenses.length}
                 >
                   تصدير PDF
@@ -569,7 +614,7 @@ const Expenses = () => {
                   variant="outlined"
                   color="success"
                   startIcon={<FileDownload />}
-                  onClick={handleExportExcel}
+                  onClick={() => handleExportExcel(selectedExpenseType)}
                   disabled={!groupedExpenses.length}
                 >
                   تصدير Excel

@@ -47,7 +47,7 @@ const dashboardSections = [
   {
     module: 'Upcoming-Repayments',
     label: 'الدفعات القادمة',
-    description: 'عرض الدفعات والأقساط القادمة'
+    description: 'عرض الدفعات القادمة'
   },
   {
     module: 'Last-Actions',

@@ -1548,7 +1548,7 @@ const Loans = () => {
                         onClick={() => navigate('/installments/' + selectedLoan.id)}
                         sx={{ fontWeight: "bold" }}
                       >
-                        عرض الأقساط
+                        عرض الدفعات
                       </Button>
                     }
                   >

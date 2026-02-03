@@ -89,7 +89,7 @@ const LoanActions = ({
                 onClick={() => window.dispatchEvent(new CustomEvent('navigate-to-installments', { detail: selectedLoan.id }))}
                 sx={{ fontWeight: "bold" }}
               >
-                عرض الأقساط
+                عرض الدفعات
               </Button>
             }
           >

@@ -776,14 +776,14 @@ const Installments = () => {
       );
 
       if (pendingInstallments.length === 0) {
-        notifyError("لا توجد أقساط معلقة للسداد المبكر");
+        notifyError("لا توجد دفعات معلقة للسداد المبكر");
         setEarlyPaymentModalOpen(false);
         return;
       }
 
       await earlyPayment(loanId, discount);
 
-      notifySuccess("تم السداد المبكر للأقساط المعلقة بنجاح");
+      notifySuccess("تم السداد المبكر للدفعات المعلقة بنجاح");
 
       setEarlyPaymentModalOpen(false);
       setDiscountAmount("0");
@@ -1750,7 +1750,7 @@ const Installments = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        حدث خطأ في تحميل بيانات الأقساط
+        حدث خطأ في تحميل بيانات الدفعات
       </Alert>
     );
   }
@@ -1765,8 +1765,8 @@ const Installments = () => {
       }}
     >
       <Helmet>
-        <title> أقساط السلفة</title>
-        <meta name="description" content="أقساط السلفة" />
+        <title> دفعات السلفه</title>
+        <meta name="description" content="دفعات السلفه" />
       </Helmet>
       <Box
         sx={{

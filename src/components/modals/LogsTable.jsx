@@ -90,7 +90,7 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
       "Journals": "القيود",
       "Loans": "السلف",
       "Partners": "الشركاء",
-      "Repayments": "الأقساط",
+      "Repayments": "الدفعات",
       "Roles": "الأدوار",
       "Templates": "القوالب",
       "Users": "المستخدمين",

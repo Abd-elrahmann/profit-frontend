@@ -34,10 +34,10 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
 
       // Set document properties
       doc.setProperties({
-        title: 'تقرير أقساط السلفة',
-        subject: 'بيانات أقساط السلفة',
+        title: 'تقرير دفعات السلفه',
+        subject: 'بيانات دفعات السلفه',
         author: 'نظام إدارة السلف',
-        keywords: 'أقساط, سلفة, تقرير, بيانات',
+        keywords: 'دفعات, سلفة, تقرير, بيانات',
         creator: 'نظام إدارة السلف'
       });
 
@@ -54,7 +54,7 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
       // Title section - with more spacing to avoid overlap
       doc.setFontSize(18);
       doc.setFont('Amiri', 'bold');
-      doc.text('تقرير أقساط السلفة', doc.internal.pageSize.width / 2, 30, { align: 'center' });
+      doc.text('تقرير دفعات السلفه', doc.internal.pageSize.width / 2, 30, { align: 'center' });
 
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
@@ -113,11 +113,11 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
       doc.setFontSize(12);
       doc.setFont('Amiri', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text('جدول الأقساط', pageWidth / 2, yPosition, { align: 'center' });
+      doc.text('جدول الدفعات', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 8;
 
       // Define headers in logical order (will be reversed for RTL display)
-      const repaymentsHeaders = [['رقم القسط', 'تاريخ الاستحقاق', 'المبلغ الأساسي', 'الفائدة', 'إجمالي القسط', 'الحالة', 'المبلغ المدفوع', 'حالة الدفع']];
+      const repaymentsHeaders = [['رقم الدفعة', 'تاريخ الاستحقاق', 'المبلغ الأساسي', 'الفائدة', 'إجمالي الدفعة', 'الحالة', 'المبلغ المدفوع', 'حالة الدفع']];
       const repaymentsTableData = repaymentsData.map(repayment => {
         // Format date with Hijri date below
         let dateText = repayment.dueDate ? dayjs(repayment.dueDate).format('DD/MM/YYYY') : '-';
@@ -150,11 +150,11 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
           0: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // حالة الدفع (الأول من اليمين)
           1: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // المبلغ المدفوع
           2: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }, // الحالة
-          3: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // إجمالي القسط
+          3: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // إجمالي الدفعة
           4: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }, // الفائدة
           5: { cellWidth: 'auto', minCellWidth: 25, halign: 'right' }, // المبلغ الأساسي
           6: { cellWidth: 'auto', minCellWidth: 30, halign: 'right', valign: 'middle', cellPadding: { top: 6, bottom: 6, left: 4, right: 4 } }, // تاريخ الاستحقاق (مع التاريخ الهجري)
-          7: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }  // رقم القسط (الأخير من اليمين)
+          7: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }  // رقم الدفعة (الأخير من اليمين)
         },
         margin: { top: 20, left: 15, right: 15 },
         tableWidth: 'auto',
@@ -207,7 +207,7 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
       }
 
       // Save PDF
-      const fileName = `تقرير_أقساط_السلفة_${clientName}_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      const fileName = `تقرير_دفعات_السلفه_${clientName}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
     } catch (error) {
@@ -256,7 +256,7 @@ export const exportRepaymentsToExcel = async (repaymentsData, loanData) => {
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص السلفة');
 
     // Repayments sheet - reversed for RTL
-    const repaymentsHeaders = ['رقم القسط', 'تاريخ الاستحقاق', 'المبلغ الأساسي', 'الفائدة', 'إجمالي القسط', 'الحالة', 'المبلغ المدفوع', 'حالة الدفع'];
+    const repaymentsHeaders = ['رقم الدفعة', 'تاريخ الاستحقاق', 'المبلغ الأساسي', 'الفائدة', 'إجمالي الدفعة', 'الحالة', 'المبلغ المدفوع', 'حالة الدفع'];
     const repaymentsTableData = [
       reverseRow(repaymentsHeaders),
       ...repaymentsData.map(repayment => reverseRow([
@@ -276,13 +276,13 @@ export const exportRepaymentsToExcel = async (repaymentsData, loanData) => {
       { wch: 20 }, // حالة الدفع
       { wch: 20 }, // المبلغ المدفوع
       { wch: 15 }, // الحالة
-      { wch: 20 }, // إجمالي القسط
+      { wch: 20 }, // إجمالي الدفعة
       { wch: 15 }, // الفائدة
       { wch: 20 }, // المبلغ الأساسي
       { wch: 20 }, // تاريخ الاستحقاق
-      { wch: 15 }  // رقم القسط
+      { wch: 15 }  // رقم الدفعة
     ];
-    XLSX.utils.book_append_sheet(workbook, repaymentsSheet, 'جدول الأقساط');
+    XLSX.utils.book_append_sheet(workbook, repaymentsSheet, 'جدول الدفعات');
 
     // Generate Excel file
     const excelBuffer = XLSX.write(workbook, {
@@ -295,7 +295,7 @@ export const exportRepaymentsToExcel = async (repaymentsData, loanData) => {
       type: 'application/vnd.openxmlformats-officdocument.spreadsheetml.sheet'
     });
 
-    const fileName = `تقرير_أقساط_السلفة_${clientName}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    const fileName = `تقرير_دفعات_السلفه_${clientName}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
 
   } catch (error) {

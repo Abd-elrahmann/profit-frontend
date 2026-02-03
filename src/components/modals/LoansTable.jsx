@@ -157,7 +157,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
 
   const handleViewInstallmentsClick = (loan) => {
     if (loan.status === "PENDING") {
-      notifyError("يجب تفعيل السلفة أولاً لعرض الأقساط");
+      notifyError("يجب تفعيل السلفة أولاً لعرض الدفعات");
       return;
     }
     onViewInstallments(loan);
@@ -1111,7 +1111,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
           <ListItemIcon>
             <Schedule fontSize="small" sx={{ color: "warning.main" }} />
           </ListItemIcon>
-          عرض الأقساط
+          عرض الدفعات
         </MenuItem>
 
         {/* View Contracts */}
