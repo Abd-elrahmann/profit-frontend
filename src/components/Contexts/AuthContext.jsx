@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }) => {
           setUser(userData);
           setIsAuthenticated(true);
 
-          console.log('AuthContext: Session restored successfully');
           window.dispatchEvent(new CustomEvent('userLoggedIn', { 
             detail: { accessToken: token, user: userData } 
           }));
@@ -79,17 +78,6 @@ export const AuthProvider = ({ children }) => {
           throw new Error('Invalid refresh response');
         }
       } catch (error) {
-        const status = error?.response?.status;
-        
-        // فقط نسجل الخطأ - لا نعتبر كل خطأ = logout
-        if (status === 401 || status === 403) {
-          console.log('AuthContext: No valid session (401/403)');
-        } else if (error.message === 'Auth check timeout') {
-          console.warn('AuthContext: Session check timeout - treating as no session');
-        } else {
-          console.warn('AuthContext: Session check failed:', error.message);
-        }
-        
         setIsAuthenticated(false);
         setUser(null);
         setAccessToken(null);
@@ -103,7 +91,6 @@ export const AuthProvider = ({ children }) => {
 
     const handleTokenRefresh = (event) => {
       const { accessToken: token, user: userData } = event.detail;
-      console.log('AuthContext: Token refreshed successfully');
       setAccessToken(token);
       setApiAccessToken(token);
       if (userData) {
@@ -112,7 +99,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     const handleAuthFailed = () => {
-      console.log('AuthContext: Auth failed event received - logging out user');
       setAccessToken(null);
       setApiAccessToken(null);
       setUser(null);
@@ -129,9 +115,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback(async (token, userData) => {
-    console.log('AuthContext: User logging in');
-    
-    // Update state directly
     setAccessToken(token);
     setApiAccessToken(token);
     setUser(userData);
@@ -139,8 +122,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    console.log('AuthContext: User logging out');
-    // Clear all auth data first
     setAccessToken(null);
     setApiAccessToken(null);
     setUser(null);
@@ -173,7 +154,6 @@ export const AuthProvider = ({ children }) => {
       await Api.post('/api/auth/logout');
     } catch {
       // Ignore logout errors - user is already logged out locally
-      console.log('Logout endpoint call failed (already logged out)');
     }
   }, []);
 

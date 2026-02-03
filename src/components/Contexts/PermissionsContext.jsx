@@ -28,7 +28,6 @@ export const PermissionProvider = ({ children }) => {
       ]);
 
       if (!permissionsRes.data || permissionsRes.data.length === 0) {
-        console.log('No permissions found - user may have no permissions assigned');
         setPermissions([]);
         return [];
       }
@@ -41,12 +40,10 @@ export const PermissionProvider = ({ children }) => {
       
       // إذا 401 أو 403 → الجلسة منتهية (authFailed سيتم إطلاقه من Api.js)
       if (status === 401 || status === 403) {
-        console.log('Session expired during permission fetch');
         setPermissions([]);
       } 
       // أخطاء شبكة أو سيرفر → نحتفظ بالـ permissions القديمة إن وجدت
       else {
-        console.warn('Permission fetch failed (network/server error):', err.message);
         // لا نمسح الـ permissions - نبقيها كما هي
       }
       return [];
@@ -73,20 +70,17 @@ export const PermissionProvider = ({ children }) => {
     // عند انتهاء الجلسة الفعلية (authFailed من Api.js): نمسح الصلاحيات فقط
     // AuthContext هو المسؤول عن تسجيل الخروج
     const handleAuthFailed = () => {
-      console.log('PermissionContext: Auth failed - clearing permissions');
       setPermissions([]);
       setLoading(false);
     };
 
     // عند تحديث التوكن بنجاح: نجلب الصلاحيات من جديد
     const handleTokenRefreshed = () => {
-      console.log('PermissionContext: Token refreshed - fetching permissions');
       fetchPermissions();
     };
 
     // عند تسجيل الدخول أو استرجاع الجلسة: نجلب الصلاحيات
     const handleUserLoggedIn = () => {
-      console.log('PermissionContext: User logged in - fetching permissions');
       fetchPermissions();
     };
 
