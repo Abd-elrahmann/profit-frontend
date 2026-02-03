@@ -20,65 +20,21 @@ export const PermissionProvider = ({ children }) => {
     try {
       setLoading(true);
 
-      const modulesRes = await Promise.race([
-        Api.get("/api/auth/modules"),
+      const permissionsRes = await Promise.race([
+        Api.get("/api/auth/permissions"),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Modules fetch timeout')), PERMISSIONS_TIMEOUT)
+          setTimeout(() => reject(new Error('Permissions fetch timeout')), PERMISSIONS_TIMEOUT)
         ),
       ]);
 
-      if (!modulesRes.data || modulesRes.data.length === 0) {
-        console.log('No modules found - user may have no permissions assigned');
+      if (!permissionsRes.data || permissionsRes.data.length === 0) {
+        console.log('No permissions found - user may have no permissions assigned');
         setPermissions([]);
-        return;
+        return [];
       }
 
-      const permissionPromises = modulesRes.data.map(module =>
-        Promise.race([
-          Api.get(`/api/auth/permissions/${module}`).then(res => ({
-            module,
-            permissions: res.data
-          })),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error(`Permission fetch timeout for ${module}`)), PERMISSIONS_TIMEOUT)
-          ),
-        ]).catch(err => {
-          console.warn(`Failed to fetch permissions for module ${module}:`, err.message);
-          return { module, permissions: [] };
-        })
-      );
-
-      const permissionResults = await Promise.all(permissionPromises);
-
-      const allPermissions = [];
-
-      permissionResults.forEach(({ module, permissions: perms }) => {
-        if (!perms || perms.length === 0) return;
-        
-        perms.forEach((perm) => {
-          const cleanName = perm.replace("can", "");
-
-          let moduleKey = module;
-          switch (module) {
-            case "messages-templates":
-              moduleKey = "messagesTemplates";
-              break;
-            case "journal-entries":
-              moduleKey = "journalEntries";
-              break;
-            case "contract-templates":
-              moduleKey = "contractTemplates";
-              break;
-            default:
-              moduleKey = module;
-          }
-
-          allPermissions.push(`${moduleKey}_${cleanName}`);
-        });
-      });
-
-      setPermissions(allPermissions);
-      return allPermissions;
+      setPermissions(permissionsRes.data);
+      return permissionsRes.data;
 
     } catch (err) {
       const status = err?.response?.status;

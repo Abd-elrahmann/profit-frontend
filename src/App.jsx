@@ -14,6 +14,7 @@ const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { AuthProvider, useAuth } from './components/Contexts/AuthContext';
 import { notifyError } from './utilities/toastify';
+import { convertModuleToPermission } from './utilities/moduleConverter';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Api from './config/Api';
@@ -22,19 +23,6 @@ import { usePrefetch } from './hooks/usePrefetch';
 const CheckConnection = React.lazy(() => import('./pages/CheckConnection'));
 
 const getFirstAccessiblePage = (permissions) => {
-  const convertModuleToPermission = (module) => {
-    switch (module) {
-      case "messages-templates":
-        return "messagesTemplates";
-      case "journal-entries":
-        return "journalEntries";
-      case "contract-templates":
-        return "contractTemplates";
-      default:
-        return module;
-    }
-  };
-
   for (const route of routes) {
     if (route.protected && route.requiresPermissions && route.module) {
       const moduleKey = convertModuleToPermission(route.module);
@@ -257,21 +245,7 @@ const ProtectedRoute = ({ children, route }) => {
       );
     }
 
-    let moduleKey = route.module;
-    switch (route.module) {
-      case "messages-templates":
-        moduleKey = "messagesTemplates";
-        break;
-      case "journal-entries":
-        moduleKey = "journalEntries";
-        break;
-      case "contract-templates":
-        moduleKey = "contractTemplates";
-        break;
-      default:
-        moduleKey = route.module;
-    }
-
+    const moduleKey = convertModuleToPermission(route.module);
     const hasPermission = permissions.includes(`${moduleKey}_View`);
 
     if (!hasPermission) {

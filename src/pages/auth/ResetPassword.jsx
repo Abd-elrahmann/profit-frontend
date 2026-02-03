@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import AuthThemeProvider from "./AuthThemeProvider";
 import {
-  MdAccountBalance as AccountBalance,
   MdArrowBack as ArrowBackIcon,
   MdVisibility as VisibilityIcon,
   MdVisibilityOff as VisibilityOffIcon,
@@ -28,7 +27,7 @@ import * as Yup from "yup";
 import { Helmet } from "react-helmet-async";
 import Api, { handleApiError } from "../../config/Api";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import Logo from "/assets/images/logo.webp";
+import AuthSidebar from "../../components/auth/AuthSidebar";
 
 const validationSchema = Yup.object().shape({
   newPassword: Yup.string()
@@ -89,6 +88,7 @@ const ResetPassword = () => {
 
   if (!isTokenValid) {
     return (
+      <AuthThemeProvider>
       <Box
         sx={{
           minHeight: "100vh",
@@ -118,89 +118,15 @@ const ResetPassword = () => {
               minHeight: { md: 540 },
             }}
           >
-              <Box
-              sx={{
-                position: "relative",
-                p: { xs: 3, md: 5 },
-                background:
-                  "linear-gradient(135deg, #1e5a2e 0%, #2E8B45 50%, #3da35a 100%)",
-                color: "#fff",
-                overflow: "hidden",
-                display: { xs: "none", md: "flex" },
-                flexDirection: "column",
-                gap: 4,
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  opacity: 0.12,
-                  backgroundImage:
-                    "radial-gradient(circle at 30% 20%, #fff, transparent 28%), radial-gradient(circle at 70% 80%, #fff, transparent 22%)",
-                }}
+              <AuthSidebar
+                title="رابط غير صالح"
+                subtitle="يبدو أن رابط إعادة تعيين كلمة المرور الذي استخدمته غير صالح أو منتهي الصلاحية."
+                features={[
+                  { icon: <SecurityIcon size={18} color="#ef4444" />, text: "الروابط تكون صالحة لفترة محدودة فقط." },
+                  { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "يمكنك طلب رابط جديد بسهولة." },
+                  { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "تحقق من بريدك الإلكتروني للحصول على رابط جديد." },
+                ]}
               />
-
-              <Box sx={{ position: "relative", zIndex: 1 }}>
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <img src={Logo} alt="Logo" style={{ width: 34, height: 34 }} />
-                  <Typography sx={{ fontSize: 22, fontWeight: 700, lineHeight: 1.3, color: "#fff" }}>
-                    نظام إدارة السلف
-                  </Typography>
-                </Stack>
-                <Typography sx={{ color: "rgba(255,255,255,0.78)", fontSize: 14, mt: 1.5 }}>
-                  منصة مالية موثوقة لإدارة السلف والاستحقاقات بسهولة وأمان.
-                </Typography>
-              </Box>
-
-              <Box sx={{ position: "relative", zIndex: 1 }}>
-                <Typography sx={{ fontSize: 28, fontWeight: 800, mb: 1, color: "#fff" }}>
-                  رابط غير صالح
-                </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.88)", mb: 3 }}>
-                  يبدو أن رابط إعادة تعيين كلمة المرور الذي استخدمته غير صالح أو منتهي الصلاحية.
-                </Typography>
-
-                <Stack spacing={1.5}>
-                  {[
-                    { icon: <SecurityIcon size={18} color="#ef4444" />, text: "الروابط تكون صالحة لفترة محدودة فقط." },
-                    { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "يمكنك طلب رابط جديد بسهولة." },
-                    { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "تحقق من بريدك الإلكتروني للحصول على رابط جديد." },
-                  ].map((item, idx) => (
-                    <Stack
-                      key={idx}
-                      direction="row"
-                      spacing={1.2}
-                      alignItems="center"
-                      sx={{
-                        backgroundColor: "rgba(255,255,255,0.06)",
-                        borderRadius: 2,
-                        px: 1.5,
-                        py: 1,
-                        backdropFilter: "blur(4px)",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          backgroundColor: "rgba(255,255,255,0.12)",
-                        }}
-                      >
-                        {item.icon}
-                      </Box>
-                      <Typography sx={{ fontSize: 15, fontWeight: 500, color: "#fff" }}>
-                        {item.text}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              </Box>
-            </Box>
 
             <CardContent
               sx={{
@@ -246,6 +172,7 @@ const ResetPassword = () => {
           </Box>
         </Card>
       </Box>
+      </AuthThemeProvider>
     );
   }
 
@@ -285,89 +212,15 @@ const ResetPassword = () => {
             minHeight: { md: 540 },
           }}
         >
-            <Box
-            sx={{
-              position: "relative",
-              p: { xs: 3, md: 5 },
-              background:
-                "linear-gradient(135deg, #1e5a2e 0%, #2E8B45 50%, #3da35a 100%)",
-              color: "#fff",
-              overflow: "hidden",
-              display: { xs: "none", md: "flex" },
-              flexDirection: "column",
-              gap: 4,
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                opacity: 0.12,
-                backgroundImage:
-                  "radial-gradient(circle at 30% 20%, #fff, transparent 28%), radial-gradient(circle at 70% 80%, #fff, transparent 22%)",
-              }}
+            <AuthSidebar
+              title="إعادة تعيين كلمة المرور"
+              subtitle="أدخل كلمة مرور جديدة قوية لحماية حسابك. تأكد من أنها آمنة وسهلة التذكر."
+              features={[
+                { icon: <SecurityIcon size={18} color="#ef4444" />, text: "استخدم كلمة مرور قوية تحتوي على أحرف وأرقام." },
+                { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "تأكد من مطابقة كلمتي المرور في الحقلين." },
+                { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "لا تشارك كلمة المرور مع أي شخص آخر." },
+              ]}
             />
-
-            <Box sx={{ position: "relative", zIndex: 1 }}>
-              <Stack direction="row" alignItems="center" spacing={1.5}>
-                <img src={Logo} alt="Logo" style={{ width: 34, height: 34 }} />
-                <Typography sx={{ fontSize: 22, fontWeight: 700, lineHeight: 1.3, color: "#fff" }}>
-                  نظام إدارة السلف
-                </Typography>
-              </Stack>
-              <Typography sx={{ color: "rgba(255,255,255,0.78)", fontSize: 14, mt: 1.5 }}>
-                منصة مالية موثوقة لإدارة السلف والاستحقاقات بسهولة وأمان.
-              </Typography>
-            </Box>
-
-            <Box sx={{ position: "relative", zIndex: 1 }}>
-              <Typography sx={{ fontSize: 28, fontWeight: 800, mb: 1, color: "#fff" }}>
-                إعادة تعيين كلمة المرور
-              </Typography>
-              <Typography sx={{ color: "rgba(255,255,255,0.88)", mb: 3 }}>
-                أدخل كلمة مرور جديدة قوية لحماية حسابك. تأكد من أنها آمنة وسهلة التذكر.
-              </Typography>
-
-              <Stack spacing={1.5}>
-                {[
-                  { icon: <SecurityIcon size={18} color="#ef4444" />, text: "استخدم كلمة مرور قوية تحتوي على أحرف وأرقام." },
-                  { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "تأكد من مطابقة كلمتي المرور في الحقلين." },
-                  { icon: <CheckCircleIcon size={18} color="#22c55e" />, text: "لا تشارك كلمة المرور مع أي شخص آخر." },
-                ].map((item, idx) => (
-                  <Stack
-                    key={idx}
-                    direction="row"
-                    spacing={1.2}
-                    alignItems="center"
-                    sx={{
-                      backgroundColor: "rgba(255,255,255,0.06)",
-                      borderRadius: 2,
-                      px: 1.5,
-                      py: 1,
-                      backdropFilter: "blur(4px)",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        backgroundColor: "rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      {item.icon}
-                    </Box>
-                    <Typography sx={{ fontSize: 15, fontWeight: 500, color: "#fff" }}>
-                      {item.text}
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
-            </Box>
-          </Box>
 
           <CardContent
             sx={{
