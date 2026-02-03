@@ -19,9 +19,9 @@ import {
   Button,
   Stack as MuiStack
 } from "@mui/material";
-import { PictureAsPdf as PdfIcon, TableChart as ExcelIcon } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
-import { getLogs, getAllLogsForExport } from "./logsApi";
+import { PictureAsPdf as PdfIcon, TableChart as ExcelIcon, DeleteSweep } from "@mui/icons-material";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getLogs, getAllLogsForExport, deleteAllLogs } from "./logsApi";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -31,6 +31,7 @@ import { exportLogsToPDF, exportLogsToExcel } from "../../utilities/logsExporter
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { useTheme } from '../../theme/ThemeContext';
+import DeleteModal from '../../components/modals/DeleteModal';
 
 const Logs = () => {
   const [page, setPage] = useState(1);
@@ -42,6 +43,8 @@ const Logs = () => {
     to: "",
     userName: "",
   });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { permissions } = usePermissions();
   const { isDarkMode } = useTheme();
@@ -53,6 +56,18 @@ const Logs = () => {
   const { data: logsData, isLoading } = useQuery({
     queryKey: ["allLogs", page, filters],
     queryFn: () => getLogs(page, filters),
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: deleteAllLogs,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(["allLogs"]);
+      setDeleteModalOpen(false);
+      notifySuccess(data.message || "تم حذف جميع السجلات بنجاح");
+    },
+    onError: (error) => {
+      notifyError("حدث خطأ أثناء حذف السجلات");
+    },
   });
 
   const formatArabicDate = (date) => {
@@ -97,6 +112,14 @@ const Logs = () => {
       notifyError("حدث خطأ أثناء تصدير Excel");
       console.error('Excel export error:', error);
     }
+  };
+
+  const handleDeleteAll = () => {
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteAllMutation.mutate();
   };
 
 
@@ -427,42 +450,60 @@ const Logs = () => {
           onResetFilters={handleResetFilters}
           isMobile={isMobile}
           exportButtons={
-            permissions.includes("logs_Export") && (
-              <MuiStack direction="row" spacing={1}>
+            <MuiStack direction="row" spacing={1}>
+              {permissions.includes("logs_Export") && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
+                    onClick={handleExportPDF}
+                    disabled={!logsData?.data || logsData.data.length === 0}
+                    sx={{
+                      borderColor: "#d32f2f",
+                      color: "#d32f2f",
+                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                      borderRadius: 2,
+                      px: 2,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    PDF
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+                    onClick={handleExportExcel}
+                    disabled={!logsData?.data || logsData.data.length === 0}
+                    sx={{
+                      borderColor: "#2e7d32",
+                      color: "#2e7d32",
+                      "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                      borderRadius: 2,
+                      px: 2,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Excel
+                  </Button>
+                </>
+              )}
+              {permissions.includes("logs_Delete") && (
                 <Button
-                  variant="outlined"
-                  startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
-                  onClick={handleExportPDF}
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteSweep sx={{ marginLeft: "10px" }} />}
+                  onClick={handleDeleteAll}
                   disabled={!logsData?.data || logsData.data.length === 0}
                   sx={{
-                    borderColor: "#d32f2f",
-                    color: "#d32f2f",
-                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
                     borderRadius: 2,
                     px: 2,
                     fontWeight: "bold",
                   }}
                 >
-                  PDF
+                  حذف جميع السجلات
                 </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-                  onClick={handleExportExcel}
-                  disabled={!logsData?.data || logsData.data.length === 0}
-                  sx={{
-                    borderColor: "#2e7d32",
-                    color: "#2e7d32",
-                    "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-                    borderRadius: 2,
-                    px: 2,
-                    fontWeight: "bold",
-                  }}
-                >
-                  Excel
-                </Button>
-              </MuiStack>
-            )
+              )}
+            </MuiStack>
           }
         />
 
@@ -500,6 +541,16 @@ const Logs = () => {
           )}
         </Paper>
       </Box>
+
+      <DeleteModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="حذف جميع السجلات"
+        message="هل أنت متأكد من حذف جميع سجلات النشاطات؟ هذا الإجراء لا يمكن التراجع عنه."
+        isLoading={deleteAllMutation.isPending}
+        ButtonText="حذف الكل"
+      />
     </Box>
   );
 };

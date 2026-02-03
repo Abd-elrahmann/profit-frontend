@@ -71,3 +71,13 @@ export const getAllLogsForExport = async (params = {}) => {
     throw error;
   }
 };
+
+export const deleteAllLogs = async () => {
+  try {
+    const response = await Api.delete('/api/logs/all');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
