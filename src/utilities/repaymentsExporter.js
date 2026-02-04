@@ -75,11 +75,17 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
       doc.text('ملخص السلفة', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 8;
 
-      const summaryHeaders = [['البيان', 'القيمة']];
+      // حساب إجمالي الخصومات من الدفعات
+      const totalDiscounts = repaymentsData.reduce((sum, repayment) => sum + (repayment.discount || 0), 0);
+      
+      const summaryHeaders = [['القيمة', 'البيان']];
       const summaryData = [
-        ['مبلغ السلفة', loanData?.amount ? loanData.amount.toLocaleString('en-US') : '0'],
-        ['إجمالي الفائدة', loanData?.interestAmount ? loanData.interestAmount.toLocaleString('en-US') : '0'],
-        ['المبلغ الإجمالي', loanData?.totalAmount ? loanData.totalAmount.toLocaleString('en-US') : '0'],
+        [loanData?.amount ? loanData.amount.toLocaleString('en-US') : '0', 'مبلغ السلفة'],
+        [loanData?.interestAmount ? loanData.interestAmount.toLocaleString('en-US') : '0', 'إجمالي الفائدة'],
+        [loanData?.totalAmount ? loanData.totalAmount.toLocaleString('en-US') : '0', 'المبلغ الإجمالي'],
+        [loanData?.pagination?.totalPaidAmount ? loanData.pagination.totalPaidAmount.toLocaleString('en-US') : '0', 'المبلغ المدفوع'],
+        [loanData?.pagination?.totalRemainingAmount ? loanData.pagination.totalRemainingAmount.toLocaleString('en-US') : '0', 'المبلغ المتبقي'],
+        [totalDiscounts.toLocaleString('en-US'), 'إجمالي الخصومات'],
       ];
 
       autoTable(doc, {
@@ -232,20 +238,26 @@ export const exportRepaymentsToExcel = async (repaymentsData, loanData) => {
 
     const clientName = loanData?.client?.name || 'غير محدد';
 
+    // حساب إجمالي الخصومات من الدفعات
+    const totalDiscounts = repaymentsData.reduce((sum, repayment) => sum + (repayment.discount || 0), 0);
+    
     // Summary sheet
     const summaryData = [
       ['ملخص السلفة'],
       [''],
-      ['مبلغ السلفة', loanData?.amount || 0],
-      ['إجمالي الفائدة', loanData?.interestAmount || 0],
-      ['المبلغ الإجمالي', loanData?.totalAmount || 0],
+      [loanData?.amount || 0, 'مبلغ السلفة'],
+      [loanData?.interestAmount || 0, 'إجمالي الفائدة'],
+      [loanData?.totalAmount || 0, 'المبلغ الإجمالي'],
+      [loanData?.pagination?.totalPaidAmount || 0, 'المبلغ المدفوع'],
+      [loanData?.pagination?.totalRemainingAmount || 0, 'المبلغ المتبقي'],
+      [totalDiscounts, 'إجمالي الخصومات'],
       [''],
       ['تفاصيل السلفة'],
       [''],
-      ['العميل', clientName],
-      ['نوع السلفة', loanData?.type || ''],
-      ['تاريخ البداية', loanData?.startDate ? dayjs(loanData.startDate).format('DD/MM/YYYY') : ''],
-      ['حالة السلفة', loanData?.status || ''],
+      [clientName, 'العميل'],
+      [loanData?.type || '', 'نوع السلفة'],
+      [loanData?.startDate ? dayjs(loanData.startDate).format('DD/MM/YYYY') : '', 'تاريخ البداية'],
+      [loanData?.status || '', 'حالة السلفة'],
     ];
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);

@@ -24,6 +24,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Menu,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import { Add, PictureAsPdf, FileDownload, Edit, Delete, ExpandMore, ExpandLess, FilterList } from "@mui/icons-material";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -53,8 +60,11 @@ const Expenses = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [expandedRows, setExpandedRows] = useState([]);
-  const [selectedExpenseType, setSelectedExpenseType] = useState("");
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [pdfAnchorEl, setPdfAnchorEl] = useState(null);
+  const [excelAnchorEl, setExcelAnchorEl] = useState(null);
+  const [isTypeSelectionModalOpen, setIsTypeSelectionModalOpen] = useState(false);
+  const [selectedExpenseTypes, setSelectedExpenseTypes] = useState([]);
+  const [exportFormat, setExportFormat] = useState("");
 
   const EXPENSE_TYPES = [
     "مصروف رواتب",
@@ -180,38 +190,46 @@ const Expenses = () => {
     setExpandedRows([]);
   };
 
-  const handleExportPDF = async (expenseType = "") => {
+  const handleExportPDF = async (expenseTypes = []) => {
     const rows = expensesData?.expenses || [];
     if (!rows.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
     
-    const filteredRows = expenseType ? rows.filter(exp => exp.type === expenseType) : rows;
+    const filteredRows = expenseTypes.length > 0 
+      ? rows.filter(exp => expenseTypes.includes(exp.type)) 
+      : rows;
     
     if (!filteredRows.length) {
-      notifyError(`لا توجد مصاريف من نوع "${expenseType}"`);
+      notifyError(`لا توجد مصاريف من الأنواع المحددة`);
       return;
     }
     
-    await exportExpensesToPDF(filteredRows, expenseType);
+    const typeLabel = expenseTypes.length > 0 ? expenseTypes.join(', ') : '';
+    await exportExpensesToPDF(filteredRows, typeLabel);
+    setPdfAnchorEl(null);
   };
 
-  const handleExportExcel = async (expenseType = "") => {
+  const handleExportExcel = async (expenseTypes = []) => {
     const rows = expensesData?.expenses || [];
     if (!rows.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
     
-    const filteredRows = expenseType ? rows.filter(exp => exp.type === expenseType) : rows;
+    const filteredRows = expenseTypes.length > 0 
+      ? rows.filter(exp => expenseTypes.includes(exp.type)) 
+      : rows;
     
     if (!filteredRows.length) {
-      notifyError(`لا توجد مصاريف من نوع "${expenseType}"`);
+      notifyError(`لا توجد مصاريف من الأنواع المحددة`);
       return;
     }
     
-    await exportExpensesToExcel(filteredRows, expenseType);
+    const typeLabel = expenseTypes.length > 0 ? expenseTypes.join(', ') : '';
+    await exportExpensesToExcel(filteredRows, typeLabel);
+    setExcelAnchorEl(null);
   };
 
   const toggleRowExpansion = (journalId) => {
@@ -220,6 +238,29 @@ const Expenses = () => {
         ? prev.filter(id => id !== journalId)
         : [...prev, journalId]
     );
+  };
+
+  const handleOpenTypeSelectionModal = (format) => {
+    setExportFormat(format);
+    setSelectedExpenseTypes([]);
+    setIsTypeSelectionModalOpen(true);
+    setPdfAnchorEl(null);
+    setExcelAnchorEl(null);
+  };
+
+  const handleCloseTypeSelectionModal = () => {
+    setIsTypeSelectionModalOpen(false);
+    setSelectedExpenseTypes([]);
+    setExportFormat("");
+  };
+
+  const handleConfirmExport = () => {
+    if (exportFormat === "pdf") {
+      handleExportPDF(selectedExpenseTypes);
+    } else if (exportFormat === "excel") {
+      handleExportExcel(selectedExpenseTypes);
+    }
+    handleCloseTypeSelectionModal();
   };
 
   const renderTable = () => (
@@ -586,39 +627,49 @@ const Expenses = () => {
 
             {canExport && (
               <Stack direction={isMobile ? "column" : "row"} spacing={1}>
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>نوع المصروف</InputLabel>
-                  <Select
-                    value={selectedExpenseType}
-                    label="نوع المصروف"
-                    onChange={(e) => setSelectedExpenseType(e.target.value)}
-                  >
-                    <MenuItem value="">الكل</MenuItem>
-                    {EXPENSE_TYPES.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
                 <Button
                   variant="outlined"
                   color="error"
                   startIcon={<PictureAsPdf />}
-                  onClick={() => handleExportPDF(selectedExpenseType)}
+                  onClick={(e) => setPdfAnchorEl(e.currentTarget)}
                   disabled={!groupedExpenses.length}
                 >
                   تصدير PDF
                 </Button>
+                <Menu
+                  anchorEl={pdfAnchorEl}
+                  open={Boolean(pdfAnchorEl)}
+                  onClose={() => setPdfAnchorEl(null)}
+                >
+                  <MenuItem onClick={() => { handleExportPDF([]); }}>
+                    تصدير الكل
+                  </MenuItem>
+                  <MenuItem onClick={() => handleOpenTypeSelectionModal("pdf")}>
+                    اختيار مصروف محدد
+                  </MenuItem>
+                </Menu>
+
                 <Button
                   variant="outlined"
                   color="success"
                   startIcon={<FileDownload />}
-                  onClick={() => handleExportExcel(selectedExpenseType)}
+                  onClick={(e) => setExcelAnchorEl(e.currentTarget)}
                   disabled={!groupedExpenses.length}
                 >
                   تصدير Excel
                 </Button>
+                <Menu
+                  anchorEl={excelAnchorEl}
+                  open={Boolean(excelAnchorEl)}
+                  onClose={() => setExcelAnchorEl(null)}
+                >
+                  <MenuItem onClick={() => { handleExportExcel([]); }}>
+                    تصدير الكل
+                  </MenuItem>
+                  <MenuItem onClick={() => handleOpenTypeSelectionModal("excel")}>
+                    اختيار مصروف محدد
+                  </MenuItem>
+                </Menu>
               </Stack>
             )}
           </Box>
@@ -702,6 +753,57 @@ const Expenses = () => {
         isLoading={deleteExpenseMutation.isLoading}
         ButtonText="حذف المصروفات"
       />
+
+      <Dialog
+        open={isTypeSelectionModalOpen}
+        onClose={handleCloseTypeSelectionModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>اختيار أنواع المصروفات</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Autocomplete
+              multiple
+              options={EXPENSE_TYPES}
+              value={selectedExpenseTypes}
+              onChange={(event, newValue) => {
+                setSelectedExpenseTypes(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="اختر أنواع المصروفات"
+                  placeholder="ابحث عن نوع..."
+                />
+              )}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    label={option}
+                    {...getTagProps({ index })}
+                    color="primary"
+                    size="small"
+                  />
+                ))
+              }
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseTypeSelectionModal} color="inherit">
+            إلغاء
+          </Button>
+          <Button
+            onClick={handleConfirmExport}
+            variant="contained"
+            color="primary"
+            disabled={selectedExpenseTypes.length === 0}
+          >
+            تأكيد التصدير
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

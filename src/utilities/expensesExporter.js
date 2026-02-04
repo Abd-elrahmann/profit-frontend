@@ -20,11 +20,11 @@ const generateExcelRows = (expenses) => {
 
   expenses.forEach((expense) => {
     rows.push([
-      expense.type || '-',
-      expense.amount || 0,
-      expense.description || '-',
-      expense.employee?.name || '-',
       dayjs(expense.createdAt).format('DD/MM/YYYY'),
+      expense.employee?.name || '-',
+      expense.description || '-',
+      expense.amount || 0,
+      expense.type || '-',
     ]);
   });
 
@@ -73,14 +73,14 @@ export const exportExpensesToPDF = async (expenses, expenseType = "") => {
         align: 'center',
       });
 
-      const headers = [['النوع', 'المبلغ', 'الوصف', 'الموظف', 'التاريخ']];
+      const headers = [['التاريخ', 'الموظف', 'الوصف', 'المبلغ', 'النوع']];
       const body = expenses.map((expense) => {
         return [
-          expense.type || '-',
-          (expense.amount || 0).toLocaleString('en-US'),
-          expense.description || '-',
-          expense.employee?.name || '-',
           dayjs(expense.createdAt).format('DD/MM/YYYY'),
+          expense.employee?.name || '-',
+          expense.description || '-',
+          (expense.amount || 0).toLocaleString('en-US'),
+          expense.type || '-',
         ];
       });
 
@@ -169,16 +169,16 @@ export const exportExpensesToExcel = async (expenses, expenseType = "") => {
     rows.unshift(['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm'), '', '', '']);
     rows.unshift(['', '', '', '', '']);
 
-    rows.unshift(['النوع', 'المبلغ', 'الوصف', 'الموظف', 'التاريخ']);
+    rows.unshift(['التاريخ', 'الموظف', 'الوصف', 'المبلغ', 'النوع']);
     
     const sheet = XLSX.utils.aoa_to_sheet(rows);
     
     sheet['!cols'] = [
-      { wch: 20 },  
       { wch: 15 },  
+      { wch: 20 },  
       { wch: 40 },  
-      { wch: 20 },  
       { wch: 15 },  
+      { wch: 20 },  
     ];
 
     const range = XLSX.utils.decode_range(sheet['!ref']);
@@ -193,7 +193,7 @@ export const exportExpensesToExcel = async (expenses, expenseType = "") => {
     }
 
     for (let R = 5; R <= range.e.r; ++R) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 1 }); 
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 3 }); 
       if (sheet[cellAddress] && typeof sheet[cellAddress].v === 'number') {
         sheet[cellAddress].s = {
           numFmt: '#,##0.00'

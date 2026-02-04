@@ -68,17 +68,20 @@ const numberToArabicWords = (num) => {
   for (let s of scale) {
     if (num >= s.value) {
       const part = Math.floor(num / s.value);
-      if (part === 1) result += s.singular + " ";
-      else if (part === 2) result += s.dual + " ";
-      else if (part >= 3 && part <= 10) {
-        result += ones[part] + " " + s.plural + " ";
-      } else if (part === 10) {
-        result += "عشرة" + " " + s.plural + " ";
-      } else if (part >= 11 && part <= 19) {
-        result += teens[part - 10] + " " + s.singular + " ";
-      } else {
-        result += numberToArabicWords(part) + " " + s.singular + " ";
-      }
+     if (part === 1) {
+  result += s.singular + " ";
+} else if (part === 2) {
+  result += s.dual + " ";
+} else if (part === 10) {
+  result += "عشرة " + s.plural + " ";
+} else if (part >= 3 && part <= 9) {
+  result += ones[part] + " " + s.plural + " ";
+} else if (part >= 11 && part <= 19) {
+  result += teens[part - 10] + " " + s.singular + " ";
+} else {
+  result += numberToArabicWords(part) + " " + s.singular + " ";
+}
+
 
       num %= s.value;
       if (s.value === 1e3) hasThousands = true;
@@ -353,6 +356,7 @@ const InstallmentSettlementReceipt = React.forwardRef(
               0
             );
           }
+          
           // مبلغ التسوية = إجمالي العقد - إجمالي الخصومات
           const settlementByFormula = totalContractAmount > 0
             ? Math.max(0, totalContractAmount - totalDiscountsAll)
@@ -387,7 +391,7 @@ const InstallmentSettlementReceipt = React.forwardRef(
           const amountInWords = amount > 0 ? numberToArabicWords(amount) : "صفر";
 
           const discountInfo = totalDiscountsAll > 0 
-            ? `(بعد خصم قدره ${totalDiscountsAll.toLocaleString("en-US")} ريال من إجمالي العقد ${totalContractAmount.toLocaleString("en-US")} ريال)`
+            ? `<span class="discount-text">(بعد خصم قدره ${totalDiscountsAll.toLocaleString("en-US")} ريال من إجمالي العقد ${totalContractAmount.toLocaleString("en-US")} ريال)</span>`
             : "";
 
           let filledTemplate = templateContent
