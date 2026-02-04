@@ -64,6 +64,7 @@ const Expenses = () => {
   const [excelAnchorEl, setExcelAnchorEl] = useState(null);
   const [isTypeSelectionModalOpen, setIsTypeSelectionModalOpen] = useState(false);
   const [selectedExpenseTypes, setSelectedExpenseTypes] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [exportFormat, setExportFormat] = useState("");
 
   const EXPENSE_TYPES = [
@@ -190,16 +191,21 @@ const Expenses = () => {
     setExpandedRows([]);
   };
 
-  const handleExportPDF = async (expenseTypes = []) => {
+  const handleExportPDF = async (expenseTypes = [], employeeIds = []) => {
     const rows = expensesData?.expenses || [];
     if (!rows.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
     
-    const filteredRows = expenseTypes.length > 0 
+    let filteredRows = expenseTypes.length > 0 
       ? rows.filter(exp => expenseTypes.includes(exp.type)) 
       : rows;
+    
+    // تصفية حسب الموظفين إذا تم اختيارهم
+    if (employeeIds.length > 0) {
+      filteredRows = filteredRows.filter(exp => exp.employee && employeeIds.includes(exp.employee._id));
+    }
     
     if (!filteredRows.length) {
       notifyError(`لا توجد مصاريف من الأنواع المحددة`);
@@ -211,16 +217,21 @@ const Expenses = () => {
     setPdfAnchorEl(null);
   };
 
-  const handleExportExcel = async (expenseTypes = []) => {
+  const handleExportExcel = async (expenseTypes = [], employeeIds = []) => {
     const rows = expensesData?.expenses || [];
     if (!rows.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
     
-    const filteredRows = expenseTypes.length > 0 
+    let filteredRows = expenseTypes.length > 0 
       ? rows.filter(exp => expenseTypes.includes(exp.type)) 
       : rows;
+    
+    // تصفية حسب الموظفين إذا تم اختيارهم
+    if (employeeIds.length > 0) {
+      filteredRows = filteredRows.filter(exp => exp.employee && employeeIds.includes(exp.employee._id));
+    }
     
     if (!filteredRows.length) {
       notifyError(`لا توجد مصاريف من الأنواع المحددة`);
@@ -243,6 +254,7 @@ const Expenses = () => {
   const handleOpenTypeSelectionModal = (format) => {
     setExportFormat(format);
     setSelectedExpenseTypes([]);
+    setSelectedEmployees([]);
     setIsTypeSelectionModalOpen(true);
     setPdfAnchorEl(null);
     setExcelAnchorEl(null);
@@ -251,14 +263,16 @@ const Expenses = () => {
   const handleCloseTypeSelectionModal = () => {
     setIsTypeSelectionModalOpen(false);
     setSelectedExpenseTypes([]);
+    setSelectedEmployees([]);
     setExportFormat("");
   };
 
   const handleConfirmExport = () => {
+    const employeeIds = selectedEmployees.map(emp => emp._id);
     if (exportFormat === "pdf") {
-      handleExportPDF(selectedExpenseTypes);
+      handleExportPDF(selectedExpenseTypes, employeeIds);
     } else if (exportFormat === "excel") {
-      handleExportExcel(selectedExpenseTypes);
+      handleExportExcel(selectedExpenseTypes, employeeIds);
     }
     handleCloseTypeSelectionModal();
   };
@@ -762,13 +776,17 @@ const Expenses = () => {
       >
         <DialogTitle>اختيار أنواع المصروفات</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Autocomplete
               multiple
               options={EXPENSE_TYPES}
               value={selectedExpenseTypes}
               onChange={(event, newValue) => {
                 setSelectedExpenseTypes(newValue);
+                // إعادة تعيين الموظفين المختارين إذا تم إلغاء اختيار "مصروف رواتب"
+                if (!newValue.includes("مصروف رواتب")) {
+                  setSelectedEmployees([]);
+                }
               }}
               renderInput={(params) => (
                 <TextField
@@ -788,6 +806,43 @@ const Expenses = () => {
                 ))
               }
             />
+            
+            {selectedExpenseTypes.includes("مصروف رواتب") && (
+              <Autocomplete
+                multiple
+                options={
+                  Array.from(
+                    new Map(
+                      (expensesData?.expenses || [])
+                        .filter(exp => exp.employee)
+                        .map(exp => [exp.employee._id, exp.employee])
+                    ).values()
+                  )
+                }
+                getOptionLabel={(option) => option.name || ""}
+                value={selectedEmployees}
+                onChange={(event, newValue) => {
+                  setSelectedEmployees(newValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="اختر الموظفين (اختياري)"
+                    placeholder="ابحث عن موظف..."
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      label={option.name}
+                      {...getTagProps({ index })}
+                      color="secondary"
+                      size="small"
+                    />
+                  ))
+                }
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
