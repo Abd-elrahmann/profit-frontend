@@ -72,19 +72,16 @@ const Login = () => {
       };
 
       const response = await Api.post("/api/auth/login", cleanedValues);
-      const { accessToken, user } = response.data;
+      const { user } = response.data;
 
-      // ✅ Store token and user in memory only (via AuthContext)
-      await login(accessToken, user);
+      await login(user);
 
-      // Remember email if checkbox is checked (email is not sensitive data)
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", cleanedValues.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Wait for permissions to be fetched (don't let errors propagate)
       let userPermissions = [];
       try {
         if (fetchPermissions && typeof fetchPermissions === 'function') {
@@ -93,13 +90,10 @@ const Login = () => {
         }
       } catch (permError) {
         console.warn('Permissions fetch failed, navigating to dashboard:', permError);
-        // Continue with empty permissions - will navigate to dashboard
       }
 
-      // Show success message after permissions are fetched
       notifySuccess("تم تسجيل الدخول بنجاح");
-
-      // Find first accessible page based on permissions
+      
       let firstPage = '/dashboard';
       for (const route of routes) {
         if (route.protected && route.requiresPermissions && route.module) {

@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import i18next from 'i18next';
 
 const getBaseURL = () => {
- // return "http://localhost:3000";
-  return "http://72.61.101.53:3003";
+  return "http://localhost:3000";
+  // return "http://72.61.101.53:3003";
 };
 
 const Api = axios.create({
@@ -16,15 +16,8 @@ const Api = axios.create({
   withCredentials: true,
 });
 
-let accessToken = null;
-
-export const setAccessToken = (token) => {
-  accessToken = token;
-};
-
-export const getAccessToken = () => {
-  return accessToken;
-};
+// Access Token is now handled via HTTP-Only Cookie
+// No need to manage it in JavaScript for security
 let isRefreshing = false;
 let failedQueue = [];
 let lastRefreshFailTime = 0;
@@ -38,21 +31,16 @@ const processQueue = (error, token = null) => {
     }
   });
 
-
   failedQueue = [];
 };
-
-
 
 Api.interceptors.request.use(
   (config) => {
     config.headers["Accept-Language"] = i18next.language;
     config.headers["page"] = window.location.pathname.split('/').pop();
 
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // Access Token is automatically sent via HTTP-Only Cookie
+    // No need to manually add Authorization header
 
     return config;
   },
@@ -73,8 +61,8 @@ Api.interceptors.response.use(
 
       // If this is the refresh endpoint itself failing, redirect immediately
       if (originalRequest.url?.includes('/api/auth/refresh')) {
+        console.warn('❌ Refresh endpoint failed:', error?.response?.data?.message || error.message);
         lastRefreshFailTime = Date.now();
-        setAccessToken(null);
         window.dispatchEvent(new Event('authFailed'));
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
@@ -111,8 +99,8 @@ Api.interceptors.response.use(
             }
           });
         })
-          .then(token => {
-            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          .then(() => {
+            // Access Token cookie is automatically sent
             return Api(originalRequest);
           })
           .catch(err => {
@@ -139,28 +127,22 @@ Api.interceptors.response.use(
           ),
         ]);
 
-        if (response.data && response.data.accessToken) {
-          const newToken = response.data.accessToken;
-
-          setAccessToken(newToken);
-
+        if (response.data && response.data.user) {
+          // Access Token is now in HTTP-Only Cookie, no need to handle it
           window.dispatchEvent(new CustomEvent('tokenRefreshed', {
             detail: {
-              accessToken: newToken,
               user: response.data.user
             }
           }));
 
-          processQueue(null, newToken);
+          processQueue(null, true);
 
-          originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
+          // Retry original request - Access Token cookie will be sent automatically
           return Api(originalRequest);
         }
       } catch (refreshError) {
         lastRefreshFailTime = Date.now();
         processQueue(refreshError, null);
-
-        setAccessToken(null);
 
         window.dispatchEvent(new Event('authFailed'));
 

@@ -1,23 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import Api, { setAccessToken as setApiAccessToken } from '../../config/Api';
+import Api from '../../config/Api';
 
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [accessToken, setAccessToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // مصدر واحد للحقيقة: قرار الـ auth فقط (مش مرتبط بالـ permissions)
   const authStatus =
     isLoading ? 'checking'
     : isAuthenticated ? 'authenticated'
     : 'unauthenticated';
 
   useEffect(() => {
-    // Clean up old localStorage-based authentication
     const cleanupOldAuth = () => {
       const oldAuthKeys = [
         'accessToken',
@@ -36,7 +33,6 @@ export const AuthProvider = ({ children }) => {
         }
       });
       
-      // Clear sessionStorage as well
       oldAuthKeys.forEach(key => {
         if (sessionStorage.getItem(key)) {
           sessionStorage.removeItem(key);
@@ -44,11 +40,10 @@ export const AuthProvider = ({ children }) => {
       });
     };
 
-    const AUTH_REFRESH_TIMEOUT = 10000; // 10 seconds - منع تعليق الموقع
+    const AUTH_REFRESH_TIMEOUT = 10000;
 
     const initializeAuth = async () => {
 
-      // Clean up old authentication data first
       cleanupOldAuth();
 
       try {
@@ -59,29 +54,26 @@ export const AuthProvider = ({ children }) => {
           ),
         ]);
         
-        if (response.data && response.data.accessToken) {
-          const { accessToken: token, user: userData } = response.data;
+        if (response.data && response.data.user) {
+          const { user: userData } = response.data;
 
-          if (!token) {
-            throw new Error('No access token in response');
-          }
-
-          setAccessToken(token);
-          setApiAccessToken(token);
           setUser(userData);
           setIsAuthenticated(true);
 
           window.dispatchEvent(new CustomEvent('userLoggedIn', { 
-            detail: { accessToken: token, user: userData } 
+            detail: { user: userData } 
           }));
         } else {
           throw new Error('Invalid refresh response');
         }
       } catch (error) {
+        if (error?.response?.status !== 401) {
+          console.warn('⚠️ Auth initialization failed:', error.message);
+        } else {
+          console.log('ℹ️ No active session found - user needs to login');
+        }
         setIsAuthenticated(false);
         setUser(null);
-        setAccessToken(null);
-        setApiAccessToken(null);
       } finally {
         setIsLoading(false);
       }
@@ -90,17 +82,13 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
 
     const handleTokenRefresh = (event) => {
-      const { accessToken: token, user: userData } = event.detail;
-      setAccessToken(token);
-      setApiAccessToken(token);
+      const { user: userData } = event.detail;
       if (userData) {
         setUser(userData);
       }
     };
 
     const handleAuthFailed = () => {
-      setAccessToken(null);
-      setApiAccessToken(null);
       setUser(null);
       setIsAuthenticated(false);
     };
@@ -114,20 +102,15 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = useCallback(async (token, userData) => {
-    setAccessToken(token);
-    setApiAccessToken(token);
+  const login = useCallback(async (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
   }, []);
 
   const logout = useCallback(async () => {
-    setAccessToken(null);
-    setApiAccessToken(null);
     setUser(null);
     setIsAuthenticated(false);
     
-    // Clear only auth-related data, preserve other important settings
     const keysToPreserve = [
       'theme',
       'language',
@@ -138,7 +121,6 @@ export const AuthProvider = ({ children }) => {
       'cached_permissions_timestamp'
     ];
     
-    // Clear localStorage - but keep important settings
     const localStorageKeys = Object.keys(localStorage);
     localStorageKeys.forEach(key => {
       if (!keysToPreserve.includes(key) && !key.startsWith('persist_')) {
@@ -146,14 +128,11 @@ export const AuthProvider = ({ children }) => {
       }
     });
     
-    // Clear sessionStorage completely (it's temporary)
     sessionStorage.clear();
     
-    // Try to call logout endpoint (but don't fail if it errors)
     try {
       await Api.post('/api/auth/logout');
     } catch {
-      // Ignore logout errors - user is already logged out locally
     }
   }, []);
 
@@ -161,21 +140,14 @@ export const AuthProvider = ({ children }) => {
     setUser(prev => ({ ...prev, ...userData }));
   }, []);
 
-  const updateAccessToken = useCallback((token) => {
-    setAccessToken(token);
-    setApiAccessToken(token); // Set token in Api.js
-  }, []);
-
   const value = {
     user,
-    accessToken,
     isAuthenticated,
     isLoading,
     authStatus,
     login,
     logout,
-    updateUser,
-    updateAccessToken
+    updateUser
   };
 
   return (

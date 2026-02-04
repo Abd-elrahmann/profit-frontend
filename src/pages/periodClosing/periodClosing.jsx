@@ -44,6 +44,10 @@ import {
 } from "../../components/layouts/tableLayout";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { exportPeriodClosingToPDF, exportPeriodClosingToExcel } from "../../utilities/periodClosingExporter";
+import { notifyInfo } from "../../utilities/toastify";
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 const PeriodClosing = () => {
   const theme = useTheme();
@@ -52,6 +56,7 @@ const PeriodClosing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDraftAlert, setShowDraftAlert] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -173,6 +178,35 @@ const PeriodClosing = () => {
         return "ملغي";
       default:
         return status;
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!periodData) return;
+    setIsExporting(true);
+    try {
+      await exportPeriodClosingToPDF(periodData);
+      notifySuccess("تم تصدير PDF بنجاح");
+    } catch (error) {
+      notifyError("فشل تصدير PDF");
+      console.error(error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!periodData) return;
+    setIsExporting(true);
+    try {
+      notifyInfo("جاري تصدير Excel...");
+      await exportPeriodClosingToExcel(periodData);
+      notifySuccess("تم تصدير Excel بنجاح");
+    } catch (error) {
+      notifyError("فشل تصدير Excel");
+      console.error(error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -375,6 +409,42 @@ const PeriodClosing = () => {
 
   const renderMobilePeriodDetails = () => (
     <Box>
+      {permissions.includes("period_Export") && (
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'center' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<PictureAsPdfIcon />}
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            sx={{
+              color: '#d32f2f',
+              borderColor: '#d32f2f',
+              fontSize: '0.75rem',
+              py: 0.5,
+              px: 1.5
+            }}
+          >
+            PDF
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DescriptionIcon />}
+            onClick={handleExportExcel}
+            disabled={isExporting}
+            sx={{
+              color: '#2e7d32',
+              borderColor: '#2e7d32',
+              fontSize: '0.75rem',
+              py: 0.5,
+              px: 1.5
+            }}
+          >
+            Excel
+          </Button>
+        </Box>
+      )}
       {showDraftAlert && !periodData?.isClosed && (
         <Alert
           severity="warning"
@@ -760,9 +830,52 @@ const PeriodClosing = () => {
 
   const renderDesktopPeriodDetails = () => (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={3} textAlign={"center"}>
-        تفاصيل الفترة
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ flex: 1 }} />
+        <Typography variant="h6" color="primary" fontWeight="bold" textAlign="center" sx={{ flex: 1 }}>
+          تفاصيل الفترة
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, flex: 1, justifyContent: 'flex-end' }}>
+          {permissions.includes("period_Export") && (
+            <>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleExportPDF}
+                disabled={isExporting}
+                sx={{
+                  color: '#d32f2f',
+                  borderColor: '#d32f2f',
+                  '&:hover': {
+                    borderColor: '#b71c1c',
+                    bgcolor: 'rgba(211, 47, 47, 0.04)'
+                  }
+                }}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DescriptionIcon />}
+                onClick={handleExportExcel}
+                disabled={isExporting}
+                sx={{
+                  color: '#2e7d32',
+                  borderColor: '#2e7d32',
+                  '&:hover': {
+                    borderColor: '#1b5e20',
+                    bgcolor: 'rgba(46, 125, 50, 0.04)'
+                  }
+                }}
+              >
+                Excel
+              </Button>
+            </>
+          )}
+        </Box>
+      </Box>
 
       {showDraftAlert && !periodData?.isClosed && (
         <Alert
