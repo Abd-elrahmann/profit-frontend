@@ -72,6 +72,10 @@ const numberToArabicWords = (num) => {
       else if (part === 2) result += s.dual + " ";
       else if (part >= 3 && part <= 10) {
         result += ones[part] + " " + s.plural + " ";
+      } else if (part === 10) {
+        result += "عشرة" + " " + s.plural + " ";
+      } else if (part >= 11 && part <= 19) {
+        result += teens[part - 10] + " " + s.singular + " ";
       } else {
         result += numberToArabicWords(part) + " " + s.singular + " ";
       }
