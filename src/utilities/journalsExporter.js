@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
-import XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 // Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
