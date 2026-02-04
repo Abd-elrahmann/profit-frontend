@@ -34,7 +34,7 @@ import {
 } from "@mui/material";
 import { Add, PictureAsPdf, FileDownload, Edit, Delete, ExpandMore, ExpandLess, FilterList } from "@mui/icons-material";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { getExpenses, deleteExpense } from "./expensesApi";
+import { getExpenses, deleteExpense, getUsersForExpenses } from "./expensesApi";
 import { Helmet } from "react-helmet-async";
 import {
   StyledTableCell,
@@ -96,6 +96,12 @@ const Expenses = () => {
   const { data: expensesData, isLoading } = useQuery({
     queryKey: ["expenses", page],
     queryFn: () => getExpenses(page),
+    retry: 1,
+  });
+
+  const { data: employeesData } = useQuery({
+    queryKey: ["employees-for-expenses"],
+    queryFn: () => getUsersForExpenses(),
     retry: 1,
   });
 
@@ -204,7 +210,9 @@ const Expenses = () => {
     
     // تصفية حسب الموظفين إذا تم اختيارهم
     if (employeeIds.length > 0) {
-      filteredRows = filteredRows.filter(exp => exp.employee && employeeIds.includes(exp.employee._id));
+      filteredRows = filteredRows.filter(exp => 
+        exp.employee && employeeIds.includes(exp.employee.id || exp.employee._id)
+      );
     }
     
     if (!filteredRows.length) {
@@ -230,7 +238,9 @@ const Expenses = () => {
     
     // تصفية حسب الموظفين إذا تم اختيارهم
     if (employeeIds.length > 0) {
-      filteredRows = filteredRows.filter(exp => exp.employee && employeeIds.includes(exp.employee._id));
+      filteredRows = filteredRows.filter(exp => 
+        exp.employee && employeeIds.includes(exp.employee.id || exp.employee._id)
+      );
     }
     
     if (!filteredRows.length) {
@@ -268,7 +278,7 @@ const Expenses = () => {
   };
 
   const handleConfirmExport = () => {
-    const employeeIds = selectedEmployees.map(emp => emp._id);
+    const employeeIds = selectedEmployees.map(emp => emp.id || emp._id);
     if (exportFormat === "pdf") {
       handleExportPDF(selectedExpenseTypes, employeeIds);
     } else if (exportFormat === "excel") {
@@ -810,15 +820,7 @@ const Expenses = () => {
             {selectedExpenseTypes.includes("مصروف رواتب") && (
               <Autocomplete
                 multiple
-                options={
-                  Array.from(
-                    new Map(
-                      (expensesData?.expenses || [])
-                        .filter(exp => exp.employee)
-                        .map(exp => [exp.employee._id, exp.employee])
-                    ).values()
-                  )
-                }
+                options={employeesData?.users || []}
                 getOptionLabel={(option) => option.name || ""}
                 value={selectedEmployees}
                 onChange={(event, newValue) => {
