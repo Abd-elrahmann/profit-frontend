@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import i18next from 'i18next';
 
 const getBaseURL = () => {
-  return "http://localhost:3000";
-  // return "http://72.61.101.53:3003";
+ // return "http://localhost:3000";
+  return "http://72.61.101.53:3003";
 };
 
 const Api = axios.create({
@@ -16,8 +16,7 @@ const Api = axios.create({
   withCredentials: true,
 });
 
-// Access Token is now handled via HTTP-Only Cookie
-// No need to manage it in JavaScript for security
+
 let isRefreshing = false;
 let failedQueue = [];
 let lastRefreshFailTime = 0;
@@ -39,8 +38,7 @@ Api.interceptors.request.use(
     config.headers["Accept-Language"] = i18next.language;
     config.headers["page"] = window.location.pathname.split('/').pop();
 
-    // Access Token is automatically sent via HTTP-Only Cookie
-    // No need to manually add Authorization header
+
 
     return config;
   },
@@ -54,12 +52,10 @@ Api.interceptors.response.use(
     const status = error?.response?.status;
 
     if (status === 401 && !originalRequest._retry) {
-      // If on login page, silently reject without attempting refresh
       if (window.location.pathname === '/login') {
         return Promise.reject(error);
       }
 
-      // If this is the refresh endpoint itself failing, redirect immediately
       if (originalRequest.url?.includes('/api/auth/refresh')) {
         console.warn('❌ Refresh endpoint failed:', error?.response?.data?.message || error.message);
         lastRefreshFailTime = Date.now();
@@ -86,7 +82,7 @@ Api.interceptors.response.use(
               failedQueue.splice(index, 1);
             }
             reject(new Error('Request queue timeout'));
-          }, 8000); // 8s timeout for queued requests
+          }, 8000);
 
           failedQueue.push({
             resolve: (token) => {
@@ -100,7 +96,6 @@ Api.interceptors.response.use(
           });
         })
           .then(() => {
-            // Access Token cookie is automatically sent
             return Api(originalRequest);
           })
           .catch(err => {
@@ -128,7 +123,6 @@ Api.interceptors.response.use(
         ]);
 
         if (response.data && response.data.user) {
-          // Access Token is now in HTTP-Only Cookie, no need to handle it
           window.dispatchEvent(new CustomEvent('tokenRefreshed', {
             detail: {
               user: response.data.user
@@ -137,7 +131,6 @@ Api.interceptors.response.use(
 
           processQueue(null, true);
 
-          // Retry original request - Access Token cookie will be sent automatically
           return Api(originalRequest);
         }
       } catch (refreshError) {
