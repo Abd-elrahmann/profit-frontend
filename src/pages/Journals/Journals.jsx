@@ -567,6 +567,8 @@ const Journals = () => {
         return "إيداع مالي لشريك";
       case "EXPENSES":
         return "مصروف";
+      case "SAVING":
+        return "ادخار";
       case "PARTNER_WITHDRAWING":
         return "انسحاب مالي لشريك";
       case "ZAKAT":

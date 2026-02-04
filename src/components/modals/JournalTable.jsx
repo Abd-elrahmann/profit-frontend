@@ -170,6 +170,8 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         return "انسحاب مالي لشريك";
         case "SMALL_LOAN":
           return "سلفة صغيرة";
+        case "SAVING":
+          return "ادخار";
         case "ZAKAT":
           return "سحب زكاة";
         case "PARTNER_PROFIT_WITHDRAWAL":

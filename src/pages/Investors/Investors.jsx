@@ -72,6 +72,7 @@ export default function Investors() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editFormData, setEditFormData] = useState({});
   const [hasDataChanged, setHasDataChanged] = useState(false);
+  const [changedFields, setChangedFields] = useState({});
   
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionForm, setTransactionForm] = useState({
@@ -172,12 +173,57 @@ export default function Investors() {
       ...prev,
       [field]: value
     }));
-    if (field === 'capitalAmount' || field === 'orgProfitPercent') {
-      const originalValue = field === 'capitalAmount'
-        ? investorDetails.capitalAmount?.toString()
-        : investorDetails.orgProfitPercent?.toString();
-      setHasDataChanged(value !== originalValue);
+    
+    // Track which fields have changed
+    let originalValue;
+    switch(field) {
+      case 'capitalAmount':
+        originalValue = investorDetails.total?.toString() || investorDetails.capitalAmount?.toString();
+        break;
+      case 'orgProfitPercent':
+        originalValue = investorDetails.orgProfitPercent?.toString();
+        break;
+      case 'name':
+        originalValue = investorDetails.name;
+        break;
+      case 'phone':
+        originalValue = investorDetails.phone;
+        break;
+      case 'address':
+        originalValue = investorDetails.address;
+        break;
+      case 'city':
+        originalValue = investorDetails.city;
+        break;
+      case 'email':
+        originalValue = investorDetails.email;
+        break;
+      case 'createdAt':
+        originalValue = investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '';
+        break;
+      case 'isActive':
+        originalValue = investorDetails.isActive;
+        break;
+      case 'status':
+        originalValue = getInvestorStatus(investorDetails);
+        break;
+      default:
+        originalValue = investorDetails[field];
     }
+    
+    const hasChanged = value !== originalValue;
+    
+    setChangedFields(prev => {
+      const updated = { ...prev };
+      if (hasChanged) {
+        updated[field] = value;
+      } else {
+        delete updated[field];
+      }
+      return updated;
+    });
+    
+    setHasDataChanged(Object.keys({ ...changedFields, ...(hasChanged ? { [field]: value } : {}) }).length > 0);
   };
 
   const handleTransactionInputChange = (field, value) => {
@@ -237,30 +283,43 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
-      let isNewPartner = false;
-      let withdrawingStatus = null;
-      if (editFormData.status === 'NEW') {
-        isNewPartner = true;
-        withdrawingStatus = null;
-      } else if (editFormData.status === 'OLD') {
-        isNewPartner = false;
-        withdrawingStatus = null;
-      } else if (editFormData.status === 'WITHDRAWN') {
-        withdrawingStatus = 'WITHDRAWN';
+      // Build dataToSend with only changed fields
+      const dataToSend = {};
+      
+      // Handle status field changes
+      if (changedFields.status) {
+        if (changedFields.status === 'NEW') {
+          dataToSend.isNewPartner = true;
+        } else if (changedFields.status === 'OLD') {
+          dataToSend.isNewPartner = false;
+        } else if (changedFields.status === 'WITHDRAWN') {
+          dataToSend.withdrawingStatus = 'WITHDRAWN';
+        }
       }
-
-      const { status: _status, ...restFormData } = editFormData;
-      const dataToSend = {
-        ...restFormData,
-        isNewPartner,
-        capitalAmount: editFormData.capitalAmount ? parseInt(editFormData.capitalAmount) : undefined,
-        orgProfitPercent: editFormData.orgProfitPercent ? parseInt(editFormData.orgProfitPercent) : undefined,
-        createdAt: editFormData.createdAt || undefined,
-        isActive: editFormData.isActive !== undefined ? editFormData.isActive : undefined,
-      };
-
-      if (withdrawingStatus) {
-        dataToSend.withdrawingStatus = withdrawingStatus;
+      
+      // Add other changed fields
+      Object.keys(changedFields).forEach(field => {
+        if (field === 'status') return; // Already handled above
+        
+        const value = changedFields[field];
+        
+        if (field === 'capitalAmount') {
+          dataToSend.capitalAmount = parseInt(value);
+        } else if (field === 'orgProfitPercent') {
+          dataToSend.orgProfitPercent = parseInt(value);
+        } else if (field === 'createdAt') {
+          dataToSend.createdAt = value;
+        } else if (field === 'isActive') {
+          dataToSend.isActive = value;
+        } else {
+          dataToSend[field] = value;
+        }
+      });
+      
+      // Only send request if there are changes
+      if (Object.keys(dataToSend).length === 0) {
+        notifyError('لا توجد تغييرات للحفظ');
+        return;
       }
       
       await updateInvestor(selectedInvestor.id, dataToSend);
@@ -291,6 +350,7 @@ export default function Investors() {
       } else {
         setEditMode(false);
         setHasDataChanged(false);
+        setChangedFields({});
       }
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحديث البيانات');
@@ -455,11 +515,6 @@ export default function Investors() {
   const handleWithdraw = async () => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
-      return;
-    }
-
-    if (investorDetails?.isActive && !investorDetails?.isFrozen) {
-      notifyError("هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط");
       return;
     }
 

@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
-
+import XLSX from 'xlsx';
 // Register Arabic fonts
 const registerArabicFonts = (doc) => {
   try {
@@ -390,8 +390,10 @@ const getJournalSourceTypeText = (sourceType) => {
       return "مصروف";
     case "PARTNER_WITHDRAWING":
       return "انسحاب مالي لشريك";
-    case "ZAKAT":
+    case "ZAKAT": 
       return "سحب زكاة";
+    case "SAVING":
+      return "ادخار";
     case "PARTNER_PROFIT_WITHDRAWAL":
       return "سحب ارباح شريك";
     case "OTHER":

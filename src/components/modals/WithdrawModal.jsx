@@ -129,12 +129,6 @@ const WithdrawModal = ({
                 لا يمكن إنشاء طلب انسحاب جديد لمستثمر منسحب. يرجى مراجعة صفحة المستثمرين المنسحبين.
               </Typography>
             </Alert>
-          ) : (investorDetails?.isActive && !investorDetails?.isFrozen) ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              <Typography variant="body2" fontWeight="bold">
-                هذا المستثمر نشط. لكي يتم تفعيل الإنسحاب لابد أن يكون المستثمر غير نشط
-              </Typography>
-            </Alert>
           ) : (
             <Alert severity="info" sx={{ mb: 2 }}>
               <Typography variant="body2">
@@ -191,7 +185,6 @@ const WithdrawModal = ({
             required
             disabled={
               !isEditMode && (
-                (investorDetails?.isActive && !investorDetails?.isFrozen) ||
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
                 investorDetails?.WithdrawingStatus === 'WITHDRAWN'
               )
@@ -203,9 +196,7 @@ const WithdrawModal = ({
                 ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه (بالريال السعودي)"
                 : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')
                   ? "المستثمر منسحب بالفعل"
-                  : (investorDetails?.isActive && !investorDetails?.isFrozen)
-                    ? "لا يمكن تنفيذ الإنسحاب لأن المستثمر نشط"
-                    : "أدخل المبلغ الشهري الذي يتم سحبه (بالريال السعودي)"
+                  : "أدخل المبلغ الشهري الذي يتم سحبه (بالريال السعودي)"
             }
             InputProps={{
               inputProps: {
@@ -216,7 +207,7 @@ const WithdrawModal = ({
             }}
           />
 
-          {withdrawalPreview && (isEditMode || (!(investorDetails?.isActive && !investorDetails?.isFrozen) &&
+          {withdrawalPreview && (isEditMode || (
            investorDetails?.WithdrawingStatus !== 'WITHDRAWING' &&
            investorDetails?.WithdrawingStatus !== 'WITHDRAWN')) && (
               <>
@@ -404,7 +395,6 @@ const WithdrawModal = ({
             disabled={
               isWithdrawing ||
               (!isEditMode && (
-                (investorDetails?.isActive && !investorDetails?.isFrozen) ||
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
                 investorDetails?.WithdrawingStatus === 'WITHDRAWN'
               ))
