@@ -31,7 +31,7 @@ const generateExcelRows = (expenses) => {
   return rows;
 };
 
-export const exportExpensesToPDF = async (expenses, expenseType = "") => {
+export const exportExpensesToPDF = async (expenses, expenseType = "", employeeNames = "") => {
   return new Promise((resolve, reject) => {
     try {
       if (!Array.isArray(expenses) || expenses.length === 0) {
@@ -41,7 +41,12 @@ export const exportExpensesToPDF = async (expenses, expenseType = "") => {
       const doc = new jsPDF();
       registerArabicFonts(doc);
 
-      const reportTitle = expenseType ? `تقرير المصروفات - ${expenseType}` : 'تقرير المصروفات';
+      let reportTitle = 'تقرير المصروفات';
+      if (employeeNames) {
+        reportTitle = `تقرير مصروفات رواتب للموظف ${employeeNames}`;
+      } else if (expenseType) {
+        reportTitle = `تقرير المصروفات - ${expenseType}`;
+      }
       
       doc.setProperties({
         title: reportTitle,
@@ -60,7 +65,12 @@ export const exportExpensesToPDF = async (expenses, expenseType = "") => {
       doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
       doc.setFontSize(18);
-      const title = expenseType ? `تقرير المصروفات - ${expenseType}` : 'تقرير المصروفات';
+      let title = 'تقرير المصروفات';
+      if (employeeNames) {
+        title = `تقرير مصروفات رواتب للموظف ${employeeNames}`;
+      } else if (expenseType) {
+        title = `تقرير المصروفات - ${expenseType}`;
+      }
       doc.text(title, doc.internal.pageSize.width / 2, 30, {
         align: 'center',
       });
@@ -138,9 +148,12 @@ export const exportExpensesToPDF = async (expenses, expenseType = "") => {
         doc.setTextColor(0, 0, 0);
       }
 
-      const fileName = expenseType 
-        ? `تقرير_المصروفات_${expenseType.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.pdf`
-        : `تقرير_المصروفات_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      let fileName = `تقرير_المصروفات_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      if (employeeNames) {
+        fileName = `تقرير_مصروفات_رواتب_${employeeNames.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      } else if (expenseType) {
+        fileName = `تقرير_المصروفات_${expenseType.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.pdf`;
+      }
       doc.save(fileName);
       resolve();
     } catch (error) {
@@ -150,7 +163,7 @@ export const exportExpensesToPDF = async (expenses, expenseType = "") => {
   });
 };
 
-export const exportExpensesToExcel = async (expenses, expenseType = "") => {
+export const exportExpensesToExcel = async (expenses, expenseType = "", employeeNames = "") => {
   try {
     if (!Array.isArray(expenses) || expenses.length === 0) {
       throw new Error('لا توجد بيانات للتصدير');
@@ -203,12 +216,18 @@ export const exportExpensesToExcel = async (expenses, expenseType = "") => {
 
     XLSX.utils.book_append_sheet(workbook, sheet, 'المصروفات');
 
-    const summaryTitle = expenseType ? `ملخص المصروفات - ${expenseType}` : 'ملخص المصروفات';
+    let summaryTitle = 'ملخص المصروفات';
+    if (employeeNames) {
+      summaryTitle = `ملخص مصروفات رواتب للموظف ${employeeNames}`;
+    } else if (expenseType) {
+      summaryTitle = `ملخص المصروفات - ${expenseType}`;
+    }
     
     const summaryData = [
       [summaryTitle],
       [],
-      ['نوع المصروف:', expenseType || 'الكل'],
+      ['نوع المصروف:', employeeNames ? 'مصروف رواتب' : (expenseType || 'الكل')],
+      ...(employeeNames ? [['الموظف:', employeeNames]] : []),
       ['إجمالي عدد المصروفات:', expenses.length],
       ['إجمالي المبالغ:', totalAmount],
       ['تاريخ التصدير:', dayjs().format('DD/MM/YYYY HH:mm')]
@@ -217,7 +236,12 @@ export const exportExpensesToExcel = async (expenses, expenseType = "") => {
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     summarySheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
     
-    const summarySheetName = expenseType ? `ملخص - ${expenseType.substring(0, 20)}` : 'ملخص';
+    let summarySheetName = 'ملخص';
+    if (employeeNames) {
+      summarySheetName = `ملخص - ${employeeNames.substring(0, 20)}`;
+    } else if (expenseType) {
+      summarySheetName = `ملخص - ${expenseType.substring(0, 20)}`;
+    }
     XLSX.utils.book_append_sheet(workbook, summarySheet, summarySheetName);
 
     const excelBuffer = XLSX.write(workbook, {
@@ -230,9 +254,12 @@ export const exportExpensesToExcel = async (expenses, expenseType = "") => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
 
-    const fileName = expenseType 
-      ? `تقرير_المصروفات_${expenseType.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.xlsx`
-      : `تقرير_المصروفات_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    let fileName = `تقرير_المصروفات_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    if (employeeNames) {
+      fileName = `تقرير_مصروفات_رواتب_${employeeNames.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    } else if (expenseType) {
+      fileName = `تقرير_المصروفات_${expenseType.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+    }
     saveAs(blob, fileName);
   } catch (error) {
     console.error('Excel export error:', error.message);

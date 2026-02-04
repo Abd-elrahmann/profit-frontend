@@ -216,12 +216,22 @@ const Expenses = () => {
     }
     
     if (!filteredRows.length) {
-      notifyError(`لا توجد مصاريف من الأنواع المحددة`);
+      let errorMessage = 'لا توجد مصروفات';
+      
+      if (selectedEmployees.length > 0) {
+        const employeeNames = selectedEmployees.map(emp => emp.name).join('، ');
+        errorMessage = `لا توجد مصروفات لـ ${employeeNames}`;
+      } else if (expenseTypes.length > 0) {
+        errorMessage = `لا توجد مصاريف من الأنواع المحددة`;
+      }
+      
+      notifyError(errorMessage);
       return;
     }
     
     const typeLabel = expenseTypes.length > 0 ? expenseTypes.join(', ') : '';
-    await exportExpensesToPDF(filteredRows, typeLabel);
+    const employeeNamesLabel = selectedEmployees.length > 0 ? selectedEmployees.map(emp => emp.name).join('، ') : '';
+    await exportExpensesToPDF(filteredRows, typeLabel, employeeNamesLabel);
     setPdfAnchorEl(null);
   };
 
@@ -244,12 +254,22 @@ const Expenses = () => {
     }
     
     if (!filteredRows.length) {
-      notifyError(`لا توجد مصاريف من الأنواع المحددة`);
+      let errorMessage = 'لا توجد مصروفات';
+      
+      if (selectedEmployees.length > 0) {
+        const employeeNames = selectedEmployees.map(emp => emp.name).join('، ');
+        errorMessage = `لا توجد مصروفات لـ ${employeeNames}`;
+      } else if (expenseTypes.length > 0) {
+        errorMessage = `لا توجد مصاريف من الأنواع المحددة`;
+      }
+      
+      notifyError(errorMessage);
       return;
     }
     
     const typeLabel = expenseTypes.length > 0 ? expenseTypes.join(', ') : '';
-    await exportExpensesToExcel(filteredRows, typeLabel);
+    const employeeNamesLabel = selectedEmployees.length > 0 ? selectedEmployees.map(emp => emp.name).join('، ') : '';
+    await exportExpensesToExcel(filteredRows, typeLabel, employeeNamesLabel);
     setExcelAnchorEl(null);
   };
 
@@ -806,21 +826,25 @@ const Expenses = () => {
                 />
               )}
               renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option}
-                    {...getTagProps({ index })}
-                    color="primary"
-                    size="small"
-                  />
-                ))
+                value.map((option, index) => {
+                  const { key, ...tagProps } = getTagProps({ index });
+                  return (
+                    <Chip
+                      key={key}
+                      label={option}
+                      {...tagProps}
+                      color="primary"
+                      size="small"
+                    />
+                  );
+                })
               }
             />
             
             {selectedExpenseTypes.includes("مصروف رواتب") && (
               <Autocomplete
                 multiple
-                options={employeesData?.users || []}
+                options={Array.isArray(employeesData) ? employeesData : []}
                 getOptionLabel={(option) => option.name || ""}
                 value={selectedEmployees}
                 onChange={(event, newValue) => {
@@ -834,14 +858,18 @@ const Expenses = () => {
                   />
                 )}
                 renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      label={option.name}
-                      {...getTagProps({ index })}
-                      color="secondary"
-                      size="small"
-                    />
-                  ))
+                  value.map((option, index) => {
+                    const { key, ...tagProps } = getTagProps({ index });
+                    return (
+                      <Chip
+                        key={key}
+                        label={option.name}
+                        {...tagProps}
+                        color="secondary"
+                        size="small"
+                      />
+                    );
+                  })
                 }
               />
             )}
