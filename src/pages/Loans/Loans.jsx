@@ -671,10 +671,16 @@ const Loans = () => {
 
   const calculateInstallments = () => {
     const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
-    const totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
+    let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
     const paymentAmount =
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const loanType = loanForm.type;
+
+    // Calculate interest from rate if totalInterest is empty
+    if (totalInterest === 0 && loanForm.interestRate !== "" && amount > 0) {
+      const interestRate = parseFloat(loanForm.interestRate) || 0;
+      totalInterest = (amount * interestRate) / 100;
+    }
 
     if (amount > 0 && paymentAmount > 0 && totalInterest >= 0) {
       const profit = totalInterest;
@@ -836,10 +842,18 @@ const Loans = () => {
     try {
       setIsCreatingLoan(true);
 
+      // Calculate TotalInterest from rate if empty
+      let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
+      if (totalInterest === 0 && loanForm.interestRate !== "") {
+        const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
+        const interestRate = parseFloat(loanForm.interestRate) || 0;
+        totalInterest = (amount * interestRate) / 100;
+      }
+
       const loanData = {
         clientId: selectedClient.client.id,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        TotalInterest: parseFloat(loanForm.totalInterest.replace(/,/g, "")),
+        TotalInterest: totalInterest,
         InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
@@ -935,9 +949,17 @@ const Loans = () => {
     }
 
     try {
+      // Calculate TotalInterest from rate if empty
+      let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
+      if (totalInterest === 0 && loanForm.interestRate !== "") {
+        const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
+        const interestRate = parseFloat(loanForm.interestRate) || 0;
+        totalInterest = (amount * interestRate) / 100;
+      }
+
       const loanData = {
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        TotalInterest: parseFloat(loanForm.totalInterest.replace(/,/g, "")),
+        TotalInterest: totalInterest,
         InterestPercentage: parseFloat(loanForm.interestRate),
         paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
         type: loanForm.type,
@@ -1221,6 +1243,13 @@ const Loans = () => {
         ...prev,
         [field]: value,
       };
+
+      // Mutual exclusion logic between interest rate and total interest
+      if (field === "totalInterest" && value !== "") {
+        updatedForm.interestRate = "";
+      } else if (field === "interestRate" && value !== "") {
+        updatedForm.totalInterest = "";
+      }
 
       if (field === "promissoryNoteType") {
         if (value === "inspection") {

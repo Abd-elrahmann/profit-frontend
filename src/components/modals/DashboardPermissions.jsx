@@ -75,6 +75,7 @@ const DashboardPermissions = ({
 }) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
   const [initialValues, setInitialValues] = useState({
     permissions: dashboardSections.map(section => ({
       module: section.module,
@@ -85,6 +86,7 @@ const DashboardPermissions = ({
   useEffect(() => {
     if (open && roleId) {
       const fetchCurrentPermissions = async () => {
+        setIsLoadingPermissions(true);
         try {
           let permissionsPayload = null;
 
@@ -120,6 +122,8 @@ const DashboardPermissions = ({
             });
         } catch (error) {
           console.error('Error fetching current permissions:', error);
+        } finally {
+          setIsLoadingPermissions(false);
         }
       };
 
@@ -211,7 +215,12 @@ const DashboardPermissions = ({
         {({ values, setFieldValue }) => (
           <Form>
             <DialogContent sx={{ p: 3 }}>
-              <Box sx={{ mb: 3 }}>
+              {isLoadingPermissions ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+                  <CircularProgress size={40} />
+                </Box>
+              ) : (
+                <Box sx={{ mb: 3 }}>
                 <Box sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -282,6 +291,7 @@ const DashboardPermissions = ({
                   ))}
                 </Grid>
               </Box>
+              )}
             </DialogContent>
 
             <Divider />

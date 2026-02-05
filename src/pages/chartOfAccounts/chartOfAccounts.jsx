@@ -214,7 +214,7 @@ const ChartOfAccount = () => {
     };
 
     return (
-      <Box key={account.id} sx={{ mb: 2, ml: depth * 2.5 }}>
+      <Box key={account.id} sx={{ mb: 1, ml: depth * 2.5 }}>
         <Card
           elevation={isSelected ? 8 : (depth === 0 ? 3 : 2)}
           sx={{
@@ -244,8 +244,8 @@ const ChartOfAccount = () => {
         >
           <Box sx={{ position: 'relative' }}>
             <CardActionArea onClick={() => handleAccountSelect(account)}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <CardContent sx={{ p: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                     {/* دائرة ملونة للمستوى */}
                     {depth > 0 && (
@@ -301,7 +301,7 @@ const ChartOfAccount = () => {
                   </Box>
                 </Box>
 
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
                   <Chip
                     label={getAccountTypeLabel(account.type)}
                     size="small"

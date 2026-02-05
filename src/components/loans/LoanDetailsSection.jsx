@@ -230,7 +230,7 @@ const LoanDetailsSection = ({
               InputLabelProps={{
                 shrink: true,
               }}
-              disabled={isReadOnlyMode}
+              disabled={isReadOnlyMode || loanForm.interestRate !== ""}
               onKeyDown={(e) => {
                 if (e.key === "-" || e.key === "+") e.preventDefault();
               }}
@@ -238,9 +238,10 @@ const LoanDetailsSection = ({
                 "& .MuiOutlinedInput-root": {
                   height: "56px",
                   width: "300px",
-                  backgroundColor: "background.paper",
+                  backgroundColor: loanForm.interestRate !== "" ? "#f5f5f5" : "background.paper",
                 },
               }}
+              helperText={loanForm.interestRate !== "" ? "مغلق عند إدخال نسبة الفائدة" : ""}
             />
             {!isReadOnlyMode && parseFloat(loanForm.totalInterest?.replace(/,/g, "") || 0) === 0 && loanForm.totalInterest !== "" && (
               <Alert severity="info" sx={{ mt: 1, mb: 1 }}>
@@ -256,17 +257,19 @@ const LoanDetailsSection = ({
             type="number"
             label="معدل الفائدة السنوي (%)"
             value={loanForm.interestRate}
-            disabled={true}
+            onChange={(e) => handleInputChange("interestRate", e.target.value)}
             InputLabelProps={{
               shrink: true,
             }}
+            disabled={isReadOnlyMode || loanForm.totalInterest !== ""}
             sx={{
               "& .MuiOutlinedInput-root": {
                 height: "56px",
                 width: "300px",
-                backgroundColor: "background.paper",
+                backgroundColor: loanForm.totalInterest !== "" ? "#f5f5f5" : "background.paper",
               },
             }}
+            helperText={loanForm.totalInterest !== "" ? "مغلق عند إدخال مبلغ الفائدة" : ""}
           />
         </Grid>
 
