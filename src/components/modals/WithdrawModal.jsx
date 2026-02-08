@@ -60,7 +60,7 @@ const WithdrawModal = ({
       return "مبلغ السحب الشهري يجب أن يكون أقل من 1,000,000 ريال";
     }
 
-    if (investorDetails?.capitalAmount && amount > investorDetails.capitalAmount * 0.5) {
+    if (investorDetails?.total && amount > investorDetails.total * 0.5) {
       return "مبلغ السحب الشهري يجب أن يكون أقل من 50% من رأس المال";
     }
 
@@ -142,7 +142,7 @@ const WithdrawModal = ({
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" color="text.secondary" mb={0.5}>رأس المال الأصلي</Typography>
                 <Typography variant="h6" fontWeight="bold" color="primary">
-                  {investorDetails?.capitalAmount?.toLocaleString()}
+                  {investorDetails?.totalAmount?.toLocaleString()}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
