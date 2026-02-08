@@ -133,24 +133,36 @@ const InvestorHeader = ({
           </>
         )}
 
-        {/* Withdraw Button */}
+        {/* Withdraw/Cancel Withdraw Button */}
         {permissions.includes("partners_Add") && (
           <>
             <Button
               variant="outlined"
               startIcon={<AccountBalanceWalletIcon sx={{marginLeft: '10px'}} />}
               onClick={onWithdraw}
-              disabled={investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN'}
               sx={{
-                borderColor: "error.main",
-                color: "error.main",
-                "&:hover": { bgcolor: "error.50", borderColor: "error.dark" },
+                borderColor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                  ? "warning.main" 
+                  : "error.main",
+                color: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                  ? "warning.main" 
+                  : "error.main",
+                "&:hover": { 
+                  bgcolor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                    ? "warning.50" 
+                    : "error.50", 
+                  borderColor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                    ? "warning.dark" 
+                    : "error.dark" 
+                },
                 borderRadius: 2,
                 px: 2,
                 fontWeight: 500,
               }}
             >
-              انسحاب المستثمر
+              {investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                ? 'إلغاء الانسحاب' 
+                : 'انسحاب المستثمر'}
             </Button>
 
             {/* Delete Button */}

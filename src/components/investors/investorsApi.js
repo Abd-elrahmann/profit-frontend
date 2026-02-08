@@ -141,3 +141,11 @@ export const updatePartnerWithdrawal = async (partnerId, amount) => {
   });
   return response.data;
 };
+
+/**
+ * Cancel partner withdrawal
+ */
+export const cancelPartnerWithdrawal = async (partnerId) => {
+  const response = await Api.post(`/api/partner-withdraw/cancel/${partnerId}`);
+  return response.data;
+};

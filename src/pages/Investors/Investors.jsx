@@ -55,6 +55,7 @@ import {
   getWithdrawalPreview,
   createPartnerWithdrawal,
   updatePartnerWithdrawal,
+  cancelPartnerWithdrawal,
 } from "../../components/investors/investorsApi";
 
 export default function Investors() {
@@ -484,6 +485,32 @@ export default function Investors() {
   const handleOpenWithdrawModal = async (isEditMode = false) => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
+      return;
+    }
+
+    // إذا كان المستثمر منسحب، قم بإلغاء الانسحاب مباشرة
+    if (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN') {
+      try {
+        setIsWithdrawing(true);
+        await cancelPartnerWithdrawal(selectedInvestor.id);
+        
+        setWithdrawnInvestors(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(selectedInvestor.id);
+          return newSet;
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+        queryClient.invalidateQueries({ queryKey: ['investors'] });
+        queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
+        
+        notifySuccess(`تم إلغاء انسحاب المستثمر ${selectedInvestor.name} بنجاح`);
+      } catch (error) {
+        notifyError(error.response?.data?.message || 'حدث خطأ أثناء إلغاء الانسحاب');
+        handleApiError(error);
+      } finally {
+        setIsWithdrawing(false);
+      }
       return;
     }
 
