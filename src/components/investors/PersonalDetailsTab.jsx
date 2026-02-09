@@ -34,30 +34,32 @@ const PersonalDetailsTab = ({
           <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             ملخص المستثمر
           </Typography>
-          <Box sx={{ display: "flex", gap: 2 }}>
-            {permissions.includes("partners_Update") && (
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
-                onClick={onEditModeToggle}
-                size="small"
-              >
-                {editMode ? 'إلغاء التعديل' : 'تعديل'}
-              </Button>
-            )}
-            {permissions.includes("partners_Add") && (
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
-                sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
-                disabled={!editMode}
-                onClick={onSaveChanges}
-                size="small"
-              >
-                حفظ التغييرات
-              </Button>
-            )}
-          </Box>
+          {investorDetails?.WithdrawingStatus !== 'WITHDRAWING' && investorDetails?.WithdrawingStatus !== 'WITHDRAWN' && (
+            <Box sx={{ display: "flex", gap: 2 }}>
+              {permissions.includes("partners_Update") && (
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
+                  onClick={onEditModeToggle}
+                  size="small"
+                >
+                  {editMode ? 'إلغاء التعديل' : 'تعديل'}
+                </Button>
+              )}
+              {permissions.includes("partners_Add") && (
+                <Button
+                  variant="contained"
+                  startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
+                  sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
+                  disabled={!editMode}
+                  onClick={onSaveChanges}
+                  size="small"
+                >
+                  حفظ التغييرات
+                </Button>
+              )}
+            </Box>
+          )}
         </Box>
         <Divider sx={{ mb: 3 }} />
         

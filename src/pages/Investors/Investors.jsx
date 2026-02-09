@@ -915,14 +915,19 @@ export default function Investors() {
 
             <Box sx={{ p: 3 }}>
               {/* Withdrawn Alert */}
-              {withdrawnInvestors.has(selectedInvestor?.id) && (
+              {(withdrawnInvestors.has(selectedInvestor?.id) || 
+                investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
+                investorDetails?.WithdrawingStatus === 'WITHDRAWN') && (
                 <Alert 
                   severity="warning" 
                   sx={{ mb: 3 }}
                   icon={<WarningIcon />}
                 >
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" fontWeight="bold" sx={{ mb: 0.5 }}>
                     تم إنسحاب هذا المستثمر من توزيعات الأرباح
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    لا يمكن تعديل أي بيانات خاصة بهذا المساهم
                   </Typography>
                 </Alert>
               )}

@@ -78,6 +78,78 @@ const InvestorHeader = ({
       
       {/* Action Buttons */}
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", justifyContent: 'flex-end' }}>
+        {/* Withdraw/Cancel Withdraw Button */}
+        {permissions.includes("partners_Add") && (
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<AccountBalanceWalletIcon sx={{marginLeft: '10px'}} />}
+              onClick={onWithdraw}
+              sx={{
+                borderColor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                  ? "warning.main" 
+                  : "error.main",
+                color: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                  ? "warning.main" 
+                  : "error.main",
+                "&:hover": { 
+                  bgcolor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                    ? "warning.50" 
+                    : "error.50", 
+                  borderColor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                    ? "warning.dark" 
+                    : "error.dark" 
+                },
+                borderRadius: 2,
+                px: 2,
+                fontWeight: 500,
+              }}
+            >
+              {investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
+                ? 'إلغاء الانسحاب' 
+                : 'انسحاب المستثمر'}
+            </Button>
+            
+            {/* Edit Withdrawal Button */}
+            {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
+                onClick={onEdit}
+                sx={{
+                  borderColor: "warning.main",
+                  color: "warning.main",
+                  "&:hover": { bgcolor: "warning.50", borderColor: "warning.dark" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: 500,
+                }}
+              >
+                تعديل مبلغ الانسحاب
+              </Button>
+            )}
+
+            {/* Delete Button */}
+            {permissions.includes("partners_Delete") && (
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon sx={{marginLeft: '10px'}} />}
+                onClick={onDelete}
+                sx={{
+                  borderColor: "error.main",
+                  "&:hover": { bgcolor: "error.50", borderColor: "error.dark" },
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: 500,
+                }}
+              >
+                حذف المستثمر
+              </Button>
+            )}
+          </>
+        )}
+
         {/* Export Menu */}
         {permissions.includes("partners_Export") && (
           <>
@@ -130,78 +202,6 @@ const InvestorHeader = ({
                 تصدير PDF
               </MenuItem>
             </Menu>
-          </>
-        )}
-
-        {/* Withdraw/Cancel Withdraw Button */}
-        {permissions.includes("partners_Add") && (
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<AccountBalanceWalletIcon sx={{marginLeft: '10px'}} />}
-              onClick={onWithdraw}
-              sx={{
-                borderColor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
-                  ? "warning.main" 
-                  : "error.main",
-                color: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
-                  ? "warning.main" 
-                  : "error.main",
-                "&:hover": { 
-                  bgcolor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
-                    ? "warning.50" 
-                    : "error.50", 
-                  borderColor: investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
-                    ? "warning.dark" 
-                    : "error.dark" 
-                },
-                borderRadius: 2,
-                px: 2,
-                fontWeight: 500,
-              }}
-            >
-              {investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN' 
-                ? 'إلغاء الانسحاب' 
-                : 'انسحاب المستثمر'}
-            </Button>
-
-            {/* Delete Button */}
-            {permissions.includes("partners_Delete") && (
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<DeleteIcon sx={{marginLeft: '10px'}} />}
-                onClick={onDelete}
-                sx={{
-                  borderColor: "error.main",
-                  "&:hover": { bgcolor: "error.50", borderColor: "error.dark" },
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: 500,
-                }}
-              >
-                حذف المستثمر
-              </Button>
-            )}
-            
-            {/* Edit Withdrawal Button */}
-            {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
-                onClick={onEdit}
-                sx={{
-                  borderColor: "warning.main",
-                  color: "warning.main",
-                  "&:hover": { bgcolor: "warning.50", borderColor: "warning.dark" },
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: 500,
-                }}
-              >
-                تعديل مبلغ الانسحاب
-              </Button>
-            )}
           </>
         )}
       </Box>

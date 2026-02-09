@@ -1244,11 +1244,48 @@ const Loans = () => {
         [field]: value,
       };
 
-      // Mutual exclusion logic between interest rate and total interest
-      if (field === "totalInterest" && value !== "") {
-        updatedForm.interestRate = "";
-      } else if (field === "interestRate" && value !== "") {
-        updatedForm.totalInterest = "";
+      // Handle interest fields logic
+      if (field === "totalInterest") {
+        if (value !== "") {
+          // Calculate interest rate from totalInterest
+          const amount = parseFloat(prev.amount.replace(/,/g, "")) || 0;
+          const totalInterest = parseFloat(value.replace(/,/g, "")) || 0;
+          if (amount > 0) {
+            const percentage = totalInterest > 0 ? (totalInterest / amount) * 100 : 0;
+            updatedForm.interestRate = percentage.toFixed(2);
+          }
+        } else {
+          // Only clear interestRate if totalInterest is completely empty
+          updatedForm.interestRate = "";
+        }
+      } else if (field === "interestRate") {
+        if (value !== "") {
+          // Calculate totalInterest from interestRate
+          const amount = parseFloat(prev.amount.replace(/,/g, "")) || 0;
+          const rate = parseFloat(value) || 0;
+          if (amount > 0) {
+            const calculatedInterest = (amount * rate) / 100;
+            updatedForm.totalInterest = formatAmount(calculatedInterest.toFixed(2));
+          }
+        } else {
+          // Only clear totalInterest if interestRate is completely empty
+          updatedForm.totalInterest = "";
+        }
+      } else if (field === "amount" && value !== "") {
+        // When amount changes, recalculate based on what field has a value
+        const amount = parseFloat(value.replace(/,/g, "")) || 0;
+        
+        if (prev.interestRate !== "" && amount > 0) {
+          // Recalculate totalInterest from interestRate
+          const rate = parseFloat(prev.interestRate) || 0;
+          const calculatedInterest = (amount * rate) / 100;
+          updatedForm.totalInterest = formatAmount(calculatedInterest.toFixed(2));
+        } else if (prev.totalInterest !== "" && amount > 0) {
+          // Recalculate interestRate from totalInterest
+          const totalInterest = parseFloat(prev.totalInterest.replace(/,/g, "")) || 0;
+          const percentage = totalInterest > 0 ? (totalInterest / amount) * 100 : 0;
+          updatedForm.interestRate = percentage.toFixed(2);
+        }
       }
 
       if (field === "promissoryNoteType") {
@@ -1256,19 +1293,6 @@ const Loans = () => {
           updatedForm.promissoryNoteDate = "";
         } else if (value === "manual" && !prev.promissoryNoteDate) {
           updatedForm.promissoryNoteDate = "";
-        }
-      }
-
-      if (field === "amount" || field === "totalInterest") {
-        const amount = parseFloat((field === "amount" ? value : prev.amount).replace(/,/g, "")) || 0;
-        const totalInterest = parseFloat((field === "totalInterest" ? value : prev.totalInterest).replace(/,/g, "")) || 0;
-
-        if (amount > 0 && totalInterest >= 0) {
-          const percentage = totalInterest > 0 ? (totalInterest / amount) * 100 : 0;
-          updatedForm.interestRate = percentage.toFixed(2);
-
-        } else if (amount > 0) {
-          updatedForm.interestRate = "";
         }
       }
 

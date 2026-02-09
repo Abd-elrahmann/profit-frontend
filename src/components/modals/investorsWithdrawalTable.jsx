@@ -105,7 +105,7 @@ const InvestorsWithdrawalTable = ({
                     {investor.totalAmount?.toLocaleString()}
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    {investor.savings?.toLocaleString() || 0}
+                    {investor.withdrawalRequest?.savingAmount?.toLocaleString() || 0}
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     <Chip

@@ -163,7 +163,7 @@ const FinancialInfoTab = ({
                   الأرباح القادمة
                 </Typography>
                 <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ fontSize: '1.25rem' }}>
-                  {Math.round(investorDetails.upcomingProfit || 0)?.toLocaleString() || 0}
+                  {(investorDetails.upcomingProfit || 0)?.toLocaleString() || 0}
                 </Typography>
               </CardContent>
             </Card>
@@ -415,30 +415,32 @@ const FinancialInfoTab = ({
       })()}
 
       {/* Edit Actions */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3, justifyContent: 'flex-end' }}>
-        {permissions.includes("partners_Update") && (
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
-            onClick={onEditModeToggle}
-            size="small"
-          >
-            {editMode ? 'إلغاء التعديل' : 'تعديل'}
-          </Button>
-        )}
-        {permissions.includes("partners_Add") && (
-          <Button
-            variant="contained"
-            startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
-            sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
-            disabled={!editMode}
-            onClick={onSaveChanges}
-            size="small"
-          >
-            حفظ التغييرات
-          </Button>
-        )}
-      </Box>
+      {investorDetails?.WithdrawingStatus !== 'WITHDRAWING' && investorDetails?.WithdrawingStatus !== 'WITHDRAWN' && (
+        <Box sx={{ display: "flex", gap: 2, mb: 3, justifyContent: 'flex-end' }}>
+          {permissions.includes("partners_Update") && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
+              onClick={onEditModeToggle}
+              size="small"
+            >
+              {editMode ? 'إلغاء التعديل' : 'تعديل'}
+            </Button>
+          )}
+          {permissions.includes("partners_Add") && (
+            <Button
+              variant="contained"
+              startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
+              sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
+              disabled={!editMode}
+              onClick={onSaveChanges}
+              size="small"
+            >
+              حفظ التغييرات
+            </Button>
+          )}
+        </Box>
+      )}
 
       {/* Editable Fields */}
       <Grid container spacing={3}>
