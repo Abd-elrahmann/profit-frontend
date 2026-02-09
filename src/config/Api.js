@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import i18next from 'i18next';
 
 const getBaseURL = () => {
- // return "http://localhost:3000";
-  return "http://72.61.101.53:3003";
+  return "http://localhost:3000";
+ // return "http://72.61.101.53:3003";
 };
 
 const Api = axios.create({
@@ -13,9 +13,8 @@ const Api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: true, // Important: This ensures cookies are sent with requests
 });
-
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -37,8 +36,8 @@ Api.interceptors.request.use(
   (config) => {
     config.headers["Accept-Language"] = i18next.language;
     config.headers["page"] = window.location.pathname.split('/').pop();
-
-
+    
+    config.withCredentials = true;
 
     return config;
   },
@@ -57,7 +56,6 @@ Api.interceptors.response.use(
       }
 
       if (originalRequest.url?.includes('/api/auth/refresh')) {
-        console.warn('❌ Refresh endpoint failed:', error?.response?.data?.message || error.message);
         lastRefreshFailTime = Date.now();
         window.dispatchEvent(new Event('authFailed'));
         if (window.location.pathname !== '/login') {
@@ -116,7 +114,9 @@ Api.interceptors.response.use(
 
       try {
         const response = await Promise.race([
-          Api.post('/api/auth/refresh'),
+          Api.post('/api/auth/refresh', {}, {
+            withCredentials: true, // Ensure credentials are sent
+          }),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Refresh token timeout')), REFRESH_TIMEOUT_MS)
           ),
@@ -168,11 +168,10 @@ export const handleApiError = (error) => {
       responseBody?.message?.map((e) => toast.error(e));
     } else {
       const errorMes = responseBody?.message || responseBody?.error || responseBody;
-      console.log('🚀 ~ handleApiError ~ errorMes:', errorMes);
       toast.error(errorMes);
     }
   } catch (error) {
-    console.log(error);
+    console.error('Error in handleApiError:', error);
   }
 };
 
