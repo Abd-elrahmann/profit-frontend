@@ -98,6 +98,7 @@ export default function Investors() {
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawnInvestors, setWithdrawnInvestors] = useState(new Set());
+  const [isCancelWithdrawModalOpen, setIsCancelWithdrawModalOpen] = useState(false);
   
   const [isWithdrawEditMode, setIsWithdrawEditMode] = useState(false);
   const [withdrawPreviewData, setWithdrawPreviewData] = useState(null);
@@ -490,35 +491,40 @@ export default function Investors() {
     return calculateWithdrawalPreview(withdrawAmount, investorDetails, withdrawPreviewData, formatArabicDate, firstPaymentDate);
   }, [withdrawAmount, investorDetails, withdrawPreviewData, firstPaymentDate]);
 
+  const handleCancelWithdrawal = async () => {
+    try {
+      setIsWithdrawing(true);
+      await cancelPartnerWithdrawal(selectedInvestor.id);
+      
+      setWithdrawnInvestors(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(selectedInvestor.id);
+        return newSet;
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
+      
+      notifySuccess(`تم إلغاء انسحاب المستثمر ${selectedInvestor.name} بنجاح`);
+      setIsCancelWithdrawModalOpen(false);
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء إلغاء الانسحاب');
+      handleApiError(error);
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   const handleOpenWithdrawModal = async (isEditMode = false) => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
       return;
     }
 
-    // إذا كان المستثمر منسحب، قم بإلغاء الانسحاب مباشرة
+    // إذا كان المستثمر منسحب، افتح مودال التأكيد
     if (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN') {
-      try {
-        setIsWithdrawing(true);
-        await cancelPartnerWithdrawal(selectedInvestor.id);
-        
-        setWithdrawnInvestors(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(selectedInvestor.id);
-          return newSet;
-        });
-        
-        queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-        queryClient.invalidateQueries({ queryKey: ['investors'] });
-        queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
-        
-        notifySuccess(`تم إلغاء انسحاب المستثمر ${selectedInvestor.name} بنجاح`);
-      } catch (error) {
-        notifyError(error.response?.data?.message || 'حدث خطأ أثناء إلغاء الانسحاب');
-        handleApiError(error);
-      } finally {
-        setIsWithdrawing(false);
-      }
+      setIsCancelWithdrawModalOpen(true);
       return;
     }
 
@@ -1151,6 +1157,15 @@ export default function Investors() {
         onWithdraw={handleWithdraw}
         setWithdrawPreviewData={setWithdrawPreviewData}
         isDarkMode={isDarkMode}
+      />
+
+      <DeleteModal
+        open={isCancelWithdrawModalOpen}
+        onClose={() => setIsCancelWithdrawModalOpen(false)}
+        onConfirm={handleCancelWithdrawal}
+        title="إلغاء الانسحاب"
+        message={`هل أنت متأكد من إلغاء انسحاب المستثمر ${selectedInvestor?.name}؟ سيتم حذف جدول السحب وإعادة المستثمر لحالته الطبيعية.`}
+        ButtonText="إلغاء الانسحاب"
       />
 
     </Box>

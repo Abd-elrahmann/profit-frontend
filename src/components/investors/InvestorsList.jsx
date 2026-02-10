@@ -152,9 +152,31 @@ const InvestorsList = ({
 
       {investorsData && !isLoading && investorsData.partners && investorsData.partners.length > 0 && (
         <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: isDarkMode ? 'background.paper' : '#f9f9f9', flexShrink: 0 }}>
-          <Typography variant="body2" color="text.primary">
+          <Typography variant="body2" color="text.primary" sx={{ mb: 2 }}>
             صفحة {investorsData.currentPage} من {investorsData.totalPages} - إجمالي {investorsData.totalPartners} {showWithdrawnOnly ? 'مستثمر منسحب' : 'مستثمر'}
           </Typography>
+          {investorsData.totalPages > 1 && (
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Pagination
+                count={investorsData.totalPages}
+                page={currentPage}
+                onChange={onPageChange}
+                color="primary"
+                size="small"
+                siblingCount={1}
+                boundaryCount={1}
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    fontSize: '0.875rem',
+                  }
+                }}
+              />
+            </Box>
+          )}
         </Box>
       )}
 
@@ -296,33 +318,6 @@ const InvestorsList = ({
                 </Card>
               );
             })}
-
-            {investorsData && investorsData.totalPages > 1 && (
-              <Box sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                p: 2,
-                gap: 2,
-                borderTop: '1px solid #eee',
-                bgcolor: 'background.paper',
-              }}>
-                <Pagination
-                  count={investorsData.totalPages}
-                  page={currentPage}
-                  onChange={onPageChange}
-                  color="primary"
-                  size="small"
-                  siblingCount={1}
-                  boundaryCount={1}
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      fontSize: '0.875rem',
-                    }
-                  }}
-                />
-              </Box>
-            )}
           </>
         )}
       </Box>

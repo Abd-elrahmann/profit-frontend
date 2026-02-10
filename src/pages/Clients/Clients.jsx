@@ -750,10 +750,34 @@ export default function Clients() {
             <Box
               sx={{ p: 2, borderBottom: "1px solid #eee", bgcolor: isDarkMode ? 'background.paper' : '#f9f9f9' }}
             >
-              <Typography variant="body2" color="text.primary">
+              <Typography variant="body2" color="text.primary" sx={{ mb: 2 }}>
                 صفحة {clientsData.currentPage} من {clientsData.totalPages} -
                 إجمالي {clientsData.totalClients} عميل
               </Typography>
+              {clientsData.totalPages > 1 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Pagination
+                    count={clientsData.totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="small"
+                    siblingCount={1}
+                    boundaryCount={1}
+                    sx={{
+                      "& .MuiPaginationItem-root": {
+                        fontSize: "0.875rem",
+                      },
+                    }}
+                  />
+                </Box>
+              )}
             </Box>
           )}
 
@@ -850,66 +874,6 @@ export default function Clients() {
                 </Box>
               );
             })
-          )}
-
-          {clientsData && clientsData.totalPages > 1 && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                p: 2,
-                borderTop: "1px solid #eee",
-                bgcolor: isDarkMode ? 'background.paper' : '#fafafa',
-              }}
-            >
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ChevronRight />}
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(null, currentPage - 1)}
-                sx={{
-                  minWidth: "80px",
-                  "&:disabled": {
-                    opacity: 0.5,
-                  },
-                }}
-              >
-                السابق
-              </Button>
-
-              <Pagination
-                count={clientsData.totalPages}
-                page={currentPage}
-                onChange={handlePageChange}
-                color="primary"
-                size="small"
-                siblingCount={1}
-                boundaryCount={1}
-                sx={{
-                  "& .MuiPaginationItem-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-              />
-
-              <Button
-                variant="outlined"
-                size="small"
-                endIcon={<ChevronLeft />}
-                disabled={currentPage === clientsData.totalPages}
-                onClick={() => handlePageChange(null, currentPage + 1)}
-                sx={{
-                  minWidth: "80px",
-                  "&:disabled": {
-                    opacity: 0.5,
-                  },
-                }}
-              >
-                التالي
-              </Button>
-            </Box>
           )}
         </Box>
 
