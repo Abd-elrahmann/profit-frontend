@@ -146,7 +146,7 @@ export default function Treasury() {
   const currentMonthRemainingRepayment = currentData?.currentMonth?.remaining || 0;
   const currentMonthDiscount = currentData?.currentMonth?.discount || 0;
   const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
-  const currentTotalPaid = paidRepaymentsUntilNow + totalDiscount;
+  const currentTotalPaid = currentMonthPaidUntilNow + totalDiscount;
   const currentMonthProgress = currentMonthTotalAmount > 0
     ? Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100)
     : 0;
