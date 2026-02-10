@@ -13,7 +13,7 @@ const Api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important: This ensures cookies are sent with requests
+  withCredentials: true,
 });
 
 let isRefreshing = false;

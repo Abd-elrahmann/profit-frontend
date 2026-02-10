@@ -919,7 +919,7 @@ export default function Investors() {
 
         {/* Main Content */}
         {selectedInvestor && investorDetails ? (
-          <Box sx={{ flex: 1, bgcolor: "background.paper", overflowY: "auto", position: 'relative' }}>
+          <Box sx={{ flex: 1, bgcolor: "background.paper", display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
             {/* Header */}
             <InvestorHeader
               investorDetails={investorDetails}
@@ -935,7 +935,7 @@ export default function Investors() {
               permissions={permissions}
             />
 
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
               {/* Withdrawn Alert */}
               {(withdrawnInvestors.has(selectedInvestor?.id) || 
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
