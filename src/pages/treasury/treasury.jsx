@@ -148,7 +148,7 @@ export default function Treasury() {
   const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
   const currentTotalPaid = paidRepaymentsUntilNow + totalDiscount;
   const currentMonthProgress = currentMonthTotalAmount > 0
-    ? Math.min(100, Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100))
+    ? Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100)
     : 0;
 
   const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
@@ -991,7 +991,7 @@ export default function Treasury() {
                                   متبقي
                                 </Typography>
                                 <Typography variant="body2" fontWeight="bold" color="warning.main">
-                                  {currentMonthRemaining.toLocaleString('en-US')}
+                                  {currentMonthRemainingRepayment.toLocaleString('en-US')}
                                 </Typography>
                               </Box>
                               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
