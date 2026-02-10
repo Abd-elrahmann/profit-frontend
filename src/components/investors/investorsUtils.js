@@ -9,6 +9,20 @@ export const formatArabicDate = (date) => {
     + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
 };
 
+export const formatArabicDateOnly = (date) => {
+  return dayjs(date)
+    .locale("ar")
+    .format("D MMMM YYYY");
+};
+
+export const getMonthName = (monthNumber) => {
+  const months = [
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  ];
+  return months[monthNumber - 1] || monthNumber;
+};
+
 export const getInvestorStatus = (investor) => {
   if (investor?.WithdrawingStatus === 'WITHDRAWING' || investor?.WithdrawingStatus === 'WITHDRAWN') return 'WITHDRAWN';
   if (investor?.isNewPartner) return 'NEW';
@@ -86,7 +100,8 @@ export const calculateWithdrawalPreview = (
   withdrawAmount,
   investorDetails,
   withdrawPreviewData,
-  formatArabicDateFn
+  formatArabicDateFn,
+  firstPaymentDate
 ) => {
   if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !investorDetails) {
     return null;
@@ -108,8 +123,8 @@ export const calculateWithdrawalPreview = (
   const monthlyPayment = normalizeDecimal(monthlyAmount);
   const schedule = [];
   let remaining = remainingCapital;
-  let monthIndex = 1;
-  const startDate = new Date();
+  let monthIndex = 0;
+  const startDate = firstPaymentDate ? new Date(firstPaymentDate) : new Date();
 
   while (remaining > 0 && schedule.length < 100) {
     const amount = remaining - monthlyPayment > 0 ? monthlyPayment : remaining;
@@ -118,8 +133,8 @@ export const calculateWithdrawalPreview = (
     payDate.setMonth(startDate.getMonth() + monthIndex);
 
     schedule.push({
-      month: monthIndex,
-      date: formatArabicDateFn(payDate),
+      month: monthIndex + 1,
+      date: formatArabicDateOnly(payDate),
       amount: normalizeDecimal(amount),
       remaining: normalizeDecimal(remaining - amount)
     });
@@ -246,7 +261,6 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
 
   if (!capitalAmount) {
     capitalAmount = 0;
-    console.warn('Capital amount not found after checking all sources, using 0');
   }
 
   return capitalAmount;

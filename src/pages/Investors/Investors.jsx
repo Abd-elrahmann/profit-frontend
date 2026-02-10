@@ -95,6 +95,7 @@ export default function Investors() {
 
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [firstPaymentDate, setFirstPaymentDate] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawnInvestors, setWithdrawnInvestors] = useState(new Set());
   
@@ -179,7 +180,8 @@ export default function Investors() {
     let originalValue;
     switch(field) {
       case 'capitalAmount':
-        originalValue = investorDetails.total?.toString() || investorDetails.capitalAmount?.toString();
+        // استخدام extractCapitalAmount للحصول على القيمة الأصلية الصحيحة
+        originalValue = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails)?.toString();
         break;
       case 'orgProfitPercent':
         originalValue = investorDetails.orgProfitPercent?.toString();
@@ -257,10 +259,15 @@ export default function Investors() {
         freshInvestorData = freshInvestorResponse;
       }
 
+      // استخدام دالة extractCapitalAmount للحصول على رأس المال الصحيح
+      const capitalAmount = updatedInvestorData.capitalAmount 
+        ? Number(updatedInvestorData.capitalAmount)
+        : extractCapitalAmount(freshInvestorData, selectedInvestor, investorDetails);
+
       const mergedData = {
         ...freshInvestorData,
         ...updatedInvestorData,
-        capitalAmount: Number(updatedInvestorData.capitalAmount || freshInvestorData.capitalAmount) || 0,
+        capitalAmount: capitalAmount,
         orgProfitPercent: Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) || 0,
         investorProfitPercent: (updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) 
           ? (100 - Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent)) 
@@ -338,7 +345,8 @@ export default function Investors() {
         updatedInvestorData = updatedInvestorResponse;
       }
 
-      const originalCapital = investorDetails?.partner?.capitalAmount || investorDetails?.capitalAmount || 0;
+      // استخدام extractCapitalAmount للحصول على رأس المال الأصلي الصحيح
+      const originalCapital = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails);
       const newCapital = Number(editFormData.capitalAmount) || Number(dataToSend.capitalAmount) || 0;
       
       if (originalCapital !== newCapital && newCapital > 0) {
@@ -479,8 +487,8 @@ export default function Investors() {
   };
 
   const withdrawalPreview = useMemo(() => {
-    return calculateWithdrawalPreview(withdrawAmount, investorDetails, withdrawPreviewData, formatArabicDate);
-  }, [withdrawAmount, investorDetails, withdrawPreviewData]);
+    return calculateWithdrawalPreview(withdrawAmount, investorDetails, withdrawPreviewData, formatArabicDate, firstPaymentDate);
+  }, [withdrawAmount, investorDetails, withdrawPreviewData, firstPaymentDate]);
 
   const handleOpenWithdrawModal = async (isEditMode = false) => {
     if (!selectedInvestor) {
@@ -539,7 +547,7 @@ export default function Investors() {
     }
   };
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = async (firstPaymentDate) => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
       return;
@@ -550,11 +558,16 @@ export default function Investors() {
       return;
     }
 
+    if (!firstPaymentDate) {
+      notifyError("يرجى إدخال تاريخ أول دفعة");
+      return;
+    }
+
     try {
       setIsWithdrawing(true);
       
       if (isWithdrawEditMode) {
-        await updatePartnerWithdrawal(selectedInvestor.id, withdrawAmount);
+        await updatePartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
         
         queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
         queryClient.invalidateQueries({ queryKey: ['investors'] });
@@ -562,7 +575,7 @@ export default function Investors() {
         
         notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
       } else {
-        await createPartnerWithdrawal(selectedInvestor.id, withdrawAmount);
+        await createPartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
 
         setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
         
@@ -780,6 +793,9 @@ export default function Investors() {
 
   useEffect(() => {
     if (investorDetails) {
+      // استخدام extractCapitalAmount للحصول على رأس المال الصحيح
+      const capitalAmount = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails);
+      
       setEditFormData({
         name: investorDetails.name || '',
         phone: investorDetails.phone || '',
@@ -787,13 +803,13 @@ export default function Investors() {
         city: investorDetails.city || '',
         email: investorDetails.email || '',
         orgProfitPercent: investorDetails.orgProfitPercent || '',
-        capitalAmount: investorDetails.total || '',
+        capitalAmount: capitalAmount || '',
         status: getInvestorStatus(investorDetails),
         createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
         isActive: investorDetails.isActive !== undefined ? investorDetails.isActive : true,
       });
     }
-  }, [investorDetails]);
+  }, [investorDetails, selectedInvestor]);
 
   return (
     <Box
@@ -1117,6 +1133,7 @@ export default function Investors() {
         onClose={() => {
           setIsWithdrawModalOpen(false);
           setWithdrawAmount("");
+          setFirstPaymentDate("");
           setWithdrawPreviewData(null);
           setIsWithdrawEditMode(false);
         }}
@@ -1124,6 +1141,8 @@ export default function Investors() {
         setIsEditMode={setIsWithdrawEditMode}
         withdrawAmount={withdrawAmount}
         setWithdrawAmount={setWithdrawAmount}
+        firstPaymentDate={firstPaymentDate}
+        setFirstPaymentDate={setFirstPaymentDate}
         withdrawalPreview={withdrawalPreview}
         isLoadingPreview={isLoadingPreview}
         investorDetails={investorDetails}

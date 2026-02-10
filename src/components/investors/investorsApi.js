@@ -125,9 +125,10 @@ export const getWithdrawalPreview = async (partnerId) => {
 /**
  * Create partner withdrawal
  */
-export const createPartnerWithdrawal = async (partnerId, amount) => {
+export const createPartnerWithdrawal = async (partnerId, amount, firstPaymentDate) => {
   const response = await Api.post(`/api/partner-withdraw/${partnerId}`, {
-    amount: parseFloat(amount)
+    amount: parseFloat(amount),
+    firstPaymentDate: firstPaymentDate
   });
   return response.data;
 };
@@ -135,9 +136,10 @@ export const createPartnerWithdrawal = async (partnerId, amount) => {
 /**
  * Update partner withdrawal amount
  */
-export const updatePartnerWithdrawal = async (partnerId, amount) => {
+export const updatePartnerWithdrawal = async (partnerId, amount, firstPaymentDate) => {
   const response = await Api.patch(`/api/partner-withdraw/${partnerId}`, {
-    amount: parseFloat(amount)
+    amount: parseFloat(amount),
+    firstPaymentDate: firstPaymentDate
   });
   return response.data;
 };

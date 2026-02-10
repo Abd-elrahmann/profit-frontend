@@ -166,6 +166,13 @@ const ContractGenerator = React.forwardRef(({
     try {
       const { gregorianDate, hijriDate } = getCurrentDates();
       const capitalAmount = Number(investorData.capitalAmount) || 0;
+      
+      if (capitalAmount === 0) {
+        if (!forPDF) {
+          notifyError('تحذير: رأس المال يساوي صفر. يرجى التحقق من بيانات المستثمر.');
+        }
+      }
+      
       const capitalInWords = `${numberToArabicWords(capitalAmount)} ريال`;
     
       const orgProfitPercent = investorData.orgProfitPercent || 0;

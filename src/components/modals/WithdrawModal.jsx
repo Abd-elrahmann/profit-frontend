@@ -30,6 +30,8 @@ const WithdrawModal = ({
   setIsEditMode,
   withdrawAmount,
   setWithdrawAmount,
+  firstPaymentDate,
+  setFirstPaymentDate,
   withdrawalPreview,
   isLoadingPreview,
   investorDetails,
@@ -85,9 +87,6 @@ const WithdrawModal = ({
 
   const handleClose = () => {
     onClose();
-    setWithdrawAmount("");
-    setWithdrawPreviewData(null);
-    setIsEditMode(false);
     setAmountError("");
     setTouched(false);
   };
@@ -175,39 +174,71 @@ const WithdrawModal = ({
             </Paper>
           )}
 
-          <TextField
-            label={isEditMode ? "المبلغ الشهري الجديد للسحب" : "المبلغ الشهري للسحب"}
-            type="number"
-            value={withdrawAmount}
-            onChange={(e) => handleAmountChange(e.target.value)}
-            onBlur={handleAmountBlur}
-            fullWidth
-            required
-            disabled={
-              !isEditMode && (
-                investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
-                investorDetails?.WithdrawingStatus === 'WITHDRAWN'
-              )
-            }
-            error={touched && !!amountError}
-            helperText={
-              touched && amountError ? amountError :
-              isEditMode
-                ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه (بالريال السعودي)"
-                : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')
-                  ? "المستثمر منسحب بالفعل"
-                  : "أدخل المبلغ الشهري الذي يتم سحبه (بالريال السعودي)"
-            }
-            InputProps={{
-              inputProps: {
-                min: 0,
-                step: 0.01,
-                max: 1000000
-              }
-            }}
-          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label={isEditMode ? "المبلغ الشهري الجديد للسحب" : "المبلغ الشهري للسحب"}
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                onBlur={handleAmountBlur}
+                fullWidth
+                required
+                disabled={
+                  !isEditMode && (
+                    investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
+                    investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+                  )
+                }
+                error={touched && !!amountError}
+                helperText={
+                  touched && amountError ? amountError :
+                  isEditMode
+                    ? "أدخل المبلغ الشهري الجديد الذي يتم سحبه (بالريال السعودي)"
+                    : (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')
+                      ? "المستثمر منسحب بالفعل"
+                      : "أدخل المبلغ الشهري الذي يتم سحبه (بالريال السعودي)"
+                }
+                InputProps={{
+                  inputProps: {
+                    min: 0,
+                    step: 0.01,
+                    max: 1000000
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="تاريخ أول دفعة"
+                type="date"
+                value={firstPaymentDate}
+                onChange={(e) => setFirstPaymentDate(e.target.value)}
+                fullWidth
+                required
+                disabled={
+                  !isEditMode && (
+                    investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
+                    investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+                  )
+                }
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                helperText="حدد تاريخ بداية أول دفعة للسحب"
+              />
+            </Grid>
+          </Grid>
 
-          {withdrawalPreview && (isEditMode || (
+          {withdrawAmount && !firstPaymentDate && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                ⚠️ يرجى إدخال تاريخ أول دفعة لعرض المعاينة
+              </Typography>
+            </Alert>
+          )}
+
+          {withdrawalPreview && firstPaymentDate && (isEditMode || (
            investorDetails?.WithdrawingStatus !== 'WITHDRAWING' &&
            investorDetails?.WithdrawingStatus !== 'WITHDRAWN')) && (
               <>
@@ -387,13 +418,14 @@ const WithdrawModal = ({
               setAmountError(error);
               setTouched(true);
 
-              if (!error) {
-                onWithdraw();
+              if (!error && firstPaymentDate) {
+                onWithdraw(firstPaymentDate);
               }
             }}
             variant="contained"
             disabled={
               isWithdrawing ||
+              !firstPaymentDate ||
               (!isEditMode && (
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
                 investorDetails?.WithdrawingStatus === 'WITHDRAWN'

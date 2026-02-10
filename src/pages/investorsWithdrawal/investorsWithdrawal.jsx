@@ -28,6 +28,7 @@ import {
   partialPayWithdrawal,
   uploadWithdrawalReceipt,
 } from "./withdrawal";
+import { getMonthName } from "../../components/investors/investorsUtils";
 import {
   Grid,
   Card,
@@ -43,6 +44,8 @@ import {
   DialogContent,
   DialogActions,
   Stack,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -75,6 +78,7 @@ export default function InvestorsWithdrawal() {
   const [allSchedulesPaid, setAllSchedulesPaid] = useState(false);
   const [hasAutoOpenedPreview, setHasAutoOpenedPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [partialPaymentAlerts, setPartialPaymentAlerts] = useState([]);
 
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
@@ -204,7 +208,7 @@ export default function InvestorsWithdrawal() {
       await approveWithdrawal(scheduleId);
       
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === scheduleId);
-      const monthName = schedule?.month || "الدفعة";
+      const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
       
       notifySuccess(`تم الموافقة على دفعة شهر ${monthName} بنجاح`);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
@@ -233,7 +237,7 @@ export default function InvestorsWithdrawal() {
       await rejectWithdrawal(selectedScheduleId);
       
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
-      const monthName = schedule?.month || "الدفعة";
+      const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
       
       notifySuccess(`تم رفض دفعة شهر ${monthName} بنجاح`);
       setIsDeleteModalOpen(false);
@@ -276,7 +280,26 @@ export default function InvestorsWithdrawal() {
       await partialPayWithdrawal(selectedScheduleId, parseFloat(partialAmount));
       
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
-      const monthName = schedule?.month || "الدفعة";
+      const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
+      
+      // إضافة alert للدفع الجزئي
+      const paidAmount = parseFloat(partialAmount);
+      const totalDue = (schedule?.amount || 0) + (schedule?.carryAmount || 0);
+      const remainingAmount = totalDue - paidAmount;
+      
+      if (remainingAmount > 0) {
+        const alertId = Date.now();
+        const newAlert = {
+          id: alertId,
+          scheduleId: selectedScheduleId,
+          month: monthName,
+          paidAmount: paidAmount,
+          carriedAmount: remainingAmount,
+          timestamp: new Date().toLocaleString('ar-SA')
+        };
+        
+        setPartialPaymentAlerts(prev => [newAlert, ...prev]);
+      }
       
       notifySuccess(`تم تسجيل السداد الجزئي لدفعة شهر ${monthName} بنجاح`);
       setPartialPayDialogOpen(false);
@@ -401,6 +424,10 @@ export default function InvestorsWithdrawal() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleCloseAlert = (alertId) => {
+    setPartialPaymentAlerts(prev => prev.filter(alert => alert.id !== alertId));
   };
 
   const getWithdrawingStatusText = (status) => {
@@ -731,6 +758,74 @@ export default function InvestorsWithdrawal() {
                         </Button>
                       )}
                     </Box>
+
+                    {/* Partial Payment Alerts */}
+                    {partialPaymentAlerts.length > 0 && (
+                      <Box sx={{ mb: 2 }}>
+                        {partialPaymentAlerts.map((alert) => (
+                          <Box
+                            key={alert.id}
+                            sx={{
+                              bgcolor: 'info.50',
+                              borderBottom: '2px solid',
+                              borderColor: 'info.200',
+                              px: 3,
+                              py: 2,
+                              mb: 1,
+                              borderRadius: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
+                              <AttachMoney sx={{ color: 'info.main', fontSize: 24, mt: 0.5 }} />
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="body1" fontWeight="bold" color="info.main" sx={{ mb: 1 }}>
+                                  دفع جزئي لشهر {alert.month}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                  <Box>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                      المبلغ المدفوع
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="bold" color="success.main">
+                                      {alert.paidAmount.toLocaleString()} ريال
+                                    </Typography>
+                                  </Box>
+                                  <Box>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                      المبلغ المرحل
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="bold" color="warning.main">
+                                      {alert.carriedAmount.toLocaleString()} ريال
+                                    </Typography>
+                                  </Box>
+                                  <Box>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                      التاريخ والوقت
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="600" color="text.primary">
+                                      {alert.timestamp}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            </Box>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleCloseAlert(alert.id)}
+                              sx={{
+                                color: 'info.main',
+                                '&:hover': { bgcolor: 'info.100' }
+                              }}
+                            >
+                              <Cancel fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
                     <TableContainer sx={{ bgcolor: 'background.paper' }}>
                       <Table>
                         <TableHead sx={{ bgcolor: 'background.paper' }}>
@@ -771,7 +866,7 @@ export default function InvestorsWithdrawal() {
                                 {schedule.year}
                               </StyledTableCell>
                               <StyledTableCell align="center">
-                                {schedule.month}
+                                {getMonthName(schedule.month)}
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 {schedule.amount?.toLocaleString()}
@@ -799,65 +894,67 @@ export default function InvestorsWithdrawal() {
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 {permissions.includes("partners-withdraw_Post") && (
-                                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                                <Box sx={{ display: "flex", gap: 0.3, justifyContent: "center" }}>
                                     <>
                                       {schedule.status !== "PAID" && !schedule.isPaid && (
                                         <>
-                                          <Button
+                                          <Tooltip title="موافقة على الدفعة" arrow>
+                                            <IconButton
+                                              size="large"
+                                              color="success"
+                                              onClick={() => handleApprove(schedule.id)}
+                                              disabled={isProcessing}
+                                              sx={{
+                                                color: "green",
+                                              }}
+                                            >
+                                              <CheckCircle fontSize="medium" />
+                                            </IconButton>
+                                          </Tooltip>
+                                          <Tooltip title="رفض الدفعة" arrow>
+                                            <IconButton
+                                              size="large"
+                                              color="error"
+                                              onClick={() => handleOpenRejectModal(schedule.id)}
+                                              disabled={isProcessing}
+                                              sx={{
+                                                color: "red",
+                                              }}
+                                            >
+                                              <Cancel fontSize="medium" />
+                                            </IconButton>
+                                          </Tooltip>
+                                          <Tooltip title="دفع جزئي" arrow>
+                                            <IconButton
+                                              size="large"
+                                              color="warning"
+                                              onClick={() => handleOpenPartialPayDialog(schedule.id)}
+                                              disabled={isProcessing}
+                                              sx={{
+                                                color: "orange",
+                                              }}
+                                            >
+                                              <AttachMoney fontSize="medium" />
+                                            </IconButton>
+                                          </Tooltip>
+                                        </>
+                                      )}
+                                      {schedule.status === "PAID" && (
+                                        <Tooltip title="رفض الدفعة" arrow>
+                                          <IconButton
                                             size="small"
-                                            variant="contained"
-                                            color="success"
-                                            onClick={() => handleApprove(schedule.id)}
-                                            disabled={isProcessing}
-                                            sx={{
-                                                fontWeight: "bold",
-                                            }}
-                                          >
-                                            <CheckCircle sx={{marginLeft: "5px"}} />
-                                            موافقة
-                                          </Button>
-                                          <Button
-                                            size="small"
-                                            variant="contained"
                                             color="error"
                                             onClick={() => handleOpenRejectModal(schedule.id)}
                                             disabled={isProcessing}
                                             sx={{
-                                                fontWeight: "bold",
+                                              bgcolor: "error.main",
+                                              color: "white",
+                                              "&:hover": { bgcolor: "error.dark" },
                                             }}
                                           >
-                                            <Cancel sx={{marginLeft: "5px"}} />
-                                            رفض
-                                          </Button>
-                                          <Button
-                                            size="small"
-                                            variant="contained"
-                                            color="warning"
-                                            onClick={() => handleOpenPartialPayDialog(schedule.id)}
-                                            disabled={isProcessing}
-                                            sx={{
-                                                fontWeight: "bold",
-                                            }}
-                                          >
-                                            <AttachMoney sx={{marginLeft: "5px"}} />
-                                            دفع جزئي
-                                          </Button>
-                                        </>
-                                      )}
-                                      {schedule.status === "PAID" && (
-                                        <Button
-                                          size="small"
-                                          variant="contained"
-                                          color="error"
-                                          onClick={() => handleOpenRejectModal(schedule.id)}
-                                          disabled={isProcessing}
-                                          sx={{
-                                              fontWeight: "bold",
-                                          }}
-                                        >
-                                          <Cancel sx={{marginLeft: "5px"}} />
-                                          رفض
-                                        </Button>
+                                            <Cancel fontSize="small" />
+                                          </IconButton>
+                                        </Tooltip>
                                       )}
                                     </>
                                 </Box>

@@ -133,9 +133,16 @@ const AddInvestor = ({ open, onClose, onSuccess }) => {
         createdAt: formData.createdAt || undefined,
       });
       
+      // التأكد من أن capitalAmount موجود في البيانات
+      const partnerData = response.data.partner || response.data;
+      const capitalAmount = parseInt(formData.capitalAmount);
+      
       const newInvestorData = {
-        ...response.data.partner,
-        partnerProfitPercent: response.data.partnerProfitPercent || (100 - parseInt(formData.orgProfitPercent))
+        ...partnerData,
+        capitalAmount: capitalAmount,
+        orgProfitPercent: parseInt(formData.orgProfitPercent),
+        partnerProfitPercent: response.data.partnerProfitPercent || (100 - parseInt(formData.orgProfitPercent)),
+        investorProfitPercent: 100 - parseInt(formData.orgProfitPercent)
       };
       
       notifySuccess('تم إضافة المستثمر بنجاح');
