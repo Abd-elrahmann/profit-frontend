@@ -77,7 +77,13 @@ const InvestorsWithdrawalTable = ({
                   رقم الهوية
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                  المبلغ الإجمالي
+                  إجمالي المنسحب
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                  الدفعات المصروفة
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                  المتبقي
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                   الادخار
@@ -102,7 +108,15 @@ const InvestorsWithdrawalTable = ({
                   <StyledTableCell align="center">{investor.name}</StyledTableCell>
                   <StyledTableCell align="center">{investor.nationalId}</StyledTableCell>
                   <StyledTableCell align="center">
-                    {investor.totalAmount?.toLocaleString()}
+                    {investor.withdrawalRequest?.remainingCapital != null
+                      ? Number(investor.withdrawalRequest.remainingCapital).toLocaleString()
+                      : investor.totalAmount?.toLocaleString()}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {investor.totalPaidSoFar != null ? Number(investor.totalPaidSoFar).toLocaleString() : "0"}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {investor.remainingToPay != null ? Number(investor.remainingToPay).toLocaleString() : "-"}
                   </StyledTableCell>
                   <StyledTableCell align="center">
                     {investor.withdrawalRequest?.savingAmount?.toLocaleString() || 0}

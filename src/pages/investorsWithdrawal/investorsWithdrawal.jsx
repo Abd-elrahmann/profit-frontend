@@ -683,10 +683,26 @@ export default function InvestorsWithdrawal() {
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography variant="body2" mb={1} fontWeight={500}>
-                          رأس المال المتبقي
+                          رأس المال المتبقي (بعد الصرف)
                         </Typography>
                         <TextField
-                          value={withdrawalDetails.withdrawal.remainingCapital?.toLocaleString() || "0"}
+                          value={(withdrawalDetails.remainingCapitalToDate ?? withdrawalDetails.withdrawal?.remainingCapital)?.toLocaleString() || "0"}
+                          fullWidth
+                          readOnly
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor: 'background.paper',
+                              borderRadius: "6px",
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
+                          إجمالي الدفعات المصروفة
+                        </Typography>
+                        <TextField
+                          value={withdrawalDetails.totalPaidFromSchedules?.toLocaleString() ?? "0"}
                           fullWidth
                           readOnly
                           sx={{
@@ -849,6 +865,9 @@ export default function InvestorsWithdrawal() {
                               المدفوع
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
+                              المتبقي
+                            </StyledTableCell>
+                            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
                               الحالة
                             </StyledTableCell>
                             <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
@@ -879,6 +898,9 @@ export default function InvestorsWithdrawal() {
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 {schedule.paidAmount?.toLocaleString() || 0}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {(schedule.remaining ?? (Math.max(0, (schedule.amount || 0) + (schedule.carryAmount || 0) - (schedule.paidAmount || 0))))?.toLocaleString() || 0}
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 <Chip
@@ -942,17 +964,15 @@ export default function InvestorsWithdrawal() {
                                       {schedule.status === "PAID" && (
                                         <Tooltip title="رفض الدفعة" arrow>
                                           <IconButton
-                                            size="small"
+                                            size="large"
                                             color="error"
                                             onClick={() => handleOpenRejectModal(schedule.id)}
                                             disabled={isProcessing}
                                             sx={{
-                                              bgcolor: "error.main",
-                                              color: "white",
-                                              "&:hover": { bgcolor: "error.dark" },
+                                              color: "red",
                                             }}
                                           >
-                                            <Cancel fontSize="small" />
+                                            <Cancel fontSize="medium" />
                                           </IconButton>
                                         </Tooltip>
                                       )}
