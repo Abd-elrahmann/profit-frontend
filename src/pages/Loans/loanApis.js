@@ -138,6 +138,26 @@ export const updateSmallLoan = async (loanId, updateData) => {
   }
 };
 
+export const getUnpostedSmallLoanJournals = async () => {
+  try {
+    const response = await Api.get('/api/small-loans/unposted-journals');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+export const getUnpostedLoanJournals = async () => {
+  try {
+    const response = await Api.get('/api/loans/get/unposted-journals');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 export const getSmallLoans = async (page = 1, search = '', limit = 20) => {
   try {
     const params = new URLSearchParams();

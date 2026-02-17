@@ -21,7 +21,16 @@ const LoanMainTab = ({
     >
       {/* Alert for loans needing contracts */}
       {loansNeedingContracts && loansNeedingContracts.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
+        <Alert
+          severity="warning"
+          sx={{
+            mb: 3,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            "& .MuiAlert-message": { flex: 1 },
+          }}
+        >
           <Typography variant="subtitle2" fontWeight="bold" mb={2}>
             السلف التالية تحتاج إلى حفظ العقود:
           </Typography>

@@ -124,6 +124,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       await deleteLoan(loanId);
       notifySuccess("تم حذف السلفة بنجاح");
       queryClient.invalidateQueries(["loans"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
       setIsDeleteModalOpen(false);
       setLoanToDelete(null);
     } catch (error) {
@@ -136,6 +138,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       await activateLoan(loanId);
       notifySuccess("تم تفعيل السلفة بنجاح");
       queryClient.invalidateQueries(["loans"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تفعيل السلفة"
@@ -148,6 +152,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       await deactivateLoan(loanId);
       notifySuccess("تم إلغاء تفعيل السلفة بنجاح");
       queryClient.invalidateQueries(["loans"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء إلغاء تفعيل السلفة"

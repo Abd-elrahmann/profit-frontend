@@ -19,6 +19,8 @@ import {
   getPartners,
   convertLoanClient,
   transferPartialLoanAmount,
+  getUnpostedSmallLoanJournals,
+  getUnpostedLoanJournals,
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
@@ -171,6 +173,20 @@ const Loans = () => {
     retry: 1,
   });
 
+  const { data: unpostedSmallLoanJournals } = useQuery({
+    queryKey: ["unposted-small-loan-journals"],
+    queryFn: getUnpostedSmallLoanJournals,
+    enabled: activeTab === 2 || activeTab === 3,
+    retry: 1,
+  });
+
+  const { data: unpostedLoanJournals } = useQuery({
+    queryKey: ["unposted-loan-journals"],
+    queryFn: getUnpostedLoanJournals,
+    enabled: activeTab === 0 || activeTab === 1,
+    retry: 1,
+  });
+
   const { data: loansNeedingContracts } = useQuery({
     queryKey: ["loans-needing-contracts"],
     queryFn: async () => {
@@ -299,6 +315,7 @@ const Loans = () => {
     setShowConversionConfirmModal(false);
     setActiveTab(0);
     queryClient.invalidateQueries(["loans"]);
+    queryClient.invalidateQueries(["unposted-loan-journals"]);
   }, [queryClient]);
 
   const calculateRemainingAmount = (loan) => {
@@ -637,6 +654,7 @@ const Loans = () => {
       notifySuccess("تم حفظ العقود بنجاح");
 
       queryClient.invalidateQueries(["loans"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
       if (loanDataToUse?.id) {
         queryClient.invalidateQueries(["loan", loanDataToUse.id]);
       }
@@ -901,6 +919,7 @@ const Loans = () => {
       setSavedLoanData(loanDataForPreview);
 
       queryClient.invalidateQueries(["loans"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
 
       setTimeout(async () => {
         try {
@@ -1041,6 +1060,7 @@ const Loans = () => {
       }
 
       queryClient.invalidateQueries(["loans"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
       setIsEditMode(false);
       setIsViewMode(true);
     } catch (error) {
@@ -1721,6 +1741,84 @@ const Loans = () => {
               onSearchChange={(e) => setLoansTableSearchQuery(e.target.value)}
             />
 
+            {(activeTab === 0 || activeTab === 1) && unpostedLoanJournals?.count > 0 && (
+              <Alert
+                severity="warning"
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  border: "2px solid",
+                  borderColor: "warning.main",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  "& .MuiAlert-message": { flex: 1 },
+                }}
+                action={
+                  <Button
+                    size="small"
+                    color="primary"
+                    variant="contained"
+                    onClick={() => navigate("/journal-entries")}
+                    sx={{ fontWeight: 600, textTransform: "none" }}
+                  >
+                    الذهاب للقيود
+                  </Button>
+                }
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {unpostedLoanJournals.count === 1
+                    ? `يوجد ${unpostedLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedLoanJournals.items?.[0]?.clientName || unpostedLoanJournals.items?.[0]?.loanCode || ""}.`
+                    : `يوجد ${unpostedLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${unpostedLoanJournals.items?.map((i) => i.clientName || i.loanCode).filter(Boolean).join("، ") || ""}.`}
+                </Typography>
+                <Typography variant="caption" sx={{ mt: 0.5, display: "block" }}>
+                  {unpostedLoanJournals.count === 1
+                    ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
+                    : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
+                </Typography>
+              </Alert>
+            )}
+
+            {(activeTab === 2 || activeTab === 3) && unpostedSmallLoanJournals?.count > 0 && (
+              <Alert
+                severity="warning"
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  border: "2px solid",
+                  borderColor: "warning.main",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  "& .MuiAlert-message": { flex: 1 },
+                }}
+                action={
+                  <Button
+                    size="small"
+                    color="primary"
+                    variant="contained"
+                    onClick={() => navigate("/journal-entries")}
+                    sx={{ fontWeight: 600, textTransform: "none" }}
+                  >
+                    الذهاب للقيود
+                  </Button>
+                }
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {unpostedSmallLoanJournals.count === 1
+                    ? `يوجد ${unpostedSmallLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedSmallLoanJournals.items?.[0]?.loanName || ""}.`
+                    : `يوجد ${unpostedSmallLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${unpostedSmallLoanJournals.items?.map((i) => i.loanName).filter(Boolean).join("، ") || ""}.`}
+                </Typography>
+                <Typography variant="caption" sx={{ mt: 0.5, display: "block" }}>
+                  {unpostedSmallLoanJournals.count === 1
+                    ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
+                    : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
+                </Typography>
+              </Alert>
+            )}
+
             {activeTab === 0 ? (
               <Box
                 sx={{ width: "100%", display: "flex", flexDirection: "column" }}
@@ -1857,6 +1955,8 @@ const Loans = () => {
                     setSelectedLoanForEdit(null);
                     setIsSmallLoanEditMode(false);
                     setActiveTab(3);
+                    queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+                    queryClient.invalidateQueries(["small-loans"]);
                   }}
                 />
               </Box>

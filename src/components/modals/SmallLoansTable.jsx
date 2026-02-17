@@ -102,6 +102,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
       await deleteSmallLoan(loanId);
       notifySuccess("تم حذف السلفة الصغيرة بنجاح");
       queryClient.invalidateQueries(["small-loans"]);
+      queryClient.invalidateQueries(["unposted-small-loan-journals"]);
       setIsDeleteModalOpen(false);
       setLoanToDelete(null);
     } catch (error) {
@@ -157,6 +158,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
       notifySuccess("تم سداد الدفعة بنجاح");
 
       queryClient.invalidateQueries(["small-loans"]);
+      queryClient.invalidateQueries(["unposted-small-loan-journals"]);
       handleClosePayModal();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء سداد الدفعة");
