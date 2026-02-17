@@ -377,21 +377,34 @@ const Loans = () => {
     }
   }, [savedLoanData, selectedLoan, debtAckTemplate, promissoryNoteTemplate, selectedPartner, selectedKafeel, debtAckGeneratorRef, promissoryNoteGeneratorRef, setPreviewContracts, setPreviewOpen]);
 
-  const handleConfirmConversion = useCallback(async (partialAmount = null) => {
+  const handleConfirmConversion = useCallback(async (partialAmount = null, paymentAmount = null, repaymentDay = null) => {
     setIsConverting(true);
     try {
+      const repaymentDayValue = repaymentDay || null;
+      const paymentAmountValue = paymentAmount ? parseFloat(String(paymentAmount).replace(/,/g, "")) : null;
+      
       if (conversionType === "partial") {
         const amount = parseFloat(partialAmount.replace(/,/g, ""));
+        
         await transferPartialLoanAmount(
           loanForConversion.clientId,
           selectedClientForConversion.client.id,
           loanForConversion.id,
           amount,
-          selectedKafeelForConversion?.id || null
+          selectedKafeelForConversion?.id || null,
+          paymentAmountValue,
+          repaymentDayValue
         );
         notifySuccess("تم نقل جزء من المديونية بنجاح");
       } else {
-          await convertLoanClient(loanForConversion.clientId, selectedClientForConversion.client.id, loanForConversion.id, selectedKafeelForConversion?.id || null);
+          await convertLoanClient(
+            loanForConversion.clientId, 
+            selectedClientForConversion.client.id, 
+            loanForConversion.id, 
+            selectedKafeelForConversion?.id || null,
+            paymentAmountValue,
+            repaymentDayValue
+          );
 
         const updatedLoan = await getLoanById(loanForConversion.id);
 

@@ -28,14 +28,22 @@ const LoanConversionConfirmModal = ({
   partialAmount,
   onPartialAmountChange,
   maxPartialAmount,
+  paymentAmount,
+  repaymentDay,
 }) => {
   const [localPartialAmount, setLocalPartialAmount] = useState(partialAmount || "");
+  const [localPaymentAmount, setLocalPaymentAmount] = useState(paymentAmount || "");
+  const [localRepaymentDay, setLocalRepaymentDay] = useState(repaymentDay || "");
 
   useEffect(() => {
-    if (open && transferType === "partial") {
-      setLocalPartialAmount(partialAmount || "");
+    if (open) {
+      if (transferType === "partial") {
+        setLocalPartialAmount(partialAmount || "");
+      }
+      setLocalPaymentAmount(paymentAmount || "");
+      setLocalRepaymentDay(repaymentDay || "");
     }
-  }, [open, partialAmount, transferType]);
+  }, [open, partialAmount, transferType, paymentAmount, repaymentDay]);
 
   const handlePartialAmountChange = (value) => {
     const numericValue = value.replace(/,/g, "");
@@ -46,6 +54,18 @@ const LoanConversionConfirmModal = ({
         onPartialAmountChange(formatted);
       }
     }
+  };
+
+  const handlePaymentAmountChange = (value) => {
+    const numericValue = value.replace(/,/g, "");
+    if (!isNaN(numericValue) && numericValue >= 0) {
+      const formatted = numericValue ? parseFloat(numericValue).toLocaleString() : "";
+      setLocalPaymentAmount(formatted);
+    }
+  };
+
+  const handleRepaymentDayChange = (value) => {
+    setLocalRepaymentDay(value);
   };
 
   const isPartialValid = transferType === "full" || (localPartialAmount && parseFloat(localPartialAmount.replace(/,/g, "")) > 0);
@@ -265,29 +285,34 @@ const LoanConversionConfirmModal = ({
               mb={2}
               textAlign="center"
             >
-              {transferType === "partial" && localPartialAmount ? "المبلغ المتبقي بعد النقل الجزئي" : "المبلغ المتبقي للنقل"}
+              تفاصيل الدفع
             </Typography>
-            <Grid container spacing={2} justifyContent="space-around" flexDirection="row-reverse">
-              <Grid item xs={12} sm={6} textAlign="center" justifyContent="center">
-                <Typography variant="body2" color="text.secondary" textAlign="center">
-                  المبلغ المتبقي:
-                </Typography>
-                <Typography variant="h6" fontWeight="bold" color="error.main" textAlign="center">
-                  {transferType === "partial" && localPartialAmount
-                    ? actualRemainingAmount.toLocaleString()
-                    : referenceAmount.toLocaleString()}
-                </Typography>
+            <Grid container spacing={2} justifyContent="center">
+              <Grid item xs={12} sm={6} textAlign="center">
+                <TextField
+                  fullWidth
+                  label="مبلغ الدفعة"
+                  value={localPaymentAmount}
+                  onChange={(e) => handlePaymentAmountChange(e.target.value)}
+                  InputProps={{
+                    inputProps: { style: { textAlign: 'center', fontSize: '18px', fontWeight: 'bold' } }
+                  }}
+                  sx={{ maxWidth: 400, mx: 'auto' }}
+                />
               </Grid>
-              {transferType === "partial" && localPartialAmount && (
-                <Grid item xs={12} sm={6} textAlign="center" justifyContent="center">
-                  <Typography variant="body2" color="text.secondary" textAlign="center">
-                    سيتم نقله:
-                  </Typography>
-                  <Typography variant="h6" fontWeight="bold" color="primary.main" textAlign="center">
-                    {localPartialAmount}
-                  </Typography>
-                </Grid>
-              )}
+              <Grid item xs={12} sm={6} textAlign="center">
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="يوم السداد"
+                  value={localRepaymentDay}
+                  onChange={(e) => handleRepaymentDayChange(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{ maxWidth: 400, mx: 'auto' }}
+                />
+              </Grid>
             </Grid>
           </Paper>
               
@@ -332,10 +357,14 @@ const LoanConversionConfirmModal = ({
           إلغاء
         </Button>
         <Button
-          onClick={() => onConfirm(transferType === "partial" ? localPartialAmount : null)}
+          onClick={() => onConfirm(
+            transferType === "partial" ? localPartialAmount : null,
+            localPaymentAmount,
+            localRepaymentDay
+          )}
           variant="contained"
           color="primary"
-          disabled={isLoading || !isPartialValid || (transferType === "partial" && localPartialAmount && parseFloat(localPartialAmount.replace(/,/g, "")) > parseFloat(String(maxPartialAmount || "0").replace(/,/g, "")))}
+          disabled={isLoading || !isPartialValid || (transferType === "partial" && localPartialAmount && parseFloat(localPartialAmount.replace(/,/g, "")) > parseFloat(String(maxPartialAmount || "0").replace(/,/g, ""))) || !localPaymentAmount || !localRepaymentDay}
           size="large"
           startIcon={
             isLoading ? (

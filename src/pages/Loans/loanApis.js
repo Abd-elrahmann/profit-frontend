@@ -163,12 +163,14 @@ export const deleteSmallLoan = async (loanId) => {
   }
 };
 
-export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeelId) => {
+export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeelId, paymentAmount, repaymentDay) => {
   try {
     const response = await Api.patch(`/api/loans/convert-client/${loanId}`, {
       fromClientId: String(fromClientId),
       toClientId: String(toClientId),
       kafeelId: kafeelId ? String(kafeelId) : null,
+      paymentAmount: paymentAmount ? Number(paymentAmount) : null,
+      repaymentDay: repaymentDay || null,
     });
     return response.data;
   } catch (error) {
@@ -177,13 +179,15 @@ export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeel
   }
 };
   
-export const transferPartialLoanAmount = async (fromClientId, toClientId, loanId, amount, kafeelId) => {
+export const transferPartialLoanAmount = async (fromClientId, toClientId, loanId, amount, kafeelId, paymentAmount, repaymentDay) => {
   try {
     const response = await Api.patch(`/api/loans/convert-partial/${loanId}`, {
       fromClientId: Number(fromClientId),
       toClientId: Number(toClientId),
       kafeelId: kafeelId ? Number(kafeelId) : null,
       amount: Number(amount),
+      paymentAmount: paymentAmount ? Number(paymentAmount) : null,
+      repaymentDay: repaymentDay || null,
     });
     return response.data;
   } catch (error) {
