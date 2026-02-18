@@ -83,6 +83,8 @@ const PartialPaymentModal = ({
   };
 
   const remainingAmount = selectedActionInstallment?.remaining || 0;
+  const paidAmountNum = parseFloat(paidAmount) || 0;
+  const remainingAfterPayment = Math.max(0, remainingAmount - paidAmountNum);
 
   return (
     <Dialog
@@ -97,8 +99,11 @@ const PartialPaymentModal = ({
           {selectedActionInstallment?.amount?.toFixed(2)} ريال
         </Typography>
 
-        <Typography variant="body2" color="primary" fontWeight="bold" mb={2}>
-          المبلغ المتبقي: {remainingAmount.toFixed(2)} ريال
+        <Typography variant="body2" color="primary" fontWeight="bold" mb={1}>
+          المبلغ المتبقي الحالي: {remainingAmount.toFixed(2)} ريال
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          المبلغ المتبقي بعد الدفع: <strong>{remainingAfterPayment.toFixed(2)}</strong> ريال
         </Typography>
 
         {touched && amountError && (

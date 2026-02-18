@@ -348,14 +348,18 @@ const InstallmentSettlementReceipt = React.forwardRef(
           const earlyPaidAmount = Number(dataToUse.loanData?.earlyPaidAmount || 0);
           const earlyPaymentDiscount = Number(dataToUse.loanData?.earlyPaymentDiscount || 0);
 
-          // إجمالي الخصومات = كل الخصومات (خصم سداد مبكر + خصم الموافقة على الدفعات كاملة أو جزئية)
-          let totalDiscountsAll = 0;
+          // إجمالي الخصومات = خصم الدفعات (من الموافقة) + خصم السداد المبكر
+          let totalDiscountsFromRepayments = 0;
           if (dataToUse.loanData?.allInstallments && Array.isArray(dataToUse.loanData.allInstallments)) {
-            totalDiscountsAll = dataToUse.loanData.allInstallments.reduce(
+            totalDiscountsFromRepayments = dataToUse.loanData.allInstallments.reduce(
               (sum, inst) => sum + (Number(inst.discount) || 0),
               0
             );
           }
+          // استخدم مجموع خصومات الدفعات، أو خصم السداد المبكر إذا لم يُحسب من الدفعات
+          const totalDiscountsAll = totalDiscountsFromRepayments > 0
+            ? totalDiscountsFromRepayments
+            : earlyPaymentDiscount;
           
           // مبلغ التسوية = إجمالي العقد - إجمالي الخصومات
           const settlementByFormula = totalContractAmount > 0
@@ -392,7 +396,7 @@ const InstallmentSettlementReceipt = React.forwardRef(
 
           const discountInfo = totalDiscountsAll > 0 
             ? `<span class="discount-text">(بعد خصم قدره ${totalDiscountsAll.toLocaleString("en-US")} ريال من إجمالي العقد ${totalContractAmount.toLocaleString("en-US")} ريال)</span>`
-            : "";
+            : "فقط لا غير";
 
           let filledTemplate = templateContent
             .replace(/{{اسم_العميل}}/g, dataToUse.clientData.name || "")
@@ -414,6 +418,7 @@ const InstallmentSettlementReceipt = React.forwardRef(
               /{{المبلغ_رقما}}/g, `${amount?.toLocaleString("en-US") || "0"} ريال`)
             .replace(/{{المبلغ_كتابة}}/g, amountInWords)
             .replace(/{{معلومات_الخصم}}/g, discountInfo)
+            .replace(/فقط لا غير/g, discountInfo)
 
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)

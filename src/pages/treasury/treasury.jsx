@@ -34,15 +34,12 @@ import {
   PictureAsPdf,
   TableChart,
   CheckCircle,
-  Close as CloseIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import Api from "../../config/Api";
 import dayjs from "dayjs";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -54,8 +51,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Area,
-  ComposedChart,
 } from "recharts";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
 import { exportJournalsToPDF, exportJournalsToExcel, exportStatisticsToPDF, exportStatisticsToExcel } from '../../utilities/treasuryJournalsExporter';
@@ -95,7 +90,6 @@ export default function Treasury() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
-  const [showFilterAlert, setShowFilterAlert] = useState(true);
   const { isDarkMode } = useTheme();
 
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -133,7 +127,6 @@ export default function Treasury() {
 
   const totalRepaymentsAmount = currentData?.repayments?.totalAmount || 0;
   const paidRepaymentsUntilNow = currentData?.repayments?.paidUntilNow || 0;
-  const totalRemaining = currentData?.repayments?.remaining || 0;
   const totalDiscount = currentData?.repayments?.discount || 0;
   const remainingRepayments = totalRepaymentsAmount - paidRepaymentsUntilNow;
   const totalPaid = paidRepaymentsUntilNow + totalDiscount;
@@ -145,7 +138,6 @@ export default function Treasury() {
   const currentMonthPaidUntilNow = currentData?.currentMonth?.paidUntilNow || 0;
   const currentMonthRemainingRepayment = currentData?.currentMonth?.remaining || 0;
   const currentMonthDiscount = currentData?.currentMonth?.discount || 0;
-  const currentMonthRemaining = currentMonthTotalAmount - currentMonthPaidUntilNow;
   const currentTotalPaid = currentMonthPaidUntilNow + totalDiscount;
   const currentMonthProgress = currentMonthTotalAmount > 0
     ? Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100)
@@ -656,38 +648,6 @@ export default function Treasury() {
                     boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                     bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                   }}>
-                    {showFilterAlert && (
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 2,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start'
-                        }}
-                        action={
-                          <IconButton
-                            aria-label="close"
-                            color="inherit"
-                            size="small"
-                            onClick={() => setShowFilterAlert(false)}
-                          >
-                            <CloseIcon fontSize="inherit" />
-                          </IconButton>
-                        }
-                      >
-                        <Typography variant="body2" fontWeight="bold" gutterBottom>
-                          كيفية استخدام الفلتر:
-                        </Typography>
-                        <Typography variant="body2" component="div">
-                          • <strong>اختيار السنة فقط:</strong> يعرض جميع بيانات السنة (من يناير إلى ديسمبر)
-                          <br />
-                          • <strong>اختيار السنة + الشهر:</strong> يعرض بيانات الشهر المحدد فقط
-                          <br />
-                          • <strong>بدون اختيار:</strong> يعرض جميع البيانات من جميع السنوات
-                        </Typography>
-                      </Alert>
-                    )}
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} md={3}>
                         <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ mb: isSmallScreen ? 1 : 0 }}>
@@ -1185,7 +1145,7 @@ export default function Treasury() {
                                   cy="50"
                                   r="45"
                                   fill="transparent"
-                                  stroke="#1976d2"
+                                  stroke="#2e7d32"
                                   strokeWidth="10"
                                   strokeDasharray={strokeDasharray}
                                   strokeLinecap="round"
@@ -1197,8 +1157,7 @@ export default function Treasury() {
                                 <Typography
                                   variant={isSmallScreen ? "h5" : "h4"}
                                   fontWeight="bold"
-                                  color="primary"
-                                  sx={{ mb: 0.5 }}
+                                  sx={{ mb: 0.5, color: '#2e7d32' }}
                                 >
                                   {availableBalance >= 1000000
                                     ? `${(availableBalance / 1000000).toFixed(1)}م`
@@ -1258,7 +1217,7 @@ export default function Treasury() {
                     </Grid>
                   )}
 
-                  {/* رسمة Area Chart المكدسة */}
+                  {/* رسمة تطور الوارد والصادر والرصيد */}
                   {monthlyBalanceData.length > 0 && (
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                       <Grid item xs={12}>
@@ -1273,22 +1232,12 @@ export default function Treasury() {
                             تطور الوارد والصادر والرصيد
                           </Typography>
                           <ResponsiveContainer width="100%" height={isSmallScreen ? 300 : 400}>
-                            <ComposedChart data={monthlyBalanceData}>
-                              <defs>
-                                <linearGradient id="colorDebit" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8} />
-                                  <stop offset="95%" stopColor="#00C49F" stopOpacity={0.1} />
-                                </linearGradient>
-                                <linearGradient id="colorCredit" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#FF8042" stopOpacity={0.8} />
-                                  <stop offset="95%" stopColor="#FF8042" stopOpacity={0.1} />
-                                </linearGradient>
-                              </defs>
+                            <BarChart data={monthlyBalanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#424242" : "#e0e0e0"} />
                               <XAxis dataKey="name" stroke={isDarkMode ? "#ffffff" : "#666"} />
-                              <YAxis stroke={isDarkMode ? "#ffffff" : "#666"} />
+                              <YAxis stroke={isDarkMode ? "#ffffff" : "#666"} tickFormatter={(value) => value?.toLocaleString?.('en-US') || value} />
                               <Tooltip
-                                formatter={(value, name) => [`${value.toLocaleString('en-US')}`, name]}
+                                formatter={(value, name) => [`${Number(value || 0).toLocaleString('en-US')}`, name]}
                                 contentStyle={{
                                   borderRadius: '8px',
                                   backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff',
@@ -1297,34 +1246,10 @@ export default function Treasury() {
                                 }}
                               />
                               <Legend />
-                              <Area
-                                type="monotone"
-                                dataKey="الوارد"
-                                stackId="1"
-                                stroke="#00C49F"
-                                fill="url(#colorDebit)"
-                                name="الوارد"
-                                strokeWidth={2}
-                              />
-                              <Area
-                                type="monotone"
-                                dataKey="الصادر"
-                                stackId="1"
-                                stroke="#FF8042"
-                                fill="url(#colorCredit)"
-                                name="الصادر"
-                                strokeWidth={2}
-                              />
-                              <Line
-                                type="monotone"
-                                dataKey="الرصيد"
-                                stroke="#1976d2"
-                                strokeWidth={3}
-                                name="الرصيد"
-                                dot={{ fill: '#1976d2', r: 5 }}
-                                activeDot={{ r: 7 }}
-                              />
-                            </ComposedChart>
+                              <Bar dataKey="الوارد" name="الوارد" fill="#00C49F" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="الصادر" name="الصادر" fill="#FF8042" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="الرصيد" name="الرصيد" fill="#2e7d32" radius={[4, 4, 0, 0]} />
+                            </BarChart>
                           </ResponsiveContainer>
                         </Paper>
                       </Grid>
@@ -1679,38 +1604,6 @@ export default function Treasury() {
                     boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                     bgcolor: isDarkMode ? 'background.paper' : 'background.paper'
                   }}>
-                    {showFilterAlert && (
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 2,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start'
-                        }}
-                        action={
-                          <IconButton
-                            aria-label="close"
-                            color="inherit"
-                            size="small"
-                            onClick={() => setShowFilterAlert(false)}
-                          >
-                            <CloseIcon fontSize="inherit" />
-                          </IconButton>
-                        }
-                      >
-                        <Typography variant="body2" fontWeight="bold" gutterBottom>
-                          كيفية استخدام الفلتر:
-                        </Typography>
-                        <Typography variant="body2" component="div">
-                          • <strong>اختيار السنة فقط:</strong> يعرض جميع بيانات السنة (من يناير إلى ديسمبر)
-                          <br />
-                          • <strong>اختيار السنة + الشهر:</strong> يعرض بيانات الشهر المحدد فقط
-                          <br />
-                          • <strong>بدون اختيار:</strong> يعرض جميع البيانات من جميع السنوات
-                        </Typography>
-                      </Alert>
-                    )}
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} md={3}>
                         <Typography variant="body2" color={isDarkMode ? 'text.secondary' : 'text.secondary'} sx={{ mb: isSmallScreen ? 1 : 0 }}>

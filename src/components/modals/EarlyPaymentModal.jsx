@@ -26,7 +26,7 @@ const EarlyPaymentModal = ({
   const [discountError, setDiscountError] = useState("");
   const [touched, setTouched] = useState(false);
 
-  const pendingInstallments = (sortedInstallments || []).filter((inst) => inst.status === "PENDING");
+  const pendingInstallments = (sortedInstallments || []).filter((inst) => inst.status === "PENDING" || inst.status === "PARTIAL_PAID");
 
   useEffect(() => {
     if (open) {
@@ -135,7 +135,7 @@ const EarlyPaymentModal = ({
                 {dayjs(installment.dueDate).format("DD/MM/YYYY")}
               </Typography>
               <Typography variant="body2" fontWeight="bold">
-                {installment.amount?.toFixed(2)}
+                {installment.remaining?.toFixed(2)}
               </Typography>
             </Box>
           ))}
@@ -150,7 +150,7 @@ const EarlyPaymentModal = ({
               color="primary.main"
             >
               {pendingInstallments
-                .reduce((sum, inst) => sum + (inst.amount || 0), 0)
+                .reduce((sum, inst) => sum + (inst.remaining || 0), 0)
                 .toLocaleString()}{" "}
             </Typography>
           </Box>
@@ -169,7 +169,7 @@ const EarlyPaymentModal = ({
             inputProps: {
               min: 0,
               step: 0.01,
-              max: pendingInstallments.reduce((sum, inst) => sum + (inst.amount || 0), 0),
+              max: pendingInstallments.reduce((sum, inst) => sum + (inst.remaining || 0), 0),
             },
           }}
           helperText={
@@ -191,7 +191,7 @@ const EarlyPaymentModal = ({
               المبلغ بعد الخصم:{" "}
               {(
                 pendingInstallments
-                  .reduce((sum, inst) => sum + (inst.amount || 0), 0) -
+                  .reduce((sum, inst) => sum + (inst.remaining || 0), 0) -
                 parseFloat(discountAmount || 0)
               ).toLocaleString()}{" "}
             </Typography>

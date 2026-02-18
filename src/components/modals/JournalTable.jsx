@@ -270,6 +270,9 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
               المصدر
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              الوصف
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               المعتمد بواسطة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -330,6 +333,9 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {getJournalSourceTypeText(journal.sourceType)}
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {journal.description}
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {journal.postedBy?.name || "لم يتم الاعتماد "}

@@ -845,17 +845,25 @@ const Installments = () => {
     try {
       setIsGeneratingSettlement(true);
 
-      const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
+      // جلب كل الدفعات لضمان احتساب إجمالي الخصومات بشكل صحيح (التصفح قد يعرض صفحة واحدة فقط)
+      const { repayments: allRepayments } = await fetchAllRepayments();
+      const installmentsForSettlement = (allRepayments && allRepayments.length > 0)
+        ? [...allRepayments].sort((a, b) => a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate))
+        : sortedInstallments;
+
+      const lastInstallment = installmentsForSettlement[installmentsForSettlement.length - 1];
 
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const totalContractAmount = Number(loanData?.totalAmount) ||
         (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
-      const totalDiscounts = sortedInstallments.reduce(
+      const totalDiscounts = installmentsForSettlement.reduce(
         (sum, inst) => sum + (Number(inst.discount) || 0),
         0
       );
-      const calculatedSettlementAmount = Math.max(0, totalContractAmount - totalDiscounts);
+      const earlyPaymentDiscount = Number(loanData?.earlyPaymentDiscount || 0);
+      const effectiveTotalDiscounts = totalDiscounts > 0 ? totalDiscounts : earlyPaymentDiscount;
+      const calculatedSettlementAmount = Math.max(0, totalContractAmount - effectiveTotalDiscounts);
 
       const settlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
@@ -863,7 +871,8 @@ const Installments = () => {
           loanData: {
             ...loanData,
             calculatedSettlementAmount,
-            allInstallments: sortedInstallments,
+            allInstallments: installmentsForSettlement,
+            earlyPaymentDiscount: loanData?.earlyPaymentDiscount,
           },
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
@@ -885,16 +894,23 @@ const Installments = () => {
     try {
       setIsGeneratingSettlement(true);
 
-      const lastInstallment = sortedInstallments[sortedInstallments.length - 1];
+      const { repayments: allRepayments } = await fetchAllRepayments();
+      const installmentsForSettlement = (allRepayments && allRepayments.length > 0)
+        ? [...allRepayments].sort((a, b) => a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate))
+        : sortedInstallments;
+
+      const lastInstallment = installmentsForSettlement[installmentsForSettlement.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
 
       const totalContractAmount = Number(loanData?.totalAmount) ||
         (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
-      const totalDiscounts = sortedInstallments.reduce(
+      const totalDiscounts = installmentsForSettlement.reduce(
         (sum, inst) => sum + (Number(inst.discount) || 0),
         0
       );
-      const calculatedSettlementAmount = Math.max(0, totalContractAmount - totalDiscounts);
+      const earlyPaymentDiscount = Number(loanData?.earlyPaymentDiscount || 0);
+      const effectiveTotalDiscounts = totalDiscounts > 0 ? totalDiscounts : earlyPaymentDiscount;
+      const calculatedSettlementAmount = Math.max(0, totalContractAmount - effectiveTotalDiscounts);
 
       const finalSettlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
@@ -902,7 +918,8 @@ const Installments = () => {
           loanData: {
             ...loanData,
             calculatedSettlementAmount,
-            allInstallments: sortedInstallments,
+            allInstallments: installmentsForSettlement,
+            earlyPaymentDiscount: loanData?.earlyPaymentDiscount,
           },
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
@@ -1130,7 +1147,7 @@ const Installments = () => {
     return (
       <Box sx={{ p: 1 }}>
         {/* Select All for Mobile */}
-        {permissions.includes("repayments_Post") && sortedInstallments.length > 0 && (
+        {permissions.includes("repayments_Post") && !isSettlementCompleted() && sortedInstallments.length > 0 && (
           <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Checkbox
               checked={selectedInstallments.length === sortedInstallments.length && sortedInstallments.length > 0}
@@ -1192,7 +1209,7 @@ const Installments = () => {
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      {permissions.includes("repayments_Post") && (
+                      {permissions.includes("repayments_Post") && !isSettlementCompleted() && (
                         <Checkbox
                           checked={selectedInstallments.includes(installment.id)}
                           onChange={(e) => {
@@ -1208,7 +1225,7 @@ const Installments = () => {
                           <Checkbox checked size="small" />
                         )}
                       <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                        <Typography variant="subtitle2" sx={{ fontWeight: 500 }} color="primary">
                           دفعة #{installment.count}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -1258,7 +1275,7 @@ const Installments = () => {
                       <Typography variant="caption" color="text.secondary">
                         قيمة الدفعة
                       </Typography>
-                      <Typography variant="body2" fontWeight="bold">
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {installment.amount?.toFixed(2)}
                       </Typography>
                     </Box>
@@ -1267,7 +1284,7 @@ const Installments = () => {
                       <Typography variant="caption" color="text.secondary">
                         المبلغ الأصلي
                       </Typography>
-                      <Typography variant="body2" fontWeight="bold">
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {installment.principalAmount?.toFixed(2) || "0.00"}
                       </Typography>
                     </Box>
@@ -1278,8 +1295,7 @@ const Installments = () => {
                       </Typography>
                       <Typography 
                         variant="body2" 
-                        fontWeight="bold"
-                        sx={{ color: "primary.main" }}
+                        sx={{ fontWeight: 500, color: "primary.main" }}
                       >
                         {installment.interestAmount?.toFixed(2) || "0.00"}
                       </Typography>
@@ -1291,10 +1307,7 @@ const Installments = () => {
                       </Typography>
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
-                        sx={{
-                          color: installment.paidAmount > 0 ? "green" : "red",
-                        }}
+                        sx={{ fontWeight: 500, color: installment.paidAmount > 0 ? "green" : "red" }}
                       >
                         {installment.paidAmount > 0
                           ? `${installment.paidAmount.toFixed(2)}`
@@ -1308,10 +1321,7 @@ const Installments = () => {
                       </Typography>
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
-                        sx={{
-                          color: (installment.discount || 0) > 0 ? "warning.main" : "text.secondary",
-                        }}
+                        sx={{ fontWeight: 500, color: (installment.discount || 0) > 0 ? "warning.main" : "text.secondary" }}
                       >
                         {(installment.discount || 0) > 0
                           ? `${installment.discount.toFixed(2)}`
@@ -1325,10 +1335,7 @@ const Installments = () => {
                       </Typography>
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
-                        sx={{
-                          color: installment.remaining === 0 ? "text.primary" : "error.main",
-                        }}
+                        sx={{ fontWeight: 500, color: installment.remaining === 0 ? "text.primary" : "error.main" }}
                       >
                         {installment.remaining?.toFixed(2) || "0.00"}
                       </Typography>
@@ -1361,7 +1368,7 @@ const Installments = () => {
             }}
           >
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="subtitle2" fontWeight="bold" mb={1.5}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 500 }} mb={1.5}>
                 الإجمالي
               </Typography>
               <Stack spacing={1}>
@@ -1369,7 +1376,7 @@ const Installments = () => {
                   <Typography variant="caption" color="text.secondary">
                     الدفعات المدفوعة
                   </Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {paidCount}
                   </Typography>
                 </Box>
@@ -1377,7 +1384,7 @@ const Installments = () => {
                   <Typography variant="caption" color="text.secondary">
                     إجمالي الدفعات
                   </Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {totalAmount.toFixed(2)}
                   </Typography>
                 </Box>
@@ -1387,8 +1394,7 @@ const Installments = () => {
                   </Typography>
                   <Typography
                     variant="body2"
-                    fontWeight="bold"
-                    sx={{ color: "green" }}
+                    sx={{ fontWeight: 500, color: "green" }}
                   >
                     {totalPaid.toFixed(2)}
                   </Typography>
@@ -1399,8 +1405,7 @@ const Installments = () => {
                   </Typography>
                   <Typography
                     variant="body2"
-                    fontWeight="bold"
-                    sx={{ color: "warning.main" }}
+                    sx={{ fontWeight: 500, color: "warning.main" }}
                   >
                     {sortedInstallments
                       .reduce((sum, inst) => sum + (inst.discount || 0), 0)
@@ -1413,8 +1418,7 @@ const Installments = () => {
                   </Typography>
                   <Typography
                     variant="body2"
-                    fontWeight="bold"
-                    sx={{ color: "red" }}
+                    sx={{ fontWeight: 500, color: "red" }}
                   >
                     {totalRemaining.toFixed(2)}
                   </Typography>
@@ -1432,7 +1436,7 @@ const Installments = () => {
     <Table stickyHeader size="small">
       <TableHead>
         <StyledTableRow>
-          {permissions.includes("repayments_Post") && (
+          {permissions.includes("repayments_Post") && !isSettlementCompleted() && (
             <StyledTableCell 
               align="center" 
               sx={{ 
@@ -1530,7 +1534,7 @@ const Installments = () => {
               },
             }}
           >
-            {permissions.includes("repayments_Post") && (
+            {permissions.includes("repayments_Post") && !isSettlementCompleted() && (
               <StyledTableCell align="center" sx={{ px: 0.5, py: 1 }}>
                 <Checkbox
                   checked={selectedInstallments.includes(installment.id)}
@@ -1552,7 +1556,7 @@ const Installments = () => {
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ px: 0.5, py: 1 }}>
               <Box sx={{ lineHeight: 1.2 }}>
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500 }}>
                   {dayjs(installment.dueDate).format("DD/MM/YYYY")}
                 </Typography>
                 {installment.dueDateHijri && (
@@ -1562,20 +1566,20 @@ const Installments = () => {
                 )}
               </Box>
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ px: 0.5, py: 1, fontWeight: "bold", fontSize: "13px" }}>
+            <StyledTableCell align="center" sx={{ px: 0.5, py: 1, fontWeight: 500, fontSize: "13px" }}>
               {installment.amount?.toFixed(2)}
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ px: 0.5, py: 1, fontWeight: "bold", fontSize: "13px" }}>
+            <StyledTableCell align="center" sx={{ px: 0.5, py: 1, fontWeight: 500, fontSize: "13px" }}>
               {installment.principalAmount?.toFixed(2) || "0.00"}
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ px: 0.5, py: 1, color: "primary.main", fontWeight: "bold", fontSize: "13px" }}>
+            <StyledTableCell align="center" sx={{ px: 0.5, py: 1, color: "primary.main", fontWeight: 500, fontSize: "13px" }}>
               {installment.interestAmount?.toFixed(2) || "0.00"}
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ 
               px: 0.5, 
               py: 1, 
               color: installment.paidAmount > 0 ? "green" : "red",
-              fontWeight: "bold",
+              fontWeight: 500,
               fontSize: "13px"
             }}>
               {installment.paidAmount > 0
@@ -1586,7 +1590,7 @@ const Installments = () => {
               px: 0.5, 
               py: 1,
               color: (installment.discount || 0) > 0 ? "warning.main" : "text.secondary",
-              fontWeight: "bold",
+              fontWeight: 500,
               fontSize: "13px"
             }}>
               {(installment.discount || 0) > 0
@@ -1597,7 +1601,7 @@ const Installments = () => {
               px: 0.5, 
               py: 1,
               color: installment.remaining === 0 ? "text.primary" : "error.main",
-              fontWeight: "bold",
+              fontWeight: 500,
               fontSize: "13px"
             }}>
               {installment.remaining?.toFixed(2) || "0.00"}
@@ -1612,7 +1616,7 @@ const Installments = () => {
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ px: 0.5, py: 1 }}>
               <Box sx={{ lineHeight: 1.2 }}>
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500 }}>
                   {installment.paymentDate
                     ? dayjs(installment.paymentDate).format("DD/MM/YYYY")
                     : "لم يأتي بعد"}
@@ -1665,7 +1669,7 @@ const Installments = () => {
                 backgroundColor: "background.paper",
                 fontSize: "13px",
                 "& td": {
-                  fontWeight: "bold",
+                  fontWeight: 500,
                   fontSize: "13px",
                   borderTop: "2px solid",
                   borderTopColor: "divider",
@@ -1674,36 +1678,36 @@ const Installments = () => {
                 },
               }}
             >
-              {permissions.includes("repayments_Post") && (
+              {permissions.includes("repayments_Post") && !isSettlementCompleted() && (
                 <StyledTableCell align="center" sx={{ width: "40px" }}></StyledTableCell>
               )}
               <StyledTableCell align="center" sx={{ width: "50px" }}>
                 {paidCount > 0 && (
-                  <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold" }}>
+                  <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500 }}>
                     {paidCount}
                   </Typography>
                 )}
               </StyledTableCell>
               <StyledTableCell align="center">
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500 }}>
                   الإجمالي
                 </Typography>
               </StyledTableCell>
               <StyledTableCell align="center">-</StyledTableCell>
               <StyledTableCell align="center">
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500 }}>
                   {totalAmount.toFixed(2)}
                 </Typography>
               </StyledTableCell>
               <StyledTableCell align="center">
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500 }}>
                   {sortedInstallments
                     .reduce((sum, inst) => sum + (inst.principalAmount || 0), 0)
                     .toFixed(2)}
                 </Typography>
               </StyledTableCell>
               <StyledTableCell align="center">
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold", color: "primary.main" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500, color: "primary.main" }}>
                   {sortedInstallments
                     .reduce((sum, inst) => sum + (inst.interestAmount || 0), 0)
                     .toFixed(2)}
@@ -1713,14 +1717,14 @@ const Installments = () => {
                 align="center"
                 sx={{
                   color: "green",
-                  fontWeight: "bold",
+                  fontWeight: 500,
                   fontSize: "13px"
                 }}
               >
                 {totalPaid.toFixed(2)}
               </StyledTableCell>
               <StyledTableCell align="center">
-                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: "bold", color: "warning.main" }}>
+                <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 500, color: "warning.main" }}>
                   {sortedInstallments
                     .reduce((sum, inst) => sum + (inst.discount || 0), 0)
                     .toFixed(2)}
@@ -1730,7 +1734,7 @@ const Installments = () => {
                 align="center"
                 sx={{
                   color: "red",
-                  fontWeight: "bold",
+                  fontWeight: 500,
                   fontSize: "13px"
                 }}
               >

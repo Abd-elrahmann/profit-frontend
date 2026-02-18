@@ -917,11 +917,11 @@ const IncomeStatement = () => {
                                 )}
                                 {/* حصة الشركاء */}
                                 {client.partnersRevenue > 0 && (
-                                  <TableRow sx={{ bgcolor: theme.palette.secondary.main + '05', '&:hover': { bgcolor: theme.palette.secondary.main + '08' } }}>
-                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.secondary.main }}>
+                                  <TableRow sx={{ bgcolor: theme.palette.primary.main + '05', '&:hover': { bgcolor: theme.palette.primary.main + '08' } }}>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
                                       حصة الشركاء
                                     </TableCell>
-                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.secondary.main }}>
+                                    <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 600, color: theme.palette.primary.main }}>
                                       {formatNumber(client.partnersRevenue)}
                                     </TableCell>
                                     <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', color: theme.palette.text.secondary }}>
