@@ -11,6 +11,7 @@ import {
   FormControl,
   MenuItem,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 
 const TransactionModal = ({
@@ -19,6 +20,7 @@ const TransactionModal = ({
   transactionForm,
   onInputChange,
   onSave,
+  isSaving = false,
   permissions
 }) => {
   const [errors, setErrors] = useState({});
@@ -155,12 +157,14 @@ const TransactionModal = ({
           <Button
             onClick={handleSave}
             variant="contained"
+            disabled={isSaving}
+            startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : null}
             sx={{
               bgcolor: "primary.main",
               "&:hover": { bgcolor: "primary.dark" },
             }}
           >
-            حفظ
+            {isSaving ? 'جاري الحفظ...' : 'حفظ'}
           </Button>
         )}
       </DialogActions>

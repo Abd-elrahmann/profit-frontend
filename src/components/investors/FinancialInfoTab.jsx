@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -37,6 +38,7 @@ const FinancialInfoTab = ({
   onInputChange,
   onSaveChanges,
   onGenerateContract,
+  isSaving = false,
   
   // Permissions & Theme
   permissions,
@@ -430,13 +432,13 @@ const FinancialInfoTab = ({
           {permissions.includes("partners_Add") && (
             <Button
               variant="contained"
-              startIcon={<SaveIcon sx={{marginLeft: '10px'}} />}
+              startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon sx={{marginLeft: '10px'}} />}
               sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
-              disabled={!editMode}
+              disabled={!editMode || isSaving}
               onClick={onSaveChanges}
               size="small"
             >
-              حفظ التغييرات
+              {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
             </Button>
           )}
         </Box>

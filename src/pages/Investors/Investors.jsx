@@ -106,6 +106,10 @@ export default function Investors() {
   const [isWithdrawEditMode, setIsWithdrawEditMode] = useState(false);
   const [withdrawPreviewData, setWithdrawPreviewData] = useState(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingTransaction, setIsSavingTransaction] = useState(false);
+  const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
 
   const handleExportMenuOpen = (event) => {
     setExportMenuAnchor(event.currentTarget);
@@ -249,6 +253,8 @@ export default function Investors() {
 
   const handleSaveChanges = async () => {
     try {
+      setIsSaving(true);
+      
       // Build dataToSend with only changed fields
       const dataToSend = {};
       
@@ -285,6 +291,7 @@ export default function Investors() {
       // Only send request if there are changes
       if (Object.keys(dataToSend).length === 0) {
         notifyError('لا توجد تغييرات للحفظ');
+        setIsSaving(false);
         return;
       }
       
@@ -322,6 +329,8 @@ export default function Investors() {
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحديث البيانات');
       handleApiError(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -353,6 +362,8 @@ export default function Investors() {
 
   const handleDeleteInvestor = async (investorId) => {
     try {
+      setIsDeleting(true);
+      
       const currentIndex = investorsData?.partners?.findIndex(inv => inv.id === investorId) ?? -1;
       const nextInvestorId = currentIndex >= 0 && currentIndex < investorsData.partners.length - 1 
         ? investorsData.partners[currentIndex + 1]?.id
@@ -382,6 +393,8 @@ export default function Investors() {
     } catch (error) { 
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف المستثمر');
       handleApiError(error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -615,6 +628,8 @@ export default function Investors() {
         return;
       }
 
+      setIsSavingTransaction(true);
+
       await createPartnerTransaction(selectedInvestor.id, {
         type: transactionForm.type,
         amount: parseFloat(transactionForm.amount)
@@ -632,11 +647,15 @@ export default function Investors() {
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء إضافة العملية المالية');
       handleApiError(error);
+    } finally {
+      setIsSavingTransaction(false);
     }
   };
 
   const handleDeleteTransaction = async (transactionId) => {
     try {
+      setIsDeletingTransaction(true);
+      
       await deletePartnerTransaction(transactionId);
       
       invalidateInvestorQueries(queryClient, selectedInvestor.id);
@@ -648,6 +667,8 @@ export default function Investors() {
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف العملية المالية');
       handleApiError(error);
+    } finally {
+      setIsDeletingTransaction(false);
     }
   };
 
@@ -909,6 +930,7 @@ export default function Investors() {
                   onEditModeToggle={() => setEditMode(!editMode)}
                   onInputChange={handleInputChange}
                   onSaveChanges={handleSaveChanges}
+                  isSaving={isSaving}
                   permissions={permissions}
                   isDarkMode={isDarkMode}
                 />
@@ -936,6 +958,7 @@ export default function Investors() {
                     ...editFormData,
                     partnerProfitPercent: investorDetails.partnerProfitPercent || (100 - parseInt(editFormData.orgProfitPercent || investorDetails.orgProfitPercent))
                   })}
+                  isSaving={isSaving}
                   permissions={permissions}
                   isDarkMode={isDarkMode}
                 />
@@ -996,8 +1019,10 @@ export default function Investors() {
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {
-          setIsDeleteModalOpen(false);
-          setInvestorToDelete(null);
+          if (!isDeleting) {
+            setIsDeleteModalOpen(false);
+            setInvestorToDelete(null);
+          }
         }}
         onConfirm={() => {
           if (investorToDelete?.id) {
@@ -1009,6 +1034,7 @@ export default function Investors() {
         title="حذف المستثمر"
         message={`هل أنت متأكد من حذف المستثمر ${investorToDelete?.name}؟`}
         ButtonText="حذف"
+        isLoading={isDeleting}
       />
 
       {contractInvestorData && mudarabahTemplate && (
@@ -1024,18 +1050,21 @@ export default function Investors() {
 
       <TransactionModal
         isOpen={isTransactionModalOpen}
-        onClose={() => setIsTransactionModalOpen(false)}
+        onClose={() => !isSavingTransaction && setIsTransactionModalOpen(false)}
         transactionForm={transactionForm}
         onInputChange={handleTransactionInputChange}
         onSave={handleSaveTransaction}
+        isSaving={isSavingTransaction}
         permissions={permissions}
       />
 
       <DeleteModal
         open={isDeleteTransactionModalOpen}
         onClose={() => {
-          setIsDeleteTransactionModalOpen(false);
-          setTransactionToDelete(null);
+          if (!isDeletingTransaction) {
+            setIsDeleteTransactionModalOpen(false);
+            setTransactionToDelete(null);
+          }
         }}
         onConfirm={() => {
           if (transactionToDelete?.id) {
@@ -1045,6 +1074,7 @@ export default function Investors() {
         title="حذف العملية المالية"
         message={`هل أنت متأكد من حذف العملية المالية برقم المرجع ${transactionToDelete?.reference}؟`}
         ButtonText="حذف"
+        isLoading={isDeletingTransaction}
       />
 
       <WithdrawModal
