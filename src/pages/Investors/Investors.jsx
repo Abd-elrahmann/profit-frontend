@@ -22,8 +22,6 @@ import TransactionModal from "../../components/modals/TransactionModal";
 import WithdrawModal from "../../components/modals/WithdrawModal";
 import ContractGenerator from "../../components/ContractGenerator";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
-import dayjs from "dayjs";
-import "dayjs/locale/ar";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { useTheme } from "../../theme/ThemeContext";
@@ -38,9 +36,14 @@ import DocumentsTab from "../../components/investors/DocumentsTab";
 
 import {  
   formatArabicDate,
-  getInvestorStatus,
   calculateWithdrawalPreview,
   extractCapitalAmount,
+  extractInvestorDataFromResponse,
+  buildEditFormData,
+  getOriginalFieldValue,
+  invalidateInvestorQueries,
+  invalidateAllInvestorQueries,
+  QUERY_KEYS,
 } from "../../components/investors/investorsUtils";
 import {
   getInvestors,
@@ -119,27 +122,27 @@ export default function Investors() {
   const queryClient = useQueryClient();
 
   const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
-    queryKey: ["investors", currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus],
+    queryKey: [QUERY_KEYS.INVESTORS, currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus],
     queryFn: () => getInvestors(currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus),
     retry: 1,
   });
 
   const { data: investorDetails } = useQuery({
-    queryKey: ["investor-details", selectedInvestor?.id],
+    queryKey: [QUERY_KEYS.INVESTOR_DETAILS, selectedInvestor?.id],
     queryFn: () => selectedInvestor ? getInvestorDetails(selectedInvestor.id) : null,
     enabled: !!selectedInvestor,
     retry: 1,
   });
 
   const { data: transactionsData, isLoading: isTransactionsLoading } = useQuery({
-    queryKey: ["partner-transactions", selectedInvestor?.id, transactionsPage],
+    queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, selectedInvestor?.id, transactionsPage],
     queryFn: () => selectedInvestor ? getPartnerTransactions(selectedInvestor.id, transactionsPage) : null,
     enabled: !!selectedInvestor,
     retry: 1,
   });
 
   const { data: openingJournalsCheck } = useQuery({
-    queryKey: ["opening-journals-check"],
+    queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK],
     queryFn: () => checkUnpostedOpeningJournals(),
     retry: 1,
   });
@@ -177,44 +180,7 @@ export default function Investors() {
       [field]: value
     }));
     
-    // Track which fields have changed
-    let originalValue;
-    switch(field) {
-      case 'capitalAmount':
-        // استخدام extractCapitalAmount للحصول على القيمة الأصلية الصحيحة
-        originalValue = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails)?.toString();
-        break;
-      case 'orgProfitPercent':
-        originalValue = investorDetails.orgProfitPercent?.toString();
-        break;
-      case 'name':
-        originalValue = investorDetails.name;
-        break;
-      case 'phone':
-        originalValue = investorDetails.phone;
-        break;
-      case 'address':
-        originalValue = investorDetails.address;
-        break;
-      case 'city':
-        originalValue = investorDetails.city;
-        break;
-      case 'email':
-        originalValue = investorDetails.email;
-        break;
-      case 'createdAt':
-        originalValue = investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '';
-        break;
-      case 'isActive':
-        originalValue = investorDetails.isActive;
-        break;
-      case 'status':
-        originalValue = getInvestorStatus(investorDetails);
-        break;
-      default:
-        originalValue = investorDetails[field];
-    }
-    
+    const originalValue = getOriginalFieldValue(field, investorDetails, selectedInvestor);
     const hasChanged = value !== originalValue;
     
     setChangedFields(prev => {
@@ -250,29 +216,20 @@ export default function Investors() {
   const handleGenerateContractAfterUpdate = async (updatedInvestorData) => {
     try {
       const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
-      
-      let freshInvestorData;
-      if (freshInvestorResponse.partner) {
-        freshInvestorData = freshInvestorResponse.partner;
-      } else if (freshInvestorResponse.data && freshInvestorResponse.data.partner) {
-        freshInvestorData = freshInvestorResponse.data.partner;
-      } else {
-        freshInvestorData = freshInvestorResponse;
-      }
+      const freshInvestorData = extractInvestorDataFromResponse(freshInvestorResponse);
 
-      // استخدام دالة extractCapitalAmount للحصول على رأس المال الصحيح
       const capitalAmount = updatedInvestorData.capitalAmount 
         ? Number(updatedInvestorData.capitalAmount)
         : extractCapitalAmount(freshInvestorData, selectedInvestor, investorDetails);
 
+      const orgProfitPercent = Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) || 0;
+      
       const mergedData = {
         ...freshInvestorData,
         ...updatedInvestorData,
-        capitalAmount: capitalAmount,
-        orgProfitPercent: Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) || 0,
-        investorProfitPercent: (updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent) 
-          ? (100 - Number(updatedInvestorData.orgProfitPercent || freshInvestorData.orgProfitPercent)) 
-          : 0
+        capitalAmount,
+        orgProfitPercent,
+        investorProfitPercent: orgProfitPercent ? (100 - orgProfitPercent) : 0
       };
 
       await fetchMudarabahTemplate();
@@ -332,23 +289,23 @@ export default function Investors() {
       }
       
       await updateInvestor(selectedInvestor.id, dataToSend);
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      invalidateInvestorQueries(queryClient, selectedInvestor.id);
       notifySuccess('تم تحديث بيانات المستثمر بنجاح');
       
       const updatedInvestorResponse = await getInvestorDetails(selectedInvestor.id);
-      let updatedInvestorData;
-      if (updatedInvestorResponse.partner) {
-        updatedInvestorData = updatedInvestorResponse.partner;
-      } else if (updatedInvestorResponse.data && updatedInvestorResponse.data.partner) {
-        updatedInvestorData = updatedInvestorResponse.data.partner;
-      } else {
-        updatedInvestorData = updatedInvestorResponse;
-      }
+      const updatedInvestorData = extractInvestorDataFromResponse(updatedInvestorResponse);
 
       // استخدام extractCapitalAmount للحصول على رأس المال الأصلي الصحيح
       const originalCapital = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails);
       const newCapital = Number(editFormData.capitalAmount) || Number(dataToSend.capitalAmount) || 0;
+      
+      // تحديث editFormData بالقيمة الجديدة من السيرفر
+      const updatedCapitalAmount = extractCapitalAmount(updatedInvestorData, selectedInvestor, updatedInvestorData);
+      setEditFormData(prev => ({
+        ...prev,
+        capitalAmount: updatedCapitalAmount || prev.capitalAmount,
+        orgProfitPercent: updatedInvestorData.orgProfitPercent || prev.orgProfitPercent,
+      }));
       
       if (originalCapital !== newCapital && newCapital > 0) {
         handleGenerateContractAfterUpdate({
@@ -372,9 +329,11 @@ export default function Investors() {
     setIsContractModalOpen(false);
     setContractInvestorData(null);
     setEditMode(false);
+    setHasDataChanged(false);
+    setChangedFields({});
 
     if (selectedInvestor) {
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
+      invalidateInvestorQueries(queryClient, selectedInvestor.id);
     }
 
     notifySuccess('تم توليد العقد الجديد بنجاح');
@@ -408,7 +367,7 @@ export default function Investors() {
       
       const refetchedData = await refetch();
       
-      queryClient.invalidateQueries({ queryKey: ["opening-journals-check"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK] });
       
       if (selectedInvestor?.id === investorId) {
         if (nextInvestorId) {
@@ -502,9 +461,7 @@ export default function Investors() {
         return newSet;
       });
       
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investors'] });
-      queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
+      invalidateAllInvestorQueries(queryClient, selectedInvestor.id);
       
       notifySuccess(`تم إلغاء انسحاب المستثمر ${selectedInvestor.name} بنجاح`);
       setIsCancelWithdrawModalOpen(false);
@@ -574,20 +531,12 @@ export default function Investors() {
       
       if (isWithdrawEditMode) {
         await updatePartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
-        
-        queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-        queryClient.invalidateQueries({ queryKey: ['investors'] });
-        queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestor.id] });
-        
+        invalidateAllInvestorQueries(queryClient, selectedInvestor.id);
         notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
       } else {
         await createPartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
-
         setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
-        
-        queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-        queryClient.invalidateQueries({ queryKey: ['investors'] });
-        
+        invalidateInvestorQueries(queryClient, selectedInvestor.id);
         notifySuccess(`تم إنسحاب المستثمر ${selectedInvestor.name} من توزيعات الأرباح بنجاح`);
       }
       
@@ -615,19 +564,10 @@ export default function Investors() {
 
     try {
       const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
-      
-      let freshInvestorData;
-      if (freshInvestorResponse.partner) {
-        freshInvestorData = freshInvestorResponse.partner;
-      } else if (freshInvestorResponse.data && freshInvestorResponse.data.partner) {
-        freshInvestorData = freshInvestorResponse.data.partner;
-      } else if (freshInvestorResponse.data) {
-        freshInvestorData = freshInvestorResponse.data;
-      } else {
-        freshInvestorData = freshInvestorResponse;
-      }
+      const freshInvestorData = extractInvestorDataFromResponse(freshInvestorResponse);
 
       const capitalAmount = extractCapitalAmount(freshInvestorData, selectedInvestor, investorDetails);
+      const orgProfitPercent = Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent || 0);
       
       const templateResponse = await Api.get('/api/templates/mudarabah');
       setMudarabahTemplate(templateResponse.data.content || '');
@@ -640,11 +580,9 @@ export default function Investors() {
         city: freshInvestorData.city || selectedInvestor.city || '',
         phone: freshInvestorData.phone || selectedInvestor.phone || '',
         email: freshInvestorData.email || selectedInvestor.email || '',
-        capitalAmount: capitalAmount,
-        orgProfitPercent: Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent || 0),
-        investorProfitPercent: (freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent) 
-          ? (100 - Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent)) 
-          : 0
+        capitalAmount,
+        orgProfitPercent,
+        investorProfitPercent: orgProfitPercent ? (100 - orgProfitPercent) : 0
       };
       setContractInvestorData(investorData);
       setIsContractModalOpen(true);
@@ -682,9 +620,8 @@ export default function Investors() {
         amount: parseFloat(transactionForm.amount)
       });
 
-      queryClient.invalidateQueries({ queryKey: ['partner-transactions', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      invalidateInvestorQueries(queryClient, selectedInvestor.id);
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, selectedInvestor.id] });
       
       notifySuccess("تم إضافة العملية المالية بنجاح");
       setIsTransactionModalOpen(false);
@@ -702,9 +639,8 @@ export default function Investors() {
     try {
       await deletePartnerTransaction(transactionId);
       
-      queryClient.invalidateQueries({ queryKey: ['partner-transactions', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investor-details', selectedInvestor.id] });
-      queryClient.invalidateQueries({ queryKey: ['investors'] });
+      invalidateInvestorQueries(queryClient, selectedInvestor.id);
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, selectedInvestor.id] });
       
       notifySuccess("تم حذف العملية المالية بنجاح");
       setIsDeleteTransactionModalOpen(false);
@@ -799,21 +735,7 @@ export default function Investors() {
 
   useEffect(() => {
     if (investorDetails) {
-      // استخدام extractCapitalAmount للحصول على رأس المال الصحيح
-      const capitalAmount = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails);
-      
-      setEditFormData({
-        name: investorDetails.name || '',
-        phone: investorDetails.phone || '',
-        address: investorDetails.address || '',
-        city: investorDetails.city || '',
-        email: investorDetails.email || '',
-        orgProfitPercent: investorDetails.orgProfitPercent || '',
-        capitalAmount: capitalAmount || '',
-        status: getInvestorStatus(investorDetails),
-        createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
-        isActive: investorDetails.isActive !== undefined ? investorDetails.isActive : true,
-      });
+      setEditFormData(buildEditFormData(investorDetails, selectedInvestor));
     }
   }, [investorDetails, selectedInvestor]);
 
@@ -1002,18 +924,9 @@ export default function Investors() {
                     const newEditMode = !editMode;
                     setEditMode(newEditMode);
                     if (!newEditMode) {
-                      setEditFormData({
-                        name: investorDetails.name || '',
-                        phone: investorDetails.phone || '',
-                        address: investorDetails.address || '',
-                        city: investorDetails.city || '',
-                        email: investorDetails.email || '',
-                        orgProfitPercent: investorDetails.orgProfitPercent || '',
-                        capitalAmount: investorDetails.total || '',
-                        status: getInvestorStatus(investorDetails),
-                        createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
-                      });
+                      setEditFormData(buildEditFormData(investorDetails, selectedInvestor));
                       setHasDataChanged(false);
+                      setChangedFields({});
                     }
                   }}
                   onInputChange={handleInputChange}
@@ -1076,7 +989,7 @@ export default function Investors() {
         onSuccess={() => {
           setIsAddModalOpen(false);
           refetch();
-          queryClient.invalidateQueries({ queryKey: ["opening-journals-check"] });
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK] });
         }}
       />
 

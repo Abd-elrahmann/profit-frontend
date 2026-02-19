@@ -447,7 +447,7 @@ const FinancialInfoTab = ({
         <Grid item xs={12} md={6}>
           <Typography variant="body2" mb={1} fontWeight={500}>رأس المال</Typography>
           <TextField
-            value={editMode ? (editFormData.capitalAmount || '') : (editFormData.capitalAmount?.toLocaleString() || '0')}
+            value={editMode ? (editFormData.capitalAmount || '') : (investorDetails.capitalAmount?.toLocaleString() || '0')}
             onChange={(e) => onInputChange('capitalAmount', e.target.value)}
             fullWidth
             disabled={!editMode}

@@ -1,6 +1,32 @@
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
 
+// Query keys constants for consistency
+export const QUERY_KEYS = {
+  INVESTORS: 'investors',
+  INVESTOR_DETAILS: 'investor-details',
+  PARTNER_TRANSACTIONS: 'partner-transactions',
+  WITHDRAWAL_DETAILS: 'withdrawal-details',
+  OPENING_JOURNALS_CHECK: 'opening-journals-check',
+};
+
+/**
+ * Invalidate common investor-related queries
+ */
+export const invalidateInvestorQueries = (queryClient, investorId) => {
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTOR_DETAILS, investorId] });
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTORS] });
+};
+
+/**
+ * Invalidate all investor-related queries including transactions and withdrawals
+ */
+export const invalidateAllInvestorQueries = (queryClient, investorId) => {
+  invalidateInvestorQueries(queryClient, investorId);
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, investorId] });
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WITHDRAWAL_DETAILS, investorId] });
+};
+
 export const formatArabicDate = (date) => {
   return dayjs(date)
     .locale("ar")
@@ -264,4 +290,71 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
   }
 
   return capitalAmount;
+};
+
+/**
+ * Extract investor data from API response
+ * Handles different response structures from the API
+ */
+export const extractInvestorDataFromResponse = (response) => {
+  if (response?.partner) {
+    return response.partner;
+  }
+  if (response?.data?.partner) {
+    return response.data.partner;
+  }
+  if (response?.data) {
+    return response.data;
+  }
+  return response;
+};
+
+/**
+ * Build edit form data from investor details
+ */
+export const buildEditFormData = (investorDetails, selectedInvestor) => {
+  if (!investorDetails) return {};
+  
+  const capitalAmount = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails);
+  
+  return {
+    name: investorDetails.name || '',
+    phone: investorDetails.phone || '',
+    address: investorDetails.address || '',
+    city: investorDetails.city || '',
+    email: investorDetails.email || '',
+    orgProfitPercent: investorDetails.orgProfitPercent || '',
+    capitalAmount: capitalAmount || '',
+    status: getInvestorStatus(investorDetails),
+    createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
+    isActive: investorDetails.isActive !== undefined ? investorDetails.isActive : true,
+  };
+};
+
+/**
+ * Get original field value from investor details for change tracking
+ */
+export const getOriginalFieldValue = (field, investorDetails, selectedInvestor) => {
+  if (!investorDetails) return undefined;
+  
+  switch(field) {
+    case 'capitalAmount':
+      return extractCapitalAmount(investorDetails, selectedInvestor, investorDetails)?.toString();
+    case 'orgProfitPercent':
+      return investorDetails.orgProfitPercent?.toString();
+    case 'createdAt':
+      return investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '';
+    case 'status':
+      return getInvestorStatus(investorDetails);
+    case 'isActive':
+      return investorDetails.isActive;
+    case 'name':
+    case 'phone':
+    case 'address':
+    case 'city':
+    case 'email':
+      return investorDetails[field];
+    default:
+      return investorDetails[field];
+  }
 };
