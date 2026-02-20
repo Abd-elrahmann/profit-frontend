@@ -342,9 +342,11 @@ const WithdrawReceiptGenerator = React.forwardRef(
             ? new Date(withdrawalDataToUse.withdrawal.createdAt).toISOString().split("T")[0]
             : new Date().toISOString().split("T")[0];
 
+          const createdByName = withdrawalDataToUse.withdrawal?.createdBy?.name || "المضارب (الإدارة)";
+          
           let filledTemplate = templateContent  
             .replace(/{{رقم_المرجع}}/g, receiptNum)
-            .replace(/{{اسم_المضارب}}/g, "المضارب (الإدارة)")
+            .replace(/{{اسم_المضارب}}/g, createdByName)
             .replace(/{{رقم_هوية_المضارب}}/g, "")
             .replace(/{{اسم_المساهم}}/g, withdrawalDataToUse.partner?.name || "")
             .replace(/{{رقم_هوية_المساهم}}/g, withdrawalDataToUse.partner?.nationalId || "")

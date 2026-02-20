@@ -456,14 +456,10 @@ const WithdrawReceipt = () => {
     <!-- Parties Information -->
     <div class="parties-section">
       <div class="party-box">
-        <div class="party-title">الطرف الأول: المضارب</div>
+        <div class="party-title">الطرف الأول: الإدارة (المضارب)</div>
         <div class="party-info">
-          <span class="party-label">الاسم:</span>
+          <span class="party-label">الموظف المختص:</span>
           <span class="party-value">{{اسم_المضارب}}</span>
-        </div>
-        <div class="party-info">
-          <span class="party-label">رقم الهوية:</span>
-          <span class="party-value">{{رقم_هوية_المضارب}}</span>
         </div>
         <div class="party-info">
           <span class="party-label">التاريخ:</span>
