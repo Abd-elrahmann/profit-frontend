@@ -5,7 +5,7 @@ import i18next from 'i18next';
 
 const getBaseURL = () => {
  //return "http://localhost:3000";
- return "http://72.61.101.53:3003";
+ return "https://api.solfweb.com";
 };
 
 const Api = axios.create({
