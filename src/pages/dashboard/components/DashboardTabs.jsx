@@ -1,49 +1,33 @@
 import React from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
-import { useTheme, useMediaQuery } from '@mui/material/styles';
 
-const tabStyles = (theme) => ({
-  '& .MuiTabs-indicator': {
-    height: 3,
-    borderRadius: '3px 3px 0 0',
-  },
-  '& .MuiTab-root': {
-    fontSize: { xs: '0.875rem', sm: '0.9rem', md: '1rem' },
-    fontWeight: 600,
-    minHeight: { xs: 48, sm: 56, md: 64 },
-    px: { xs: 1.5, sm: 2, md: 3 },
-    color: theme.palette.text.primary,
-    '&.Mui-selected': {
-      color: theme.palette.primary.main,
-    },
-  },
-});
-
-const DashboardTabs = React.memo(({ value, onChange, tabs }) => {
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+const DashboardTabs = React.memo(({ value, onChange, tabs, variant = 'standalone' }) => {
+  const isTopNav = variant === 'topNav';
 
   return (
-    <Box
-      sx={{
-        mb: { xs: 2, sm: 3 },
-        display: 'flex',
-        justifyContent: 'center',
-        overflowX: 'auto',
-      }}
-    >
-      <Tabs
-        value={value}
-        onChange={onChange}
-        variant={isSmallScreen ? 'scrollable' : 'standard'}
-        scrollButtons="auto"
-        sx={tabStyles(theme)}
-      >
-        {tabs.map((tab) => (
-          <Tab key={tab.permission} label={tab.label} />
-        ))}
-      </Tabs>
-    </Box>
+    <>
+      {tabs.map((tab, index) => (
+        <button
+          key={tab.permission}
+          type="button"
+          role="tab"
+          aria-selected={value === index}
+          aria-controls={`dashboard-tabpanel-${index}`}
+          id={`dashboard-tab-${index}`}
+          onClick={(e) => onChange(e, index)}
+          className={`
+            flex flex-col items-center justify-center pb-3 pt-4 font-bold text-sm tracking-wide whitespace-nowrap
+            border-b-[3px] transition-colors
+            ${
+              value === index
+                ? 'border-primary text-primary'
+                : 'border-transparent text-slate-500 hover:text-primary transition-colors font-medium'
+            }
+          `}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </>
   );
 });
 

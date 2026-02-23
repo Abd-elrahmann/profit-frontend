@@ -148,13 +148,13 @@ const TableLayout = ({
           },
         }}
       >
-        <Table stickyHeader sx={{ minWidth: 1200 }}>
+        <Table stickyHeader sx={{ minWidth: 1000, tableLayout: 'fixed', width: '100%' }}>
           <TableHead>
             <TableRow>
               {columns.map((column) => (
                 <StyledTableCell
                   key={column.id}
-                  align={column.align || (isRTL ? 'right' : 'left')}
+                  align={column.align || 'center'}
                   sx={{ 
                     minWidth: column.minWidth || 'auto',
                     backgroundColor: 'primary.main',
@@ -182,7 +182,7 @@ const TableLayout = ({
                     return (
                       <StyledTableCell 
                         key={column.id}
-                        align={column.align || (isRTL ? 'right' : 'left')}
+                        align={column.align || 'center'}
                       >
                         {column.format ? column.format(value, row) : value}
                       </StyledTableCell>

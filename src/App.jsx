@@ -18,7 +18,7 @@ import { convertModuleToPermission } from './utilities/moduleConverter';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Api from './config/Api';
-import PageLoader from './components/PageLoader';
+import PageLoader from './components/common/PageLoader';
 import { usePrefetch } from './hooks/usePrefetch';
 const CheckConnection = React.lazy(() => import('./pages/CheckConnection'));
 

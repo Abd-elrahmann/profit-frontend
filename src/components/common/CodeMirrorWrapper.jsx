@@ -102,4 +102,3 @@ const CodeMirrorWrapper = ({
 };
 
 export default CodeMirrorWrapper;
-

@@ -16,8 +16,8 @@ import {
   CheckCircle,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import Api, { handleApiError } from '../config/Api';
-import { notifySuccess, notifyError } from '../utilities/toastify';
+import Api, { handleApiError } from '../../config/Api';
+import { notifySuccess, notifyError } from '../../utilities/toastify';
 
 const FileUploadDropzone = ({
   investorId,

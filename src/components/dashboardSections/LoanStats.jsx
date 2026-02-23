@@ -1,755 +1,385 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import { Assessment, AttachMoney, Bolt, AccountBalance, CheckCircle, ErrorOutline } from '@mui/icons-material';
+  Wallet,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  Eye,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getLoanStats } from '../../pages/dashboard/dashboardApi';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import {
+  getLoanStats,
+  getLatestLoans,
+  getLoanDistribution,
+  getRepaymentTrend,
+} from '../../pages/dashboard/dashboardApi';
+import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext';
 import { useCountUp } from '../../hooks/useCountUp';
-import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
+import { Link } from 'react-router-dom';
+import ResponsiveTable from './ResponsiveTable';
 
 const LoanStats = React.memo(() => {
-  const [filter, setFilter] = useState('all');
-  const theme = useTheme();
-  const { isDarkMode } = useCustomTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{
-          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          color: isDarkMode ? '#ffffff' : '#000000',
-          fontSize: '14px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{
-              margin: '4px 0',
-              color: entry.color || (isDarkMode ? '#ffffff' : '#000000')
-            }}>
-              {`${entry.name}: ${entry.value}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  const { getApiFilter } = useDashboardFilter();
+  const apiFilter = getApiFilter();
+  const [repaymentPeriod, setRepaymentPeriod] = useState('first');
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['loan-stats', filter],
-    queryFn: () => getLoanStats(filter),
+    queryKey: ['loan-stats', apiFilter],
+    queryFn: () => getLoanStats(apiFilter),
   });
 
-  const animatedLoansCount = useCountUp(stats?.loans?.count || 0, 600, !isLoading);
-  const animatedTotalAmount = useCountUp(stats?.loans?.totalAmount || 0, 600, !isLoading);
-  const animatedActiveLoans = useCountUp(stats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
-  const animatedCompletedLoans = useCountUp(stats?.loans?.byStatus?.COMPLETED || 0, 600, !isLoading);
-  const animatedOverdueLoans = useCountUp(stats?.loans?.byStatus?.OVERDUE || 0, 600, !isLoading);
-  const animatedBankBalance = useCountUp(stats?.bank?.balance || 0, 600, !isLoading);
+  const { data: latestLoans = [], isLoading: loansLoading } = useQuery({
+    queryKey: ['dashboard', 'latest-loans'],
+    queryFn: () => getLatestLoans(5),
+  });
 
-  const formatCurrency = (amount) => {
-    return amount?.toLocaleString() || '0';
+  const { data: distribution = [], isLoading: distLoading } = useQuery({
+    queryKey: ['dashboard', 'loan-distribution'],
+    queryFn: () => getLoanDistribution(),
+  });
+
+  const { data: repaymentTrend = [], isLoading: trendLoading } = useQuery({
+    queryKey: ['dashboard', 'repayment-trend', repaymentPeriod],
+    queryFn: () => getRepaymentTrend(6, repaymentPeriod),
+  });
+
+  const animatedTotalAmount = useCountUp(stats?.loans?.totalAmount || 0, 600, !isLoading);
+  const animatedPending = useCountUp(stats?.loans?.byStatus?.PENDING || 0, 600, !isLoading);
+  const animatedActive = useCountUp(stats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
+  const animatedCompleted = useCountUp(stats?.loans?.byStatus?.COMPLETED || 0, 600, !isLoading);
+
+  const formatAmount = (n) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    return Number(n).toLocaleString('en-US');
   };
 
-  const statusData = useMemo(() => {
-    if (!stats?.loans?.byStatus) return [];
+  const formatDate = (d) => {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
 
-    const getStatusText = (status) => {
-      const statusMap = {
-        'ACTIVE': 'نشط',
-        'COMPLETED': 'مكتمل',
-        'PENDING': 'معلق',
-        'OVERDUE': 'متأخر'
-      };
-      return statusMap[status] || status;
-    };
+  const getStatusClass = (status) => {
+    if (status === 'نشط') return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
+    if (status === 'معلق') return 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400';
+    if (status === 'مكتمل') return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
+    return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+  };
 
-    const getStatusColor = (status) => {
-      const colorMap = {
-        'ACTIVE': theme.palette.success.main,
-        'COMPLETED': theme.palette.primary.main,
-        'PENDING': theme.palette.warning.main,
-        'OVERDUE': theme.palette.error.main
-      };
-      return colorMap[status] || theme.palette.grey[500];
-    };
-
-    return Object.entries(stats.loans.byStatus).map(([status, count]) => ({
-      name: getStatusText(status),
-      value: count,
-      color: getStatusColor(status)
-    }));
-  }, [stats?.loans?.byStatus, theme.palette]);
-
-  const loanStatusBarData = useMemo(() => {
-    if (statusData.length === 0) return [];
-    return statusData.map(item => ({
-      name: item.name,
-      value: Math.round(item.value),
-      color: item.color
-    }));
-  }, [statusData]);
-
-  const summaryCountData = useMemo(() => [
-    {
-      name: 'إجمالي السلف',
-      value: stats?.loans?.count || 0,
-      color: theme.palette.primary.main,
-    },
-    {
-      name: 'سلف نشطة',
-      value: stats?.loans?.byStatus?.ACTIVE || 0,
-      color: theme.palette.success.main,
-    },
-  ], [stats?.loans?.count, stats?.loans?.byStatus?.ACTIVE, theme.palette]);
-
-  const summaryAmountData = useMemo(() => [
-    {
-      name: 'إجمالي المبلغ',
-      value: stats?.loans?.totalAmount || 0,
-      color: theme.palette.warning.main,
-    },
-    {
-      name: 'رصيد البنك',
-      value: stats?.bank?.balance || 0,
-      color: theme.palette.info.main,
-    },
-  ], [stats?.loans?.totalAmount, stats?.bank?.balance, theme.palette]);
+  const maxTrendValue = Math.max(...repaymentTrend.map((d) => d.value), 1);
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress size={60} />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      p: { xs: 2, sm: 3, md: 4 }, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center',
-    }}>
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        mb: { xs: 3, sm: 4, md: 5 },
-        width: '100%',
-        maxWidth: '1200px'
-      }}>
-        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
-          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
-          <Select
-            value={filter}
-            label="الفترة"
-            onChange={(e) => setFilter(e.target.value)}
-            size="small"
-            sx={{
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'divider',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.main',
-              },
-            }}
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110" />
+          <div className="flex items-center justify-between">
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+              إجمالي قيمة السلف النشطة
+            </p>
+            <div className="bg-primary/10 text-primary p-2 rounded-lg">
+              <Wallet className="size-5" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-black">
+              {formatAmount(animatedTotalAmount)}
+            </p>
+            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
+              <TrendingUp className="size-3.5" />
+              +12.5% عن الشهر الماضي
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center justify-between">
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+              سلف قيد الانتظار
+            </p>
+            <div className="bg-amber-500/10 text-amber-500 p-2 rounded-lg">
+              <Clock className="size-5" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-black">
+              {animatedPending}
+            </p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
+              بانتظار الموافقة النهائية
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm border-r-4 border-r-primary">
+          <div className="flex items-center justify-between">
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+              سلف نشطة حالياً
+            </p>
+            <div className="bg-primary/10 text-primary p-2 rounded-lg">
+              <CheckCircle className="size-5" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-black">
+              {animatedActive}
+            </p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
+              يتم استقطاعها شهرياً
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center justify-between">
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+              سلف مسددة بالكامل
+            </p>
+            <div className="bg-blue-500/10 text-blue-500 p-2 rounded-lg">
+              <CheckCircle className="size-5" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-black">
+              {animatedCompleted}
+            </p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
+              إجمالي السلف المكتملة
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Repayment Trend Area Chart */}
+        <div className="lg:col-span-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-6 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg">
+                معدل سداد السلف
+              </h3>
+              <p className="text-slate-500 text-xs">
+                تحليل الالتزام بالسداد خلال {repaymentPeriod === 'first' ? 'أول 6 أشهر من السنة' : 'آخر 6 أشهر من السنة'}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRepaymentPeriod('first')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  repaymentPeriod === 'first'
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                أول 6 أشهر
+              </button>
+              <button
+                onClick={() => setRepaymentPeriod('last')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  repaymentPeriod === 'last'
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                آخر 6 أشهر
+              </button>
+            </div>
+          </div>
+          <div className="h-[300px] w-full relative mt-4">
+            <div className="absolute left-0 h-full flex flex-col justify-between text-[10px] text-slate-400 pb-8">
+              <span>100%</span>
+              <span>75%</span>
+              <span>50%</span>
+              <span>25%</span>
+              <span>0%</span>
+            </div>
+            <div className="h-full mr-10 relative flex flex-col justify-between">
+              <div className="border-b border-slate-100 dark:border-slate-700 w-full flex-1" />
+              <div className="border-b border-slate-100 dark:border-slate-700 w-full flex-1" />
+              <div className="border-b border-slate-100 dark:border-slate-700 w-full flex-1" />
+              <div className="border-b border-slate-100 dark:border-slate-700 w-full flex-1" />
+              <div className="absolute inset-0 pb-8">
+                {trendLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : repaymentTrend.length > 0 ? (
+                  <svg
+                    className="w-full h-full"
+                    preserveAspectRatio="none"
+                    viewBox="0 0 600 200"
+                  >
+                    <defs>
+                      <linearGradient id="loanChartGradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="5%" stopColor="#2e8a45" stopOpacity="0.3" />
+                        <stop offset="95%" stopColor="#2e8a45" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d={(() => {
+                        const pts = repaymentTrend
+                          .map((d, i) => {
+                            const x = (i / (repaymentTrend.length - 1 || 1)) * 600;
+                            const y = 200 - (d.value / 100) * 180;
+                            return `${x},${y}`;
+                          })
+                          .join(' L ');
+                        return `M ${pts} V 200 H 0 Z`;
+                      })()}
+                      fill="url(#loanChartGradient)"
+                    />
+                    <path
+                      d={(() => {
+                        const pts = repaymentTrend
+                          .map((d, i) => {
+                            const x = (i / (repaymentTrend.length - 1 || 1)) * 600;
+                            const y = 200 - (d.value / 100) * 180;
+                            return `${x},${y}`;
+                          })
+                          .join(' L ');
+                        return `M ${pts}`;
+                      })()}
+                      fill="none"
+                      stroke="#2e8a45"
+                      strokeLinecap="round"
+                      strokeWidth="3"
+                    />
+                    {repaymentTrend.map((d, i) => {
+                      const x = (i / (repaymentTrend.length - 1 || 1)) * 600;
+                      const y = 200 - (d.value / 100) * 180;
+                      return (
+                        <circle
+                          key={`point-${i}`}
+                          cx={x}
+                          cy={y}
+                          r="4"
+                          fill="#fff"
+                          stroke="#2e8a45"
+                          strokeWidth="2"
+                        />
+                      );
+                    })}
+                  </svg>                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                    لا توجد بيانات
+                  </div>
+                )}
+              </div>
+              <div className="absolute bottom-0 w-full flex justify-between text-[11px] font-bold text-slate-500 pt-2">
+                {repaymentTrend.map((d) => (
+                  <span key={d.month}>{d.month}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loan Distribution by Type */}
+        <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg">
+              توزيع السلف حسب النوع
+            </h3>
+            <p className="text-slate-500 text-xs">نسبة توزيع السلف حسب مصدر التمويل</p>
+          </div>
+          <div className="flex flex-col gap-8 flex-1 justify-center">
+            {distLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : distribution.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-4">لا توجد بيانات</p>
+            ) : (
+              distribution.map((d, i) => (
+                  <div key={d.label} className="flex flex-col gap-2">
+                    <div className="flex justify-between items-end">
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        {d.label}
+                      </span>
+                      <span className="text-xs font-bold text-primary">
+                        {d.percent}% ({formatAmount(d.amount)})
+                      </span>
+                    </div>
+                    <div className="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          i === 0 ? 'bg-primary' : i === 1 ? 'bg-primary/70' : 'bg-primary/40'
+                        }`}
+                        style={{ width: `${d.percent}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+            <Link
+              to="/loans"
+              className="block w-full text-center text-primary text-xs font-bold hover:underline"
+            >
+              عرض التفاصيل الكاملة
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Latest Loans Table */}
+      <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h3 className="text-slate-900 dark:text-slate-100 font-bold text-base sm:text-lg">
+            أحدث عمليات السلف
+          </h3>
+          <Link
+            to="/loans"
+            className="text-primary text-sm font-bold hover:bg-primary/5 px-3 py-1 rounded-lg transition-colors"
           >
-            <MenuItem value="all">الكل</MenuItem>
-            <MenuItem value="daily">يومي</MenuItem>
-            <MenuItem value="monthly">شهري</MenuItem>
-            <MenuItem value="yearly">سنوي</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
-            border: `1px solid ${theme.palette.primary.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.primary.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.primary.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.primary.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.primary.dark}10 100%)`,
-                border: `2px solid ${theme.palette.primary.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.primary.main}30`,
-                }
-              }}>
-                <Assessment sx={{ fontSize: '2rem', color: theme.palette.primary.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                إجمالي السلف
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedLoansCount}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.warning.main}15 0%, ${theme.palette.warning.dark}08 100%)`,
-            border: `1px solid ${theme.palette.warning.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.warning.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.warning.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.warning.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}20 0%, ${theme.palette.warning.dark}10 100%)`,
-                border: `2px solid ${theme.palette.warning.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.warning.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.warning.main}30`,
-                }
-              }}>
-                <Bolt sx={{ fontSize: '2rem', color: theme.palette.warning.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                سلف نشطة
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedActiveLoans}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-            border: `1px solid ${theme.palette.success.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.success.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.success.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.success.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.dark}10 100%)`,
-                border: `2px solid ${theme.palette.success.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.success.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.success.main}30`,
-                }
-              }}>
-                <CheckCircle sx={{ fontSize: '2rem', color: theme.palette.success.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                سلف مكتملة
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedCompletedLoans}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.error.main}15 0%, ${theme.palette.error.dark}08 100%)`,
-            border: `1px solid ${theme.palette.error.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.error.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.error.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.error.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.error.main}20 0%, ${theme.palette.error.dark}10 100%)`,
-                border: `2px solid ${theme.palette.error.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.error.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.error.main}30`,
-                }
-              }}>
-                <ErrorOutline sx={{ fontSize: '2rem', color: theme.palette.error.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                سلف متأخرة
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedOverdueLoans}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
-            border: `1px solid ${theme.palette.info.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.info.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.info.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.info.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
-                border: `2px solid ${theme.palette.info.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
-                }
-              }}>
-                <AttachMoney sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                إجمالي مبلغ السلف
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedTotalAmount)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
-            border: `1px solid ${theme.palette.info.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.info.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.info.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.info.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
-                border: `2px solid ${theme.palette.info.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
-                }
-              }}>
-                <AccountBalance sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                رصيد البنك
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedBankBalance)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {loanStatusBarData.length > 0 && (
-        <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-          <Card sx={{
-            p: { xs: 1.5, sm: 2, md: 3 },
-            height: { xs: 300, sm: 350, md: 400 },
-            borderRadius: 3,
-            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
-          }}>
-            <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-              توزيع السلف حسب الحالة
-            </Typography>
-            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-              <BarChart data={loanStatusBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-                <YAxis 
-                  allowDecimals={false} 
-                  width={isSmallScreen ? 40 : 60}
-                  tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-                <Bar dataKey="value">
-                  {loanStatusBarData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Box>
-      )}
-
-      <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{ 
-          p: { xs: 1.5, sm: 2, md: 3 }, 
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 3,
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-          border: `1px solid ${theme.palette.divider}`
-        }}>
-          <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            ملخص عدد السلف
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={summaryCountData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                allowDecimals={false}
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {summaryCountData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </Box>
-
-      <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{ 
-          p: { xs: 1.5, sm: 2, md: 3 }, 
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 3,
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
-          border: `1px solid ${theme.palette.divider}`
-        }}>
-          <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            ملخص المبالغ المالية
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={summaryAmountData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) => formatCurrency(value)}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {summaryAmountData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </Box>
-
-      {statusData.length > 0 && (
-        <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-          <Card sx={{
-            p: { xs: 1.5, sm: 2, md: 3 },
-            height: { xs: 300, sm: 350, md: 400 },
-            borderRadius: 3,
-            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
-          }}>
-            <Typography variant="h6" fontWeight="600" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-              حالة السلف
-            </Typography>
-            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={isSmallScreen ? 60 : 80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-        </Box>
-      )}
-    </Box>
+            عرض الكل
+          </Link>
+        </div>
+        <div className="p-4 sm:p-6">
+          <ResponsiveTable
+            columns={[
+              { id: 'clientName', label: 'العميل', render: (_, row) => (
+                <span className="font-bold text-slate-900 dark:text-slate-100">{row.clientName || '—'}</span>
+              )},
+              { id: 'source', label: 'نوع السلفة' },
+              { id: 'amount', label: 'القيمة', format: (v) => formatAmount(v) },
+              { id: 'startDate', label: 'تاريخ البدء', format: (v) => formatDate(v) },
+              { id: 'status', label: 'الحالة', render: (_, row) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusClass(row.status)}`}>
+                  {row.status}
+                </span>
+              )},
+              { id: 'actions', label: 'الإجراءات', render: (_, row) => (
+                <Link to={`/installments/${row.id}`} className="text-slate-400 hover:text-primary transition-colors inline-flex">
+                  <Eye className="size-5" />
+                </Link>
+              )},
+            ]}
+            data={latestLoans}
+            isLoading={loansLoading}
+            emptyMessage="لا توجد سلف"
+            keyField="id"
+          />
+        </div>
+      </div>
+    </div>
   );
 });
+
+LoanStats.displayName = 'LoanStats';
 
 export default LoanStats;

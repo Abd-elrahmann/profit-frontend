@@ -1,131 +1,15 @@
-import React, { useState, useEffect, useRef, Suspense, useMemo, useCallback } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Tabs,
-  Tab,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { usePermissions } from '../../components/Contexts/PermissionsContext';
-import Api, { handleApiError } from '../../config/Api';
-import PageSkeleton from '../../components/PageSkeleton';
-
-const ClientStats = React.lazy(() => import('../../components/dashboardSections/ClientStats'));
-const PartnerStats = React.lazy(() => import('../../components/dashboardSections/PartnerStats'));
-const LoanStats = React.lazy(() => import('../../components/dashboardSections/LoanStats'));
-const CollectionStats = React.lazy(() => import('../../components/dashboardSections/CollectionStats'));
-const UpcomingRepayments = React.lazy(() => import('../../components/dashboardSections/UpcomingRepayments'));
-const LastActions = React.lazy(() => import('../../components/dashboardSections/LastActions'));
-
-const TabPanel = React.memo(({ children, value, index }) => {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`dashboard-tabpanel-${index}`}
-      aria-labelledby={`dashboard-tab-${index}`}
-    >
-      {value === index && (
-        <Box sx={{ py: 3 }}>
-          <Suspense fallback={<PageSkeleton type="dashboard" />}>
-            {children}
-          </Suspense>
-        </Box>
-      )}
-    </div>
-  );
-});
+import PageSkeleton from '../../components/common/PageSkeleton';
+import { useDashboardPermissions } from './useDashboardPermissions';
+import { TabPanel, DashboardTabs, DashboardEmptyState, DashboardHeader } from './components';
+import { DashboardFilterProvider } from './DashboardFilterContext';
+import { useExportDashboard } from './useExportDashboard';
 
 const Dashboard = React.memo(() => {
   const [value, setValue] = useState(0);
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const { permissions } = usePermissions();
-  const queryClient = useQueryClient();
-
-  const { data: dashboardPermissions, isLoading: permissionsLoading } = useQuery({
-    queryKey: ['dashboard-permissions', permissions?.length || 0],
-    queryFn: async () => {
-      try {
-        const response = await Api.get('/api/roles/permissions');
-        const rolePermissions = response.data.permissions || [];
-        return rolePermissions.filter(p => p.canView && [
-          'client-stats',
-          'partner-stats',
-          'loan-stats',
-          'monthly-collection',
-          'Upcoming-Repayments',
-          'Last-Actions'
-        ].includes(p.module));
-      } catch (error) {
-        handleApiError(error);
-        return [];
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    enabled: !!permissions?.length,
-  });
-
-  const prevPermissionsLength = useRef(permissions?.length || 0);
-  useEffect(() => {
-    const currentLength = permissions?.length || 0;
-    if (currentLength !== prevPermissionsLength.current && currentLength > 0) {
-      prevPermissionsLength.current = currentLength;
-      queryClient.invalidateQueries({ queryKey: ['dashboard-permissions'] });
-    }
-  }, [permissions, queryClient]);
-
-  const allTabs = useMemo(() => [
-    {
-      label: "إحصائيات العملاء",
-      Component: ClientStats,
-      permission: 'client-stats',
-      index: 0
-    },
-    {
-      label: "إحصائيات الشركاء",
-      Component: PartnerStats,
-      permission: 'partner-stats',
-      index: 1
-    },
-    {
-      label: "إحصائيات السلف",
-      Component: LoanStats,
-      permission: 'loan-stats',
-      index: 2
-    },
-    {
-      label: "التحصيل الشهري",
-      Component: CollectionStats,
-      permission: 'monthly-collection',
-      index: 3
-    },
-    {
-      label: "الدفعات القادمة",
-      Component: UpcomingRepayments,
-      permission: 'Upcoming-Repayments',
-      index: 4
-    },
-    {
-      label: "آخر الأنشطة",
-      Component: LastActions,
-      permission: 'Last-Actions',
-      index: 5
-    }
-  ], []);
-
-  const availableTabs = useMemo(() => {
-    if (!dashboardPermissions) return [];
-    return allTabs.filter(tab =>
-      dashboardPermissions.some(perm => perm.module === tab.permission && perm.canView)
-    );
-  }, [dashboardPermissions, allTabs]);
+  const { permissionsLoading, availableTabs } = useDashboardPermissions();
+  const handleExport = useExportDashboard('dashboard-export-area');
 
   useEffect(() => {
     if (availableTabs.length > 0 && value >= availableTabs.length) {
@@ -133,112 +17,72 @@ const Dashboard = React.memo(() => {
     }
   }, [availableTabs.length, value]);
 
-  const handleChange = useCallback((event, newValue) => {
+  const handleTabChange = useCallback((event, newValue) => {
     setValue(newValue);
   }, []);
 
-  if (permissionsLoading || !dashboardPermissions) {
+  if (permissionsLoading) {
     return (
-      <Box sx={{ bgcolor: theme.palette.background.default, minHeight: '100vh', py: 1 }}>
+      <div className="min-h-screen bg-[#f6f8f6] dark:bg-[#141e16] py-1">
         <Helmet>
           <title>لوحة التحكم - النظام المالي</title>
         </Helmet>
         <PageSkeleton type="dashboard" />
-      </Box>
+      </div>
     );
   }
 
   if (availableTabs.length === 0) {
     return (
-      <Box
-        sx={{
-          bgcolor: theme.palette.background.default,
-          minHeight: '100vh',
-          py: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
+      <>
         <Helmet>
           <title>لوحة التحكم - النظام المالي</title>
         </Helmet>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="h6" color="textSecondary" gutterBottom>
-            لا توجد صلاحيات لعرض الداشبورد
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            يرجى التواصل مع مدير النظام لمنحك الصلاحيات المطلوبة
-          </Typography>
-        </Box>
-      </Box>
+        <DashboardEmptyState />
+      </>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        py: 0,
-      }}
-    >
-      <Helmet>
-        <title>لوحة التحكم - النظام المالي</title>
-        <meta name="description" content="لوحة التحكم الرئيسية للنظام المالي" />
-      </Helmet>
+    <DashboardFilterProvider>
+      <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden dark:bg-[#141e16]">
+        <Helmet>
+          <title>نظام التمويل الذكي - لوحة التحكم</title>
+          <meta name="description" content="لوحة التحكم الرئيسية للنظام المالي" />
+        </Helmet>
 
-      <Container maxWidth={false} sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
-        <Box sx={{ mb: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center', overflowX: 'auto' }}>
-          <Tabs
-            value={value}
-            onChange={handleChange}
-            variant={isSmallScreen ? 'scrollable' : 'standard'}
-            scrollButtons="auto"
-            sx={{
-              '& .MuiTabs-indicator': {
-                height: 3,
-                borderRadius: '3px 3px 0 0',
-              },
-              '& .MuiTab-root': {
-                fontSize: { xs: '0.875rem', sm: '0.9rem', md: '1rem' },
-                fontWeight: 600,
-                minHeight: { xs: 48, sm: 56, md: 64 },
-                px: { xs: 1.5, sm: 2, md: 3 },
-                color: theme.palette.text.primary,
-                '&.Mui-selected': {
-                  color: theme.palette.primary.main,
-                },
-              },
-            }}
-          >
-            {availableTabs.map((tab) => (
-              <Tab key={tab.permission} label={tab.label} />
-            ))}
-          </Tabs>
-        </Box>
+        {/* Fixed Header: Title + Filters + Export */}
+        <div className="sticky top-0 z-50 bg-white dark:bg-[#141e16] border-b border-primary/10 shadow-sm">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-10">
+            <DashboardHeader onExport={handleExport} showExport />
+          </div>
+        </div>
 
-        {availableTabs.map((tab, index) => (
-          <TabPanel key={tab.permission} value={value} index={index}>
-            <Box sx={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              px: { xs: 1, sm: 2 }
-            }}>
-              <Box sx={{
-                width: '100%',
-                maxWidth: '1200px',
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <tab.Component />
-              </Box>
-            </Box>
-          </TabPanel>
-        ))}
-      </Container>
-    </Box>
+        {/* Sub-tabs Navigation */}
+        <div className="bg-white dark:bg-[#141e16] border-b border-primary/10">
+          <div className="max-w-[1200px] mx-auto flex px-4 sm:px-6 md:px-10 gap-4 md:gap-8 overflow-x-auto scrollbar-thin">
+            <DashboardTabs
+              value={value}
+              onChange={handleTabChange}
+              tabs={availableTabs}
+              variant="topNav"
+            />
+          </div>
+        </div>
+
+        {/* Main Content Area - Export target (no sidebar/nav) */}
+        <main id="dashboard-export-area" className="max-w-[1200px] mx-auto w-full p-4 sm:p-6 flex-1 bg-[#f6f8f6] dark:bg-[#141e16]">
+          {availableTabs.map((tab, index) => (
+            <TabPanel key={tab.permission} value={value} index={index} tabTitle={tab.label}>
+              <tab.Component />
+            </TabPanel>
+          ))}
+        </main>
+      </div>
+    </DashboardFilterProvider>
   );
 });
+
+Dashboard.displayName = 'Dashboard';
 
 export default Dashboard;

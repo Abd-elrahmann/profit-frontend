@@ -63,10 +63,10 @@ import {
   ScrollableTableContainer
 } from "../../components/layouts/tableLayout";
 import dayjs from "dayjs";
-import PaymentProofGenerator from "../../components/PaymentProofGenerator";
-import PaymentProofPreview from "../../components/PaymentProofPreview";
-import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
-import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
+import PaymentProofGenerator from "../../components/contracts/generators/PaymentProofGenerator";
+import PaymentProofPreview from "../../components/contracts/generators/PaymentProofPreview";
+import InstallmentSettlementPreview from "../../components/contracts/generators/InstallmentSettlementPreview";
+import InstallmentSettlementReceipt from "../../components/contracts/generators/InstallmentSettlementReceipt";
 import DeleteModal from "../../components/modals/DeleteModal";
 import DiscountModal from "../../components/modals/DiscountModal";
 import PartialPaymentModal from "../../components/modals/PartialPaymentModal";

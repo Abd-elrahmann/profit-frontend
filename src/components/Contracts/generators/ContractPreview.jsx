@@ -21,7 +21,7 @@ import {
   Divider,
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
-import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { isValidTemplate, injectContractData } from '../../../utilities/sanitize';
 
 const ContractPreview = ({
   open,

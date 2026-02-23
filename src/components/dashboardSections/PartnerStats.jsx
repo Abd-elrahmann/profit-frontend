@@ -1,550 +1,358 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import { People, CheckCircle, BusinessCenter, TrendingUp } from '@mui/icons-material';
+  Wallet,
+  TrendingUp,
+  Users,
+  PieChart,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getPartnerStats } from '../../pages/dashboard/dashboardApi';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { getPartnerStats, getPartnerDetails, getPartnerProfitGrowth } from '../../pages/dashboard/dashboardApi';
+import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext';
 import { useCountUp } from '../../hooks/useCountUp';
-import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
+import { Link } from 'react-router-dom';
+import ResponsiveTable from './ResponsiveTable';
+
+const MONTHS_FIRST = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
+const MONTHS_LAST = ['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
 const PartnerStats = React.memo(() => {
-  const [filter, setFilter] = useState('all');
-  const theme = useTheme();
-  const { isDarkMode } = useCustomTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          color: isDarkMode ? '#ffffff' : '#000000',
-          fontSize: '14px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{
-              margin: '4px 0',
-              color: entry.color || (isDarkMode ? '#ffffff' : '#000000')
-            }}>
-              {`${entry.name}: ${Math.round(entry.value).toLocaleString()}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  const { getApiFilter } = useDashboardFilter();
+  const apiFilter = getApiFilter();
+  const [profitChartPeriod, setProfitChartPeriod] = useState('first');
+  const [hoveredProfitBar, setHoveredProfitBar] = useState(null);
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['partner-stats', filter],
-    queryFn: () => getPartnerStats(filter),
+    queryKey: ['partner-stats', apiFilter],
+    queryFn: () => getPartnerStats(apiFilter),
   });
 
-  const animatedPartnersCount = useCountUp(stats?.partnersCount || 0, 600, !isLoading);
-  const animatedActivePartners = useCountUp(stats?.activePartners || 0, 600, !isLoading);
+  const { data: partnerDetails = [], isLoading: detailsLoading } = useQuery({
+    queryKey: ['dashboard', 'partner-details'],
+    queryFn: () => getPartnerDetails(10),
+  });
+
+  const { data: profitGrowth = [] } = useQuery({
+    queryKey: ['dashboard', 'partner-profit-growth', profitChartPeriod],
+    queryFn: () => getPartnerProfitGrowth(6, profitChartPeriod),
+  });
+
   const animatedCapital = useCountUp(stats?.totalCapitalAmount || 0, 600, !isLoading);
   const animatedProfit = useCountUp(stats?.totalProfit || 0, 600, !isLoading);
+  const animatedActivePartners = useCountUp(stats?.activePartners || 0, 600, !isLoading);
 
-  const formatCurrency = (amount) => {
-    return amount?.toLocaleString() || '0';
+  const formatAmount = (n) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    return Number(n).toLocaleString('en-US');
   };
 
-  const statusData = [
-    { name: 'نشط', value: stats?.activePartners || 0 },
-    { name: 'غير نشط', value: stats?.inactivePartners || 0 },
-  ];
+  const pieData = useMemo(() => {
+    if (partnerDetails.length === 0) {
+      return [];
+    }
+    
+    // Group by partner type (old vs new)
+    const oldPartners = partnerDetails.filter(p => !p.isNewPartner);
+    const newPartners = partnerDetails.filter(p => p.isNewPartner);
+    
+    const oldTotal = oldPartners.reduce((s, p) => s + p.sharePercent, 0);
+    const newTotal = newPartners.reduce((s, p) => s + p.sharePercent, 0);
+    
+    const result = [];
+    
+    if (oldTotal > 0) {
+      result.push({
+        label: `الشركاء القدامي (${oldPartners.length})`,
+        value: oldTotal,
+        color: '#2e8a45',
+        partners: oldPartners,
+      });
+    }
+    
+    if (newTotal > 0) {
+      result.push({
+        label: `الشركاء الجدد (${newPartners.length})`,
+        value: newTotal,
+        color: '#6ee7b7',
+        partners: newPartners,
+      });
+    }
+    
+    return result;
+  }, [partnerDetails]);
 
-  const COLORS = [theme.palette.success.main, theme.palette.grey[400]];
+  const profitChartData = useMemo(() => {
+    if (profitGrowth?.length > 0) {
+      return profitGrowth.map((item) => ({
+        month: item.month,
+        value: item.totalProfit ?? 0,
+      }));
+    }
+    return (profitChartPeriod === 'last' ? MONTHS_LAST : MONTHS_FIRST).map((m) => ({ month: m, value: 0 }));
+  }, [profitGrowth, profitChartPeriod]);
 
-  const partnerBarData = useMemo(() => [
-    {
-      name: 'إجمالي الشركاء',
-      value: Math.round(stats?.partnersCount || 0),
-      color: theme.palette.primary.main,
-    },
-    {
-      name: 'شركاء نشطين',
-      value: Math.round(stats?.activePartners || 0),
-      color: theme.palette.success.main,
-    },
-    {
-      name: 'شركاء غير نشطين',
-      value: Math.round(stats?.inactivePartners || 0),
-      color: theme.palette.error.main,
-    },
-  ], [stats, theme.palette]);
-
-  const financialBarData = [
-    {
-      name: 'رأس المال',
-      value: stats?.totalCapitalAmount || 0,
-      color: theme.palette.warning.main,
-    },
-    {
-      name: 'الأرباح',
-      value: stats?.totalProfit || 0,
-      color: theme.palette.success.main,
-    },
-  ];
+  const formatDate = (d) => {
+    if (!d) return '—';
+    const date = new Date(d);
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress size={60} />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      p: { xs: 2, sm: 3, md: 4 }, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center',
-    }}>
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        mb: { xs: 3, sm: 4, md: 5 },
-        width: '100%',
-        maxWidth: '1200px'
-      }}>
-        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
-          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
-          <Select
-            value={filter}
-            label="الفترة"
-            onChange={(e) => setFilter(e.target.value)}
-            size="small"
-            sx={{
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'divider',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.main',
-              },
-            }}
-          >
-            <MenuItem value="all">الكل</MenuItem>
-            <MenuItem value="daily">يومي</MenuItem>
-            <MenuItem value="monthly">شهري</MenuItem>
-            <MenuItem value="yearly">سنوي</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <p className="text-slate-500 text-sm font-medium">إجمالي رأس المال</p>
+            <div className="bg-primary/10 text-primary p-2 rounded-lg">
+              <Wallet className="size-5" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+              {formatAmount(animatedCapital)}
+            </h3>
+            <p className="text-emerald-600 text-xs font-bold mt-1 flex items-center gap-1">
+              <TrendingUp className="size-3.5" />
+              +12.5% عن العام الماضي
+            </p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <p className="text-slate-500 text-sm font-medium">إجمالي الأرباح الموزعة</p>
+            <div className="bg-blue-500/10 text-blue-500 p-2 rounded-lg">
+              <TrendingUp className="size-5" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+              {formatAmount(animatedProfit)}
+            </h3>
+            <p className="text-emerald-600 text-xs font-bold mt-1 flex items-center gap-1">
+              <TrendingUp className="size-3.5" />
+              +8.2% نمو سنوي
+            </p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <p className="text-slate-500 text-sm font-medium">عدد الشركاء النشطين</p>
+            <div className="bg-purple-500/10 text-purple-500 p-2 rounded-lg">
+              <Users className="size-5" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+              {animatedActivePartners} شريك
+            </h3>
+            <p className="text-slate-400 text-xs font-medium mt-1">تحديث: منذ ساعتين</p>
+          </div>
+        </div>
+      </div>
 
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
-        <Grid item xs={3} sm={3} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '200px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
-            border: `1px solid ${theme.palette.primary.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.primary.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.primary.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.primary.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.primary.dark}10 100%)`,
-                border: `2px solid ${theme.palette.primary.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.primary.main}30`,
-                }
-              }}>
-                <People sx={{ fontSize: '2rem', color: theme.palette.primary.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                إجمالي الشركاء
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedPartnersCount}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Share Distribution Donut */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h4 className="font-bold text-slate-900 dark:text-white">توزيع حصص الشركاء</h4>
+            <PieChart className="size-5 text-slate-400" />
+          </div>
+          <div className="flex items-center justify-center py-4 relative">
+            {pieData.length === 0 ? (
+              <div className="text-center text-slate-500 py-8">
+                لا يوجد شركاء
+              </div>
+            ) : (
+              <div className="relative flex items-center justify-center">
+                <svg className="w-48 h-48 -rotate-90" viewBox="0 0 256 256">
+                  <circle cx="128" cy="128" fill="transparent" r="100" stroke="#e2e8f0" strokeWidth="25" className="dark:stroke-slate-700" />
+                  {pieData.map((item, i) => {
+                    const prev = pieData.slice(0, i).reduce((s, x) => s + x.value, 0);
+                    const circumference = 2 * Math.PI * 100;
+                    const offset = (prev / 100) * circumference;
+                    const pct = (item.value / 100) * circumference;
+                    return (
+                      <circle
+                        key={item.label}
+                        cx="128"
+                        cy="128"
+                        r="100"
+                        fill="transparent"
+                        stroke={item.color}
+                        strokeWidth="25"
+                        strokeDasharray={`${pct} ${circumference}`}
+                        strokeDashoffset={-offset}
+                      />
+                    );
+                  })}
+                </svg>
+                <div className="absolute flex flex-col items-center">
+                  <p className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                    {pieData.reduce((s, x) => s + x.value, 0).toFixed(0)}%
+                  </p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">إجمالي الحصص</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="space-y-3 mt-8">
+            {pieData.map((item) => (
+              <div key={item.label} className="border border-slate-100 dark:border-slate-700 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="size-3 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      {item.label}
+                    </p>
+                  </div>
+                  <p className="text-lg font-black text-primary">{item.value.toFixed(1)}%</p>
+                </div>
+                {item.partners && item.partners.length > 0 && (
+                  <div className="text-xs text-slate-500 mr-5">
+                    {item.partners.slice(0, 3).map(p => p.name).join(' • ')}
+                    {item.partners.length > 3 && ` • +${item.partners.length - 3}`}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
-        <Grid item xs={3} sm={3} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-            border: `1px solid ${theme.palette.success.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.success.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.success.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.success.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.dark}10 100%)`,
-                border: `2px solid ${theme.palette.success.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.success.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.success.main}30`,
-                }
-              }}>
-                <CheckCircle sx={{ fontSize: '2rem', color: theme.palette.success.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                شركاء نشطين
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedActivePartners}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        {/* Profit Growth Bar Chart */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h4 className="font-bold text-lg text-slate-900 dark:text-white">نمو أرباح الشركاء</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                {profitChartPeriod === 'first' ? 'أول 6 أشهر من السنة الحالية' : 'آخر 6 أشهر من السنة الحالية'}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setProfitChartPeriod('first')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  profitChartPeriod === 'first'
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                أول 6 أشهر
+              </button>
+              <button
+                type="button"
+                onClick={() => setProfitChartPeriod('last')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  profitChartPeriod === 'last'
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                آخر 6 أشهر
+              </button>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {profitChartData.map((item) => {
+              const maxVal = Math.max(...profitChartData.map((d) => d.value), 1);
+              const pct = maxVal > 0 ? (item.value / maxVal) * 100 : 0;
+              const formatAmount = (n) => {
+                if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+                if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+                return n.toLocaleString('en-US');
+              };
+              return (
+                <div key={item.month} className="flex items-center gap-3 relative group">
+                  <span className="w-16 text-sm font-medium text-slate-700 dark:text-slate-300 shrink-0">{item.month}</span>
+                  <div 
+                    className="flex-1 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden cursor-pointer"
+                    onMouseEnter={() => setHoveredProfitBar(item.month)}
+                    onMouseLeave={() => setHoveredProfitBar(null)}
+                  >
+                    <div
+                      className="h-full bg-primary rounded-lg transition-all duration-300"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-20 text-sm font-bold text-slate-900 dark:text-slate-100 text-left shrink-0">
+                    {formatAmount(item.value)}
+                  </span>
+                  {hoveredProfitBar === item.month && (
+                    <div className="absolute left-1/2 top-full mt-2 transform -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg z-10 whitespace-nowrap">
+                      {item.month}: {item.value.toLocaleString('en-US')}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2">
+                        <div className="border-4 border-transparent border-b-slate-900 dark:border-b-slate-700" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-        <Grid item xs={3} sm={3} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.warning.main}15 0%, ${theme.palette.warning.dark}08 100%)`,
-            border: `1px solid ${theme.palette.warning.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.warning.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.warning.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.warning.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}20 0%, ${theme.palette.warning.dark}10 100%)`,
-                border: `2px solid ${theme.palette.warning.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.warning.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.warning.main}30`,
-                }
-              }}>
-                <BusinessCenter sx={{ fontSize: '2rem', color: theme.palette.warning.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                إجمالي رأس المال
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedCapital)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={3} sm={3} md={3}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '250px', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
-            border: `1px solid ${theme.palette.info.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.info.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.info.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.info.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
-                border: `2px solid ${theme.palette.info.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
-                }
-              }}>
-                <TrendingUp sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                إجمالي الأرباح
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedProfit)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 3,
-          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
-        }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            توزيع الشركاء حسب الحالة
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={partnerBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                allowDecimals={false} 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {partnerBarData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </Box>
-
-      <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 3,
-          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
-        }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            رأس المال والأرباح
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={financialBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip formatter={(value) => [value.toLocaleString(), '']} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {financialBarData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </Box>
-                
-      {statusData.some(item => item.value > 0) && (
-        <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-          <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 3,
-          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)'
-        }}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-              حالة الشركاء
-            </Typography>
-            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={isSmallScreen ? 60 : 80}
-                  fill="#8884d8"
-                  dataKey="value"
+      {/* Table: تفاصيل أرصدة الشركاء */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <h4 className="font-bold text-slate-900 dark:text-white">تفاصيل أرصدة الشركاء</h4>
+          <Link to="/investors" className="text-primary text-sm font-bold hover:underline">
+            عرض الكل
+          </Link>
+        </div>
+        <div className="p-4 sm:p-6">
+          <ResponsiveTable
+            columns={[
+              { id: 'name', label: 'اسم الشريك', render: (_, row) => (
+                <span className="font-bold text-slate-900 dark:text-white">{row.name}</span>
+              )},
+              { id: 'sharePercent', label: 'الحصة (%)', format: (v) => `${v}%` },
+              { id: 'balance', label: 'الرصيد الحالي', format: (v) => Number(v || 0).toLocaleString('en-US') },
+              { id: 'lastProfit', label: 'آخر دفعة أرباح', render: (_, row) => (
+                <div className="text-sm">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    {Number(row.lastProfitAmount || 0).toLocaleString('en-US')}
+                  </p>
+                  <p className="text-[10px] text-slate-500">{formatDate(row.lastProfitDate)}</p>
+                </div>
+              )},
+              { id: 'status', label: 'الحالة', render: (_, row) => (
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold ${
+                    row.status === 'نشط'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                      : row.status === 'قيد المراجعة'
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
                 >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-        </Box>
-      )}
-    </Box>
+                  {row.status}
+                </span>
+              )},
+            ]}
+            data={partnerDetails}
+            isLoading={detailsLoading}
+            emptyMessage="لا يوجد شركاء"
+            keyField="id"
+          />
+        </div>
+      </div>
+    </div>
   );
 });
+
+PartnerStats.displayName = 'PartnerStats';
 
 export default PartnerStats;

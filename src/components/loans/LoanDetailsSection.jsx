@@ -97,7 +97,7 @@ const LoanDetailsSection = ({
               fullWidth
               type="text"
               label="مبلغ السلفة"
-              value={formatAmount(loanForm.amount)}
+              value={formatAmount(isViewMode ? (loanForm.amount || selectedLoan?.amount) : loanForm.amount)}
               onChange={(e) => handleInputChange("amount", e.target.value)}
               InputLabelProps={{
                 shrink: true,
@@ -225,7 +225,7 @@ const LoanDetailsSection = ({
               fullWidth
               type="text"
               label="مبلغ الفائدة الإجمالي"
-              value={formatAmount(loanForm.totalInterest)}
+              value={formatAmount(isViewMode ? (loanForm.totalInterest || selectedLoan?.interestAmount) : loanForm.totalInterest)}
               onChange={(e) => handleInputChange("totalInterest", e.target.value)}
               InputLabelProps={{
                 shrink: true,
@@ -255,7 +255,7 @@ const LoanDetailsSection = ({
             fullWidth
             type="number"
             label="معدل الفائدة السنوي (%)"
-            value={loanForm.interestRate}
+            value={isViewMode ? (loanForm.interestRate || selectedLoan?.interestRate) : loanForm.interestRate}
             onChange={(e) => handleInputChange("interestRate", e.target.value)}
             InputLabelProps={{
               shrink: true,
@@ -276,7 +276,7 @@ const LoanDetailsSection = ({
             fullWidth
             type="text"
             label="مبلغ الدفعة الشهرية"
-            value={formatAmount(loanForm.paymentAmount)}
+            value={formatAmount(isViewMode ? (loanForm.paymentAmount || selectedLoan?.paymentAmount) : loanForm.paymentAmount)}
             onChange={(e) => handleInputChange("paymentAmount", e.target.value)}
             InputLabelProps={{
               shrink: true,
@@ -301,7 +301,7 @@ const LoanDetailsSection = ({
             type="text"
             label="نوع السلفة"
             select
-            value={loanForm.type}
+            value={isViewMode ? (loanForm.type || selectedLoan?.type) : loanForm.type}
             onChange={(e) => handleInputChange("type", e.target.value)}
             disabled={isReadOnlyMode}
             sx={{
@@ -323,7 +323,7 @@ const LoanDetailsSection = ({
             fullWidth
             type="date"
             label="تاريخ بداية الدفعات"
-            value={loanForm.repaymentDay}
+            value={isViewMode ? (loanForm.repaymentDay || (selectedLoan?.repaymentDay ? String(selectedLoan.repaymentDay).split("T")[0] : "")) : loanForm.repaymentDay}
             onChange={(e) => handleInputChange("repaymentDay", e.target.value)}
             disabled={isReadOnlyMode}
             required={!isReadOnlyMode}
@@ -346,7 +346,7 @@ const LoanDetailsSection = ({
             fullWidth
             type="date"
             label="تاريخ البداية (اختياري)"
-            value={loanForm.startDate}
+            value={isViewMode ? (loanForm.startDate || (selectedLoan?.startDate ? String(selectedLoan.startDate).split("T")[0] : "")) : loanForm.startDate}
             onChange={(e) => handleInputChange("startDate", e.target.value)}
             InputLabelProps={{
               shrink: true,

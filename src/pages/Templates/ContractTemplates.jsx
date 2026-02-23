@@ -22,7 +22,7 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
 
 
-import RichTextEditor from "../../components/RichTextEditor";
+import RichTextEditor from "../../components/common/RichTextEditor";
 import { isValidTemplate } from "../../utilities/sanitize";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import MudarabahContract from "../../components/Contracts/MudarabahContract";

@@ -1,374 +1,305 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  useMediaQuery,
-} from '@mui/material';
-import { People, CheckCircle } from '@mui/icons-material';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getClientStats } from '../../pages/dashboard/dashboardApi';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { useTheme } from '@mui/material';
+import { TrendingUp, Wallet, CreditCard, CheckCircle } from 'lucide-react';
+import { getClientStats, getLoanStats, getTopCommittedClients, getClientRegistrationGrowth } from '../../pages/dashboard/dashboardApi';
+import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext';
 import { useCountUp } from '../../hooks/useCountUp';
-import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
+import { Link } from 'react-router-dom';
+import ResponsiveTable from './ResponsiveTable';
+
+const MONTHS_FIRST = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
+const MONTHS_LAST = ['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
 const ClientStats = React.memo(() => {
-  const [filter, setFilter] = useState('all');
-  const theme = useTheme();
-  const { isDarkMode } = useCustomTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{
-          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          color: isDarkMode ? '#ffffff' : '#000000',
-          fontSize: '14px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{
-              margin: '4px 0',
-              color: entry.color || (isDarkMode ? '#ffffff' : '#000000')
-            }}>
-              {`${entry.name}: ${Math.round(entry.value).toLocaleString()}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  const { getApiFilter } = useDashboardFilter();
+  const [chartPeriod, setChartPeriod] = useState('first');
+  const [hoveredBar, setHoveredBar] = useState(null);
+  const apiFilter = getApiFilter();
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['client-stats', filter],
-    queryFn: () => getClientStats(filter),
+    queryKey: ['client-stats', apiFilter],
+    queryFn: () => getClientStats(apiFilter),
+  });
+
+  const { data: loanStats } = useQuery({
+    queryKey: ['dashboard', 'loan-stats', apiFilter],
+    queryFn: () => getLoanStats(apiFilter),
+  });
+
+  const { data: topClients = [], isLoading: clientsLoading } = useQuery({
+    queryKey: ['dashboard', 'top-committed-clients'],
+    queryFn: () => getTopCommittedClients(5),
+  });
+
+  const { data: clientGrowth = [] } = useQuery({
+    queryKey: ['dashboard', 'client-registration-growth', chartPeriod],
+    queryFn: () => getClientRegistrationGrowth(6, chartPeriod),
   });
 
   const animatedCount = useCountUp(stats?.count || 0, 600, !isLoading);
-  const animatedNewClients = useCountUp(stats?.newClientsToday || 0, 600, !isLoading);
-  const animatedActive = useCountUp(stats?.activeCount || 0, 600, !isLoading);
-  const animatedOverdue = useCountUp(stats?.overdueCount || 0, 600, !isLoading);
+  const animatedActiveLoans = useCountUp(loanStats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
+  const animatedTotalAmount = useCountUp(loanStats?.loans?.totalAmount || 0, 600, !isLoading);
 
-  const clientBarData = useMemo(() => [
-    {
-      name: 'إجمالي العملاء',
-      value: Math.round(stats?.count || 0),
-      color: theme.palette.primary.main,
-    },
-    {
-      name: 'عملاء نشطين',
-      value: Math.round(stats?.activeCount || 0),
-      color: theme.palette.success.main,
-    },
-    {
-      name: 'عملاء متعثرين',
-      value: Math.round(stats?.overdueCount || 0),
-      color: theme.palette.error.main,
-    },
-  ], [stats, theme.palette]);
+  const pieData = useMemo(() => {
+    const total = stats?.count || 1;
+    const active = stats?.activeCount || 0;
+    const overdue = stats?.overdueCount || 0;
+    const late = Math.max(0, total - active - overdue);
+    return [
+      { label: 'نشط', value: Math.round((active / total) * 100) || 0, color: '#2e8a45' },
+      { label: 'متأخر', value: Math.round((late / total) * 100) || 0, color: '#f59e0b' },
+      { label: 'متعثر', value: Math.round((overdue / total) * 100) || 0, color: '#ef4444' },
+    ];
+  }, [stats]);
 
+  const barChartData = useMemo(() => {
+    if (clientGrowth?.length > 0) {
+      return clientGrowth.map((item) => ({
+        month: item.month,
+        value: item.count ?? item.value ?? 0,
+      }));
+    }
+    return (chartPeriod === 'last' ? MONTHS_LAST : MONTHS_FIRST).map((m) => ({ month: m, value: 0 }));
+  }, [clientGrowth, chartPeriod]);
+
+  const formatAmount = (n) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    return Number(n).toLocaleString('en-US');
+  };
+
+  const getCommitmentLabel = (pct) => {
+    if (pct >= 95) return 'ملتزم تماماً';
+    if (pct >= 85) return 'ملتزم';
+    return 'جيد';
+  };
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress size={60} />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      p: { xs: 2, sm: 3, md: 4 }, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center',
-    }}>
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        mb: { xs: 3, sm: 4, md: 5 },
-        width: '100%',
-        maxWidth: '1200px'
-      }}>
-        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
-          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
-          <Select
-            value={filter}
-            label="الفترة"
-            onChange={(e) => setFilter(e.target.value)}
-            size="small"
-            sx={{
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'divider',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.main',
-              },
-            }}
-          >
-            <MenuItem value="all">الكل</MenuItem>
-            <MenuItem value="daily">يومي</MenuItem>
-            <MenuItem value="monthly">شهري</MenuItem>
-            <MenuItem value="yearly">سنوي</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+    <div className="space-y-6">
+      {/* KPI Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-slate-500 text-sm font-medium mb-1">إجمالي العملاء</p>
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedCount}</h3>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+              <TrendingUp className="size-3.5 ml-1" />
+              +12.5%
+            </span>
+            <p className="text-[11px] text-slate-400 mt-2">منذ الشهر الماضي</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-slate-500 text-sm font-medium mb-1">القروض النشطة</p>
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedActiveLoans}</h3>
+          </div>
+          <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center">
+            <CreditCard className="size-5 text-primary" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-slate-500 text-sm font-medium mb-1">إجمالي المبالغ المصروفة</p>
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+              {formatAmount(animatedTotalAmount)}
+            </h3>
+          </div>
+          <div className="size-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+            <Wallet className="size-5 text-blue-600 dark:text-blue-400" />
+          </div>
+        </div>
+      </div>
 
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, sm: 4, md: 5 }, maxWidth: '1200px', justifyContent: 'center' }}>
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '180px', sm: '100%', md: '300px' },
-            width: { xs: '250px', sm: '100%', md: '400px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
-            border: `1px solid ${theme.palette.primary.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.primary.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.primary.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.primary.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, position: 'relative', zIndex: 1 }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 64,
-                  height: 64,
-                  borderRadius: '16px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.primary.dark}10 100%)`,
-                  border: `2px solid ${theme.palette.primary.main}30`,
-                  mb: 2.5,
-                  boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1) rotate(5deg)',
-                    boxShadow: `0 6px 20px ${theme.palette.primary.main}30`,
-                  }
-                }}>
-                  <People sx={{ fontSize: '2rem', color: theme.palette.primary.main }} />
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                  إجمالي العملاء
-                </Typography>
-                <Typography variant="h4" fontWeight="800" sx={{ 
-                  mb: 2.5, 
-                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>
-                  {animatedCount}
-                </Typography>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  gap: 1,
-                  p: 1.5,
-                  borderRadius: 3,
-                  background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-                  border: `1px solid ${theme.palette.success.main}30`,
-                  boxShadow: `0 2px 8px ${theme.palette.success.main}10`
-                }}>
-                  <Typography variant="body2" color="success.main" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, fontWeight: 600 }}>
-                    عملاء جدد اليوم
-                  </Typography>
-                  <Typography variant="h6" fontWeight="700" color="success.main" sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}>
-                    {animatedNewClients}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={6} sm={12} md={3}>
-          <Card sx={{
-            height: { xs: '180px', sm: '100%', md: '300px' },
-            width: { xs: '250px', sm: '100%', md: '400px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-            border: `1px solid ${theme.palette.success.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.success.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.success.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.success.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, position: 'relative', zIndex: 1 }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 64,
-                  height: 64,
-                  borderRadius: '16px',
-                  background: `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.dark}10 100%)`,
-                  border: `2px solid ${theme.palette.success.main}30`,
-                  mb: 2.5,
-                  boxShadow: `0 4px 12px ${theme.palette.success.main}20`,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1) rotate(5deg)',
-                    boxShadow: `0 6px 20px ${theme.palette.success.main}30`,
-                  }
-                }}>
-                  <CheckCircle sx={{ fontSize: '2rem', color: theme.palette.success.main }} />
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                  عملاء نشطين
-                </Typography>
-                <Typography variant="h4" fontWeight="800" sx={{ 
-                  mb: 2.5, 
-                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                  background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>
-                  {animatedActive}
-                </Typography>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  gap: 1,
-                  p: 1.5,
-                  borderRadius: 3,
-                  background: `linear-gradient(135deg, ${theme.palette.error.main}15 0%, ${theme.palette.error.dark}08 100%)`,
-                  border: `1px solid ${theme.palette.error.main}30`,
-                  boxShadow: `0 2px 8px ${theme.palette.error.main}10`
-                }}>
-                  <Typography variant="body2" color="error.main" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, fontWeight: 600 }}>
-                    عملاء متعثرين
-                  </Typography>
-                  <Typography variant="h6" fontWeight="700" color="error.main" sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}>
-                    {animatedOverdue}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-
-      <Box sx={{ width: '100vw', maxWidth: '100%', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 4,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}08 0%, ${theme.palette.primary.dark}05 100%)`,
-          border: `1px solid ${theme.palette.primary.main}20`,
-          boxShadow: `
-            0 2px 8px ${theme.palette.primary.main}10,
-            0 8px 24px rgba(0,0,0,0.08),
-            inset 0 1px 0 rgba(255,255,255,0.5)
-          `,
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            boxShadow: `
-              0 4px 16px ${theme.palette.primary.main}15,
-              0 16px 48px rgba(0,0,0,0.1),
-              inset 0 1px 0 rgba(255,255,255,0.6)
-            `,
-          }
-        }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            توزيع العملاء حسب الحالة
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={clientBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                allowDecimals={false} 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pie Chart: تصنيف العملاء */}
+        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="font-bold text-lg text-slate-900 dark:text-slate-100">تصنيف العملاء</h4>
+          </div>
+          <div className="flex items-center justify-center py-4 relative">
+            <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 256 256">
+              <circle cx="128" cy="128" fill="transparent" r="100" stroke="#e2e8f0" strokeWidth="25" />
+              <circle
+                cx="128"
+                cy="128"
+                fill="transparent"
+                r="100"
+                stroke={pieData[0]?.color || '#2e8a45'}
+                strokeDasharray={`${(pieData[0]?.value || 0) * 6.28} 628`}
+                strokeWidth="25"
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {clientBarData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </Box>
+              <circle
+                cx="128"
+                cy="128"
+                fill="transparent"
+                r="100"
+                stroke={pieData[1]?.color || '#f59e0b'}
+                strokeDasharray={`${(pieData[1]?.value || 0) * 6.28} 628`}
+                strokeDashoffset={-((pieData[0]?.value || 0) * 6.28)}
+                strokeWidth="25"
+              />
+              <circle
+                cx="128"
+                cy="128"
+                fill="transparent"
+                r="100"
+                stroke={pieData[2]?.color || '#ef4444'}
+                strokeDasharray={`${(pieData[2]?.value || 0) * 6.28} 628`}
+                strokeDashoffset={-(((pieData[0]?.value || 0) + (pieData[1]?.value || 0)) * 6.28)}
+                strokeWidth="25"
+              />
+            </svg>
+            <div className="absolute flex flex-col items-center">
+              <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {stats?.count?.toLocaleString('en-US') || 0}
+              </span>
+              <span className="text-xs text-slate-500">إجمالي الحالات</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-6">
+            {pieData.map((item) => (
+              <div
+                key={item.label}
+                className={`flex flex-col items-center p-3 rounded-lg border ${
+                  item.color === '#2e8a45'
+                    ? 'bg-primary/5 border-primary/10'
+                    : item.color === '#f59e0b'
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="size-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </div>
+                <span className="font-bold">{item.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
+        {/* Bar Chart: نمو تسجيل العملاء */}
+        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h4 className="font-bold text-lg text-slate-900 dark:text-slate-100">نمو تسجيل العملاء</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                {chartPeriod === 'first' ? 'أول 6 أشهر من السنة الحالية' : 'آخر 6 أشهر من السنة الحالية'}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setChartPeriod('first')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  chartPeriod === 'first'
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                أول 6 أشهر
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartPeriod('last')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  chartPeriod === 'last'
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                آخر 6 أشهر
+              </button>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {barChartData.map((item) => {
+              const maxVal = Math.max(...barChartData.map((d) => d.value), 1);
+              const pct = maxVal > 0 ? (item.value / maxVal) * 100 : 0;
+              return (
+                <div key={item.month} className="flex items-center gap-3 relative group">
+                  <span className="w-16 text-sm font-medium text-slate-700 dark:text-slate-300 shrink-0">{item.month}</span>
+                  <div 
+                    className="flex-1 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden cursor-pointer"
+                    onMouseEnter={() => setHoveredBar(item.month)}
+                    onMouseLeave={() => setHoveredBar(null)}
+                  >
+                    <div
+                      className="h-full bg-primary rounded-lg transition-all duration-300 min-w-[4px]"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-sm font-bold text-slate-900 dark:text-slate-100 text-left shrink-0">{item.value}</span>
+                  {hoveredBar === item.month && (
+                    <div className="absolute left-1/2 top-full mt-2 transform -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg z-10 whitespace-nowrap">
+                      {item.month}: {item.value} عميل
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2">
+                        <div className="border-4 border-transparent border-b-slate-900 dark:border-b-slate-700" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-    </Box>
+      {/* Table: أفضل 5 عملاء ملتزمين */}
+      <div className="bg-white dark:bg-[#141e16] rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-primary/5">
+          <h4 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <CheckCircle className="size-5 text-primary shrink-0" />
+            أفضل 5 عملاء ملتزمين
+          </h4>
+          <Link to="/clients" className="text-sm text-primary font-bold hover:underline">
+            عرض الكل
+          </Link>
+        </div>
+        <div className="p-4 sm:p-6">
+          <ResponsiveTable
+            columns={[
+              { id: 'name', label: 'العميل', render: (_, row) => (
+                <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{row.name}</span>
+              )},
+              { id: 'commitment', label: 'نقاط الالتزام', render: (_, row) => (
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: `${row.commitment}%` }} />
+                  </div>
+                  <span className="text-sm font-bold">{row.commitment}%</span>
+                </div>
+              )},
+              { id: 'totalPaid', label: 'إجمالي المسدد', format: (v) => Number(v || 0).toLocaleString('en-US') },
+              { id: 'payments', label: 'عدد الدفعات', render: (_, row) => `${row.paidCount || 0}/${row.paymentsCount || 0}` },
+              { id: 'status', label: 'الحالة', render: (_, row) => (
+                <span className="inline-flex px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">
+                  {getCommitmentLabel(row.commitment)}
+                </span>
+              )},
+            ]}
+            data={topClients}
+            isLoading={clientsLoading}
+            emptyMessage="لا يوجد عملاء"
+            keyField="id"
+          />
+        </div>
+      </div>
+    </div>
   );
 });
+
+ClientStats.displayName = 'ClientStats';
 
 export default ClientStats;

@@ -19,7 +19,7 @@ import {
 import SaveIcon from "@mui/icons-material/Save";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
-import ReactQuillWrapper from "../../components/ReactQuillWrapper";
+import ReactQuillWrapper from "../../components/common/ReactQuillWrapper";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";

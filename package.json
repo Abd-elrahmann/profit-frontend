@@ -34,6 +34,7 @@
     "file-saver": "^2.0.5",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.24",
+    "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.12.1",
     "i18next": "^25.6.3",
     "i18next-browser-languagedetector": "^8.2.0",
@@ -75,6 +76,7 @@
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "postcss": "^8.5.6",
+    "@tailwindcss/vite": "^4.1.17",
     "tailwindcss": "^4.1.17",
     "vite": "^7.1.7",
     "vite-plugin-resolve": "^2.5.2"

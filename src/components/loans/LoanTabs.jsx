@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Tabs,
-  Tab,
-  TextField,
-  InputAdornment,
-} from "@mui/material";
-import { Search } from "@mui/icons-material";
+import { Search } from "lucide-react";
 
 const LoanTabs = ({
   activeTab,
@@ -21,116 +14,77 @@ const LoanTabs = ({
   searchQuery,
   onSearchChange,
 }) => {
+  const handleTabChange = (newValue) => {
+    setActiveTab(newValue);
+    if (newValue === 0 || newValue === 2 || newValue === 3) {
+      resetLoanForm();
+    }
+  };
+
+  const tabs = [
+    { actualIndex: 0, label: "جميع السلفات" },
+    ...(permissions.includes("loans_Add")
+      ? [
+          {
+            actualIndex: 1,
+            label: isClientConversion
+              ? "نقل مديونية السلفة"
+              : isViewMode
+              ? "عرض تفاصيل السلفة"
+              : isEditMode
+              ? "تعديل السلفة"
+              : isAdditionalLoan
+              ? "إنشاء سلفة إضافية"
+              : "إنشاء سلفة جديدة",
+          },
+        ]
+      : []),
+    { actualIndex: 2, label: "إنشاء سلفة بدون فائدة" },
+    { actualIndex: 3, label: "عرض السلفات بدون فائدة" },
+  ];
 
   return (
-    <Box
-      sx={{
-        mb: isSmallScreen ? 2 : 4,
-      }}
-    >
-      {/* Header with Tabs and Search */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          px: 2,
-          py: 1,
-        }}
-      >
-        <Tabs
-        value={activeTab}
-        onChange={(e, newValue) => {
-          setActiveTab(newValue);
-          if (newValue === 0 || newValue === 2 || newValue === 3) {
-            resetLoanForm();
-          }
-        }}
-        variant={"scrollable"}
-        scrollButtons={"auto"}
-        sx={{
-          "& .MuiTab-root": {
-            fontSize: isSmallScreen ? "0.875rem" : "0.85rem",
-            minWidth: isSmallScreen ? "auto" : 72,
-            padding: isSmallScreen ? "12px 8px" : "12px 16px",
-            bgcolor: 'background.paper',
-          },
-        }}
-      >
-        <Tab
-          label="جميع السلفات"
-          sx={{
-            fontWeight: "bold",
-            borderBottom: activeTab === 0 ? "3px solid" : "none",
-            borderBottomColor: activeTab === 0 ? "primary.main" : "transparent",
-            color: activeTab === 0 ? "primary.main" : "text.primary",
-          }}
-        />
-        {permissions.includes("loans_Add") && (
-          <Tab
-            label={
-              isClientConversion
-                ? "نقل مديونية السلفة"
-                : isViewMode
-                ? "عرض تفاصيل السلفة"
-                : isEditMode
-                ? "تعديل السلفة"
-                : isAdditionalLoan
-                ? "إنشاء سلفة إضافية"
-                : "إنشاء سلفة جديدة"
-            }
-            sx={{
-              fontWeight: "bold",
-              borderBottom: activeTab === 1 ? "3px solid" : "none",
-              borderBottomColor: activeTab === 1 ? "primary.main" : "transparent",
-              color: activeTab === 1 ? "primary.main" : "text.primary",
-            }}
-          />
-        )}
-        <Tab
-          label="إنشاء سلفة بدون فائدة"
-          sx={{
-            fontWeight: "bold",
-            borderBottom: activeTab === 2 ? "3px solid" : "none",
-            borderBottomColor: activeTab === 2 ? "primary.main" : "transparent",
-            color: activeTab === 2 ? "primary.main" : "text.primary",
-          }}
-        />
-        <Tab
-          label="عرض السلفات بدون فائدة"
-          sx={{
-            fontWeight: "bold",
-            borderBottom: activeTab === 3 ? "3px solid" : "none",
-            borderBottomColor: activeTab === 3 ? "primary.main" : "transparent",
-            color: activeTab === 3 ? "primary.main" : "text.primary",
-          }}
-        />
-      </Tabs>
+    <div className={`mb-4 ${isSmallScreen ? "mb-4" : "mb-8"}`}>
+      {/* Tabs row */}
+      <div className="flex gap-4 overflow-x-auto border-b border-slate-200 px-4 py-2 md:gap-8 dark:border-slate-800">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.actualIndex;
+          return (
+            <button
+              key={tab.actualIndex}
+              type="button"
+              role="tab"
+              onClick={() => handleTabChange(tab.actualIndex)}
+              className={`whitespace-nowrap border-b-2 pb-4 font-bold transition-all ${
+                isActive
+                  ? "border-primary text-primary"
+                  : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              } ${isSmallScreen ? "text-sm" : "text-base"}`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Search Bar - Only show in tab 0 (جميع السلفات) */}
+      {/* Search row - below tabs, same position */}
       {activeTab === 0 && (
-        <TextField
-          size="small"
-          placeholder="ابحث باسم العميل أو رقم السلفة..."
-          value={searchQuery || ""}
-          onChange={(e) => onSearchChange && onSearchChange(e)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            width: isSmallScreen ? "200px" : "300px",
-            "& .MuiOutlinedInput-root": {
-              height: "40px",
-            },
-          }}
-        />
+        <div className="px-4 pt-4">
+          <div className="relative inline-flex items-center">
+            <Search className="absolute right-3 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="ابحث باسم العميل أو رقم السلفة..."
+              value={searchQuery || ""}
+              onChange={(e) => onSearchChange?.(e)}
+              className={`rounded-xl border-none bg-slate-100 py-2 pr-10 pl-4 text-sm focus:ring-2 focus:ring-primary dark:bg-slate-800 ${
+                isSmallScreen ? "w-[200px]" : "w-[300px]"
+              }`}
+            />
+          </div>
+        </div>
       )}
-    </Box>
-    </Box>
+    </div>
   );
 };
 

@@ -35,9 +35,11 @@ import {
   getPeriodById,
   closePeriod,
   unpostClosing,
+  comparePeriods,
 } from "./periodApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import PeriodTable from "../../components/modals/periodTable";
+import PeriodCompareModal from "../../components/modals/PeriodCompareModal";
 import {
   StyledTableCell,
   StyledTableRow,
@@ -57,6 +59,10 @@ const PeriodClosing = () => {
   const [showDraftAlert, setShowDraftAlert] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedPeriods, setSelectedPeriods] = useState([]);
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
+  const [compareData, setCompareData] = useState(null);
+  const [isCompareLoading, setIsCompareLoading] = useState(false);
 
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -128,6 +134,27 @@ const PeriodClosing = () => {
 
   const handleNavigateToProfitDistribution = () => {
     navigate(`/profit-distribution?periodId=${selectedPeriod}&from=period-closing`);
+  };
+
+  const handleComparePeriods = async (periodId1, periodId2) => {
+    setIsCompareLoading(true);
+    setCompareData(null);
+    setCompareModalOpen(true);
+    try {
+      const data = await comparePeriods(periodId1, periodId2);
+      setCompareData(data);
+    } catch (error) {
+      notifyError(error?.response?.data?.message || "حدث خطأ أثناء مقارنة الفترات");
+      setCompareModalOpen(false);
+    } finally {
+      setIsCompareLoading(false);
+    }
+  };
+
+  const handleCloseCompareModal = () => {
+    setCompareModalOpen(false);
+    setCompareData(null);
+    setSelectedPeriods([]);
   };
 
   const formatDate = (dateString) => {
@@ -1307,11 +1334,23 @@ const PeriodClosing = () => {
             )}
 
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
-              <PeriodTable
-                onViewDetails={handleViewDetails}
-                isMobile={isMobile}
-                searchQuery={searchQuery}
-              />
+              <>
+                <PeriodTable
+                  onViewDetails={handleViewDetails}
+                  isMobile={isMobile}
+                  searchQuery={searchQuery}
+                  showSelection={true}
+                  selectedPeriods={selectedPeriods}
+                  onSelectionChange={setSelectedPeriods}
+                  onComparePeriods={handleComparePeriods}
+                />
+                <PeriodCompareModal
+                  open={compareModalOpen}
+                  onClose={handleCloseCompareModal}
+                  data={compareData}
+                  isLoading={isCompareLoading}
+                />
+              </>
             ) : (
               <Box>
                 {!selectedPeriod ? (

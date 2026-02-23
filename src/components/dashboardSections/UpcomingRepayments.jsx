@@ -1,154 +1,223 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  TableBody,
-  TableHead,
-  TablePagination,
-  CircularProgress,
-  Table,
-} from '@mui/material';
-import { Schedule } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getUpcomingRepayments } from '../../pages/dashboard/dashboardApi';
-import { useTheme } from '@mui/material';
-import { format } from 'date-fns';
-import {StyledTableCell, StyledTableRow, ScrollableTableContainer} from '../layouts/tableLayout';
-const UpcomingRepayments = React.memo(() => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const theme = useTheme();
+import { getRepaymentsByMonth } from '../../pages/dashboard/dashboardApi';
+import { useCountUp } from '../../hooks/useCountUp';
+import { Link } from 'react-router-dom';
+import ResponsiveTable from './ResponsiveTable';
 
-  const { data: repayments, isLoading } = useQuery({
-    queryKey: ['upcoming-repayments'],
-    queryFn: getUpcomingRepayments,
+const MONTH_NAMES = [
+  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+];
+const DAY_ABBR = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
+
+const UpcomingRepayments = React.memo(() => {
+  const [viewDate, setViewDate] = useState(() => new Date());
+
+  const selectedYear = viewDate.getFullYear();
+  const selectedMonth = viewDate.getMonth() + 1; // 1-indexed for API
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['repayments-by-month', selectedYear, selectedMonth],
+    queryFn: () => getRepaymentsByMonth(selectedYear, selectedMonth),
   });
 
-  const formatCurrency = (amount) => {
-    return Math.round(amount || 0).toLocaleString();
+  const repayments = data?.repayments ?? [];
+  const totalExpected = data?.totalExpected ?? 0;
+  const totalPaid = data?.totalPaid ?? 0;
+  const totalRemaining = data?.totalRemaining ?? 0;
+  const animatedTotal = useCountUp(totalExpected, 600, !isLoading);
+  const animatedPaid = useCountUp(totalPaid, 600, !isLoading);
+  const animatedRemaining = useCountUp(totalRemaining, 600, !isLoading);
+
+  const formatAmount = (n) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  const formatDueDate = (d) => {
+    if (!d) return '—';
+    const date = new Date(d);
+    return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
   };
 
-  const formatDate = (date) => {
-    return format(new Date(date), 'dd/MM/yyyy');
-  };
+  const calendarDays = useMemo(() => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month + 1, 0);
+    const startPad = (first.getDay() + 6) % 7;
+    const days = [];
+    for (let i = 0; i < startPad; i++) days.push(null);
+    for (let d = 1; d <= last.getDate(); d++) days.push(d);
+    return days;
+  }, [viewDate]);
 
-  const getDueDate = (repayment) => {
-    return repayment.newDueDate || repayment.dueDate;
-  };
+  const today = new Date();
+  const isToday = (d) =>
+    d &&
+    viewDate.getMonth() === today.getMonth() &&
+    viewDate.getFullYear() === today.getFullYear() &&
+    d === today.getDate();
 
-  const paginatedRepayments = useMemo(() => {
-    if (!repayments) return [];
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return repayments.slice(startIndex, endIndex);
-  }, [repayments, page, rowsPerPage]);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const hasRepaymentOnDay = (d) => {
+    if (!d) return false;
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    return repayments.some((r) => {
+      const due = new Date(r.dueDate);
+      return due.getFullYear() === y && due.getMonth() === m && due.getDate() === d;
+    });
   };
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Card sx={{ maxWidth: { xs: '100%', sm: '100%', md: '100%', lg: '100%' }, width: '100%', mx: 'auto', boxShadow: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Schedule sx={{ mr: 2, color: theme.palette.primary.main }} />
-          <Typography variant="h5" component="h2" fontWeight="bold">
-            الدفعات القادمة
-          </Typography>
-        </Box>
+    <div className="flex flex-col gap-6">
+      {/* Hero Section */}
+      <section className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 mb-1">
+              الدفعات القادمة
+            </h1>
+            <p className="text-slate-500 text-sm">
+              نظرة عامة على التدفقات النقدية لشهر {MONTH_NAMES[viewDate.getMonth()]} {viewDate.getFullYear()}
+            </p>
+          </div>
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+              <p className="text-xs font-bold text-slate-400 mb-1">إجمالي المستحق</p>
+              <p className="text-xl font-black text-slate-900 dark:text-white">{formatAmount(animatedTotal)}</p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <p className="text-xs font-bold text-green-600 dark:text-green-400 mb-1">تم السداد</p>
+              <p className="text-xl font-black text-green-600 dark:text-green-400">{formatAmount(animatedPaid)}</p>
+            </div>
+            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+              <p className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-1">المتبقي</p>
+              <p className="text-xl font-black text-orange-600 dark:text-orange-400">{formatAmount(animatedRemaining)}</p>
+            </div>
+          </div>
+          {totalExpected > 0 && (
+            <div className="mt-4">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-slate-500">نسبة السداد</span>
+                <span className="font-bold text-primary">{Math.round((totalPaid / totalExpected) * 100)}%</span>
+              </div>
+              <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${Math.min((totalPaid / totalExpected) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
-        {repayments && repayments.length > 0 ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <ScrollableTableContainer
-              maxHeight={650}
-            >
-              <Table stickyHeader sx={{ minWidth: 1000 }}>
-                <TableHead sx={{ bgcolor: theme.palette.grey[50] }}>
-                  <StyledTableRow>
-                    <StyledTableCell align="center">
-                      اسم العميل
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      تاريخ الاستحقاق
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      إجمالي المبلغ
-                    </StyledTableCell>
-                 
-                  </StyledTableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedRepayments.map((repayment) => (
-                    <StyledTableRow
-                      key={repayment.id}
-                      sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}
-                    >
-                      <StyledTableCell align="center">
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {repayment.loan?.client?.name || 'غير محدد'}
-                        </Box>
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        <Typography variant="body2">
-                          {formatDate(getDueDate(repayment))}
-                        </Typography>
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        <Typography variant="body2" fontWeight="bold">
-                          {formatCurrency((repayment.principalAmount || 0) + (repayment.interestAmount || 0))}
-                        </Typography>
-                      </StyledTableCell>
-                    </StyledTableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollableTableContainer>
-          </Box>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Schedule sx={{ fontSize: 64, color: theme.palette.grey[300], mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              لا توجد دفعات قادمة
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              جميع الدفعات تم تحصيلها أو لا توجد دفعات معلقة
-            </Typography>
-          </Box>
-        )}
-  
-        {repayments && repayments.length > rowsPerPage && (
-          <TablePagination
-            component="div"
-            count={repayments.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-            labelRowsPerPage="عدد الصفوف:"
-            labelDisplayedRows={({ from, to, count }) =>
-              `${from}-${to} من ${count}`
-            }
+        {/* Mini Calendar */}
+        <div className="w-full md:w-80 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              {MONTH_NAMES[viewDate.getMonth()]} {viewDate.getFullYear()}
+            </h3>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1))}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1))}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-7 gap-1 text-center">
+            {DAY_ABBR.map((abbr) => (
+              <span key={abbr} className="text-[10px] font-bold text-slate-400">
+                {abbr}
+              </span>
+            ))}
+            {calendarDays.map((d, i) => (
+              <div
+                key={i}
+                className={`p-1 text-xs rounded-full ${
+                  !d
+                    ? 'text-slate-300 dark:text-slate-600'
+                    : isToday(d)
+                    ? 'bg-primary text-white font-bold'
+                    : hasRepaymentOnDay(d)
+                    ? 'bg-primary/20 text-primary font-bold'
+                    : 'text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                {d || ''}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Payments Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="font-bold text-slate-900 dark:text-slate-100">
+            دفعات شهر {MONTH_NAMES[viewDate.getMonth()]} {viewDate.getFullYear()}
+          </h3>
+        </div>
+        <div className="p-4 sm:p-6">
+          <ResponsiveTable
+            columns={[
+              { id: 'clientName', label: 'اسم العميل', render: (_, row) => (
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{row.clientName || '—'}</span>
+              )},
+              { id: 'source', label: 'المصدر' },
+              { id: 'dueDate', label: 'تاريخ الاستحقاق', format: (v) => formatDueDate(v) },
+              { id: 'amount', label: 'المبلغ', format: (v) => formatAmount(v) },
+              { id: 'status', label: 'الحالة', render: (_, row) => (
+                <span
+                  className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                    row.status === 'قيد المراجعة'
+                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  }`}
+                >
+                  {row.status}
+                </span>
+              )},
+              { id: 'link', label: 'الإجراءات', render: (_, row) => (
+                <Link to={`/installments/${row.loanId}`} className="text-primary text-xs font-bold hover:underline">
+                  التفاصيل
+                </Link>
+              )},
+            ]}
+            data={repayments}
+            emptyMessage="لا توجد دفعات قادمة"
+            keyField="id"
           />
-        )}
-      </CardContent>
-    </Card>
+        </div>
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/30 flex justify-center">
+          <Link
+            to="/loans"
+            className="text-sm font-bold text-slate-500 hover:text-primary transition-colors flex items-center gap-2"
+          >
+            عرض جميع الدفعات القادمة
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 });
+
+UpcomingRepayments.displayName = 'UpcomingRepayments';
 
 export default UpcomingRepayments;

@@ -1,836 +1,318 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  useMediaQuery,
-} from '@mui/material';
-import { AttachMoney, TrendingUp, AccountBalance, TrendingDown, CheckCircle } from '@mui/icons-material';
+  Calendar,
+  TrendingUp,
+  BarChart3,
+  Wallet,
+  Check,
+  X,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getMonthlyCollection } from '../../pages/dashboard/dashboardApi';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { useTheme } from '@mui/material';
+import {
+  getMonthlyCollection,
+  getDailyCollectionTrend,
+  getPendingReviewRepayments,
+} from '../../pages/dashboard/dashboardApi';
 import { useCountUp } from '../../hooks/useCountUp';
-import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
+import { Link } from 'react-router-dom';
+import ResponsiveTable from './ResponsiveTable';
+
+const MONTH_NAMES = [
+  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+];
 
 const CollectionStats = React.memo(() => {
-  const [filter, setFilter] = useState('all');
-  const theme = useTheme();
-  const { isDarkMode } = useCustomTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const [hoveredBar, setHoveredBar] = React.useState(null);
   
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{
-          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          color: isDarkMode ? '#ffffff' : '#000000',
-          fontSize: '14px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{
-              margin: '4px 0',
-              color: entry.color || (isDarkMode ? '#ffffff' : '#000000')
-            }}>
-              {`${entry.name}: ${entry.value.toLocaleString()}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['monthly-collection', filter],
-    queryFn: () => getMonthlyCollection(filter),
+    queryKey: ['monthly-collection'],
+    queryFn: () => getMonthlyCollection(),
   });
 
-  const animatedPercentage = useCountUp(stats?.currentMonth?.collectionPercentage || 0, 600, !isLoading);
-  
-  const animatedBankDebit = useCountUp(stats?.bankAccount?.debit || 0, 600, !isLoading);
-  const animatedBankCredit = useCountUp(stats?.bankAccount?.credit || 0, 600, !isLoading);
-  const animatedBankBalance = useCountUp(stats?.bankAccount?.balance || 0, 600, !isLoading);
-  const animatedLoansBalance = useCountUp(stats?.loansBalance || 0, 600, !isLoading);
+  const { data: dailyTrend = [], isLoading: dailyLoading } = useQuery({
+    queryKey: ['dashboard', 'daily-collection-trend'],
+    queryFn: () => getDailyCollectionTrend(7),
+  });
 
-  const formatCurrency = (amount) => {
-    return amount?.toLocaleString() || '0';
+  const { data: pendingItems = [], isLoading: pendingLoading } = useQuery({
+    queryKey: ['dashboard', 'pending-review-repayments'],
+    queryFn: () => getPendingReviewRepayments(10),
+  });
+
+  const collectionPct = stats?.currentMonth?.collectionPercentage ?? 0;
+  const animatedPct = useCountUp(collectionPct, 600, !isLoading);
+  const targetAmount = stats?.currentMonth?.totalAmount ?? 0;
+  const achievedAmount = stats?.currentMonth?.paidUntilNow ?? 0;
+
+  const formatAmount = (n) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    return Number(n).toLocaleString('en-US');
   };
 
-  const collectionBarData = [
-    {
-      name: 'إجمالي المستحق',
-      value: stats?.totalRepayment || 0,
-      color: theme.palette.primary.main,
-    },
-    {
-      name: 'إجمالي المدفوع',
-      value: stats?.totalPaid || 0,
-      color: theme.palette.success.main,
-    },
-    {
-      name: 'المتبقي للتحصيل',
-      value: stats?.totalRemaining || 0,
-      color: theme.palette.error.main,
-    },
-  ];
+  const formatDate = (d) => {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
 
-  const bankAccountBarData = [
-    {
-      name: 'الوارد',
-      value: stats?.bankAccount?.debit || 0,
-      color: theme.palette.success.main,
-    },
-    {
-      name: 'الصادر',
-      value: stats?.bankAccount?.credit || 0,
-      color: theme.palette.error.main,
-    },
-    {
-      name: 'الرصيد',
-      value: stats?.bankAccount?.balance || 0,
-      color: theme.palette.primary.main,
-    },
-  ];
+  const currentMonthName = useMemo(() => {
+    // Use month from backend if available (0-indexed), otherwise fallback to current date
+    if (stats?.month !== undefined) {
+      return MONTH_NAMES[stats.month];
+    }
+    const d = stats?.range?.startDate ? new Date(stats.range.startDate) : new Date();
+    return MONTH_NAMES[d.getMonth()];
+  }, [stats?.month, stats?.range?.startDate]);
 
-  const repaymentsBarData = [
-    {
-      name: 'إجمالي التحصيلات',
-      value: stats?.currentMonth?.totalAmount || 0,
-      color: theme.palette.primary.main,
-    },
-    {
-      name: 'تم تحصيله',
-      value: stats?.currentMonth?.paidUntilNow || 0,
-      color: theme.palette.success.main,
-    },
-    {
-      name: 'المتبقي',
-      value: stats?.currentMonth?.remaining || 0,
-      color: theme.palette.warning.main,
-    },
-  ];
+  const currentYear = stats?.year ?? new Date().getFullYear();
+
+  const maxDailyValue = useMemo(() => {
+    const vals = dailyTrend.map((d) => d.collected).filter((v) => v > 0);
+    return Math.max(...vals, 1);
+  }, [dailyTrend]);
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress size={60} />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ width: '100vw', maxWidth: '100%', p: { xs: 1.5, sm: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 15,
-        mb: { xs: 3, sm: 4, md: 5 },
-        width: '100%',
-        maxWidth: '1200px'
-      }}>
-        <FormControl sx={{ minWidth: { xs: 120, sm: 140 } }} size="small">
-          <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>الفترة</InputLabel>
-          <Select
-            value={filter}
-            label="الفترة"
-            onChange={(e) => setFilter(e.target.value)}
-            size="small"
-            sx={{
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'divider',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.main',
-              },
-            }}
-          >
-            <MenuItem value="all">الكل</MenuItem>
-            <MenuItem value="daily">يومي</MenuItem>
-            <MenuItem value="monthly">شهري</MenuItem>
-            <MenuItem value="yearly">سنوي</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
+            التحصيل الشهري
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            متابعة أداء التحصيلات والتدفقات المالية - {currentMonthName}{' '}
+            {currentYear}
+          </p>
+        </div>
+      </div>
 
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
-        <Grid item xs={2.4} sm={2.4} md={2.4}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '100%', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-            border: `1px solid ${theme.palette.success.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.success.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.success.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.success.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.dark}10 100%)`,
-                border: `2px solid ${theme.palette.success.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.success.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.success.main}30`,
-                }
-              }}>
-                <TrendingUp sx={{ fontSize: '2rem', color: theme.palette.success.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                الوارد
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedBankDebit)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={2.4} sm={2.4} md={2.4}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '100%', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.error.main}15 0%, ${theme.palette.error.dark}08 100%)`,
-            border: `1px solid ${theme.palette.error.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.error.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.error.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.error.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.error.main}20 0%, ${theme.palette.error.dark}10 100%)`,
-                border: `2px solid ${theme.palette.error.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.error.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.error.main}30`,
-                }
-              }}>
-                <TrendingDown sx={{ fontSize: '2rem', color: theme.palette.error.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                الصادر
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedBankCredit)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={2.4} sm={2.4} md={2.4}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '100%', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
-            border: `1px solid ${theme.palette.primary.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.primary.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.primary.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.primary.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.primary.dark}10 100%)`,
-                border: `2px solid ${theme.palette.primary.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.primary.main}30`,
-                }
-              }}>
-                <AccountBalance sx={{ fontSize: '2rem', color: theme.palette.primary.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                رصيد الصندوق
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedBankBalance)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* رصيد السلف */}
-        <Grid item xs={2.4} sm={2.4} md={2.4}>
-          <Card sx={{
-            height: { xs: '200px', sm: '100%', md: '200px' },
-            width: { xs: '100%', sm: '100%', md: '250px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.warning.main}15 0%, ${theme.palette.warning.dark}08 100%)`,
-            border: `1px solid ${theme.palette.warning.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.warning.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.warning.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.warning.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}20 0%, ${theme.palette.warning.dark}10 100%)`,
-                border: `2px solid ${theme.palette.warning.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.warning.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.warning.main}30`,
-                }
-              }}>
-                <AccountBalance sx={{ fontSize: '2rem', color: theme.palette.warning.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                رصيد السلف
-              </Typography>
-              <Typography variant="h4" fontWeight="800" sx={{ 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {formatCurrency(animatedLoansBalance)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Summary Cards - Row 2: ملخص التحصيلات + نسبة التحصيل + المبلغ المتاح */}
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 }, justifyContent: 'center', maxWidth: '1200px', px: { xs: 1, sm: 0 } }}>
-
-        {/* ملخص التحصيلات الشهري */}
-        {stats?.currentMonth && (
-          <Grid item xs={12} sm={12} md={5}>
-            <Card sx={{
-              height: { xs: '300px', sm: '250px', md: '230px' },
-              width: { xs: '100%', sm: '100%', md: '650px' },
-              borderRadius: 4,
-              background: `linear-gradient(135deg, ${theme.palette.success.main}10 0%, ${theme.palette.success.dark}05 100%)`,
-              border: `1px solid ${theme.palette.success.main}20`,
-              boxShadow: `
-                0 2px 8px ${theme.palette.success.main}10,
-                0 8px 24px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.5)
-              `,
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '4px',
-                background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-              },
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: `
-                  0 4px 16px ${theme.palette.success.main}20,
-                  0 16px 48px rgba(0,0,0,0.12),
-                  inset 0 1px 0 rgba(255,255,255,0.6)
-                `,
-                borderColor: `${theme.palette.success.main}40`,
-              }
-            }}>
-              <CardContent sx={{ p: { xs: 2.5, sm: 3 }, position: 'relative', zIndex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
-                  <Box sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 48,
-                    height: 48,
-                    borderRadius: '16px',
-                    mr: 1.5,
-                  }}>
-                    <CheckCircle sx={{ fontSize: '1.75rem', color: theme.palette.success.main }} />
-                  </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{
-                    textAlign: 'center',
-                    background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}>
-                    ملخص التحصيلات الشهري
-                  </Typography>
-                </Box>
-                
-                <Grid container spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: { xs: 'center', sm: 'space-between' } }}>
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      p: 2.5,
-                      borderRadius: 3,
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.primary.dark}08 100%)`,
-                      border: `1px solid ${theme.palette.primary.main}30`,
-                      height: '100%',
-                      boxShadow: `0 2px 8px ${theme.palette.primary.main}10`,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: `0 4px 16px ${theme.palette.primary.main}20`,
-                      }
-                    }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                        إجمالي التحصيلات
-                      </Typography>
-                      <Typography variant="h3" fontWeight="800" sx={{
-                        fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}>
-                        {formatCurrency(stats?.currentMonth?.totalAmount || 0)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      p: 2.5,
-                      borderRadius: 3,
-                      background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.success.dark}08 100%)`,
-                      border: `1px solid ${theme.palette.success.main}30`,
-                      height: '100%',
-                      boxShadow: `0 2px 8px ${theme.palette.success.main}10`,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: `0 4px 16px ${theme.palette.success.main}20`,
-                      }
-                    }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                        تم تحصيله
-                      </Typography>
-                      <Typography variant="h3" fontWeight="800" sx={{
-                        fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                        background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}>
-                        {formatCurrency(stats?.currentMonth?.paidUntilNow || 0)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      p: 2.5,
-                      borderRadius: 3,
-                      background: `linear-gradient(135deg, ${theme.palette.warning.main}15 0%, ${theme.palette.warning.dark}08 100%)`,
-                      border: `1px solid ${theme.palette.warning.main}30`,
-                      height: '100%',
-                      boxShadow: `0 2px 8px ${theme.palette.warning.main}10`,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: `0 4px 16px ${theme.palette.warning.main}20`,
-                      }
-                    }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                        المتبقي
-                      </Typography>
-                      <Typography variant="h3" fontWeight="800" sx={{
-                        fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                        background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}>
-                        {formatCurrency(stats?.currentMonth?.remaining || 0)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* نسبة التحصيل + المبلغ المتاح */}
-        <Grid item xs={12} sm={12} md={4}>
-          <Card sx={{
-            height: { xs: '300px', sm: '250px', md: '230px' },
-            width: { xs: '100%', sm: '100%', md: '350px' },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.info.main}15 0%, ${theme.palette.info.dark}08 100%)`,
-            border: `1px solid ${theme.palette.info.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.info.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-            },
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.02)',
-              boxShadow: `
-                0 4px 16px ${theme.palette.info.main}20,
-                0 16px 48px rgba(0,0,0,0.12),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-              borderColor: `${theme.palette.info.main}40`,
-            }
-          }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 64,
-                height: 64,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.info.main}20 0%, ${theme.palette.info.dark}10 100%)`,
-                border: `2px solid ${theme.palette.info.main}30`,
-                mb: 2.5,
-                boxShadow: `0 4px 12px ${theme.palette.info.main}20`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: `0 6px 20px ${theme.palette.info.main}30`,
-                }
-              }}>
-                <TrendingUp sx={{ fontSize: '2rem', color: theme.palette.info.main }} />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: { xs: '0.75rem', sm: '0.875rem' }, fontWeight: 600, letterSpacing: '0.5px' }}>
-                نسبة التحصيل
-              </Typography>
-              <Typography variant="h3" fontWeight="800" sx={{ 
-                mb: 1, 
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                {animatedPercentage}%
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Bar Charts */}
-      <Box sx={{ width: '100%', maxWidth: '1200px', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
-        {/* Chart 1: ملخص التحصيل */}
-        <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 4,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}08 0%, ${theme.palette.primary.dark}05 100%)`,
-          border: `1px solid ${theme.palette.primary.main}20`,
-          boxShadow: `
-            0 2px 8px ${theme.palette.primary.main}10,
-            0 8px 24px rgba(0,0,0,0.08),
-            inset 0 1px 0 rgba(255,255,255,0.5)
-          `,
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'all 0.3s ease',
-          mb: 3,
-          '&:hover': {
-            boxShadow: `
-              0 4px 16px ${theme.palette.primary.main}15,
-              0 16px 48px rgba(0,0,0,0.1),
-              inset 0 1px 0 rgba(255,255,255,0.6)
-            `,
-          }
-        }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            ملخص التحصيل
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={collectionBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
+      {/* Gauge & Comparison Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Gauge */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center shadow-sm">
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-6">
+            نسبة التحصيل لهذا الشهر
+          </p>
+          <div className="relative w-[200px] h-[110px] mb-2">
+            <svg viewBox="0 0 200 110" className="w-full h-full">
+              {/* Background arc */}
+              <path
+                d="M 10 100 A 90 90 0 0 1 190 100"
+                fill="none"
+                stroke="#e2e8f0"
+                strokeWidth="16"
+                strokeLinecap="round"
+                className="dark:stroke-slate-700"
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {collectionBarData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        {/* Chart 2: حساب البنك */}
-        <Card sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          height: { xs: 300, sm: 350, md: 400 },
-          borderRadius: 4,
-          background: `linear-gradient(135deg, ${theme.palette.success.main}08 0%, ${theme.palette.success.dark}05 100%)`,
-          border: `1px solid ${theme.palette.success.main}20`,
-          boxShadow: `
-            0 2px 8px ${theme.palette.success.main}10,
-            0 8px 24px rgba(0,0,0,0.08),
-            inset 0 1px 0 rgba(255,255,255,0.5)
-          `,
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'all 0.3s ease',
-          mb: 3,
-          '&:hover': {
-            boxShadow: `
-              0 4px 16px ${theme.palette.success.main}15,
-              0 16px 48px rgba(0,0,0,0.1),
-              inset 0 1px 0 rgba(255,255,255,0.6)
-            `,
-          }
-        }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            حساب البنك
-          </Typography>
-          <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-            <BarChart data={bankAccountBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-              <YAxis 
-                width={isSmallScreen ? 40 : 60}
-                tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                axisLine={false}
-                tickLine={false}
+              {/* Filled arc based on percentage */}
+              <path
+                d="M 10 100 A 90 90 0 0 1 190 100"
+                fill="none"
+                stroke="#2e8a45"
+                strokeWidth="16"
+                strokeLinecap="round"
+                strokeDasharray={`${(Math.min(collectionPct, 100) / 100) * 283} 283`}
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-              <Bar dataKey="value">
-                {bankAccountBarData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl font-bold text-slate-900 dark:text-white">{animatedPct}%</p>
+            {stats?.changeFromLastMonth !== undefined && (
+              <div className={`flex items-center justify-center gap-1 text-sm font-bold mt-1 ${stats.changeFromLastMonth >= 0 ? 'text-primary' : 'text-red-500'}`}>
+                <TrendingUp className={`size-3.5 ${stats.changeFromLastMonth < 0 ? 'rotate-180' : ''}`} />
+                {stats.changeFromLastMonth >= 0 ? '+' : ''}{stats.changeFromLastMonth}% عن الشهر الماضي
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* Chart 3: ملخص التحصيلات الشهري */}
-        {stats?.currentMonth && (
-          <Card sx={{
-            p: { xs: 1.5, sm: 2, md: 3 },
-            height: { xs: 300, sm: 350, md: 400 },
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.palette.warning.main}08 0%, ${theme.palette.warning.dark}05 100%)`,
-            border: `1px solid ${theme.palette.warning.main}20`,
-            boxShadow: `
-              0 2px 8px ${theme.palette.warning.main}10,
-              0 8px 24px rgba(0,0,0,0.08),
-              inset 0 1px 0 rgba(255,255,255,0.5)
-            `,
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              boxShadow: `
-                0 4px 16px ${theme.palette.warning.main}15,
-                0 16px 48px rgba(0,0,0,0.1),
-                inset 0 1px 0 rgba(255,255,255,0.6)
-              `,
-            }
-          }}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-              ملخص التحصيلات الشهري
-            </Typography>
-            <ResponsiveContainer width="100%" height="90%" minWidth={280} minHeight={250}>
-              <BarChart data={repaymentsBarData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-                <YAxis 
-                  width={isSmallScreen ? 40 : 60}
-                  tick={{ fontSize: { xs: 12, sm: 14, md: 16 } }}
-                  axisLine={false}
-                  tickLine={false}
+        {/* Target & Achieved Cards */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 bg-primary/5 size-24 rounded-full group-hover:scale-110 transition-transform" />
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-3">
+              المبلغ المستهدف
+            </p>
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white">
+              {formatAmount(targetAmount)}
+            </h3>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className="bg-slate-300 dark:bg-slate-500 w-full h-full" />
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                المستهدف
+              </span>
+            </div>
+          </div>
+          <div className="bg-primary/5 dark:bg-primary/10 p-8 rounded-xl border border-primary/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 bg-primary/10 size-24 rounded-full group-hover:scale-110 transition-transform" />
+            <p className="text-primary/80 dark:text-primary/60 text-sm font-bold mb-3">
+              المحقق فعلياً
+            </p>
+            <h3 className="text-3xl font-black text-primary dark:text-white">
+              {formatAmount(achievedAmount)}
+            </h3>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-1.5 flex-1 bg-primary/20 rounded-full overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all"
+                  style={{ width: `${targetAmount > 0 ? Math.min((achievedAmount / targetAmount) * 100, 100) : 0}%` }}
                 />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: isSmallScreen ? '12px' : '14px' }} />
-                <Bar dataKey="value">
-                  {repaymentsBarData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        )}
-      </Box>
+              </div>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">
+                {targetAmount > 0 ? Math.round((achievedAmount / targetAmount) * 100) : 0}% مكتمل
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    </Box>
+      {/* Daily Bar Chart */}
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="flex justify-between items-center mb-8">
+          <h4 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <BarChart3 className="size-5 text-primary" />
+            التحصيل اليومي (آخر 7 أيام)
+          </h4>
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2">
+              <div className="size-3 bg-primary rounded-full" />
+              <span className="text-xs text-slate-500">المحصل</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="size-3 bg-slate-200 dark:bg-slate-600 rounded-full" />
+              <span className="text-xs text-slate-500">المتوقع</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-4">
+          {/* Y-Axis */}
+          <div className="flex flex-col justify-between h-48 py-2 text-[10px] text-slate-400 text-right">
+            <span>{formatAmount(maxDailyValue)}</span>
+            <span>{formatAmount(maxDailyValue * 0.75)}</span>
+            <span>{formatAmount(maxDailyValue * 0.5)}</span>
+            <span>{formatAmount(maxDailyValue * 0.25)}</span>
+            <span>0</span>
+          </div>
+          {/* Bars */}
+          <div className="flex-1 grid grid-cols-7 gap-4 items-end h-48 px-4 relative">
+            {dailyLoading ? (
+              <div className="col-span-7 flex justify-center py-12">
+                <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : dailyTrend.length === 0 ? (
+              <div className="col-span-7 text-center text-slate-500 py-8">لا توجد بيانات</div>
+            ) : (
+              dailyTrend.map((d, idx) => {
+                const collectedH = maxDailyValue > 0 ? (d.collected / maxDailyValue) * 100 : 0;
+                const hasData = d.collected > 0;
+                return (
+                  <div key={d.day} className="flex flex-col items-center gap-3 relative">
+                    <div className="w-full flex flex-col items-center justify-end h-36">
+                      {hasData ? (
+                        <div
+                          className="w-full bg-primary rounded-t-lg transition-all hover:opacity-80 min-h-[4px] cursor-pointer relative group"
+                          style={{ height: `${Math.max(collectedH, 15)}%` }}
+                          onMouseEnter={() => setHoveredBar(idx)}
+                          onMouseLeave={() => setHoveredBar(null)}
+                        >
+                          {hoveredBar === idx && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-slate-900 dark:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg whitespace-nowrap z-10">
+                              {formatAmount(d.collected)}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                                <div className="border-4 border-transparent border-t-slate-900 dark:border-t-slate-700" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-t-lg h-4" />
+                      )}
+                    </div>
+                    <span className="text-xs font-medium text-slate-400">{d.day}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Pending Table */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+          <h4 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Wallet className="size-5 text-primary" />
+            دفعات بانتظار الموافقة
+          </h4>
+          <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+            {pendingItems.length} معاملة معلقة
+          </span>
+        </div>
+        <div className="p-4 sm:p-6">
+          <ResponsiveTable
+            columns={[
+              { id: 'clientName', label: 'العميل', render: (_, row) => (
+                <span className="text-sm font-bold text-slate-900 dark:text-white">{row.clientName || '—'}</span>
+              )},
+              { id: 'reference', label: 'رقم المرجع' },
+              { id: 'amount', label: 'المبلغ', format: (v) => formatAmount(v) },
+              { id: 'dueDate', label: 'التاريخ', format: (v) => formatDate(v) },
+              { id: 'status', label: 'الحالة', render: (_, row) => (
+                <span className="inline-flex items-center gap-1.5 py-1 px-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                  <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {row.status}
+                </span>
+              )},
+              { id: 'actions', label: 'الإجراءات', render: (_, row) => (
+                <div className="flex gap-2">
+                  <Link
+                    to={`/installments/${row.loanId}`}
+                    className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all"
+                  >
+                    <Check className="size-4" />
+                  </Link>
+                  <button
+                    type="button"
+                    className="size-8 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              )},
+            ]}
+            data={pendingItems}
+            isLoading={pendingLoading}
+            emptyMessage="لا توجد معاملات معلقة"
+            keyField="id"
+          />
+        </div>
+        <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-center">
+          <Link
+            to="/loans"
+            className="text-primary text-sm font-bold hover:underline"
+          >
+            عرض جميع المعاملات المعلقة
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 });
+
+CollectionStats.displayName = 'CollectionStats';
 
 export default CollectionStats;

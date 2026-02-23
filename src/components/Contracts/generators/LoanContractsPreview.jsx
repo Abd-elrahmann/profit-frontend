@@ -24,7 +24,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Close as CloseIcon, Download, Print } from '@mui/icons-material';
-import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { isValidTemplate, injectContractData } from '../../../utilities/sanitize';
 
 const LoanContractsPreview = ({
   open,

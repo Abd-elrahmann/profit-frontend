@@ -1,3 +1,5 @@
+import React from 'react';
+
 export const DASHBOARD_MODULES = [
   'client-stats',
   'partner-stats',
@@ -8,10 +10,13 @@ export const DASHBOARD_MODULES = [
 ];
 
 export const DASHBOARD_TABS = [
-  { label: 'إحصائيات العملاء', permission: 'client-stats', index: 0 },
-  { label: 'إحصائيات الشركاء', permission: 'partner-stats', index: 1 },
-  { label: 'إحصائيات السلف', permission: 'loan-stats', index: 2 },
-  { label: 'التحصيل الشهري', permission: 'monthly-collection', index: 3 },
-  { label: 'الدفعات القادمة', permission: 'Upcoming-Repayments', index: 4 },
-  { label: 'آخر الأنشطة', permission: 'Last-Actions', index: 5 },
+  { label: 'إحصائيات العملاء', permission: 'client-stats', index: 0, Component: React.lazy(() => import('../../components/dashboardSections/ClientStats')) },
+  { label: 'إحصائيات الشركاء', permission: 'partner-stats', index: 1, Component: React.lazy(() => import('../../components/dashboardSections/PartnerStats')) },
+  { label: 'إحصائيات السلف', permission: 'loan-stats', index: 2, Component: React.lazy(() => import('../../components/dashboardSections/LoanStats')) },
+  { label: 'التحصيل الشهري', permission: 'monthly-collection', index: 3, Component: React.lazy(() => import('../../components/dashboardSections/CollectionStats')) },
+  { label: 'الدفعات القادمة', permission: 'Upcoming-Repayments', index: 4, Component: React.lazy(() => import('../../components/dashboardSections/UpcomingRepayments')) },
+  { label: 'آخر الأنشطة', permission: 'Last-Actions', index: 5, Component: React.lazy(() => import('../../components/dashboardSections/LastActions')) },
 ];
+
+/** عرض موحد للمحتوى - يستخدم في كل أقسام الداشبورد */
+export const DASHBOARD_CONTENT_MAX_WIDTH = 1200;
