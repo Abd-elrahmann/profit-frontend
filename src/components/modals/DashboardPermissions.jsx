@@ -45,6 +45,11 @@ const dashboardSections = [
     description: 'عرض التحصيل الشهري والأرباح المتوقعة'
   },
   {
+    module: 'expense-stats',
+    label: 'احصائيات المصاريف',
+    description: 'تحليل المصاريف وتوزيعها حسب الفئة'
+  },
+  {
     module: 'Upcoming-Repayments',
     label: 'الدفعات القادمة',
     description: 'عرض الدفعات القادمة'
@@ -143,6 +148,7 @@ const DashboardPermissions = ({
 
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-permissions'] });
+      await queryClient.refetchQueries({ queryKey: ['dashboard-permissions'] });
       refetchRoles();
       onClose();
     } catch (error) {

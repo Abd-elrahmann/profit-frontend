@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   Wallet,
   TrendingUp,
+  TrendingDown,
   Users,
   PieChart,
 } from 'lucide-react';
@@ -119,10 +120,18 @@ const PartnerStats = React.memo(() => {
             <h3 className="text-2xl font-black text-slate-900 dark:text-white">
               {formatAmount(animatedCapital)}
             </h3>
-            <p className="text-emerald-600 text-xs font-bold mt-1 flex items-center gap-1">
-              <TrendingUp className="size-3.5" />
-              +12.5% عن العام الماضي
-            </p>
+            {stats?.capitalTrend !== undefined && stats?.capitalTrend !== 0 && (
+              <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${
+                stats.capitalTrend >= 0 ? 'text-emerald-600' : 'text-red-600'
+              }`}>
+                {stats.capitalTrend >= 0 ? (
+                  <TrendingUp className="size-3.5" />
+                ) : (
+                  <TrendingDown className="size-3.5" />
+                )}
+                {stats.capitalTrend >= 0 ? '+' : ''}{stats.capitalTrend}% {stats.trendLabel || 'منذ الشهر الماضي'}
+              </p>
+            )}
           </div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
@@ -136,10 +145,18 @@ const PartnerStats = React.memo(() => {
             <h3 className="text-2xl font-black text-slate-900 dark:text-white">
               {formatAmount(animatedProfit)}
             </h3>
-            <p className="text-emerald-600 text-xs font-bold mt-1 flex items-center gap-1">
-              <TrendingUp className="size-3.5" />
-              +8.2% نمو سنوي
-            </p>
+            {stats?.profitTrend !== undefined && stats?.profitTrend !== 0 && (
+              <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${
+                stats.profitTrend >= 0 ? 'text-emerald-600' : 'text-red-600'
+              }`}>
+                {stats.profitTrend >= 0 ? (
+                  <TrendingUp className="size-3.5" />
+                ) : (
+                  <TrendingDown className="size-3.5" />
+                )}
+                {stats.profitTrend >= 0 ? '+' : ''}{stats.profitTrend}% {stats.trendLabel || 'منذ الشهر الماضي'}
+              </p>
+            )}
           </div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">

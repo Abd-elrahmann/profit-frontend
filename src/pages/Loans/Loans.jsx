@@ -1649,7 +1649,7 @@ const Loans = () => {
                   <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
                     {unpostedLoanJournals.count === 1
                       ? `يوجد ${unpostedLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedLoanJournals.items?.[0]?.clientName || unpostedLoanJournals.items?.[0]?.loanCode || ""}.`
-                      : `يوجد ${unpostedLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${unpostedLoanJournals.items?.map((i) => i.clientName || i.loanCode).filter(Boolean).join("، ") || ""}.`}
+                      : `يوجد ${unpostedLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${[...new Set(unpostedLoanJournals.items?.map((i) => i.clientName || i.loanCode).filter(Boolean) || [])].join("، ")}.`}
                   </p>
                   <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
                     {unpostedLoanJournals.count === 1
@@ -1673,7 +1673,7 @@ const Loans = () => {
                   <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
                     {unpostedSmallLoanJournals.count === 1
                       ? `يوجد ${unpostedSmallLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedSmallLoanJournals.items?.[0]?.loanName || ""}.`
-                      : `يوجد ${unpostedSmallLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${unpostedSmallLoanJournals.items?.map((i) => i.loanName).filter(Boolean).join("، ") || ""}.`}
+                      : `يوجد ${unpostedSmallLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${[...new Set(unpostedSmallLoanJournals.items?.map((i) => i.loanName).filter(Boolean) || [])].join("، ")}.`}
                   </p>
                   <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
                     {unpostedSmallLoanJournals.count === 1

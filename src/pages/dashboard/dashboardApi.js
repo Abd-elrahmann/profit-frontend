@@ -40,6 +40,14 @@ export const getMonthlyCollection = async () => {
   return response.data;
 };
 
+export const getExpenseStats = async (filter = 'all', period = 'first') => {
+  let params = buildFilterParams(filter);
+  params += params ? '&' : '?';
+  params += `period=${period}`;
+  const response = await Api.get(`/api/dashboard/expense-stats${params}`);
+  return response.data;
+};
+
 export const getUpcomingRepayments = async (limit = 20, days = 7) => {
   const response = await Api.get(`/api/dashboard/Upcoming-Repayments?limit=${limit}&days=${days}`);
   return response.data;

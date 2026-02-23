@@ -24,7 +24,7 @@ export function useDashboardPermissions() {
       }
     },
     staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     enabled: !!permissions?.length,
   });

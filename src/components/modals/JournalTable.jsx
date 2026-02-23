@@ -269,7 +269,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               المصدر
             </StyledTableCell>
-            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+            <StyledTableCell align="center" sx={{ maxWidth: 180, width: 180, whiteSpace: 'normal', wordBreak: 'break-word' }}>
               الوصف
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -334,7 +334,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {getJournalSourceTypeText(journal.sourceType)}
                 </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                <StyledTableCell align="center" sx={{ maxWidth: 180, width: 180, whiteSpace: 'normal', wordBreak: 'break-word' }}>
                   {journal.description}
                 </StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>

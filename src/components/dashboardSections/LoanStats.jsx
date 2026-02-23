@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   Wallet,
   TrendingUp,
+  TrendingDown,
   Clock,
   CheckCircle,
   Eye,
@@ -97,10 +98,20 @@ const LoanStats = React.memo(() => {
             <p className="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-black">
               {formatAmount(animatedTotalAmount)}
             </p>
-            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
-              <TrendingUp className="size-3.5" />
-              +12.5% عن الشهر الماضي
-            </div>
+            {stats?.loans?.totalAmountTrend !== undefined && stats?.loans?.totalAmountTrend !== 0 && (
+              <div className={`flex items-center gap-1 text-sm font-bold ${
+                stats.loans.totalAmountTrend >= 0 
+                  ? 'text-emerald-600 dark:text-emerald-400' 
+                  : 'text-red-600 dark:text-red-400'
+              }`}>
+                {stats.loans.totalAmountTrend >= 0 ? (
+                  <TrendingUp className="size-3.5" />
+                ) : (
+                  <TrendingDown className="size-3.5" />
+                )}
+                {stats.loans.totalAmountTrend >= 0 ? '+' : ''}{stats.loans.totalAmountTrend}% {stats.loans.trendLabel || 'عن الشهر الماضي'}
+              </div>
+            )}
           </div>
         </div>
 

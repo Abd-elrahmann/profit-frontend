@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, Wallet, CreditCard, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, CreditCard, CheckCircle } from 'lucide-react';
 import { getClientStats, getLoanStats, getTopCommittedClients, getClientRegistrationGrowth } from '../../pages/dashboard/dashboardApi';
 import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext';
 import { useCountUp } from '../../hooks/useCountUp';
@@ -91,11 +91,28 @@ const ClientStats = React.memo(() => {
             <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedCount}</h3>
           </div>
           <div className="flex flex-col items-end">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-              <TrendingUp className="size-3.5 ml-1" />
-              +12.5%
-            </span>
-            <p className="text-[11px] text-slate-400 mt-2">منذ الشهر الماضي</p>
+            {stats?.clientsTrend !== undefined && stats?.clientsTrend !== 0 && (
+              <>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  stats.clientsTrend >= 0 
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                }`}>
+                  {stats.clientsTrend >= 0 ? (
+                    <TrendingUp className="size-3.5 ml-1" />
+                  ) : (
+                    <TrendingDown className="size-3.5 ml-1" />
+                  )}
+                  {stats.clientsTrend >= 0 ? '+' : ''}{stats.clientsTrend}%
+                </span>
+                <p className="text-[11px] text-slate-400 mt-2">{stats.trendLabel || 'منذ الشهر الماضي'}</p>
+              </>
+            )}
+            {(stats?.clientsTrend === undefined || stats?.clientsTrend === 0) && (
+              <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <TrendingUp className="size-5 text-primary" />
+              </div>
+            )}
           </div>
         </div>
         <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
@@ -103,8 +120,29 @@ const ClientStats = React.memo(() => {
             <p className="text-slate-500 text-sm font-medium mb-1">السلف النشطة</p>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedActiveLoans}</h3>
           </div>
-          <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center">
-            <CreditCard className="size-5 text-primary" />
+          <div className="flex flex-col items-end">
+            {loanStats?.loans?.activeLoansTrend !== undefined && loanStats?.loans?.activeLoansTrend !== 0 && (
+              <>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  loanStats.loans.activeLoansTrend >= 0 
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                }`}>
+                  {loanStats.loans.activeLoansTrend >= 0 ? (
+                    <TrendingUp className="size-3.5 ml-1" />
+                  ) : (
+                    <TrendingDown className="size-3.5 ml-1" />
+                  )}
+                  {loanStats.loans.activeLoansTrend >= 0 ? '+' : ''}{loanStats.loans.activeLoansTrend}%
+                </span>
+                <p className="text-[11px] text-slate-400 mt-2">{loanStats.loans.trendLabel || 'منذ الشهر الماضي'}</p>
+              </>
+            )}
+            {(loanStats?.loans?.activeLoansTrend === undefined || loanStats?.loans?.activeLoansTrend === 0) && (
+              <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <CreditCard className="size-5 text-primary" />
+              </div>
+            )}
           </div>
         </div>
         <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
@@ -114,8 +152,29 @@ const ClientStats = React.memo(() => {
               {formatAmount(animatedTotalAmount)}
             </h3>
           </div>
-          <div className="size-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-            <Wallet className="size-5 text-blue-600 dark:text-blue-400" />
+          <div className="flex flex-col items-end">
+            {loanStats?.loans?.totalAmountTrend !== undefined && loanStats?.loans?.totalAmountTrend !== 0 && (
+              <>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  loanStats.loans.totalAmountTrend >= 0 
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                }`}>
+                  {loanStats.loans.totalAmountTrend >= 0 ? (
+                    <TrendingUp className="size-3.5 ml-1" />
+                  ) : (
+                    <TrendingDown className="size-3.5 ml-1" />
+                  )}
+                  {loanStats.loans.totalAmountTrend >= 0 ? '+' : ''}{loanStats.loans.totalAmountTrend}%
+                </span>
+                <p className="text-[11px] text-slate-400 mt-2">{loanStats.loans.trendLabel || 'منذ الشهر الماضي'}</p>
+              </>
+            )}
+            {(loanStats?.loans?.totalAmountTrend === undefined || loanStats?.loans?.totalAmountTrend === 0) && (
+              <div className="size-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <Wallet className="size-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -271,22 +330,77 @@ const ClientStats = React.memo(() => {
           <ResponsiveTable
             columns={[
               { id: 'name', label: 'العميل', render: (_, row) => (
-                <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{row.name}</span>
-              )},
-              { id: 'commitment', label: 'نقاط الالتزام', render: (_, row) => (
-                <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full" style={{ width: `${row.commitment}%` }} />
-                  </div>
-                  <span className="text-sm font-bold">{row.commitment}%</span>
+                <div className="flex justify-center">
+                  <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{row.name}</span>
                 </div>
               )},
-              { id: 'totalPaid', label: 'إجمالي المسدد', format: (v) => Number(v || 0).toLocaleString('en-US') },
-              { id: 'payments', label: 'عدد الدفعات', render: (_, row) => `${row.paidCount || 0}/${row.paymentsCount || 0}` },
+              { id: 'commitment', label: 'نقاط الالتزام', render: (_, row) => (
+                <div className="flex justify-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="bg-primary h-full rounded-full" style={{ width: `${row.commitment}%` }} />
+                    </div>
+                    <span className="text-sm font-bold">{row.commitment}%</span>
+                  </div>
+                </div>
+              )},
+              {
+                id: 'loans',
+                label: 'السلف',
+                render: (_, row) => (
+                  <div className="flex justify-center">
+                    <span className="text-sm">
+                      {row.completedLoansCount ?? 0} مكتملة من {row.loansCount ?? 0}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                id: 'totalPaid',
+                label: 'المسدد لكل سلفة',
+                render: (_, row) => {
+                  const items = (row.loansPayments || []).slice(0, 3);
+                  return (
+                    <div className="flex justify-center">
+                      <div className="flex flex-col gap-1 items-center">
+                        {items.map((lp, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-sm">
+                            <span className="text-slate-500 text-xs">سلفة {i + 1}:</span>
+                            <span className="font-bold">{formatAmount(lp.paidAmount ?? 0)}</span>
+                          </span>
+                        ))}
+                        {items.length === 0 && <span className="text-slate-500">—</span>}
+                      </div>
+                    </div>
+                  );
+                },
+              },
+              {
+                id: 'loansPayments',
+                label: 'دفعات كل سلفة',
+                render: (_, row) => {
+                  const items = (row.loansPayments || []).slice(0, 3);
+                  return (
+                    <div className="flex justify-center">
+                      <div className="flex flex-col gap-1 items-center">
+                        {items.map((lp, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-sm">
+                            <span className="text-slate-500 text-xs">سلفة {i + 1}:</span>
+                            <span className="font-bold">{lp.paidCount}/{lp.paymentsCount}</span>
+                          </span>
+                        ))}
+                        {items.length === 0 && <span className="text-slate-500">—</span>}
+                      </div>
+                    </div>
+                  );
+                },
+              },
               { id: 'status', label: 'الحالة', render: (_, row) => (
-                <span className="inline-flex px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">
-                  {getCommitmentLabel(row.commitment)}
-                </span>
+                <div className="flex justify-center">
+                  <span className="inline-flex px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">
+                    {getCommitmentLabel(row.commitment)}
+                  </span>
+                </div>
               )},
             ]}
             data={topClients}
