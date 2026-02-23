@@ -36,8 +36,8 @@ const dashboardSections = [
   },
   {
     module: 'loan-stats',
-    label: 'إحصائيات السلف والقروض',
-    description: 'عرض إحصائيات السلف والقروض والبنك'
+    label: 'إحصائيات السلف',
+    description: 'عرض إحصائيات السلف والبنك'
   },
   {
     module: 'monthly-collection',

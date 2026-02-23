@@ -100,7 +100,7 @@ const ClientStats = React.memo(() => {
         </div>
         <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-slate-500 text-sm font-medium mb-1">القروض النشطة</p>
+            <p className="text-slate-500 text-sm font-medium mb-1">السلف النشطة</p>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedActiveLoans}</h3>
           </div>
           <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center">

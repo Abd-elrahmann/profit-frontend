@@ -84,7 +84,7 @@ const LastActions = React.memo(() => {
 
   const getScreenTitle = (screen) => {
     const map = {
-      Loans: 'القروض والطلبات',
+      Loans: 'السلف والطلبات',
       Repayments: 'المدفوعات والتحصيل',
       Journals: 'القيود اليومية',
       Partners: 'العملاء والمسؤولين',
@@ -138,7 +138,7 @@ const LastActions = React.memo(() => {
                 className="w-full rounded-lg border border-primary/20 bg-white dark:bg-slate-800 text-slate-900 dark:text-white h-12 px-4 pr-10 focus:ring-primary focus:border-primary appearance-none"
               >
                 <option value="all">جميع الأنشطة</option>
-                <option value="loans">القروض والطلبات</option>
+                <option value="loans">السلف والطلبات</option>
                 <option value="payments">المدفوعات والتحصيل</option>
                 <option value="journals">القيود اليومية</option>
                 <option value="partners">العملاء والمسؤولين</option>
