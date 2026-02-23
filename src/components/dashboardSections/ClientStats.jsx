@@ -43,12 +43,12 @@ const ClientStats = React.memo(() => {
   const pieData = useMemo(() => {
     const total = stats?.count || 1;
     const active = stats?.activeCount || 0;
-    const overdue = stats?.overdueCount || 0;
-    const late = Math.max(0, total - active - overdue);
+    const completed = stats?.completedCount || 0;
+    const defaulted = stats?.overdueCount || 0;
     return [
       { label: 'نشط', value: Math.round((active / total) * 100) || 0, color: '#2e8a45' },
-      { label: 'متأخر', value: Math.round((late / total) * 100) || 0, color: '#f59e0b' },
-      { label: 'متعثر', value: Math.round((overdue / total) * 100) || 0, color: '#ef4444' },
+      { label: 'منتهي', value: Math.round((completed / total) * 100) || 0, color: '#f59e0b' },
+      { label: 'متعثر', value: Math.round((defaulted / total) * 100) || 0, color: '#ef4444' },
     ];
   }, [stats]);
 
