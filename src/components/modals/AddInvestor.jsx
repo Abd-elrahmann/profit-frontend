@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 import Api, { handleApiError } from "../../config/Api";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
-import ContractGenerator from "../contracts/generators/ContractGenerator";
+import ContractGenerator from "../Contracts/generators/ContractGenerator";
 import { useQueryClient } from "@tanstack/react-query";
 const AddInvestor = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
