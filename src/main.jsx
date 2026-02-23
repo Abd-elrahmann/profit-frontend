@@ -6,6 +6,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import i18next from 'i18next'
 import './config/translationConfig.js'
+import './index.css'
 document.documentElement.lang = 'ar'
 document.documentElement.dir = 'rtl'
 i18next.changeLanguage('ar')
