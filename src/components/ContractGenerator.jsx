@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import html2pdf from 'html2pdf.js';
 import ContractPreview from './ContractPreview';
-import Api, { handleApiError } from '../../../config/Api';
-import { notifySuccess, notifyError } from '../../../utilities/toastify';
+import Api, { handleApiError } from '../config/Api';
+import { notifySuccess, notifyError } from '../utilities/toastify';
 
 const numberToArabicWords = (num) => {
   if (num === null || num === undefined || isNaN(num)) {

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import PageSkeleton from '../../../components/common/PageSkeleton';
+import PageSkeleton from '../../../components/PageSkeleton';
 import { useDashboardFilter } from '../DashboardFilterContext';
 
 const TabPanel = React.memo(({ children, value, index, tabTitle }) => {

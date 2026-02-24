@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
-import Api, { handleApiError } from "../../../config/Api";
-import { notifyError } from "../../../utilities/toastify";
+import Api, { handleApiError } from "../config/Api";
+import { notifyError } from "../utilities/toastify";
 
 const numberToArabicWords = (num) => {
   const ones = [

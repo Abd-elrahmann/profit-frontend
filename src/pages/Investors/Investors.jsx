@@ -20,7 +20,7 @@ import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
 import TransactionModal from "../../components/modals/TransactionModal";
 import WithdrawModal from "../../components/modals/WithdrawModal";
-import ContractGenerator from "../../components/Contracts/generators/ContractGenerator";
+import ContractGenerator from "../../components/ContractGenerator";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";

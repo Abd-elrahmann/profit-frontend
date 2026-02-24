@@ -1,7 +1,8 @@
+
 /**
- * InstallmentSettlementPreview
+ * PaymentProofPreview
  *
- * Displays legally approved installment settlement receipt templates.
+ * Displays legally approved payment proof receipt templates.
  * HTML templates are internally seeded and trusted from the database.
  * Dynamic values are sanitized before injection to prevent XSS attacks.
  * All templates undergo validation to ensure they contain no malicious content.
@@ -21,58 +22,52 @@ import {
   Divider,
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
-import { isValidTemplate, injectContractData } from '../../../utilities/sanitize';
+import { isValidTemplate, injectContractData } from '../utilities/sanitize';
 
-const InstallmentSettlementPreview = ({
+const PaymentProofPreview = ({
   open,
   onClose,
-  settlementHtml,
-  onSaveSettlement,
+  paymentProofHtml,
+  onSaveProof,
   loading = false,
   clientName = "",
   installmentAmount = 0,
-  settlementData = {} 
+  discount = 0,
+  paymentData = {} // Additional dynamic data for template injection
 }) => {
-  const safeSettlementHtml = React.useMemo(() => {
-    if (!settlementHtml) return '';
+  const finalAmount = Math.max(0, installmentAmount - discount);
+
+  // Safely process payment proof HTML with XSS protection
+  const safePaymentProofHtml = React.useMemo(() => {
+    if (!paymentProofHtml) return '';
 
     try {
-      if (!isValidTemplate(settlementHtml)) {
-        console.error('Invalid settlement template: contains potentially dangerous content');
-        return '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب التسوية غير آمن</div>';
+      // Validate template safety
+      if (!isValidTemplate(paymentProofHtml)) {
+        console.error('Invalid payment proof template: contains potentially dangerous content');
+        return '<div style="color: red; text-align: center; padding: 20px;">خطأ: قالب إيصال السداد غير آمن</div>';
       }
 
-      return injectContractData(settlementHtml, settlementData);
+      // Inject additional sanitized data if provided
+      return injectContractData(paymentProofHtml, paymentData);
     } catch (error) {
-      console.error('Error processing settlement template:', error);
-      return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب التسوية</div>';
+      console.error('Error processing payment proof template:', error);
+      return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب إيصال السداد</div>';
     }
-  }, [settlementHtml, settlementData]);
-
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    }
-  };
-
-  const handleSaveAndClose = async () => {
-    if (onSaveSettlement) {
-      await onSaveSettlement();
-      handleClose();
-    }
-  };
+  }, [paymentProofHtml, paymentData]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="lg"
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
+      fullScreen={true}
       dir="rtl"
       PaperProps={{
         sx: {
           borderRadius: 2,
-          maxHeight: '90vh'
+          maxHeight: '100vh'
         }
       }}
     >
@@ -91,15 +86,20 @@ const InstallmentSettlementPreview = ({
       >
         <Box>
           <Typography variant="h6" fontWeight="bold">
-            معاينة سند التسوية
+            معاينة إيصال السداد
           </Typography>
           {clientName && (
             <Typography variant="body2" color="text.secondary">
-              العميل: {clientName} - المبلغ: {installmentAmount.toLocaleString()} ر.س
+              العميل: {clientName} - المبلغ: {finalAmount.toLocaleString()} ر.س
+              {discount > 0 && (
+                <span style={{ color: '#d32f2f' }}>
+                  {' '}({installmentAmount.toLocaleString()} - خصم {discount.toLocaleString()})
+                </span>
+              )}
             </Typography>
           )}
         </Box>
-        <IconButton onClick={handleClose} size="small">
+        <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -112,10 +112,10 @@ const InstallmentSettlementPreview = ({
         }
       }}>
         <Paper 
-          id="settlement-receipt-content"
+          id="payment-proof-content"
           sx={{ 
-            m: 1, 
-            p: 1, 
+            m: 3, 
+            p: 4, 
             minHeight: '500px',
             bgcolor: 'white',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -130,9 +130,9 @@ const InstallmentSettlementPreview = ({
             }
           }}
         >
-          {safeSettlementHtml ? (
+          {safePaymentProofHtml ? (
             <Box
-              dangerouslySetInnerHTML={{ __html: safeSettlementHtml }}
+              dangerouslySetInnerHTML={{ __html: safePaymentProofHtml }}
               sx={{
                 '& *': {
                   fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
@@ -166,7 +166,7 @@ const InstallmentSettlementPreview = ({
                 لا يوجد محتوى للعرض
               </Typography>
               <Typography variant="body2">
-                يرجى التأكد من وجود قالب السند وبيانات العميل
+                يرجى التأكد من وجود قالب الإيصال وبيانات العميل
               </Typography>
             </Box>
           )}
@@ -187,10 +187,11 @@ const InstallmentSettlementPreview = ({
           }
         }}
       >
-        <Button
-          onClick={handleClose}
+        <Button 
+          onClick={onClose}
+          disabled={loading}
           variant="outlined"
-          sx={{
+          sx={{ 
             minWidth: '100px',
             borderColor: 'grey.300',
             color: 'text.secondary',
@@ -202,23 +203,22 @@ const InstallmentSettlementPreview = ({
         >
           إغلاق
         </Button>
-    
+
         <Button
           variant="contained"
           startIcon={<Download sx={{marginLeft: '10px'}} />}
-          onClick={handleSaveAndClose} 
-          disabled={loading || !settlementHtml}
+          onClick={onSaveProof}
+          disabled={loading || !paymentProofHtml}
           sx={{
             bgcolor: "primary.main",
-            "&:hover": { bgcolor: "#2563EB" },
-            minWidth: '140px'
+            minWidth: '140px',
+            "&:hover": { bgcolor: "primary.main" },
           }}
         >
-          {loading ? 'جاري الحفظ...' : 'حفظ السند'}
+          {loading ? 'جاري الحفظ...' : 'حفظ الإيصال'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-
-export default InstallmentSettlementPreview;
+export default PaymentProofPreview;

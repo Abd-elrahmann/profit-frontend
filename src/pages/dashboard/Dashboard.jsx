@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import PageSkeleton from '../../components/common/PageSkeleton';
+import PageSkeleton from '../../components/PageSkeleton';
 import { useDashboardPermissions } from './useDashboardPermissions';
 import { TabPanel, DashboardTabs, DashboardEmptyState, DashboardHeader } from './components';
 import { DashboardFilterProvider } from './DashboardFilterContext';
