@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  Stack,
-  Divider,
-  Alert,
-  Chip,
-  useMediaQuery,
-} from "@mui/material";
+import { useMediaQuery } from "@mui/material";
 import { debounce } from "../../utilities/debounce";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import {
   getClients,
   createLoan,
@@ -21,6 +12,7 @@ import {
   transferPartialLoanAmount,
   getUnpostedSmallLoanJournals,
   getUnpostedLoanJournals,
+  getLoans,
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
@@ -186,6 +178,30 @@ const Loans = () => {
     enabled: activeTab === 0 || activeTab === 1,
     retry: 1,
   });
+
+  const [debouncedLoansSearchForCounts, setDebouncedLoansSearchForCounts] = useState(loansTableSearchQuery);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedLoansSearchForCounts(loansTableSearchQuery), 500);
+    return () => clearTimeout(t);
+  }, [loansTableSearchQuery]);
+
+  const statusCountsQueries = useQueries({
+    queries: ["PENDING", "ACTIVE", "COMPLETED"].map((status) => ({
+      queryKey: ["loans-count", status, debouncedLoansSearchForCounts],
+      queryFn: () => getLoans(1, debouncedLoansSearchForCounts, 1, status),
+      enabled: activeTab === 0,
+      retry: 1,
+    })),
+  });
+
+  const statusCounts = useMemo(
+    () => ({
+      PENDING: statusCountsQueries[0]?.data?.total ?? 0,
+      ACTIVE: statusCountsQueries[1]?.data?.total ?? 0,
+      COMPLETED: statusCountsQueries[2]?.data?.total ?? 0,
+    }),
+    [statusCountsQueries]
+  );
 
   const { data: loansNeedingContracts } = useQuery({
     queryKey: ["loans-needing-contracts"],
@@ -1145,14 +1161,14 @@ const Loans = () => {
       const formattedTotalInterest = parseFloat(totalInterestAmount.toFixed(2));
 
       setLoanForm({
-        amount: loan.amount.toString(),
+        amount: (loan.amount ?? 0).toString(),
         totalInterest: formattedTotalInterest.toString(),
-        interestRate: loan.interestRate.toString(),
+        interestRate: (loan.interestRate ?? 0).toString(),
         paymentAmount: loan.paymentAmount?.toString() || "",
-        type: loan.type,
-        source: loan.source,
-        startDate: loan.startDate.split("T")[0],
-        repaymentDay: loan.repaymentDay ? loan.repaymentDay.split("T")[0] : "",
+        type: loan.type || "",
+        source: loan.source || "",
+        startDate: loan.startDate ? String(loan.startDate).split("T")[0] : "",
+        repaymentDay: loan.repaymentDay ? String(loan.repaymentDay).split("T")[0] : "",
         issuanceCity: loan.issuanceCity || "",
         paymentCity: loan.paymentCity || "",
         promissoryNoteType: loan.promissoryNoteType || "",
@@ -1395,155 +1411,88 @@ const Loans = () => {
 
 
   return (
-    <Box
-      sx={{
-        bgcolor: 'background.paper',
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className="flex min-h-screen flex-col bg-white dark:bg-slate-900">
       <Helmet>
         <title>السلف</title>
         <meta name="description" content="السلف" />
       </Helmet>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: isSmallScreen ? "column" : "row-reverse",
-          flex: 1,
-          height: isSmallScreen ? "auto" : "calc(100vh - 80px)",
-          width: "100%",
-        }}
+      <div
+        className={`flex w-full flex-1 ${isSmallScreen ? "flex-col" : "flex-row-reverse"} ${isSmallScreen ? "h-auto" : "h-[calc(100vh-80px)]"}`}
       >
         {activeTab === 1 && !isSmallScreen && (
-          <Box
-            sx={{
-              width: isSmallScreen ? "300px" : "350px",
-              bgcolor: 'background.paper',
-              height: "100%",
-              overflowY: "auto",
-              flexShrink: 0,
-            }}
-          >
+          <div className="flex h-full w-[350px] shrink-0 flex-col overflow-y-auto bg-white dark:bg-slate-900">
             {!isClientConversion && (
-              <Box
-                sx={{
-                  p: isTablet ? 2 : 3,
-                }}
-              >
-                <Typography
-                  variant={isTablet ? "subtitle1" : "h6"}
-                  fontWeight="bold"
-                  mb={isTablet ? 2 : 3}
-                >
+              <div className={isTablet ? "p-4" : "p-6"}>
+                <h3 className={`font-bold ${isTablet ? "mb-4 text-base" : "mb-6 text-lg"}`}>
                   محاكاة السلفة
-                </Typography>
+                </h3>
               {simulationSummary && loanForm.type ? (
-                <Stack spacing={3}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography color="text.secondary">
+                <div className="flex flex-col gap-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
                       {simulationSummary.loanType === "DAILY"
                         ? "عدد الأيام"
                         : simulationSummary.loanType === "WEEKLY"
                         ? "عدد الأسابيع"
                         : "عدد الأشهر"}
-                    </Typography>
-                    <Typography
-                      color="primary.main"
-                      fontWeight="bold"
-                      fontSize="20px"
-                    >
+                    </span>
+                    <span className="text-xl font-bold text-primary">
                       {simulationSummary.durationText}
-                    </Typography>
-                  </Box>
+                    </span>
+                  </div>
 
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography color="text.secondary">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
                       إجمالي الفائدة
-                    </Typography>
-                    <Typography color="#333" fontSize="16px">
+                    </span>
+                    <span className="text-base text-slate-800 dark:text-slate-200">
                       {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
-                    </Typography>
-                  </Box>
+                    </span>
+                  </div>
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography color="text.secondary">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
                       المبلغ الإجمالي المستحق
-                    </Typography>
-                    <Typography color="#333" fontSize="16px">
+                    </span>
+                    <span className="text-base text-slate-800 dark:text-slate-200">
                       {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
-                    </Typography>
-                  </Box>
+                    </span>
+                  </div>
 
-                  <Divider />
+                  <hr className="border-slate-200 dark:border-slate-700" />
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography color="text.secondary">حالة السلفة</Typography>
-                    <Chip
-                      label={
-                        isViewMode ? "عرض" : isEditMode ? "تحت التعديل" : "جديد"
-                      }
-                      sx={{
-                        backgroundColor: isViewMode
-                          ? "rgba(100, 100, 100, 0.2)"
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">حالة السلفة</span>
+                    <span
+                      className={`rounded-lg border px-3 py-1 text-xs font-bold ${
+                        isViewMode
+                          ? "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                           : isEditMode
-                          ? "rgba(214, 158, 46, 0.2)"
-                          : "rgba(56, 161, 105, 0.2)",
-                        color: isViewMode
-                          ? "#666"
-                          : isEditMode
-                          ? "#D69E2E"
-                          : "#38A169",
-                        fontWeight: "bold",
-                      }}
-                    />
-                  </Box>
-                </Stack>
-              ) : (
-                <Alert severity="info">أدخل بيانات السلفة لعرض المحاكاة</Alert>
+                          ? "border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                          : "border-primary/20 bg-primary/10 text-primary"
+                      }`}
+                    >
+                      {isViewMode ? "عرض" : isEditMode ? "تحت التعديل" : "جديد"}
+                    </span>
+                  </div>
+                </div>
+              ) : !isViewMode && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                  أدخل بيانات السلفة لعرض المحاكاة
+                </div>
               )}
-            </Box>
+            </div>
             )}
 
-            <Box sx={{ p: isTablet ? 2 : 3 }}>
-              <Typography
-                variant={isTablet ? "subtitle1" : "h6"}
-                fontWeight="bold"
-                mb={isTablet ? 2 : 3}
-              >
+            <div className={isTablet ? "p-4" : "p-6"}>
+              <h3 className={`font-bold ${isTablet ? "mb-4 text-base" : "mb-6 text-lg"}`}>
                 الإجراءات
-              </Typography>
-              <Stack spacing={2}>
+              </h3>
+              <div className="flex flex-col gap-3">
                 {isClientConversion && (
                   <>
-                    <Button
-                      variant="contained"
+                    <button
+                      type="button"
                       onClick={() => {
                         if (!selectedClientForConversion) {
                           notifyError("يرجى اختيار العميل الجديد أولاً");
@@ -1557,25 +1506,17 @@ const Loans = () => {
                         setShowConversionConfirmModal(true);
                       }}
                       disabled={!selectedClientForConversion}
-                      sx={{
-                        bgcolor: selectedClientForConversion ? "primary.main" : "grey.400",
-                        height: isTablet ? "44px" : "48px",
-                        fontSize: isTablet ? "14px" : "16px",
-                        fontWeight: "bold",
-                        "&:hover": {
-                          bgcolor: selectedClientForConversion ? "primary.dark" : "grey.400"
-                        },
-                        "&:disabled": {
-                          bgcolor: "grey.400",
-                          color: "grey.600"
-                        }
-                      }}
+                      className={`w-full rounded-xl font-bold transition-colors ${
+                        selectedClientForConversion
+                          ? "bg-primary text-white hover:bg-primary/90"
+                          : "cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-400"
+                      } ${isTablet ? "h-11 text-sm" : "h-12 text-base"}`}
                     >
                       نقل كامل المديونية
-                    </Button>
+                    </button>
 
-                    <Button
-                      variant="contained"
+                    <button
+                      type="button"
                       onClick={() => {
                         if (!selectedClientForConversion) {
                           notifyError("يرجى اختيار العميل الجديد أولاً");
@@ -1589,144 +1530,105 @@ const Loans = () => {
                         setShowConversionConfirmModal(true);
                       }}
                       disabled={!selectedClientForConversion}
-                      sx={{
-                        bgcolor: selectedClientForConversion ? "warning.main" : "grey.400",
-                        height: isTablet ? "44px" : "48px",
-                        fontSize: isTablet ? "14px" : "16px",
-                        fontWeight: "bold",
-                        "&:hover": {
-                          bgcolor: selectedClientForConversion ? "warning.dark" : "grey.400"
-                        },
-                        "&:disabled": {
-                          bgcolor: "grey.400",
-                          color: "grey.600"
-                        }
-                      }}
+                      className={`w-full rounded-xl font-bold transition-colors ${
+                        selectedClientForConversion
+                          ? "bg-amber-500 text-white hover:bg-amber-600"
+                          : "cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-400"
+                      } ${isTablet ? "h-11 text-sm" : "h-12 text-base"}`}
                     >
                       نقل جزء من المديونية
-                    </Button>
+                    </button>
 
-                    <Button
-                      variant="outlined"
+                    <button
+                      type="button"
                       onClick={handleCancelConversion}
-                      sx={{
-                        borderColor: "rgba(255, 0, 0, 0.5)",
-                        color: "error.main",
-                        height: isTablet ? "44px" : "48px",
-                        fontSize: isTablet ? "14px" : "16px",
-                        fontWeight: "bold",
-                        "&:hover": { bgcolor: "rgba(255, 0, 0, 0.1)" },
-                      }}
+                      className={`w-full rounded-xl border border-red-500/50 font-bold text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/10 ${
+                        isTablet ? "h-11 text-sm" : "h-12 text-base"
+                      }`}
                     >
                       إلغاء
-                    </Button>
+                    </button>
                   </>
                 )}
   
                 {isViewMode && selectedLoan?.status === "ACTIVE" && (
-                  <Alert
-                    severity="warning"
-                    sx={{ mb: 2 }}
-                    action={
-                      <Button
-                        color="inherit"
-                        size="small"
-                        onClick={() => navigate('/installments/' + selectedLoan.id)}
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        عرض الدفعات
-                      </Button>
-                    }
-                  >
-                    لا يمكنك تعديل هذه السلفة لأنها في حالة نشطة. للتعديل يجب إلغاء تفعيل السلفة أولاً.
-                  </Alert>
+                  <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
+                    <span className="text-sm text-amber-800 dark:text-amber-200">
+                      لا يمكنك تعديل هذه السلفة لأنها في حالة نشطة. للتعديل يجب إلغاء تفعيل السلفة أولاً.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/installments/' + selectedLoan.id)}
+                      className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-bold text-white hover:bg-amber-700"
+                    >
+                      عرض الدفعات
+                    </button>
+                  </div>
                 )}
 
                 {!isViewMode && !isClientConversion && (
-                  <Button
-                    variant="contained"
+                  <button
+                    type="button"
                     onClick={handleSaveLoan}
                     disabled={!isFormValid}
-                    sx={{
-                      bgcolor: "primary.main",
-                      height: isTablet ? "44px" : "48px",
-                      fontSize: isTablet ? "14px" : "16px",
-                      fontWeight: "bold",
-                      "&:hover": { bgcolor: "primary.dark" },
-                    }}
+                    className={`w-full rounded-xl bg-primary font-bold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 ${
+                      isTablet ? "h-11 text-sm" : "h-12 text-base"
+                    }`}
                   >
                     {isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
-                  </Button>
+                  </button>
                 )}
 
                 {isViewMode && canEditLoan && (
-                  <Button
-                    variant="contained"
+                  <button
+                    type="button"
                     onClick={handleEditLoan}
-                    sx={{
-                      bgcolor: "primary.main",
-                      height: isTablet ? "44px" : "48px",
-                      fontSize: isTablet ? "14px" : "16px",
-                      fontWeight: "bold",
-                      "&:hover": { bgcolor: "primary.dark" },
-                    }}
+                    className={`w-full rounded-xl bg-primary font-bold text-white transition-colors hover:bg-primary/90 ${
+                      isTablet ? "h-11 text-sm" : "h-12 text-base"
+                    }`}
                   >
                     تعديل السلفة
-                  </Button>
+                  </button>
                 )}
 
                 {!isClientConversion && (
-                  <Button
-                    variant="outlined"
+                  <button
+                    type="button"
                     onClick={handleOpenPreview}
                     disabled={!savedLoanData && (!isViewMode || (selectedLoan?.DEBT_ACKNOWLEDGMENT && selectedLoan?.PROMISSORY_NOTE))}
-                    sx={{
-                      borderColor: "primary.main",
-                      color: "primary.main",
-                      height: isTablet ? "44px" : "48px",
-                      fontSize: isTablet ? "14px" : "16px",
-                      fontWeight: "bold",
-                      "&:hover": { bgcolor: "rgba(25, 118, 210, 0.1)" },
-                    }}
+                    className={`w-full rounded-xl border border-primary font-bold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${
+                      isTablet ? "h-11 text-sm" : "h-12 text-base"
+                    }`}
                   >
                     معاينة العقود
-                  </Button>
+                  </button>
                 )}
 
                 {isEditMode && (
-                  <Button
-                    variant="outlined"
+                  <button
+                    type="button"
                     onClick={() => {
                       setIsEditMode(false);
                       setIsViewMode(true);
                     }}
-                    sx={{
-                      borderColor: "rgba(255, 0, 0, 0.5)",
-                      color: "error.main",
-                      height: isTablet ? "44px" : "48px",
-                      fontSize: isTablet ? "14px" : "16px",
-                      fontWeight: "bold",
-                      "&:hover": { bgcolor: "rgba(255, 0, 0, 0.1)" },
-                    }}
+                    className={`w-full rounded-xl border border-red-500/50 font-bold text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/10 ${
+                      isTablet ? "h-11 text-sm" : "h-12 text-base"
+                    }`}
                   >
                     إلغاء التعديل
-                  </Button>
+                  </button>
                 )}
-              </Stack>
-            </Box>
-          </Box>
+              </div>
+            </div>
+          </div>
         )}
 
-        <Box
-          sx={{
-            flex: 1,
-            p: isSmallScreen ? 2 : isLargeScreen ? 3 : 4,
-            bgcolor: 'background.paper',
-            overflowY: "auto",
-            width: "100%",
-          }}
+        <div
+          className={`flex flex-1 flex-col overflow-y-auto bg-white dark:bg-slate-900 ${
+            isSmallScreen ? "p-4" : isLargeScreen ? "p-6" : "p-8"
+          }`}
         >
-          <Box sx={{ width: "100%" }}>
+          <div className="w-full">
             <LoanTabs
               activeTab={activeTab}
               setActiveTab={setActiveTab}
@@ -1742,92 +1644,61 @@ const Loans = () => {
             />
 
             {(activeTab === 0 || activeTab === 1) && unpostedLoanJournals?.count > 0 && (
-              <Alert
-                severity="warning"
-                sx={{
-                  mb: 2,
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  border: "2px solid",
-                  borderColor: "warning.main",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  "& .MuiAlert-message": { flex: 1 },
-                }}
-                action={
-                  <Button
-                    size="small"
-                    color="primary"
-                    variant="contained"
-                    onClick={() => navigate("/journal-entries")}
-                    sx={{ fontWeight: 600, textTransform: "none" }}
-                  >
-                    الذهاب للقيود
-                  </Button>
-                }
-              >
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {unpostedLoanJournals.count === 1
-                    ? `يوجد ${unpostedLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedLoanJournals.items?.[0]?.clientName || unpostedLoanJournals.items?.[0]?.loanCode || ""}.`
-                    : `يوجد ${unpostedLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${unpostedLoanJournals.items?.map((i) => i.clientName || i.loanCode).filter(Boolean).join("، ") || ""}.`}
-                </Typography>
-                <Typography variant="caption" sx={{ mt: 0.5, display: "block" }}>
-                  {unpostedLoanJournals.count === 1
-                    ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
-                    : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
-                </Typography>
-              </Alert>
+              <div className="mb-4 flex flex-col gap-3 rounded-xl border-2 border-amber-500 bg-amber-50 p-4 shadow-sm dark:border-amber-600 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                    {unpostedLoanJournals.count === 1
+                      ? `يوجد ${unpostedLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedLoanJournals.items?.[0]?.clientName || unpostedLoanJournals.items?.[0]?.loanCode || ""}.`
+                      : `يوجد ${unpostedLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${[...new Set(unpostedLoanJournals.items?.map((i) => i.clientName || i.loanCode).filter(Boolean) || [])].join("، ")}.`}
+                  </p>
+                  <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                    {unpostedLoanJournals.count === 1
+                      ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
+                      : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/journal-entries")}
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+                >
+                  الذهاب للقيود
+                </button>
+              </div>
             )}
 
             {(activeTab === 2 || activeTab === 3) && unpostedSmallLoanJournals?.count > 0 && (
-              <Alert
-                severity="warning"
-                sx={{
-                  mb: 2,
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  border: "2px solid",
-                  borderColor: "warning.main",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  "& .MuiAlert-message": { flex: 1 },
-                }}
-                action={
-                  <Button
-                    size="small"
-                    color="primary"
-                    variant="contained"
-                    onClick={() => navigate("/journal-entries")}
-                    sx={{ fontWeight: 600, textTransform: "none" }}
-                  >
-                    الذهاب للقيود
-                  </Button>
-                }
-              >
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {unpostedSmallLoanJournals.count === 1
-                    ? `يوجد ${unpostedSmallLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedSmallLoanJournals.items?.[0]?.loanName || ""}.`
-                    : `يوجد ${unpostedSmallLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${unpostedSmallLoanJournals.items?.map((i) => i.loanName).filter(Boolean).join("، ") || ""}.`}
-                </Typography>
-                <Typography variant="caption" sx={{ mt: 0.5, display: "block" }}>
-                  {unpostedSmallLoanJournals.count === 1
-                    ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
-                    : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
-                </Typography>
-              </Alert>
+              <div className="mb-4 flex flex-col gap-3 rounded-xl border-2 border-amber-500 bg-amber-50 p-4 shadow-sm dark:border-amber-600 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                    {unpostedSmallLoanJournals.count === 1
+                      ? `يوجد ${unpostedSmallLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedSmallLoanJournals.items?.[0]?.loanName || ""}.`
+                      : `يوجد ${unpostedSmallLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${[...new Set(unpostedSmallLoanJournals.items?.map((i) => i.loanName).filter(Boolean) || [])].join("، ")}.`}
+                  </p>
+                  <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                    {unpostedSmallLoanJournals.count === 1
+                      ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
+                      : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/journal-entries")}
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+                >
+                  الذهاب للقيود
+                </button>
+              </div>
             )}
 
             {activeTab === 0 ? (
-              <Box
-                sx={{ width: "100%", display: "flex", flexDirection: "column" }}
-              >
+              <div className="flex w-full flex-col">
                 <LoanMainTab
                   loansNeedingContracts={loansNeedingContracts}
                   subTab={subTab}
                   setSubTab={setSubTab}
                   handleViewLoanDetails={handleViewLoanDetails}
+                  statusCounts={statusCounts}
                 />
 
                 <LoansTable
@@ -1842,9 +1713,9 @@ const Loans = () => {
                   }
                   searchQuery={loansTableSearchQuery}
                 />
-              </Box>
+              </div>
             ) : activeTab === 1 ? (
-              <Box>
+              <div>
                 {isClientConversion ? (
                   <LoanClientConversion
                     loan={loanForConversion}
@@ -1946,9 +1817,9 @@ const Loans = () => {
                     onCancelConversion={handleCancelConversion}
                   />
                 )}
-              </Box>
+              </div>
             ) : activeTab === 2 ? (
-              <Box>
+              <div>
                 <EditSmallLoanForm
                   selectedLoan={selectedLoanForEdit}
                   onLoanUpdated={() => {
@@ -1959,17 +1830,15 @@ const Loans = () => {
                     queryClient.invalidateQueries(["small-loans"]);
                   }}
                 />
-              </Box>
+              </div>
             ) : activeTab === 3 ? (
-              <Box
-                sx={{ width: "100%", display: "flex", flexDirection: "column" }}
-              >
+              <div className="flex w-full flex-col">
                 <SmallLoansTable onEditLoan={handleEditSmallLoan} />
-              </Box>
+              </div>
             ) : null}
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       <AddClient
         open={isAddClientOpen}
@@ -2061,7 +1930,7 @@ const Loans = () => {
         maxPartialAmount={calculateRemainingAmount(loanForConversion)}
       />
 
-    </Box>
+    </div>
   );
 };
 

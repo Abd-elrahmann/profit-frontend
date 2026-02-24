@@ -135,7 +135,7 @@ const PaymentProofPreview = ({
               dangerouslySetInnerHTML={{ __html: safePaymentProofHtml }}
               sx={{
                 '& *': {
-                  fontFamily: '"Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important',
+                  fontFamily: '"Cairo", "Tajawal", "Noto Sans Arabic", sans-serif !important',
                   lineHeight: 1.8
                 },
                 '& h1, & h2, & h3': {
