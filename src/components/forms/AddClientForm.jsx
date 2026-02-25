@@ -65,7 +65,7 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
       .nullable()
       .email('البريد الإلكتروني غير صالح'),
     nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
-    birthDate: Yup.date().required('تاريخ الميلاد مطلوب'),
+    birthDate: Yup.date().nullable(),
     city: Yup.string().required('المدينة مطلوبة'),
     district: Yup.string().required('الحي مطلوب'),
     address: Yup.string().required('العنوان مطلوب'),
@@ -315,7 +315,7 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                     {touched.nationalId && errors.nationalId && <span className={fieldError}>{errors.nationalId}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>تاريخ الميلاد</label>
+                    <label className={labelBase}>تاريخ الميلاد (اختياري)</label>
                     <input name="birthDate" type="date" value={values.birthDate} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
                     {touched.birthDate && errors.birthDate && <span className={fieldError}>{errors.birthDate}</span>}
                   </div>
@@ -527,7 +527,7 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                   <button
                     type="button"
                     onClick={handleNext}
-                    disabled={(activeStep === 1 && values.hasKafeel && values.kafeels?.some((k) => !k.name || !k.nationalId || !k.phoneCode || !k.phone || !k.city || !k.district || !k.employer || !k.salary || k.obligations === '' || k.obligations == null)) || (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.birthDate || !values.city || !values.district || !values.address || !values.employer || !values.salary || values.obligations === '' || values.obligations == null || !values.creationReason))}
+                    disabled={(activeStep === 1 && values.hasKafeel && values.kafeels?.some((k) => !k.name || !k.nationalId || !k.phoneCode || !k.phone || !k.city || !k.district || !k.employer || !k.salary || k.obligations === '' || k.obligations == null)) || (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.city || !values.district || !values.address || !values.employer || !values.salary || values.obligations === '' || values.obligations == null || !values.creationReason))}
                     className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
                   >
                     التالي<span className="rotate-180 inline-block"><ArrowForward sx={{ fontSize: 20 }} /></span>
