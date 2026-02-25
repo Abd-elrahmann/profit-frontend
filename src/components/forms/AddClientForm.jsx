@@ -395,10 +395,26 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                         <p className="text-xs text-slate-500 dark:text-slate-400">تفعيل هذا الخيار سيضيف خطوة بيانات الكفيل</p>
                       </div>
                     </div>
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={values.hasKafeel} onChange={(e) => { e.preventDefault(); const checked = e.target.checked; setFieldValue('hasKafeel', checked, false); if (checked && (!values.kafeels || values.kafeels.length === 0)) setFieldValue('kafeels', [getInitialKafeelValues()], false); else if (!checked) setFieldValue('kafeels', [], false); }} className="sr-only peer" />
-                      <div className="relative w-14 h-7 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all rtl:peer-checked:after:-translate-x-full peer-checked:after:translate-x-full" />
-                    </label>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const newValue = !values.hasKafeel;
+                        setFieldValue('hasKafeel', newValue, false);
+                        if (newValue && (!values.kafeels || values.kafeels.length === 0)) {
+                          setFieldValue('kafeels', [getInitialKafeelValues()], false);
+                        } else if (!newValue) {
+                          setFieldValue('kafeels', [], false);
+                        }
+                      }}
+                      className="relative w-14 h-7 rounded-full transition-colors focus:outline-none"
+                      style={{ backgroundColor: values.hasKafeel ? 'var(--color-primary)' : '' }}
+                    >
+                      <div className={`relative w-14 h-7 ${values.hasKafeel ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'} rounded-full transition-colors`}>
+                        <div className={`absolute top-0.5 h-6 w-6 bg-white rounded-full transition-all ${values.hasKafeel ? 'start-[calc(100%-28px)]' : 'start-[4px]'}`} />
+                      </div>
+                    </button>
                   </div>
                 </div>
               )}
