@@ -623,31 +623,16 @@ const AddClient = ({ open, onClose }) => {
                           type="checkbox"
                           checked={values.hasKafeel}
                           onChange={(e) => {
-                            const el = e.target;
-                            let scrollParent = el.parentElement;
-                            while (scrollParent && scrollParent !== document.body) {
-                              const { overflowY } = getComputedStyle(scrollParent);
-                              if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
-                                break;
-                              }
-                              scrollParent = scrollParent.parentElement;
-                            }
-                            const scrollTop = scrollParent && scrollParent !== document.body ? scrollParent.scrollTop : window.scrollY;
-                            const checked = el.checked;
-                            setFieldValue('hasKafeel', checked);
+                            e.preventDefault();
+                            const checked = e.target.checked;
+                            setFieldValue('hasKafeel', checked, false);
                             if (checked) {
                               if (!values.kafeels || values.kafeels.length === 0) {
-                                setFieldValue('kafeels', [getInitialKafeelValues()]);
+                                setFieldValue('kafeels', [getInitialKafeelValues()], false);
                               }
                             } else {
-                              setFieldValue('kafeels', []);
+                              setFieldValue('kafeels', [], false);
                             }
-                            requestAnimationFrame(() => {
-                              requestAnimationFrame(() => {
-                                if (scrollParent && scrollParent !== document.body) scrollParent.scrollTop = scrollTop;
-                                else window.scrollTo(0, scrollTop);
-                              });
-                            });
                           }}
                           className="sr-only peer"
                         />
