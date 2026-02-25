@@ -5,8 +5,13 @@ const Login = React.lazy(() => import('./pages/auth/Login'));
 const Employees = React.lazy(() => import('./pages/Employees/Employees'));
 const Roles = React.lazy(() => import('./pages/Roles/Roles'));
 const Clients = React.lazy(() => import('./pages/Clients/Clients'));
+const AddClientPage = React.lazy(() => import('./pages/Clients/AddClientPage'));
+const AddKafeelPage = React.lazy(() => import('./pages/Clients/AddKafeelPage'));
+const EditDocumentsPage = React.lazy(() => import('./pages/Clients/EditDocumentsPage'));
+const EditKafeelDocumentsPage = React.lazy(() => import('./pages/Clients/EditKafeelDocumentsPage'));
 const ContractTemplates = React.lazy(() => import('./pages/Templates/ContractTemplates'));
 const Investors = React.lazy(() => import('./pages/Investors/Investors'));
+const AddInvestorPage = React.lazy(() => import('./pages/Investors/AddInvestorPage'));
 const Loans = React.lazy(() => import('./pages/Loans/Loans'));
 const Banks = React.lazy(() => import('./pages/Banks/Banks'));
 const Installments = React.lazy(() => import('./pages/Installments/Installments'));
@@ -74,6 +79,38 @@ const routes = [
     requiresPermissions: true
   },
   {
+    path: '/clients/add',
+    element: AddClientPage,
+    protected: true,
+    showInSidebar: false,
+    module: 'clients',
+    requiresPermissions: true
+  },
+  {
+    path: '/clients/:clientId/add-kafeel',
+    element: AddKafeelPage,
+    protected: true,
+    showInSidebar: false,
+    module: 'clients',
+    requiresPermissions: true
+  },
+  {
+    path: '/clients/:clientId/edit-documents',
+    element: EditDocumentsPage,
+    protected: true,
+    showInSidebar: false,
+    module: 'clients',
+    requiresPermissions: true
+  },
+  {
+    path: '/clients/:clientId/kafeels/:kafeelId/edit-documents',
+    element: EditKafeelDocumentsPage,
+    protected: true,
+    showInSidebar: false,
+    module: 'clients',
+    requiresPermissions: true
+  },
+  {
     path: '/client-collections',
     element: ClientCollections,
     protected: true,
@@ -86,6 +123,14 @@ const routes = [
     element: Investors,
     protected: true,
     showInSidebar: true,
+    module: 'partners',
+    requiresPermissions: true
+  },
+  {
+    path: '/investors/add',
+    element: AddInvestorPage,
+    protected: true,
+    showInSidebar: false,
     module: 'partners',
     requiresPermissions: true
   },

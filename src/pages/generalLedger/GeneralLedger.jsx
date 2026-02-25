@@ -1,62 +1,22 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableContainer,
-  TableHead,
-  TableBody,
-  Chip,
-  CircularProgress,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Alert,
-  Pagination,
-  Stack,
-  useMediaQuery,
-} from '@mui/material';
-import {
-  PictureAsPdf,
-  TableChart,
-  Search,
-  RestartAlt,
-  ArrowBack as ArrowBackIcon,
-} from '@mui/icons-material';
+import React, { useState, useCallback } from 'react';
+import { Box, Typography, Paper, CircularProgress, Alert, useMediaQuery } from '@mui/material';
+import { Search } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import Api, { handleApiError } from '../../config/Api';
-import dayjs from 'dayjs';
-import "dayjs/locale/ar";
-import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
+import { handleApiError } from '../../config/Api';
+import { getAccountLedger } from './generalLedgerApi';
 import GeneralLedgerSearch from '../../components/modals/GeneralLedgerSearch';
+import {
+  GeneralLedgerToolbar,
+  GeneralLedgerSearchParams,
+  GeneralLedgerSummaryCards,
+  GeneralLedgerTable,
+  GeneralLedgerCards,
+  GeneralLedgerPagination,
+} from '../../components/GeneralLedger';
 import { exportGeneralLedgerToPDF, exportGeneralLedgerToExcel } from '../../utilities/GeneralLedgerExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
-const getAccountLedger = async (accountId, fromDate = null, toDate = null, page = 1, limit = 10) => {
-  const params = new URLSearchParams();
-  if (fromDate) {
-    params.append('from', fromDate);
-  }
-  if (toDate) {
-    params.append('to', toDate);
-  }
-  params.append('limit', limit.toString());
-  
-  const queryString = params.toString();
-  const response = await Api.get(`/api/accounts/${accountId}/${page}${queryString ? `?${queryString}` : ''}`);
-  return response.data;
-};
-
-const formatArabicDate = (date) => {
-  return dayjs(date)
-    .locale("ar")
-    .format("D [من] MMMM [الساعة] h:mm")
-    + " "
-    + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
-};
 
 export default function GeneralLedger() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -65,249 +25,79 @@ export default function GeneralLedger() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit] = useState(10);
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 480px)');
+  const isTablet = useMediaQuery('(max-width: 768px)');
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();
+
   const { data: ledgerData, isLoading: isLoadingLedger, error } = useQuery({
     queryKey: ['account-ledger', searchParams?.account?.id, searchParams?.fromDate, searchParams?.toDate, currentPage, pageLimit],
-    queryFn: () => 
-      searchParams ? 
-      getAccountLedger(searchParams.account.id, searchParams.fromDate, searchParams.toDate, currentPage, pageLimit) : 
-      null,
+    queryFn: () =>
+      searchParams
+        ? getAccountLedger(searchParams.account.id, searchParams.fromDate, searchParams.toDate, currentPage, pageLimit)
+        : null,
     enabled: !!searchParams,
     retry: 1,
   });
 
-  const handleSearch = (params) => {
+  const handleSearch = useCallback((params) => {
     setSearchParams(params);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSearchParams(null);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handlePageChange = (event, value) => {
-    setCurrentPage(value);
-  };
+  const handlePageChange = (event, value) => setCurrentPage(value);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = useCallback(async () => {
     if (!ledgerData || !searchParams) return;
-    
-    setExportLoading(prev => ({ ...prev, pdf: true }));
+    setExportLoading((prev) => ({ ...prev, pdf: true }));
     try {
       await exportGeneralLedgerToPDF(ledgerData, searchParams.account, searchParams);
-      notifySuccess("تم تصدير دفتر الأستاذ بصيغة PDF بنجاح");
-    } catch (error) {
-      notifyError("حدث خطأ أثناء تصدير PDF");
-      handleApiError(error);
+      notifySuccess('تم تصدير دفتر الأستاذ بصيغة PDF بنجاح');
+    } catch (err) {
+      notifyError('حدث خطأ أثناء تصدير PDF');
+      handleApiError(err);
     } finally {
-      setExportLoading(prev => ({ ...prev, pdf: false }));
+      setExportLoading((prev) => ({ ...prev, pdf: false }));
     }
-  };
+  }, [ledgerData, searchParams]);
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = useCallback(async () => {
     if (!ledgerData || !searchParams) return;
-    
-    setExportLoading(prev => ({ ...prev, excel: true }));
+    setExportLoading((prev) => ({ ...prev, excel: true }));
     try {
       await exportGeneralLedgerToExcel(ledgerData, searchParams.account, searchParams);
-      notifySuccess("تم تصدير دفتر الأستاذ بصيغة Excel بنجاح");
-    } catch (error) {
-      notifyError("حدث خطأ أثناء تصدير Excel");
-      handleApiError(error);
+      notifySuccess('تم تصدير دفتر الأستاذ بصيغة Excel بنجاح');
+    } catch (err) {
+      notifyError('حدث خطأ أثناء تصدير Excel');
+      handleApiError(err);
     } finally {
-      setExportLoading(prev => ({ ...prev, excel: false }));
+      setExportLoading((prev) => ({ ...prev, excel: false }));
     }
-  };
+  }, [ledgerData, searchParams]);
 
-  const totalDebit = ledgerData?.journals?.reduce((sum, journal) => {
-    return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
-  }, 0) || 0;
-  
-  const totalCredit = ledgerData?.journals?.reduce((sum, journal) => {
-    return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
-  }, 0) || 0;
-  
+  const totalDebit =
+    ledgerData?.journals?.reduce((sum, journal) => {
+      return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
+    }, 0) || 0;
+
+  const totalCredit =
+    ledgerData?.journals?.reduce((sum, journal) => {
+      return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
+    }, 0) || 0;
+
   const closingBalance = ledgerData?.account?.balance || 0;
 
-  const renderMobileJournalCards = () => (
-    <Stack spacing={2}>
-      {ledgerData.journals?.map((journal) => 
-        journal.lines.map((line) => (
-          <Card key={`${journal.id}-${line.id}`} variant="outlined" sx={{ borderRadius: 2, bgcolor: 'background.paper' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Stack spacing={1.5}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary">
-                      {journal.reference}
-                    </Typography>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
-                        {formatArabicDate(journal.date)}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.7rem', display: 'block' }}>
-                        {journal.hijriDate}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" sx={{ mb: 0.5 }} fontWeight="medium">
-                    {line.description}
-                  </Typography>
-                  {journal.postedBy && (
-                    <Typography variant="caption" color="text.secondary">
-                      بواسطة: {journal.postedBy}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-                  <Box sx={{ textAlign: 'center', flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      مدين
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight="bold" 
-                      color={line.debit > 0 ? "success.main" : "text.secondary"}
-                    >
-                      {line.debit > 0 ? line.debit.toLocaleString('en-US') : '0'}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ textAlign: 'center', flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      دائن
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight="bold" 
-                      color={line.credit > 0 ? "error.main" : "text.secondary"}
-                    >
-                      {line.credit > 0 ? line.credit.toLocaleString('en-US') : '0'}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ textAlign: 'center', flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      الرصيد
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight="bold"
-                      color={line.balance >= 0 ? "primary.main" : "error.main"}
-                    >
-                      {line.balance.toLocaleString('en-US')}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        ))
-      )}
-    </Stack>
-  );
-
-  const renderDesktopTable = () => (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <StyledTableRow>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '150px' }}>
-              التاريخ
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-              المرجع
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>
-              الوصف
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-              مدين
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-              دائن
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '120px' }}>
-              الرصيد
-            </StyledTableCell>
-          </StyledTableRow>
-        </TableHead>
-        <TableBody>
-          {ledgerData.journals?.map((journal) => 
-            journal.lines.map((line) => (
-              <StyledTableRow key={`${journal.id}-${line.id}`} hover>
-                <StyledTableCell align="center">
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                      {formatArabicDate(journal.date)}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.75rem' }}>
-                      {journal.hijriDate}
-                    </Typography>
-                  </Box>
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography variant="body2" fontWeight="500" color="primary">
-                    {journal.reference}
-                  </Typography>
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>
-                    {line.description}
-                  </Typography>
-                  {journal.postedBy && (
-                    <Typography variant="caption" color="text.secondary">
-                      بواسطة: {journal.postedBy}
-                    </Typography>
-                  )}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {line.debit > 0 ? (
-                    <Typography variant="body2" fontWeight="bold" color="success.main">
-                      {line.debit.toLocaleString('en-US')}
-                    </Typography>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      0
-                    </Typography>
-                  )}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {line.credit > 0 ? (
-                    <Typography variant="body2" fontWeight="bold" color="error.main">
-                      {line.credit.toLocaleString('en-US')}
-                    </Typography>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      0
-                    </Typography>
-                  )}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography variant="body2" fontWeight="bold"
-                    color={line.balance >= 0 ? 'primary.main' : 'error.main'}>
-                    {line.balance.toLocaleString('en-US')}
-                  </Typography>
-                </StyledTableCell>
-              </StyledTableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+  const hasExportPermission = permissions.includes('general-ledger_Export');
+  const hasJournals = ledgerData?.journals && ledgerData.journals.length > 0;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.paper" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.paper' }}>
       <Helmet>
         <title>دفتر الأستاذ العام</title>
         <meta name="description" content="دفتر الأستاذ العام للمحاسبة" />
@@ -315,163 +105,41 @@ export default function GeneralLedger() {
 
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
           p: isSmallScreen ? 2 : 3,
         }}
       >
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: isSmallScreen ? 'column' : 'row',
-            gap: 2,
-            justifyContent: 'space-between',
-            alignItems: isSmallScreen ? 'stretch' : 'center',
-          }}>
-            {permissions.includes("general-ledger_Export") && (
-              <Box sx={{
-                display: 'flex',
-                gap: 1,
-                justifyContent: isSmallScreen ? 'center' : 'flex-start',
-                order: isSmallScreen ? 2 : 1
-              }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<PictureAsPdf sx={{marginLeft:'10px'}} />}
-                  onClick={handleExportPDF}
-                  disabled={exportLoading.pdf || !ledgerData}
-                  size={isSmallScreen ? "small" : "medium"}
-                  sx={{
-                    borderColor: '#d32f2f',
-                    color: '#d32f2f',
-                    '&:hover': {
-                      borderColor: '#b71c1c',
-                      backgroundColor: 'rgba(211, 47, 47, 0.04)'
-                    }
-                  }}
-                >
-                  {exportLoading.pdf ? (
-                    <CircularProgress size={20} sx={{ color: '#d32f2f' }} />
-                  ) : (
-                    'PDF'
-                  )}
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<TableChart sx={{marginLeft:'10px'}} />}
-                  onClick={handleExportExcel}
-                  disabled={exportLoading.excel || !ledgerData}
-                  size={isSmallScreen ? "small" : "medium"}
-                  sx={{
-                    borderColor: '#2e7d32',
-                    color: '#2e7d32',
-                    '&:hover': {
-                      borderColor: '#1b5e20',
-                      backgroundColor: 'rgba(46, 125, 50, 0.04)'
-                    }
-                  }}
-                >
-                  {exportLoading.excel ? (
-                    <CircularProgress size={20} sx={{ color: '#2e7d32' }} />
-                  ) : (
-                    'Excel'
-                  )}
-                </Button>
-              </Box>
-            )}
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 1,
-              justifyContent: isSmallScreen ? 'center' : 'flex-end',
-              order: isSmallScreen ? 1 : 2
-            }}>
-              {searchParams && (
-                <Button
-                  variant="outlined"
-                  startIcon={<RestartAlt sx={{marginLeft:'10px'}} />}
-                  onClick={handleReset}
-                  size={isSmallScreen ? "small" : "medium"}
-                  sx={{
-                    borderColor: 'warning.main',
-                    color: 'warning.main',
-                    '&:hover': {
-                      borderColor: 'warning.dark',
-                      backgroundColor: 'rgba(237, 108, 2, 0.04)'
-                    }
-                  }}
-                >
-                  {isSmallScreen ? 'إعادة' : 'إعادة تعيين'}
-                </Button>
-              )}
-              <Button
-                variant="contained"
-                startIcon={<Search sx={{marginLeft:'10px'}} />}
-                onClick={() => setSearchModalOpen(true)}
-                size={isSmallScreen ? "small" : "medium"}
-                sx={{
-                  bgcolor: 'primary.main',
-                  '&:hover': { bgcolor: 'primary.dark' }
-                }}
-              >
-                بحث
-              </Button>
-            </Box>
-          </Box>
+          <GeneralLedgerToolbar
+            isSmallScreen={isSmallScreen}
+            hasExportPermission={hasExportPermission}
+            searchParams={searchParams}
+            ledgerData={ledgerData}
+            exportLoading={exportLoading}
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
+            onReset={handleReset}
+            onSearchClick={() => setSearchModalOpen(true)}
+          />
 
-          {searchParams && (
-            <Paper sx={{ 
-              mt: 2, 
-              p: 2, 
-              borderRadius: 2,
-              bgcolor: 'primary.50'
-            }}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" fontWeight="bold" color="primary.main">
-                    {searchParams.account.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {searchParams.account.code} - {getAccountTypeArabic(searchParams.account.type)}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 1, 
-                    justifyContent: isSmallScreen ? 'flex-start' : 'flex-end',
-                    flexWrap: 'wrap'
-                  }}>
-                    <Chip 
-                      label={`من: ${searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'البداية'}`}
-                      variant="outlined"
-                      size={isSmallScreen ? "small" : "medium"}
-                    />
-                    <Chip 
-                      label={`إلى: ${searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'النهاية'}`}
-                      variant="outlined"
-                      size={isSmallScreen ? "small" : "medium"}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Paper>
-          )}
+          <GeneralLedgerSearchParams searchParams={searchParams} isSmallScreen={isSmallScreen} />
         </Box>
 
         <Box sx={{ flex: 1 }}>
           {!searchParams ? (
-            <Paper sx={{ 
-              borderRadius: 2, 
-              boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
-              overflow: 'hidden',
-              textAlign: 'center',
-              p: 6
-            }}>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                overflow: 'hidden',
+                textAlign: 'center',
+                p: 6,
+              }}
+            >
               <Search sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-              <Typography variant="body2">
-                لا توجد قيود في الفترة المحددة
-              </Typography>
+              <Typography variant="body2">اختر حساباً للبحث</Typography>
             </Paper>
           ) : isLoadingLedger ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
@@ -483,98 +151,29 @@ export default function GeneralLedger() {
             </Alert>
           ) : (
             <Box>
-              <Grid container spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 3 }}>
-                <Grid item xs={6} md={3} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <Card sx={{ 
-                    borderRadius: 2, 
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                    textAlign: 'center',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    bgcolor: 'rgba(211, 47, 47, 0.1)'
-                  }}>
-                    <CardContent sx={{ p: isSmallScreen ? 1 : 2 }}>
-                      <Typography variant={isSmallScreen ? "h6" : "h5"} fontWeight="bold" color="error.main">
-                        {totalDebit.toLocaleString('en-US')}
-                      </Typography>
-                      <Typography variant={isSmallScreen ? "caption" : "body2"} color="text.secondary">
-                        إجمالي المدين
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ 
-                    borderRadius: 2, 
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                    textAlign: 'center',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    bgcolor: 'rgba(46, 125, 50, 0.1)'
-                  }}>
-                    <CardContent sx={{ p: isSmallScreen ? 1 : 2 }}>
-                      <Typography variant={isSmallScreen ? "h6" : "h5"} fontWeight="bold" color="success.main">
-                        {totalCredit.toLocaleString('en-US')}
-                      </Typography>
-                      <Typography variant={isSmallScreen ? "caption" : "body2"} color="text.secondary">
-                        إجمالي الدائن
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ 
-                    borderRadius: 2, 
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                    textAlign: 'center',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    bgcolor: 'rgba(237, 108, 2, 0.1)'
-                  }}>
-                    <CardContent sx={{ p: isSmallScreen ? 1 : 2 }}>
-                      <Typography variant={isSmallScreen ? "h6" : "h5"} fontWeight="bold" color="warning.main">
-                        {ledgerData.totalJournals || 0}
-                      </Typography>
-                      <Typography variant={isSmallScreen ? "caption" : "body2"} color="text.secondary">
-                        إجمالي القيود
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ 
-                    borderRadius: 2, 
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                    textAlign: 'center',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    bgcolor: 'rgba(25, 118, 210, 0.1)'
-                  }}>
-                    <CardContent sx={{ p: isSmallScreen ? 1 : 2 }}>
-                      <Typography 
-                        variant={isSmallScreen ? "h6" : "h5"} 
-                        fontWeight="bold" 
-                        color={closingBalance >= 0 ? 'primary.main' : 'error.main'}
-                      >
-                        {closingBalance.toLocaleString('en-US')}
-                      </Typography>
-                      <Typography variant={isSmallScreen ? "caption" : "body2"} color="text.secondary">
-                        الرصيد الختامي
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+              <GeneralLedgerSummaryCards
+                totalDebit={totalDebit}
+                totalCredit={totalCredit}
+                totalJournals={ledgerData?.totalJournals}
+                closingBalance={closingBalance}
+                isSmallScreen={isSmallScreen}
+              />
 
-              <Paper sx={{ 
-                borderRadius: 2, 
-                boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
-                overflow: 'hidden',
-                p: isSmallScreen ? 2 : 3
-              }}>
-                {isSmallScreen ? renderMobileJournalCards() : renderDesktopTable()}
+              <Paper
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
+                  p: isSmallScreen ? 2 : 3,
+                }}
+              >
+                {isSmallScreen ? (
+                  <GeneralLedgerCards journals={ledgerData?.journals} />
+                ) : (
+                  <GeneralLedgerTable journals={ledgerData?.journals} />
+                )}
 
-                {(!ledgerData.journals || ledgerData.journals.length === 0) && (
+                {!hasJournals && (
                   <Box sx={{ textAlign: 'center', py: 6 }}>
                     <Typography variant="h6" color="text.secondary" gutterBottom>
                       لا توجد قيود في الفترة المحددة
@@ -585,18 +184,12 @@ export default function GeneralLedger() {
                   </Box>
                 )}
 
-                {ledgerData.totalPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', pt: 3 }}>
-                    <Pagination
-                      count={ledgerData.totalPages}
-                      page={currentPage}
-                      onChange={handlePageChange}
-                      color="primary"
-                      size={isSmallScreen ? "small" : "large"}
-                      showFirstButton
-                      showLastButton
-                    />
-                  </Box>
+                {(ledgerData?.totalPages ?? 0) > 1 && (
+                  <GeneralLedgerPagination
+                    currentPage={currentPage}
+                    totalPages={ledgerData.totalPages}
+                    onPageChange={handlePageChange}
+                  />
                 )}
               </Paper>
             </Box>
@@ -604,22 +197,7 @@ export default function GeneralLedger() {
         </Box>
       </Box>
 
-      <GeneralLedgerSearch
-        open={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-        onSearch={handleSearch}
-      />
+      <GeneralLedgerSearch open={searchModalOpen} onClose={() => setSearchModalOpen(false)} onSearch={handleSearch} />
     </Box>
   );
-};
-
-const getAccountTypeArabic = (type) => {
-  const typeMap = {
-    'ASSET': 'أصول',
-    'LIABILITY': 'خصوم',
-    'EQUITY': 'حقوق ملكية',
-    'REVENUE': 'إيرادات',
-    'EXPENSE': 'مصروفات'
-  };
-  return typeMap[type] || type;
-};
+}

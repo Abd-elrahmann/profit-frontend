@@ -1,38 +1,26 @@
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  IconButton,
-  Typography,
-  Switch,
-  FormControlLabel,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  CircularProgress,
-  Alert,
-  Grid,
-  Divider,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import { Close as CloseIcon, CloudUpload, Delete } from '@mui/icons-material';
+import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Formik, Form } from 'formik';
+import {
+  Person,
+  Group,
+  CloudUpload,
+  Close,
+  AccountCircle,
+  LocationOn,
+  Work,
+  VerifiedUser,
+  Info,
+  ContactPage,
+  ArrowForward,
+  Autorenew,
+  CheckCircle,
+} from '@mui/icons-material';
 import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-import { useTheme } from '../../theme/ThemeContext';
-  
+
 const countryCodes = [
   { code: '+20', country: 'مصر', flag: '🇪🇬' },
   { code: '+966', country: 'السعودية', flag: '🇸🇦' },
@@ -49,7 +37,6 @@ const countryCodes = [
   { code: '+1', country: 'الولايات المتحدة', flag: '🇺🇸' },
   { code: '+44', country: 'المملكة المتحدة', flag: '🇬🇧' },
 ];
-
 
 const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
   const kafeelSchema = Yup.object().shape({
@@ -97,13 +84,24 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
 };
 
 const AddClient = ({ open, onClose }) => {
-  const { isDarkMode } = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [addAnotherKafeel, setAddAnotherKafeel] = useState(false);
   const queryClient = useQueryClient();
-  const steps = ['المعلومات الأساسية', 'معلومات الكفيل', 'المستندات'];
+  const steps = [
+    { label: 'بيانات العميل', icon: Person },
+    { label: 'بيانات الكفيل', icon: Group },
+    { label: 'المرفقات', icon: CloudUpload },
+  ];
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (open) document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [open, onClose]);
 
   const getInitialKafeelValues = () => ({
     name: '',
@@ -148,15 +146,15 @@ const AddClient = ({ open, onClose }) => {
 
   const handleDrop = (acceptedFiles, fieldName) => {
     if (acceptedFiles.length > 0) {
-      setUploadedFiles(prev => ({
+      setUploadedFiles((prev) => ({
         ...prev,
-        [fieldName]: acceptedFiles[0]
+        [fieldName]: acceptedFiles[0],
       }));
     }
   };
 
   const removeFile = (fieldName) => {
-    setUploadedFiles(prev => {
+    setUploadedFiles((prev) => {
       const newFiles = { ...prev };
       delete newFiles[fieldName];
       return newFiles;
@@ -164,7 +162,7 @@ const AddClient = ({ open, onClose }) => {
   };
 
   const getFilePreview = (file) => {
-    if (file.type.startsWith('image/')) {
+    if (file?.type?.startsWith('image/')) {
       return URL.createObjectURL(file);
     }
     return null;
@@ -180,62 +178,51 @@ const AddClient = ({ open, onClose }) => {
     const file = uploadedFiles[fieldName];
 
     return (
-      <Paper
+      <div
         {...getRootProps()}
-        sx={{
-          p: 3,
-          border: '2px dashed',
-          borderColor: isDragActive ? 'primary.main' : '#ccc',
-          textAlign: 'center',
-          bgcolor: isDragActive ? 'action.hover' : (isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#fafafa'),
-          cursor: 'pointer',
-          '&:hover': {
-            borderColor: 'primary.main',
-            bgcolor: 'action.hover',
-          },
-        }}
+        className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all group ${
+          isDragActive
+            ? 'border-primary bg-primary/5'
+            : 'border-primary/20 bg-primary/5 dark:bg-primary/10 hover:border-primary'
+        }`}
       >
         <input {...getInputProps()} />
         {file ? (
-          <Box>
-            {file.type.startsWith('image/') ? (
-              <Box>
-                <img 
-                  src={getFilePreview(file)} 
+          <div className="flex flex-col items-center">
+            {file.type?.startsWith('image/') ? (
+              <>
+                <img
+                  src={getFilePreview(file)}
                   alt={file.name}
-                  style={{ maxWidth: '200px', maxHeight: 120, marginBottom: 8 }}
+                  className="max-w-[200px] max-h-[120px] mb-2 rounded-lg object-cover"
                 />
-                <Typography variant="body2">{file.name}</Typography>
-              </Box>
+                <p className="text-sm text-slate-700 dark:text-slate-300">{file.name}</p>
+              </>
             ) : (
-              <Box>
-                <CloudUpload sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                <Typography variant="body2">{file.name}</Typography>
-              </Box>
+              <>
+                <CloudUpload sx={{ fontSize: 40, color: 'primary.main', mb: 0.5 }} />
+                <p className="text-sm text-slate-700 dark:text-slate-300">{file.name}</p>
+              </>
             )}
-            <Button
-              startIcon={<Delete />}
-              color="error"
-              size="small"
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 removeFile(fieldName);
               }}
-              sx={{ mt: 1 }}
+              className="mt-2 px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
               إزالة
-            </Button>
-          </Box>
+            </button>
+          </div>
         ) : (
-          <Box>
-            <CloudUpload sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-            <Typography variant="body2">{label}</Typography>
-            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-              اسحب وأفلت الملف هنا أو انقر للاختيار
-            </Typography>
-          </Box>
+          <div className="flex flex-col items-center text-center">
+            <CloudUpload sx={{ fontSize: 40, color: 'primary.main', mb: 0.5 }} className="group-hover:scale-110 transition-transform" />
+            <p className="text-sm font-bold text-slate-800 dark:text-white">{label}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">اسحب وأفلت الملف هنا أو انقر للاختيار</p>
+          </div>
         )}
-      </Paper>
+      </div>
     );
   };
 
@@ -244,7 +231,7 @@ const AddClient = ({ open, onClose }) => {
     try {
       const formData = new FormData();
 
-      Object.keys(values).forEach(key => {
+      Object.keys(values).forEach((key) => {
         if (key === 'hasKafeel') {
           formData.append(key, values[key]);
         } else if (key === 'email' && (!values[key] || values[key].trim() === '')) {
@@ -255,13 +242,13 @@ const AddClient = ({ open, onClose }) => {
         } else if (key === 'phoneCode') {
           return;
         } else if (key !== 'kafeels' && !key.startsWith('kafeel')) {
-          formData.append(key, values[key]);
+          if (values[key] !== '' && values[key] != null) formData.append(key, values[key]);
         }
       });
 
       if (values.hasKafeel && values.kafeels && values.kafeels.length > 0) {
         values.kafeels.forEach((kafeel, index) => {
-          Object.keys(kafeel).forEach(key => {
+          Object.keys(kafeel).forEach((key) => {
             if (key === 'email' && (!kafeel[key] || kafeel[key].trim() === '')) {
               return;
             } else if (key === 'phone') {
@@ -276,7 +263,7 @@ const AddClient = ({ open, onClose }) => {
         });
       }
 
-      Object.keys(uploadedFiles).forEach(key => {
+      Object.keys(uploadedFiles).forEach((key) => {
         if (!key.startsWith('kafeels[') && !key.startsWith('kafeel[')) {
           formData.append(key, uploadedFiles[key]);
         }
@@ -286,7 +273,7 @@ const AddClient = ({ open, onClose }) => {
         values.kafeels.forEach((kafeel, index) => {
           const kafeelIdImageKey = `kafeels[${index}][kafeelIdImage]`;
           const kafeelWorkCardKey = `kafeels[${index}][kafeelWorkCard]`;
-          
+
           if (uploadedFiles[kafeelIdImageKey]) {
             formData.append('kafeelIdImage', uploadedFiles[kafeelIdImageKey]);
           }
@@ -315,271 +302,326 @@ const AddClient = ({ open, onClose }) => {
     }
   };
 
+  const inputBase =
+    'w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100';
+  const labelBase = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
+  const fieldError = 'text-xs text-red-500 mt-0.5';
+
+  if (!open) return null;
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          direction: 'rtl'
-        }
-      }}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/50 backdrop-blur-sm overflow-y-auto h-screen right-56"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      dir="rtl"
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        pb: 1
-      }}>
-        <Typography variant="h6" fontWeight="bold">
-          إضافة عميل جديد
-        </Typography>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+      <div className="w-full max-w-5xl max-h-[calc(100vh-5rem)] md:max-h-[calc(100vh-10rem)] bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col border border-primary/10 shrink-0">
+        {/* Modal Header */}
+        <div className="px-8 pt-8 pb-6 border-b border-primary/10 bg-white dark:bg-slate-900 sticky top-0 z-10 shrink-0">
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة عميل جديد</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                يرجى إكمال خطوات إضافة بيانات العميل الجديد في النظام المالي
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <Close sx={{ fontSize: 20 }} />
+            </button>
+          </div>
 
-      <Stepper activeStep={activeStep} sx={{ p: 3, pb: 0 }}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+          {/* Horizontal Stepper */}
+          <div className="flex items-center justify-between max-w-3xl mx-auto relative">
+            {steps.map((step, idx) => {
+              const StepIcon = step.icon;
+              return (
+              <React.Fragment key={step.label}>
+                <div className="flex flex-col items-center gap-2 z-10">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                      idx < activeStep
+                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                        : idx === activeStep
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-2 border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <StepIcon sx={{ fontSize: 24 }} />
+                  </div>
+                  <span
+                    className={`text-sm font-medium ${
+                      idx <= activeStep ? 'text-primary font-bold' : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {idx < steps.length - 1 && (
+                  <div
+                    className={`flex-1 h-1 mx-4 -mt-6 rounded ${
+                      idx < activeStep ? 'bg-primary/40' : 'bg-slate-100 dark:bg-slate-800'
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
 
-      <Formik
-        initialValues={initialValues}
-        validate={(values) => {
-          const schema = createClientValidationSchema(
-            values.hasKafeel || false,
-            values.kafeels?.length || 0
-          );
-          try {
-            schema.validateSync(values, { abortEarly: false });
-            return {};
-          } catch (err) {
-            const errors = {};
-            if (err.inner) {
-              err.inner.forEach((error) => {
-                if (error.path) {
-                  errors[error.path] = error.message;
-                }
-              });
+        <Formik
+          initialValues={initialValues}
+          validate={(values) => {
+            const schema = createClientValidationSchema(values.hasKafeel || false, values.kafeels?.length || 0);
+            try {
+              schema.validateSync(values, { abortEarly: false });
+              return {};
+            } catch (err) {
+              const errors = {};
+              if (err.inner) {
+                err.inner.forEach((error) => {
+                  if (error.path) errors[error.path] = error.message;
+                });
+              }
+              return errors;
             }
-            return errors;
-          }
-        }}
-        onSubmit={handleSubmit}
-        enableReinitialize
-      >
-        {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm }) => {
-
-
-          return (
-            <Form onSubmit={(e) => e.preventDefault()}>
-              <DialogContent sx={{ pb: 1, minHeight: 400 }}>
+          }}
+          onSubmit={handleSubmit}
+          enableReinitialize
+        >
+          {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm }) => (
+            <Form className="flex flex-col flex-1 min-h-0">
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-8 bg-white dark:bg-slate-900">
+                {/* Step 0: Client Data */}
                 {activeStep === 0 && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>المعلومات الشخصية للعميل</Typography>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="name"
-                          label="اسم العميل"
-                          value={values.name}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Personal Info */}
+                    <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mb-2">
+                      <AccountCircle sx={{ fontSize: 24, color: 'primary.main' }} />
+                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">المعلومات الشخصية</h2>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>الاسم الكامل</label>
+                      <input
+                        name="name"
+                        value={values.name}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="أدخل اسم العميل الثلاثي"
+                        className={inputBase}
+                      />
+                      {touched.name && errors.name && <span className={fieldError}>{errors.name}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>رقم الهوية الوطنية</label>
+                      <input
+                        name="nationalId"
+                        value={values.nationalId}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="1XXXXXXXXX"
+                        className={inputBase}
+                      />
+                      {touched.nationalId && errors.nationalId && <span className={fieldError}>{errors.nationalId}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>تاريخ الميلاد</label>
+                      <input
+                        name="birthDate"
+                        type="date"
+                        value={values.birthDate}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={inputBase}
+                      />
+                      {touched.birthDate && errors.birthDate && (
+                        <span className={fieldError}>{errors.birthDate}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>البريد الإلكتروني</label>
+                      <input
+                        name="email"
+                        type="email"
+                        value={values.email}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="example@mail.com"
+                        className={inputBase}
+                      />
+                      {touched.email && errors.email && <span className={fieldError}>{errors.email}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>رقم الجوال</label>
+                      <div className="flex gap-2">
+                        <select
+                          name="phoneCode"
+                          value={values.phoneCode}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          error={touched.name && Boolean(errors.name)}
-                          helperText={touched.name && errors.name}
+                          className={`${inputBase} w-28 shrink-0`}
+                        >
+                          {countryCodes.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.flag} {c.code}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          name="phone"
+                          value={values.phone}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="05XXXXXXXX"
+                          className={`${inputBase} text-left`}
+                          dir="ltr"
                         />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="nationalId"
-                          label="رقم الهوية الوطنية"
-                          value={values.nationalId}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.nationalId && Boolean(errors.nationalId)}
-                          helperText={touched.nationalId && errors.nationalId}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="email"
-                          label=" البريد الإلكتروني (اختياري)" 
-                          type="email"
-                          value={values.email}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.email && Boolean(errors.email)}
-                          helperText={touched.email && errors.email}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="birthDate"
-                          label="تاريخ الميلاد"
-                          type="date"
-                          value={values.birthDate}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.birthDate && Boolean(errors.birthDate)}
-                          helperText={touched.birthDate && errors.birthDate}
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                        />  
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>رمز الدولة</InputLabel>
-                            <Select
-                              name="phoneCode"
-                              value={values.phoneCode}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              error={touched.phoneCode && Boolean(errors.phoneCode)}
-                              label="رمز الدولة"
-                            >
-                              {countryCodes.map((country) => (
-                                <MenuItem key={country.code} value={country.code}>
-                                  {country.flag} {country.code} ({country.country})
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                          <TextField
-                            fullWidth
-                            name="phone"
-                            label="رقم الجوال"
-                            value={values.phone}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            error={touched.phone && Boolean(errors.phone)}
-                            helperText={touched.phone && errors.phone}
-                          />
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="city"
-                          label="المدينة"
-                          value={values.city}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.city && Boolean(errors.city)}
-                          helperText={touched.city && errors.city}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="district"
-                          label="الحي"
-                          value={values.district}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.district && Boolean(errors.district)}
-                          helperText={touched.district && errors.district}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          name="address"
-                          label="العنوان التفصيلي"
-                          value={values.address}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.address && Boolean(errors.address)}
-                          helperText={touched.address && errors.address}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          name="employer"
-                          label="جهة العمل"
-                          value={values.employer}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.employer && Boolean(errors.employer)}
-                          helperText={touched.employer && errors.employer}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
+                      </div>
+                      {touched.phone && errors.phone && <span className={fieldError}>{errors.phone}</span>}
+                    </div>
+                    {/* Address */}
+                    <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
+                      <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العنوان</h2>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>المدينة</label>
+                      <input
+                        name="city"
+                        value={values.city}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="المدينة"
+                        className={inputBase}
+                      />
+                      {touched.city && errors.city && <span className={fieldError}>{errors.city}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>الحي</label>
+                      <input
+                        name="district"
+                        value={values.district}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="اسم الحي"
+                        className={inputBase}
+                      />
+                      {touched.district && errors.district && <span className={fieldError}>{errors.district}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>العنوان التفصيلي</label>
+                      <input
+                        name="address"
+                        value={values.address}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="الشارع، رقم المبنى"
+                        className={inputBase}
+                      />
+                      {touched.address && errors.address && <span className={fieldError}>{errors.address}</span>}
+                    </div>
+
+                    {/* Professional */}
+                    <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
+                      <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العمل والدخل</h2>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>جهة العمل</label>
+                      <input
+                        name="employer"
+                        value={values.employer}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="اسم الشركة أو الوزارة"
+                        className={inputBase}
+                      />
+                      {touched.employer && errors.employer && (
+                        <span className={fieldError}>{errors.employer}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>الراتب الشهري</label>
+                      <div className="relative">
+                        <input
                           name="salary"
-                          label="الراتب"
                           type="number"
                           value={values.salary}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          error={touched.salary && Boolean(errors.salary)}
-                          helperText={touched.salary && errors.salary}
+                          placeholder="0.00"
+                          className={`${inputBase} pl-12`}
                         />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">ر.س</span>
+                      </div>
+                      {touched.salary && errors.salary && <span className={fieldError}>{errors.salary}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>الالتزامات الشهرية</label>
+                      <div className="relative">
+                        <input
                           name="obligations"
-                          label="الالتزامات"
                           type="number"
                           value={values.obligations}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          error={touched.obligations && Boolean(errors.obligations)}
-                          helperText={touched.obligations && errors.obligations}
+                          placeholder="0.00"
+                          className={`${inputBase} pl-12`}
                         />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          name="creationReason"
-                          label="سبب الإنشاء"
-                          value={values.creationReason}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.creationReason && Boolean(errors.creationReason)}
-                          helperText={touched.creationReason && errors.creationReason}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          name="notes"
-                          label="ملاحظات"
-                          multiline
-                          rows={2}
-                          value={values.notes}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          error={touched.notes && Boolean(errors.notes)}
-                          helperText={touched.notes && errors.notes}
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                             width: '800px',
-                            },
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">ر.س</span>
+                      </div>
+                      {touched.obligations && errors.obligations && (
+                        <span className={fieldError}>{errors.obligations}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>سبب إنشاء الحساب</label>
+                      <input
+                        name="creationReason"
+                        value={values.creationReason}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="تمويل، تجارة، إلخ"
+                        className={inputBase}
+                      />
+                      {touched.creationReason && errors.creationReason && (
+                        <span className={fieldError}>{errors.creationReason}</span>
+                      )}
+                    </div>
+                    <div className="md:col-span-2 flex flex-col gap-1.5">
+                      <label className={labelBase}>ملاحظات إضافية</label>
+                      <input
+                        name="notes"
+                        value={values.notes}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="أي معلومات إضافية عن العميل"
+                        className={inputBase}
+                      />
+                    </div>
 
-                    <FormControlLabel
-                      control={
-                        <Switch
+                    {/* Has Kafeel Toggle */}
+                    <div className="md:col-span-3 mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                          <VerifiedUser sx={{ fontSize: 24 }} color="primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white">هل يوجد كفيل؟</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            تفعيل هذا الخيار سيضيف خطوة بيانات الكفيل
+                          </p>
+                        </div>
+                      </div>
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
                           checked={values.hasKafeel}
                           onChange={(e) => {
                             const checked = e.target.checked;
@@ -592,212 +634,174 @@ const AddClient = ({ open, onClose }) => {
                               setFieldValue('kafeels', []);
                             }
                           }}
+                          className="sr-only peer"
                         />
-                      }
-                      label="هل يوجد كفيل؟"
-                    />
-                  </Box>
+                        <div className="relative w-14 h-7 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all rtl:peer-checked:after:-translate-x-full peer-checked:after:translate-x-full" />
+                      </label>
+                    </div>
+                  </div>
                 )}
 
-                {activeStep === 1 && values.hasKafeel && values.kafeels && values.kafeels.length > 0 && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Step 1: Kafeel Data */}
+                {activeStep === 1 && values.hasKafeel && values.kafeels?.length > 0 && (
+                  <div className="space-y-8">
                     {values.kafeels.map((kafeel, index) => (
-                      <Box key={index}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
+                      <div key={index}>
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                          <Group sx={{ color: 'primary.main' }} />
                           معلومات الكفيل {index + 1}
-                        </Typography>
-                        
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>اسم الكفيل</label>
+                            <input
                               name={`kafeels[${index}][name]`}
-                              label="اسم الكفيل"
                               value={kafeel.name || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][name]`] && Boolean(errors[`kafeels[${index}][name]`])}
-                              helperText={touched[`kafeels[${index}][name]`] && errors[`kafeels[${index}][name]`]}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                            {touched[`kafeels[${index}][name]`] && errors[`kafeels[${index}][name]`] && (
+                              <span className={fieldError}>{errors[`kafeels[${index}][name]`]}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>رقم هوية الكفيل</label>
+                            <input
                               name={`kafeels[${index}][nationalId]`}
-                              label="رقم هوية الكفيل"
                               value={kafeel.nationalId || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][nationalId]`] && Boolean(errors[`kafeels[${index}][nationalId]`])}
-                              helperText={touched[`kafeels[${index}][nationalId]`] && errors[`kafeels[${index}][nationalId]`]}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                            {touched[`kafeels[${index}][nationalId]`] && errors[`kafeels[${index}][nationalId]`] && (
+                              <span className={fieldError}>{errors[`kafeels[${index}][nationalId]`]}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>تاريخ الميلاد</label>
+                            <input
                               name={`kafeels[${index}][birthDate]`}
-                              label="تاريخ الميلاد"
                               type="date"
                               value={kafeel.birthDate || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][birthDate]`] && Boolean(errors[`kafeels[${index}][birthDate]`])}
-                              helperText={touched[`kafeels[${index}][birthDate]`] && errors[`kafeels[${index}][birthDate]`]}
-                              InputLabelProps={{
-                                shrink: true
-                              }}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <FormControl sx={{ minWidth: 120 }}>
-                                <InputLabel>رمز الدولة</InputLabel>
-                                <Select
-                                  name={`kafeels[${index}][phoneCode]`}
-                                  value={kafeel.phoneCode || '+966'}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  error={touched[`kafeels[${index}][phoneCode]`] && Boolean(errors[`kafeels[${index}][phoneCode]`])}
-                                  label="رمز الدولة"
-                                  sx={{
-                                    width: '250px',
-                                  }}
-                                >
-                                  {countryCodes.map((country) => (
-                                    <MenuItem key={country.code} value={country.code}>
-                                      {country.flag} {country.code} ({country.country})
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                              <TextField
-                                fullWidth
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>رقم جوال الكفيل</label>
+                            <div className="flex gap-2">
+                              <select
+                                name={`kafeels[${index}][phoneCode]`}
+                                value={kafeel.phoneCode || '+966'}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`${inputBase} w-28 shrink-0`}
+                              >
+                                {countryCodes.map((c) => (
+                                  <option key={c.code} value={c.code}>
+                                    {c.flag} {c.code}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
                                 name={`kafeels[${index}][phone]`}
-                                label="رقم جوال الكفيل"
                                 value={kafeel.phone || ''}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                error={touched[`kafeels[${index}][phone]`] && Boolean(errors[`kafeels[${index}][phone]`])}
-                                helperText={touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`]}
-                                sx={{
-                                  width: '250px',
-                                }}
+                                className={`${inputBase} text-left`}
+                                dir="ltr"
                               />
-                            </Box>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                            </div>
+                            {touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`] && (
+                              <span className={fieldError}>{errors[`kafeels[${index}][phone]`]}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>البريد الإلكتروني (اختياري)</label>
+                            <input
                               name={`kafeels[${index}][email]`}
-                              label="البريد الإلكتروني (اختياري)"
                               type="email"
                               value={kafeel.email || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][email]`] && Boolean(errors[`kafeels[${index}][email]`])}
-                              helperText={touched[`kafeels[${index}][email]`] && errors[`kafeels[${index}][email]`]}
-                              sx={{
-                                width: '300px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>المدينة</label>
+                            <input
                               name={`kafeels[${index}][city]`}
-                              label="المدينة"
                               value={kafeel.city || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][city]`] && Boolean(errors[`kafeels[${index}][city]`])}
-                              helperText={touched[`kafeels[${index}][city]`] && errors[`kafeels[${index}][city]`]}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>الحي</label>
+                            <input
                               name={`kafeels[${index}][district]`}
-                              label="الحي"
                               value={kafeel.district || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][district]`] && Boolean(errors[`kafeels[${index}][district]`])}
-                              helperText={touched[`kafeels[${index}][district]`] && errors[`kafeels[${index}][district]`]}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>جهة عمل الكفيل</label>
+                            <input
                               name={`kafeels[${index}][employer]`}
-                              label="جهة عمل الكفيل"
                               value={kafeel.employer || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][employer]`] && Boolean(errors[`kafeels[${index}][employer]`])}
-                              helperText={touched[`kafeels[${index}][employer]`] && errors[`kafeels[${index}][employer]`]}
-                              sx={{
-                                  width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                            {touched[`kafeels[${index}][employer]`] && errors[`kafeels[${index}][employer]`] && (
+                              <span className={fieldError}>{errors[`kafeels[${index}][employer]`]}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>راتب الكفيل</label>
+                            <input
                               name={`kafeels[${index}][salary]`}
-                              label="راتب الكفيل"
                               type="number"
                               value={kafeel.salary || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][salary]`] && Boolean(errors[`kafeels[${index}][salary]`])}
-                              helperText={touched[`kafeels[${index}][salary]`] && errors[`kafeels[${index}][salary]`]}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
+                            {touched[`kafeels[${index}][salary]`] && errors[`kafeels[${index}][salary]`] && (
+                              <span className={fieldError}>{errors[`kafeels[${index}][salary]`]}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={labelBase}>التزامات الكفيل</label>
+                            <input
                               name={`kafeels[${index}][obligations]`}
-                              label="التزامات الكفيل"
                               type="number"
                               value={kafeel.obligations || ''}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={touched[`kafeels[${index}][obligations]`] && Boolean(errors[`kafeels[${index}][obligations]`])}
-                              helperText={touched[`kafeels[${index}][obligations]`] && errors[`kafeels[${index}][obligations]`]}
-                              sx={{
-                                width: '250px',
-                              }}
+                              className={inputBase}
                             />
-                          </Grid>
-                        </Grid>
-                        
+                            {touched[`kafeels[${index}][obligations]`] && errors[`kafeels[${index}][obligations]`] && (
+                              <span className={fieldError}>{errors[`kafeels[${index}][obligations]`]}</span>
+                            )}
+                          </div>
+                        </div>
                         {index < values.kafeels.length - 1 && (
-                          <Divider sx={{ my: 3 }} />
+                          <div className="border-t border-slate-200 dark:border-slate-700 my-6" />
                         )}
-                      </Box>
+                      </div>
                     ))}
 
-                    <FormControlLabel
-                      control={
-                        <Switch
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <p className="font-bold text-slate-900 dark:text-white">إضافة كفيل آخر</p>
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
                           checked={addAnotherKafeel}
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -809,171 +813,177 @@ const AddClient = ({ open, onClose }) => {
                               setAddAnotherKafeel(false);
                             }
                           }}
+                          className="sr-only peer"
                         />
-                      }
-                      label="إضافة كفيل آخر"
-                      sx={{ mt: 2 }}
-                    />
-                  </Box>
+                        <div className="relative w-14 h-7 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all rtl:peer-checked:after:-translate-x-full peer-checked:after:translate-x-full" />
+                      </label>
+                    </div>
+                  </div>
                 )}
 
                 {activeStep === 1 && !values.hasKafeel && (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    تم تعطيل معلومات الكفيل. يمكنك المتابعة إلى الخطوة التالية.
-                  </Alert>
+                  <div className="p-6 bg-primary/5 rounded-xl border border-primary/10 text-center">
+                    <Info sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+                    <p className="text-slate-700 dark:text-slate-300">تم تعطيل معلومات الكفيل. يمكنك المتابعة إلى الخطوة التالية.</p>
+                  </div>
                 )}
 
-                {/* Step 3: Documents */}
+                {/* Step 2: Attachments */}
                 {activeStep === 2 && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <Typography variant="h6">مستندات العميل</Typography>
-                    
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <DocumentDropzone
-                          fieldName="clientIdImage"
-                          label="صورة هوية العميل"
-                          acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <DocumentDropzone
-                          fieldName="clientWorkCard"
-                          label="بطاقة عمل العميل"
-                          acceptedTypes={{ 
-                            'application/pdf': ['.pdf'],
-                            'image/*': ['.png', '.jpg', '.jpeg'] 
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <DocumentDropzone
-                          fieldName="salaryReport"
-                          label="تقرير الراتب"
-                          acceptedTypes={{ 
-                            'application/pdf': ['.pdf'],
-                            'application/msword': ['.doc', '.docx'] 
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <DocumentDropzone
-                          fieldName="simaReport"
-                          label="تقرير سمة"
-                          acceptedTypes={{ 
-                            'application/pdf': ['.pdf'],
-                            'application/msword': ['.doc', '.docx'] 
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                      <CloudUpload sx={{ color: 'primary.main' }} />
+                      مستندات العميل
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <DocumentDropzone
+                        fieldName="clientIdImage"
+                        label="صورة هوية العميل"
+                        acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
+                      />
+                      <DocumentDropzone
+                        fieldName="clientWorkCard"
+                        label="بطاقة عمل العميل"
+                        acceptedTypes={{
+                          'application/pdf': ['.pdf'],
+                          'image/*': ['.png', '.jpg', '.jpeg'],
+                        }}
+                      />
+                      <DocumentDropzone
+                        fieldName="salaryReport"
+                        label="تقرير الراتب"
+                        acceptedTypes={{
+                          'application/pdf': ['.pdf'],
+                          'application/msword': ['.doc', '.docx'],
+                        }}
+                      />
+                      <DocumentDropzone
+                        fieldName="simaReport"
+                        label="تقرير سمة"
+                        acceptedTypes={{
+                          'application/pdf': ['.pdf'],
+                          'application/msword': ['.doc', '.docx'],
+                        }}
+                      />
+                    </div>
 
-                    {values.hasKafeel && values.kafeels && values.kafeels.length > 0 && (
+                    {values.hasKafeel && values.kafeels?.length > 0 && (
                       <>
                         {values.kafeels.map((kafeel, index) => (
-                          <Box key={index}>
-                            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                          <div key={index}>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-white mt-8 mb-4 flex items-center gap-2">
+                              <ContactPage sx={{ color: 'primary.main' }} />
                               مستندات الكفيل {index + 1}
-                            </Typography>
-                            <Grid container spacing={3}>
-                              <Grid item xs={12} md={6}>
-                                <DocumentDropzone
-                                  fieldName={`kafeels[${index}][kafeelIdImage]`}
-                                  label={`صورة هوية الكفيل ${index + 1}`}
-                                  acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
-                                />
-                              </Grid>
-                              <Grid item xs={12} md={6}>
-                                <DocumentDropzone
-                                  fieldName={`kafeels[${index}][kafeelWorkCard]`}
-                                  label={`بطاقة عمل الكفيل ${index + 1}`}
-                                  acceptedTypes={{ 
-                                    'application/pdf': ['.pdf'],
-                                    'image/*': ['.png', '.jpg', '.jpeg'] 
-                                  }}
-                                />
-                              </Grid>
-                            </Grid>
-                            {index < values.kafeels.length - 1 && (
-                              <Divider sx={{ my: 3 }} />
-                            )}
-                          </Box>
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                              <DocumentDropzone
+                                fieldName={`kafeels[${index}][kafeelIdImage]`}
+                                label={`صورة هوية الكفيل ${index + 1}`}
+                                acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
+                              />
+                              <DocumentDropzone
+                                fieldName={`kafeels[${index}][kafeelWorkCard]`}
+                                label={`بطاقة عمل الكفيل ${index + 1}`}
+                                acceptedTypes={{
+                                  'application/pdf': ['.pdf'],
+                                  'image/*': ['.png', '.jpg', '.jpeg'],
+                                }}
+                              />
+                            </div>
+                          </div>
                         ))}
                       </>
                     )}
-                  </Box>
+                  </div>
                 )}
-              </DialogContent>
+              </div>
 
-              <DialogActions sx={{ 
-                px: 3, 
-                py: 2, 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-              }}>
-                <Box>
+              {/* Modal Footer */}
+              <div className="px-8 py-6 border-t border-primary/10 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  إلغاء العملية
+                </button>
+                <div className="flex gap-3">
                   {activeStep > 0 && (
-                    <Button onClick={handleBack} disabled={isSubmitting}>
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      disabled={isSubmitting}
+                      className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                    >
+                      <ArrowForward sx={{ fontSize: 20 }} />
                       رجوع
-                    </Button>
+                    </button>
                   )}
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button 
-                    onClick={onClose}
-                    variant="outlined"
-                    color="inherit"
-                    disabled={isSubmitting}
-                  >
-                    إلغاء
-                  </Button>
-                  
                   {activeStep < steps.length - 1 ? (
-                    <Button
-                      onClick={() => handleNext(values)}
-                      variant="contained"
+                    <button
+                      type="button"
+                      onClick={handleNext}
                       disabled={
-                        (activeStep === 1 && values.hasKafeel && values.kafeels && values.kafeels.some((kafeel) =>
-                          !kafeel.name || !kafeel.nationalId || !kafeel.phoneCode || !kafeel.phone || !kafeel.employer || !kafeel.salary || !kafeel.obligations
-                        )) ||
-                        (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.birthDate ||
-                          !values.city || !values.district || !values.address || !values.employer || !values.salary ||
-                          !values.obligations || !values.creationReason))
+                        (activeStep === 1 &&
+                          values.hasKafeel &&
+                          values.kafeels?.some(
+                            (k) =>
+                              !k.name ||
+                              !k.nationalId ||
+                              !k.phoneCode ||
+                              !k.phone ||
+                              !k.employer ||
+                              !k.salary ||
+                              k.obligations === '' ||
+                              k.obligations == null
+                          )) ||
+                        (activeStep === 0 &&
+                          (!values.name ||
+                            !values.phoneCode ||
+                            !values.phone ||
+                            !values.nationalId ||
+                            !values.birthDate ||
+                            !values.city ||
+                            !values.district ||
+                            !values.address ||
+                            !values.employer ||
+                            !values.salary ||
+                            values.obligations === '' ||
+                            values.obligations == null ||
+                            !values.creationReason))
                       }
-                      sx={{
-                        bgcolor: "primary.main",
-                        "&:hover": { bgcolor: "primary.dark" },
-                      }}
+                      className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
                     >
                       التالي
-                    </Button>
+                      <span className="rotate-180 inline-block"><ArrowForward sx={{ fontSize: 20 }} /></span>
+                    </button>
                   ) : (
-                    <Button
+                    <button
+                      type="button"
                       onClick={submitForm}
-                      variant="contained"
                       disabled={isSubmitting}
-                      sx={{
-                        bgcolor: "primary.main",
-                        "&:hover": { bgcolor: "primary.dark" },
-                        minWidth: 120
-                      }}
+                      className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70"
                     >
                       {isSubmitting ? (
-                        <CircularProgress size={24} color="inherit" />
+                        <>
+                          <span className="animate-spin inline-block"><Autorenew sx={{ fontSize: 20 }} /></span>
+                          جاري الإضافة...
+                        </>
                       ) : (
-                        'إضافة العميل'
+                        <>
+                          إضافة العميل
+                          <CheckCircle sx={{ fontSize: 20 }} />
+                        </>
                       )}
-                    </Button>
+                    </button>
                   )}
-                </Box>
-              </DialogActions>
+                </div>
+              </div>
             </Form>
-          );
-        }}
-      </Formik>
-    </Dialog>
+          )}
+        </Formik>
+      </div>
+    </div>
   );
 };
 

@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { preloadContractFonts } from '../utilities/fontLoader';
 
 const InstallmentSettlementPreview = ({
   open,
@@ -48,6 +49,12 @@ const InstallmentSettlementPreview = ({
       return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب التسوية</div>';
     }
   }, [settlementHtml, settlementData]);
+
+  React.useEffect(() => {
+    if (open && settlementHtml) {
+      preloadContractFonts();
+    }
+  }, [open, settlementHtml]);
 
   const handleClose = () => {
     if (onClose) {

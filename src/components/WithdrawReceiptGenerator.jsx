@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../config/Api";
 import { notifyError } from "../utilities/toastify";
+import { ensureFontsReady } from "../utilities/fontLoader";
 
 const numberToArabicWords = (num) => {
   const ones = [
@@ -279,7 +280,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
             },
           };
 
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await ensureFontsReady();
 
           const container = document.getElementById(previewContainer.id);
           const pdfBlob = await html2pdf()

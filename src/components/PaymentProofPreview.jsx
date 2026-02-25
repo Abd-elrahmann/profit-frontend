@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { preloadContractFonts } from '../utilities/fontLoader';
 
 const PaymentProofPreview = ({
   open,
@@ -55,6 +56,12 @@ const PaymentProofPreview = ({
       return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب إيصال السداد</div>';
     }
   }, [paymentProofHtml, paymentData]);
+
+  React.useEffect(() => {
+    if (open && paymentProofHtml) {
+      preloadContractFonts();
+    }
+  }, [open, paymentProofHtml]);
 
   return (
     <Dialog 

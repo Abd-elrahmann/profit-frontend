@@ -19,7 +19,6 @@ import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toast
 import LoansTable from "../../components/modals/LoansTable";
 import EditSmallLoanForm from "../../components/modals/EditSmallLoanForm";
 import SmallLoansTable from "../../components/modals/SmallLoansTable";
-import AddClient from "../../components/modals/AddClient";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import LoanContractGenerator from "../../components/LoanContractGenerator";
 import LoanContractsPreview from "../../components/LoanContractsPreview";
@@ -51,7 +50,6 @@ const Loans = () => {
   const [clientsPage, setClientsPage] = useState(1);
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
-  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [isAddKafeelOpen, setIsAddKafeelOpen] = useState(false);
   const [loanForm, setLoanForm] = useState({
     amount: "",
@@ -1738,7 +1736,7 @@ const Loans = () => {
                     isViewMode={isViewMode}
                     isEditMode={isEditMode}
                     isAdditionalLoan={isAdditionalLoan}
-                    setIsAddClientOpen={setIsAddClientOpen}
+                    onAddClientClick={() => navigate("/clients/add?returnTo=loans")}
                     selectedKafeel={selectedKafeel}
                     handleKafeelSelect={handleKafeelSelect}
                     clientLoansData={clientLoansData}
@@ -1839,15 +1837,6 @@ const Loans = () => {
           </div>
         </div>
       </div>
-
-      <AddClient
-        open={isAddClientOpen}
-        onClose={() => setIsAddClientOpen(false)}
-        onSuccess={() => {
-          setIsAddClientOpen(false);
-          queryClient.invalidateQueries(["clients"]);
-        }}
-      />
 
       <AddAdditionalKafeel
         open={isAddKafeelOpen}

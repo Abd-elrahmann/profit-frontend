@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Download, Print } from '@mui/icons-material';
 import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { preloadContractFonts } from '../utilities/fontLoader';
 
 const WithdrawReceiptPreview = ({
   open,
@@ -51,6 +52,12 @@ const WithdrawReceiptPreview = ({
       return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب المخالصة</div>';
     }
   }, [receiptHtml, receiptData]);
+
+  React.useEffect(() => {
+    if (open && receiptHtml) {
+      preloadContractFonts();
+    }
+  }, [open, receiptHtml]);
 
   const handlePrint = async () => {
     try {

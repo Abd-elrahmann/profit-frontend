@@ -1,0 +1,11 @@
+export { default as ClientsSidebar } from "./ClientsSidebar";
+export { default as ClientsHeader } from "./ClientsHeader";
+export { default as ClientsProfileTab } from "./ClientsProfileTab";
+export { default as ClientsFinancialTab } from "./ClientsFinancialTab";
+export { default as ClientsKafeelTab } from "./ClientsKafeelTab";
+export { default as ClientsDocumentsTab } from "./ClientsDocumentsTab";
+export { default as ClientsStatementTab } from "./ClientsStatementTab";
+export { default as ClientsLoansTab } from "./ClientsLoansTab";
+export * from "./clientsApi";
+export * from "./clientsUtils";
+export * from "./constants";

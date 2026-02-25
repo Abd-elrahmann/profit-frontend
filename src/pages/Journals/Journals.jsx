@@ -1,47 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-  Grid,
-  TextField,
-  Button,
-  Stack,
-  Divider,
-  Alert,
-  Table,
-  TableBody,
-  TableContainer,
-  TableHead,
-  MenuItem,
-  CircularProgress,
-  useMediaQuery,
-  useTheme,
-  Card,
-  CardContent,
-  IconButton,
-  Chip as MuiChip,
-  Autocomplete,
-  InputBase,
-  Chip,
-} from "@mui/material";
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Check as CheckIcon,
-  Cancel as CancelIcon,
-  Save as SaveIcon,
-  Visibility as VisibilityIcon,
-  ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
-  PictureAsPdf as PDFIcon,
-  TableChart as ExcelIcon,
-  Search as SearchIcon,
-} from "@mui/icons-material";
+import { Box, Alert, CircularProgress, useMediaQuery } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
+
 import {
   getJournalById,
   updateJournal,
@@ -55,14 +17,21 @@ import { notifySuccess, notifyError } from "../../utilities/toastify";
 import JournalTable from "../../components/modals/JournalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AdvancedSearchModal from "../../components/modals/AdvancedSearchModal";
-import {
-  StyledTableCell,
-  StyledTableRow,
-} from "../../components/layouts/tableLayout";
-import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { useTheme } from "../../theme/ThemeContext";
 import { exportJournalToPDF, exportJournalToExcel } from "../../utilities/journalsExporter";
- 
+
+import {
+  JournalsHeader,
+  JournalsSidebar,
+  JournalsJournalDetails,
+  flattenAccountsTree,
+  isJournalBalanced,
+  mapJournalLinesFromApi,
+  calculateTotals,
+  calculateTotalsForTable,
+} from "../../components/Journals";
+
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -73,7 +42,6 @@ const Journals = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilters, setSearchFilters] = useState({});
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
-  const location = useLocation();
   const [editForm, setEditForm] = useState({
     description: "",
     date: "",
@@ -94,39 +62,20 @@ const Journals = () => {
   });
   const [chartAccounts, setChartAccounts] = useState([]);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { permissions } = usePermissions();
+  const { isDarkMode } = useTheme();
+
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
 
-  const queryClient = useQueryClient();
-  const { permissions } = usePermissions();
-  const { isDarkMode } = useTheme();
-  const navigate = useNavigate();
   const fromPeriod = location.state?.fromPeriod;
   const fromProfitDistribution = location.state?.fromProfitDistribution;
   const fromInvestorsWithdrawal = location.state?.fromInvestorsWithdrawal;
   const investorId = location.state?.investorId;
-
-  const flattenAccountsTree = (accounts) => {
-    if (!accounts || !Array.isArray(accounts)) return [];
-
-    const flattened = [];
-
-    const traverse = (account) => {
-      if (!account) return;
-
-      const { children: _children, ...accountWithoutChildren } = account;
-      flattened.push(accountWithoutChildren);
-
-      if (account.children && Array.isArray(account.children)) {
-        account.children.forEach((child) => traverse(child));
-      }
-    };
-
-    accounts.forEach((account) => traverse(account));
-
-    return flattened;
-  };
 
   const { data: journalData, isLoading: isJournalLoading } = useQuery({
     queryKey: ["journal", selectedJournal],
@@ -141,21 +90,7 @@ const Journals = () => {
         date: journalData.date ? journalData.date.split("T")[0] : "",
         type: journalData.type || "",
       });
-      if (journalData.lines && Array.isArray(journalData.lines)) {
-        setJournalLines(
-          journalData.lines.map((line) => ({
-            id: line.id,
-            accountId: line.account?.id,
-            account: line.account,
-            debit: line.debit || 0,
-            credit: line.credit || 0,
-            balance: line.balance || 0,
-            description: line.description || "",
-          }))
-        );
-      } else {
-        setJournalLines([]);
-      }
+      setJournalLines(mapJournalLinesFromApi(journalData.lines));
     } else if (!selectedJournal) {
       setJournalLines([]);
     }
@@ -165,27 +100,38 @@ const Journals = () => {
     const fetchChartAccounts = async () => {
       try {
         const accountsTree = await getChartOfAccounts();
-        const flattenedAccounts = flattenAccountsTree(accountsTree || []);
-        setChartAccounts(flattenedAccounts);
+        setChartAccounts(flattenAccountsTree(accountsTree || []));
       } catch (error) {
         console.error("Error fetching chart accounts:", error);
       }
     };
-
     fetchChartAccounts();
   }, []);
 
   useEffect(() => {
-    if (location.state) {
-      const { journalId, activeTab: targetTab } = location.state;
-      if (journalId) {
-        setSelectedJournal(journalId);
-        setActiveTab(targetTab || 1);
-        setIsEditMode(false);
-        setIsAddMode(false);
-      }
+    const { journalId, activeTab: targetTab } = location.state || {};
+    if (journalId) {
+      setSelectedJournal(journalId);
+      setActiveTab(targetTab || 1);
+      setIsEditMode(false);
+      setIsAddMode(false);
     }
   }, [location.state]);
+
+  const handleTabChange = (newValue) => {
+    setActiveTab(newValue);
+    if (newValue === 0) {
+      setSelectedJournal(null);
+      setIsEditMode(false);
+      setIsAddMode(false);
+      setJournalLines([]);
+    }
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    if (value) setSearchFilters({});
+  };
 
   const handleViewDetails = (journalId) => {
     setSelectedJournal(journalId);
@@ -201,12 +147,7 @@ const Journals = () => {
     setIsAddMode(false);
     setJournalLines([]);
     setEditingLineIndex(null);
-    setCurrentLine({
-      accountId: "",
-      debit: "",
-      credit: "",
-      description: "",
-    });
+    setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
   };
 
   const handleAddNewClick = () => {
@@ -216,12 +157,7 @@ const Journals = () => {
     setSelectedJournal(null);
     setJournalLines([]);
     setEditingLineIndex(null);
-    setCurrentLine({
-      accountId: "",
-      debit: "",
-      credit: "",
-      description: "",
-    });
+    setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
     setNewJournalForm({
       description: "",
       date: new Date().toISOString().split("T")[0],
@@ -229,26 +165,12 @@ const Journals = () => {
     });
   };
 
-  const handleBackToPeriodClosing = () => {
-    navigate("/period-closing");
-  };
+  const handleBackToPeriodClosing = () => navigate("/period-closing");
+  const handleBackToProfitDistribution = () => navigate("/profit-distribution");
+  const handleBackToInvestorsWithdrawal = () =>
+    navigate("/investors-withdraw", { state: { investorId, activeTab: 1 } });
 
-  const handleBackToProfitDistribution = () => {
-    navigate("/profit-distribution");
-  };
-
-  const handleBackToInvestorsWithdrawal = () => {
-    navigate("/investors-withdraw", {
-      state: {
-        investorId: investorId,
-        activeTab: 1,
-      },
-    });
-  };
-
-  const handleEditClick = () => {
-    setIsEditMode(true);
-  };
+  const handleEditClick = () => setIsEditMode(true);
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
@@ -258,17 +180,7 @@ const Journals = () => {
         date: journalData.date ? journalData.date.split("T")[0] : "",
         type: journalData.type || "",
       });
-      setJournalLines(
-        journalData.lines?.map((line) => ({
-          id: line.id,
-          accountId: line.account?.id,
-          account: line.account,
-          debit: line.debit || 0,
-          credit: line.credit || 0,
-          balance: line.balance || 0,
-          description: line.description || "",
-        })) || []
-      );
+      setJournalLines(mapJournalLinesFromApi(journalData.lines));
     }
   };
 
@@ -276,12 +188,7 @@ const Journals = () => {
     setIsAddMode(false);
     setJournalLines([]);
     setEditingLineIndex(null);
-    setCurrentLine({
-      accountId: "",
-      debit: "",
-      credit: "",
-      description: "",
-    });
+    setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
     setNewJournalForm({
       description: "",
       date: new Date().toISOString().split("T")[0],
@@ -317,12 +224,7 @@ const Journals = () => {
       setJournalLines((prev) => [...prev, newLine]);
     }
 
-    setCurrentLine({
-      accountId: "",
-      debit: "",
-      credit: "",
-      description: "",
-    });
+    setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
   };
 
   const handleEditLine = (index) => {
@@ -340,26 +242,20 @@ const Journals = () => {
     setJournalLines((prev) => prev.filter((_, i) => i !== index));
     if (editingLineIndex === index) {
       setEditingLineIndex(null);
-      setCurrentLine({
-        accountId: "",
-        debit: "",
-        credit: "",
-        description: "",
-      });
+      setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
     }
   };
 
   const handleLineInputChange = (field, value) => {
-    setCurrentLine((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setCurrentLine((prev) => ({ ...prev, [field]: value }));
   };
 
-
-  const isJournalBalanced = (debit, credit) => {
-    const difference = Math.abs(debit - credit);
-    return difference < 0.01;
+  const handleInputChange = (field, value) => {
+    if (isAddMode) {
+      setNewJournalForm((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setEditForm((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleCreateJournal = async () => {
@@ -385,7 +281,7 @@ const Journals = () => {
     }
 
     try {
-      const journalData = {
+      await createJournal({
         description: newJournalForm.description,
         date: newJournalForm.date,
         type: newJournalForm.type,
@@ -395,9 +291,7 @@ const Journals = () => {
           credit: parseFloat(line.credit || 0),
           description: line.description,
         })),
-      };
-
-      await createJournal(journalData);
+      });
       notifySuccess("تم إنشاء القيد بنجاح");
       setIsAddMode(false);
       setJournalLines([]);
@@ -431,7 +325,7 @@ const Journals = () => {
     }
 
     try {
-      const updateData = {
+      await updateJournal(selectedJournal, {
         description: editForm.description,
         date: editForm.date,
         type: editForm.type,
@@ -441,29 +335,13 @@ const Journals = () => {
           credit: parseFloat(line.credit || 0),
           description: line.description,
         })),
-      };
-
-      await updateJournal(selectedJournal, updateData);
+      });
       notifySuccess("تم تعديل القيد بنجاح");
       setIsEditMode(false);
       queryClient.invalidateQueries(["journal", selectedJournal]);
       queryClient.invalidateQueries(["journals"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تعديل القيد");
-    }
-  };
-
-  const handleInputChange = (field, value) => {
-    if (isAddMode) {
-      setNewJournalForm((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    } else {
-      setEditForm((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
     }
   };
 
@@ -509,1224 +387,50 @@ const Journals = () => {
 
   const handleExportPDF = async () => {
     if (!journalData) return;
-    
     try {
       await exportJournalToPDF(journalData);
       notifySuccess("تم تصدير القيد إلى PDF بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير PDF");
-      console.error('PDF export error:', error);
+      console.error("PDF export error:", error);
     }
   };
-  
+
   const handleExportExcel = async () => {
     if (!journalData) return;
-
     try {
       await exportJournalToExcel(journalData);
       notifySuccess("تم تصدير القيد إلى Excel بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير Excel");
-      console.error('Excel export error:', error);
+      console.error("Excel export error:", error);
     }
-  };
-
-  const handleOpenAdvancedSearch = () => {
-    setIsAdvancedSearchOpen(true);
   };
 
   const handleAdvancedSearch = (filters) => {
     setSearchFilters(filters);
-      setSearchQuery("");
-  };
-
-  const handleClearSearch = () => {
-    setSearchFilters({});
     setSearchQuery("");
   };
 
-  const getJournalSourceTypeText = (sourceType) => {
-    switch (sourceType) {
-      case "LOAN":
-        return "سلفة";
-      case "REPAYMENT":
-        return "سداد دفعة";
-      case "LOAN_INTEREST":
-        return "فوائد سلفة";
-      case "LOAN_CONVERSION":
-        return "نقل مديونية";
-      case "PARTNER":
-        return "انضمام شريك";
-      case "PERIOD_CLOSING":
-        return "إقفال فترة";
-      case "PARTNER_TRANSACTION_WITHDRAWAL":
-        return "سحب مالي لشريك";
-      case "COMPANY_PROFIT_WITHDRAWAL":
-        return "سحب ربح شركة";
-      case "PARTNER_TRANSACTION_DEPOSIT":
-        return "إيداع مالي لشريك";
-      case "EXPENSES":
-        return "مصروف";
-      case "SAVING":
-        return "ادخار";
-      case "PARTNER_WITHDRAWING":
-        return "انسحاب مالي لشريك";
-      case "ZAKAT":
-        return "سحب زكاة";
-      case "PARTNER_PROFIT_WITHDRAWAL":
-        return "سحب ارباح شريك";
-      case "OTHER":
-        return "أخرى";
-      default:
-        return sourceType || "-";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "DRAFT":
-        return "مسودة";
-      case "POSTED":
-        return "معتمد";
-      case "CANCELLED":
-        return "ملغي";
-      default:
-        return status;
-    }
-  };
-
-  const calculateTotalsForTable = () => {
-    if (journalData?.totals) {
-      return journalData.totals;
-    }
-
-    const totalDebit = journalLines.reduce(
-      (sum, line) => sum + (line.debit || 0),
-      0
-    );
-    const totalCredit = journalLines.reduce(
-      (sum, line) => sum + (line.credit || 0),
-      0
-    );
-    const totalBalance = totalDebit - totalCredit;
-
-    return { totalDebit, totalCredit, totalBalance };
-  };
-
-  const calculateTotals = () => {
-    if (journalData?.totals) {
-      return journalData.totals;
-    }
-
-    let totalDebit = 0;
-    let totalCredit = 0;
-
-    if (editingLineIndex !== null && journalLines[editingLineIndex]) {
-      journalLines.forEach((line, index) => {
-        if (index !== editingLineIndex) {
-          totalDebit += (line.debit || 0);
-          totalCredit += (line.credit || 0);
-        }
-      });
-
-      if (currentLine) {
-        totalDebit += (currentLine.debit || 0);
-        totalCredit += (currentLine.credit || 0);
-      }
-    } else {
-      totalDebit = journalLines.reduce(
-        (sum, line) => sum + (line.debit || 0),
-        0
-      );
-      totalCredit = journalLines.reduce(
-        (sum, line) => sum + (line.credit || 0),
-        0
-      );
-
-      if (
-        currentLine &&
-        ((currentLine.debit || 0) > 0 ||
-          (currentLine.credit || 0) > 0)
-      ) {
-        totalDebit += (currentLine.debit || 0);
-        totalCredit += (currentLine.credit || 0);
-      }
-    }
-
-    const totalBalance = totalDebit - totalCredit;
-
-    return { totalDebit, totalCredit, totalBalance };
-  };
-
-  const totals = calculateTotals();
-  const totalsForTable = calculateTotalsForTable();
-
-  const renderMobileLinesCards = () => (
-    <Stack spacing={2}>
-      {journalLines.map((line, index) => {
-        return (
-          <Card key={line.id || index} variant="outlined" sx={{ borderRadius: 2 }}>
-            <CardContent sx={{ p: 2 }}>
-              <Stack spacing={1.5}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary">
-                      {line.account?.code} - {line.account?.name}
-                    </Typography>
-                    {line.description && (
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {line.description}
-                      </Typography>
-                    )}
-                  </Box>
-                  {(isEditMode || isAddMode) && (
-                    <Box sx={{ display: "flex", gap: 0.5 }}>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleEditLine(index)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeleteLine(index)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  )}
-                </Box>
-
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="caption" color="text.secondary">
-                      نوع الحساب
-                    </Typography>
-                    <Chip
-                      label={parseFloat(line.debit || 0) > 0 ? "مدين" : "دائن"}
-                      color={parseFloat(line.debit || 0) > 0 ? "error" : "success"}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
-
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography variant="caption" color="text.secondary">
-                      مدين
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold" color="error">
-                      {line.debit ? Math.round(line.debit).toLocaleString() : '0'}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography variant="caption" color="text.secondary">
-                      دائن
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold" color="success.main">
-                      {line.credit ? Math.round(line.credit).toLocaleString() : '0'}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography variant="caption" color="text.secondary">
-                      الإجمالي
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color={
-                        (line.balance || 0) === 0
-                          ? "text.primary"
-                          : (line.balance || 0) > 0
-                          ? "error"
-                          : "success.main"
-                      }
-                    >
-                      {typeof line.balance === 'number' ? Math.round(line.balance).toLocaleString() : '0'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      <Card
-        variant="outlined"
-        sx={{
-          borderRadius: 2,
-          backgroundColor: isDarkMode ? 'background.default' : 'grey.100',
-          border: "2px solid",
-          borderColor: "divider",
-        }}
-      >
-        <CardContent sx={{ p: 2 }}>
-          <Typography variant="subtitle2" fontWeight="bold" mb={1.5}>
-            الإجمالي
-          </Typography>
-          <Stack spacing={1}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="caption" color="text.secondary">
-                إجمالي المدين
-              </Typography>
-              <Typography variant="body2" fontWeight="bold" color="error">
-                {totalsForTable.totalDebit ? Math.round(totalsForTable.totalDebit).toLocaleString() : '0'}
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="caption" color="text.secondary">
-                إجمالي الدائن
-              </Typography>
-              <Typography variant="body2" fontWeight="bold" color="success.main">
-                {totalsForTable.totalCredit ? Math.round(totalsForTable.totalCredit).toLocaleString() : '0'}
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="caption" color="text.secondary">
-                الفرق
-              </Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {totalsForTable.totalBalance ? Math.round(totalsForTable.totalBalance).toLocaleString() : '0'}
-              </Typography>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {!isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
-        <Alert severity="error">
-          القيد غير متوازن! إجمالي المدين: {Math.round(totalsForTable.totalDebit).toLocaleString()} ≠ إجمالي الدائن: {Math.round(totalsForTable.totalCredit).toLocaleString()} (الفرق: {Math.round(Math.abs(totalsForTable.totalBalance)).toLocaleString()})
-        </Alert>
-      )}
-    </Stack>
+  const totals = calculateTotals(
+    journalData,
+    journalLines,
+    editingLineIndex,
+    currentLine
   );
+  const totalsForTable = calculateTotalsForTable(journalData, journalLines);
 
-  const renderDesktopLinesTable = () => (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <StyledTableRow>
-            <StyledTableCell align="center">الحساب</StyledTableCell>
-            <StyledTableCell align="center">الوصف</StyledTableCell>
-            <StyledTableCell align="center">نوع الحساب</StyledTableCell>
-            <StyledTableCell align="center">مدين</StyledTableCell>
-            <StyledTableCell align="center">دائن</StyledTableCell>
-            <StyledTableCell align="center">الإجمالي</StyledTableCell>
-            {(isEditMode || isAddMode) && (
-              <StyledTableCell align="center" className="hide-on-print">
-                الإجراءات
-              </StyledTableCell>
-            )}
-          </StyledTableRow>
-        </TableHead>
-        <TableBody>
-          {journalLines.map((line, index) => {
-            return (
-              <StyledTableRow key={line.id || index}>
-                <StyledTableCell align="center">
-                  {line.account?.code} - {line.account?.name}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {line.description || "-"}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Chip
-                    label={(line.debit || 0) > 0 ? "مدين" : "دائن"}
-                    color={(line.debit || 0) > 0 ? "error" : "success"}
-                    size="small"
-                    variant="outlined"
-                  />
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {line.debit ? Math.round(line.debit).toLocaleString() : '0'}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {line.credit ? Math.round(line.credit).toLocaleString() : '0'}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  <Typography
-                    fontWeight="medium"
-                    color={
-                      (line.balance || 0) === 0
-                        ? "text.primary"
-                        : (line.balance || 0) > 0
-                        ? "error"
-                        : "success.main"
-                    }
-                  >
-                    {line.balance ? Math.round(line.balance).toLocaleString() : '0'}
-                  </Typography>
-                </StyledTableCell>
-                {(isEditMode || isAddMode) && (
-                  <StyledTableCell align="center" className="hide-on-print">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => handleEditLine(index)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteLine(index)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </StyledTableCell>
-                )}
-              </StyledTableRow>
-            );
-          })}
-          <StyledTableRow sx={{ backgroundColor: isDarkMode ? 'background.default' : '#f5f5f5' }}>
-            <StyledTableCell colSpan={3} align="center">
-              <Typography fontWeight="bold">الإجمالي</Typography>
-            </StyledTableCell>
-            <StyledTableCell align="center">
-              <Typography fontWeight="bold" color="error">
-                {totalsForTable.totalDebit ? Math.round(totalsForTable.totalDebit).toLocaleString() : '0'}
-              </Typography>
-            </StyledTableCell>
-            <StyledTableCell align="center">
-              <Typography fontWeight="bold" color="success.main">
-                {totalsForTable.totalCredit ? Math.round(totalsForTable.totalCredit).toLocaleString() : '0'}
-              </Typography>
-            </StyledTableCell>
-            <StyledTableCell align="center">
-              <Typography fontWeight="bold">
-                {totalsForTable.totalBalance ? Math.round(totalsForTable.totalBalance).toLocaleString() : '0'}
-              </Typography>
-            </StyledTableCell>
-            {(isEditMode || isAddMode) && (
-              <StyledTableCell align="center"></StyledTableCell>
-            )}
-          </StyledTableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+  const searchFiltersForTable = searchQuery
+    ? { search: searchQuery }
+    : searchFilters;
 
-  const renderLinesForm = () => (
-    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
-        {editingLineIndex !== null ? "تعديل البند" : "إضافة بند جديد"}
-      </Typography>
-
-      <Grid container spacing={2} alignItems="center" justifyContent="center">
-        <Grid item xs={12} md={3}>
-          <Autocomplete
-            sx={{
-              width: "250px",
-            }}
-            options={chartAccounts}
-            getOptionLabel={(option) => `${option.code} - ${option.name}`}
-            value={
-              chartAccounts.find((acc) => acc.id === currentLine.accountId) ||
-              null
-            }
-            onChange={(event, newValue) => {
-              handleLineInputChange("accountId", newValue?.id || "");
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="الحساب"
-                required
-                variant="outlined"
-                sx={{
-                  width: "250px",
-                }}
-              />
-            )}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={2}>
-          <TextField
-            label="مدين"
-            type="number"
-            value={currentLine.debit}
-            onChange={(e) => {
-              const val = e.target.value;
-
-              if (val.includes("-")) return;
-
-              handleLineInputChange("debit", val);
-            }}
-            inputProps={{ min: 0 }}
-            sx={{
-              width: "200px",
-            }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={2}>
-          <TextField
-            label="دائن"
-            type="number"
-            value={currentLine.credit}
-            onChange={(e) => {
-              const val = e.target.value;
-
-              if (val.includes("-")) return;
-
-              handleLineInputChange("credit", val);
-            }}
-            inputProps={{ min: 0 }}
-            sx={{ width: "200px" }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={3}>
-          <TextField
-            label="الوصف"
-            value={currentLine.description}
-            onChange={(e) =>
-              handleLineInputChange("description", e.target.value)
-            }
-            sx={{
-              width: "250px",
-            }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={2}>
-          <Button
-            fullWidth
-            sx={{
-              fontWeight: "bold",
-            }}
-            variant="contained"
-            startIcon={
-              editingLineIndex !== null ? (
-                <SaveIcon sx={{ marginLeft: "10px" }} />
-              ) : (
-                <AddIcon sx={{ marginLeft: "10px" }} />
-              )
-            }
-            onClick={handleAddLine}
-            size="small"
-          >
-            {editingLineIndex !== null ? "تحديث" : "إضافة"}
-          </Button>
-        </Grid>
-      </Grid>
-    </Paper>
-  );
-
-  const renderLinesList = () => (
-    <Paper sx={{ p: isSmallScreen ? 2 : 3, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Typography variant="h6" fontWeight="bold" mb={3} color="primary.main" textAlign="center">
-        بنود القيد
-      </Typography>
-
-      {journalLines.length === 0 ? (
-        <Alert severity="info">لا توجد بنود مضافة</Alert>
-      ) : (
-        <>
-          {isSmallScreen ? renderMobileLinesCards() : renderDesktopLinesTable()}
-
-          {!isSmallScreen && !isJournalBalanced(totalsForTable.totalDebit, totalsForTable.totalCredit) && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              القيد غير متوازن! إجمالي المدين: {Math.round(totalsForTable.totalDebit).toLocaleString()} ≠ إجمالي الدائن: {Math.round(totalsForTable.totalCredit).toLocaleString()} (الفرق: {Math.round(Math.abs(totalsForTable.totalBalance)).toLocaleString()})
-            </Alert>
-          )}
-        </>
-      )}
-    </Paper>
-  );
-
-  const renderDesktopSidebar = () => (
-    <Box
-      sx={{
-        width: "350px",
-        borderRight: "1px solid",
-        borderColor: "divider",
-        bgcolor: 'background.paper',
-        flexShrink: 0,
-      }}
-    >
-      <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "divider" }}>
-        <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
-          معلومات القيد
-        </Typography>
-        <Stack spacing={2}>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography color="error">إجمالي المدين:</Typography>
-            <Typography fontWeight="bold" color="error">
-              {totals.totalDebit ? Math.round(totals.totalDebit).toLocaleString() : '0'}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography color="success.main">إجمالي الدائن:</Typography>
-            <Typography fontWeight="bold" color="success.main">
-              {totals.totalCredit ? Math.round(totals.totalCredit).toLocaleString() : '0'}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography color="text.primary">الفرق:</Typography>
-            <Typography
-              fontWeight="bold"
-              color={(totals.totalBalance || 0) === 0 ? "success.main" : "error"}
-            >
-              {totals.totalBalance ? Math.round(totals.totalBalance).toLocaleString() : '0'}
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
-  
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
-          الإجراءات
-        </Typography>
-        <Stack spacing={2}>
-
-          {!isAddMode && journalData && permissions.includes("journals_Export") && (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<PDFIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleExportPDF}
-                sx={{
-                  borderColor: "#d32f2f",
-                  color: "#d32f2f",
-                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                }}
-              >
-                تصدير PDF
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleExportExcel}
-                sx={{
-                  borderColor: "#2e7d32",
-                  color: "#2e7d32",
-                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-                }}
-              >
-                تصدير Excel
-              </Button>
-              <Divider />
-            </>
-          )}
-  
-          {isAddMode ? (
-            <>
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleCreateJournal}
-                disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
-                sx={{
-                  bgcolor: "success.main",
-                  "&:hover": { bgcolor: "success.dark" },
-                }}
-              >
-                حفظ القيد
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleCancelAdd}
-                sx={{
-                  borderColor: "grey.500",
-                  color: "text.primary",
-                }}
-              >
-                إلغاء
-              </Button>
-            </>
-          ) : journalData?.status === "DRAFT" &&
-            !isEditMode &&
-            permissions.includes("journals_Update") ? (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleEditClick}
-                sx={{
-                  borderColor: "warning.main",
-                  color: "warning.main",
-                  fontWeight: "bold",
-                  "&:hover": { bgcolor: "warning.dark" },
-                }}
-              >
-                تعديل القيد
-              </Button>
-              {permissions.includes("journals_Post") && (
-                <Button
-                  variant="contained"
-                  startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
-                  onClick={handlePostJournal}
-                  sx={{
-                    bgcolor: "success.main",
-                    fontWeight: "bold",
-                    "&:hover": { bgcolor: "success.dark" },
-                  }}
-                >
-                  اعتماد القيد
-                </Button>
-              )}
-              {permissions.includes("journals_Delete") && (
-                <Button
-                  variant="outlined"
-                  startIcon={<DeleteIcon sx={{ marginLeft: "10px" }} />}
-                  onClick={() => {
-                    setJournalToDelete(selectedJournal);
-                    setIsDeleteModalOpen(true);
-                  }}
-                  sx={{
-                    borderColor: "error.main",
-                    color: "error.main",
-                    fontWeight: "bold",
-                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                  }}
-                >
-                  حذف القيد
-                </Button>
-              )}
-            </>
-          ) : journalData?.status === "DRAFT" &&
-            isEditMode &&
-            permissions.includes("journals_Update") ? (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleUpdateJournal}
-                disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
-                sx={{
-                  borderColor: "success.main",
-                  color: "success.main",
-                  fontWeight: "bold",
-                  "&:hover": { bgcolor: "success.dark" },
-                }}
-              >
-                حفظ التعديلات
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleCancelEdit}
-                sx={{
-                  borderColor: "grey.500",
-                  color: "text.primary",
-                }}
-              >
-                إلغاء التعديل
-              </Button>
-            </>
-          ) : journalData?.status === "POSTED" &&
-            permissions.includes("journals_Post") ? (
-            <Button
-              variant="outlined"
-              startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleUnpostJournal}
-              sx={{
-                borderColor: "error.main",
-                color: "error.main",
-                "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-              }}
-            >
-              إلغاء الاعتماد
-            </Button>
-          ) : null}
-        </Stack>
-      </Box>
-    </Box>
-  );
-  
-  const renderMobileActions = () => (
-    <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
-        الإجراءات
-      </Typography>
-      <Stack spacing={1}>
-        {!isAddMode && journalData && permissions.includes("journals_Export") && (
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<PDFIcon />}
-              onClick={handleExportPDF}
-              fullWidth
-              size="small"
-              color="error"
-            >
-              تصدير PDF
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportExcel}
-              fullWidth
-              size="small"
-              color="success"
-            >
-              تصدير Excel
-            </Button>
-          </>
-        )}
-  
-        {isAddMode ? (
-          <>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleCreateJournal}
-              disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
-              fullWidth
-              size="small"
-              sx={{ bgcolor: "success.main" }}
-            >
-              حفظ القيد
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleCancelAdd}
-              fullWidth
-              size="small"
-            >
-              إلغاء
-            </Button>
-          </>
-        ) : journalData?.status === "DRAFT" &&
-          !isEditMode &&
-          permissions.includes("journals_Update") ? (
-          <>
-            <Button
-              variant="contained"
-              startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleEditClick}
-              fullWidth
-              size="small"
-            >
-              تعديل القيد
-            </Button>
-            {permissions.includes("journals_Post") && (
-              <Button
-                variant="contained"
-                startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handlePostJournal}
-                fullWidth
-                size="small"
-                sx={{ bgcolor: "success.main" }}
-              >
-                اعتماد القيد
-              </Button>
-            )}
-            {permissions.includes("journals_Delete") && (
-              <Button
-                variant="outlined"
-                startIcon={<DeleteIcon sx={{ marginLeft: "10px" }} />}
-                onClick={() => {
-                  setJournalToDelete(selectedJournal);
-                  setIsDeleteModalOpen(true);
-                }}
-                fullWidth
-                size="small"
-                color="error"
-              >
-                حذف القيد
-              </Button>
-            )}
-          </>
-        ) : journalData?.status === "DRAFT" &&
-          isEditMode &&
-          permissions.includes("journals_Update") ? (
-          <>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleUpdateJournal}
-              disabled={!isJournalBalanced(totals.totalDebit, totals.totalCredit)}
-              fullWidth
-              size="small"
-              sx={{ bgcolor: "success.main" }}
-            >
-              حفظ التعديلات
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleCancelEdit}
-              fullWidth
-              size="small"
-            >
-              إلغاء التعديل
-            </Button>
-          </>
-        ) : journalData?.status === "POSTED" &&
-          permissions.includes("journals_Post") ? (
-          <Button
-            variant="outlined"
-            startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
-            onClick={handleUnpostJournal}
-            fullWidth
-            size="small"
-            color="error"
-          >
-            إلغاء الاعتماد
-          </Button>
-        ) : null}
-      </Stack>
-    </Paper>
-  );
-  const renderMobileJournalDetails = () => (
-    <Box>
-      <Grid container spacing={2} mb={3}>
-        <Grid item xs={4}>
-          <Card sx={{ bgcolor: "rgba(211, 47, 47, 0.1)", textAlign: "center" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="error">
-                المدين
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="error">
-                {totals.totalDebit ? Math.round(totals.totalDebit).toLocaleString() : '0'}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={4}>
-          <Card sx={{ bgcolor: "rgba(46, 125, 50, 0.1)", textAlign: "center" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="success.main">
-                الدائن
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="success.main">
-                {totals.totalCredit ? Math.round(totals.totalCredit).toLocaleString() : '0'}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={4}>
-          <Card sx={{ bgcolor: "rgba(33, 33, 33, 0.1)", textAlign: "center" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2">الفرق</Typography>
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                color={(totals.totalBalance || 0) === 0 ? "success.main" : "error"}
-              >
-                {totals.totalBalance ? Math.round(totals.totalBalance).toLocaleString() : '0'}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {renderMobileActions()}
-
-      <Paper sx={{ p: 3, borderRadius: 2, mb: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
-          معلومات القيد
-        </Typography>
-
-        <Stack spacing={2}>
-          {!isAddMode && (
-            <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                رقم القيد
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {journalData?.reference || "-"}
-              </Typography>
-            </Box>
-          )}
-
-          <Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              التاريخ
-            </Typography>
-            {isEditMode || isAddMode ? (
-              <TextField
-                type="date"
-                value={isAddMode ? newJournalForm.date : editForm.date}
-                onChange={(e) => handleInputChange("date", e.target.value)}
-                sx={{
-                  width: "250px",
-                }}
-              />
-            ) : (
-              <Typography variant="body1" fontWeight="bold">
-                {journalData?.date
-                  ? new Date(journalData.date).toLocaleDateString("ar-EG")
-                  : "-"}
-              </Typography>
-            )}
-          </Box>
-
-          <Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              نوع القيد
-            </Typography>
-            {isEditMode || isAddMode ? (
-              <TextField
-                select
-                value={isAddMode ? newJournalForm.type : editForm.type}
-                onChange={(e) => handleInputChange("type", e.target.value)}
-                sx={{
-                  width: "250px",
-                }}
-                InputLabelProps={{ shrink: true }}
-              >
-                <MenuItem value="GENERAL">عام</MenuItem>
-                <MenuItem value="OPENING">افتتاحي</MenuItem>
-                <MenuItem value="CLOSING">ختامي</MenuItem>
-                <MenuItem value="ADJUSTMENT">تسوية</MenuItem>
-              </TextField>
-            ) : (
-              <Typography variant="body1" fontWeight="bold">
-                {journalData?.type === "GENERAL"
-                  ? "عام"
-                  : journalData?.type === "OPENING"
-                  ? "افتتاحي"
-                  : journalData?.type === "CLOSING"
-                  ? "ختامي"
-                  : journalData?.type === "ADJUSTMENT"
-                  ? "تسوية"
-                  : "-"}
-              </Typography>
-            )}
-          </Box>
-
-          {!isAddMode && (
-            <>
-              <Box>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  نوع المصدر
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {getJournalSourceTypeText(journalData?.sourceType)}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  الحالة
-                </Typography>
-                <MuiChip
-                  label={getStatusText(journalData?.status)}
-                  color={
-                    journalData?.status === "POSTED"
-                      ? "success"
-                      : journalData?.status === "DRAFT"
-                      ? "warning"
-                      : "error"
-                  }
-                  size="small"
-                />
-              </Box>
-
-              <Box>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  المعتمد بواسطة
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {journalData?.postedBy?.name || "لم يتم الاعتماد"}
-                </Typography>
-              </Box>
-            </>
-          )}
-
-          <Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              الوصف
-            </Typography>
-            {isEditMode || isAddMode ? (
-              <TextField
-                value={
-                  isAddMode ? newJournalForm.description : editForm.description
-                }
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                multiline
-                rows={2}
-                sx={{
-                  width: "250px",
-                }}
-                InputLabelProps={{ shrink: true }}
-              />
-            ) : (
-              <Typography variant="body1" fontWeight="medium">
-                {journalData?.description || "-"}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
-      </Paper>
-
-      {(isEditMode || isAddMode) && renderLinesForm()}
-
-      {renderLinesList()}
-    </Box>
-  );
-
-  const renderDesktopJournalDetails = () => (
-    <Paper sx={{ p: 4, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Typography
-        variant="h6"
-        color="primary"
-        fontWeight="bold"
-        mb={3}
-        textAlign={"center"}
-      >
-        {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
-      </Typography>
-
-      <Grid
-        container
-        spacing={3}
-        mb={4}
-        justifyContent="center"
-        alignItems="center"
-      >
-        {!isAddMode && (
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="رقم القيد"
-              value={journalData?.reference || ""}
-              disabled
-              InputLabelProps={{ shrink: true }}
-              sx={{
-                width: "250px",
-              }}
-            />
-          </Grid>
-        )}
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="التاريخ"
-            type="date"
-            value={
-              isAddMode
-                ? newJournalForm.date
-                : isEditMode
-                ? editForm.date
-                : journalData?.date
-                ? journalData.date.split("T")[0]
-                : ""
-            }
-            onChange={(e) => handleInputChange("date", e.target.value)}
-            disabled={!(isEditMode || isAddMode)}
-            InputLabelProps={{ shrink: true }}
-            sx={{
-              width: "250px",
-            }}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="نوع القيد"
-            select
-            value={
-              isAddMode
-                ? newJournalForm.type
-                : isEditMode
-                ? editForm.type
-                : journalData?.type || ""
-            }
-            onChange={(e) => handleInputChange("type", e.target.value)}
-            disabled={!(isEditMode || isAddMode)}
-            InputLabelProps={{ shrink: true }}
-            sx={{
-              width: "250px",
-            }}
-          >
-            <MenuItem value="GENERAL">عام</MenuItem>
-            <MenuItem value="OPENING">افتتاحي</MenuItem>
-            <MenuItem value="CLOSING">ختامي</MenuItem>
-            <MenuItem value="ADJUSTMENT">تسوية</MenuItem>
-          </TextField>
-        </Grid>
-        {!isAddMode && (
-          <>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="نوع المصدر"
-                value={
-                  journalData?.sourceType
-                    ? getJournalSourceTypeText(journalData.sourceType)
-                    : "لا يوجد"
-                }
-                disabled
-                InputLabelProps={{ shrink: true }}
-                sx={{
-                  width: "250px",
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="الحالة"
-                value={getStatusText(journalData?.status)}
-                disabled
-                InputLabelProps={{ shrink: true }}
-                sx={{
-                  width: "250px",
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="المعتمد بواسطة"
-                value={journalData?.postedBy?.name || "لم يتم الاعتماد "}
-                disabled
-                InputLabelProps={{ shrink: true }}
-                sx={{
-                  width: "250px",
-                }}
-              />
-            </Grid>
-          </>
-        )}
-        <Grid item xs={12}>
-          <TextField
-            label="الوصف"
-            value={
-              isAddMode
-                ? newJournalForm.description
-                : isEditMode
-                ? editForm.description
-                : journalData?.description || ""
-            }
-            onChange={(e) => handleInputChange("description", e.target.value)}
-            disabled={!(isEditMode || isAddMode)}
-            multiline
-            rows={1}
-            InputLabelProps={{ shrink: true }}
-            sx={{
-              width: "450px",
-            }}
-          />
-        </Grid>
-      </Grid>
-
-      {(isEditMode || isAddMode) && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          {renderLinesForm()}
-        </>
-      )}
-
-      <Divider sx={{ my: 3 }} />
-      {renderLinesList()}
-    </Paper>
-  );
+  const showJournalDetails =
+    (selectedJournal && journalData) || (isAddMode && activeTab === 1);
 
   return (
     <Box
       sx={{
-        bgcolor: isDarkMode ? 'background.default' : '#f6f6f8',
+        bgcolor: isDarkMode ? "background.default" : "#f6f6f8",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -1748,273 +452,72 @@ const Journals = () => {
       >
         {!isSmallScreen &&
           activeTab === 1 &&
-          (journalData || isAddMode) &&
-          renderDesktopSidebar()}
+          showJournalDetails &&
+          (
+            <JournalsSidebar
+              totals={totals}
+              isAddMode={isAddMode}
+              journalData={journalData}
+              isEditMode={isEditMode}
+              permissions={permissions}
+              isJournalBalanced={isJournalBalanced}
+              onExportPDF={handleExportPDF}
+              onExportExcel={handleExportExcel}
+              onCreateJournal={handleCreateJournal}
+              onCancelAdd={handleCancelAdd}
+              onEditClick={handleEditClick}
+              onPostJournal={handlePostJournal}
+              onDeleteClick={() => {
+                setJournalToDelete(selectedJournal);
+                setIsDeleteModalOpen(true);
+              }}
+              onUpdateJournal={handleUpdateJournal}
+              onCancelEdit={handleCancelEdit}
+              onUnpostJournal={handleUnpostJournal}
+            />
+          )}
 
         <Box
           sx={{
             flex: 1,
             p: isSmallScreen ? 2 : 3,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             overflowY: "auto",
             width: "100%",
           }}
         >
-          <Box sx={{ width: "100%" }}>  
-            {!isSmallScreen ? (
-              <Box
-                sx={{
-                  borderBottom: 1,
-                  borderColor: "divider",
-                  mb: 4,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Tabs
-                  value={activeTab}
-                  onChange={(e, newValue) => {
-                    setActiveTab(newValue);
-                    if (newValue === 0) {
-                      setSelectedJournal(null);
-                      setIsEditMode(false);
-                      setIsAddMode(false);
-                      setJournalLines([]);
-                    }
-                  }}
-                >
-                  <Tab
-                    label="عرض جميع القيود"
-                    sx={{
-                      fontWeight: "bold",
-                      borderBottom:
-                        activeTab === 0 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 0 ? "#0d40a5" : "text.primary",
-                    }}
-                  />
-                  <Tab
-                    label={
-                      selectedJournal || isAddMode
-                        ? isAddMode
-                          ? "إضافة قيد جديد"
-                          : "تفاصيل القيد"
-                        : "قيد محدد"
-                    }
-                    sx={{
-                      fontWeight: "bold",
-                      borderBottom:
-                        activeTab === 1 ? "3px solid #0d40a5" : "none",
-                      color: activeTab === 1 ? "#0d40a5" : "text.primary",
-                    }}
-                  />
-                </Tabs>
-
-                {activeTab === 0 && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    {permissions.includes("journals_Add") && (
-                    <InputBase
-                      placeholder="ابحث برقم القيد..."
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        if (e.target.value) {
-                          setSearchFilters({});
-                        }
-                      }}
-                      sx={{
-                        width: "280px",
-                        borderRadius: "6px",
-                        p: 1,
-                        border: "1px solid #e0e0e0",
-                        bgcolor: "background.paper"
-                      }}
-                    />
-                    )}
-                    {permissions.includes("journals_Add") && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<SearchIcon sx={{marginLeft: "10px"}} />}
-                      onClick={handleOpenAdvancedSearch}
-                      sx={{
-                        borderColor: "#0d40a5",
-                        color: "#0d40a5",
-                        "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
-                      }}
-                    >
-                      بحث متقدم
-                    </Button>
-                    )}
-                    {(Object.keys(searchFilters).length > 0 || searchQuery) && (
-                      <Button
-                        variant="outlined"
-                        color="inherit"
-                        onClick={handleClearSearch}
-                        size="small"
-                      >
-                        مسح البحث
-                      </Button>
-                    )}
-                    {permissions.includes("journals_Add") && (
-                      <Button
-                        sx={{
-                          fontWeight: "bold",
-                        }}
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={handleAddNewClick}
-                      >
-                        إضافة قيد جديد
-                      </Button>
-                    )}
-                  </Box>
-                )}
-                {activeTab === 1 && fromPeriod && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={handleBackToPeriodClosing}
-                    sx={{
-                      borderColor: "#0d40a5",
-                      color: "#0d40a5",
-                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
-                    }}
-                  >
-                    رجوع لتقفيل الفترات
-                  </Button>
-                )}
-                {activeTab === 1 && fromProfitDistribution && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={handleBackToProfitDistribution}
-                    sx={{
-                      borderColor: "#0d40a5",
-                      color: "#0d40a5",
-                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
-                    }}
-                  >
-                    رجوع لتوزيع الأرباح
-                  </Button>
-                )}
-                {activeTab === 1 && fromInvestorsWithdrawal && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={handleBackToInvestorsWithdrawal}
-                    sx={{
-                      borderColor: "#0d40a5",
-                      color: "#0d40a5",
-                      "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
-                    }}
-                  >
-                    رجوع لانسحابات المستثمرين
-                  </Button>
-                )}
-              </Box>
-            ) : (
-              <Box sx={{ mb: 3 }}>
-                {activeTab === 1 ? (
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <IconButton
-                      onClick={
-                        fromInvestorsWithdrawal
-                          ? handleBackToInvestorsWithdrawal
-                          : fromProfitDistribution
-                          ? handleBackToProfitDistribution
-                          : fromPeriod
-                          ? handleBackToPeriodClosing
-                          : handleBackToList
-                      }
-                      size="small"
-                    >
-                      <ArrowBackIcon />
-                    </IconButton>
-                    <Typography variant="h6" fontWeight="bold" sx={{ ml: 1 }}>
-                      {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 2,
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight="bold">
-                        القيود المحاسبية
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <Button
-                          variant="outlined"
-                          startIcon={<SearchIcon />}
-                          onClick={handleOpenAdvancedSearch}
-                          size="small"
-                          sx={{
-                            borderColor: "#0d40a5",
-                            color: "#0d40a5",
-                            "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
-                          }}
-                        >
-                          بحث متقدم
-                        </Button>
-                        {permissions.includes("journals_Add") && (
-                          <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={handleAddNewClick}
-                            size="small"
-                          >
-                            إضافة
-                          </Button>
-                        )}
-                      </Box>
-                    </Box>
-                    <Box sx={{ mb: 2 }}>
-                      <InputBase
-                        placeholder="ابحث برقم القيد أو الوصف..."
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          if (e.target.value) {
-                              setSearchFilters({});
-                          }
-                        }}
-                        sx={{
-                          width: "100%",
-                          borderRadius: "6px",
-                          p: 1,
-                          border: "1px solid #e0e0e0",
-                          bgcolor: "background.paper"
-                        }}
-                      />
-                      {(Object.keys(searchFilters).length > 0 || searchQuery) && (
-                        <Button
-                          variant="outlined"
-                          color="inherit"
-                          onClick={handleClearSearch}
-                          size="small"
-                          sx={{ mt: 1 }}
-                          fullWidth
-                        >
-                          مسح البحث
-                        </Button>
-                      )}
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-            )}
+          <Box sx={{ width: "100%" }}>
+            <JournalsHeader
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              selectedJournal={selectedJournal}
+              isAddMode={isAddMode}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              searchFilters={searchFilters}
+              onOpenAdvancedSearch={() => setIsAdvancedSearchOpen(true)}
+              onClearSearch={() => {
+                setSearchFilters({});
+                setSearchQuery("");
+              }}
+              onAddNew={handleAddNewClick}
+              fromPeriod={fromPeriod}
+              fromProfitDistribution={fromProfitDistribution}
+              fromInvestorsWithdrawal={fromInvestorsWithdrawal}
+              onBackToPeriodClosing={handleBackToPeriodClosing}
+              onBackToProfitDistribution={handleBackToProfitDistribution}
+              onBackToInvestorsWithdrawal={handleBackToInvestorsWithdrawal}
+              onBackToList={handleBackToList}
+              isSmallScreen={isSmallScreen}
+              permissions={permissions}
+            />
 
             {activeTab === 0 ||
             (isSmallScreen && !selectedJournal && !isAddMode) ? (
               <JournalTable
                 onViewDetails={handleViewDetails}
                 isMobile={isMobile}
-                searchFilters={searchQuery ? { search: searchQuery } : searchFilters}
+                searchFilters={searchFiltersForTable}
               />
             ) : (
               <Box>
@@ -2033,18 +536,42 @@ const Journals = () => {
                   >
                     <CircularProgress size={20} />
                   </Box>
-                ) : selectedJournal && journalData ? (
-                  isSmallScreen ? (
-                    renderMobileJournalDetails()
-                  ) : (
-                    renderDesktopJournalDetails()
-                  )
-                ) : isAddMode ? (
-                  isSmallScreen ? (
-                    renderMobileJournalDetails()
-                  ) : (
-                    renderDesktopJournalDetails()
-                  )
+                ) : showJournalDetails ? (
+                  <JournalsJournalDetails
+                    journalData={journalData}
+                    editForm={editForm}
+                    newJournalForm={newJournalForm}
+                    isAddMode={isAddMode}
+                    isEditMode={isEditMode}
+                    journalLines={journalLines}
+                    totals={totals}
+                    totalsForTable={totalsForTable}
+                    currentLine={currentLine}
+                    chartAccounts={chartAccounts}
+                    editingLineIndex={editingLineIndex}
+                    isSmallScreen={isSmallScreen}
+                    isDarkMode={isDarkMode}
+                    permissions={permissions}
+                    isJournalBalanced={isJournalBalanced}
+                    onInputChange={handleInputChange}
+                    onLineInputChange={handleLineInputChange}
+                    onAddLine={handleAddLine}
+                    onEditLine={handleEditLine}
+                    onDeleteLine={handleDeleteLine}
+                    onExportPDF={handleExportPDF}
+                    onExportExcel={handleExportExcel}
+                    onCreateJournal={handleCreateJournal}
+                    onCancelAdd={handleCancelAdd}
+                    onEditClick={handleEditClick}
+                    onPostJournal={handlePostJournal}
+                    onDeleteClick={() => {
+                      setJournalToDelete(selectedJournal);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    onUpdateJournal={handleUpdateJournal}
+                    onCancelEdit={handleCancelEdit}
+                    onUnpostJournal={handleUnpostJournal}
+                  />
                 ) : (
                   <Alert severity="error">حدث خطأ في تحميل بيانات القيد</Alert>
                 )}

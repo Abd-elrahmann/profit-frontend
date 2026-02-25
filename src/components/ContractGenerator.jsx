@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import html2pdf from 'html2pdf.js';
 import ContractPreview from './ContractPreview';
 import Api, { handleApiError } from '../config/Api';
+import { ensureFontsReady } from '../utilities/fontLoader';
 import { notifySuccess, notifyError } from '../utilities/toastify';
 
 const numberToArabicWords = (num) => {
@@ -140,7 +141,9 @@ const ContractGenerator = React.forwardRef(({
   templateContent,
   onContractGenerated,
   onPreviewClose,
-  contractType = 'MUDARABAH'
+  contractType = 'MUDARABAH',
+  formDataForCreate = null,
+  isPendingCreate = false,
 }, ref) => {
   const [showPreview, setShowPreview] = useState(false);
   const [contractHtml, setContractHtml] = useState('');
@@ -242,21 +245,21 @@ const ContractGenerator = React.forwardRef(({
     }
   }, [investorData, templateContent]);
 
-  const uploadPDFToServer = useCallback(async (pdfBlob) => {
-    if (!investorData || !investorData.id) {
-      throw new Error('بيانات المستثمر غير كاملة');
+  const uploadPDFToServer = useCallback(async (pdfBlob, partnerId) => {
+    if (!partnerId) {
+      throw new Error('معرف المستثمر غير متوفر');
     }
     
     try {
       const formData = new FormData();
-      formData.append('file', pdfBlob, `mudarabah_contract_${investorData.name || 'unknown'}_${Date.now()}.pdf`);
-      formData.append('investorId', investorData.id);
+      formData.append('file', pdfBlob, `mudarabah_contract_${investorData?.name || 'unknown'}_${Date.now()}.pdf`);
+      formData.append('investorId', partnerId);
       formData.append('contractType', contractType);
 
-      formData.append('partnerProfitPercent', 100 - (investorData.orgProfitPercent || 0));
-      formData.append('orgProfitPercent', investorData.orgProfitPercent || 0);
+      formData.append('partnerProfitPercent', 100 - (investorData?.orgProfitPercent || 0));
+      formData.append('orgProfitPercent', investorData?.orgProfitPercent || 0);
 
-      const response = await Api.post(`/api/partners/upload/${investorData.id}`, formData, {
+      const response = await Api.post(`/api/partners/upload/${partnerId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -277,6 +280,18 @@ const ContractGenerator = React.forwardRef(({
 
     setLoading(true);
     try {
+      let partnerId = investorData.id;
+
+      // إذا كان المستثمر لم يُضف بعد - نضيفه أولاً عند حفظ العقد
+      if (isPendingCreate && formDataForCreate) {
+        const response = await Api.post('/api/partners', formDataForCreate);
+        const partnerData = response.data.partner || response.data;
+        partnerId = partnerData.id;
+        if (!partnerId) {
+          throw new Error('فشل في إنشاء المستثمر');
+        }
+      }
+
       const finalContractHtml = await generateContract(true);
       
       if (!finalContractHtml || finalContractHtml.trim() === '') {
@@ -292,6 +307,7 @@ const ContractGenerator = React.forwardRef(({
 
       element.innerHTML = finalContractHtml;
 
+      await ensureFontsReady();
 
       const options = {
         margin: 0,
@@ -318,9 +334,9 @@ const ContractGenerator = React.forwardRef(({
         .set(options)
         .outputPdf('blob');
 
-      await uploadPDFToServer(pdfBlob);
+      await uploadPDFToServer(pdfBlob, partnerId);
 
-      notifySuccess('تم إنشاء وحفظ العقد بنجاح');
+      notifySuccess('تم إنشاء وحفظ العقد وإضافة المستثمر بنجاح');
       setShowPreview(false);
 
       if (onContractGenerated) {
@@ -328,13 +344,13 @@ const ContractGenerator = React.forwardRef(({
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      notifyError('حدث خطأ أثناء إنشاء ملف PDF');
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء إنشاء ملف PDF');
       handleApiError(error);
     } finally {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer, generateContract]);
+  }, [contractHtml, investorData, onContractGenerated, uploadPDFToServer, generateContract, isPendingCreate, formDataForCreate]);
  
   React.useImperativeHandle(ref, () => ({
     generateContract
@@ -359,6 +375,7 @@ const ContractGenerator = React.forwardRef(({
           `(نسبة الأرباح: ${100 - investorData.orgProfitPercent}% للمستثمر، ${investorData.orgProfitPercent}% للشركة)` : 
           ''
         }
+        saveButtonText={isPendingCreate ? 'حفظ العقد وإضافة المستثمر' : 'حفظ كـ PDF'}
       />
     </>
   );

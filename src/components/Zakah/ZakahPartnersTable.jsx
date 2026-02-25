@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Paper,
   Table,
   TableBody,
   TableContainer,
   TableHead,
   IconButton,
-  Chip,
   Stack,
   Typography,
   CircularProgress,
@@ -20,6 +17,7 @@ import {
   TablePagination,
   Button,
   Tooltip,
+  Box,
 } from '@mui/material';
 import { Visibility, PictureAsPdf, TableChart } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
@@ -28,8 +26,22 @@ import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { usePermissions } from '../Contexts/PermissionsContext';
 import { exportZakahToPDF, exportZakahToExcel } from '../../utilities/zakahExporter';
 
-const ZakahTable = ({ onViewDetails, isMobile = false }) => {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+const formatInt = (value) => {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num)) return '0';
+  return num.toLocaleString();
+};
+
+const ZakahPartnersTable = ({
+  onViewDetails,
+  isMobile = false,
+  selectedYear: controlledYear,
+  onYearChange,
+  onTotalsChange,
+}) => {
+  const [internalYear, setInternalYear] = useState(new Date().getFullYear());
+  const selectedYear = controlledYear ?? internalYear;
+  const setSelectedYear = onYearChange ?? setInternalYear;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [isExporting, setIsExporting] = useState({ pdf: false, excel: false });
@@ -60,9 +72,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     }
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  const handleChangePage = (event, newPage) => setPage(newPage);
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -76,9 +86,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
     let pageIndex = 1;
     while (pageIndex <= totalPages) {
       const res = await getZakahByYear(selectedYear, pageIndex, limit);
-      if (Array.isArray(res?.data)) {
-        all.push(...res.data);
-      }
+      if (Array.isArray(res?.data)) all.push(...res.data);
       pageIndex += 1;
     }
     return all;
@@ -89,108 +97,113 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
       alert('لا توجد بيانات للتصدير');
       return;
     }
-    
-    setIsExporting(prev => ({ ...prev, [type]: true }));
-    
+    setIsExporting((prev) => ({ ...prev, [type]: true }));
     try {
       const totalPartners = zakahResponse?.pagination?.totalPartners || zakahData.length;
-      const allData = zakahData.length < totalPartners ? await fetchAllZakahByYear() : zakahData;
-
+      const allData =
+        zakahData.length < totalPartners ? await fetchAllZakahByYear() : zakahData;
       const filters = { year: selectedYear };
-      if (type === 'pdf') {
-        await exportZakahToPDF(allData, filters);
-      } else if (type === 'excel') {
-        await exportZakahToExcel(allData, filters);
-      }
-    } catch (error) {
-      console.error('Error exporting zakah:', error);
-      alert(`خطأ في التصدير: ${error.message}`);
+      if (type === 'pdf') await exportZakahToPDF(allData, filters);
+      else if (type === 'excel') await exportZakahToExcel(allData, filters);
+    } catch (err) {
+      console.error('Error exporting zakah:', err);
+      alert(`خطأ في التصدير: ${err.message}`);
     } finally {
-      setIsExporting(prev => ({ ...prev, [type]: false }));
+      setIsExporting((prev) => ({ ...prev, [type]: false }));
     }
   };
 
-  const totals = zakahData?.reduce((acc, item) => ({
-    capitalAmount: acc.capitalAmount + (item.capitalAmount || 0),
-    annualZakat: acc.annualZakat + (item.annualZakat || 0),
-    monthlyZakat: acc.monthlyZakat + (item.monthlyZakat || 0),
-    totalPaid: acc.totalPaid + (item.totalPaid || 0),
-    remaining: acc.remaining + (item.remaining || 0),
-  }), { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 }) || {
-    capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0
-  };
+  const totals =
+    zakahData?.reduce(
+      (acc, item) => ({
+        capitalAmount: acc.capitalAmount + (item.capitalAmount || 0),
+        annualZakat: acc.annualZakat + (item.annualZakat || 0),
+        monthlyZakat: acc.monthlyZakat + (item.monthlyZakat || 0),
+        totalPaid: acc.totalPaid + (item.totalPaid || 0),
+        remaining: acc.remaining + (item.remaining || 0),
+      }),
+      { capitalAmount: 0, annualZakat: 0, monthlyZakat: 0, totalPaid: 0, remaining: 0 }
+    ) || {
+      capitalAmount: 0,
+      annualZakat: 0,
+      monthlyZakat: 0,
+      totalPaid: 0,
+      remaining: 0,
+    };
 
-  const formatInt = (value) => {
-    const num = Number(value ?? 0);
-    if (!Number.isFinite(num)) return '0';
-    return num.toLocaleString();
-  };
-
-  const renderExportButtons = () => (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
-      <Tooltip title="تصدير إلى PDF">
-        <Button
-          variant="contained"
-          color="error"
-          size="small"
-          disabled={isExporting.pdf || zakahData.length === 0}
-          onClick={() => handleExport('pdf')}
-          startIcon={<PictureAsPdf />}
-          sx={{ 
-            fontWeight: 'bold',
-            minWidth: '120px'
-          }}
-        >
-          {isExporting.pdf ? (
-            <CircularProgress size={20} sx={{ color: 'white', mr: 1 }} />
-          ) : 'PDF'}
-        </Button>
-      </Tooltip>
-      
-      <Tooltip title="تصدير إلى Excel">
-        <Button
-          variant="contained"
-          color="success"
-          size="small"
-          disabled={isExporting.excel || zakahData.length === 0}
-          onClick={() => handleExport('excel')}
-          startIcon={<TableChart />}
-          sx={{ 
-            fontWeight: 'bold',
-            minWidth: '120px'
-          }}
-        >
-          {isExporting.excel ? (
-            <CircularProgress size={20} sx={{ color: 'white', mr: 1 }} />
-          ) : 'Excel'}
-        </Button>
-      </Tooltip>
-    </Box>
-  );
+  React.useEffect(() => {
+    if (onTotalsChange && zakahData?.length) {
+      onTotalsChange(totals);
+    }
+  }, [
+    onTotalsChange,
+    zakahData?.length,
+    totals.capitalAmount,
+    totals.annualZakat,
+    totals.totalPaid,
+    totals.remaining,
+  ]);
 
   const renderTable = () => (
-    <Box>
-      {permissions.includes("zakat_Export") && renderExportButtons()}
-      <TableContainer sx={{ height: "100%", width: "100%" }}>
-        <Table stickyHeader sx={{ width: "100%" }}>
+    <>
+      {permissions.includes('zakat_Export') && (
+        <div className="flex justify-end gap-2 mb-4">
+          <Tooltip title="تصدير إلى PDF">
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={isExporting.pdf || zakahData.length === 0}
+              onClick={() => handleExport('pdf')}
+              startIcon={<PictureAsPdf />}
+              sx={{ fontWeight: 'bold', minWidth: '120px' }}
+            >
+              {isExporting.pdf ? (
+                <CircularProgress size={20} sx={{ color: 'white', mr: 1 }} />
+              ) : (
+                'PDF'
+              )}
+            </Button>
+          </Tooltip>
+          <Tooltip title="تصدير إلى Excel">
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              disabled={isExporting.excel || zakahData.length === 0}
+              onClick={() => handleExport('excel')}
+              startIcon={<TableChart />}
+              sx={{ fontWeight: 'bold', minWidth: '120px' }}
+            >
+              {isExporting.excel ? (
+                <CircularProgress size={20} sx={{ color: 'white', mr: 1 }} />
+              ) : (
+                'Excel'
+              )}
+            </Button>
+          </Tooltip>
+        </div>
+      )}
+      <TableContainer>
+        <Table stickyHeader sx={{ width: '100%' }}>
           <TableHead>
             <StyledTableRow>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                 اسم الشريك
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                 رأس المال
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                 الزكاة السنوية
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                 المدفوع
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                 المتبقي
               </StyledTableCell>
-              <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                 الإجراءات
               </StyledTableCell>
             </StyledTableRow>
@@ -218,55 +231,55 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
               </StyledTableRow>
             ) : (
               zakahData?.map((zakah) => (
-                <StyledTableRow key={zakah.partnerId}>
+                <StyledTableRow key={zakah.partnerId} className="group">
                   <StyledTableCell align="center">
-                    {zakah.partnerName}
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {zakah.partnerName}
+                    </span>
                   </StyledTableCell>
-                  <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     {formatInt(zakah.capitalAmount)}
                   </StyledTableCell>
-                  <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Typography fontWeight="bold" color="primary.main">
                       {formatInt(zakah.annualZakat)}
                     </Typography>
                   </StyledTableCell>
-                  <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Typography fontWeight="bold" color="success.main">
                       {formatInt(zakah.totalPaid)}
                     </Typography>
                   </StyledTableCell>
-                  <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Typography
                       fontWeight="bold"
-                      color={zakah.remaining > 0 ? "error" : "success.main"}
+                      color={zakah.remaining > 0 ? 'error' : 'success.main'}
                     >
                       {formatInt(zakah.remaining)}
                     </Typography>
                   </StyledTableCell>
-                  <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                      {permissions.includes("zakat_View") && (
-                        <Tooltip title="عرض التفاصيل">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onViewDetails(zakah.partnerId, selectedYear);
-                            }}
-                          >
-                            <Visibility fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Stack>
+                  <StyledTableCell align="center">
+                    {permissions.includes('zakat_View') && (
+                      <Tooltip title="عرض التفاصيل">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetails(zakah.partnerId, selectedYear);
+                          }}
+                          className="hover:bg-primary/10 rounded-full"
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))
             )}
-
             {zakahData && zakahData.length > 0 && (
-              <StyledTableRow sx={{ backgroundColor: "#f5f5f5" }}>
+              <StyledTableRow sx={{ backgroundColor: '#f5f5f5' }}>
                 <StyledTableCell align="center">
                   <Typography fontWeight="bold">الإجمالي</Typography>
                 </StyledTableCell>
@@ -288,7 +301,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                 <StyledTableCell align="center">
                   <Typography
                     fontWeight="bold"
-                    color={totals.remaining > 0 ? "error" : "success.main"}
+                    color={totals.remaining > 0 ? 'error' : 'success.main'}
                   >
                     {formatInt(totals.remaining)}
                   </Typography>
@@ -310,7 +323,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage="عدد العناصر لكل صفحة:"
           labelDisplayedRows={({ from, to, count }) =>
-            `${from}–${to} من ${count !== -1 ? count : `أكثر من ${to}`}`
+            `عرض ${from}–${to} من أصل ${count !== -1 ? count : `أكثر من ${to}`} شركاء`
           }
           sx={{
             direction: 'rtl',
@@ -320,13 +333,13 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
           }}
         />
       )}
-    </Box>
+    </>
   );
 
   const renderCards = () => (
-    <Box sx={{ p: 1 }}>
-      {permissions.includes("zakat_Export") && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+    <div className="p-4 space-y-4">
+      {permissions.includes('zakat_Export') && (
+        <div className="flex justify-center gap-2 flex-wrap">
           <Button
             variant="contained"
             color="error"
@@ -334,7 +347,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
             disabled={isExporting.pdf || zakahData.length === 0}
             onClick={() => handleExport('pdf')}
             startIcon={<PictureAsPdf />}
-            sx={{ fontWeight: 'bold', mb: 1 }}
+            sx={{ fontWeight: 'bold' }}
           >
             {isExporting.pdf ? 'جاري التصدير...' : 'PDF'}
           </Button>
@@ -345,27 +358,26 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
             disabled={isExporting.excel || zakahData.length === 0}
             onClick={() => handleExport('excel')}
             startIcon={<TableChart />}
-            sx={{ fontWeight: 'bold', mb: 1 }}
+            sx={{ fontWeight: 'bold' }}
           >
             {isExporting.excel ? 'جاري التصدير...' : 'Excel'}
           </Button>
-        </Box>
+        </div>
       )}
-      
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <div className="flex justify-center py-8">
           <CircularProgress size={30} />
-        </Box>
+        </div>
       ) : zakahData?.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <div className="flex justify-center py-8">
           <Typography variant="h6" color="textSecondary">
             لا توجد بيانات زكاة للعام {selectedYear}
           </Typography>
-        </Box>
+        </div>
       ) : (
         <Grid container spacing={2} justifyContent="center">
           {zakahData?.map((zakah) => (
-            <Grid item xs={12} key={zakah.partnerId} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Grid item xs={12} key={zakah.partnerId} className="flex justify-center">
               <Card
                 sx={{
                   border: '1px solid #e0e0e0',
@@ -373,71 +385,59 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   width: '300px',
                   minHeight: '280px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-                  },
+                  '&:hover': { boxShadow: '0 4px 8px rgba(0,0,0,0.15)' },
                 }}
               >
-                <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Stack spacing={1} sx={{ flex: 1 }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Stack spacing={1}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Typography variant="h6" fontWeight="bold" color="primary.main">
                         {zakah.partnerName}
                       </Typography>
-                      <Chip
-                        label={`العام: ${zakah.year}`}
-                        color="primary"
-                        size="small"
-                      />
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                        العام: {zakah.year}
+                      </span>
                     </Box>
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                      <Box>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
                         <Typography variant="body2" color="textSecondary">
                           رأس المال:
                         </Typography>
                         <Typography variant="body2" fontWeight="medium">
                           {formatInt(zakah.capitalAmount)}
                         </Typography>
-                      </Box>
-
-                      <Box>
+                      </div>
+                      <div>
                         <Typography variant="body2" color="textSecondary">
                           الزكاة السنوية:
                         </Typography>
                         <Typography variant="body2" fontWeight="bold" color="primary.main">
                           {formatInt(zakah.annualZakat)}
                         </Typography>
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                      <Box>
+                      </div>
+                      <div>
                         <Typography variant="body2" color="textSecondary">
                           المدفوع:
                         </Typography>
                         <Typography variant="body2" fontWeight="bold" color="success.main">
                           {formatInt(zakah.totalPaid)}
                         </Typography>
-                      </Box>
-                      <Box>
+                      </div>
+                      <div>
                         <Typography variant="body2" color="textSecondary">
                           المتبقي:
                         </Typography>
                         <Typography
                           variant="body2"
                           fontWeight="bold"
-                          color={zakah.remaining > 0 ? "error" : "success.main"}
+                          color={zakah.remaining > 0 ? 'error' : 'success.main'}
                         >
                           {formatInt(zakah.remaining)}
                         </Typography>
-                      </Box>
-                    </Box>
-
-                    {permissions.includes("zakat_View") && (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
+                      </div>
+                    </div>
+                    {permissions.includes('zakat_View') && (
+                      <div className="flex justify-center pt-2">
                         <Tooltip title="عرض التفاصيل">
                           <IconButton
                             size="small"
@@ -447,7 +447,7 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
                             <Visibility fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                      </Box>
+                      </div>
                     )}
                   </Stack>
                 </CardContent>
@@ -456,25 +456,81 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
           ))}
         </Grid>
       )}
-    </Box>
+      {isMobile && zakahData && zakahData.length > 0 && (
+        <Card sx={{ m: 1, bgcolor: 'primary.50' }}>
+          <CardContent sx={{ p: 2 }}>
+            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+              ملخص الإجماليات
+            </Typography>
+            <Grid container spacing={1}>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="textSecondary">
+                  إجمالي رأس المال:
+                </Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {totals.capitalAmount.toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="textSecondary">
+                  إجمالي الزكاة السنوية:
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" color="primary.main">
+                  {totals.annualZakat.toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="textSecondary">
+                  إجمالي المدفوع:
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" color="success.main">
+                  {totals.totalPaid.toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="textSecondary">
+                  إجمالي المتبقي:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight="bold"
+                  color={totals.remaining > 0 ? 'error' : 'success.main'}
+                >
+                  {totals.remaining.toLocaleString()}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
+      {isMobile && zakahData && zakahData.length > 0 && (
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50]}
+          component="div"
+          count={pagination.totalPartners || 0}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="عدد العناصر:"
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}–${to} من ${count !== -1 ? count : `أكثر من ${to}`}`
+          }
+          sx={{ direction: 'rtl' }}
+        />
+      )}
+    </div>
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 2,
-        flexWrap: 'wrap',
-        gap: 2
-      }}>
+    <div className="flex flex-col w-full">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
         <Autocomplete
           options={years}
           value={selectedYear}
           onChange={handleYearChange}
-          getOptionLabel={(option) => option.toString()}
-          isOptionEqualToValue={(option, value) => option === value}
+          getOptionLabel={(opt) => opt.toString()}
+          isOptionEqualToValue={(opt, val) => opt === val}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -485,90 +541,16 @@ const ZakahTable = ({ onViewDetails, isMobile = false }) => {
           )}
           sx={{ flexShrink: 0 }}
         />
-        
         <Typography variant="body2" color="textSecondary">
           عدد الشركاء: {zakahData?.length || 0}
         </Typography>
-      </Box>
+      </div>
 
-      <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
+      <div className="bg-white dark:bg-background-dark rounded-xl border border-primary/10 shadow-sm overflow-hidden">
         {isMobile ? renderCards() : renderTable()}
-
-        {isMobile && zakahData && zakahData.length > 0 && (
-          <Card sx={{ m: 1, bgcolor: 'primary.50' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                ملخص الإجماليات
-              </Typography>
-              <Grid container spacing={1}>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    إجمالي رأس المال:
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {totals.capitalAmount.toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    إجمالي الزكاة السنوية:
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold" color="primary.main">
-                    {totals.annualZakat.toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    إجمالي المدفوع:
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold" color="success.main">
-                    {totals.totalPaid.toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    إجمالي المتبقي:
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    color={totals.remaining > 0 ? "error" : "success.main"}
-                  >
-                    {totals.remaining.toLocaleString()}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        )}
-
-        {isMobile && zakahData && zakahData.length > 0 && (
-          <Box sx={{ p: 2 }}>
-            <TablePagination
-              rowsPerPageOptions={[10, 25, 50]}
-              component="div"
-              count={pagination.totalPartners || 0}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="عدد العناصر:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}–${to} من ${count !== -1 ? count : `أكثر من ${to}`}`
-              }
-              sx={{
-                direction: 'rtl',
-                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                  fontFamily: 'inherit',
-                  fontSize: '0.875rem',
-                },
-              }}
-            />
-          </Box>
-        )}
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 };
 
-export default ZakahTable;
+export default ZakahPartnersTable;

@@ -4,25 +4,29 @@ import React from "react";
 const PromissoryNote = () => {
 return `
 <style>
+  * {
+    box-sizing: border-box;
+    word-spacing: normal;
+    letter-spacing: normal;
+  }
+
   .contract-wrapper {
     background: #f8f9fc;
     padding: 15px;
     font-family: "Cairo", "Tajawal", "Noto Sans Arabic", sans-serif;
     direction: rtl;
     text-align: right;
-  }
-  * {
-    word-spacing: normal;
-    letter-spacing: normal;
+    width: 100%;
   }
 
   .contract-container {
-    max-width: 900px;
-    margin: auto;
+    max-width: 100%;
+    margin: 0 auto;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 12px;
     padding: 20px;
+    width: 100%;
   }
 
   .header {
@@ -57,12 +61,14 @@ return `
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 15px;
+    align-items: start;
   }
 
   .details-box {
     background: rgba(46, 139, 69, 0.05);
     padding: 15px;
     border-radius: 8px;
+    height: fit-content;
   }
   .details-box h2 {
     font-weight: bold;
@@ -100,7 +106,8 @@ return `
   .content-box {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    height: 100%;
   }
 
   .amount-box {
@@ -109,6 +116,8 @@ return `
     padding: 15px;
     border-radius: 8px;
     background: rgba(46, 139, 69, 0.02);
+    margin: 0;
+    height: fit-content;
   }
   .amount-box h3 {
     font-size: 15px;
@@ -228,38 +237,49 @@ return `
   @media print {
     @page {
       size: A4;
-      margin: 10mm;
+      margin: 15mm;
     }
 
     html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      width: 100% !important;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      background: white;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
-    .contract-wrapper,
-    .contract-container {
-      height: auto !important;
-      min-height: auto !important;
-      max-height: none !important;
-      margin: 0 auto !important;
-      padding: 20px !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      box-shadow: none !important;
-      border: none !important;
+    .contract-wrapper {
+      background: white;
+      padding: 0;
+      margin: 0;
     }
-    .grid-wrapper,
-    .parties-grid,
-    .text-box,
-    .signatures {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
+
+    .contract-container {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      box-shadow: none;
+      padding: 20px;
+      margin: 0;
+      page-break-inside: avoid;
+    }
+
+    .grid-wrapper {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 20px !important;
+      align-items: start !important;
+      page-break-inside: avoid;
+    }
+
+    .details-box, .amount-box {
+      page-break-inside: avoid;
     }
 
     * {
-      max-height: none !important;
-      overflow: visible !important;
+      -webkit-column-break-inside: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
   }
 </style>

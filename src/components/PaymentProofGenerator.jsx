@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Api, { handleApiError } from '../config/Api';
 import { notifyError } from '../utilities/toastify';
+import { ensureFontsReady } from '../utilities/fontLoader';
 import html2pdf from 'html2pdf.js';
 
 const numberToArabicWords = (num) => {
@@ -225,11 +226,6 @@ const PaymentProofGenerator = React.forwardRef(({
         }
       };
 
-      const fontLink = document.createElement('link');
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap';
-      fontLink.rel = 'stylesheet';
-      document.head.appendChild(fontLink);
-
       const tempElement = document.createElement('div');
       tempElement.style.width = '794px';
       tempElement.style.backgroundColor = 'white';
@@ -239,7 +235,7 @@ const PaymentProofGenerator = React.forwardRef(({
 
       document.body.appendChild(tempElement);
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await ensureFontsReady();
 
       const pdfBlob = await html2pdf()
         .from(tempElement)
@@ -247,7 +243,6 @@ const PaymentProofGenerator = React.forwardRef(({
         .outputPdf('blob');
 
       document.body.removeChild(tempElement);
-      document.head.removeChild(fontLink);
 
       await uploadPDFToServer(pdfBlob, isBulkOperation, repaymentIds);
 
