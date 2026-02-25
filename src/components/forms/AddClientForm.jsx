@@ -396,7 +396,33 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                       </div>
                     </div>
                     <label className="inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={values.hasKafeel} onChange={(e) => { const checked = e.target.checked; setFieldValue('hasKafeel', checked); if (checked && (!values.kafeels || values.kafeels.length === 0)) setFieldValue('kafeels', [getInitialKafeelValues()]); else if (!checked) setFieldValue('kafeels', []); }} className="sr-only peer" />
+                      <input
+                        type="checkbox"
+                        checked={values.hasKafeel}
+                        onChange={(e) => {
+                          const el = e.target;
+                          let scrollParent = el.parentElement;
+                          while (scrollParent && scrollParent !== document.body) {
+                            const { overflowY } = getComputedStyle(scrollParent);
+                            if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+                              break;
+                            }
+                            scrollParent = scrollParent.parentElement;
+                          }
+                          const scrollTop = scrollParent && scrollParent !== document.body ? scrollParent.scrollTop : window.scrollY;
+                          const checked = el.checked;
+                          setFieldValue('hasKafeel', checked);
+                          if (checked && (!values.kafeels || values.kafeels.length === 0)) setFieldValue('kafeels', [getInitialKafeelValues()]);
+                          else if (!checked) setFieldValue('kafeels', []);
+                          requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                              if (scrollParent && scrollParent !== document.body) scrollParent.scrollTop = scrollTop;
+                              else window.scrollTo(0, scrollTop);
+                            });
+                          });
+                        }}
+                        className="sr-only peer"
+                      />
                       <div className="relative w-14 h-7 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all rtl:peer-checked:after:-translate-x-full peer-checked:after:translate-x-full" />
                     </label>
                   </div>

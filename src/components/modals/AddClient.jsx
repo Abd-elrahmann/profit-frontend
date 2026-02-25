@@ -623,7 +623,17 @@ const AddClient = ({ open, onClose }) => {
                           type="checkbox"
                           checked={values.hasKafeel}
                           onChange={(e) => {
-                            const checked = e.target.checked;
+                            const el = e.target;
+                            let scrollParent = el.parentElement;
+                            while (scrollParent && scrollParent !== document.body) {
+                              const { overflowY } = getComputedStyle(scrollParent);
+                              if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+                                break;
+                              }
+                              scrollParent = scrollParent.parentElement;
+                            }
+                            const scrollTop = scrollParent && scrollParent !== document.body ? scrollParent.scrollTop : window.scrollY;
+                            const checked = el.checked;
                             setFieldValue('hasKafeel', checked);
                             if (checked) {
                               if (!values.kafeels || values.kafeels.length === 0) {
@@ -632,6 +642,12 @@ const AddClient = ({ open, onClose }) => {
                             } else {
                               setFieldValue('kafeels', []);
                             }
+                            requestAnimationFrame(() => {
+                              requestAnimationFrame(() => {
+                                if (scrollParent && scrollParent !== document.body) scrollParent.scrollTop = scrollTop;
+                                else window.scrollTo(0, scrollTop);
+                              });
+                            });
                           }}
                           className="sr-only peer"
                         />
