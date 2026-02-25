@@ -91,14 +91,21 @@ function KafeelFormFields({
         </Grid>
         <Grid item xs={12}>
           <Box
-            width="100%"
-            className="flex items-center gap-2 pb-2 mt-2 mb-2"
+            className="flex items-center gap-6 pb-2 mt-2 mb-2"
             sx={{ borderBottom: "1px solid", borderColor: "divider" }}
           >
-            <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
-            <Typography variant="subtitle1" fontWeight="bold">
-              بيانات العنوان
-            </Typography>
+            <Box className="flex items-center gap-2">
+              <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+              <Typography variant="subtitle1" fontWeight="bold">
+                بيانات العنوان
+              </Typography>
+            </Box>
+            <Box className="flex items-center gap-2">
+              <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+              <Typography variant="subtitle1" fontWeight="bold">
+                بيانات العمل والدخل
+              </Typography>
+            </Box>
           </Box>
         </Grid>
         <Grid item xs={12} md={6}>
@@ -108,6 +115,18 @@ function KafeelFormFields({
           <TextField
             value={getValue("city")}
             onChange={(e) => onInputChange("city", e.target.value)}
+            fullWidth
+            disabled={!isEditing}
+            sx={inputSx(isEditing, isDarkMode)}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+            جهة العمل
+          </Typography>
+          <TextField
+            value={getValue("employer")}
+            onChange={(e) => onInputChange("employer", e.target.value)}
             fullWidth
             disabled={!isEditing}
             sx={inputSx(isEditing, isDarkMode)}
@@ -127,54 +146,6 @@ function KafeelFormFields({
         </Grid>
         <Grid item xs={12} md={6}>
           <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            رقم الجوال
-          </Typography>
-          <TextField
-            value={getValue("phone")}
-            onChange={(e) => onInputChange("phone", e.target.value)}
-            fullWidth
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            البريد الإلكتروني
-          </Typography>
-          <TextField
-            value={getValue("email")}
-            onChange={(e) => onInputChange("email", e.target.value)}
-            fullWidth
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <Box
-            width="100%"
-            className="flex items-center gap-2 pb-2 mt-2 mb-2"
-            sx={{ borderBottom: "1px solid", borderColor: "divider" }}
-          >
-            <Work sx={{ fontSize: 24, color: 'primary.main' }} />
-            <Typography variant="subtitle1" fontWeight="bold">
-              بيانات العمل والدخل
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            جهة العمل
-          </Typography>
-          <TextField
-            value={getValue("employer")}
-            onChange={(e) => onInputChange("employer", e.target.value)}
-            fullWidth
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" mb={1} fontWeight={500}>
             الراتب
           </Typography>
           <TextField
@@ -182,6 +153,18 @@ function KafeelFormFields({
             onChange={(e) => onInputChange("salary", e.target.value)}
             fullWidth
             type="number"
+            disabled={!isEditing}
+            sx={inputSx(isEditing, isDarkMode)}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+            رقم الجوال
+          </Typography>
+          <TextField
+            value={getValue("phone")}
+            onChange={(e) => onInputChange("phone", e.target.value)}
+            fullWidth
             disabled={!isEditing}
             sx={inputSx(isEditing, isDarkMode)}
           />
@@ -195,6 +178,18 @@ function KafeelFormFields({
             onChange={(e) => onInputChange("obligations", e.target.value)}
             fullWidth
             type="number"
+            disabled={!isEditing}
+            sx={inputSx(isEditing, isDarkMode)}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+            البريد الإلكتروني
+          </Typography>
+          <TextField
+            value={getValue("email")}
+            onChange={(e) => onInputChange("email", e.target.value)}
+            fullWidth
             disabled={!isEditing}
             sx={inputSx(isEditing, isDarkMode)}
           />

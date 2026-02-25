@@ -116,14 +116,21 @@ export default function ClientsProfileTab({
 
           <Grid item xs={12}>
             <Box
-              width="100%"
-              className="flex items-center gap-2 pb-2 mt-4 mb-2"
+              className="flex items-center gap-6 pb-2 mt-4 mb-2"
               sx={{ borderBottom: "1px solid", borderColor: "divider" }}
             >
-              <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
-              <Typography variant="h6" fontWeight="bold">
-                بيانات العنوان
-              </Typography>
+              <Box className="flex items-center gap-2">
+                <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+                <Typography variant="h6" fontWeight="bold">
+                  بيانات العنوان
+                </Typography>
+              </Box>
+              <Box className="flex items-center gap-2">
+                <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+                <Typography variant="h6" fontWeight="bold">
+                  بيانات العمل والدخل
+                </Typography>
+              </Box>
             </Box>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -140,43 +147,6 @@ export default function ClientsProfileTab({
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              الحي
-            </Typography>
-            <TextField
-              value={getValue("district")}
-              onChange={(e) => onClientInputChange("district", e.target.value)}
-              fullWidth
-              disabled={!editMode}
-              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "280px" } }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              العنوان التفصيلي
-            </Typography>
-            <TextField
-              value={getDisplayValue("address")}
-              onChange={(e) => onClientInputChange("address", e.target.value)}
-              fullWidth
-              disabled={!editMode}
-              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "350px" } }}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Box
-              width="100%"
-              className="flex items-center gap-2 pb-2 mt-4 mb-2"
-              sx={{ borderBottom: "1px solid", borderColor: "divider" }}
-            >
-              <Work sx={{ fontSize: 24, color: 'primary.main' }} />
-              <Typography variant="h6" fontWeight="bold">
-                بيانات العمل والدخل
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
               جهة العمل
             </Typography>
             <TextField
@@ -185,6 +155,18 @@ export default function ClientsProfileTab({
               fullWidth
               disabled={!editMode}
               sx={textFieldSx(editMode)}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+              الحي
+            </Typography>
+            <TextField
+              value={getValue("district")}
+              onChange={(e) => onClientInputChange("district", e.target.value)}
+              fullWidth
+              disabled={!editMode}
+              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "280px" } }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -199,6 +181,18 @@ export default function ClientsProfileTab({
               fullWidth
               disabled={!editMode}
               sx={textFieldSx(editMode)}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+              العنوان التفصيلي
+            </Typography>
+            <TextField
+              value={getDisplayValue("address")}
+              onChange={(e) => onClientInputChange("address", e.target.value)}
+              fullWidth
+              disabled={!editMode}
+              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "350px" } }}
             />
           </Grid>
         </Grid>
