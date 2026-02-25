@@ -465,7 +465,7 @@ const AddClient = ({ open, onClose }) => {
                           value={values.phoneCode}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          className={`${inputBase} w-28 shrink-0`}
+                          className={`${inputBase} w-20 shrink-0`}
                         >
                           {countryCodes.map((c) => (
                             <option key={c.code} value={c.code}>
@@ -479,7 +479,7 @@ const AddClient = ({ open, onClose }) => {
                           onChange={handleChange}
                           onBlur={handleBlur}
                           placeholder="05XXXXXXXX"
-                          className={`${inputBase} text-left`}
+                          className={`${inputBase} flex-1 min-w-0 text-left`}
                           dir="ltr"
                         />
                       </div>
@@ -696,7 +696,7 @@ const AddClient = ({ open, onClose }) => {
                                 value={kafeel.phoneCode || '+966'}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`${inputBase} w-28 shrink-0`}
+                                className={`${inputBase} w-20 shrink-0`}
                               >
                                 {countryCodes.map((c) => (
                                   <option key={c.code} value={c.code}>
@@ -709,7 +709,7 @@ const AddClient = ({ open, onClose }) => {
                                 value={kafeel.phone || ''}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`${inputBase} text-left`}
+                                className={`${inputBase} flex-1 min-w-0 text-left`}
                                 dir="ltr"
                               />
                             </div>
