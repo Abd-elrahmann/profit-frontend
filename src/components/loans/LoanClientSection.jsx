@@ -20,7 +20,7 @@ const LoanClientSection = ({
   isViewMode,
   isEditMode,
   isAdditionalLoan,
-  setIsAddClientOpen,
+  onAddClientClick,
   selectedKafeel,
   handleKafeelSelect,
 }) => {
@@ -118,7 +118,7 @@ const LoanClientSection = ({
                   fontSize: isSmallScreen ? "12px" : "14px",
                   whiteSpace: "nowrap",
                 }}
-                onClick={() => setIsAddClientOpen(true)}
+                onClick={onAddClientClick}
               >
                 إنشاء عميل جديد
               </Button>

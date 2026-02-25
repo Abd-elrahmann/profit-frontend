@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Print, Download } from '@mui/icons-material';
 import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { preloadContractFonts } from '../utilities/fontLoader';
 
 const ContractPreview = ({
   open,
@@ -30,7 +31,8 @@ const ContractPreview = ({
   onGeneratePDF,
   loading = false,
   contractTitle = "معاينة العقد",
-  contractData = {} 
+  contractData = {},
+  saveButtonText = "حفظ كـ PDF",
 }) => {
   const safeContractHtml = React.useMemo(() => {
     if (!contractHtml) return '';
@@ -47,6 +49,12 @@ const ContractPreview = ({
       return '<div style="color: red; text-align: center; padding: 20px;">خطأ في معالجة قالب العقد</div>';
     }
   }, [contractHtml, contractData]);
+
+  React.useEffect(() => {
+    if (open && contractHtml) {
+      preloadContractFonts();
+    }
+  }, [open, contractHtml]);
 
   return (
     <Dialog 
@@ -76,7 +84,7 @@ const ContractPreview = ({
           }
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
+        <Typography component="span" variant="h6" fontWeight="bold">
           {contractTitle}
         </Typography>
         <IconButton onClick={onClose} size="small">
@@ -489,23 +497,21 @@ const ContractPreview = ({
                     background: '#fff !important',
                     padding: '0 !important',
                     margin: '0 !important',
-                    'page-break-inside': 'avoid !important',
-                    'break-inside': 'avoid !important',
+                    pageBreakInside: 'avoid !important',
+                    breakInside: 'avoid !important',
                     width: '100% !important',
-                    'max-width': '100% !important'
+                    maxWidth: '100% !important'
                   },
                   '& .contract-container': {
                     margin: '0 auto !important',
                     padding: '15mm !important',
-                    'page-break-inside': 'avoid !important',
-                    'break-inside': 'avoid !important',
-                    'box-shadow': 'none !important',
+                    pageBreakInside: 'avoid !important',
+                    breakInside: 'avoid !important',
+                    boxShadow: 'none !important',
                     border: 'none !important',
                     width: '100% !important',
-                    'max-width': '180mm !important',
-                    background: '#fff !important',
-                    maxWidth: '100%',
-                    pageBreakInside: 'avoid'
+                    maxWidth: '180mm !important',
+                    background: '#fff !important'
                   },
                   '& *': {
                     wordWrap: 'break-word !important',
@@ -643,7 +649,7 @@ const ContractPreview = ({
             minWidth: '140px'
           }}
         >
-          {loading ? 'جاري الحفظ...' : 'حفظ كـ PDF'}
+          {loading ? 'جاري الحفظ...' : saveButtonText}
         </Button>
       </DialogActions>
     </Dialog>

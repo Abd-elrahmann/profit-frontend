@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../config/Api";
 import { notifyError } from "../utilities/toastify";
+import { ensureFontsReady } from "../utilities/fontLoader";
 
 const numberToArabicWords = (num) => {
   const ones = [
@@ -238,7 +239,6 @@ const LoanContractGenerator = React.forwardRef(
     ref
   ) => {
     const [contractHtml, setContractHtml] = useState("");
-    const [isGenerating, setIsGenerating] = useState(false);
 
     const uploadPDFToServer = useCallback(
       async (pdfBlob, loanDataParam = null, contractNumbers = {}) => {
@@ -298,14 +298,7 @@ const LoanContractGenerator = React.forwardRef(
         }
 
         try {
-          setIsGenerating(true);
-
           let finalContent = contentToUse;
-
-          if (!contractNumbers.debtAcknowledgmentNumber || !contractNumbers.promissoryNoteNumber) {
-            finalContent = await generateContract(false, loanDataParam, null, true);
-          }
-    
           let cleanedContent = finalContent;
 
           const tempDiv = document.createElement('div');
@@ -351,9 +344,9 @@ const LoanContractGenerator = React.forwardRef(
           
           tempElement.innerHTML = cleanedContent;
           document.body.appendChild(tempElement);
-          
-          await new Promise(resolve => setTimeout(resolve, 500));
-    
+
+          await ensureFontsReady();
+
           const pdfBlob = await html2pdf()
             .from(tempElement)
             .set(options)
@@ -372,11 +365,9 @@ const LoanContractGenerator = React.forwardRef(
           notifyError("حدث خطأ أثناء إنشاء ملف PDF");
           handleApiError(error);
           throw error;
-        } finally {
-          setIsGenerating(false);
         }
       },
-      [contractType, uploadPDFToServer, onContractGenerated, loanData]
+      [contractType, uploadPDFToServer, onContractGenerated, loanData, clientData, contractHtml]
     );
 
     const generateContract = useCallback(
@@ -534,33 +525,7 @@ const LoanContractGenerator = React.forwardRef(
       generatePDF: (htmlContent, loanDataParam) => generatePDF(htmlContent || contractHtml, loanDataParam || loanData),
     }));
 
-    if (autoGenerate) {
-      return null;
-    }
-    if (!isGenerating) {
-      return null;
-    }
-
-    return (
-      <div
-        style={{
-          width: "100%",
-          border: "1px solid #ddd",
-          marginBottom: "20px",
-          padding: "10px",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            padding: "20px",
-            backgroundColor: "#f5f5f5",
-          }}
-        >
-          جاري إنشاء PDF...
-        </div>
-      </div>
-    );
+    return null;
   }
 );
 export default LoanContractGenerator;

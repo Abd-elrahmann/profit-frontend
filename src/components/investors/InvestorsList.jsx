@@ -38,6 +38,7 @@ const InvestorsList = ({
 
   permissions,
   isDarkMode,
+  listScrollRef,
 }) => {
   return (
     <Box
@@ -180,7 +181,7 @@ const InvestorsList = ({
         </Box>
       )}
 
-      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+      <Box ref={listScrollRef} sx={{ flex: 1, overflowY: 'auto' }}>
         {isLoading ? (
           <Box sx={{ p: 2 }}>
             {[...Array(5)].map((_, index) => (

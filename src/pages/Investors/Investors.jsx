@@ -16,7 +16,6 @@ import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { checkUnpostedOpeningJournals } from "../Journals/journalsApi";
 import { debounce } from '../../utilities/debounce';
-import AddInvestor from "../../components/modals/AddInvestor";
 import DeleteModal from "../../components/modals/DeleteModal";
 import TransactionModal from "../../components/modals/TransactionModal";
 import WithdrawModal from "../../components/modals/WithdrawModal";
@@ -69,7 +68,6 @@ export default function Investors() {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedActiveStatus, setSelectedActiveStatus] = useState("");
   const [selectedInvestor, setSelectedInvestor] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [investorToDelete, setInvestorToDelete] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -177,6 +175,19 @@ export default function Investors() {
     setEditMode(false);
     setTransactionsPage(1);
   };
+
+  const contentScrollRef = React.useRef(null);
+  const listScrollRef = React.useRef(null);
+  useEffect(() => {
+    if (selectedInvestor) {
+      listScrollRef.current?.scrollTo?.(0, 0);
+      document.querySelector('main')?.scrollTo?.(0, 0);
+      window.scrollTo(0, 0);
+    }
+    if (selectedInvestor && investorDetails) {
+      contentScrollRef.current?.scrollTo?.(0, 0);
+    }
+  }, [selectedInvestor?.id, investorDetails?.id]);
 
   const handleInputChange = (field, value) => {
     setEditFormData(prev => ({
@@ -351,13 +362,10 @@ export default function Investors() {
   const handleContractPreviewClose = () => {
     setIsContractModalOpen(false);
     setContractInvestorData(null);
-    if (isAddModalOpen) {
-      setIsAddModalOpen(false);
-    }
   };
 
   const handleAddInvestor = () => {
-    setIsAddModalOpen(true);
+    navigate('/investors/add');
   };
 
   const handleDeleteInvestor = async (investorId) => {
@@ -858,6 +866,7 @@ export default function Investors() {
           onViewWithdrawn={() => navigate('/investors-withdraw')}
           permissions={permissions}
           isDarkMode={isDarkMode}
+          listScrollRef={listScrollRef}
         />
 
         {/* Main Content */}
@@ -878,7 +887,7 @@ export default function Investors() {
               permissions={permissions}
             />
 
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
+            <Box ref={contentScrollRef} sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
               {/* Withdrawn Alert */}
               {(withdrawnInvestors.has(selectedInvestor?.id) || 
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
@@ -932,7 +941,6 @@ export default function Investors() {
                   onSaveChanges={handleSaveChanges}
                   isSaving={isSaving}
                   permissions={permissions}
-                  isDarkMode={isDarkMode}
                 />
               )}
 
@@ -1006,16 +1014,6 @@ export default function Investors() {
       </Box>
 
       {/* Modals */}
-      <AddInvestor
-        open={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          setIsAddModalOpen(false);
-          refetch();
-          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK] });
-        }}
-      />
-
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {

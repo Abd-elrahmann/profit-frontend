@@ -1,292 +1,223 @@
 import React from "react";
-import {
-  Box,
-  Grid,
-  Typography,
-  Button,
-  TextField,
-  Paper,
-  Divider,
-  MenuItem,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import dayjs from "dayjs";
 import { getStatusText } from "./investorsUtils";
+import {
+  AccountCircle,
+  Edit,
+  Autorenew,
+  CheckCircle,
+  Person,
+  ContactPhone,
+  Info,
+} from "@mui/icons-material";
+import dayjs from "dayjs";
+
+const inputBase =
+  "w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100 disabled:opacity-70 disabled:cursor-not-allowed";
+const inputDisabled =
+  "w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 px-3 py-2 text-slate-600 dark:text-slate-400 cursor-not-allowed";
+const labelBase = "text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5";
 
 const PersonalDetailsTab = ({
   investorDetails,
-  
   editMode,
   editFormData,
   onEditModeToggle,
   onInputChange,
   onSaveChanges,
   isSaving = false,
-  
   permissions,
-  isDarkMode,
 }) => {
   return (
-    <Box>
-      <Paper sx={{ p: 3, mb: 3, bgcolor: "background.paper" }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+    <div className="space-y-8">
+      <div className="border-2 border-primary/10 rounded-xl p-6 bg-primary/5 dark:bg-primary/10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <AccountCircle sx={{ color: 'primary.main' }} />
             ملخص المستثمر
-          </Typography>
-          {investorDetails?.WithdrawingStatus !== 'WITHDRAWING' && investorDetails?.WithdrawingStatus !== 'WITHDRAWN' && (
-            <Box sx={{ display: "flex", gap: 2 }}>
-              {permissions.includes("partners_Update") && (
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
-                  onClick={onEditModeToggle}
-                  size="small"
-                >
-                  {editMode ? 'إلغاء التعديل' : 'تعديل'}
-                </Button>
-              )}
-              {permissions.includes("partners_Add") && (
-                <Button
-                  variant="contained"
-                  startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon sx={{marginLeft: '10px'}} />}
-                  sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
-                  disabled={!editMode || isSaving}
-                  onClick={onSaveChanges}
-                  size="small"
-                >
-                  {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-                </Button>
-              )}
-            </Box>
-          )}
-        </Box>
-        <Divider sx={{ mb: 3 }} />
-        
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
-            البيانات الأساسية
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>الاسم الكامل</Typography>
-              <TextField 
-                value={editMode ? editFormData.name : investorDetails.name} 
-                onChange={(e) => onInputChange('name', e.target.value)}
-                fullWidth
-                disabled={!editMode}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
-                    borderRadius: '6px',
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
-            معلومات الاتصال
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>البريد الإلكتروني</Typography>
-              <TextField 
-                value={editMode ? editFormData.email : investorDetails.email || 'لا يوجد بريد إلكتروني'} 
-                onChange={(e) => onInputChange('email', e.target.value)}
-                fullWidth
-                disabled={!editMode}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
-                    borderRadius: '6px',
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>رقم الجوال</Typography>
-              <TextField
-                value={editMode ? editFormData.phone : investorDetails.phone}
-                onChange={(e) => onInputChange('phone', e.target.value)}
-                fullWidth
-                disabled={!editMode}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
-                    borderRadius: '6px',
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="body2" mb={1} fontWeight={500}>العنوان</Typography>
-              <TextField
-                value={editMode ? editFormData.address : investorDetails.address}
-                onChange={(e) => onInputChange('address', e.target.value)}
-                fullWidth
-                disabled={!editMode}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
-                    borderRadius: '6px',
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>المدينة</Typography>
-              <TextField
-                value={editMode ? editFormData.city : investorDetails.city || ''}
-                onChange={(e) => onInputChange('city', e.target.value)}
-                fullWidth
-                disabled={!editMode}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
-                    borderRadius: '6px',
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-                
-        <Box>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
-            معلومات إضافية
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>رقم الهوية الوطنية</Typography>
-              <TextField 
-                value={investorDetails.nationalId} 
-                fullWidth
-                disabled
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
-                    borderRadius: '6px',
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام الميلادي</Typography>
-              <TextField
-                type="date"
-                value={editMode ? editFormData.createdAt : (investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '')}
-                onChange={(e) => onInputChange('createdAt', e.target.value)}
-                fullWidth
-                disabled={!editMode}
-                InputLabelProps={{ shrink: true }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: editMode ? (isDarkMode ? 'background.paper' : '#fff') : (isDarkMode ? 'background.default' : '#f9fafb'),
-                    borderRadius: '6px',
-                    '&:hover fieldset': {
-                      borderColor: editMode ? 'primary.main' : undefined,
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>تاريخ الانضمام الهجري</Typography>
-              <TextField
-                value={investorDetails.HIjriCreatedAt || ''}
-                fullWidth
-                disabled
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
-                    borderRadius: '6px',
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>الحالة</Typography>
-              {editMode ? (
-                <Box>
-                  <TextField
-                    select
-                    value={editFormData.isActive !== undefined ? editFormData.isActive : investorDetails.isActive}
-                    onChange={(e) => onInputChange('isActive', e.target.value)}
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: isDarkMode ? 'background.paper' : '#ffffff',
-                        borderRadius: '6px',
-                      },
-                    }}
+          </h2>
+          {investorDetails?.WithdrawingStatus !== "WITHDRAWING" &&
+            investorDetails?.WithdrawingStatus !== "WITHDRAWN" && (
+              <div className="flex gap-2">
+                {permissions.includes("partners_Update") && (
+                  <button
+                    type="button"
+                    onClick={onEditModeToggle}
+                    className="px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                   >
-                    <MenuItem value={true}>نشط</MenuItem>
-                    <MenuItem value={false}>غير نشط</MenuItem>
-                  </TextField>
-                  {editFormData.isActive !== investorDetails.isActive && (
-                    <Alert severity="info" sx={{ mt: 1, fontSize: '0.85rem' }}>
-                      {editFormData.isActive === true ?
-                        'سيتم تفعيل المستثمر' :
-                        'سيتم إلغاء تفعيل المستثمر'}
-                    </Alert>
-                  )}
-                </Box>
-              ) : (
-                <TextField
-                  value={investorDetails.isActive ? 'نشط' : 'غير نشط'}
-                  fullWidth
-                  disabled
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
-                      borderRadius: '6px',
-                    },
-                  }}
+                    <Edit sx={{ fontSize: 20 }} />
+                    {editMode ? "إلغاء التعديل" : "تعديل"}
+                  </button>
+                )}
+                {permissions.includes("partners_Add") && (
+                  <button
+                    type="button"
+                    onClick={onSaveChanges}
+                    disabled={!editMode || isSaving}
+                    className="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70"
+                  >
+                    {isSaving ? (
+                      <>
+                        <span className="animate-spin inline-block"><Autorenew sx={{ fontSize: 20 }} /></span>
+                        جاري الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle sx={{ fontSize: 20 }} />
+                        حفظ التغييرات
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+        </div>
+
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+              <Person sx={{ fontSize: 20 }} />
+              البيانات الأساسية
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelBase}>الاسم الكامل</label>
+                <input
+                  value={editMode ? editFormData.name : investorDetails.name}
+                  onChange={(e) => onInputChange("name", e.target.value)}
+                  disabled={!editMode}
+                  className={editMode ? inputBase : inputDisabled}
                 />
-              )}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" mb={1} fontWeight={500}>تصنيف المستثمر</Typography>
-              <TextField
-                value={getStatusText(investorDetails)}
-                fullWidth
-                disabled
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: isDarkMode ? 'background.default' : '#f9fafb',
-                    borderRadius: '6px',
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-      </Paper>
-    </Box>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-primary/10 pt-6">
+            <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+              <ContactPhone sx={{ fontSize: 20 }} />
+              معلومات الاتصال
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelBase}>البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  value={editMode ? editFormData.email : investorDetails.email || "لا يوجد بريد إلكتروني"}
+                  onChange={(e) => onInputChange("email", e.target.value)}
+                  disabled={!editMode}
+                  className={editMode ? inputBase : inputDisabled}
+                />
+              </div>
+              <div>
+                <label className={labelBase}>رقم الجوال</label>
+                <input
+                  value={editMode ? editFormData.phone : investorDetails.phone}
+                  onChange={(e) => onInputChange("phone", e.target.value)}
+                  disabled={!editMode}
+                  className={`${editMode ? inputBase : inputDisabled} text-left`}
+                  dir="ltr"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelBase}>العنوان</label>
+                <textarea
+                  value={editMode ? editFormData.address : investorDetails.address}
+                  onChange={(e) => onInputChange("address", e.target.value)}
+                  disabled={!editMode}
+                  rows={2}
+                  className={editMode ? inputBase : inputDisabled}
+                />
+              </div>
+              <div>
+                <label className={labelBase}>المدينة</label>
+                <input
+                  value={editMode ? editFormData.city : investorDetails.city || ""}
+                  onChange={(e) => onInputChange("city", e.target.value)}
+                  disabled={!editMode}
+                  className={editMode ? inputBase : inputDisabled}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-primary/10 pt-6">
+            <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+              <Info sx={{ fontSize: 20 }} />
+              معلومات إضافية
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelBase}>رقم الهوية الوطنية</label>
+                <input
+                  value={investorDetails.nationalId}
+                  disabled
+                  className={inputDisabled}
+                />
+              </div>
+              <div>
+                <label className={labelBase}>تاريخ الانضمام الميلادي</label>
+                <input
+                  type="date"
+                  value={
+                    editMode
+                      ? editFormData.createdAt
+                      : investorDetails.createdAt
+                        ? dayjs(investorDetails.createdAt).format("YYYY-MM-DD")
+                        : ""
+                  }
+                  onChange={(e) => onInputChange("createdAt", e.target.value)}
+                  disabled={!editMode}
+                  className={editMode ? inputBase : inputDisabled}
+                />
+              </div>
+              <div>
+                <label className={labelBase}>تاريخ الانضمام الهجري</label>
+                <input
+                  value={investorDetails.HIjriCreatedAt || ""}
+                  disabled
+                  className={inputDisabled}
+                />
+              </div>
+              <div>
+                <label className={labelBase}>الحالة</label>
+                {editMode ? (
+                  <div>
+                    <select
+                      value={String(editFormData.isActive !== undefined ? editFormData.isActive : investorDetails.isActive)}
+                      onChange={(e) => onInputChange("isActive", e.target.value === "true")}
+                      className={inputBase}
+                    >
+                      <option value={true}>نشط</option>
+                      <option value={false}>غير نشط</option>
+                    </select>
+                    {editFormData.isActive !== investorDetails.isActive && (
+                      <p className="text-sm text-primary mt-2">
+                        {editFormData.isActive === true
+                          ? "سيتم تفعيل المستثمر"
+                          : "سيتم إلغاء تفعيل المستثمر"}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    value={investorDetails.isActive ? "نشط" : "غير نشط"}
+                    disabled
+                    className={inputDisabled}
+                  />
+                )}
+              </div>
+              <div>
+                <label className={labelBase}>تصنيف المستثمر</label>
+                <input
+                  value={getStatusText(investorDetails)}
+                  disabled
+                  className={inputDisabled}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

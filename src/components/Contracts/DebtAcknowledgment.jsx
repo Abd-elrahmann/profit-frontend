@@ -4,25 +4,29 @@ import React from "react";
 const DebtAcknowledgment = () => {
 return `
 <style>
-  .contract-wrapper {
-    background: #f8f9fc;
-    padding: 30px;
-    font-family: "Cairo", "Tajawal", "Noto Sans Arabic", sans-serif;
-    direction: rtl;
-    text-align: right;
-  }
   * {
+    box-sizing: border-box;
     word-spacing: normal;
     letter-spacing: normal;
   }
 
+  .contract-wrapper {
+    background: #f8f9fc;
+    padding: 15px;
+    font-family: "Cairo", "Tajawal", "Noto Sans Arabic", sans-serif;
+    direction: rtl;
+    text-align: right;
+    width: 100%;
+  }
+
   .contract-container {
-    max-width: 900px;
-    margin: auto;
+    max-width: 100%;
+    margin: 0 auto;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 12px;
-    padding: 30px;
+    padding: 25px;
+    width: 100%;
   }
 
   .header {
@@ -56,13 +60,15 @@ return `
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    align-items: start;
   }
 
   .details-box {
     background: rgba(46, 139, 69, 0.05);
-    padding: 15px;
+    padding: 20px;
     border-radius: 8px;
+    height: fit-content;
   }
   .details-box h2 {
     font-weight: bold;
@@ -114,15 +120,18 @@ return `
   .content-box {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    height: 100%;
+    justify-content: flex-start;
   }
 
   .amount-box {
     text-align: center;
     border: 1px solid rgba(46, 139, 69, 0.2);
-    padding: 15px;
+    padding: 20px;
     border-radius: 8px;
     background: rgba(46, 139, 69, 0.02);
+    margin: 0;
+    height: fit-content;
   }
   .amount-box h3 {
     font-size: 16px;
@@ -135,10 +144,11 @@ return `
     margin-bottom: 10px;
   }
   .amount-box h1 {
-    font-size: 30px;
+    font-size: 32px;
     font-weight: 800;
     color: #2E8B45;
-    margin: 6px 0;
+    margin: 10px 0;
+    line-height: 1.3;
   }
   .amount-box p {
     font-size: 15px;
@@ -209,35 +219,49 @@ return `
   @media print {
     @page {
       size: A4;
-      margin: 10mm;
+      margin: 15mm;
     }
 
-    .contract-wrapper,
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      background: white;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .contract-wrapper {
+      background: white;
+      padding: 0;
+      margin: 0;
+    }
+
     .contract-container {
-      height: auto !important;
-      min-height: auto !important;
-      max-height: none !important;
-      margin: 0 auto !important;
-      padding: 20px !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      box-shadow: none !important;
-      border: none !important;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      box-shadow: none;
+      padding: 25px;
+      margin: 0;
+      page-break-inside: avoid;
     }
 
-    /* منع أي انقسام للصفحات داخل المحتوى */
-    .grid-wrapper,
-    .parties-grid,
-    .text-box,
-    .signatures {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
+    .grid-wrapper {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 20px !important;
+      align-items: start !important;
+      page-break-inside: avoid;
     }
 
-    /* ضبط أقصى ارتفاع ليكون صفحة واحدة فقط */
+    .details-box, .amount-box {
+      page-break-inside: avoid;
+    }
+
     * {
-      max-height: none !important;
-      overflow: visible !important;
+      -webkit-column-break-inside: avoid;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
   }
 </style>

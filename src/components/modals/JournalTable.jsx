@@ -20,6 +20,7 @@ import {
   Alert,
 } from "@mui/material";
 import { Visibility, CheckCircle, Cancel, PictureAsPdf, TableChart } from "@mui/icons-material";
+import JournalsListSummaryCards from "../Journals/JournalsListSummaryCards";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getJournals, postMultipleJournals, unpostMultipleJournals } from "../../pages/Journals/journalsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
@@ -540,51 +541,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       }}
     >
       {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 1,
-            gap: 2,
-            flexWrap: 'wrap'
-          }}
-        >
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
-              <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                <Typography variant="body1" color="text.secondary" gutterBottom>
-                  عدد القيود
-                </Typography>
-                <Typography variant="h4" color="primary.main" fontWeight="bold">
-                  {journalsData.journals.length.toLocaleString('en-US')}
-                </Typography>
-              </CardContent>
-            </Card>
-            <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
-              <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                <Typography variant="body1" color="text.secondary" gutterBottom>
-                  المعتمد
-                </Typography>
-                <Typography variant="h4" color="success.main" fontWeight="bold">
-                  {journalsData.journals.filter(journal => journal.status === 'POSTED').length.toLocaleString('en-US')}
-                </Typography>
-              </CardContent>
-            </Card>
-            <Card sx={{ borderRadius: 1, boxShadow: 2, flex: 1, minWidth: 180, maxWidth: 250 }}>
-              <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                <Typography variant="body1" color="text.secondary" gutterBottom>
-                  الغير معتمد
-                </Typography>
-                <Typography variant="h4" color="warning.main" fontWeight="bold">
-                  {journalsData.journals.filter(journal => journal.status !== 'POSTED').length.toLocaleString('en-US')}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8 mb-6">
+          <JournalsListSummaryCards
+            total={journalsData.journals.length}
+            posted={journalsData.journals.filter((j) => j.status === "POSTED").length}
+            draft={journalsData.journals.filter((j) => j.status !== "POSTED").length}
+          />
           {canExport && (
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <div className="lg:col-span-2 flex flex-row flex-wrap items-center gap-2">
               <Button
                 variant="outlined"
                 color="error"
@@ -603,9 +567,9 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
               >
                 تصدير Excel
               </Button>
-            </Box>
+            </div>
           )}
-        </Box>
+        </div>
       )}
   
       {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (

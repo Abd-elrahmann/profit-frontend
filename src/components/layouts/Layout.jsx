@@ -31,40 +31,29 @@ const Layout = ({ children }) => {
       }
       setIsInitialized(true);
     };
-
     const timer = setTimeout(initializeSidebar, 100);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    const checkLoginStatus = () => {
-      // Check if user is on a protected route (not auth pages)
-      const isProtectedRoute = location.pathname !== '/login' 
-        && location.pathname !== '/register'
-        && location.pathname !== '/forgot-password'
-        && location.pathname !== '/reset-password'
-        && location.pathname !== '/check-connection'
-        && !location.pathname.startsWith('/payment-receipt');
-      
-      setIsLoggedIn(isProtectedRoute);
-    };
+    const isProtectedRoute = location.pathname !== '/login'
+      && location.pathname !== '/register'
+      && location.pathname !== '/forgot-password'
+      && location.pathname !== '/reset-password'
+      && location.pathname !== '/check-connection'
+      && !location.pathname.startsWith('/payment-receipt');
+    setIsLoggedIn(isProtectedRoute);
 
-    checkLoginStatus();
-    
-    // Check if we should show refresh success message
     const showRefreshSuccess = sessionStorage.getItem('showRefreshSuccess');
     if (showRefreshSuccess === 'true') {
       sessionStorage.removeItem('showRefreshSuccess');
       notifySuccess('تم تحديث البيانات بنجاح');
     }
-    
-    // Listen for login/logout events
+
     const handleUserLogin = () => setIsLoggedIn(true);
     const handleAuthFailed = () => setIsLoggedIn(false);
-    
     window.addEventListener('userLoggedIn', handleUserLogin);
     window.addEventListener('authFailed', handleAuthFailed);
-    
     return () => {
       window.removeEventListener('userLoggedIn', handleUserLogin);
       window.removeEventListener('authFailed', handleAuthFailed);
@@ -78,51 +67,39 @@ const Layout = ({ children }) => {
   };
 
   const handleSidebarClose = () => {
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
-    }
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
   const handleSync = async () => {
     try {
       setIsSyncing(true);
       const response = await Api.get('/api');
-      if (response.data && response.data.refresh === true) {
+      if (response.data?.refresh === true) {
         sessionStorage.setItem('showRefreshSuccess', 'true');
         window.location.reload();
       } else {
         notifyError('فشل في تحديث البيانات');
       }
-    } catch (error) {
+    } catch {
       notifyError('حدث خطأ أثناء تحديث البيانات');
-      console.error('تحديث البيانات error:', error);
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const isAuthPage = location.pathname === '/login' 
+  const isAuthPage = location.pathname === '/login'
     || location.pathname === '/register'
     || location.pathname === '/forgot-password'
     || location.pathname === '/reset-password'
     || location.pathname === '/';
-
   const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt');
   const isCheckConnectionPage = location.pathname === '/check-connection';
 
-  // أثناء تحميل حالة الدخول لا نعرض النافبار أو السايدبار
   if (authLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
+      <div className="flex justify-center items-center min-h-screen bg-background-light dark:bg-background-dark">
         <CircularProgress />
-      </Box>
+      </div>
     );
   }
 
@@ -130,92 +107,52 @@ const Layout = ({ children }) => {
     return <>{children}</>;
   }
 
-  return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      minHeight: '100vh',
-      overflow: 'hidden' 
-    }}>
-      <Navbar 
-        onMenuToggle={handleMenuToggle} 
-        isSidebarOpen={isSidebarOpen} 
-      />
+  const sidebarWidth = 256;
+  const showSidebar = isLoggedIn && isInitialized && isSidebarOpen;
 
-      <Box sx={{ 
-        display: 'flex', 
-        flex: 1, 
-        mt: '64px', 
-        position: 'relative',
-        overflow: 'hidden',
-        maxWidth: '100vw' 
-      }}>
-        <Box 
-          component="main" 
-          sx={{ 
-            flexGrow: 1,
-            p: isLoggedIn ? 3 : 0,
-            transition: 'margin-right 0.2s ease-out, width 0.2s ease-out', 
-            marginRight: { 
-              xs: 0, 
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? '240px' : '0' 
-            },
-            width: {
-              xs: '100%',
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100% - 240px)' : '100%'
-            },
-            maxWidth: {
-              xs: '100vw',
-              md: (isLoggedIn && isInitialized && isSidebarOpen) ? 'calc(100vw - 240px)' : '100vw'
-            },
-            backgroundColor: 'background.paper',
-            minHeight: 'calc(100vh - 64px)',
-            overflow: 'auto', 
-            overflowX: 'hidden' 
-          }}
+  return (
+    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+      <Navbar onMenuToggle={handleMenuToggle} />
+
+      <main
+        className="flex-1 flex flex-col overflow-hidden transition-all duration-200 pt-16"
+        style={{
+          marginRight: showSidebar ? sidebarWidth : 0,
+        }}
+      >
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-background-light dark:bg-background-dark"
+          style={{ minHeight: 'calc(100vh - 64px)' }}
         >
-          {children}
-        </Box>
-      </Box>
+          {isLoggedIn ? (
+            <div className="p-4 md:p-6 lg:p-8">
+              {children}
+            </div>
+          ) : (
+            children
+          )}
+        </div>
+      </main>
 
       {isLoggedIn && isInitialized && (
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={handleSidebarClose}
-          onToggle={handleMenuToggle}
-        />
+        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
       )}
 
       {isLoggedIn && !isAuthPage && !isPaymentReceiptPage && (
-        <IconButton
+        <button
+          type="button"
           onClick={handleSync}
           disabled={isSyncing}
-          style={{
-            position: 'fixed',
-            bottom: 3,
-            left: 20,
-          }}
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            backgroundColor: 'primary.main',
-            color: 'white',
-            zIndex: 9999,
-            boxShadow: 2,
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-            },
-          }}
+          className="fixed bottom-3 left-5 z-[9999] w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center"
         >
           {isSyncing ? (
-            <CircularProgress size={24} />
+            <CircularProgress size={24} sx={{ color: 'white' }} />
           ) : (
-            <SyncIcon sx={{ fontSize: 30 }} />
+            <SyncIcon sx={{ fontSize: 24 }} />
           )}
-        </IconButton>
+        </button>
       )}
-    </Box>
+    </div>
   );
 };
 

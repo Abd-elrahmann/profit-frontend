@@ -1,409 +1,144 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Grid,
-  TextField,
-  Button,
-  Stack,
-  Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  CircularProgress,
-  Alert,
-  Card,
-  CardContent,
-  CardActionArea,
-  Collapse,
-  IconButton,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  ChevronRight,
-  ExpandMore,
-  AccountBalance as AccountIcon,
-} from '@mui/icons-material';
-import { useFormik } from 'formik';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  getAccountsTree,
-  createAccount,
-  updateAccount,
-  deleteAccount,
-} from './chartApi';
+import { CircularProgress, Alert } from '@mui/material';
+import { getAccountsTree, deleteAccount } from './chartApi';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import DeleteModal from '../../components/modals/DeleteModal';
+import AddEditAccountModal from '../../components/modals/AddEditAccountModal';
+import {
+  ChartOfAccountsHeader,
+  ChartOfAccountsSearch,
+  ChartOfAccountsViewToggle,
+  ChartOfAccountsTable,
+  flattenAccountsTree,
+} from '../../components/ChartOfAccounts';
+import { exportChartOfAccountsToPDF, exportChartOfAccountsToExcel } from '../../utilities/chartOfAccountsExporter';
 
 const ChartOfAccount = () => {
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('tree');
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [expandedItems, setExpandedItems] = useState(new Set());
-  const [isEditing, setIsEditing] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
+  const [parentAccount, setParentAccount] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const hasInitialExpand = useRef(false);
 
-  const {
-    data: accountsTree = [],
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: accountsTree = [], isLoading, error } = useQuery({
     queryKey: ['accountsTree'],
     queryFn: getAccountsTree,
   });
 
-  const formik = useFormik({
-    initialValues: {
-      name: '',
-      code: '',
-      parentId: null,
-      type: '',
-      nature: '',
-      accountBasicType: '',
-      level: 1,
-      isActive: true,
-    },
-    onSubmit: async (values) => {
-      try {
-        if (isEditing) {
-          await updateAccount(selectedAccount.id, values);
-          notifySuccess('تم تحديث الحساب بنجاح');
-          const updatedAccount = { ...selectedAccount, ...values };
-          setSelectedAccount(updatedAccount);
-          queryClient.invalidateQueries(['accountsTree']);
-          setIsEditing(false);
-          setIsAdding(false);
-          formik.setValues(updatedAccount);
-        } else {
-          await createAccount(values);
-          notifySuccess('تم إنشاء الحساب بنجاح');
-          queryClient.invalidateQueries(['accountsTree']);
-          resetForm();
-        }
-      } catch (error) {
-        notifyError(error.response?.data?.message || 'فشلت العملية');
-      }
-    },
-  });
-
-  const resetForm = () => {
-    formik.resetForm();
-    setIsEditing(false);
-    setIsAdding(false);
-    if (selectedAccount) {
-      formik.setValues(selectedAccount);
+  useEffect(() => {
+    if (accountsTree.length > 0 && !hasInitialExpand.current) {
+      hasInitialExpand.current = true;
+      setExpandedIds(new Set(accountsTree.map((a) => a.id)));
     }
-  };
+  }, [accountsTree]);
 
-  const handleAccountSelect = (account) => {
-    setSelectedAccount(account);
-    setIsEditing(false);
-    setIsAdding(false);
-    formik.setValues(account);
-  };
+  const flatAccounts = useMemo(
+    () =>
+      viewMode === 'list'
+        ? flattenAccountsTree(accountsTree, 0, new Set(), true)
+        : flattenAccountsTree(accountsTree, 0, expandedIds),
+    [accountsTree, expandedIds, viewMode]
+  );
 
-  const handleAdd = () => {
-    if (!selectedAccount) {
-      notifyError('يرجى اختيار الحساب الرئيسي أولاً');
-      return;
-    }
+  const filteredAccounts = useMemo(() => {
+    if (!searchQuery.trim()) return flatAccounts;
+    const q = searchQuery.toLowerCase();
+    return flatAccounts.filter(
+      (a) =>
+        (a.code && a.code.toString().toLowerCase().includes(q)) ||
+        (a.name && a.name.toLowerCase().includes(q))
+    );
+  }, [flatAccounts, searchQuery]);
 
-    setIsAdding(true);
-    setIsEditing(false);
-    
-    formik.setValues({
-      name: '',
-      code: generateChildCode(selectedAccount),
-      parentId: selectedAccount.id,
-      type: selectedAccount.type,
-      nature: selectedAccount.nature,
-      accountBasicType: '',
-      level: selectedAccount.level + 1,
-      isActive: true,
+  const toggleExpand = useCallback((id) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
+  }, []);
+
+  const handleAddRoot = () => {
+    setModalMode('add');
+    setParentAccount(null);
+    setSelectedAccount(null);
+    setModalOpen(true);
   };
 
-  const handleEdit = () => {
-    if (!selectedAccount) {
-      notifyError('يرجى اختيار حساب للتعديل');
-      return;
-    }
-    setIsEditing(true);
-    setIsAdding(false);
+  const handleAddChild = (parent) => {
+    setModalMode('add');
+    setParentAccount(parent);
+    setSelectedAccount(null);
+    setModalOpen(true);
   };
 
-  const handleDelete = () => {
-    if (!selectedAccount) {
-      notifyError('يرجى اختيار حساب للحذف');
-      return;
-    }
+  const handleEdit = (account) => {
+    setModalMode('edit');
+    setSelectedAccount(account);
+    setParentAccount(null);
+    setModalOpen(true);
+  };
+
+  const handleDelete = (account) => {
+    setAccountToDelete(account);
     setDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
+    if (!accountToDelete) return;
     try {
-      await deleteAccount(selectedAccount.id);
+      await deleteAccount(accountToDelete.id);
       notifySuccess('تم حذف الحساب بنجاح');
       queryClient.invalidateQueries(['accountsTree']);
-      setSelectedAccount(null);
-      resetForm();
       setDeleteModalOpen(false);
-    } catch (error) {
-      notifyError(error.response?.data?.message || 'فشل الحذف');
+      setAccountToDelete(null);
+    } catch (err) {
+      notifyError(err.response?.data?.message || 'فشل الحذف');
     }
   };
 
-  const generateChildCode = (parent) => {
-    if (!parent.children || parent.children.length === 0) {
-      const baseCode = parseInt(parent.code);
-      return String(baseCode + 1000).padStart(5, '0');
+  const handleExportPDF = async () => {
+    try {
+      await exportChartOfAccountsToPDF(accountsTree);
+      notifySuccess('تم تصدير PDF بنجاح');
+    } catch (err) {
+      notifyError(err.message || 'حدث خطأ أثناء التصدير');
     }
-    
-    const lastChild = parent.children[parent.children.length - 1];
-    const lastCode = parseInt(lastChild.code);
-    return String(lastCode + 100).padStart(5, '0');
   };
 
-  const toggleExpand = (accountId) => {
-    const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(accountId)) {
-      newExpanded.delete(accountId);
-    } else {
-      newExpanded.add(accountId);
+  const handleExportExcel = async () => {
+    try {
+      await exportChartOfAccountsToExcel(accountsTree);
+      notifySuccess('تم تصدير Excel بنجاح');
+    } catch (err) {
+      notifyError(err.message || 'حدث خطأ أثناء التصدير');
     }
-    setExpandedItems(newExpanded);
   };
 
-  const renderAccountItem = (account, depth = 0) => {
-    const hasChildren = account.children && account.children.length > 0;
-    const isExpanded = expandedItems.has(account.id);
-    const isSelected = selectedAccount?.id === account.id;
-
-    const spiralColors = [
-      { bg: '#ffffff', border: '#e0e0e0', icon: '#757575' },
-      { bg: '#e3f2fd', border: '#90caf9', icon: '#1976d2' },
-      { bg: '#f3e5f5', border: '#ce93d8', icon: '#9c27b0' },
-      { bg: '#e8f5e9', border: '#a5d6a7', icon: '#388e3c' },
-      { bg: '#fff3e0', border: '#ffb74d', icon: '#f57c00' },
-      { bg: '#fce4ec', border: '#f48fb1', icon: '#c2185b' },
-      { bg: '#e0f2f1', border: '#80cbc4', icon: '#00796b' },
-    ];
-
-    const colorIndex = depth % spiralColors.length;
-    const colors = spiralColors[colorIndex];
-
-    const getBackgroundColor = () => {
-      if (isSelected) {
-        return depth === 0 ? 'rgba(25, 118, 210, 0.08)' : colors.bg;
-      }
-      return colors.bg;
-    };
-
-    const getBorderWidth = () => {
-      if (isSelected) return 3;
-      return depth === 0 ? 2 : 1;
-    };
-
-    return (
-      <Box key={account.id} sx={{ mb: 1, ml: depth * 2.5 }}>
-        <Card
-          elevation={isSelected ? 8 : (depth === 0 ? 3 : 2)}
-          sx={{
-            border: getBorderWidth(),
-            borderColor: isSelected ? 'primary.main' : colors.border,
-            borderRightWidth: depth > 0 ? 4 : getBorderWidth(),
-            borderRightColor: isSelected ? 'primary.main' : colors.icon,
-            backgroundColor: getBackgroundColor(),
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            '&:hover': {
-              elevation: 6,
-              transform: 'translateY(-2px)',
-              boxShadow: 4,
-            },
-            '&::before': depth > 0 ? {
-              content: '""',
-              position: 'absolute',
-              right: -10,
-              top: '50%',
-              width: '10px',
-              height: '2px',
-              backgroundColor: colors.icon,
-              opacity: 0.5,
-            } : {},
-          }}
-        >
-          <Box sx={{ position: 'relative' }}>
-            <CardActionArea onClick={() => handleAccountSelect(account)}>
-              <CardContent sx={{ p: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                    {/* دائرة ملونة للمستوى */}
-                    {depth > 0 && (
-                      <Box
-                        sx={{
-                          width: 8 + (depth * 2),
-                          height: 8 + (depth * 2),
-                          borderRadius: '50%',
-                          backgroundColor: colors.icon,
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                    <AccountIcon
-                      sx={{
-                        fontSize: 28 - (depth * 2),
-                        color: isSelected ? 'primary.main' : colors.icon,
-                      }}
-                    />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="h6"
-                        fontWeight={depth === 0 ? 'bold' : 'medium'}
-                        color={isSelected ? 'primary.main' : 'text.primary'}
-                        sx={{ fontSize: { xs: '0.95rem', sm: (1.1 - depth * 0.05) + 'rem' } }}
-                      >
-                        {account.name}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          color: colors.icon,
-                          fontWeight: 'medium',
-                        }}
-                      >
-                        كود: {account.code}
-                        {depth > 0 && (
-                          <Chip
-                            label={`المستوى ${depth}`}
-                            size="small"
-                            sx={{
-                              ml: 1,
-                              height: 18,
-                              fontSize: '0.7rem',
-                              backgroundColor: colors.icon,
-                              color: 'white',
-                            }}
-                          />
-                        )}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                  <Chip
-                    label={getAccountTypeLabel(account.type)}
-                    size="small"
-                    color={
-                      account.type === 'ASSET' ? 'primary' :
-                      account.type === 'LIABILITY' ? 'secondary' :
-                      account.type === 'EQUITY' ? 'success' :
-                      account.type === 'REVENUE' ? 'warning' : 'error'
-                    }
-                    sx={{ fontWeight: 'bold' }}
-                  />
-                  <Chip
-                    label={account.balance.toLocaleString()}
-                    size="small"
-                    variant="outlined"
-                    color={account.balance >= 0 ? 'success' : 'error'}
-                    sx={{ fontWeight: 'bold' }}
-                  />
-                </Box>
-              </CardContent>
-            </CardActionArea>
-
-            {hasChildren && (
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleExpand(account.id);
-                }}
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  left: 8,
-                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s ease',
-                  color: colors.icon,
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  },
-                  zIndex: 1,
-                }}
-              >
-                <ExpandMore />
-              </IconButton>
-            )}
-          </Box>
-        </Card>
-
-        {hasChildren && (
-          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <Box sx={{ mt: 2 }}>
-              {account.children.map(child => renderAccountItem(child, depth + 1))}
-            </Box>
-          </Collapse>
-        )}
-      </Box>
-    );
+  const handleModalSuccess = () => {
+    queryClient.invalidateQueries(['accountsTree']);
   };
 
-  const getAccountTypeLabel = (type) => {
-    const typeMap = {
-      'ASSET': 'أصول',
-      'LIABILITY': 'خصوم',
-      'EQUITY': 'حقوق ملكية',
-      'REVENUE': 'إيرادات',
-      'EXPENSE': 'مصروفات'
-    };
-    return typeMap[type] || type;
-  };
-
-
-  const accountTypes = [
-    { value: 'ASSET', label: 'أصول' },
-    { value: 'LIABILITY', label: 'خصوم' },
-    { value: 'EQUITY', label: 'حقوق ملكية' },
-    { value: 'REVENUE', label: 'إيرادات' },
-    { value: 'EXPENSE', label: 'مصروفات' },
-  ];
-
-  const accountBasicTypes = [
-    { value: 'OTHER', label: 'أخرى' },
-    { value: 'BANK', label: 'بنك' },
-    { value: 'LOANS_RECEIVABLE', label: 'سلفات للعملاء' },
-    { value: 'SMALL_LOANS_RECEIVABLE', label: 'سلفات صغيرة للعملاء' },
-    { value: 'PARTNER_PAYABLE', label: 'مستحق للشركاء' },
-    { value: 'PARTNER_EQUITY', label: 'رأس مال الشريك' },
-    { value: 'LOAN_INCOME', label: 'إيراد السلفات' },
-    { value: 'COMPANY_SHARES', label: 'حصص الشركة' },
-    { value: 'PARTNER_SHARES_EXPENSES', label: 'مصروفات توزيع الأرباح' },
-  ];
-
-  const natureTypes = [
-    { value: 'DEBIT', label: 'مدين' },
-    { value: 'CREDIT', label: 'دائن' },
-  ];
+  const canAdd = permissions.includes('accounts_Add');
+  const canUpdate = permissions.includes('accounts_Update');
+  const canDelete = permissions.includes('accounts_Delete');
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <div className="flex justify-center items-center min-h-[400px]">
         <CircularProgress />
-      </Box>
+      </div>
     );
   }
 
@@ -418,301 +153,58 @@ const ChartOfAccount = () => {
   return (
     <>
       <Helmet>
-        <title>شجرة الحسابات</title>
+        <title>شجرة الحسابات - النظام المالي الذكي</title>
       </Helmet>
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' },
-        gap: { xs: 2, md: 3 }, 
-        width: '100%' 
-      }}>
-        <Box sx={{ 
-          flex: { md: '1 1 50%' }, 
-          width: { xs: '100%', md: 'auto' },
-          display: 'flex', 
-          flexDirection: 'column', 
-          minWidth: 0 
-        }}>
-          <Box sx={{ 
-            p: { xs: 1, sm: 2 }, 
-            border: 1, 
-            borderColor: 'divider', 
-            borderRadius: 1, 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-          }}>
+      <div className="flex flex-col min-h-screen  dark:bg-background-dark">
+        <ChartOfAccountsHeader
+          onAddClick={handleAddRoot}
+          onExportPDF={handleExportPDF}
+          onExportExcel={handleExportExcel}
+          canAdd={canAdd}
+        />
 
-            <Box sx={{ flex: 1, overflow: 'auto', pr: 1 }}>
-              {accountsTree.map(account => renderAccountItem(account))}
-            </Box>
-          </Box>
-        </Box>
+        <div className="flex-1 p-6 md:p-8 space-y-6">
+          <section className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <ChartOfAccountsSearch value={searchQuery} onChange={setSearchQuery} />
+            <ChartOfAccountsViewToggle view={viewMode} onChange={setViewMode} />
+          </section>
 
-        <Box sx={{ 
-          flex: { md: '1 1 50%' }, 
-          width: { xs: '100%', md: 'auto' },
-          display: 'flex', 
-          flexDirection: 'column', 
-          minWidth: 0 
-        }}>
-          <Box sx={{ 
-            p: { xs: 1, sm: 2 }, 
-            border: 1, 
-            borderColor: 'divider', 
-            borderRadius: 1, 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column' 
-          }}>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              spacing={{ xs: 1, sm: 2 }} 
-              sx={{ mb: 2, gap: { xs: 1, sm: 2 } }}
-            >
-              {permissions.includes('accounts_Add') && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon sx={{marginLeft: { xs: 0, sm: "10px" }}} />}
-                  onClick={handleAdd}
-                  disabled={!selectedAccount}
-                  color="success"
-                  sx={{ 
-                    width: { xs: '100%', sm: 'auto' },
-                    minWidth: { sm: '120px' }
-                  }}
-                >
-                  إضافة حساب فرعي
-                </Button>
-              )}
-              {permissions.includes('accounts_Update') && (
-                <Button
-                  variant="contained"
-                  startIcon={<EditIcon sx={{marginLeft: { xs: 0, sm: "10px" }}} />}
-                  onClick={handleEdit}
-                  disabled={!selectedAccount}
-                  color="warning"
-                  sx={{ 
-                    width: { xs: '100%', sm: 'auto' },
-                    minWidth: { sm: '120px' }
-                  }}
-                >
-                  تعديل
-                </Button>
-              )}
-              {permissions.includes('accounts_Delete') && (
-                <Button
-                  variant="outlined"
-                  startIcon={<DeleteIcon sx={{marginLeft: { xs: 0, sm: "10px" }}} />}
-                  onClick={handleDelete}
-                  disabled={!selectedAccount}
-                  color="error"
-                  sx={{ 
-                    width: { xs: '100%', sm: 'auto' },
-                    minWidth: { sm: '120px' }
-                  }}
-                >
-                  حذف
-                </Button>
-              )}
-            </Stack>
+          <section>
+            <ChartOfAccountsTable
+              flatAccounts={filteredAccounts}
+              expandedIds={expandedIds}
+              onToggleExpand={toggleExpand}
+              onAddChild={handleAddChild}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              canAdd={canAdd}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              viewMode={viewMode}
+            />
+          </section>
+        </div>
+      </div>
 
-            <form onSubmit={formik.handleSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 } }}>
-                {/* الصف الأول: اسم الحساب والنوع */}
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                  <TextField
-                    sx={{ width: { xs: '100%', sm: '250px' } }}
-                    label="اسم الحساب"
-                    name="name"
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    disabled={!isEditing && !isAdding}
-                    required
-                    size="small"
-                  />
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
-                    <InputLabel>نوع الحساب</InputLabel>
-                    <Select
-                      name="type"
-                      value={formik.values.type}
-                      onChange={formik.handleChange}
-                      label="نوع الحساب"
-                      required
-                    >
-                      {accountTypes.map(type => (
-                        <MenuItem key={type.value} value={type.value}>
-                          {type.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                {/* الصف الثاني: الكود والطبيعة */}
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                  <TextField
-                    sx={{ width: { xs: '100%', sm: '250px' } }}
-                    label="كود الحساب"
-                    name="code"
-                    value={formik.values.code}
-                    onChange={formik.handleChange}
-                    disabled={!isAdding}
-                    required
-                    size="small"
-                  />
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
-                    <InputLabel>طبيعة الحساب</InputLabel>
-                    <Select
-                      name="nature"
-                      value={formik.values.nature}
-                      onChange={formik.handleChange}
-                      label="طبيعة الحساب"
-                      required
-                    >
-                      {natureTypes.map(nature => (
-                        <MenuItem key={nature.value} value={nature.value}>
-                          {nature.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                {/* الصف الثالث: النوع الأساسي والمستوى */}
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
-                    <InputLabel>النوع الأساسي</InputLabel>
-                    <Select
-                      name="accountBasicType"
-                      value={formik.values.accountBasicType}
-                      onChange={formik.handleChange}
-                      label="النوع الأساسي"
-                    >
-                      <MenuItem value="">
-                        <em>لا شيء</em>
-                      </MenuItem>
-                      {accountBasicTypes.map(basicType => (
-                        <MenuItem key={basicType.value} value={basicType.value}>
-                          {basicType.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    sx={{ width: { xs: '100%', sm: '250px' } }}
-                    type="number"
-                    label="المستوى"
-                    name="level"
-                    value={formik.values.level}
-                    onChange={formik.handleChange}
-                    disabled={!isAdding}
-                    InputProps={{ inputProps: { min: 1 } }}
-                    size="small"
-                  />
-                </Box>
-
-                {/* الصف الرابع: الحالة */}
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                  <FormControl sx={{ width: { xs: '100%', sm: '250px' } }} disabled={!isAdding} size="small">
-                    <InputLabel>الحالة</InputLabel>
-                    <Select
-                      name="isActive"
-                      value={formik.values.isActive}
-                      onChange={formik.handleChange}
-                      label="الحالة"
-                    >
-                      <MenuItem value={true}>نشط</MenuItem>
-                      <MenuItem value={false}>غير نشط</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                {/* الصف الخامس والسادس: أرصدة الحساب */}
-                {selectedAccount && (
-                  <>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                      <TextField
-                        sx={{ width: { xs: '100%', sm: '250px' } }}
-                        label="مدين"
-                        value={selectedAccount.debit?.toLocaleString() || '0'}
-                        disabled
-                        size="small"
-                      />
-                      <TextField
-                        sx={{ width: { xs: '100%', sm: '250px' } }}
-                        label="دائن"
-                        value={selectedAccount.credit?.toLocaleString() || '0'}
-                        disabled
-                        size="small"
-                      />
-                    </Box>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 2 } }}>
-                      <TextField
-                        sx={{
-                          width: { xs: '100%', sm: '250px' },
-                          '& .MuiInputBase-input': {
-                            color: selectedAccount.balance >= 0 ? 'success.main' : 'error.main',
-                            fontWeight: 'bold',
-                          },
-                        }}
-                        label="الرصيد"
-                        value={selectedAccount.balance?.toLocaleString() || '0'}
-                        disabled
-                        size="small"
-                      />
-                    </Box>
-                  </>
-                )}
-
-                {/* الصف الأخير: أزرار الحفظ والإلغاء */}
-                {(isEditing || isAdding) && (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    gap: { xs: 1, sm: 2 }, 
-                    mt: 2 
-                  }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      color="success"
-                      startIcon={<SaveIcon sx={{marginLeft: { xs: 0, sm: "10px" }}} />}
-                      disabled={formik.isSubmitting}
-                      sx={{ 
-                        width: { xs: '100%', sm: 'auto' },
-                        minWidth: { sm: '120px' }
-                      }}
-                    >
-                      {formik.isSubmitting ? <CircularProgress size={24} /> : 'حفظ'}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<CancelIcon sx={{marginLeft: { xs: 0, sm: "10px" }}} />}
-                      onClick={resetForm}
-                      disabled={formik.isSubmitting}
-                      sx={{ 
-                        width: { xs: '100%', sm: 'auto' },
-                        minWidth: { sm: '120px' }
-                      }}
-                    >
-                      إلغاء
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-            </form>
-          </Box>
-        </Box>
-      </Box>
+      <AddEditAccountModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        account={modalMode === 'edit' ? selectedAccount : null}
+        parentAccount={modalMode === 'add' ? parentAccount : null}
+        onSuccess={handleModalSuccess}
+        isEdit={modalMode === 'edit'}
+      />
 
       <DeleteModal
         open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setAccountToDelete(null);
+        }}
         onConfirm={handleConfirmDelete}
         title="حذف الحساب"
-        message={`هل أنت متأكد من رغبتك في حذف الحساب "${selectedAccount?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
+        message={`هل أنت متأكد من رغبتك في حذف الحساب "${accountToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
     </>
   );

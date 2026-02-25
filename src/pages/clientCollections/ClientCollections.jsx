@@ -1,146 +1,96 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Tabs,
-  Tab,
-  Paper,
-  useMediaQuery,
-  useTheme,
-  Button,
-  Stack,
-  Menu,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-} from "@mui/material";
-import { 
-  FileDownload as FileDownloadIcon,
-  Print as PrintIcon,
-  ViewColumn as ViewColumnIcon 
-} from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
-import { getAllClients } from "./clientsCollectionsApi";
-import ClientCollectionsTable from "../../components/modals/ClientCollectionsTable";
-import { Helmet } from "react-helmet-async";
-import { notifySuccess, notifyError } from "../../utilities/toastify";
+import React, { useState, useCallback } from 'react';
+import { Box, Paper, useMediaQuery, useTheme } from '@mui/material';
+import { Helmet } from 'react-helmet-async';
+import { notifySuccess, notifyError } from '../../utilities/toastify';
 import {
   exportClientCollectionsToPDF,
   exportClientCollectionsToExcel,
   printClientCollections,
-} from "../../utilities/clientCollectionsExporter";
-import { usePermissions } from "../../components/Contexts/PermissionsContext";
-
-const availableColumns = [
-  { id: 'id', label: 'م', show: true, required: true },
-  { id: 'client', label: 'العميل', show: true },
-  { id: 'address', label: 'العنوان', show: true },
-  { id: 'loansCount', label: 'عدد السلف', show: true },
-  { id: 'paidRepayments', label: 'الدفعات المدفوعة', show: true },
-  { id: 'remainingRepayments', label: 'الدفعات المتبقية', show: true },
-  { id: 'monthlyInstallment', label: 'الدفعة الشهرية', show: true },
-  { id: 'totalDebit', label: 'إجمالي المديونية', show: true },
-  { id: 'totalPaid', label: 'إجمالي المدفوع', show: true },
-  { id: 'totalInterest', label: 'إجمالي الفوائد', show: true },
-  { id: 'totalDiscounts', label: 'الخصومات', show: true },
-  { id: 'remaining', label: 'المتبقي', show: true },
-  { id: 'note', label: 'ملاحظات', show: true },
-];
+} from '../../utilities/clientCollectionsExporter';
+import { usePermissions } from '../../components/Contexts/PermissionsContext';
+import {
+  ClientCollectionsTabs,
+  ClientCollectionsToolbar,
+  ClientCollectionsTable,
+  useClientCollectionsData,
+  AVAILABLE_COLUMNS,
+} from '../../components/ClientCollections';
 
 const ClientCollections = () => {
-  const [clientsTab, setClientsTab] = useState(0); 
-  const [page] = useState(1);
-  const [limit] = useState(20);
-  const [columns, setColumns] = useState(availableColumns);
+  const [clientsTab, setClientsTab] = useState(0);
+  const [columns, setColumns] = useState(AVAILABLE_COLUMNS);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const isSmallScreen = useMediaQuery("(max-width: 768px)");
+  const isSmallScreen = useMediaQuery('(max-width: 768px)');
   const { permissions } = usePermissions();
-  const { isDarkMode } = useTheme();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
-  const { data: activeClientsData, isLoading: isActiveClientsLoading } = useQuery({
-    queryKey: ["clients-collections", page, "ACTIVE"],
-    queryFn: () => getAllClients(page, limit, "ACTIVE"),
-    enabled: clientsTab === 0,
-  });
+  const { data: clientsData, isLoading: isClientsLoading } = useClientCollectionsData(clientsTab);
 
-  const { data: completedClientsData, isLoading: isCompletedClientsLoading } = useQuery({
-    queryKey: ["clients-collections", page, "COMPLETE"],
-    queryFn: () => getAllClients(page, limit, "COMPLETE"),
-    enabled: clientsTab === 1,
-  });
+  const handleColumnMenuClick = (e) => setAnchorEl(e.currentTarget);
+  const handleColumnMenuClose = () => setAnchorEl(null);
 
-  const clientsData = clientsTab === 0 ? activeClientsData : completedClientsData;
-  const isClientsLoading = clientsTab === 0 ? isActiveClientsLoading : isCompletedClientsLoading;
+  const handleColumnToggle = useCallback((columnId) => {
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === columnId && !col.required ? { ...col, show: !col.show } : col
+      )
+    );
+  }, []);
 
-  const handleColumnMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const handleSelectAllColumns = useCallback(() => {
+    setColumns((prev) => prev.map((col) => ({ ...col, show: true })));
+  }, []);
 
-  const handleColumnMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleDeselectAllColumns = useCallback(() => {
+    setColumns((prev) =>
+      prev.map((col) => (col.required ? col : { ...col, show: false }))
+    );
+  }, []);
 
-  const handleColumnToggle = (columnId) => {
-    setColumns(columns.map(col => 
-      col.id === columnId && !col.required ? { ...col, show: !col.show } : col
-    ));
-  };
+  const status = clientsTab === 0 ? 'ACTIVE' : 'COMPLETE';
+  const visibleColumns = columns.filter((col) => col.show);
 
-  const handleSelectAllColumns = () => {
-    setColumns(columns.map(col => ({ ...col, show: true })));
-  };
-
-  const handleDeselectAllColumns = () => {
-    setColumns(columns.map(col => 
-      col.required ? col : { ...col, show: false }
-    ));
-  };
-
-  const handleExportPDF = async () => {
+  const handleExportPDF = useCallback(async () => {
     try {
-      const dataToExport = clientsData;
-      const status = clientsTab === 0 ? "ACTIVE" : "COMPLETE";
-      const visibleColumns = columns.filter(col => col.show);
-      await exportClientCollectionsToPDF(dataToExport, status, visibleColumns);
-      notifySuccess("تم تصدير ملف PDF بنجاح");
+      await exportClientCollectionsToPDF(clientsData, status, visibleColumns);
+      notifySuccess('تم تصدير ملف PDF بنجاح');
     } catch (error) {
-      console.error("Error exporting PDF:", error);
-      notifyError("حدث خطأ أثناء تصدير ملف PDF");
+      console.error('Error exporting PDF:', error);
+      notifyError('حدث خطأ أثناء تصدير ملف PDF');
     }
-  };
+  }, [clientsData, status, visibleColumns]);
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = useCallback(async () => {
     try {
-      const dataToExport = clientsData;
-      const status = clientsTab === 0 ? "ACTIVE" : "COMPLETE";
-      const visibleColumns = columns.filter(col => col.show);
-      await exportClientCollectionsToExcel(dataToExport, status, visibleColumns);
-      notifySuccess("تم تصدير ملف Excel بنجاح");
+      await exportClientCollectionsToExcel(clientsData, status, visibleColumns);
+      notifySuccess('تم تصدير ملف Excel بنجاح');
     } catch (error) {
-      console.error("Error exporting Excel:", error);
-      notifyError("حدث خطأ أثناء تصدير ملف Excel");
+      console.error('Error exporting Excel:', error);
+      notifyError('حدث خطأ أثناء تصدير ملف Excel');
     }
-  };
+  }, [clientsData, status, visibleColumns]);
 
-  const handlePrint = async () => {
+  const handlePrint = useCallback(async () => {
     try {
-      const dataToExport = clientsData;
-      const status = clientsTab === 0 ? "ACTIVE" : "COMPLETE";
-      const visibleColumns = columns.filter(col => col.show);
-      await printClientCollections(dataToExport, status, visibleColumns);
+      await printClientCollections(clientsData, status, visibleColumns);
     } catch (error) {
-      console.error("Error printing:", error);
-      notifyError("حدث خطأ أثناء الطباعة");
+      console.error('Error printing:', error);
+      notifyError('حدث خطأ أثناء الطباعة');
     }
-  };
+  }, [clientsData, status, visibleColumns]);
+
+  const hasExportPermission = permissions.includes('client-report_Export');
+  const hasData = Boolean(clientsData?.data?.length);
 
   return (
     <Box
       sx={{
         bgcolor: isDarkMode ? 'background.default' : '#f6f6f8',
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Helmet>
@@ -155,192 +105,58 @@ const ClientCollections = () => {
           bgcolor: 'background.paper',
         }}
       >
-        <Box sx={{ width: "100%" }}>
-          <Box sx={{ width: "100%" }}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexDirection: isSmallScreen ? "column" : "row",
-                  gap: 2,
-                }}
-              >
-                <Tabs
-                  value={clientsTab}
-                  onChange={(e, newValue) => setClientsTab(newValue)}
-                  variant={isSmallScreen ? "fullWidth" : "standard"}
-                  sx={{ flex: 1 }}
-                >
-                  <Tab
-                    label="العملاء المديونين"
-                    sx={{
-                      fontWeight: "bold",
-                      borderBottom: clientsTab === 0 ? "3px solid #d32f2f" : "none",
-                      color: clientsTab === 0 ? "#d32f2f" : "text.primary",
-                    }}
-                  />
-                  <Tab
-                    label="العملاء المسددين"
-                    sx={{
-                      fontWeight: "bold",
-                      borderBottom: clientsTab === 1 ? "3px solid #2e7d32" : "none",
-                      color: clientsTab === 1 ? "#2e7d32" : "text.primary",
-                    }}
-                  />
-                </Tabs>
-
-                {permissions.includes("client-report_Export") && (
-                  <Stack
-                    direction={isSmallScreen ? "column" : "row"}
-                    spacing={1}
-                    sx={{ width: isSmallScreen ? "100%" : "auto", gap: 2 }}
-                  >
-                    {/* زر الأعمدة */}
-                    <Button
-                      variant="contained"
-                      color="warning"
-                      startIcon={<ViewColumnIcon sx={{marginLeft:"8px"}} />}
-                      onClick={handleColumnMenuClick}
-                      fullWidth={isSmallScreen}
-                      sx={{
-                        fontWeight: "bold",
-                      }}
-                    >
-                      الأعمدة
-                    </Button>
-
-                    {/* زر الطباعة */}
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<PrintIcon sx={{marginLeft:"8px"}} />}
-                      onClick={() => handlePrint()}
-                      disabled={isClientsLoading || !clientsData?.data?.length}
-                      fullWidth={isSmallScreen}
-                      sx={{
-                        fontWeight: "bold",
-                        "&:hover": {
-                          backgroundColor: "primary.main",
-                        },
-
-                      }}
-                    >
-                      طباعة
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      color="error"
-                      startIcon={<FileDownloadIcon sx={{marginLeft:"8px"}} />}
-                      onClick={handleExportPDF}
-                      disabled={isClientsLoading || !clientsData?.data?.length}
-                      fullWidth={isSmallScreen}
-                      sx={{
-                        fontWeight: "bold",
-                      }}
-                    >
-                      تصدير PDF
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="success"
-                      startIcon={<FileDownloadIcon sx={{marginLeft:"8px"}} />}
-                      onClick={handleExportExcel}
-                      disabled={isClientsLoading || !clientsData?.data?.length}
-                      fullWidth={isSmallScreen}
-                      sx={{
-                        fontWeight: "bold",
-                      }}
-                    >
-                      تصدير Excel
-                    </Button>
-                  </Stack>
-                )}
-              </Box>
-            </Box>
-
-          {/* قائمة اختيار الأعمدة */}
-<Menu
-  anchorEl={anchorEl}
-  open={Boolean(anchorEl)}
-  onClose={handleColumnMenuClose}
-  PaperProps={{
-    style: {
-      maxHeight: 400,
-      width: 500,
-    },
-  }}
->
-  <MenuItem>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-      <Button size="small" onClick={handleSelectAllColumns}>تحديد الكل</Button>
-      <Button size="small" onClick={handleDeselectAllColumns}>إلغاء الكل</Button>
-    </Box>
-  </MenuItem>
-  
-  {/* تقسيم الأعمدة إلى مجموعات من عمودين */}
-  {(() => {
-    const menuItems = [];
-    for (let i = 0; i < columns.length; i += 2) {
-      const firstColumn = columns[i];
-      const secondColumn = columns[i + 1];
-      
-      menuItems.push(
-        <MenuItem key={`row-${i}`} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-          {/* العمود الأول */}
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={firstColumn.show}
-                onChange={() => handleColumnToggle(firstColumn.id)}
-                disabled={firstColumn.required}
-              />
-            }
-            label={firstColumn.label}
-            sx={{ flex: 1 }}
-          />
-          
-          {/* العمود الثاني (إذا كان موجود) */}
-          {secondColumn && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={secondColumn.show}
-                  onChange={() => handleColumnToggle(secondColumn.id)}
-                  disabled={secondColumn.required}
-                />
-              }
-              label={secondColumn.label}
-              sx={{ flex: 1 }}
-            />
-          )}
-        </MenuItem>
-      );
-    }
-    return menuItems;
-  })()}
-</Menu>
-
-            <Paper
+        <Box sx={{ width: '100%' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Box
               sx={{
-                flex: 1,
-                width: "100%",
-                overflow: "hidden",
-                borderRadius: 2,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexDirection: isSmallScreen ? 'column' : 'row',
+                gap: 2,
               }}
             >
-              <ClientCollectionsTable
-                isLoading={isClientsLoading}
-                clientsData={clientsData}
-                visibleColumns={columns.filter(col => col.show)}
+              <ClientCollectionsTabs
+                value={clientsTab}
+                onChange={setClientsTab}
+                isSmallScreen={isSmallScreen}
               />
-            </Paper>
+
+              <ClientCollectionsToolbar
+                isSmallScreen={isSmallScreen}
+                hasExportPermission={hasExportPermission}
+                isLoading={isClientsLoading}
+                hasData={hasData}
+                onColumnMenuClick={handleColumnMenuClick}
+                onPrint={handlePrint}
+                onExportPDF={handleExportPDF}
+                onExportExcel={handleExportExcel}
+                anchorEl={anchorEl}
+                onColumnMenuClose={handleColumnMenuClose}
+                columns={columns}
+                onColumnToggle={handleColumnToggle}
+                onSelectAllColumns={handleSelectAllColumns}
+                onDeselectAllColumns={handleDeselectAllColumns}
+              />
+            </Box>
           </Box>
+
+          <Paper
+            sx={{
+              flex: 1,
+              width: '100%',
+              overflow: 'hidden',
+              borderRadius: 2,
+            }}
+          >
+            <ClientCollectionsTable
+              isLoading={isClientsLoading}
+              clientsData={clientsData}
+              visibleColumns={visibleColumns}
+            />
+          </Paper>
         </Box>
       </Box>
-
     </Box>
   );
 };

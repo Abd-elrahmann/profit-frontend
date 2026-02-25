@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Download, Print } from '@mui/icons-material';
 import { isValidTemplate, injectContractData } from '../utilities/sanitize';
+import { preloadContractFonts } from '../utilities/fontLoader';
 
 const LoanContractsPreview = ({
   open,
@@ -38,6 +39,12 @@ const LoanContractsPreview = ({
   contractData = {} 
 }) => {
   const [activeTab, setActiveTab] = React.useState(0);
+
+  React.useEffect(() => {
+    if (open && (debtAckHtml || promissoryNoteHtml)) {
+      preloadContractFonts();
+    }
+  }, [open, debtAckHtml, promissoryNoteHtml]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
