@@ -29,8 +29,6 @@ function KafeelFormFields({
   isDarkMode,
   onInputChange,
 }) {
-  const data = isEditing ? formData : kafeel;
-
   const getValue = (field) => {
     if (isEditing) return formData?.[field] ?? "";
     if (field === "birthDate" && kafeel?.birthDate) {
@@ -40,7 +38,8 @@ function KafeelFormFields({
   };
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* المعلومات الشخصية */}
       <Box
         className="flex items-center gap-2 pb-2 mb-3"
         sx={{ borderBottom: "1px solid", borderColor: "divider" }}
@@ -52,9 +51,7 @@ function KafeelFormFields({
       </Box>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            اسم الكفيل
-          </Typography>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>اسم الكفيل</Typography>
           <TextField
             value={getValue("name")}
             onChange={(e) => onInputChange("name", e.target.value)}
@@ -64,9 +61,7 @@ function KafeelFormFields({
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            رقم هوية الكفيل
-          </Typography>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>رقم هوية الكفيل</Typography>
           <TextField
             value={getValue("nationalId")}
             onChange={(e) => onInputChange("nationalId", e.target.value)}
@@ -76,9 +71,7 @@ function KafeelFormFields({
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            تاريخ الميلاد
-          </Typography>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>تاريخ الميلاد</Typography>
           <TextField
             value={getValue("birthDate")}
             onChange={(e) => onInputChange("birthDate", e.target.value)}
@@ -89,78 +82,8 @@ function KafeelFormFields({
             sx={inputSx(isEditing, isDarkMode)}
           />
         </Grid>
-        <Grid item xs={12}>
-          <Box
-            className="flex items-center gap-6 pb-2 mt-2 mb-2"
-            sx={{ borderBottom: "1px solid", borderColor: "divider" }}
-          >
-            <Box className="flex items-center gap-2">
-              <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
-              <Typography variant="subtitle1" fontWeight="bold">
-                بيانات العنوان
-              </Typography>
-            </Box>
-            <Box className="flex items-center gap-2">
-              <Work sx={{ fontSize: 24, color: 'primary.main' }} />
-              <Typography variant="subtitle1" fontWeight="bold">
-                بيانات العمل والدخل
-              </Typography>
-            </Box>
-          </Box>
-        </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            المدينة
-          </Typography>
-          <TextField
-            value={getValue("city")}
-            onChange={(e) => onInputChange("city", e.target.value)}
-            fullWidth
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            جهة العمل
-          </Typography>
-          <TextField
-            value={getValue("employer")}
-            onChange={(e) => onInputChange("employer", e.target.value)}
-            fullWidth
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            الحي
-          </Typography>
-          <TextField
-            value={getValue("district")}
-            onChange={(e) => onInputChange("district", e.target.value)}
-            fullWidth
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            الراتب
-          </Typography>
-          <TextField
-            value={getValue("salary")}
-            onChange={(e) => onInputChange("salary", e.target.value)}
-            fullWidth
-            type="number"
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            رقم الجوال
-          </Typography>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>رقم الجوال</Typography>
           <TextField
             value={getValue("phone")}
             onChange={(e) => onInputChange("phone", e.target.value)}
@@ -170,22 +93,7 @@ function KafeelFormFields({
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="body2" mb={1} fontWeight={500}>
-            الالتزامات
-          </Typography>
-          <TextField
-            value={getValue("obligations")}
-            onChange={(e) => onInputChange("obligations", e.target.value)}
-            fullWidth
-            type="number"
-            disabled={!isEditing}
-            sx={inputSx(isEditing, isDarkMode)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            البريد الإلكتروني
-          </Typography>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>البريد الإلكتروني</Typography>
           <TextField
             value={getValue("email")}
             onChange={(e) => onInputChange("email", e.target.value)}
@@ -195,7 +103,89 @@ function KafeelFormFields({
           />
         </Grid>
       </Grid>
-    </>
+
+      {/* بيانات العنوان - سطر جديد كامل، ثم حقوله تحته */}
+      <Box sx={{ width: "100%", mt: 4 }}>
+        <Box
+          className="flex items-center gap-2 pb-2 mb-2"
+          sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+        >
+          <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+          <Typography variant="subtitle1" fontWeight="bold">
+            بيانات العنوان
+          </Typography>
+        </Box>
+        <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>المدينة</Typography>
+            <TextField
+              value={getValue("city")}
+              onChange={(e) => onInputChange("city", e.target.value)}
+              fullWidth
+              disabled={!isEditing}
+              sx={inputSx(isEditing, isDarkMode)}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الحي</Typography>
+            <TextField
+              value={getValue("district")}
+              onChange={(e) => onInputChange("district", e.target.value)}
+              fullWidth
+              disabled={!isEditing}
+              sx={inputSx(isEditing, isDarkMode)}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* بيانات العمل والدخل - سطر جديد كامل، ثم حقوله تحته */}
+      <Box sx={{ width: "100%", mt: 4 }}>
+        <Box
+          className="flex items-center gap-2 pb-2 mb-2"
+          sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+        >
+          <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+          <Typography variant="subtitle1" fontWeight="bold">
+            بيانات العمل والدخل
+          </Typography>
+        </Box>
+        <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>جهة العمل</Typography>
+            <TextField
+              value={getValue("employer")}
+              onChange={(e) => onInputChange("employer", e.target.value)}
+              fullWidth
+              disabled={!isEditing}
+              sx={inputSx(isEditing, isDarkMode)}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الراتب</Typography>
+            <TextField
+              value={getValue("salary")}
+              onChange={(e) => onInputChange("salary", e.target.value)}
+              fullWidth
+              type="number"
+              disabled={!isEditing}
+              sx={inputSx(isEditing, isDarkMode)}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body2" mb={1} fontWeight={500}>الالتزامات</Typography>
+            <TextField
+              value={getValue("obligations")}
+              onChange={(e) => onInputChange("obligations", e.target.value)}
+              fullWidth
+              type="number"
+              disabled={!isEditing}
+              sx={inputSx(isEditing, isDarkMode)}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
   );
 }
 

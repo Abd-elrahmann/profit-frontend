@@ -256,15 +256,9 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
                     <input name="email" type="email" value={values.email || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
                     {touched.email && errors.email && <span className={fieldError}>{errors.email}</span>}
                   </div>
-                  <div className="md:col-span-3 flex items-center gap-6 pb-2 border-b border-primary/10 mt-6 mb-2">
-                    <div className="flex items-center gap-2">
-                      <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
-                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العنوان</h2>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Work sx={{ fontSize: 24, color: 'primary.main' }} />
-                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العمل والدخل</h2>
-                    </div>
+                  <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
+                    <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العنوان</h2>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>المدينة</label>
@@ -272,14 +266,18 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
                     {touched.city && errors.city && <span className={fieldError}>{errors.city}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>جهة عمل الكفيل</label>
-                    <input name="employer" value={values.employer || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
-                    {touched.employer && errors.employer && <span className={fieldError}>{errors.employer}</span>}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>الحي</label>
                     <input name="district" value={values.district || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
                     {touched.district && errors.district && <span className={fieldError}>{errors.district}</span>}
+                  </div>
+                  <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
+                    <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العمل والدخل</h2>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelBase}>جهة عمل الكفيل</label>
+                    <input name="employer" value={values.employer || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
+                    {touched.employer && errors.employer && <span className={fieldError}>{errors.employer}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>راتب الكفيل</label>

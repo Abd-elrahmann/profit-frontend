@@ -485,16 +485,10 @@ const AddClient = ({ open, onClose }) => {
                       </div>
                       {touched.phone && errors.phone && <span className={fieldError}>{errors.phone}</span>}
                     </div>
-                    {/* Address & Work - titles in one line */}
-                    <div className="md:col-span-3 flex items-center gap-6 pb-2 border-b border-primary/10 mt-6 mb-2">
-                      <div className="flex items-center gap-2">
-                        <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العنوان</h2>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Work sx={{ fontSize: 24, color: 'primary.main' }} />
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العمل والدخل</h2>
-                      </div>
+                    {/* بيانات العنوان */}
+                    <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
+                      <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العنوان</h2>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className={labelBase}>المدينة</label>
@@ -507,6 +501,35 @@ const AddClient = ({ open, onClose }) => {
                         className={inputBase}
                       />
                       {touched.city && errors.city && <span className={fieldError}>{errors.city}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className={labelBase}>الحي</label>
+                      <input
+                        name="district"
+                        value={values.district}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="اسم الحي"
+                        className={inputBase}
+                      />
+                      {touched.district && errors.district && <span className={fieldError}>{errors.district}</span>}
+                    </div>
+                    <div className="flex flex-col gap-1.5 md:col-span-2">
+                      <label className={labelBase}>العنوان التفصيلي</label>
+                      <input
+                        name="address"
+                        value={values.address}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="الشارع، رقم المبنى"
+                        className={inputBase}
+                      />
+                      {touched.address && errors.address && <span className={fieldError}>{errors.address}</span>}
+                    </div>
+                    {/* بيانات العمل والدخل */}
+                    <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
+                      <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العمل والدخل</h2>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className={labelBase}>جهة العمل</label>
@@ -523,18 +546,6 @@ const AddClient = ({ open, onClose }) => {
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className={labelBase}>الحي</label>
-                      <input
-                        name="district"
-                        value={values.district}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="اسم الحي"
-                        className={inputBase}
-                      />
-                      {touched.district && errors.district && <span className={fieldError}>{errors.district}</span>}
-                    </div>
-                    <div className="flex flex-col gap-1.5">
                       <label className={labelBase}>الراتب الشهري</label>
                       <div className="relative">
                         <input
@@ -549,18 +560,6 @@ const AddClient = ({ open, onClose }) => {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">ر.س</span>
                       </div>
                       {touched.salary && errors.salary && <span className={fieldError}>{errors.salary}</span>}
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className={labelBase}>العنوان التفصيلي</label>
-                      <input
-                        name="address"
-                        value={values.address}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="الشارع، رقم المبنى"
-                        className={inputBase}
-                      />
-                      {touched.address && errors.address && <span className={fieldError}>{errors.address}</span>}
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className={labelBase}>الالتزامات الشهرية</label>

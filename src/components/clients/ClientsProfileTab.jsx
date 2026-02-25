@@ -35,8 +35,9 @@ export default function ClientsProfileTab({
   });
 
   return (
-    <Box>
-      <Paper sx={{ p: 3, mb: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Paper sx={{ p: 3, mb: 0 }}>
+        {/* المعلومات الشخصية */}
         <Box
           className="flex items-center gap-2 pb-2 mb-4"
           sx={{ borderBottom: "1px solid", borderColor: "divider" }}
@@ -48,9 +49,7 @@ export default function ClientsProfileTab({
         </Box>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              الاسم الكامل
-            </Typography>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الاسم الكامل</Typography>
             <TextField
               value={getValue("name")}
               onChange={(e) => onClientInputChange("name", e.target.value)}
@@ -60,9 +59,7 @@ export default function ClientsProfileTab({
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              البريد الإلكتروني
-            </Typography>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>البريد الإلكتروني</Typography>
             <TextField
               value={getDisplayValue("email", "لا يوجد بريد إلكتروني")}
               onChange={(e) => onClientInputChange("email", e.target.value)}
@@ -72,20 +69,11 @@ export default function ClientsProfileTab({
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              رقم الهوية الوطنية
-            </Typography>
-            <TextField
-              value={client.nationalId}
-              fullWidth
-              disabled
-              sx={{ "& .MuiOutlinedInput-root": { width: "280px" } }}
-            />
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>رقم الهوية الوطنية</Typography>
+            <TextField value={client.nationalId} fullWidth disabled sx={{ "& .MuiOutlinedInput-root": { width: "280px" } }} />
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              رقم الجوال
-            </Typography>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>رقم الجوال</Typography>
             <TextField
               value={getValue("phone")}
               onChange={(e) => onClientInputChange("phone", e.target.value)}
@@ -95,9 +83,7 @@ export default function ClientsProfileTab({
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              تاريخ الميلاد
-            </Typography>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>تاريخ الميلاد</Typography>
             <TextField
               value={
                 editMode
@@ -113,92 +99,112 @@ export default function ClientsProfileTab({
               sx={textFieldSx(editMode)}
             />
           </Grid>
-
-          <Grid item xs={12}>
-            <Box
-              className="flex items-center gap-6 pb-2 mt-4 mb-2"
-              sx={{ borderBottom: "1px solid", borderColor: "divider" }}
-            >
-              <Box className="flex items-center gap-2">
-                <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
-                <Typography variant="h6" fontWeight="bold">
-                  بيانات العنوان
-                </Typography>
-              </Box>
-              <Box className="flex items-center gap-2">
-                <Work sx={{ fontSize: 24, color: 'primary.main' }} />
-                <Typography variant="h6" fontWeight="bold">
-                  بيانات العمل والدخل
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              المدينة
-            </Typography>
-            <TextField
-              value={getValue("city")}
-              onChange={(e) => onClientInputChange("city", e.target.value)}
-              fullWidth
-              disabled={!editMode}
-              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "280px" } }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              جهة العمل
-            </Typography>
-            <TextField
-              value={getValue("employer")}
-              onChange={(e) => onClientInputChange("employer", e.target.value)}
-              fullWidth
-              disabled={!editMode}
-              sx={textFieldSx(editMode)}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              الحي
-            </Typography>
-            <TextField
-              value={getValue("district")}
-              onChange={(e) => onClientInputChange("district", e.target.value)}
-              fullWidth
-              disabled={!editMode}
-              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "280px" } }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              سبب الإنشاء
-            </Typography>
-            <TextField
-              value={getDisplayValue("creationReason")}
-              onChange={(e) =>
-                onClientInputChange("creationReason", e.target.value)
-              }
-              fullWidth
-              disabled={!editMode}
-              sx={textFieldSx(editMode)}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              العنوان التفصيلي
-            </Typography>
-            <TextField
-              value={getDisplayValue("address")}
-              onChange={(e) => onClientInputChange("address", e.target.value)}
-              fullWidth
-              disabled={!editMode}
-              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "350px" } }}
-            />
-          </Grid>
         </Grid>
+
+        {/* بيانات العنوان - سطر جديد كامل، ثم حقوله تحته */}
+        <Box sx={{ width: "100%", mt: 4 }}>
+          <Box
+            className="flex items-center gap-2 pb-2 mb-2"
+            sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+          >
+            <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
+            <Typography variant="h6" fontWeight="bold">
+              بيانات العنوان
+            </Typography>
+          </Box>
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>المدينة</Typography>
+              <TextField
+                value={getValue("city")}
+                onChange={(e) => onClientInputChange("city", e.target.value)}
+                fullWidth
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الحي</Typography>
+              <TextField
+                value={getValue("district")}
+                onChange={(e) => onClientInputChange("district", e.target.value)}
+                fullWidth
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>العنوان التفصيلي</Typography>
+              <TextField
+                value={getDisplayValue("address")}
+                onChange={(e) => onClientInputChange("address", e.target.value)}
+                fullWidth
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* بيانات العمل والدخل - سطر جديد كامل، ثم حقوله تحته */}
+        <Box sx={{ width: "100%", mt: 4 }}>
+          <Box
+            className="flex items-center gap-2 pb-2 mb-2"
+            sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+          >
+            <Work sx={{ fontSize: 24, color: 'primary.main' }} />
+            <Typography variant="h6" fontWeight="bold">
+              بيانات العمل والدخل
+            </Typography>
+          </Box>
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>جهة العمل</Typography>
+              <TextField
+                value={getValue("employer")}
+                onChange={(e) => onClientInputChange("employer", e.target.value)}
+                fullWidth
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الراتب الشهري</Typography>
+              <TextField
+                value={getValue("salary")}
+                onChange={(e) => onClientInputChange("salary", e.target.value)}
+                fullWidth
+                type="number"
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الالتزامات الشهرية</Typography>
+              <TextField
+                value={getValue("obligations")}
+                onChange={(e) => onClientInputChange("obligations", e.target.value)}
+                fullWidth
+                type="number"
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>سبب الإنشاء</Typography>
+              <TextField
+                value={getDisplayValue("creationReason")}
+                onChange={(e) => onClientInputChange("creationReason", e.target.value)}
+                fullWidth
+                disabled={!editMode}
+                sx={textFieldSx(editMode)}
+              />
+            </Grid>
+          </Grid>
+        </Box>
       </Paper>
 
-      <Paper sx={{ p: 3, mt: 3 }}>
+      <Paper sx={{ p: 3 }}>
         <Box
           className="flex items-center gap-2 pb-2 mb-4"
           sx={{ borderBottom: "1px solid", borderColor: "divider" }}
