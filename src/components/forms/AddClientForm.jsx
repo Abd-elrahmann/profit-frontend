@@ -52,8 +52,8 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
     salary: Yup.number().required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
     obligations: Yup.number().required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
     birthDate: Yup.string(),
-    city: Yup.string(),
-    district: Yup.string(),
+    city: Yup.string().required('المدينة مطلوبة'),
+    district: Yup.string().required('الحي مطلوب'),
   });
 
   const baseSchema = {
@@ -320,7 +320,7 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                     {touched.birthDate && errors.birthDate && <span className={fieldError}>{errors.birthDate}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>البريد الإلكتروني</label>
+                    <label className={labelBase}>البريد الإلكتروني (اختياري)</label>
                     <input name="email" type="email" value={values.email} onChange={handleChange} onBlur={handleBlur} placeholder="example@mail.com" className={inputBase} />
                     {touched.email && errors.email && <span className={fieldError}>{errors.email}</span>}
                   </div>
@@ -384,7 +384,7 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                     {touched.creationReason && errors.creationReason && <span className={fieldError}>{errors.creationReason}</span>}
                   </div>
                   <div className="md:col-span-2 flex flex-col gap-1.5">
-                    <label className={labelBase}>ملاحظات إضافية</label>
+                    <label className={labelBase}>ملاحظات إضافية (اختياري)</label>
                     <input name="notes" value={values.notes} onChange={handleChange} onBlur={handleBlur} placeholder="أي معلومات إضافية عن العميل" className={inputBase} />
                   </div>
                   <div className="md:col-span-3 mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center justify-between">
@@ -445,7 +445,7 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {['name', 'nationalId', 'birthDate'].map((field) => (
                           <div key={field} className="flex flex-col gap-1.5">
-                            <label className={labelBase}>{field === 'name' ? 'اسم الكفيل' : field === 'nationalId' ? 'رقم هوية الكفيل' : 'تاريخ الميلاد'}</label>
+                            <label className={labelBase}>{field === 'name' ? 'اسم الكفيل' : field === 'nationalId' ? 'رقم هوية الكفيل' : 'تاريخ الميلاد (اختياري)'}</label>
                             <input name={`kafeels[${index}][${field}]`} type={field === 'birthDate' ? 'date' : 'text'} value={kafeel[field] || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
                             {touched[`kafeels[${index}][${field}]`] && errors[`kafeels[${index}][${field}]`] && <span className={fieldError}>{errors[`kafeels[${index}][${field}]`]}</span>}
                           </div>
@@ -491,18 +491,21 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
               {activeStep === 2 && (
                 <div className="space-y-6">
                   <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2"><CloudUpload sx={{ color: 'primary.main' }} />مستندات العميل</h2>
+                  {!uploadedFiles.clientIdImage && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400">صورة هوية العميل مطلوبة</p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <DocumentDropzone fieldName="clientIdImage" label="صورة هوية العميل" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                    <DocumentDropzone fieldName="clientWorkCard" label="بطاقة عمل العميل" acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                    <DocumentDropzone fieldName="salaryReport" label="تقرير الراتب" acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }} />
-                    <DocumentDropzone fieldName="simaReport" label="تقرير سمة" acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }} />
+                    <DocumentDropzone fieldName="clientWorkCard" label="بطاقة عمل العميل (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
+                    <DocumentDropzone fieldName="salaryReport" label="تقرير الراتب (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }} />
+                    <DocumentDropzone fieldName="simaReport" label="تقرير سمة (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }} />
                   </div>
                   {values.hasKafeel && values.kafeels?.length > 0 && values.kafeels.map((_, index) => (
                     <div key={index}>
                       <h2 className="text-lg font-bold text-slate-800 dark:text-white mt-8 mb-4 flex items-center gap-2"><ContactPage sx={{ color: 'primary.main' }} />مستندات الكفيل {index + 1}</h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <DocumentDropzone fieldName={`kafeels[${index}][kafeelIdImage]`} label={`صورة هوية الكفيل ${index + 1}`} acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                        <DocumentDropzone fieldName={`kafeels[${index}][kafeelWorkCard]`} label={`بطاقة عمل الكفيل ${index + 1}`} acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
+                        <DocumentDropzone fieldName={`kafeels[${index}][kafeelIdImage]`} label={`صورة هوية الكفيل ${index + 1} (اختياري)`} acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }} />
+                        <DocumentDropzone fieldName={`kafeels[${index}][kafeelWorkCard]`} label={`بطاقة عمل الكفيل ${index + 1} (اختياري)`} acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
                       </div>
                     </div>
                   ))}
@@ -524,13 +527,13 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                   <button
                     type="button"
                     onClick={handleNext}
-                    disabled={(activeStep === 1 && values.hasKafeel && values.kafeels?.some((k) => !k.name || !k.nationalId || !k.phoneCode || !k.phone || !k.employer || !k.salary || k.obligations === '' || k.obligations == null)) || (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.birthDate || !values.city || !values.district || !values.address || !values.employer || !values.salary || values.obligations === '' || values.obligations == null || !values.creationReason))}
+                    disabled={(activeStep === 1 && values.hasKafeel && values.kafeels?.some((k) => !k.name || !k.nationalId || !k.phoneCode || !k.phone || !k.city || !k.district || !k.employer || !k.salary || k.obligations === '' || k.obligations == null)) || (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.birthDate || !values.city || !values.district || !values.address || !values.employer || !values.salary || values.obligations === '' || values.obligations == null || !values.creationReason))}
                     className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
                   >
                     التالي<span className="rotate-180 inline-block"><ArrowForward sx={{ fontSize: 20 }} /></span>
                   </button>
                 ) : (
-                  <button type="button" onClick={submitForm} disabled={isSubmitting} className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70">
+                  <button type="button" onClick={submitForm} disabled={isSubmitting || !uploadedFiles.clientIdImage} className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70">
                     {isSubmitting ? <><span className="animate-spin inline-block"><Autorenew sx={{ fontSize: 20 }} /></span>جاري الإضافة...</> : <><CheckCircle sx={{ fontSize: 20 }} />إضافة العميل</>}
                   </button>
                 )}

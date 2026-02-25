@@ -19,7 +19,7 @@ const validationSchema = Yup.object().shape({
   name: Yup.string().required('الاسم مطلوب'),
   nationalId: Yup.string().required('رقم الهوية مطلوب'),
   address: Yup.string().required('العنوان مطلوب'),
-  phone: Yup.string().required('رقم الجوال مطلوب'),
+  phone: Yup.string(),
   email: Yup.string()
     .transform((v) => (v?.trim() === '' ? null : v))
     .nullable()
@@ -78,8 +78,8 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
         name: values.name,
         nationalId: values.nationalId,
         address: values.address,
-        city: values.city || undefined,
-        phone: values.phone,
+        city: values.city?.trim() || undefined,
+        phone: values.phone?.trim() || undefined,
         email: values.email?.trim() || undefined,
         orgProfitPercent,
         capitalAmount,
@@ -195,7 +195,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
                     {touched.nationalId && errors.nationalId && <span className="text-xs text-red-500">{errors.nationalId}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>رقم الجوال</label>
+                    <label className={labelBase}>رقم الجوال (اختياري)</label>
                     <input
                       name="phone"
                       value={values.phone}
@@ -232,7 +232,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>المدينة</label>
+                    <label className={labelBase}>المدينة (اختياري)</label>
                     <input
                       name="city"
                       value={values.city}
