@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getPartnerZakah, getZakatAccountReport, withdrawZakat } from './zakahApi';
 import { Helmet } from 'react-helmet-async';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { exportZakahToPDF, exportZakahToExcel } from '../../utilities/zakahExporter';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import WithdrawZakah from '../../components/modals/WithdrawZakah';
 import {
@@ -126,7 +127,6 @@ const Zakah = () => {
 
     setIsExporting(true);
     try {
-      const { exportZakahToPDF } = await import('../../utilities/zakahExporter');
       await exportZakahToPDF(exportData, filters);
       notifySuccess('تم تصدير تقرير الزكاة إلى PDF بنجاح');
     } catch (error) {
@@ -160,9 +160,6 @@ const Zakah = () => {
 
     setIsExporting(true);
     try {
-      const { exportZakahToExcel } = await import(
-        '../../utilities/zakahExporter'
-      );
       await exportZakahToExcel(exportData, filters);
       notifySuccess('تم تصدير تقرير الزكاة إلى Excel بنجاح');
     } catch (error) {
