@@ -327,10 +327,10 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                   <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>رقم الجوال</label>
                     <div className="flex gap-2">
-                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} w-20 shrink-0`}>
+                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={inputBase} style={{ width: '85px', minWidth: '85px', flexShrink: 0 }}>
                         {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
                       </select>
-                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} flex-1 min-w-0 text-left`} dir="ltr" />
+                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={inputBase} style={{ flex: 1, minWidth: 0, textAlign: 'left' }} dir="ltr" />
                     </div>
                     {touched.phone && errors.phone && <span className={fieldError}>{errors.phone}</span>}
                   </div>
@@ -453,10 +453,10 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                         <div className="flex flex-col gap-1.5">
                           <label className={labelBase}>رقم جوال الكفيل</label>
                           <div className="flex gap-2">
-                            <select name={`kafeels[${index}][phoneCode]`} value={kafeel.phoneCode || '+966'} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} w-20 shrink-0`}>
+                            <select name={`kafeels[${index}][phoneCode]`} value={kafeel.phoneCode || '+966'} onChange={handleChange} onBlur={handleBlur} className={inputBase} style={{ width: '85px', minWidth: '85px', flexShrink: 0 }}>
                               {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
                             </select>
-                            <input name={`kafeels[${index}][phone]`} value={kafeel.phone || ''} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} flex-1 min-w-0 text-left`} dir="ltr" />
+                            <input name={`kafeels[${index}][phone]`} value={kafeel.phone || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} style={{ flex: 1, minWidth: 0, textAlign: 'left' }} dir="ltr" />
                           </div>
                           {touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`] && <span className={fieldError}>{errors[`kafeels[${index}][phone]`]}</span>}
                         </div>
