@@ -5,7 +5,7 @@ import { NavigateNext, Home, People, CloudUpload } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import EditDocumentsForm from '../../components/forms/EditDocumentsForm';
 import { Helmet } from 'react-helmet-async';
-import { getClientDetails } from '../../components/Clients';
+import { getClientDetails } from '../../components/clients';
 
 const EditDocumentsPage = () => {
   const navigate = useNavigate();

@@ -31,7 +31,7 @@ import {
   getClientStatement,
   getClientLoans,
   isImageFile,
-} from "../../components/Clients";
+} from "../../components/clients";
 
 export default function Clients() {
   const [tab, setTab] = useState(0);

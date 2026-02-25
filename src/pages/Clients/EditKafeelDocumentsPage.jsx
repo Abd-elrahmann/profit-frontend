@@ -5,7 +5,7 @@ import { NavigateNext, Home, People, CloudUpload } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import EditKafeelDocumentsForm from '../../components/forms/EditKafeelDocumentsForm';
 import { Helmet } from 'react-helmet-async';
-import { getClientDetails } from '../../components/Clients';
+import { getClientDetails } from '../../components/clients';
 
 const EditKafeelDocumentsPage = () => {
   const navigate = useNavigate();
