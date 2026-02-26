@@ -61,7 +61,6 @@ const ProfitDistribution = () => {
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
-  const isTabletOrSmaller = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   const queryClient = useQueryClient();
