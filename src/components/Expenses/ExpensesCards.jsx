@@ -4,7 +4,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
   Divider,
   Stack,
   Button,
@@ -33,7 +32,7 @@ const ExpensesCards = ({
   canUpdate,
   canDelete,
   isDeleting,
-  isMobile,
+  isSmallScreen,
 }) => {
   if (isLoading) {
     return (
@@ -54,18 +53,20 @@ const ExpensesCards = ({
   }
 
   return (
-    <Box sx={{ p: isMobile ? 1 : 2 }}>
-      <Grid container spacing={2}>
+    <Box sx={{ p: isSmallScreen ? 1 : 2, width: '100%' }}>
+      <Stack spacing={1.5} sx={{ width: '100%' }}>
         {groupedExpenses.map((group) => (
-          <Grid item xs={12} key={group.journalId}>
             <Card
+              key={group.journalId}
               sx={{
-                border: '1px solid #e0e0e0',
+                width: '100%',
+                border: '1px solid',
+                borderColor: 'divider',
                 borderRadius: 2,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
               }}
             >
-              <CardContent>
+              <CardContent sx={{ p: isSmallScreen ? 1.5 : 2 }}>
                 <Stack spacing={1.5}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">
@@ -213,9 +214,8 @@ const ExpensesCards = ({
                 </Stack>
               </CardContent>
             </Card>
-          </Grid>
         ))}
-      </Grid>
+      </Stack>
     </Box>
   );
 };

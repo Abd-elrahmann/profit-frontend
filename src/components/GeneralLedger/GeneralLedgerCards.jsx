@@ -3,10 +3,10 @@ import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
 import { formatArabicDate } from './generalLedgerUtils';
 
 const GeneralLedgerCards = ({ journals }) => (
-  <Stack spacing={2}>
+  <Stack spacing={1.5} sx={{ width: '100%' }}>
     {journals?.map((journal) =>
       journal.lines.map((line) => (
-        <Card key={`${journal.id}-${line.id}`} variant="outlined" sx={{ borderRadius: 2, bgcolor: 'background.paper' }}>
+        <Card key={`${journal.id}-${line.id}`} variant="outlined" sx={{ borderRadius: 2, bgcolor: 'background.paper', width: '100%', border: '1px solid', borderColor: 'divider', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
           <CardContent sx={{ p: 2 }}>
             <Stack spacing={1.5}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -9,14 +9,27 @@ export default function InstallmentsBulkActions({
   onClearSelection,
   isLoading,
   canApprove,
+  isSmallScreen = false,
+  isMobile = false,
 }) {
+  const btnHeight = isMobile ? '32px' : '38px';
   return (
     <Paper sx={{ p: 1.5, mb: 2, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ gap: 1.5 }}>
-        <Typography variant="body2" color="text.secondary">
+      <Stack
+        direction={isSmallScreen ? 'column' : 'row'}
+        spacing={1.5}
+        alignItems={isSmallScreen ? 'stretch' : 'center'}
+        sx={{ gap: 1.5 }}
+      >
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: isSmallScreen ? 'center' : 'inherit' }}>
           تم اختيار {selectedCount} دفعة
         </Typography>
-        <Stack direction="row" sx={{ gap: 2 }}>
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          justifyContent={isSmallScreen ? 'center' : 'flex-start'}
+          sx={{ gap: isSmallScreen ? 1 : 2 }}
+        >
           {canApprove && (
             <Button
               variant="contained"
@@ -27,11 +40,11 @@ export default function InstallmentsBulkActions({
               sx={{
                 bgcolor: 'success.main',
                 '&:hover': { bgcolor: 'success.dark' },
-                height: '32px',
-                fontSize: '13px',
+                height: btnHeight,
+                fontSize: isMobile ? '13px' : '14px',
               }}
             >
-              إنشاء إيصال سداد مجمع
+              {isSmallScreen ? 'إيصال مجمع' : 'إنشاء إيصال سداد مجمع'}
             </Button>
           )}
           <Button
@@ -44,20 +57,20 @@ export default function InstallmentsBulkActions({
               borderColor: 'error.main',
               color: 'error.main',
               '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.1)' },
-              height: '32px',
-              fontSize: '13px',
+              height: btnHeight,
+              fontSize: isMobile ? '13px' : '14px',
             }}
           >
-            رفض الدفعات المحددة
+            {isSmallScreen ? 'رفض' : 'رفض الدفعات المحددة'}
           </Button>
           <Button
             variant="outlined"
             size="small"
             onClick={onClearSelection}
             disabled={isLoading}
-            sx={{ height: '32px', fontSize: '13px' }}
+            sx={{ height: btnHeight, fontSize: isMobile ? '13px' : '14px' }}
           >
-            إلغاء اختيار الدفعات المحددة
+            {isSmallScreen ? 'إلغاء' : 'إلغاء اختيار الدفعات المحددة'}
           </Button>
         </Stack>
       </Stack>

@@ -5,7 +5,9 @@ import {
   Button,
   Menu,
   MenuItem,
+  IconButton,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -19,10 +21,9 @@ import TableChartIcon from "@mui/icons-material/TableChart";
  * Displays investor name, ID, duration and action buttons
  */
 const InvestorHeader = ({
-  // Investor data
   investorDetails,
-  
-  // Export state
+  isMobile = false,
+  onBackToList,
   isExporting,
   exportMenuAnchor,
   onExportMenuOpen,
@@ -49,14 +50,25 @@ const InvestorHeader = ({
         borderBottom: '1px solid #ddd',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
         justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: 'wrap',
+        alignItems: { xs: "stretch", sm: "center" },
+        flexWrap: "wrap",
         gap: 2,
       }}
     >
-      {/* Investor Info */}
-      <Box sx={{ minWidth: '200px' }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+        {isMobile && onBackToList && (
+          <IconButton
+            onClick={onBackToList}
+            size="small"
+            sx={{ flexShrink: 0, transform: "scaleX(-1)" }}
+            aria-label="العودة للقائمة"
+          >
+            <ArrowBackIcon />
+          </IconButton>
+        )}
+        <Box sx={{ minWidth: 0 }}>
         <Typography variant="h6" fontWeight="bold" noWrap>
           {investorDetails.name}
         </Typography>
@@ -74,6 +86,7 @@ const InvestorHeader = ({
             }
           </Typography>
         )}
+        </Box>
       </Box>
       
       {/* Action Buttons */}
@@ -83,6 +96,7 @@ const InvestorHeader = ({
           <>
             <Button
               variant="outlined"
+              size={isMobile ? "small" : "medium"}
               startIcon={<AccountBalanceWalletIcon sx={{marginLeft: '10px'}} />}
               onClick={onWithdraw}
               sx={{
@@ -114,6 +128,7 @@ const InvestorHeader = ({
             {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
               <Button
                 variant="outlined"
+                size={isMobile ? "small" : "medium"}
                 startIcon={<EditIcon sx={{marginLeft: '10px'}} />}
                 onClick={onEdit}
                 sx={{
@@ -133,6 +148,7 @@ const InvestorHeader = ({
             {permissions.includes("partners_Delete") && (
               <Button
                 variant="contained"
+                size={isMobile ? "small" : "medium"}
                 color="error"
                 startIcon={<DeleteIcon sx={{marginLeft: '10px'}} />}
                 onClick={onDelete}

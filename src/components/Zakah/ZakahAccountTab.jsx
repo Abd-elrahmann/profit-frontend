@@ -52,12 +52,12 @@ const yearOptions = Array.from({ length: 31 }, (_, i) => ({
 }));
 
 const SummaryCard = ({ icon: Icon, label, value }) => (
-  <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-primary/10 shadow-sm">
+  <div className="flex flex-col gap-2 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800 border border-primary/10 shadow-sm">
     <div className="flex items-center justify-between text-primary/60">
       <p className="text-sm font-bold">{label}</p>
       <Icon sx={{ fontSize: 24 }} />
     </div>
-    <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+    <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 break-words">
       {formatCurrency(value)}
     </p>
   </div>
@@ -78,6 +78,7 @@ const ZakahAccountTab = ({
   hasAccountExportData,
   permissions,
   isSmallScreen = false,
+  isMobile = false,
 }) => {
   if (isAccountLoading && !accountReport) {
     return (
@@ -90,7 +91,7 @@ const ZakahAccountTab = ({
   return (
     <div className="flex flex-col max-w-[1200px] w-full space-y-8">
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
+      <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center flex-wrap">
         <Autocomplete
           value={monthOptions.find((o) => o.value === selectedFilterMonth) || null}
           onChange={(e, newValue) =>
@@ -99,8 +100,9 @@ const ZakahAccountTab = ({
           options={monthOptions}
           getOptionLabel={(o) => o.label}
           renderInput={(params) => (
-            <TextField {...params} label="الشهر" sx={{ width: 250 }} />
+            <TextField {...params} label="الشهر" sx={{ width: '100%', minWidth: 200 }} />
           )}
+          sx={{ width: { xs: '100%', sm: 250 } }}
         />
         <Autocomplete
           value={yearOptions.find((o) => o.value === selectedFilterYear) || null}
@@ -110,14 +112,15 @@ const ZakahAccountTab = ({
           options={yearOptions}
           getOptionLabel={(o) => o.label}
           renderInput={(params) => (
-            <TextField {...params} label="السنة" sx={{ width: 250 }} />
+            <TextField {...params} label="السنة" sx={{ width: '100%', minWidth: 200 }} />
           )}
+          sx={{ width: { xs: '100%', sm: 250 } }}
         />
       </div>
 
       {/* Export Buttons */}
       {permissions.includes('zakat_Export') && accountReport && (
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           <Button
             variant="contained"
             color="error"
@@ -147,7 +150,7 @@ const ZakahAccountTab = ({
 
       {/* Summary Cards */}
       {!isAccountLoading && !accountError && accountReport && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <SummaryCard
             icon={AccountBalance}
             label="رصيد الحساب"
@@ -191,70 +194,99 @@ const ZakahAccountTab = ({
       {accountReport?.journalsByMonth &&
       Object.keys(accountReport.journalsByMonth).length > 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-primary/10">
-            <h2 className="text-slate-900 dark:text-slate-100 text-xl font-bold">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-primary/10">
+            <h2 className="text-slate-900 dark:text-slate-100 text-lg sm:text-xl font-bold">
               العمليات المالية
             </h2>
           </div>
-          <div className="divide-y divide-primary/10">
+          <div className="divide-y divide-primary/10 overflow-x-auto">
             {Object.entries(accountReport.journalsByMonth).map(([month, data]) => (
-              <div key={month} className="p-6">
+              <div key={month} className="p-4 sm:p-6">
                 <h3 className="text-primary font-bold mb-4 p-3 bg-primary/5 rounded-lg">
                   شهر {month}
                 </h3>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <StyledTableRow>
-                        <StyledTableCell align="center">التاريخ</StyledTableCell>
-                        <StyledTableCell align="center">الوصف</StyledTableCell>
-                        <StyledTableCell align="center">مدين</StyledTableCell>
-                        <StyledTableCell align="center">دائن</StyledTableCell>
-                        <StyledTableCell align="center">الرصيد</StyledTableCell>
-                      </StyledTableRow>
-                    </TableHead>
-                    <TableBody>
-                      {data.entries && data.entries.length > 0 ? (
-                        data.entries.map((entry) => (
-                          <StyledTableRow key={entry.id}>
-                            <StyledTableCell align="center">
-                              <div>
-                                <div className="text-sm font-medium mb-0.5">
-                                  {formatArabicDate(entry.date)}
-                                </div>
-                                {entry.hijriDate && (
-                                  <div className="text-xs font-bold text-primary">
-                                    {entry.hijriDate}
+                {isMobile && data.entries && data.entries.length > 0 ? (
+                  <div className="space-y-3">
+                    {data.entries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="rounded-lg border border-primary/10 p-4 bg-white dark:bg-slate-800/50 space-y-2"
+                      >
+                        <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                          {formatArabicDate(entry.date)}
+                          {entry.hijriDate && (
+                            <span className="mr-2 text-primary font-bold">{entry.hijriDate}</span>
+                          )}
+                        </div>
+                        <p className="text-slate-800 dark:text-slate-100 font-medium">{entry.description}</p>
+                        <div className="flex flex-wrap gap-3 text-sm">
+                          <span>مدين: <strong>{formatCurrency(entry.debit)}</strong></span>
+                          <span>دائن: <strong>{formatCurrency(entry.credit)}</strong></span>
+                          <span>الرصيد: <strong>{formatCurrency(entry.balance)}</strong></span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="rounded-lg bg-primary/5 p-3 flex flex-wrap gap-3 text-sm font-bold">
+                      <span>الإجمالي - مدين: {formatCurrency(data.totalDebit)}</span>
+                      <span>دائن: {formatCurrency(data.totalCredit)}</span>
+                      <span>الرصيد: {formatCurrency(data.totalBalance)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <TableContainer sx={{ overflowX: 'auto' }}>
+                    <Table sx={{ minWidth: 400 }}>
+                      <TableHead>
+                        <StyledTableRow>
+                          <StyledTableCell align="center">التاريخ</StyledTableCell>
+                          <StyledTableCell align="center">الوصف</StyledTableCell>
+                          <StyledTableCell align="center">مدين</StyledTableCell>
+                          <StyledTableCell align="center">دائن</StyledTableCell>
+                          <StyledTableCell align="center">الرصيد</StyledTableCell>
+                        </StyledTableRow>
+                      </TableHead>
+                      <TableBody>
+                        {data.entries && data.entries.length > 0 ? (
+                          data.entries.map((entry) => (
+                            <StyledTableRow key={entry.id}>
+                              <StyledTableCell align="center">
+                                <div>
+                                  <div className="text-sm font-medium mb-0.5">
+                                    {formatArabicDate(entry.date)}
                                   </div>
-                                )}
-                              </div>
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
-                              {entry.description}
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
-                              {formatCurrency(entry.debit)}
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
-                              {formatCurrency(entry.credit)}
-                            </StyledTableCell>
-                            <StyledTableCell align="center">
-                              {formatCurrency(entry.balance)}
+                                  {entry.hijriDate && (
+                                    <div className="text-xs font-bold text-primary">
+                                      {entry.hijriDate}
+                                    </div>
+                                  )}
+                                </div>
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {entry.description}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {formatCurrency(entry.debit)}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {formatCurrency(entry.credit)}
+                              </StyledTableCell>
+                              <StyledTableCell align="center">
+                                {formatCurrency(entry.balance)}
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))
+                        ) : (
+                          <StyledTableRow>
+                            <StyledTableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                              <span className="text-slate-500">
+                                لا توجد عمليات مالية لهذا الشهر
+                              </span>
                             </StyledTableCell>
                           </StyledTableRow>
-                        ))
-                      ) : (
-                        <StyledTableRow>
-                          <StyledTableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                            <span className="text-slate-500">
-                              لا توجد عمليات مالية لهذا الشهر
-                            </span>
-                          </StyledTableCell>
-                        </StyledTableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </div>
             ))}
           </div>

@@ -43,46 +43,97 @@ export default function ProfitDistributionCards({
     );
   }
 
+  const cardSx = {
+    width: "100%",
+    minWidth: "100%",
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 2,
+    boxShadow: `0 2px 4px ${
+      theme.palette.mode === "dark"
+        ? "rgba(255,255,255,0.1)"
+        : "rgba(0,0,0,0.1)"
+    }`,
+    "&:hover": {
+      boxShadow: `0 4px 8px ${
+        theme.palette.mode === "dark"
+          ? "rgba(255,255,255,0.15)"
+          : "rgba(0,0,0,0.15)"
+      }`,
+    },
+    cursor: "pointer",
+    minHeight: 280,
+  };
+
+  const rowSx = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    py: 1,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+  };
+
   return (
-    <Box sx={{ p: 1 }}>
-      <Grid container spacing={2}>
+    <Box sx={{ width: "100%", py: 2, px: 0, boxSizing: "border-box" }}>
+      <Grid container spacing={2} sx={{ width: "100%" }}>
         {closedPeriods?.map((period) => (
-          <Grid item xs={12} key={period.periodId}>
+          <Grid item xs={12} key={period.periodId} sx={{ width: "100%", maxWidth: "100%" }}>
             <Card
-              sx={{
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 2,
-                boxShadow: `0 2px 4px ${
-                  theme.palette.mode === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.1)"
-                }`,
-                "&:hover": {
-                  boxShadow: `0 4px 8px ${
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.15)"
-                      : "rgba(0,0,0,0.15)"
-                  }`,
-                },
-                cursor: "pointer",
-              }}
+              sx={cardSx}
               onClick={() => onViewDetails(period.periodId)}
             >
-              <CardContent sx={{ p: 2 }}>
-                <Stack spacing={1}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      fontWeight="bold"
-                      color="primary.main"
-                    >
+              <CardContent sx={{ p: 2, width: "100%", boxSizing: "border-box" }}>
+                <Stack spacing={0}>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      اسم الفترة
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" color="primary.main">
                       {period.name}
+                    </Typography>
+                  </Box>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      تاريخ البداية
+                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {formatDate(period.startDate)}
+                    </Typography>
+                  </Box>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      تاريخ النهاية
+                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {formatDate(period.endDate)}
+                    </Typography>
+                  </Box>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      أرباح الشركة
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold">
+                      {formatNumber(period.companyProfit) || 0}
+                    </Typography>
+                  </Box>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      إجمالي أرباح الشركاء
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" color="success.main">
+                      {formatNumber(period.totalAfterSaving) || 0}
+                    </Typography>
+                  </Box>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      المبلغ المدخر
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" color="warning.main">
+                      {formatNumber(period.totalSaving) || 0}
+                    </Typography>
+                  </Box>
+                  <Box sx={rowSx}>
+                    <Typography variant="body2" color="textSecondary">
+                      حالة التوزيع
                     </Typography>
                     <Chip
                       label={hasDistribution(period) ? "موزعة" : "غير موزعة"}
@@ -90,60 +141,12 @@ export default function ProfitDistributionCards({
                       size="small"
                     />
                   </Box>
-
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 1,
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" color="textSecondary">
-                        من:
-                      </Typography>
-                      <Typography variant="body2" fontWeight="medium">
-                        {formatDate(period.startDate)}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="textSecondary">
-                        إلى:
-                      </Typography>
-                      <Typography variant="body2" fontWeight="medium">
-                        {formatDate(period.endDate)}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="body2" color="textSecondary">
-                      أرباح الشركة:
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      fontWeight="bold"
-                      color="primary.main"
-                    >
-                      {formatNumber(period.companyProfit) || 0}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="body2" color="textSecondary">
-                      عدد الشركاء:
-                    </Typography>
-                    <Typography variant="body2" fontWeight="medium">
-                      {period.partners?.length || 0}
-                    </Typography>
-                  </Box>
-
                   <Box
                     sx={{
                       display: "flex",
                       justifyContent: "center",
                       gap: 1,
-                      pt: 1,
+                      pt: 1.5,
                     }}
                   >
                     {permissions?.includes("distribution_View") && (

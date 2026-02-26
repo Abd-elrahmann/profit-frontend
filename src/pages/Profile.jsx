@@ -1,49 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Avatar,
-  Grid,
-  Card,
-  CardContent,
-  Divider,
-  CircularProgress,
-  Chip,
-  useTheme,
-} from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Person as PersonIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  CalendarToday as CalendarIcon,
-  Save as SaveIcon,
-  CloudUpload as UploadIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
+  Edit as EditIcon,
+  Security as SecurityIcon,
+  Lock as LockIcon,
+  Settings as SettingsIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
+  PhotoCamera as PhotoCameraIcon,
+  CalendarMonth as CalendarMonthIcon,
 } from '@mui/icons-material';
-import { useFormik } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import { Helmet } from 'react-helmet-async';
 import { notifySuccess, notifyError } from '../utilities/toastify';
 import Api from '../config/Api';
 import { useAuth } from '../components/Contexts/AuthContext';
+import { useTheme } from '../theme/ThemeContext';
 
 const Profile = () => {
-  const theme = useTheme();
   const { updateUser } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', phone: '' });
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
-  const fetchProfile = React.useCallback(async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       const response = await Api.get('/api/auth/profile');
       setUserData(response.data);
-      
       updateUser(response.data);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -57,65 +51,76 @@ const Profile = () => {
     fetchProfile();
   }, [fetchProfile]);
 
-  const formik = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      name: userData?.name || '',
-      email: userData?.email || '',
-      phone: userData?.phone || '',
-    },
-    onSubmit: async (values) => {
-      try {
-        setUpdating(true);
-        const response = await Api.patch('/api/auth/update-profile', values);
-        setUserData(prev => ({ ...prev, ...response.data.user }));
-        
-        updateUser(response.data.user);
+  useEffect(() => {
+    if (userData) {
+      setEditForm({ name: userData.name || '', phone: userData.phone || '' });
+    }
+  }, [userData]);
 
-        window.dispatchEvent(new Event('profileUpdated'));
-        window.dispatchEvent(new Event('userDataUpdated'));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'user' }));
-        
-        notifySuccess('تم تحديث الملف الشخصي بنجاح');
-      } catch (error) {
-        notifyError(error.response?.data?.message || 'حدث خطأ أثناء التحديث');
-      } finally {
-        setUpdating(false);
-      }
-    },
-  });
+  const formatDate = (dateString) => {
+    if (!dateString) return 'غير محدد';
+    return new Date(dateString).toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
-    },
+  const userRole = userData?.role?.name || (userData?.roleId === 1 ? 'مدير النظام' : 'مستخدم');
+  const username = userData?.email?.split('@')[0] || 'غير محدد';
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setUpdating(true);
+      const response = await Api.patch('/api/auth/update-profile', editForm);
+      setUserData((prev) => ({ ...prev, ...response.data.user }));
+      updateUser(response.data.user);
+      window.dispatchEvent(new Event('profileUpdated'));
+      notifySuccess('تم تحديث الملف الشخصي بنجاح');
+      setEditModalOpen(false);
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء التحديث');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      notifyError('كلمة المرور الجديدة غير متطابقة');
+      return;
+    }
+    try {
+      setUpdating(true);
+      await Api.patch('/api/auth/update-password', passwordForm);
+      notifySuccess('تم تغيير كلمة المرور بنجاح');
+      setPasswordModalOpen(false);
+      setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء تغيير كلمة المرور');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] },
     maxFiles: 1,
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length === 0) return;
-
       const file = acceptedFiles[0];
       const formData = new FormData();
       formData.append('profileImage', file);
-
       try {
         setUploading(true);
         const response = await Api.patch('/api/auth/upload-profile-image', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
-
-        setUserData(prev => ({ 
-          ...prev, 
-          profileImage: response.data.profileImage 
-        }));
-
+        setUserData((prev) => ({ ...prev, profileImage: response.data.profileImage }));
         updateUser({ profileImage: response.data.profileImage });
-
         window.dispatchEvent(new Event('profileUpdated'));
-        window.dispatchEvent(new Event('userDataUpdated'));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'user' }));
-        
         notifySuccess('تم تحديث الصورة الشخصية بنجاح');
       } catch (error) {
         notifyError(error.response?.data?.message || 'حدث خطأ أثناء رفع الصورة');
@@ -125,447 +130,319 @@ const Profile = () => {
     },
   });
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'غير محدد';
-    return new Date(dateString).toLocaleDateString('en-US');
-  };
-
   if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '60vh',
-          width: '100%'
-        }}
-      >
-        <CircularProgress size={48} />
-      </Box>
+      <div className="flex justify-center items-center min-h-[60vh] w-full">
+        <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Box 
-      sx={{ 
-        width: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        py: { xs: 2, sm: 3, md: 4 },
-        px: { xs: 1.5, sm: 2, md: 3 },
-        backgroundColor: 'background.default',
-      }}
-    >
+    <div className="w-full max-w-5xl mx-auto">
       <Helmet>
-        <title>الملف الشخصي</title>
+        <title>الملف الشخصي - نظام إدارة السلف والقروض</title>
         <meta name="description" content="الملف الشخصي للمستخدم" />
       </Helmet>
 
-      <Box 
-        sx={{ 
-          width: '100%',
-          maxWidth: { xs: '100%', sm: '900px', md: '1100px', lg: '1200px' },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Typography 
-          variant="h4" 
-          fontWeight="bold" 
-          color="primary" 
-          gutterBottom 
-          sx={{ 
-            mb: { xs: 3, sm: 4, md: 5 },
-            textAlign: 'center',
-            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-            width: '100%'
-          }}
-        >
-          الملف الشخصي
-        </Typography>
-
-        <Grid 
-          container 
-          spacing={{ xs: 2, sm: 3, md: 4 }}
-          sx={{
-            width: '100%',
-            justifyContent: 'center',
-          }}
-        >
-          <Grid item xs={12} sm={12} md={6} sx={{width: '1000px'}}>
-            <Card
-              sx={{
-                height: 'fit-content',
-                boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(255,255,255,0.08)' : '0 4px 20px rgba(0,0,0,0.08)',
-                borderRadius: 3,
-                overflow: 'hidden',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: theme.palette.mode === 'dark' ? '0 8px 30px rgba(255,255,255,0.12)' : '0 8px 30px rgba(0,0,0,0.12)',
-                }
-              }}
-            >
-              <CardContent 
-                sx={{ 
-                  textAlign: 'center', 
-                  p: { xs: 3, sm: 4, md: 4 },
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                <Box 
-                  sx={{ 
-                    mb: 3,
-                    position: 'relative',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Avatar
-                    src={userData?.profileImage}
-                    sx={{
-                      width: { xs: 100, sm: 120, md: 140 },
-                      height: { xs: 100, sm: 120, md: 140 },
-                      margin: '0 auto',
-                      fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                      bgcolor: theme.palette.primary.main,
-                      border: '4px solid',
-                      borderColor: theme.palette.primary.light,
-                      boxShadow: theme.palette.mode === 'dark' ? '0 4px 12px rgba(255,255,255,0.15)' : '0 4px 12px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {!userData?.profileImage && (userData?.name?.charAt(0) || 'U')}
-                  </Avatar>
-                </Box>
-
-                <Typography 
-                  variant="h6" 
-                  fontWeight="600" 
-                  color="text.primary"
-                  sx={{ 
-                    mb: 1,
-                    fontSize: { xs: '1rem', sm: '1.125rem' }
-                  }}
-                >
+      <div className="space-y-8">
+        {/* Header Section */}
+        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="relative" {...getRootProps()}>
+              <input {...getInputProps()} />
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 p-1 bg-slate-100 dark:bg-slate-800 cursor-pointer">
+                {userData?.profileImage ? (
+                  <img
+                    src={userData.profileImage}
+                    alt={userData?.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <PersonIcon className="w-16 h-16 text-primary" />
+                  </div>
+                )}
+              </div>
+              <div className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform flex items-center justify-center pointer-events-none">
+                {uploading ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : (
+                  <PhotoCameraIcon className="text-sm" sx={{ fontSize: 20 }} />
+                )}
+              </div>
+            </div>
+            <div className="text-center md:text-right">
+              <div className="flex items-center justify-center md:justify-start gap-3">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {userData?.name || 'مستخدم'}
-                </Typography>
-
-                <Chip
-                  icon={userData?.isActive ? <CheckCircleIcon /> : <CancelIcon />}
-                  label={userData?.isActive ? 'نشط' : 'غير نشط'}
-                  color={userData?.isActive ? 'success' : 'default'}
-                  size="small"
-                  sx={{ mb: 3, fontWeight: 500 }}
-                />
-
-                <Box
-                  {...getRootProps()}
-                  sx={{
-                    width: '100%',
-                    border: '2px dashed',
-                    borderColor: isDragActive ? theme.palette.primary.main : theme.palette.grey[300],
-                    borderRadius: 2,
-                    p: { xs: 2, sm: 3 },
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    backgroundColor: isDragActive ? theme.palette.primary.main + '20' : theme.palette.grey[50],
-                    '&:hover': {
-                      borderColor: theme.palette.primary.main,
-                      backgroundColor: theme.palette.primary.main + '20',
-                      transform: 'scale(1.02)',
-                    },
-                  }}
+                </h2>
+                <span
+                  className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full ${
+                    userData?.isActive
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                  }`}
                 >
-                  <input {...getInputProps()} />
-                  {uploading ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                      <CircularProgress size={32} />
-                      <Typography variant="caption" color="textSecondary">
-                        جاري الرفع...
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <UploadIcon 
-                        color="primary" 
-                        sx={{ 
-                          fontSize: { xs: 32, sm: 40 }, 
-                          mb: 1,
-                          opacity: 0.7
-                        }} 
-                      />
-                      <Typography 
-                        variant="body2" 
-                        color="textSecondary"
-                        sx={{ 
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          mb: 0.5
-                        }}
-                      >
-                        {isDragActive ? 'أفلت الصورة هنا' : 'انقر أو اسحب الصورة هنا'}
-                      </Typography>
-                      <Typography 
-                        variant="caption" 
-                        color="textSecondary"
-                        sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}
-                      >
-                        PNG, JPG, GIF (الحد الأقصى 5MB)
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      userData?.isActive ? 'bg-green-500' : 'bg-slate-500'
+                    }`}
+                  />
+                  {userData?.isActive ? 'نشط' : 'غير نشط'}
+                </span>
+              </div>
+              <p className="text-slate-500 mt-1">{userRole}</p>
+              <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-slate-400">
+                <span className="flex items-center gap-1">
+                  <CalendarMonthIcon sx={{ fontSize: 18 }} />
+                  انضم منذ {formatDate(userData?.createdAt)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setEditModalOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md shadow-primary/20"
+          >
+            <EditIcon sx={{ fontSize: 20 }} />
+            تعديل الملف الشخصي
+          </button>
+        </div>
 
-          <Grid item xs={12} sm={12} md={6}>
-            <Card
-              sx={{
-                boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(255,255,255,0.08)' : '0 4px 20px rgba(0,0,0,0.08)',
-                borderRadius: 3,
-                overflow: 'hidden',
-                height: 'fit-content',
-              }}
-            >
-              <CardContent 
-                sx={{ 
-                  p: { xs: 2.5, sm: 3, md: 4 },
-                }}
-              >
-                <Typography 
-                  variant="h5" 
-                  fontWeight="bold" 
-                  color="primary" 
-                  gutterBottom 
-                  sx={{ 
-                    mb: { xs: 2.5, sm: 3 },
-                    textAlign: { xs: 'center', sm: 'right' },
-                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
-                  }}
+        {/* Personal Info Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+            <PersonIcon className="text-primary" sx={{ fontSize: 24 }} />
+            <h3 className="font-bold text-lg">البيانات الشخصية</h3>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">الاسم الكامل</label>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">{userData?.name}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">اسم المستخدم</label>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">{username}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">البريد الإلكتروني</label>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">{userData?.email}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">رقم الجوال</label>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">
+                {userData?.phone || 'غير محدد'}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">تاريخ الانضمام</label>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">
+                {formatDate(userData?.createdAt)}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">الدور</label>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">{userRole}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Security & General Preferences */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Security */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+              <SecurityIcon className="text-primary" sx={{ fontSize: 24 }} />
+              <h3 className="font-bold text-lg">الأمان والإعدادات</h3>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <LockIcon className="text-slate-400" sx={{ fontSize: 24 }} />
+                  <div>
+                    <p className="font-bold text-sm">تغيير كلمة المرور</p>
+                    <p className="text-xs text-slate-500">تحديث كلمة المرور للحفاظ على أمان حسابك</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPasswordModalOpen(true)}
+                  className="text-primary hover:underline text-sm font-bold"
                 >
-                  المعلومات الشخصية
-                </Typography>
+                  تحديث الآن
+                </button>
+              </div>
+            </div>
+          </div>
 
-                <form onSubmit={formik.handleSubmit}>
-                  <Grid container spacing={{ xs: 2, sm: 3 }}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="الاسم"
-                        name="name"
-                        value={formik.values.name}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.name && Boolean(formik.errors.name)}
-                        helperText={formik.touched.name && formik.errors.name}
-                        InputProps={{
-                          startAdornment: <PersonIcon color="action" sx={{ mr: 1 }} />,
-                        }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                          }
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="البريد الإلكتروني"
-                        name="email"
-                        value={formik.values.email}
-                        disabled
-                        InputProps={{
-                          startAdornment: <EmailIcon color="action" sx={{ mr: 1 }} />,
-                        }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                          }
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="رقم الهاتف"
-                        name="phone"
-                        value={formik.values.phone}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.phone && Boolean(formik.errors.phone)}
-                        helperText={formik.touched.phone && formik.errors.phone}
-                        InputProps={{
-                          startAdornment: <PhoneIcon color="action" sx={{ mr: 1 }} />,
-                        }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                          }
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="تاريخ التسجيل"
-                        value={formatDate(userData?.createdAt)}
-                        disabled
-                        InputProps={{
-                          startAdornment: <CalendarIcon color="action" sx={{ mr: 1 }} />,
-                        }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                          }
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          justifyContent: { xs: 'center', sm: 'flex-start' },
-                          gap: 2, 
-                          flexWrap: 'wrap',
-                          mt: { xs: 1, sm: 2 }
-                        }}
-                      >
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          startIcon={!updating && <SaveIcon sx={{marginLeft: 2}} />}
-                          disabled={updating}
-                          sx={{
-                            minWidth: { xs: '100%', sm: 160 },
-                            py: 1.25,
-                            borderRadius: 2,
-                            fontSize: { xs: '0.875rem', sm: '1rem' },
-                            fontWeight: 600,
-                            boxShadow: theme.palette.mode === 'dark' ? '0 4px 12px rgba(255,255,255,0.15)' : '0 4px 12px rgba(0,0,0,0.15)',
-                            '&:hover': {
-                              boxShadow: theme.palette.mode === 'dark' ? '0 6px 16px rgba(255,255,255,0.2)' : '0 6px 16px rgba(0,0,0,0.2)',
-                            }
-                          }}
-                        >
-                          {updating ? (
-                            <CircularProgress size={20} color="inherit" />
-                          ) : (
-                            'حفظ التغييرات'
-                          )}
-                        </Button>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </form>
-
-                <Divider 
-                  sx={{ 
-                    my: { xs: 3, sm: 4 },
-                    borderColor: 'divider'
-                  }} 
-                />
-  
-                <Box>
-                  <Typography 
-                    variant="subtitle1" 
-                    fontWeight="600" 
-                    color="text.primary"
-                    sx={{ 
-                      mb: { xs: 2, sm: 2.5 },
-                      textAlign: { xs: 'center', sm: 'right' },
-                      fontSize: { xs: '0.95rem', sm: '1rem' }
-                    }}
+          {/* General Preferences */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+              <SettingsIcon className="text-primary" sx={{ fontSize: 24 }} />
+              <h3 className="font-bold text-lg">التفضيلات العامة</h3>
+            </div>
+            <div className="p-6 space-y-8">
+              <div>
+                <label className="font-bold text-sm block mb-4">وضع العرض (الثيم)</label>
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+                  <button
+                    type="button"
+                    onClick={() => isDarkMode && toggleTheme()}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all ${
+                      !isDarkMode
+                        ? 'bg-white dark:bg-slate-700 shadow-sm text-primary font-bold'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                    }`}
                   >
-                    معلومات إضافية
-                  </Typography>
-                  <Grid container spacing={{ xs: 2, sm: 3 }}>
-                    <Grid item xs={12} sm={6}>
-                      <Box 
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: { xs: 'center', sm: 'flex-start' },
-                          mb: { xs: 1.5, sm: 2 },
-                          p: 2,
-                          borderRadius: 2,
-                          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : 'grey.50',
-                        }}
-                      >
-                        <Typography 
-                          variant="body2" 
-                          color="textSecondary" 
-                          sx={{ 
-                            minWidth: { xs: 80, sm: 100 },
-                            fontWeight: 500,
-                            fontSize: { xs: '0.8rem', sm: '0.875rem' }
-                          }}
-                        >
-                          الحالة:
-                        </Typography>
-                        <Chip
-                          icon={userData?.isActive ? <CheckCircleIcon /> : <CancelIcon />}
-                          label={userData?.isActive ? 'نشط' : 'غير نشط'}
-                          color={userData?.isActive ? 'success' : 'default'}
-                          size="small"
-                          sx={{ fontWeight: 500 }}
-                        />
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: { xs: 'center', sm: 'flex-start' },
-                          mb: { xs: 1.5, sm: 2 },
-                          p: 2,
-                          borderRadius: 2,
-                          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : 'grey.50',
-                        }}
-                      >
-                        <Typography 
-                          variant="body2" 
-                          color="textSecondary" 
-                          sx={{ 
-                            minWidth: { xs: 80, sm: 100 },
-                            fontWeight: 500,
-                            fontSize: { xs: '0.8rem', sm: '0.875rem' }
-                          }}
-                        >
-                          الدور:
-                        </Typography>
-                        <Typography 
-                          variant="body2" 
-                          fontWeight="600"
-                          color="primary"
-                          sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                        >
-                          {userData?.roleId === 1 ? 'مدير النظام' : 'مستخدم'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
-    </Box>
+                    <LightModeIcon sx={{ fontSize: 20 }} />
+                    فاتح
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => !isDarkMode && toggleTheme()}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all ${
+                      isDarkMode
+                        ? 'bg-white dark:bg-slate-700 shadow-sm text-primary font-bold'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                    }`}
+                  >
+                    <DarkModeIcon sx={{ fontSize: 20 }} />
+                    داكن
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 mt-3">
+                  الوضع الحالي هو {isDarkMode ? 'الداكن' : 'الفاتح'}، سيتم تطبيق الوضع تلقائياً بناءً على
+                  اختيارك.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Edit Profile Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-6">تعديل الملف الشخصي</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  الاسم الكامل
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  رقم الجوال
+                </label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-70"
+                >
+                  {updating ? 'جاري الحفظ...' : 'حفظ'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Modal */}
+      {passwordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-6">تغيير كلمة المرور</h3>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  كلمة المرور الحالية
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.oldPassword}
+                  onChange={(e) =>
+                    setPasswordForm((p) => ({ ...p, oldPassword: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  كلمة المرور الجديدة
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  تأكيد كلمة المرور الجديدة
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  required
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPasswordModalOpen(false);
+                    setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+                  }}
+                  className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-70"
+                >
+                  {updating ? 'جاري التحديث...' : 'تحديث'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

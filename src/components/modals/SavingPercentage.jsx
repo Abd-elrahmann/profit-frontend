@@ -1,22 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  Box,
-  Grid,
-} from '@mui/material';
-import { Savings as SavingsIcon } from '@mui/icons-material';
+import React, { useState, useEffect } from "react";
+import { AccountBalanceWallet as AccountBalanceWalletIcon, Check as CheckIcon, Close as CloseIcon } from "@mui/icons-material";
 
-const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", totalProfit = 0 }) => {
-  const [savingAmount, setSavingAmount] = useState('');
+const SavingPercentage = ({
+  open,
+  onClose,
+  onApply,
+  currentPercentage = "",
+  totalProfit = 0,
+}) => {
+  const [savingAmount, setSavingAmount] = useState("");
   const [calculatedPercentage, setCalculatedPercentage] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open && currentPercentage && totalProfit > 0) {
@@ -24,7 +18,7 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
       setSavingAmount(amount.toString());
       setCalculatedPercentage(currentPercentage);
     } else if (open) {
-      setSavingAmount('');
+      setSavingAmount("");
       setCalculatedPercentage(0);
     }
   }, [open, currentPercentage, totalProfit]);
@@ -37,13 +31,13 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
 
     const numericAmount = Number(savingAmount);
 
-    if (numericAmount < 0) {
-      setError('يجب أن يكون مبلغ الادخار أكبر من أو يساوي صفر');
+    if (numericAmount <= 0) {
+      setError("المبلغ يجب أن يكون أكبر من صفر");
       return;
     }
 
     if (totalProfit > 0 && numericAmount > totalProfit) {
-      setError('لا يمكن أن يكون مبلغ الادخار أكبر من إجمالي الأرباح');
+      setError("لا يمكن أن يكون مبلغ الادخار أكبر من إجمالي الأرباح");
       return;
     }
 
@@ -54,9 +48,9 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
   };
 
   const handleClose = () => {
-    setSavingAmount('');
+    setSavingAmount("");
     setCalculatedPercentage(0);
-    setError('');
+    setError("");
     onClose();
   };
 
@@ -65,7 +59,7 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
 
     if (value === "") {
       setCalculatedPercentage(0);
-      setError('');
+      setError("");
       return;
     }
 
@@ -76,84 +70,117 @@ const SavingPercentage = ({ open, onClose, onApply, currentPercentage = "", tota
       setCalculatedPercentage(Math.min(100, Math.max(0, percentage)));
     }
 
-    setError('');
+    setError("");
   };
 
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
-          <SavingsIcon color="primary" />
-          <Typography variant="h6" fontWeight="bold" textAlign="center">
-            مبلغ الادخار
-          </Typography>
-        </Box>
-      </DialogTitle>
+  const fmt = (n) => (n ?? 0).toLocaleString("en-US");
+  const remaining = totalProfit - Number(savingAmount || 0);
 
-      <DialogContent>
-        <Grid container spacing={3} justifyContent="center" alignItems="center" mt={2}>
-          <Grid item xs={12}>
-            <TextField
-              label="مبلغ الادخار"
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") handleClose();
+    };
+    if (open) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={handleClose}
+        aria-hidden="true"
+      />
+      <div className="relative bg-white dark:bg-background-dark rounded-xl shadow-xl max-w-md w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-center gap-2 p-4 border-b border-primary/10 bg-primary/5">
+          <AccountBalanceWalletIcon className="text-primary" sx={{ fontSize: 28 }} />
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            مبلغ الادخار
+          </h2>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              مبلغ الادخار
+            </label>
+            <input
               type="number"
               value={savingAmount}
               onChange={(e) => handleAmountChange(e.target.value)}
-              inputProps={{ min: 0, step: 0.01 }}
-              sx={{ width: "300px" }}
+              min={0}
+              step={0.01}
               placeholder="أدخل مبلغ الادخار"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
             />
-          </Grid>
+          </div>
+
           {calculatedPercentage > 0 && (
-            <Grid item xs={12}>
-              <Box sx={{
-                p: 2,
-                bgcolor: 'primary.50',
-                borderRadius: 1,
-                textAlign: 'center'
-              }}>
-                <Typography variant="body1" fontWeight="bold" color="primary.main">
-                  النسبة المحسوبة: <strong>{calculatedPercentage.toFixed(2)}%</strong>
-                </Typography>
-                <Typography variant="body1" fontWeight="bold" color="text.secondary">
-                  من إجمالي الأرباح: {totalProfit?.toLocaleString() || 0}
-                </Typography>
-                <Typography variant="body1" fontWeight="bold" color="success.main">
-                  المبلغ المتبقي: <strong>{(totalProfit - Number(savingAmount || 0))?.toLocaleString() || 0} ريال</strong>
-                </Typography>
-              </Box>
-            </Grid>
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                النسبة المحسوبة:{" "}
+                <span className="font-bold text-primary">
+                  {calculatedPercentage.toFixed(2)}%
+                </span>
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                من إجمالي الأرباح: {fmt(totalProfit)}
+              </p>
+              <p className="text-sm">
+                المبلغ المتبقي:{" "}
+                <span className="font-bold text-primary">{fmt(remaining)}</span>
+              </p>
+            </div>
           )}
-        </Grid>
 
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 text-sm">
+              {error}
+            </div>
+          )}
 
-        <Alert severity="info" sx={{ mt: 2 }}>
-          <Typography variant="body1" fontWeight="bold">
-            <strong>ملاحظة:</strong> سيتم خصم {calculatedPercentage.toFixed(2)}% ({savingAmount || 0} ريال) من إجمالي الأرباح قبل توزيعها على الشركاء
-            <br />
-            المبلغ المتبقي للتوزيع: <strong>{(totalProfit - Number(savingAmount || 0))?.toLocaleString() || 0} ريال</strong>
-          </Typography>
-        </Alert>
-      </DialogContent>
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-600 dark:text-slate-400">
+            <p>
+              <strong>ملاحظة:</strong> سيتم خصم {calculatedPercentage.toFixed(2)}% (
+              {savingAmount || 0}) من إجمالي الأرباح قبل توزيعها على الشركاء.
+            </p>
+            <p className="mt-1 font-medium">
+              المبلغ المتبقي للتوزيع: {fmt(remaining)}
+            </p>
+          </div>
+        </div>
 
-      <DialogActions sx={{ p: 2.5, gap: 1, flexDirection: 'row-reverse' }}>
-        <Button onClick={handleClose}>
-          إلغاء
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          color="primary"
-          startIcon={<SavingsIcon sx={{marginLeft:"10px"}} />}
-        >
-          تطبيق المبلغ
-        </Button>
-      </DialogActions>
-    </Dialog>
+        {/* Actions */}
+        <div className="flex gap-2 p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+          >
+            <CloseIcon sx={{ fontSize: 18 }} />
+            إلغاء
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-bold"
+          >
+            <CheckIcon sx={{ fontSize: 18 }} />
+            تطبيق المبلغ
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

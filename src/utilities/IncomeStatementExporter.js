@@ -53,7 +53,7 @@ const getCapitalData = (incomeData) => {
 
   data.push({
     id: 0,
-    name: "إجمالي رأس المال المدفوع الفعلي",
+    name: "إجمالي رأس المال المدفوع",
     code: "CAP-001",
     amount: incomeData.totalCapital || 0,
     type: "capital",
@@ -104,89 +104,50 @@ const getRevenueData = (incomeData) => {
 
   data.push({
     id: 1,
-    name: "الإيرادات التشغيلية",
+    name: "قسم الإيرادات",
     type: "revenue-header",
     level: 0,
-    hasDetails: incomeData.revenueByClient && incomeData.revenueByClient.length > 0
+    hasDetails: (incomeData.revenueLineItems?.length > 0) || (incomeData.revenueByClient?.length > 0)
   });
 
+  // revenueLineItems من الباك إند (فوائد السلف المحصلة، إيرادات أخرى، إلخ)
+  if (incomeData.revenueLineItems && incomeData.revenueLineItems.length > 0) {
+    incomeData.revenueLineItems.forEach((item, idx) => {
+      data.push({
+        id: `revenue-line-${idx}`,
+        name: item.label,
+        amount: item.amount,
+        type: "revenue-line",
+        level: 1
+      });
+    });
+  } else if (incomeData.revenues?.total != null) {
+    data.push({
+      id: "revenue-total-fallback",
+      name: "فوائد السلف المحصلة",
+      amount: incomeData.revenues.total,
+      type: "revenue-line",
+      level: 1
+    });
+  }
+
+  // تفصيل حسب العميل (اختياري)
   if (incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
     incomeData.revenueByClient.forEach((client, clientIndex) => {
-      const clientNumber = clientIndex + 1;
       data.push({
         id: `client-${clientIndex}`,
-        name: `${client.clientName} : العميل ${clientNumber}`,
+        name: client.clientName,
         amount: client.totalRevenue,
         type: "client-revenue",
-        clientId: client.clientId,
-        entries: client.entries,
-        isClientName: true 
+        level: 2,
+        isClientName: true
       });
-
-      if (client.companyRevenue && client.companyRevenue > 0) {
-        data.push({
-          id: `client-${clientIndex}-company-revenue`,
-          name: "حصة الشركة",
-          amount: client.companyRevenue,
-          type: "revenue-breakdown",
-          level: 2,
-          isCompanyShare: true
-        });
-      }
-
-      if (client.partnersRevenue && client.partnersRevenue > 0) {
-        data.push({
-          id: `client-${clientIndex}-partners-revenue`,
-          name: "حصة الشركاء",
-          amount: client.partnersRevenue,
-          type: "revenue-breakdown",
-          level: 2,
-          isPartnersShare: true
-        });
-      }
-
-      if (client.entries && client.entries.length > 0) {
-        client.entries.forEach((entry, entryIndex) => {
-          data.push({
-            id: `client-${clientIndex}-entry-${entryIndex}`,
-            name: entry.description,
-            amount: entry.rawShare || entry.amount,
-            type: "revenue-detail",
-            level: 3,
-            date: entry.date,
-            entryData: entry 
-          });
-        });
-      }
     });
-
-    const totalCompanyRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.companyRevenue || 0), 0);
-    const totalPartnersRevenue = incomeData.revenueByClient.reduce((sum, client) => sum + (client.partnersRevenue || 0), 0);
-
-    if (totalCompanyRevenue > 0) {
-      data.push({
-        id: 2.6,
-        name: "إجمالي حصة الشركة",
-        amount: totalCompanyRevenue,
-        type: "revenue-distribution",
-        isTotalCompanyShare: true
-      });
-    }
-
-    if (totalPartnersRevenue > 0) {
-      data.push({
-        id: 2.7,
-        name: "إجمالي حصة الشركاء",
-        amount: totalPartnersRevenue,
-        type: "revenue-distribution",
-        isTotalPartnersShare: true
-      });
-    }
   }
 
   data.push({
     id: 2.5,
-    name: "إجمالي إيرادات الفترة",
+    name: "إجمالي الإيرادات التشغيلية",
     amount: incomeData.revenues?.total || 0,
     type: "revenue-total"
   });
@@ -201,13 +162,26 @@ const getExpenseData = (incomeData) => {
 
   data.push({
     id: 3,
-    name: "المصروفات التشغيلية",
+    name: "قسم المصروفات",
     type: "expense-header",
     level: 0,
-    hasDetails: incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0
+    hasDetails: (incomeData.expenseByType?.length > 0) || (incomeData.detailedExpenses?.length > 0)
   });
 
-  if (incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
+  // expenseByType من الباك إند (مصروف بنزين، مصروفات انترنت، إلخ)
+  if (incomeData.expenseByType && incomeData.expenseByType.length > 0) {
+    incomeData.expenseByType.forEach((item, index) => {
+      data.push({
+        id: 4 + index,
+        name: item.type,
+        amount: -item.amount,
+        type: "expense",
+        level: 1,
+        expenseType: item.type,
+        percentage: item.percentage
+      });
+    });
+  } else if (incomeData.detailedExpenses && incomeData.detailedExpenses.length > 0) {
     incomeData.detailedExpenses.forEach((expense, index) => {
       data.push({
         id: 4 + index,
@@ -237,7 +211,7 @@ const getFinalResultData = (incomeData) => {
 
   return [{
     id: "final-profit",
-    name: "صافي الربح القابل للتوزيع بعد الإغلاق",
+    name: "صافي الربح",
     code: "FIN-FINAL",
     amount: incomeData.netProfit || 0,
     type: "final-profit",
@@ -300,11 +274,6 @@ const getPeriodInfo = (incomeData, periodType, selectedMonth, selectedYear, from
     from = startOfMonth.format('YYYY-MM-DD');
     to = endOfMonth.format('YYYY-MM-DD');
     source = "MONTH";
-  } else if (periodType === "yearly") {
-    periodText = `السنة ${selectedYear}`;
-    from = dayjs().year(selectedYear).startOf('year').format('YYYY-MM-DD');
-    to = dayjs().year(selectedYear).endOf('year').format('YYYY-MM-DD');
-    source = "YEAR";
   } else {
     if (incomeData && incomeData.period) {
       const period = incomeData.period;
@@ -476,8 +445,8 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
 
       const summaryData = [
         ['المبلغ', 'البيان'],
-        [formatAmount(incomeData.totalCapital || 0), 'رأس المال الفعلي'],
-        [formatAmount(incomeData.totalRevenue || 0), 'إجمالي الإيرادات']
+        [formatAmount(incomeData.totalCapital || 0), 'رأس المال المدفوع'],
+        [formatAmount(incomeData.revenues?.total || 0), 'إجمالي الإيرادات']
       ];
 
       if (incomeData.revenues && incomeData.revenues.generalLoans > 0) {
@@ -670,7 +639,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
 
     summaryData.push([incomeData.totalCapital || 0, 'رأس المال الفعلي', 'CAP-001']);
 
-    summaryData.push([incomeData.totalRevenue || 0, 'إجمالي الإيرادات', 'REV-TOTAL']);
+    summaryData.push([incomeData.revenues?.total || 0, 'إجمالي الإيرادات', 'REV-TOTAL']);
 
     if (incomeData.revenues && incomeData.revenues.generalLoans > 0) {
       summaryData.push([incomeData.revenues.generalLoans, 'سلف عامة', 'REV-GEN']);
@@ -701,7 +670,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
 
     capitalDetails.push([
       incomeData.totalCapital || 0,
-      'إجمالي رأس المال المدفوع الفعلي',
+      'إجمالي رأس المال المدفوع',
       'CAP-001',
       ''
     ]);
@@ -711,29 +680,34 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
 
       incomeData.capitalByPartner.forEach(partner => {
         capitalDetails.push([
+          partner.totalAmount || 0,
+          partner.partnerName || '',
+          'رأس المال المدفوع',
+          '',
+          ''
+        ]);
+        capitalDetails.push([
           partner.capitalAmount || 0,
           partner.partnerName || '',
           'رأس المال الأصلي',
           'أصلي',
-          `${partner.profitPercentage || 0}%`
+          ''
         ]);
-
         if (partner.newCapitalAmount && partner.newCapitalAmount > 0) {
           capitalDetails.push([
             partner.newCapitalAmount || 0,
             partner.partnerName || '',
             'رأس المال الجديد',
             'جديد',
-            `${partner.profitPercentage || 0}%`
+            ''
           ]);
         }
-
         capitalDetails.push([
           partner.totalProfit || 0,
           partner.partnerName || '',
           'الأرباح',
           'أرباح',
-          `${partner.profitPercentage || 0}%`
+          ''
         ]);
       });
     }

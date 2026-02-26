@@ -483,7 +483,7 @@ const LoanDetailsSection = ({
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
                     width: "300px",
-                    backgroundColor: "background.paper",
+                    backgroundColor: "transparent",
                   },
                 }}
               />
@@ -522,7 +522,7 @@ const LoanDetailsSection = ({
                   "& .MuiOutlinedInput-root": {
                     height: "56px",
                     width: "300px",
-                    backgroundColor: "background.paper",
+                    backgroundColor: "transparent",
                   },
                 }}
               />

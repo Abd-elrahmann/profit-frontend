@@ -36,12 +36,12 @@ export default function JournalsLinesCards({
   );
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={{ alignItems: "center", maxWidth: 420, mx: "auto", width: "100%" }}>
       {journalLines.map((line, index) => (
         <Card
           key={line.id || index}
           variant="outlined"
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 2, width: "100%" }}
         >
           <CardContent sx={{ p: 2 }}>
             <Stack spacing={1.5}>
@@ -165,6 +165,7 @@ export default function JournalsLinesCards({
         variant="outlined"
         sx={{
           borderRadius: 2,
+          width: "100%",
           backgroundColor: isDarkMode ? "background.default" : "grey.100",
           border: "2px solid",
           borderColor: "divider",

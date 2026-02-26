@@ -14,6 +14,7 @@ import {
 import { useFormik } from 'formik';
 import Api from '../../config/Api';
 import { Search, RestartAlt, Close as CloseIcon } from '@mui/icons-material';
+import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
 import { DatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 
@@ -55,8 +56,8 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   useEffect(() => {
@@ -209,6 +210,7 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
                   label="اختر الحساب"
                   placeholder="ابحث باسم الحساب أو الكود..."
                   variant="outlined"
+                  sx={transparentSearchTextFieldSx}
                   required
                   error={formik.touched.account && !formik.values.account}
                   helperText={

@@ -82,10 +82,10 @@ const ClientStats = React.memo(() => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-slate-500 text-sm font-medium mb-1">إجمالي العملاء</p>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedCount}</h3>
@@ -115,7 +115,7 @@ const ClientStats = React.memo(() => {
             )}
           </div>
         </div>
-        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-slate-500 text-sm font-medium mb-1">السلف النشطة</p>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{animatedActiveLoans}</h3>
@@ -145,7 +145,7 @@ const ClientStats = React.memo(() => {
             )}
           </div>
         </div>
-        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between sm:col-span-2 md:col-span-1">
           <div>
             <p className="text-slate-500 text-sm font-medium mb-1">إجمالي المبالغ المصروفة</p>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
@@ -180,14 +180,14 @@ const ClientStats = React.memo(() => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Pie Chart: تصنيف العملاء */}
-        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm">
+        <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h4 className="font-bold text-lg text-slate-900 dark:text-slate-100">تصنيف العملاء</h4>
           </div>
           <div className="flex items-center justify-center py-4 relative">
-            <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 256 256">
+            <svg className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 transform -rotate-90" viewBox="0 0 256 256">
               <circle cx="128" cy="128" fill="transparent" r="100" stroke="#e2e8f0" strokeWidth="25" />
               <circle
                 cx="128"
@@ -249,7 +249,7 @@ const ClientStats = React.memo(() => {
         </div>
 
         {/* Bar Chart: نمو تسجيل العملاء */}
-        <div className="bg-white dark:bg-[#141e16] p-6 rounded-xl border border-primary/10 shadow-sm">
+        <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h4 className="font-bold text-lg text-slate-900 dark:text-slate-100">نمو تسجيل العملاء</h4>

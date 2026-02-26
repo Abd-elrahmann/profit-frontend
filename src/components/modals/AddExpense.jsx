@@ -33,7 +33,7 @@ const EXPENSE_TYPES = [
   "مصروفات اخرى"
 ];
 
-const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
+const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen }) => {
   const [expenses, setExpenses] = useState([
     { type: "", amount: "", description: "", userId: null }
   ]);
@@ -174,7 +174,7 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false }) => {
       maxWidth="sm"
       fullWidth
       dir="rtl"
-      fullScreen={isMobile}
+      fullScreen={isSmallScreen ?? isMobile}
     >
       <DialogTitle sx={{ fontWeight: "bold", color: "primary.main", bgcolor: 'background.paper' }}>
         إضافة مصروفات جديدة

@@ -1,47 +1,126 @@
 import React from "react";
-import { Box, Typography, Grid, Paper } from "@mui/material";
-import { AccountBalanceWallet } from "@mui/icons-material";
+import { Box, Typography, Grid } from "@mui/material";
 import { getStatusColor } from "./clientsUtils";
 
-export default function ClientsFinancialTab({ clientDetails }) {
+const cardStyles = {
+  blue: {
+    bg: { light: "#eff6ff", dark: "rgba(59, 130, 246, 0.15)" },
+    border: { light: "#bfdbfe", dark: "rgba(59, 130, 246, 0.4)" },
+    label: { light: "#1e40af", dark: "#93c5fd" },
+    value: "primary.main",
+  },
+  green: {
+    bg: { light: "#f0fdf4", dark: "rgba(34, 197, 94, 0.15)" },
+    border: { light: "#bbf7d0", dark: "rgba(34, 197, 94, 0.4)" },
+    label: { light: "#166534", dark: "#86efac" },
+    value: "success.main",
+  },
+  red: {
+    bg: { light: "#fef2f2", dark: "rgba(239, 68, 68, 0.15)" },
+    border: { light: "#fecaca", dark: "rgba(239, 68, 68, 0.4)" },
+    label: { light: "#991b1b", dark: "#fca5a5" },
+    value: "error.main",
+  },
+};
+
+export default function ClientsFinancialTab({ clientDetails, isMobile = false }) {
   const client = clientDetails?.client;
   if (!client) return null;
 
-  return (
-    <Paper sx={{ p: 3 }}>
+  const FinancialCard = ({ label, value, styleKey, unit }) => {
+    const s = cardStyles[styleKey];
+    return (
       <Box
-        className="flex items-center gap-2 pb-2 mb-4"
-        sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+        sx={{
+          p: 3,
+          borderRadius: 2,
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark" ? s.bg.dark : s.bg.light,
+          border: "1px solid",
+          borderColor: (theme) =>
+            theme.palette.mode === "dark" ? s.border.dark : s.border.light,
+        }}
       >
-        <AccountBalanceWallet sx={{ fontSize: 24, color: "primary.main" }} />
-        <Typography variant="h6" fontWeight="bold">
-          المعلومات المالية
+        <Typography
+          variant="body2"
+          sx={{
+            mb: 1,
+            color: (theme) =>
+              theme.palette.mode === "dark" ? s.label.dark : s.label.light,
+            fontWeight: 500,
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography variant="h5" fontWeight="bold" color={s.value}>
+          {value}
+          {unit && (
+            <Box component="span" sx={{ fontSize: "0.875rem", fontWeight: 500, ml: 0.5 }}>
+              {unit}
+            </Box>
+          )}
         </Typography>
       </Box>
-      <Grid container spacing={3} justifyContent="center" alignItems="center">
-        <Grid item xs={12} md={4} sx={{ width: "280px" }}>
-          <Paper sx={{ p: 3, bgcolor: "background.paper" }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-              الراتب
-            </Typography>
-            <Typography variant="h5" fontWeight="bold" color="primary">
-              {client.salary?.toLocaleString()}
-            </Typography>
-          </Paper>
+    );
+  };
+
+  return (
+    <Box sx={{ pt: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: "text.primary" }}>
+        الملخص المالي
+      </Typography>
+      <Grid
+        container
+        spacing={3}
+        sx={{
+          maxWidth: 1100,
+          width: "100%",
+          justifyContent: "center",
+        }}
+      >
+        <Grid item xs={12} sm={4} sx={{ minWidth: 280 }}>
+          <FinancialCard
+            label="الراتب"
+            value={client.salary?.toLocaleString() || 0}
+            styleKey="blue"
+            unit="ريال"
+          />
         </Grid>
-        <Grid item xs={12} md={4} sx={{ width: "280px" }}>
-          <Paper sx={{ p: 3, bgcolor: "background.paper" }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-              الالتزامات
-            </Typography>
-            <Typography variant="h5" fontWeight="bold" color="error">
-              {client.obligations?.toLocaleString()}
-            </Typography>
-          </Paper>
+        <Grid item xs={12} sm={4} sx={{ minWidth: 280 }}>
+          <FinancialCard
+            label="الالتزامات"
+            value={client.obligations?.toLocaleString() || 0}
+            styleKey="red"
+            unit="ريال"
+          />
         </Grid>
-        <Grid item xs={12} md={4} sx={{ width: "280px" }}>
-          <Paper sx={{ p: 3, bgcolor: "background.paper" }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+        <Grid item xs={12} sm={4} sx={{ minWidth: 280 }}>
+          <Box
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? cardStyles.green.bg.dark
+                  : cardStyles.green.bg.light,
+              border: "1px solid",
+              borderColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? cardStyles.green.border.dark
+                  : cardStyles.green.border.light,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                mb: 1,
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? cardStyles.green.label.dark
+                    : cardStyles.green.label.light,
+                fontWeight: 500,
+              }}
+            >
               الحالة
             </Typography>
             <Typography
@@ -51,9 +130,9 @@ export default function ClientsFinancialTab({ clientDetails }) {
             >
               {client.status}
             </Typography>
-          </Paper>
+          </Box>
         </Grid>
       </Grid>
-    </Paper>
+    </Box>
   );
 }

@@ -12,7 +12,7 @@ const GeneralLedgerHeader = () => (
         <input
           type="text"
           placeholder="بحث سريع..."
-          className="pr-10 pl-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 w-48 md:w-64 outline-none"
+          className="pr-10 pl-4 py-2 bg-transparent border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 w-48 md:w-64 outline-none"
           readOnly
           tabIndex={-1}
         />

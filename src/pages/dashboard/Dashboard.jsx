@@ -45,22 +45,22 @@ const Dashboard = React.memo(() => {
 
   return (
     <DashboardFilterProvider>
-      <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden dark:bg-[#141e16]">
+      <div className="relative flex h-auto min-h-screen w-full max-w-full flex-col overflow-x-hidden dark:bg-[#141e16]">
         <Helmet>
           <title>نظام التمويل الذكي - لوحة التحكم</title>
           <meta name="description" content="لوحة التحكم الرئيسية للنظام المالي" />
         </Helmet>
 
         {/* Fixed Header: Title + Filters + Export */}
-        <div className="sticky top-0 z-50 bg-white dark:bg-[#141e16] border-b border-primary/10 shadow-sm">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-10">
+        <div className="sticky top-0 z-50 w-full max-w-full bg-transparent border-b border-primary/10 shadow-sm">
+          <div className="w-full max-w-full px-3 sm:px-4 md:px-6">
             <DashboardHeader onExport={handleExport} showExport />
           </div>
         </div>
 
         {/* Sub-tabs Navigation */}
-        <div className="bg-white dark:bg-[#141e16] border-b border-primary/10">
-          <div className="max-w-[1200px] mx-auto flex px-4 sm:px-6 md:px-10 gap-4 md:gap-8 overflow-x-auto scrollbar-thin">
+        <div className="w-full max-w-full bg-transparent border-b border-primary/10">
+          <div className="w-full max-w-full flex gap-3 sm:gap-4 md:gap-8 overflow-x-auto scrollbar-thin px-3 sm:px-4 md:px-6 py-2 sm:py-0">
             <DashboardTabs
               value={value}
               onChange={handleTabChange}
@@ -71,7 +71,7 @@ const Dashboard = React.memo(() => {
         </div>
 
         {/* Main Content Area - Export target (no sidebar/nav) */}
-        <main id="dashboard-export-area" className="max-w-[1200px] mx-auto w-full p-4 sm:p-6 flex-1 bg-[#f6f8f6] dark:bg-[#141e16]">
+        <main id="dashboard-export-area" className="w-full max-w-full flex-1 py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 bg-[#f6f8f6] dark:bg-[#141e16] overflow-x-hidden">
           {availableTabs.map((tab, index) => (
             <TabPanel key={tab.permission} value={value} index={index} tabTitle={tab.label}>
               <tab.Component />

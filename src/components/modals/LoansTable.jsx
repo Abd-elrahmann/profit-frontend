@@ -78,8 +78,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   const [selectedLoanContracts, setSelectedLoanContracts] = useState(null);
   const { permissions } = usePermissions();
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet; 
   const handleMenuOpen = (event, loan) => {
     setAnchorEl(event.currentTarget);
@@ -125,7 +125,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       notifySuccess("تم حذف السلفة بنجاح");
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
-      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       setIsDeleteModalOpen(false);
       setLoanToDelete(null);
     } catch (error) {
@@ -139,7 +139,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       notifySuccess("تم تفعيل السلفة بنجاح");
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
-      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء تفعيل السلفة"
@@ -153,6 +153,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       notifySuccess("تم إلغاء تفعيل السلفة بنجاح");
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء إلغاء تفعيل السلفة"
@@ -320,9 +321,9 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   };
 
   const renderMobileLoanCards = () => (
-    <Stack spacing={2} sx={{ p: 2 }}>
+    <Stack spacing={1.5} sx={{ p: 1, width: "100%" }}>
       {loansData?.data?.map((loan) => (
-        <Card key={loan.id} variant="outlined" sx={{ borderRadius: 2 }}>
+        <Card key={loan.id} variant="outlined" sx={{ borderRadius: 2, width: "100%", border: "1px solid", borderColor: "divider", boxShadow: "0 2px 4px rgba(0,0,0,0.08)" }}>
           <CardContent sx={{ p: 2 }}>
             <Stack spacing={1.5}>
               {/* Header */}

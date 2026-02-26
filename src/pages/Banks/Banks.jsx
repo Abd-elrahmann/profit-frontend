@@ -18,7 +18,6 @@ import {
   useMediaQuery,
   Card,
   CardContent,
-  Grid,
   Divider,
 } from "@mui/material";
 import { Search, Add, Edit, Delete,PictureAsPdf as PdfIcon,TableChart as ExcelIcon} from "@mui/icons-material";
@@ -32,6 +31,7 @@ import {
   StyledTableCell,
   StyledTableRow,
 } from "../../components/layouts/tableLayout";
+import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 import { useTranslation } from "react-i18next";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportBanksToPDF, exportBanksToExcel } from "../../utilities/banksExporter";
@@ -47,8 +47,8 @@ const Banks = () => {
   const [selectedBank, setSelectedBank] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();
@@ -293,39 +293,40 @@ const Banks = () => {
   );
 
   const renderCards = () => (
-    <Box sx={{ p: isMobile ? 1 : 2 }}>
+    <Box sx={{ p: isSmallScreen ? 1 : 2, width: '100%' }}>
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={30} />
         </Box>
       ) : banksData?.data?.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Typography variant="h6" color="textSecondary">
+          <Typography variant="body1" color="textSecondary">
             لا توجد حسابات بنكية
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Stack spacing={1.5} sx={{ width: '100%' }}>
           {banksData?.data?.map((bank) => (
-            <Grid item xs={12} key={bank.id}>
-              <Card 
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-                  }
-                }}
-              >
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+            <Card 
+              key={bank.id}
+              sx={{
+                width: '100%',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                '&:hover': {
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.12)',
+                }
+              }}
+            >
+                <CardContent sx={{ p: isSmallScreen ? 1.5 : 3 }}>
                   <Stack spacing={2}>
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
                       alignItems: 'flex-start',
-                      flexDirection: isMobile ? 'column' : 'row',
+                      flexDirection: isSmallScreen ? 'column' : 'row',
                       gap: 1
                     }}>
                       <Box>
@@ -344,7 +345,7 @@ const Banks = () => {
                             size="small"
                             title="تعديل"
                           >
-                            <Edit fontSize={isMobile ? "small" : "medium"} />
+                            <Edit fontSize={isSmallScreen ? "small" : "medium"} />
                           </IconButton>
                         )}
                         {(permissions.includes("banks_Delete")) && (
@@ -357,7 +358,7 @@ const Banks = () => {
                             size="small"
                             title="حذف"
                           >
-                            <Delete fontSize={isMobile ? "small" : "medium"} />
+                            <Delete fontSize={isSmallScreen ? "small" : "medium"} />
                           </IconButton>
                         )}
                       </Box>
@@ -426,7 +427,7 @@ const Banks = () => {
                         variant="outlined"
                         sx={{
                           fontWeight: "bold",
-                          fontSize: isMobile ? '0.75rem' : '0.875rem',
+                          fontSize: isSmallScreen ? '0.75rem' : '0.875rem',
                           padding: "4px 8px",
                           borderRadius: "16px",
                         }}
@@ -435,15 +436,14 @@ const Banks = () => {
                   </Stack>
                 </CardContent>
               </Card>
-            </Grid>
           ))}
-        </Grid>
+        </Stack>
       )}
     </Box>
   );
 
   return (
-    <Box sx={{ bgcolor: "background.paper", minHeight: "100vh", p: isMobile ? 2 : 3 }}>
+    <Box sx={{ bgcolor: "background.paper", minHeight: "100vh", p: isSmallScreen ? 2 : 3 }}>
       <Helmet>
         <title>الحسابات البنكية</title>
         <meta name="description" content="الحسابات البنكية" />
@@ -452,13 +452,18 @@ const Banks = () => {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          flexDirection:'row-reverse',
-          alignItems: isSmallScreen ? "stretch" : "center",
+          flexDirection: isSmallScreen ? "column" : "row-reverse",
+          justifyContent: isSmallScreen ? "center" : "space-between",
+          alignItems: isSmallScreen ? "center" : "center",
           mb: 2,
-          gap: 1,
+          gap: isSmallScreen ? 2 : 1,
         }}
       >
+        {isSmallScreen && (
+          <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ textAlign: "center", width: "100%" }}>
+            الحسابات البنكية
+          </Typography>
+        )}
         <InputBase
           placeholder="ابحث باسم الحساب أو رقم الحساب..."
           value={searchQuery}
@@ -469,79 +474,84 @@ const Banks = () => {
             </InputAdornment>
           }
           sx={{
-            width: isSmallScreen ? '100%' : "300px",
+            width: isSmallScreen ? "100%" : "300px",
+            maxWidth: isSmallScreen ? 320 : "none",
             borderRadius: "6px",
             p: 1,
+            border: "1px solid",
+            borderColor: "divider",
+            ...transparentSearchInputBaseSx,
           }}
         />
-      
-        <Stack 
-          direction={isSmallScreen ? "column" : "row"} 
+        <Stack
+          direction="row"
           spacing={1}
-          sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
+          flexWrap="wrap"
+          justifyContent={isSmallScreen ? "center" : "flex-start"}
+          sx={{ width: isSmallScreen ? "100%" : "auto", maxWidth: isSmallScreen ? 320 : "none" }}
         >
           {(permissions.includes("banks_Export")) && (
-          <Stack direction="row" spacing={1}>
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportPDF}
-              disabled={!banksData?.data || banksData.data.length === 0}
-              sx={{
-                borderColor: "error.main",
-                color: "error.main",
-                "&:hover": {
-                  bgcolor: isDarkMode ? "rgba(211, 47, 47, 0.2)" : "rgba(211, 47, 47, 0.1)",
-                  borderColor: "error.dark"
-                },
-                borderRadius: 2,
-                px: 2,
-                fontWeight: "bold",
-                minWidth: isSmallScreen ? '50%' : 'auto',
-              }}
-            >
-              PDF
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-              onClick={handleExportExcel}
-              disabled={!banksData?.data || banksData.data.length === 0}
-              sx={{
-                borderColor: "success.main",
-                color: "success.main",
-                "&:hover": {
-                  bgcolor: isDarkMode ? "rgba(46, 125, 50, 0.2)" : "rgba(46, 125, 50, 0.1)",
-                  borderColor: "success.dark"
-                },
-                borderRadius: 2,
-                px: 2,
-                fontWeight: "bold",
-                minWidth: isSmallScreen ? '50%' : 'auto',
-              }}
-            >
-              Excel
-            </Button>
-          </Stack>
+            <>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<PdfIcon sx={{ marginLeft: "6px" }} />}
+                onClick={handleExportPDF}
+                disabled={!banksData?.data || banksData.data.length === 0}
+                sx={{
+                  borderColor: "error.main",
+                  color: "error.main",
+                  "&:hover": {
+                    bgcolor: isDarkMode ? "rgba(211, 47, 47, 0.2)" : "rgba(211, 47, 47, 0.1)",
+                    borderColor: "error.dark"
+                  },
+                  borderRadius: 2,
+                  px: isSmallScreen ? 1.5 : 2,
+                  py: isSmallScreen ? 1 : 1,
+                  fontWeight: "bold",
+                }}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ExcelIcon sx={{ marginLeft: "6px" }} />}
+                onClick={handleExportExcel}
+                disabled={!banksData?.data || banksData.data.length === 0}
+                sx={{
+                  borderColor: "success.main",
+                  color: "success.main",
+                  "&:hover": {
+                    bgcolor: isDarkMode ? "rgba(46, 125, 50, 0.2)" : "rgba(46, 125, 50, 0.1)",
+                    borderColor: "success.dark"
+                  },
+                  borderRadius: 2,
+                  px: isSmallScreen ? 1.5 : 2,
+                  py: isSmallScreen ? 1 : 1,
+                  fontWeight: "bold",
+                }}
+              >
+                Excel
+              </Button>
+            </>
           )}
           {(permissions.includes("banks_Add")) && (
             <Button
               variant="contained"
+              size="small"
               startIcon={<Add />}
               onClick={handleAddBank}
               sx={{
                 bgcolor: "primary.main",
                 "&:hover": { bgcolor: "primary.dark" },
                 borderRadius: 2,
-                px: 3,
-                py: 1,
+                px: isSmallScreen ? 2 : 3,
+                py: isSmallScreen ? 1 : 1,
                 fontWeight: "bold",
-                minWidth: isSmallScreen ? '100%' : 'auto',
               }}
             >
-              إضافة حساب بنكي
+              {isSmallScreen ? "إضافة" : "إضافة حساب بنكي"}
             </Button>
           )}
         </Stack>
@@ -564,12 +574,12 @@ const Banks = () => {
             labelRowsPerPage="صفوف لكل صفحة:"
             sx={{
               '& .MuiTablePagination-toolbar': {
-                flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? 1 : 0,
-                padding: isMobile ? 1 : 2
+                flexDirection: isSmallScreen ? 'column' : 'row',
+                gap: isSmallScreen ? 1 : 0,
+                padding: isSmallScreen ? 1 : 2
               },
               '& .MuiTablePagination-spacer': {
-                display: isMobile ? 'none' : 'block'
+                display: isSmallScreen ? 'none' : 'block'
               }
             }}
           />
@@ -594,7 +604,7 @@ const Banks = () => {
         onSuccess={handleSuccess}
         bank={selectedBank}
         isEditMode={isEditMode}
-        isMobile={isMobile}
+        isSmallScreen={isSmallScreen}
       />
     </Box>
   );

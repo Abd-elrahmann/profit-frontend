@@ -35,6 +35,8 @@ const formatInt = (value) => {
 const ZakahPartnersTable = ({
   onViewDetails,
   isMobile = false,
+  isTablet = false,
+  isSmallScreen = false,
   selectedYear: controlledYear,
   onYearChange,
   onTotalsChange,
@@ -184,8 +186,8 @@ const ZakahPartnersTable = ({
           </Tooltip>
         </div>
       )}
-      <TableContainer>
-        <Table stickyHeader sx={{ width: '100%' }}>
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table stickyHeader sx={{ minWidth: 500 }}>
           <TableHead>
             <StyledTableRow>
               <StyledTableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
@@ -312,7 +314,7 @@ const ZakahPartnersTable = ({
           </TableBody>
         </Table>
       </TableContainer>
-      {!isMobile && (
+      {!showCards && (
         <TablePagination
           rowsPerPageOptions={[10, 25, 50, 100]}
           component="div"
@@ -377,14 +379,15 @@ const ZakahPartnersTable = ({
       ) : (
         <Grid container spacing={2} justifyContent="center">
           {zakahData?.map((zakah) => (
-            <Grid item xs={12} key={zakah.partnerId} className="flex justify-center">
+            <Grid item xs={12} sm={6} md={4} key={zakah.partnerId} className="flex justify-center">
               <Card
                 sx={{
                   border: '1px solid #e0e0e0',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  width: '300px',
-                  minHeight: '280px',
+                  width: '100%',
+                  maxWidth: 360,
+                  minHeight: 280,
                   '&:hover': { boxShadow: '0 4px 8px rgba(0,0,0,0.15)' },
                 }}
               >
@@ -456,7 +459,7 @@ const ZakahPartnersTable = ({
           ))}
         </Grid>
       )}
-      {isMobile && zakahData && zakahData.length > 0 && (
+      {showCards && zakahData && zakahData.length > 0 && (
         <Card sx={{ m: 1, bgcolor: 'primary.50' }}>
           <CardContent sx={{ p: 2 }}>
             <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
@@ -503,7 +506,7 @@ const ZakahPartnersTable = ({
           </CardContent>
         </Card>
       )}
-      {isMobile && zakahData && zakahData.length > 0 && (
+      {showCards && zakahData && zakahData.length > 0 && (
         <TablePagination
           rowsPerPageOptions={[10, 25, 50]}
           component="div"
@@ -522,9 +525,11 @@ const ZakahPartnersTable = ({
     </div>
   );
 
+  const showCards = isMobile;
+
   return (
     <div className="flex flex-col w-full">
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-4 gap-2">
         <Autocomplete
           options={years}
           value={selectedYear}
@@ -536,10 +541,10 @@ const ZakahPartnersTable = ({
               {...params}
               label="اختر السنة"
               size="small"
-              sx={{ width: '200px' }}
+              sx={{ width: showCards ? '100%' : '200px', minWidth: showCards ? undefined : 200 }}
             />
           )}
-          sx={{ flexShrink: 0 }}
+          sx={{ flexShrink: 0, minWidth: showCards ? 0 : 200 }}
         />
         <Typography variant="body2" color="textSecondary">
           عدد الشركاء: {zakahData?.length || 0}
@@ -547,7 +552,7 @@ const ZakahPartnersTable = ({
       </div>
 
       <div className="bg-white dark:bg-background-dark rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-        {isMobile ? renderCards() : renderTable()}
+        {showCards ? renderCards() : renderTable()}
       </div>
     </div>
   );

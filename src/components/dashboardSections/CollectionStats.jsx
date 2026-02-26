@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   Calendar,
   TrendingUp,
@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext';
 import {
   getMonthlyCollection,
   getDailyCollectionTrend,
@@ -24,6 +25,7 @@ const MONTH_NAMES = [
 
 const CollectionStats = React.memo(() => {
   const [hoveredBar, setHoveredBar] = React.useState(null);
+  const { setTabSubtitle } = useDashboardFilter();
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ['monthly-collection'],
@@ -59,21 +61,25 @@ const CollectionStats = React.memo(() => {
     });
   };
 
+  const maxDailyValue = useMemo(() => {
+    const vals = dailyTrend.map((d) => d.collected).filter((v) => v > 0);
+    return Math.max(...vals, 1);
+  }, [dailyTrend]);
+
   const currentMonthName = useMemo(() => {
-    // Use month from backend if available (0-indexed), otherwise fallback to current date
-    if (stats?.month !== undefined) {
-      return MONTH_NAMES[stats.month];
-    }
+    if (stats?.month !== undefined) return MONTH_NAMES[stats.month];
     const d = stats?.range?.startDate ? new Date(stats.range.startDate) : new Date();
     return MONTH_NAMES[d.getMonth()];
   }, [stats?.month, stats?.range?.startDate]);
 
   const currentYear = stats?.year ?? new Date().getFullYear();
 
-  const maxDailyValue = useMemo(() => {
-    const vals = dailyTrend.map((d) => d.collected).filter((v) => v > 0);
-    return Math.max(...vals, 1);
-  }, [dailyTrend]);
+  useEffect(() => {
+    if (!isLoading && stats) {
+      setTabSubtitle(`متابعة أداء التحصيلات والتدفقات المالية - ${currentMonthName} ${currentYear}`);
+    }
+    return () => setTabSubtitle('');
+  }, [isLoading, stats, currentMonthName, currentYear, setTabSubtitle]);
 
   if (isLoading) {
     return (
@@ -85,19 +91,6 @@ const CollectionStats = React.memo(() => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-            التحصيل الشهري
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            متابعة أداء التحصيلات والتدفقات المالية - {currentMonthName}{' '}
-            {currentYear}
-          </p>
-        </div>
-      </div>
-
       {/* Gauge & Comparison Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gauge */}

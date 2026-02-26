@@ -3,7 +3,7 @@ import { Menu, MenuItem } from '@mui/material';
 import { Add, PictureAsPdf, FileDownload } from '@mui/icons-material';
 
 const ExpensesToolbar = ({
-  isMobile,
+  isSmallScreen,
   hasAddPermission,
   hasExportPermission,
   hasExpenses,
@@ -19,14 +19,14 @@ const ExpensesToolbar = ({
   onExportFilterPdf,
   onExportFilterExcel,
 }) => (
-  <div className="flex items-center gap-3 flex-wrap">
+  <div className={`flex items-center gap-2 flex-wrap ${isSmallScreen ? 'w-full' : ''}`}>
     {hasExportPermission && (
       <>
         <button
           type="button"
           onClick={onExcelMenuOpen}
           disabled={!hasExpenses}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 rounded-lg text-sm font-bold transition-all"
+          className={`flex items-center gap-2 rounded-lg text-sm font-bold transition-all bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 ${isSmallScreen ? 'px-3 py-2 flex-1 min-w-0' : 'px-4 py-2.5'}`}
         >
           <FileDownload className="text-xl" />
           تصدير Excel
@@ -40,7 +40,7 @@ const ExpensesToolbar = ({
           type="button"
           onClick={onPdfMenuOpen}
           disabled={!hasExpenses}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-red-600 dark:text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg text-sm font-bold transition-all"
+          className={`flex items-center gap-2 rounded-lg text-sm font-bold transition-all bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-red-600 dark:text-red-400 border border-red-500/30 hover:border-red-500/50 ${isSmallScreen ? 'px-3 py-2 flex-1 min-w-0' : 'px-4 py-2.5'}`}
         >
           <PictureAsPdf className="text-xl" />
           تصدير PDF
@@ -56,7 +56,7 @@ const ExpensesToolbar = ({
       <button
         type="button"
         onClick={onAddClick}
-        className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20 transition-all"
+        className={`flex items-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20 transition-all ${isSmallScreen ? 'px-4 py-2 w-full' : 'px-6 py-2.5'}`}
       >
         <Add className="text-xl" />
         إضافة مصروف

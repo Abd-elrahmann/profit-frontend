@@ -31,6 +31,7 @@ const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProf
 const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
 const InvestorsWithdrawal = React.lazy(() => import('./pages/investorsWithdrawal/investorsWithdrawal'));
 const IncomeStatement = React.lazy(() => import('./pages/incomeStatement/incomeStatement'));
+const Settings = React.lazy(() => import('./pages/Settings/Settings'));
 const routes = [
   {
     path: '/login',
@@ -284,6 +285,14 @@ const routes = [
     protected: true,
     showInSidebar: false,
     requiresPermissions: false
+  },
+  {
+    path: '/settings',
+    element: Settings,
+    protected: true,
+    showInSidebar: true,
+    module: 'settings',
+    requiresPermissions: true
   }
 ];
 

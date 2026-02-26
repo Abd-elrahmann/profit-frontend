@@ -1,9 +1,9 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
-export default function InstallmentsStatusFilter({ value, onChange, options }) {
+export default function InstallmentsStatusFilter({ value, onChange, options, fullWidth = false }) {
   return (
-    <FormControl size="small" sx={{ minWidth: 180 }}>
+    <FormControl size="small" sx={{ minWidth: fullWidth ? 0 : 180, width: fullWidth ? '100%' : 'auto' }}>
       <InputLabel id="installments-status-filter-label">فلتر الحالة</InputLabel>
       <Select
         labelId="installments-status-filter-label"

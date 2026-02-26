@@ -15,41 +15,41 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { getStatusText, getStatusColor } from "./investorsUtils";
+import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
 
 const InvestorsList = ({
   investorsData,
   isLoading,
   selectedInvestor,
   showWithdrawnOnly,
-
   search,
   selectedStatus,
   selectedActiveStatus,
   onSearchChange,
   onStatusChange,
   onActiveStatusChange,
-
   currentPage,
   onPageChange,
-
   onInvestorSelect,
   onAddInvestor,
   onViewWithdrawn,
-
   permissions,
   isDarkMode,
   listScrollRef,
+  isMobile = false,
 }) => {
   return (
     <Box
       sx={{
-        width: '350px',
-        borderRight: "1px solid #ddd",
+        width: { xs: "100%", md: "350px" },
+        minWidth: { xs: 0, md: "350px" },
+        borderRight: { xs: "none", md: "1px solid #ddd" },
         bgcolor: isDarkMode ? 'background.default' : '#fafafa',
         height: "100%",
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0
+        flexShrink: 0,
+        flex: isMobile ? 1 : "none",
       }}
     >
       <Box sx={{ p: 2, borderBottom: "1px solid #ddd", bgcolor: isDarkMode ? 'background.paper' : '#fafafa', flexShrink: 0 }}>
@@ -98,7 +98,9 @@ const InvestorsList = ({
           placeholder="البحث بالاسم أو رقم الهوية"
           fullWidth
           size="small"
+          variant="outlined"
           onChange={onSearchChange}
+          sx={transparentSearchTextFieldSx}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

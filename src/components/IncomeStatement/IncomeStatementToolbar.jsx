@@ -2,8 +2,13 @@ import React from 'react';
 import { Stack, Button } from '@mui/material';
 import { Print, TableChart, FileUpload } from '@mui/icons-material';
 
-const IncomeStatementToolbar = ({ onPrint, onExportExcel, onExportPDF }) => (
-  <Stack direction="row" justifyContent="flex-end" sx={{ gap: 1 }}>
+const IncomeStatementToolbar = ({ onPrint, onExportExcel, onExportPDF, isSmallScreen = false }) => (
+  <Stack
+    direction="row"
+    flexWrap="wrap"
+    justifyContent={isSmallScreen ? 'center' : 'flex-end'}
+    sx={{ gap: 1 }}
+  >
     <Button
       variant="outlined"
       startIcon={<Print />}

@@ -1,31 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  Table,
-  TableBody,
-  TableContainer,
-  TableHead,
-  Divider,
   Alert,
   Button,
-  Card,
-  CardContent,
-  Stack,
 } from "@mui/material";
 import {
-  StyledTableCell,
-  StyledTableRow,
-} from "../layouts/tableLayout";
-import PeriodClosingExportButtons from "./PeriodClosingExportButtons";
-import PeriodClosingDetailsForm from "./PeriodClosingDetailsForm";
-import { formatDateWithHijri } from "./periodClosingUtils.jsx";
-import PeriodClosingSummaryCards from "./PeriodClosingSummaryCards";
-import PeriodClosingActions from "./PeriodClosingActions";
-import PeriodClosingJournalsTable from "./PeriodClosingJournalsTable";
-import PeriodClosingJournalsCards from "./PeriodClosingJournalsCards";
+  ListAlt as ListAltIcon,
+  AccountBalanceWallet as AccountBalanceWalletIcon,
+  Payments as PaymentsIcon,
+  Balance as BalanceIcon,
+  Analytics as AnalyticsIcon,
+  TrendingUp as TrendingUpIcon,
+  RemoveCircle as RemoveCircleIcon,
+  VerifiedUser as VerifiedUserIcon,
+  Business as BusinessIcon,
+  HistoryEdu as HistoryEduIcon,
+  FileDownload as FileDownloadIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronLeft as ChevronLeftIcon,
+} from "@mui/icons-material";
+import {
+  calculateJournalTotals,
+  formatNumber,
+  getJournalTypeText,
+  getJournalStatusText,
+} from "./periodClosingUtils.jsx";
+
+const PAGE_SIZE = 5;
 
 export default function PeriodClosingDetails({
   periodData,
@@ -42,266 +42,112 @@ export default function PeriodClosingDetails({
   onNavigateToJournalEntries,
   onNavigateToProfitDistribution,
   onViewJournal,
+  onBackToList,
 }) {
   const journals = periodData?.journals || [];
+  const calculatedTotals = calculateJournalTotals(journals);
+  const totalDebit = periodData?.totalDebit ?? calculatedTotals.totalDebit;
+  const totalCredit = periodData?.totalCredit ?? calculatedTotals.totalCredit;
+  const totalBalance = periodData?.totalBalance ?? calculatedTotals.totalBalance;
 
-  if (isSmallScreen) {
-    return (
-      <Box>
-        <Box sx={{ display: "flex", gap: 1, mb: 2, justifyContent: "center" }}>
-          <PeriodClosingExportButtons
-          onExportPDF={onExportPDF}
-          onExportExcel={onExportExcel}
-          isExporting={isExporting}
-          permissions={permissions}
-          size="small"
-        />
-        </Box>
-        {showDraftAlert && !periodData?.isClosed && (
-          <Alert
-            severity="warning"
-            sx={{ mb: 3 }}
-            action={
-              <Button
-                color="inherit"
-                size="small"
-                onClick={onNavigateToJournalEntries}
-                sx={{ fontWeight: "bold" }}
-              >
-                انتقل للقيود
-              </Button>
-            }
-          >
-            لا يمكنك إغلاق هذه الفترة لأن هناك {draftCount} قيد غير معتمد.
-            برجاء اعتمادها أولاً.
-          </Alert>
-        )}
+  const [journalPage, setJournalPage] = useState(0);
+  const totalJournalPages = Math.ceil(journals.length / PAGE_SIZE) || 1;
+  const paginatedJournals = journals.slice(
+    journalPage * PAGE_SIZE,
+    journalPage * PAGE_SIZE + PAGE_SIZE
+  );
 
-        <PeriodClosingSummaryCards periodData={periodData} />
-        <PeriodClosingActions
-          periodData={periodData}
-          permissions={permissions}
-          onClosePeriod={onClosePeriod}
-          onUnpostClosing={onUnpostClosing}
-        />
-        <PeriodClosingDetailsForm periodData={periodData} />
+  const formatAmount = (amount) => {
+    const abs = Math.abs(amount);
+    const formatted = abs.toLocaleString("en-US");
+    return amount >= 0 ? formatted : `-${formatted}`;
+  };
 
-        {periodData?.isClosed && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-            <Alert
-              severity={
-                periodData?.totalPartnerProfit || periodData?.companyProfit
-                  ? "success"
-                  : "info"
-              }
-              sx={{ flex: 1 }}
-            >
-              {periodData?.totalPartnerProfit || periodData?.companyProfit
-                ? "تم إغلاق الفترة وتوزيعها"
-                : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها"}
-            </Alert>
-            <Button
-              variant="outlined"
-              color={
-                periodData?.totalPartnerProfit || periodData?.companyProfit
-                  ? "success"
-                  : "warning"
-              }
-              onClick={onNavigateToProfitDistribution}
-              sx={{
-                fontWeight: "bold",
-                fontSize: "0.9rem",
-                borderRadius: 1,
-                minHeight: "auto",
-                py: 0.75,
-                px: 2,
-              }}
-            >
-              الذهاب للتوزيع
-            </Button>
-          </Box>
-        )}
+  const fmt = (n) => (n ?? 0).toLocaleString("en-US");
 
-        {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
-          <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              mb={2}
-              textAlign="center"
-            >
-              تفصيل أرباح الشركاء
-            </Typography>
-            <Stack spacing={2}>
-              {periodData.partnerProfits.map((partner) => (
-                <Card key={partner.partnerId} variant="outlined">
-                  <CardContent sx={{ p: 2 }}>
-                    <Stack spacing={1}>
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight="bold"
-                        textAlign="center"
-                        mb={1}
-                      >
-                        {partner.partnerName}
-                      </Typography>
-                      <Box
-                        sx={{ display: "flex", justifyContent: "space-between" }}
-                      >
-                        <Typography variant="body2" color="text.secondary">
-                          الربح الإجمالي:
-                        </Typography>
-                        <Typography variant="body2" color="success.main">
-                          {(partner.grossProfit || 0).toLocaleString()}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{ display: "flex", justifyContent: "space-between" }}
-                      >
-                        <Typography variant="body2" color="text.secondary">
-                          حصة المصروفات:
-                        </Typography>
-                        <Typography variant="body2" color="error.main">
-                          -{(partner.expenseShare || 0).toLocaleString()}
-                        </Typography>
-                      </Box>
-                      <Divider sx={{ my: 0.5 }} />
-                      <Box
-                        sx={{ display: "flex", justifyContent: "space-between" }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight="bold"
-                          color="text.secondary"
-                        >
-                          صافي الربح:
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          fontWeight="bold"
-                          color="success.main"
-                        >
-                          {(partner.netProfit || 0).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
-            </Stack>
-          </Paper>
-        )}
+  const companyProfitBreakdown = [
+    { label: "أرباح الشركة", amount: periodData?.grossProfit?.companyTotal || 0 },
+  ];
 
-        <PeriodClosingJournalsCards
-          journals={journals}
-          onViewJournal={onViewJournal}
-        />
+  const hasExpenses = (periodData?.expenseDistribution?.totalExpenses ?? 0) > 0;
+  const partnerProfits = periodData?.partnerProfits || [];
 
-        {journals.length === 0 && (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            لا توجد قيود في هذه الفترة
-          </Alert>
-        )}
-      </Box>
-    );
-  }
+  const formatDateDisplay = (dateStr, hijriStr) => {
+    if (!dateStr) return "-";
+    const g = new Date(dateStr).toISOString().slice(0, 10).replace(/-/g, "/");
+    return hijriStr ? `${g} (${hijriStr})` : g;
+  };
 
   return (
-    <Paper sx={{ p: 4, borderRadius: 2 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Box sx={{ flex: 1 }} />
-        <Typography
-          variant="h6"
-          color="primary"
-          fontWeight="bold"
-          textAlign="center"
-          sx={{ flex: 1 }}
-        >
-          تفاصيل الفترة
-        </Typography>
-        <Box
-          sx={{ display: "flex", gap: 1, flex: 1, justifyContent: "flex-end" }}
-        >
-          <PeriodClosingExportButtons
-            onExportPDF={onExportPDF}
-            onExportExcel={onExportExcel}
-            isExporting={isExporting}
-            permissions={permissions}
-          />
-        </Box>
-      </Box>
-
-      {showDraftAlert && !periodData?.isClosed && (
-        <Alert
-          severity="warning"
-          sx={{ mb: 3 }}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={onNavigateToJournalEntries}
-              sx={{ fontWeight: "bold" }}
-            >
-              انتقل للقيود
-            </Button>
-          }
-        >
-          لا يمكنك إغلاق هذه الفترة لأن هناك {draftCount} قيد غير معتمد.
-          برجاء اعتمادها أولاً.
-        </Alert>
-      )}
-
-      <Grid container spacing={10} mb={4} justifyContent="center" alignItems="center">
-        <Grid item xs={12} md={6}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            اسم الفترة:
-          </Typography>
-          <Typography variant="body1">{periodData?.name || "-"}</Typography>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            الحالة:
-          </Typography>
-          <span
-            style={{
-              padding: "4px 12px",
-              borderRadius: 16,
-              fontSize: 14,
-              backgroundColor: periodData?.isClosed
-                ? "rgba(46, 125, 50, 0.1)"
-                : "rgba(237, 108, 2, 0.1)",
-              color: periodData?.isClosed ? "#2e7d32" : "#ed6c02",
-            }}
-          >
-            {periodData?.isClosed ? "مقفلة" : "مفتوحة"}
-          </span>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            تاريخ البداية:
-          </Typography>
-          {formatDateWithHijri(
-            periodData?.startDate,
-            periodData?.startDateHijri
+    <div className="flex flex-col gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto w-full px-2 sm:px-4">
+      {/* Title & Export & Actions */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
+            تفاصيل الفترة
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">
+            تقرير شامل للملخص المالي والقيود المحاسبية لهذه الفترة (
+            {periodData?.name || "-"})
+            {periodData?.startDate && periodData?.endDate && (
+              <span className="block mt-1 text-xs sm:text-sm">
+                {formatDateDisplay(periodData.startDate, periodData.startDateHijri)} -{" "}
+                {formatDateDisplay(periodData.endDate, periodData.endDateHijri)}
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+          {permissions?.includes("period_Export") && (
+            <>
+              <button
+                type="button"
+                onClick={onExportPDF}
+                disabled={isExporting}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-red-700 transition-all shadow-sm"
+              >
+                <FileDownloadIcon sx={{ fontSize: 16 }} />
+                <span>PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={onExportExcel}
+                disabled={isExporting}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 text-primary rounded-lg text-xs sm:text-sm font-bold hover:bg-primary/20 transition-all"
+              >
+                <FileDownloadIcon sx={{ fontSize: 16 }} />
+                <span>Excel</span>
+              </button>
+            </>
           )}
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            تاريخ النهاية:
-          </Typography>
-          {formatDateWithHijri(periodData?.endDate, periodData?.endDateHijri)}
-        </Grid>
-      </Grid>
+          {permissions?.includes("period_Post") && (
+            <>
+              {!periodData?.isClosed && (
+                <button
+                  type="button"
+                  onClick={onClosePeriod}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-primary/90 transition-all"
+                >
+                  تقفيل الفترة
+                </button>
+              )}
+              {periodData?.isClosed && (
+                <button
+                  type="button"
+                  onClick={onUnpostClosing}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 border-2 border-red-500 text-red-600 rounded-lg text-xs sm:text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                >
+                  إلغاء التقفيل
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
+      {/* Closed Period Alert - at top */}
       {periodData?.isClosed && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 3 }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Alert
             severity={
               periodData?.totalPartnerProfit || periodData?.companyProfit
@@ -312,7 +158,7 @@ export default function PeriodClosingDetails({
           >
             {periodData?.totalPartnerProfit || periodData?.companyProfit
               ? "تم إغلاق الفترة وتوزيعها"
-              : " تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها"}
+              : "تم اغلاق الفترة ولكن تحتاج الي توزيع ارباحها"}
           </Alert>
           <Button
             variant="outlined"
@@ -333,259 +179,541 @@ export default function PeriodClosingDetails({
           >
             الذهاب للتوزيع
           </Button>
-        </Box>
+        </div>
       )}
 
-      {periodData?.partnerProfits && periodData.partnerProfits.length > 0 && (
-        <>
-          <Typography
-            variant="h6"
-            color="primary"
-            fontWeight="bold"
-            mb={3}
-            textAlign="center"
-          >
-            جدول أرباح الشركاء
-          </Typography>
-          <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-            <Table>
-              <TableHead>
-                <StyledTableRow>
-                  <StyledTableCell align="center">اسم الشريك</StyledTableCell>
-                  <StyledTableCell align="center">الربح الإجمالي</StyledTableCell>
-                  <StyledTableCell align="center">حصة المصروفات</StyledTableCell>
-                  <StyledTableCell align="center">صافي الربح</StyledTableCell>
-                </StyledTableRow>
-              </TableHead>
-              <TableBody>
-                {periodData.partnerProfits.map((partner) => (
-                  <StyledTableRow key={partner.partnerId}>
-                    <StyledTableCell
-                      align="center"
-                      style={{ fontWeight: "bold" }}
-                    >
-                      {partner.partnerName}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      style={{ color: "#2e7d32" }}
-                    >
-                      {(partner.grossProfit || 0).toLocaleString()}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      style={{ color: "#d32f2f" }}
-                    >
-                      -{(partner.expenseShare || 0).toLocaleString()}
-                    </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      style={{ fontWeight: "bold", color: "#2e7d32" }}
-                    >
-                      {(partner.netProfit || 0).toLocaleString()}
-                    </StyledTableCell>
-                  </StyledTableRow>
-                ))}
-                <StyledTableRow
-                  style={{
-                    backgroundColor: theme.palette.grey[100],
-                    borderTop: `2px solid ${theme.palette.primary.main}`,
-                  }}
-                >
-                  <StyledTableCell
-                    align="center"
-                    style={{ fontWeight: "bold", fontSize: "1.1em" }}
-                  >
-                    إجمالي أرباح الشركاء
-                  </StyledTableCell>
-                  <StyledTableCell
-                    align="center"
-                    style={{
-                      fontWeight: "bold",
-                      color: "#2e7d32",
-                      fontSize: "1.1em",
-                    }}
-                  >
-                    {(periodData?.grossProfit?.partnerTotal || 0).toLocaleString()}
-                  </StyledTableCell>
-                  <StyledTableCell
-                    align="center"
-                    style={{
-                      fontWeight: "bold",
-                      color: "#d32f2f",
-                      fontSize: "1.1em",
-                    }}
-                  >
-                    -
-                    {(periodData?.expenseDistribution?.partnersShare || 0).toLocaleString()}
-                  </StyledTableCell>
-                  <StyledTableCell
-                    align="center"
-                    style={{
-                      fontWeight: "bold",
-                      color: "#2e7d32",
-                      fontSize: "1.1em",
-                    }}
-                  >
-                    {(periodData.totalPartnerProfit || 0).toLocaleString()}
-                  </StyledTableCell>
-                </StyledTableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Divider sx={{ my: 3 }} />
-        </>
-      )}
-
-      <Typography
-        variant="h6"
-        color="primary"
-        fontWeight="bold"
-        mb={3}
-        textAlign="center"
-      >
-        جدول أرباح الشركة
-      </Typography>
-      <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <StyledTableRow>
-              <StyledTableCell align="center">النوع</StyledTableCell>
-              <StyledTableCell align="center">الربح الإجمالي</StyledTableCell>
-              <StyledTableCell align="center">حصة المصروفات</StyledTableCell>
-              <StyledTableCell align="center">باقي أرباح الشركاء</StyledTableCell>
-              <StyledTableCell align="center">صافي الربح</StyledTableCell>
-              <StyledTableCell align="center">الإجمالي</StyledTableCell>
-            </StyledTableRow>
-          </TableHead>
-          <TableBody>
-            <StyledTableRow>
-              <StyledTableCell align="center" style={{ fontWeight: "bold" }}>
-                أرباح الشركة
-              </StyledTableCell>
-              <StyledTableCell align="center" style={{ color: "#2e7d32" }}>
-                {(periodData?.grossProfit?.companyTotal || 0).toLocaleString()}
-              </StyledTableCell>
-              <StyledTableCell align="center" style={{ color: "#d32f2f" }}>
-                -
-                {(periodData?.expenseDistribution?.companyShare || 0).toLocaleString()}
-              </StyledTableCell>
-              <StyledTableCell align="center" style={{ color: "#ed6c02" }}>
-                +{(periodData?.centCollected || 0).toLocaleString()}
-              </StyledTableCell>
-              <StyledTableCell
-                align="center"
-                style={{ fontWeight: "bold", color: "#1976d2" }}
-              >
-                {(periodData?.companyProfit || 0).toLocaleString()}
-              </StyledTableCell>
-              <StyledTableCell
-                align="center"
-                style={{
-                  fontWeight: "bold",
-                  color: "#d32f2f",
-                  fontSize: "1.1em",
-                }}
-              >
-                {((periodData?.companyProfit || 0) +
-                  (periodData?.centCollected || 0)).toLocaleString()}
-              </StyledTableCell>
-            </StyledTableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Divider sx={{ my: 3 }} />
-
-      <Typography
-        variant="h6"
-        color="primary"
-        fontWeight="bold"
-        mb={3}
-        textAlign="center"
-      >
-        الإجمالي العام
-      </Typography>
-      <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <StyledTableRow>
-              <StyledTableCell align="center">النوع</StyledTableCell>
-              <StyledTableCell align="center">الأرباح الإجمالية</StyledTableCell>
-              <StyledTableCell align="center">المصروفات المخصومة</StyledTableCell>
-              <StyledTableCell align="center">صافي الأرباح</StyledTableCell>
-            </StyledTableRow>
-          </TableHead>
-          <TableBody>
-            <StyledTableRow
-              style={{
-                backgroundColor: theme.palette.grey[100],
-                borderTop: `2px solid ${theme.palette.primary.main}`,
-              }}
+      {/* Draft Alert */}
+      {showDraftAlert && !periodData?.isClosed && (
+        <Alert
+          severity="warning"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={onNavigateToJournalEntries}
+              sx={{ fontWeight: "bold" }}
             >
-              <StyledTableCell
-                align="center"
-                style={{ fontWeight: "bold", fontSize: "1.1em" }}
-              >
-                الإجمالي العام
-              </StyledTableCell>
-              <StyledTableCell
-                align="center"
-                style={{
-                  fontWeight: "bold",
-                  color: "#d32f2f",
-                  fontSize: "1.1em",
-                }}
-              >
-                {(periodData?.grossProfit?.total || 0).toLocaleString()}
-              </StyledTableCell>
-              <StyledTableCell
-                align="center"
-                style={{
-                  fontWeight: "bold",
-                  color: "#d32f2f",
-                  fontSize: "1.1em",
-                }}
-              >
-                -
-                {(periodData?.expenseDistribution?.totalExpenses || 0).toLocaleString()}
-              </StyledTableCell>
-              <StyledTableCell
-                align="center"
-                style={{
-                  fontWeight: "bold",
-                  color: "#d32f2f",
-                  fontSize: "1.1em",
-                }}
-              >
-                {(periodData?.totalProfit || 0).toLocaleString()}
-              </StyledTableCell>
-            </StyledTableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Divider sx={{ my: 3 }} />
-
-      <Typography
-        variant="h6"
-        color="primary"
-        fontWeight="bold"
-        mb={3}
-        textAlign="center"
-      >
-        قيود الفترة ({journals.length})
-      </Typography>
-
-      {journals.length > 0 ? (
-        <PeriodClosingJournalsTable
-          journals={journals}
-          theme={theme}
-          onViewJournal={onViewJournal}
-        />
-      ) : (
-        <Alert severity="info">لا توجد قيود في هذه الفترة</Alert>
+              انتقل للقيود
+            </Button>
+          }
+        >
+          لا يمكنك إغلاق هذه الفترة لأن هناك {draftCount} قيد غير معتمد.
+          برجاء اعتمادها أولاً.
+        </Alert>
       )}
-    </Paper>
+
+      {/* 1. Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-background-dark/50 p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-slate-500 text-sm font-medium">عدد القيود</p>
+            <ListAltIcon className="text-primary/60" sx={{ fontSize: 24 }} />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+            {journals.length}
+          </p>
+          <p className="text-primary text-xs mt-2 font-medium flex items-center gap-1">
+            <TrendingUpIcon sx={{ fontSize: 14 }} />
+            مقارنة بالشهر الماضي
+          </p>
+        </div>
+        <div className="bg-white dark:bg-background-dark/50 p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-slate-500 text-sm font-medium">إجمالي المدين</p>
+            <AccountBalanceWalletIcon
+              className="text-primary/60"
+              sx={{ fontSize: 24 }}
+            />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+            {formatNumber(totalDebit)}
+          </p>
+          <p className="text-primary text-xs mt-2 font-medium flex items-center gap-1">
+            <TrendingUpIcon sx={{ fontSize: 14 }} />
+            إجمالي المدين
+          </p>
+        </div>
+        <div className="bg-white dark:bg-background-dark/50 p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-slate-500 text-sm font-medium">إجمالي الدائن</p>
+            <PaymentsIcon className="text-primary/60" sx={{ fontSize: 24 }} />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+            {formatNumber(totalCredit)}
+          </p>
+          <p className="text-primary text-xs mt-2 font-medium flex items-center gap-1">
+            <TrendingUpIcon sx={{ fontSize: 14 }} />
+            إجمالي الدائن
+          </p>
+        </div>
+        <div className="bg-white dark:bg-background-dark/50 p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-slate-500 text-sm font-medium">إجمالي الرصيد</p>
+            <BalanceIcon className="text-primary/60" sx={{ fontSize: 24 }} />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-primary">
+            {formatNumber(totalBalance)}
+          </p>
+          <p className="text-slate-400 text-xs mt-2 font-medium">
+            {totalBalance === 0 ? "متزن محاسبياً" : "الرصيد"}
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Profit Breakdown Section */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 pb-2">
+          <AnalyticsIcon className="text-primary" sx={{ fontSize: 28 }} />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+            {hasExpenses ? "ملخص الأرباح والمصروفات" : "الأرباح الإجمالية"}
+          </h2>
+        </div>
+        <div
+          className={`grid grid-cols-1 gap-6 ${
+            hasExpenses ? "lg:grid-cols-[1fr_auto_1fr] items-center" : "w-full"
+          }`}
+        >
+          {/* Gross Profit Card */}
+          <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-hidden shadow-sm">
+            <div className="bg-primary/5 p-4 border-b border-primary/10">
+              <h3 className="font-bold text-primary flex items-center gap-2">
+                <TrendingUpIcon />
+                {hasExpenses ? "الأرباح الإجمالية (قبل الخصم)" : "الأرباح الإجمالية"}
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-slate-400">
+                  أرباح الشركاء
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {fmt(periodData?.grossProfit?.partnerTotal)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 dark:text-slate-400">
+                  أرباح الشركة
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {fmt(periodData?.grossProfit?.companyTotal)}
+                </span>
+              </div>
+              {(periodData?.grossProfit?.totalCents ?? 0) > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600 dark:text-slate-400">
+                    باقي أرباح (سنتات)
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {fmt(periodData?.grossProfit?.totalCents)}
+                  </span>
+                </div>
+              )}
+              <hr className="border-primary/10" />
+              <div className="flex justify-between items-center pt-2">
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  الإجمالي العام
+                </span>
+                <span className="text-2xl font-black text-primary">
+                  {fmt(periodData?.grossProfit?.total)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider with Deductions - only when has expenses */}
+          {hasExpenses && (
+            <>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <div className="h-12 w-px bg-slate-200 hidden lg:block" />
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 px-6 py-3 rounded-full border border-red-200 dark:border-red-800 font-bold flex items-center gap-2 whitespace-nowrap shadow-sm">
+                  <RemoveCircleIcon />
+                  المصروفات المخصومة: -{fmt(periodData?.expenseDistribution?.totalExpenses)}
+                </div>
+                <div className="h-12 w-px bg-slate-200 hidden lg:block" />
+              </div>
+
+              {/* Net Profit Card */}
+              <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-hidden shadow-sm">
+                <div className="bg-primary p-4 border-b border-primary/10">
+                  <h3 className="font-bold text-white flex items-center gap-2">
+                    <VerifiedUserIcon />
+                    صافي الأرباح (بعد الخصم)
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">
+                      أرباح الشركاء
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {fmt(periodData?.totalPartnerProfit)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">
+                      باقي أرباح الشركاء
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {fmt(periodData?.centCollected)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">
+                      أرباح الشركة
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {fmt(periodData?.companyProfit)}
+                    </span>
+                  </div>
+                  <hr className="border-primary/10" />
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      الإجمالي النهائي
+                    </span>
+                    <span
+                      className={`text-2xl font-black ${
+                        (periodData?.totalProfit ?? 0) < 0 ? "text-red-600" : "text-primary"
+                      }`}
+                    >
+                      {fmt(periodData?.totalProfit)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* 3. Detail Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Partner Profits Table - when closed and has partner profits */}
+        {partnerProfits.length > 0 && (
+          <div className="lg:col-span-3 space-y-4">
+            <div className="flex items-center gap-2">
+              <BusinessIcon className="text-primary" sx={{ fontSize: 24 }} />
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                جدول أرباح الشركاء
+              </h2>
+            </div>
+            <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-x-auto shadow-sm">
+              <table className="w-full text-center text-sm min-w-[280px]">
+                <thead className="bg-primary/5 text-primary border-b border-primary/10">
+                  <tr>
+                    <th className="px-4 py-3 font-bold">اسم الشريك</th>
+                    <th className="px-4 py-3 font-bold">الربح الإجمالي</th>
+                    <th className="px-4 py-3 font-bold">حصة المصروفات</th>
+                    <th className="px-4 py-3 font-bold">صافي الربح</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/5">
+                  {partnerProfits.map((p) => (
+                    <tr key={p.partnerId} className="hover:bg-primary/5 transition-colors">
+                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                        {p.partnerName}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                        {fmt(p.grossProfit)}
+                      </td>
+                      <td className="px-4 py-3 text-red-600">
+                        -{fmt(p.expenseShare)}
+                      </td>
+                      <td className="px-4 py-3 font-bold text-primary">
+                        {fmt(p.netProfit)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-primary/5 font-bold">
+                  <tr>
+                    <td className="px-4 py-3">الإجمالي</td>
+                    <td className="px-4 py-3">
+                      {fmt(periodData?.grossProfit?.partnerTotal)}
+                    </td>
+                    <td className="px-4 py-3 text-red-600">
+                      -{fmt(periodData?.expenseDistribution?.partnersShare)}
+                    </td>
+                    <td className="px-4 py-3 text-primary">
+                      {fmt(periodData?.totalPartnerProfit)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Table 1: Company Profits Breakdown */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="flex items-center gap-2">
+            <BusinessIcon className="text-primary" sx={{ fontSize: 24 }} />
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+              جدول أرباح الشركة
+            </h2>
+          </div>
+          <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-hidden shadow-sm">
+            <table className="w-full text-center text-sm">
+              <thead className="bg-primary/5 text-primary border-b border-primary/10">
+                <tr>
+                  <th className="px-4 py-3 font-bold">بند الربح</th>
+                  <th className="px-4 py-3 font-bold">المبلغ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-primary/5">
+                {companyProfitBreakdown.map((row) => (
+                  <tr
+                    key={row.label}
+                    className="hover:bg-primary/5 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                      {row.label}
+                    </td>
+                    <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                      {fmt(row.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-primary/5 font-bold">
+                <tr>
+                  <td className="px-4 py-3">الإجمالي</td>
+                  <td className="px-4 py-3 text-primary">
+                    {fmt(
+                      companyProfitBreakdown.reduce((s, r) => s + (r.amount || 0), 0)
+                    )}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        {/* Table 2: Period Entries (Vouchers) */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center gap-2">
+            <HistoryEduIcon className="text-primary" sx={{ fontSize: 24 }} />
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+              جدول قيود الفترة
+            </h2>
+          </div>
+          <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-x-auto shadow-sm">
+            {/* Mobile: Cards */}
+            <div className="md:hidden divide-y divide-primary/5">
+              {paginatedJournals.length === 0 ? (
+                <div className="px-4 py-8 text-center text-slate-500">
+                  لا توجد قيود في هذه الفترة
+                </div>
+              ) : (
+                paginatedJournals.map((journal) => {
+                  const debit = journal.totalDebit ?? 0;
+                  const credit = journal.totalCredit ?? 0;
+                  const balance = debit - credit;
+                  return (
+                    <button
+                      key={journal.id}
+                      type="button"
+                      onClick={() => onViewJournal?.(journal.id)}
+                      className="w-full text-right p-4 hover:bg-primary/5 transition-colors"
+                    >
+                      <div className="flex justify-between items-start gap-2 mb-2">
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          #{journal.reference || journal.id}
+                        </span>
+                        <div className="flex flex-col gap-0.5 text-xs shrink-0 text-right">
+                          <span className="text-red-600 font-bold">
+                            مدين: {fmt(debit)}
+                          </span>
+                          <span className="text-primary font-bold">
+                            دائن: {fmt(credit)}
+                          </span>
+                          <span
+                            className={`font-bold ${
+                              balance >= 0 ? "text-primary" : "text-red-600"
+                            }`}
+                          >
+                            رصيد: {formatAmount(balance)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mb-1 text-xs">
+                        <span className="text-slate-500">
+                          {getJournalTypeText(journal.type)}
+                        </span>
+                        <span
+                          className={
+                            journal.status === "DRAFT"
+                              ? "text-amber-600"
+                              : "text-slate-500"
+                          }
+                        >
+                          {getJournalStatusText(journal.status)}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm mb-1 line-clamp-2">
+                        {journal.description || "-"}
+                      </p>
+                      <p className="text-slate-500 text-xs">
+                        {journal.date
+                          ? new Date(journal.date)
+                              .toISOString()
+                              .slice(0, 10)
+                              .replace(/-/g, "/")
+                          : "-"}
+                      </p>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop: Table */}
+            <div className="hidden md:block">
+              <table className="w-full text-center text-sm">
+                <thead className="bg-primary/5 text-primary border-b border-primary/10">
+                  <tr>
+                    <th className="px-4 py-3 font-bold">التاريخ</th>
+                    <th className="px-4 py-3 font-bold">رقم القيد</th>
+                    <th className="px-4 py-3 font-bold">النوع</th>
+                    <th className="px-4 py-3 font-bold">الحالة</th>
+                    <th className="px-4 py-3 font-bold">البيان</th>
+                    <th className="px-4 py-3 font-bold">مدين</th>
+                    <th className="px-4 py-3 font-bold">دائن</th>
+                    <th className="px-4 py-3 font-bold">الرصيد</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/5">
+                  {paginatedJournals.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="px-4 py-8 text-center text-slate-500"
+                      >
+                        لا توجد قيود في هذه الفترة
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedJournals.map((journal) => {
+                      const debit = journal.totalDebit ?? 0;
+                      const credit = journal.totalCredit ?? 0;
+                      const balance = debit - credit;
+                      return (
+                        <tr
+                          key={journal.id}
+                          className="hover:bg-primary/5 transition-colors cursor-pointer"
+                          onClick={() => onViewJournal?.(journal.id)}
+                        >
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                            {journal.date
+                              ? new Date(journal.date)
+                                  .toISOString()
+                                  .slice(0, 10)
+                                  .replace(/-/g, "/")
+                              : "-"}
+                          </td>
+                          <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                            #{journal.reference || journal.id}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                            {getJournalTypeText(journal.type)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded ${
+                                journal.status === "DRAFT"
+                                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                  : journal.status === "POSTED"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                              }`}
+                            >
+                              {getJournalStatusText(journal.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                            {journal.description || "-"}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-red-600">
+                            {fmt(debit)}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-primary">
+                            {fmt(credit)}
+                          </td>
+                          <td
+                            className={`px-4 py-3 font-bold ${
+                              balance >= 0 ? "text-primary" : "text-red-600"
+                            }`}
+                          >
+                            {formatAmount(balance)}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+                {journals.length > 0 && (
+                  <tfoot className="bg-primary/5 font-bold border-t border-primary/10">
+                    <tr>
+                      <td colSpan={5} className="px-4 py-3">
+                        الإجمالي
+                      </td>
+                      <td className="px-4 py-3 text-red-600">
+                        {fmt(totalDebit)}
+                      </td>
+                      <td className="px-4 py-3 text-primary">
+                        {fmt(totalCredit)}
+                      </td>
+                      <td
+                        className={`px-4 py-3 ${
+                          totalBalance >= 0 ? "text-primary" : "text-red-600"
+                        }`}
+                      >
+                        {formatAmount(totalBalance)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+
+            {journals.length > 0 && (
+              <div className="p-4 bg-slate-50 dark:bg-background-dark/80 flex justify-between items-center text-xs text-slate-500">
+                <p>
+                  عرض {journalPage * PAGE_SIZE + 1} -{" "}
+                  {Math.min(
+                    journalPage * PAGE_SIZE + PAGE_SIZE,
+                    journals.length
+                  )}{" "}
+                  من أصل {journals.length} قيود
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setJournalPage((p) => Math.max(0, p - 1))
+                    }
+                    disabled={journalPage === 0}
+                    className="w-8 h-8 rounded border border-slate-200 flex items-center justify-center disabled:opacity-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <ChevronRightIcon sx={{ fontSize: 16 }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setJournalPage((p) =>
+                        Math.min(totalJournalPages - 1, p + 1)
+                      )
+                    }
+                    disabled={journalPage >= totalJournalPages - 1}
+                    className="w-8 h-8 rounded border border-slate-200 flex items-center justify-center disabled:opacity-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <ChevronLeftIcon sx={{ fontSize: 16 }} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

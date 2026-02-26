@@ -68,8 +68,8 @@ const Journals = () => {
   const { permissions } = usePermissions();
   const { isDarkMode } = useTheme();
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   const fromPeriod = location.state?.fromPeriod;
@@ -297,6 +297,7 @@ const Journals = () => {
       setJournalLines([]);
       setActiveTab(0);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء إنشاء القيد");
     }
@@ -340,6 +341,7 @@ const Journals = () => {
       setIsEditMode(false);
       queryClient.invalidateQueries(["journal", selectedJournal]);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تعديل القيد");
     }
@@ -354,6 +356,7 @@ const Journals = () => {
       setSelectedJournal(null);
       setActiveTab(0);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حذف القيد");
     }
@@ -365,6 +368,10 @@ const Journals = () => {
       notifySuccess("تم اعتماد القيد بنجاح");
       queryClient.invalidateQueries(["journal", selectedJournal]);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+      queryClient.invalidateQueries(["opening-journals-check"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء اعتماد القيد"
@@ -378,6 +385,10 @@ const Journals = () => {
       notifySuccess("تم إلغاء اعتماد القيد بنجاح");
       queryClient.invalidateQueries(["journal", selectedJournal]);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+      queryClient.invalidateQueries(["opening-journals-check"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء إلغاء الاعتماد"
@@ -516,7 +527,7 @@ const Journals = () => {
             (isSmallScreen && !selectedJournal && !isAddMode) ? (
               <JournalTable
                 onViewDetails={handleViewDetails}
-                isMobile={isMobile}
+                isMobile={isSmallScreen}
                 searchFilters={searchFiltersForTable}
               />
             ) : (

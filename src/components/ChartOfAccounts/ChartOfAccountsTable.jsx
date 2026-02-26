@@ -8,6 +8,11 @@ import {
   Chip,
   Stack,
   Paper,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Divider,
 } from '@mui/material';
 import { AddCircle, Edit, Delete, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
@@ -36,7 +41,104 @@ const ChartOfAccountsTable = ({
   canUpdate,
   canDelete,
   viewMode = 'tree',
-}) => (
+  isSmallScreen = false,
+}) => {
+  const renderCards = () => (
+    <Box sx={{ p: 1 }}>
+      <Stack spacing={1.5}>
+        {flatAccounts.map((account) => {
+          const hasChildren = account.children && account.children.length > 0;
+          const isExpanded = expandedIds.has(account.id);
+          const depth = account._depth ?? 0;
+          const isTreeView = viewMode === 'tree';
+
+          return (
+            <Card
+              key={account.id}
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                ml: isTreeView ? depth * 2 : 0,
+              }}
+              onClick={() => onSelect?.(account)}
+            >
+              <CardContent sx={{ p: 1.5 }}>
+                <Stack spacing={1}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {isTreeView && hasChildren && (
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleExpand(account.id);
+                          }}
+                          sx={{ p: 0.25 }}
+                        >
+                          {isExpanded ? <KeyboardArrowDown fontSize="small" /> : <KeyboardArrowRight fontSize="small" />}
+                        </IconButton>
+                      )}
+                      <Typography variant="subtitle2" fontWeight="bold">
+                        {account.code} - {account.name}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={getAccountTypeLabel(account.type)}
+                      color={getAccountTypeChipColor(account.type)}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                  </Box>
+                  <Divider />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="caption" color="text.secondary">الرصيد (SAR)</Typography>
+                    <Typography variant="body2" fontWeight="600">
+                      {(account.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="caption" color="text.secondary">الحالة</Typography>
+                    <Chip
+                      label={account.isActive !== false ? 'نشط' : 'غير نشط'}
+                      color={account.isActive !== false ? 'success' : 'default'}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                  </Box>
+                  {(canAdd || canUpdate || canDelete) && (
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', pt: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                      {canAdd && (
+                        <Button size="small" variant="outlined" color="primary" startIcon={<AddCircle sx={{ fontSize: 16 }} />} onClick={() => onAddChild(account)}>
+                          فرعي
+                        </Button>
+                      )}
+                      {canUpdate && (
+                        <Button size="small" variant="outlined" color="primary" startIcon={<Edit sx={{ fontSize: 16 }} />} onClick={() => onEdit(account)}>
+                          تعديل
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button size="small" variant="outlined" color="error" startIcon={<Delete sx={{ fontSize: 16 }} />} onClick={() => onDelete(account)}>
+                          حذف
+                        </Button>
+                      )}
+                    </Box>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Stack>
+    </Box>
+  );
+
+  const renderTable = () => (
   <Paper
     elevation={0}
     sx={{
@@ -177,6 +279,26 @@ const ChartOfAccountsTable = ({
       </Table>
     </Box>
   </Paper>
-);
+  );
+
+  return isSmallScreen ? (
+    <Paper
+      elevation={0}
+      sx={{
+        width: '100%',
+        overflow: 'hidden',
+        borderRadius: 2,
+        direction: 'rtl',
+        border: '1px solid',
+        borderColor: 'secondary.main',
+        backgroundColor: 'background.paper',
+      }}
+    >
+      {renderCards()}
+    </Paper>
+  ) : (
+    renderTable()
+  );
+};
 
 export default React.memo(ChartOfAccountsTable);

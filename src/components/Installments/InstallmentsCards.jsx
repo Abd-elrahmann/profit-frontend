@@ -84,7 +84,7 @@ export default function InstallmentsCards({
             }}
             onClick={() => onRowClick(installment)}
           >
-            <CardContent sx={{ p: 2 }}>
+            <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
               <Stack spacing={1.5}>
                 <Box
                   sx={{
@@ -242,7 +242,7 @@ export default function InstallmentsCards({
             borderColor: 'divider',
           }}
         >
-          <CardContent sx={{ p: 2 }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 500 }} mb={1.5}>
               الإجمالي
             </Typography>

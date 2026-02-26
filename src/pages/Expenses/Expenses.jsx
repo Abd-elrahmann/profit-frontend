@@ -33,8 +33,8 @@ const Expenses = () => {
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [exportFormat, setExportFormat] = useState('');
 
-  const isMobile = useMediaQuery('(max-width: 480px)');
-  const isTablet = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();
@@ -149,6 +149,7 @@ const Expenses = () => {
 
   const handleSuccess = () => {
     queryClient.invalidateQueries(['expenses']);
+    queryClient.invalidateQueries(['unposted-journals-all']);
     setExpandedRows([]);
   };
 
@@ -173,7 +174,7 @@ const Expenses = () => {
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">عرض وإدارة كافة المصروفات المسجلة في النظام</p>
           </div>
           <ExpensesToolbar
-            isMobile={isMobile}
+            isSmallScreen={isSmallScreen}
             hasAddPermission={permissions.includes('expenses_Add')}
             hasExportPermission={canExport}
             hasExpenses={!!groupedExpenses.length}
@@ -219,7 +220,7 @@ const Expenses = () => {
                 canUpdate={permissions.includes('expenses_Update')}
                 canDelete={permissions.includes('expenses_Delete')}
                 isDeleting={deleteExpenseMutation.isLoading}
-                isMobile={isMobile}
+                isSmallScreen={isSmallScreen}
               />
             ) : (
               <ExpensesTable
@@ -280,7 +281,7 @@ const Expenses = () => {
           }}
           onSuccess={handleSuccess}
           expense={selectedExpense}
-          isMobile={isMobile}
+          isSmallScreen={isSmallScreen}
         />
       )}
 

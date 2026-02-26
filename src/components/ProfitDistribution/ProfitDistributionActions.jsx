@@ -1,13 +1,4 @@
 import React from "react";
-import {
-  Paper,
-  Typography,
-  Stack,
-  Button,
-  Box,
-  FormControlLabel,
-  Checkbox,
-} from "@mui/material";
 import { Check as CheckIcon, Cancel as CancelIcon, Savings as SavingsIcon } from "@mui/icons-material";
 import { hasDistribution } from "./profitDistributionUtils";
 
@@ -25,21 +16,15 @@ export default function ProfitDistributionActions({
   const distributed = hasDistribution(periodData);
 
   return (
-    <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-      <Typography
-        variant="h6"
-        color={theme.palette.primary.main}
-        fontWeight="bold"
-        mb={2}
-      >
-        الإجراءات
-      </Typography>
+    <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 p-4 shadow-sm">
+      <p className="text-sm font-bold text-primary mb-3">الإجراءات</p>
 
-      {!distributed && (
-        <Box sx={{ mb: 2 }}>
-          <FormControlLabel
-            control={
-              <Checkbox
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {!distributed && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
                 checked={enableSaving}
                 onChange={(e) => {
                   onEnableSavingChange(e.target.checked);
@@ -47,87 +32,57 @@ export default function ProfitDistributionActions({
                     onOpenSavingDialog();
                   }
                 }}
-                color="primary"
+                className="w-4 h-4 rounded border-primary text-primary focus:ring-primary"
               />
-            }
-            label="ادخار من التوزيع"
-          />
-
-          {enableSaving && (
-            <Box
-              sx={{
-                mt: 1,
-                p: 2,
-                bgcolor: theme.palette.primary[50] || "rgba(25, 118, 210, 0.08)",
-                borderRadius: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 1,
-                }}
-              >
-                <Typography variant="body2">نسبة الادخار:</Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {savingPercentage.toFixed(2)}%
-                </Typography>
-              </Box>
-              <Button
-                size="small"
-                startIcon={<SavingsIcon sx={{ marginLeft: "10px" }} />}
-                onClick={onOpenSavingDialog}
-                fullWidth
-                sx={{ mt: 1 }}
-              >
-                تعديل المبلغ
-              </Button>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      <Stack spacing={1}>
-        {!distributed && permissions?.includes("distribution_Post") && (
-          <Button
-            variant="contained"
-            startIcon={<CheckIcon />}
-            onClick={() =>
-              onOpenDistributionDialog(
-                selectedPeriod,
-                periodData?.name,
-                "post"
-              )
-            }
-            fullWidth
-            size="small"
-            sx={{ bgcolor: theme.palette.primary.main }}
-          >
-            توزيع الأرباح
-          </Button>
+              <span className="text-slate-700 dark:text-slate-300">ادخار من التوزيع</span>
+            </label>
+            {enableSaving && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  نسبة الادخار: <strong>{savingPercentage.toFixed(2)}%</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={onOpenSavingDialog}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded transition-colors"
+                >
+                  <SavingsIcon sx={{ fontSize: 16 }} />
+                  تعديل
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
-        {distributed && permissions?.includes("distribution_Post") && (
-          <Button
-            variant="outlined"
-            startIcon={<CancelIcon />}
-            onClick={() =>
-              onOpenDistributionDialog(
-                selectedPeriod,
-                periodData?.name,
-                "unpost"
-              )
-            }
-            fullWidth
-            size="small"
-            sx={{ color: theme.palette.error.main }}
-          >
-            إلغاء التوزيع
-          </Button>
+        {permissions?.includes("distribution_Post") && (
+          <div className="flex gap-2">
+            {!distributed && (
+              <button
+                type="button"
+                onClick={() =>
+                  onOpenDistributionDialog(selectedPeriod, periodData?.name, "post")
+                }
+                className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-all"
+              >
+                <CheckIcon sx={{ fontSize: 18 }} />
+                توزيع الأرباح
+              </button>
+            )}
+            {distributed && (
+              <button
+                type="button"
+                onClick={() =>
+                  onOpenDistributionDialog(selectedPeriod, periodData?.name, "unpost")
+                }
+                className="flex items-center gap-1 px-3 py-1.5 border border-red-500 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+              >
+                <CancelIcon sx={{ fontSize: 18 }} />
+                إلغاء التوزيع
+              </button>
+            )}
+          </div>
         )}
-      </Stack>
-    </Paper>
+      </div>
+    </div>
   );
 }

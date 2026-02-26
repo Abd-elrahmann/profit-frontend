@@ -36,6 +36,7 @@ export const isJournalBalanced = (debit, credit) => {
 export const getJournalSourceTypeText = (sourceType) => {
   const sourceTypeMap = {
     LOAN: "سلفة",
+    SMALL_LOAN: "سلفة صغيرة",
     REPAYMENT: "سداد دفعة",
     LOAN_INTEREST: "فوائد سلفة",
     LOAN_CONVERSION: "نقل مديونية",
@@ -45,6 +46,7 @@ export const getJournalSourceTypeText = (sourceType) => {
     COMPANY_PROFIT_WITHDRAWAL: "سحب ربح شركة",
     PARTNER_TRANSACTION_DEPOSIT: "إيداع مالي لشريك",
     EXPENSES: "مصروف",
+    LOSSES: "خسائر",
     SAVING: "ادخار",
     PARTNER_WITHDRAWING: "انسحاب مالي لشريك",
     ZAKAT: "سحب زكاة",

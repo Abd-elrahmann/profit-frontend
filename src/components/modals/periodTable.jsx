@@ -35,6 +35,7 @@ import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import PeriodsAdvancedSearch from "./PeriodsAdvancedSearch";
+import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 
 const PeriodTable = ({
   onViewDetails,
@@ -399,10 +400,10 @@ const PeriodTable = ({
               borderRadius: "6px",
               p: 1,
               border: "1px solid #e0e0e0",
-              bgcolor: "background.paper",
               '&:focus': {
                 borderColor: 'primary.main',
-              }
+              },
+              ...transparentSearchInputBaseSx,
             }}
             startAdornment={
               <SearchIcon sx={{ color: 'action.active', mr: 1 }} />
@@ -498,7 +499,7 @@ const PeriodTable = ({
   );
 
   const renderCards = () => (
-    <Box sx={{ p: 1 }}>
+    <Box sx={{ width: "100%", py: 2, px: 0, boxSizing: "border-box" }}>
       <Box sx={{ mb: 2 }}>
         <InputBase
           fullWidth
@@ -509,8 +510,8 @@ const PeriodTable = ({
             borderRadius: "6px",
             p: 1.5,
             border: "1px solid #e0e0e0",
-            bgcolor: "background.paper",
-            mb: 2
+            mb: 2,
+            ...transparentSearchInputBaseSx,
           }}
           startAdornment={
             <SearchIcon sx={{ color: 'action.active', mr: 1 }} />
@@ -568,12 +569,15 @@ const PeriodTable = ({
           )}
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ width: "100%" }}>
           {periodsData?.periods?.map((period) => (
-            <Grid item xs={12} key={period.id}>
+            <Grid item xs={12} key={period.id} sx={{ width: "100%", maxWidth: "100%" }}>
               <Card
                 sx={{
-                  border: '1px solid #e0e0e0',
+                  width: "100%",
+                  minWidth: "100%",
+                  border: '1px solid',
+                  borderColor: 'divider',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   '&:hover': {
@@ -589,7 +593,7 @@ const PeriodTable = ({
                   }
                 }}
               >
-                <CardContent sx={{ p: 2 }}>
+                <CardContent sx={{ p: 2, width: "100%", boxSizing: "border-box" }}>
                   <Stack spacing={1}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -709,7 +713,14 @@ const PeriodTable = ({
 
       {renderSelectionInfo()}
 
-      <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 2 }}>
+      <Paper sx={{ 
+        flex: 1, 
+        width: "100%", 
+        maxWidth: "100%",
+        overflow: "hidden", 
+        borderRadius: 2,
+        ...(isMobile && { mx: -2, px: 2 }),
+      }}>
         {!isMobile && renderSearchBar()}
 
         {isMobile ? renderCards() : renderTable()}

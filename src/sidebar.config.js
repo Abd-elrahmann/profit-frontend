@@ -28,45 +28,46 @@ import {
   AttachMoney as InstallmentsIcon,
   Message as Message,
   Description as JournalIcon,
+  Settings as SettingsIcon,
   CalendarMonth as CalendarMonthIcon,
   Savings as SavingsIcon,
   Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 
 export const parentOrder = [
-  'إدارة الموظفين',
-  'إدارة العملاء',
-  'إدارة المستثمرين',
-  'ادارة المصروفات',
-  'المحاسبة المالية',
-  'العمليات المالية',
-  'القوائم المالية',
+  'الموظفين والصلاحيات',
+  'العملاء والتحصيلات',
+  'المستثمرين والانسحابات',
+  'المصروفات',
+  'الحسابات والقيود',
+  'السلف والبنوك',
+  'القوائم والأرباح',
   'الزكاة والادخار',
-  'القوالب'
+  'القوالب والرسائل'
 ];
 
 export const parentIcons = {
-  'إدارة الموظفين': EngineeringIcon,
-  'إدارة العملاء': People,
-  'إدارة المستثمرين': BusinessCenterIcon,
-  'ادارة المصروفات': ReceiptLongIcon,
-  'المحاسبة المالية': AccountingIcon,
-  'العمليات المالية': FinancialOpsIcon,
-  'القوائم المالية': AnalyticsIcon,
+  'الموظفين والصلاحيات': EngineeringIcon,
+  'العملاء والتحصيلات': People,
+  'المستثمرين والانسحابات': BusinessCenterIcon,
+  'المصروفات': ReceiptLongIcon,
+  'الحسابات والقيود': AccountingIcon,
+  'السلف والبنوك': FinancialOpsIcon,
+  'القوائم والأرباح': AnalyticsIcon,
   'الزكاة والادخار': ZakatIcon,
-  'القوالب': ArticleIcon,
+  'القوالب والرسائل': ArticleIcon,
 };
 
 export const parentColors = {
-  'إدارة الموظفين': '#D84315', 
-  'إدارة العملاء': '#00897B', 
-  'إدارة المستثمرين': '#1565C0', 
-  'ادارة المصروفات': '#F57C00', 
-  'المحاسبة المالية': '#7B1FA2', 
-  'العمليات المالية': '#C62828', 
-  'القوائم المالية': '#2E7D32', 
+  'الموظفين والصلاحيات': '#D84315', 
+  'العملاء والتحصيلات': '#00897B', 
+  'المستثمرين والانسحابات': '#1565C0', 
+  'المصروفات': '#F57C00', 
+  'الحسابات والقيود': '#7B1FA2', 
+  'السلف والبنوك': '#C62828', 
+  'القوائم والأرباح': '#2E7D32', 
   'الزكاة والادخار': '#6A1B9A', 
-  'القوالب': '#424242', 
+  'القوالب والرسائل': '#424242', 
 };
   
 export const sidebarItems = [
@@ -89,12 +90,21 @@ export const sidebarItems = [
     parent: null
   },
   {
+    path: '/settings',
+    label: 'الإعدادات',
+    module: 'settings',
+    requiresPermissions: true,
+    icon: SettingsIcon,
+    color: '#5C6BC0',
+    parent: null
+  },
+  {
     path: '/employees',
     label: 'الموظفين',
     icon: Badge,
     module: 'users',
     requiresPermissions: true,
-    parent: 'إدارة الموظفين'
+    parent: 'الموظفين والصلاحيات'
   },
   {
     path: '/roles',
@@ -102,7 +112,7 @@ export const sidebarItems = [
     icon: AdminPanelIcon,
     module: 'roles',
     requiresPermissions: true,
-    parent: 'إدارة الموظفين'
+    parent: 'الموظفين والصلاحيات'
   },
   {
     path: '/clients',
@@ -110,7 +120,7 @@ export const sidebarItems = [
     icon: People,
     module: 'clients',
     requiresPermissions: true,
-    parent: 'إدارة العملاء'
+    parent: 'العملاء والتحصيلات'
   },
   {
     path: '/client-collections',
@@ -118,7 +128,7 @@ export const sidebarItems = [
     icon: ReceiptLongIcon,
     module: 'client-report',
     requiresPermissions: true,
-    parent: 'إدارة العملاء'
+    parent: 'العملاء والتحصيلات'
   },
   {
     path: '/investors',
@@ -126,7 +136,7 @@ export const sidebarItems = [
     icon: InvestorsIcon,
     module: 'partners',
     requiresPermissions: true,
-    parent: 'إدارة المستثمرين'
+    parent: 'المستثمرين والانسحابات'
   },
   {
     path: '/investors-withdraw',
@@ -134,7 +144,7 @@ export const sidebarItems = [
     icon: PaymentIcon,
     module: 'partners-withdraw',
     requiresPermissions: true,
-    parent: 'إدارة المستثمرين'
+    parent: 'المستثمرين والانسحابات'
   },
   {
     path: '/expenses',
@@ -142,7 +152,7 @@ export const sidebarItems = [
     module: 'expenses',
     requiresPermissions: true,
     icon: ReceiptIcon,
-    parent: 'ادارة المصروفات'
+    parent: 'المصروفات'
   },
   {
     path: '/income-statement',
@@ -150,7 +160,7 @@ export const sidebarItems = [
     module: 'income-statement',
     requiresPermissions: true,
     icon: IncomeStatementIcon,
-    parent: 'القوائم المالية'
+    parent: 'القوائم والأرباح'
   },
   {
     path: '/chart-of-accounts',
@@ -158,7 +168,7 @@ export const sidebarItems = [
     icon: AccountBalance,
     module: 'accounts',
     requiresPermissions: true,
-    parent: 'المحاسبة المالية'
+    parent: 'الحسابات والقيود'
   },
   {
     path: '/journal-entries',
@@ -166,7 +176,7 @@ export const sidebarItems = [
     module: 'journals',
     requiresPermissions: true,
     icon: JournalIcon,
-    parent: 'المحاسبة المالية'
+    parent: 'الحسابات والقيود'
   },
   {
     path: '/general-ledger',
@@ -174,7 +184,7 @@ export const sidebarItems = [
     module: 'general-ledger',
     requiresPermissions: true,
     icon: JournalIcon,
-    parent: 'المحاسبة المالية'
+    parent: 'الحسابات والقيود'
   },
   {
     path: '/period-closing',
@@ -182,7 +192,7 @@ export const sidebarItems = [
     module: 'period',
     requiresPermissions: true,
     icon: CalendarMonthIcon,
-    parent: 'القوائم المالية'
+    parent: 'القوائم والأرباح'
   },
   {
     path: '/loans',
@@ -190,7 +200,7 @@ export const sidebarItems = [
     icon: LoanIcon,
     module: 'loans',
     requiresPermissions: true,
-    parent: 'العمليات المالية'
+    parent: 'السلف والبنوك'
   },
   {
     path: '/banks',
@@ -198,7 +208,7 @@ export const sidebarItems = [
     icon: AccountBalance,
     module: 'banks',
     requiresPermissions: true,
-    parent: 'العمليات المالية'
+    parent: 'السلف والبنوك'
   },
   {
     path: '/installments',
@@ -206,7 +216,7 @@ export const sidebarItems = [
     module: 'repayments',
     requiresPermissions: true,
     icon: InstallmentsIcon,
-    parent: 'العمليات المالية'
+    parent: 'السلف والبنوك'
   },
   {
     path: '/treasury',
@@ -214,7 +224,7 @@ export const sidebarItems = [
     module: 'treasury',
     requiresPermissions: true,
     icon: TreasuryIcon,
-    parent: 'العمليات المالية'
+    parent: 'السلف والبنوك'
   },
   {
     path: '/company-profit',
@@ -222,7 +232,7 @@ export const sidebarItems = [
     module: 'company',
     requiresPermissions: true,
     icon: CompanyProfitIcon,
-    parent: 'القوائم المالية'
+    parent: 'القوائم والأرباح'
   },
   {
     path: '/profit-distribution',
@@ -230,7 +240,7 @@ export const sidebarItems = [
     module: 'distribution',
     icon: ProfitDistributionIcon,
     requiresPermissions: true,
-    parent: 'القوائم المالية'
+    parent: 'القوائم والأرباح'
   },
   {
     path: '/zakah',
@@ -254,7 +264,7 @@ export const sidebarItems = [
     icon: Contract,
     module: 'templates',
     requiresPermissions: true,
-    parent: 'القوالب'
+    parent: 'القوالب والرسائل'
   },
   {
     path: '/messages-templates',
@@ -262,7 +272,7 @@ export const sidebarItems = [
     icon: Message,
     module: 'templates',
     requiresPermissions: true,
-    parent: 'القوالب'
+    parent: 'القوالب والرسائل'
   }
 ];
 

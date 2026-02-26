@@ -267,7 +267,7 @@ const LoanClientConversion = ({
                     "& .MuiOutlinedInput-root": {
                       height: "56px",
                       width: isSmallScreen ? "250px" : "350px",
-                        backgroundColor: "background.default",
+                      backgroundColor: "transparent",
                       "&:hover fieldset": {
                         borderColor: "primary.main",
                       },
@@ -321,7 +321,7 @@ const LoanClientConversion = ({
                       "& .MuiOutlinedInput-root": {
                         height: "56px",
                         width: isSmallScreen ? "250px" : "350px",
-                        backgroundColor: "background.default",
+                        backgroundColor: "transparent",
                         "&:hover fieldset": {
                           borderColor: "primary.main",
                         },

@@ -19,7 +19,6 @@ import {
   Stack,
   Divider,
   Typography,
-  Grid,
 } from "@mui/material";
 import {
   Add,
@@ -47,6 +46,7 @@ import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportEmployeesToPDF, exportEmployeesToExcel } from "../../utilities/employeesExporter";
 import { useTheme } from '../../theme/ThemeContext';
+import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
 
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
@@ -173,7 +173,7 @@ export default function Employees() {
   };
 
   const renderTable = () => (
-    <TableContainer  sx={{ borderRadius: 2 }}>
+    <TableContainer sx={{ borderRadius: 2, overflowX: 'auto' }}>
       <Table stickyHeader>
         <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
           <StyledTableRow>
@@ -288,20 +288,20 @@ export default function Employees() {
   );
 
   const renderCards = () => (
-    <Box sx={{ p: isMobile ? 1 : 2 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 }, width: '100%', maxWidth: '100%' }}>
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={30} />
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {usersData?.map((user) => (
-            <Grid item xs={12} md={6} lg={4} key={user.id}>
-              <Card 
-                sx={{ 
-                  border: '1px solid #e0e0e0',
-                  width: '400px',
-                  borderRadius: 2,
+            <Card 
+              key={user.id}
+              sx={{ 
+                border: '1px solid #e0e0e0',
+                width: '100%',
+                borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   '&:hover': {
                     boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
@@ -371,7 +371,7 @@ export default function Employees() {
 
                     <Divider />
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2 }}>
                       <Box>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
                           رقم الهاتف:
@@ -427,21 +427,20 @@ export default function Employees() {
                   </Stack>
                 </CardContent>
               </Card>
-            </Grid>
           ))}
-        </Grid>
+        </Stack>
       )}
     </Box>
   );
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: '100%', overflowX: 'hidden' }}>
       <Helmet>
         <title>الموظفين</title>
         <meta name="description" content="الموظفين" />
       </Helmet>
       
-      <Box sx={{ p: isMobile ? 2 : 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, maxWidth: '100%', overflowX: 'hidden' }}>
         <Box
           sx={{
             display: "flex",
@@ -458,10 +457,9 @@ export default function Employees() {
             onChange={handleSearchChange}
             sx={{
               flex: 1,
-              bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6',
               borderRadius: 2,
-              "& fieldset": { border: "none" },
               minWidth: isSmallScreen ? '100%' : 'auto',
+              ...transparentSearchTextFieldSx,
             }}
             InputProps={{
               startAdornment: (
@@ -475,10 +473,28 @@ export default function Employees() {
           <Stack 
             direction={isSmallScreen ? "column" : "row"} 
             spacing={1}
-            sx={{ minWidth: isSmallScreen ? '100%' : 'auto' }}
+            alignItems={isSmallScreen ? "center" : "stretch"}
+            sx={{ minWidth: isSmallScreen ? '100%' : 'auto', flexWrap: 'wrap' }}
           >
+            {permissions.includes("users_Add") && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAdd}
+                sx={{
+                  bgcolor: "#2E8B45",
+                  "&:hover": { bgcolor: "#2E8B45" },
+                  fontWeight: "bold",
+                  width: isSmallScreen ? '100%' : 'auto',
+                  minWidth: isSmallScreen ? '100%' : 'auto',
+                  py: isSmallScreen ? 1.5 : 1,
+                }}
+              >
+                إضافة موظف جديد
+              </Button>
+            )}
             {permissions.includes("users_Export") && (
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={isSmallScreen ? "center" : "flex-start"} sx={{ width: isSmallScreen ? '100%' : 'auto' }}>
               <Button
                 variant="outlined"
                 startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
@@ -490,8 +506,10 @@ export default function Employees() {
                   "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
                   borderRadius: 2,
                   px: 2,
+                  py: isSmallScreen ? 1.5 : 1,
                   fontWeight: "bold",
                   minWidth: isSmallScreen ? '50%' : 'auto',
+                  flex: isSmallScreen ? 1 : 'none',
                 }}
               >
                 PDF
@@ -507,36 +525,22 @@ export default function Employees() {
                   "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
                   borderRadius: 2,
                   px: 2,
+                  py: isSmallScreen ? 1.5 : 1,
                   fontWeight: "bold",
                   minWidth: isSmallScreen ? '50%' : 'auto',
+                  flex: isSmallScreen ? 1 : 'none',
                 }}
               >
                 Excel
               </Button>
             </Stack>
             )}
-
-            {permissions.includes("users_Add") && (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAdd}
-                sx={{
-                  bgcolor: "#2E8B45",
-                  "&:hover": { bgcolor: "#2E8B45" },
-                  fontWeight: "bold",
-                  minWidth: isSmallScreen ? '100%' : 'auto',
-                  py: isSmallScreen ? 1.5 : 1,
-                }}
-              >
-                إضافة موظف جديد
-              </Button>
-            )}
           </Stack>
         </Box>
 
         <Paper sx={{ 
           width: "100%", 
+          maxWidth: '100%',
           overflow: "hidden", 
           borderRadius: 2,
           minHeight: 400

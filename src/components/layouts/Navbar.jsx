@@ -1,480 +1,213 @@
-import React, { useState, useEffect } from "react";
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Box,
-  Menu,
-  MenuItem,
-  Avatar,
-  Divider,
-  ListItemIcon,
-  ListItemText,
-  Tooltip,
-  useMediaQuery,
-  useTheme as useMuiTheme,
-  Badge,
-  alpha,
-} from "@mui/material";
-import {
-  Menu as MenuIcon,
-  AccountCircle,
-  Logout,
-  Brightness4,
-  Brightness7,
-  Person,
-} from "@mui/icons-material";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../../theme/ThemeContext";
+import { Menu as MenuIcon, Notifications as NotificationsIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
 import { useAuth } from "../Contexts/AuthContext";
+import { useNotifications } from "../Contexts/NotificationsContext";
+import { usePermissions } from "../Contexts/PermissionsContext";
 import Logo from "/assets/images/logo.webp";
 
 const Navbar = ({ onMenuToggle }) => {
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [scrolled, setScrolled] = useState(false);
   const { user, logout } = useAuth();
-  const { isDarkMode, toggleTheme } = useTheme();
-  const muiTheme = useMuiTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
+  const { notifications, count, shouldShake, onApproveJournal, approvingId } = useNotifications();
+  const { permissions } = usePermissions();
+  const canPostJournals = permissions?.includes("journals_Post") ?? false;
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const notificationsRef = useRef(null);
+  const prevCountRef = useRef(count);
+
+  const showAvatar = user?.profileImage && !imgError;
+  const userRole = user?.role?.name || (user?.roleId === 1 ? "مدير النظام" : "مستخدم");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+    const handleClickOutside = (e) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
     };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleUserMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleUserMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleProfileClick = () => {
-    handleUserMenuClose();
-    navigate("/profile");
-  };
+  useEffect(() => {
+    if (prevCountRef.current > 0 && count === 0 && showNotifications) {
+      setShowNotifications(false);
+    }
+    prevCountRef.current = count;
+  }, [count, showNotifications]);
 
   const handleLogout = async () => {
-    handleUserMenuClose();
+    setShowUserMenu(false);
     await logout();
     navigate("/login", { replace: true });
   };
 
+  const handleNotificationClick = (link) => {
+    setShowNotifications(false);
+    navigate(link);
+  };
+
   return (
-    <AppBar
-      position="fixed"
-      elevation={scrolled ? 4 : 0}
-      sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        background: isDarkMode
-          ? scrolled
-            ? 'linear-gradient(135deg, #2a2a3e 0%, #26263e 100%)'
-            : 'linear-gradient(135deg, #1f1f2e 0%, #2a2a3e 100%)'
-          : scrolled
-          ? 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-          : '#ffffff',
-        color: isDarkMode ? "#fff" : "#000",
-        boxShadow: scrolled
-          ? isDarkMode
-            ? '0 4px 20px rgba(0, 0, 0, 0.5)'
-            : '0 4px 20px rgba(0, 0, 0, 0.08)'
-          : 'none',
-        backdropFilter: 'blur(10px)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        borderBottom: scrolled
-          ? 'none'
-          : isDarkMode
-          ? '1px solid rgba(255, 255, 255, 0.1)'
-          : '1px solid rgba(0, 0, 0, 0.08)',
-      }}
-    >
-      <Toolbar sx={{ justifyContent: "space-between", minHeight: { xs: 64, sm: 70 } }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={onMenuToggle}
-            sx={{
-              mr: 1,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.1) rotate(90deg)',
-                bgcolor: isDarkMode
-                  ? alpha('#fff', 0.1)
-                  : alpha('#000', 0.05),
-              },
-            }}
+    <header className="h-14 bg-white dark:bg-slate-900 border-b border-primary/5 px-4 md:px-8 flex items-center justify-between shrink-0 fixed top-0 left-0 right-0 z-[1100]">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <button
+          type="button"
+          data-sidebar-toggle
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMenuToggle(); }}
+          className="lg:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation cursor-pointer -ml-1"
+          aria-label="فتح/إغلاق القائمة"
+          style={{ touchAction: 'manipulation' }}
+        >
+          <MenuIcon sx={{ fontSize: 24, color: "inherit" }} />
+        </button>
+
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
+          <img src={Logo} alt="Logo" className="size-7 md:size-8 object-contain shrink-0" />
+          <span className="font-bold text-primary text-xs sm:text-base md:text-lg whitespace-nowrap truncate">
+            نظام إدارة السلف
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 md:gap-6 shrink-0">
+        <div className="relative" ref={notificationsRef}>
+          <button
+            type="button"
+            onClick={() => setShowNotifications((v) => !v)}
+            className={`relative p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors ${shouldShake ? "animate-bell-ring" : ""}`}
+            aria-label="الإشعارات"
           >
-            <MenuIcon />
-          </IconButton>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
-              }}
-            >
-              <img
-                src={Logo}
-                alt="Logo"
-                style={{
-                  width: isMobile ? 32 : 38,
-                  height: isMobile ? 32 : 38,
-                  objectFit: 'contain',
-                }}
-              />
-            </Box>
-
-            {!isMobile && (
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 800,
-                  color: (theme) => theme.palette.primary.main,
-                  fontSize: '1.3rem',
-                  letterSpacing: '-0.5px',
-                }}
-              >
-                نظام إدارة السلف
-              </Typography>
+            <NotificationsIcon sx={{ fontSize: 26, color: "inherit" }} />
+            {count > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
+                {count > 99 ? "99+" : count}
+              </span>
             )}
-            
-            {!isMobile && (
-              <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"} arrow>
-                <IconButton
-                  onClick={toggleTheme}
-                  sx={{
-                    ml: 2,
-                    width: 40,
-                    height: 40,
-                    borderRadius: '10px',
-                    bgcolor: isDarkMode
-                      ? alpha('#fff', 0.1)
-                      : alpha('#000', 0.05),
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      bgcolor: isDarkMode
-                        ? alpha('#fff', 0.15)
-                        : alpha('#000', 0.1),
-                      transform: 'rotate(180deg)',
-                    },
-                  }}
-                >
-                  {isDarkMode ? (
-                    <Brightness7 sx={{ fontSize: 22, color: '#ffa726' }} />
-                  ) : (
-                    <Brightness4 sx={{ fontSize: 22, color: '#5e35b1' }} />
-                  )}
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        </Box>
+          </button>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {!isMobile && user?.name && (
-            <Box
-              sx={{
-                textAlign: 'right',
-                mr: 1,
-                px: 2,
-                py: 1,
-                borderRadius: '12px',
-                bgcolor: isDarkMode
-                  ? alpha('#fff', 0.05)
-                  : alpha('#667eea', 0.05),
-                border: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#667eea', 0.2)}`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  bgcolor: isDarkMode
-                    ? alpha('#fff', 0.08)
-                    : alpha('#667eea', 0.08),
-                },
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
-                  fontSize: '0.75rem',
-                  lineHeight: 1.2,
-                  fontWeight: 500,
-                }}
-              >
-                مرحباً بك
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  fontWeight: 700,
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  fontSize: '0.95rem',
-                  lineHeight: 1.2,
-                }}
-              >
-                {user.name}
-              </Typography>
-            </Box>
-          )}
-
-          <Tooltip title="الحساب" arrow>
-            <IconButton
-              onClick={handleUserMenuOpen}
-              sx={{
-                p: 0,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
-              }}
-            >
-              <Badge
-                overlap="circular"
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                variant="dot"
-                sx={{
-                  '& .MuiBadge-badge': {
-                    backgroundColor: '#44b700',
-                    color: '#ffc107',
-                    boxShadow: `0 0 0 2px ${isDarkMode ? '#1a1a2e' : '#fff'}`,
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    '&::after': {
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '50%',
-                      animation: 'ripple 1.2s infinite ease-in-out',
-                      border: '1px solid currentColor',
-                      content: '""',
-                    },
-                  },
-                  '@keyframes ripple': {
-                    '0%': {
-                      transform: 'scale(.8)',
-                      opacity: 1,
-                    },
-                    '100%': {
-                      transform: 'scale(2.4)',
-                      opacity: 0,
-                    },
-                  },
-                }}
-              >
-                <Avatar
-                  src={user?.profileImage}
-                  alt={user?.name}
-                  sx={{
-                    width: 42,
-                    height: 42,
-                    background: user?.profileImage
-                      ? 'transparent'
-                      : '#f59e0b',
-                    color: 'white',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    border: `3px solid #f59e0b`,
-                    boxShadow: isDarkMode
-                      ? '0 4px 15px rgba(245, 158, 11, 0.4)'
-                      : '0 4px 15px rgba(245, 158, 11, 0.3)',
-                  }}
+          {showNotifications && (
+            <div className="fixed top-12 left-1/2 -translate-x-1/2 mt-2 w-80 flex flex-col bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-[1200] max-h-[85vh] overflow-hidden md:absolute md:top-full md:left-0 md:translate-x-0 md:mt-2">
+              <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 shrink-0">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                    الإشعارات
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {count > 0
+                      ? `${count} قيد يحتاج اعتماد`
+                      : "لا توجد إشعارات جديدة"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleNotificationClick("/journal-entries")}
+                  className="shrink-0 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors"
                 >
-                  {!user?.profileImage && user?.name
-                    ? user.name.charAt(0).toUpperCase()
-                    : ''}
-                </Avatar>
-              </Badge>
-            </IconButton>
-          </Tooltip>
-          
-          {isMobile && (
-            <Tooltip title={isDarkMode ? "الوضع النهاري" : "الوضع الليلي"} arrow>
-              <IconButton
-                onClick={toggleTheme}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '10px',
-                  bgcolor: isDarkMode
-                    ? alpha('#fff', 0.1)
-                    : alpha('#000', 0.05),
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    bgcolor: isDarkMode
-                      ? alpha('#fff', 0.15)
-                      : alpha('#000', 0.1),
-                    transform: 'rotate(180deg)',
-                  },
-                }}
-              >
-                {isDarkMode ? (
-                  <Brightness7 sx={{ fontSize: 20, color: '#ffa726' }} />
+                  الذهاب للقيود
+                </button>
+              </div>
+              <div className="py-2 overflow-y-auto max-h-[60vh] min-h-0">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                    لا توجد قيود تحتاج اعتماد
+                  </div>
                 ) : (
-                  <Brightness4 sx={{ fontSize: 20, color: '#5e35b1' }} />
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className="flex items-start gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700/50 last:border-0"
+                    >
+                      <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => handleNotificationClick(n.link)}
+                      >
+                        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                          {n.message}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {n.detail}
+                        </p>
+                      </div>
+                      {canPostJournals && (
+                        <button
+                          type="button"
+                          onClick={(e) => onApproveJournal(n.journalId, e)}
+                          disabled={approvingId === n.journalId}
+                          className="shrink-0 p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="اعتماد القيد"
+                          aria-label="اعتماد القيد"
+                        >
+                          {approvingId === n.journalId ? (
+                            <div className="size-[22px] rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                          ) : (
+                            <CheckCircleIcon sx={{ fontSize: 22 }} />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  ))
                 )}
-              </IconButton>
-            </Tooltip>
+              </div>
+            </div>
           )}
+        </div>
 
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleUserMenuClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            PaperProps={{
-              sx: {
-                mt: 1.5,
-                minWidth: 240,
-                borderRadius: '16px',
-                boxShadow: isDarkMode
-                  ? '0 8px 32px rgba(0, 0, 0, 0.5)'
-                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
-                bgcolor: isDarkMode ? '#1a1a2e' : '#ffffff',
-                border: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
-                overflow: 'visible',
-                '&::before': {
-                  content: '""',
-                  display: 'block',
-                  position: 'absolute',
-                  top: 0,
-                  right: 14,
-                  width: 12,
-                  height: 12,
-                  bgcolor: isDarkMode ? '#1a1a2e' : '#ffffff',
-                  transform: 'translateY(-50%) rotate(45deg)',
-                  zIndex: 0,
-                  borderTop: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
-                  borderLeft: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
-                },
-              },
-            }}
+        <div className="relative flex items-center gap-3 border-r border-slate-200 dark:border-slate-700 pr-4 md:pr-6">
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setShowUserMenu((v) => !v)}
+            onBlur={() => setTimeout(() => setShowUserMenu(false), 150)}
+            tabIndex={0}
+            role="button"
           >
-            <Box
-              sx={{
-                px: 2.5,
-                py: 2,
-                borderBottom: `1px solid ${isDarkMode ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                <Avatar
-                  src={user?.profileImage}
-                  alt={user?.name}
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    background: user?.profileImage
-                      ? 'transparent'
-                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  }}
-                >
-                  {!user?.profileImage && user?.name
-                    ? user.name.charAt(0).toUpperCase()
-                    : ''}
-                </Avatar>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
-                    {user?.name || "مستخدم"}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
-                      fontSize: '0.75rem',
-                    }}
-                  >
-                    {user?.email || ""}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <MenuItem
-              onClick={handleProfileClick}
-              sx={{
-                mx: 1,
-                my: 1,
-                borderRadius: '10px',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  bgcolor: isDarkMode
-                    ? alpha('#667eea', 0.2)
-                    : alpha('#667eea', 0.1),
-                  transform: 'translateX(-4px)',
-                },
-              }}
-            >
-              <ListItemIcon>
-                <Person
-                  fontSize="small"
-                  sx={{
-                    color: isDarkMode ? '#667eea' : '#667eea',
-                  }}
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-none">
+                {user?.name || "مستخدم"}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-1">{userRole}</p>
+            </div>
+            <div className="relative size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+              {showAvatar ? (
+                <img
+                  src={user.profileImage}
+                  alt={user?.name ? `صورة ${user.name}` : "صورة المستخدم"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={() => setImgError(true)}
                 />
-              </ListItemIcon>
-              <ListItemText>
-                <Typography fontWeight={500}>الملف الشخصي</Typography>
-              </ListItemText>
-            </MenuItem>
+              ) : (
+                <span className="text-primary font-bold text-sm">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
+                </span>
+              )}
+            </div>
+          </div>
 
-            <Divider sx={{ mx: 1 }} />
-
-            <MenuItem
-              onClick={handleLogout}
-              sx={{
-                mx: 1,
-                my: 1,
-                borderRadius: '10px',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  bgcolor: alpha('#f44336', 0.1),
-                  transform: 'translateX(-4px)',
-                },
-              }}
-            >
-              <ListItemIcon>
-                <Logout fontSize="small" sx={{ color: '#f44336' }} />
-              </ListItemIcon>
-              <ListItemText>
-                <Typography color="#f44336" fontWeight={500}>
-                  تسجيل الخروج
-                </Typography>
-              </ListItemText>
-            </MenuItem>
-          </Menu>
-        </Box>
-      </Toolbar>
-    </AppBar>
+          {showUserMenu && (
+            <div className="absolute top-full left-0 mt-2 w-48 py-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-50">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUserMenu(false);
+                  navigate("/profile");
+                }}
+                className="w-full px-4 py-2 text-right text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                الملف الشخصي
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full px-4 py-2 text-right text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                تسجيل الخروج
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
   );
 };
 

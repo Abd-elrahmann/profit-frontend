@@ -77,11 +77,8 @@ const GeneralLedgerFilters = ({
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgb(248 250 252)',
+                    backgroundColor: 'transparent',
                     borderRadius: '0.5rem',
-                  },
-                  '& .MuiOutlinedInput-root.dark': {
-                    backgroundColor: 'rgb(30 41 59)',
                   },
                 }}
               />

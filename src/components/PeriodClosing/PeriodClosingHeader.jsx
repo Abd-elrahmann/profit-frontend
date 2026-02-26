@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Tabs, Tab, Typography, InputBase, IconButton } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
+import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 
 export default function PeriodClosingHeader({
   activeTab,
@@ -42,7 +43,7 @@ export default function PeriodClosingHeader({
               borderRadius: "6px",
               p: 1,
               border: (theme) => `1px solid ${theme.palette.divider}`,
-              bgcolor: "background.paper",
+              ...transparentSearchInputBaseSx,
             }}
           />
         </Box>

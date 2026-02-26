@@ -25,8 +25,8 @@ export default function GeneralLedger() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit] = useState(10);
 
-  const isMobile = useMediaQuery('(max-width: 480px)');
-  const isTablet = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();

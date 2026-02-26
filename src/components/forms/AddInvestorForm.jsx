@@ -69,6 +69,17 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
+      // التحقق من رقم الهوية قبل عرض العقد
+      const nationalId = String(values.nationalId || '').trim();
+      if (nationalId) {
+        const { data } = await Api.get(`/api/partners/check-national-id/${encodeURIComponent(nationalId)}`);
+        if (data?.exists) {
+          notifyError('المساهم برقم الهوية هذا موجود مسبقًا');
+          setLoading(false);
+          return;
+        }
+      }
+
       const capitalClean = String(values.capitalAmount || '').replace(/,/g, '').replace(/[^0-9]/g, '');
       const capitalAmount = parseInt(capitalClean) || 0;
       const orgProfitPercent = parseInt(values.orgProfitPercent) || 0;
@@ -127,6 +138,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTORS] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTOR_DETAILS] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK] });
+    queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
     onSuccess?.();
   };
 

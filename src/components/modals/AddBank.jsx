@@ -13,7 +13,7 @@ import {
 import { createBank, updateBank } from "../../pages/Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { useTheme } from "../../theme/ThemeContext";
-const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile = false }) => {
+const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile = false, isSmallScreen }) => {
   const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
     name: "",
@@ -148,17 +148,17 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth={isMobile ? "xs" : "sm"} 
+      maxWidth={(isSmallScreen ?? isMobile) ? "xs" : "sm"} 
       fullWidth 
-      fullScreen={isMobile}
+      fullScreen={isSmallScreen ?? isMobile}
       dir="rtl"
       PaperProps={{
         sx: {
-          borderRadius: isMobile ? 0 : 2,
+          borderRadius: (isSmallScreen ?? isMobile) ? 0 : 2,
         }
       }}
     >
-      <DialogTitle sx={{ pb: 1, position: isMobile ? 'sticky' : 'static', top: 0, bgcolor: 'background.paper', zIndex: 1 }}>
+      <DialogTitle sx={{ pb: 1, position: (isSmallScreen ?? isMobile) ? 'sticky' : 'static', top: 0, bgcolor: 'background.paper', zIndex: 1 }}>
         <Typography variant="h6" fontWeight="bold">
           {isEditMode ? "تعديل حساب بنكي" : "إضافة حساب بنكي جديد"}
         </Typography>
@@ -174,7 +174,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
             error={!!errors.name}
             helperText={errors.name}
             required
-            size={isMobile ? "small" : "medium"}
+            size={(isSmallScreen ?? isMobile) ? "small" : "medium"}
           />
 
           <TextField
@@ -186,7 +186,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
             error={!!errors.owner}
             helperText={errors.owner}
             required
-            size={isMobile ? "small" : "medium"}
+            size={(isSmallScreen ?? isMobile) ? "small" : "medium"}
           />
 
           <TextField
@@ -198,7 +198,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
             error={!!errors.accountNumber}
             helperText={errors.accountNumber}
             required
-            size={isMobile ? "small" : "medium"}
+            size={(isSmallScreen ?? isMobile) ? "small" : "medium"}
             inputProps={{
               inputMode: "text",
               maxLength: 14,
@@ -219,7 +219,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
             error={!!errors.IBAN}
             helperText={errors.IBAN}
             required
-            size={isMobile ? "small" : "medium"}
+            size={(isSmallScreen ?? isMobile) ? "small" : "medium"}
             inputProps={{
               inputMode: "text",
               maxLength: 24,
@@ -240,7 +240,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
             error={!!errors.limit}
             helperText={errors.limit}
             required
-            size={isMobile ? "small" : "medium"}
+            size={(isSmallScreen ?? isMobile) ? "small" : "medium"}
             inputProps={{
               inputMode: "numeric",
               min: 0,
@@ -256,19 +256,19 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
         p: 3, 
         gap: 1, 
         flexDirection: "row-reverse",
-        position: isMobile ? 'sticky' : 'static',
+        position: (isSmallScreen ?? isMobile) ? 'sticky' : 'static',
         bottom: 0,
         bgcolor: 'background.paper',
-        borderTop: isMobile ? '1px solid' : 'none',
+        borderTop: (isSmallScreen ?? isMobile) ? '1px solid' : 'none',
         borderColor: 'divider'
       }}>
         <Button
           onClick={handleClose}
           disabled={loading}
           variant="outlined"
-          fullWidth={isMobile}
+          fullWidth={isSmallScreen ?? isMobile}
           sx={{
-            minWidth: isMobile ? 'auto' : "100px",
+            minWidth: (isSmallScreen ?? isMobile) ? 'auto' : "100px",
             borderColor: "grey.400",
             color: "text.secondary",
             "&:hover": {
@@ -283,11 +283,11 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
           variant="contained"
           onClick={handleSubmit}
           disabled={loading}
-          fullWidth={isMobile}
+          fullWidth={isSmallScreen ?? isMobile}
           sx={{
             bgcolor: "primary.main",
             "&:hover": { bgcolor: "primary.dark" },
-            minWidth: isMobile ? 'auto' : "100px",
+            minWidth: (isSmallScreen ?? isMobile) ? 'auto' : "100px",
           }}
         >
           {loading ? (

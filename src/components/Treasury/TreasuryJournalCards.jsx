@@ -4,15 +4,18 @@ import dayjs from 'dayjs';
 
 export default function TreasuryJournalCards({ journals, isDarkMode }) {
   return (
-    <Stack spacing={2} sx={{ p: 2 }}>
+    <Stack spacing={1.5} sx={{ p: 1, width: '100%' }}>
       {journals.map((journal) => (
         <Card
           key={journal.id}
           variant="outlined"
           sx={{
+            width: '100%',
             borderRadius: 2,
             bgcolor: isDarkMode ? '#2a2a2a' : 'background.paper',
-            borderColor: isDarkMode ? '#424242' : '#e0e0e0',
+            border: '1px solid',
+            borderColor: isDarkMode ? '#424242' : 'divider',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
           }}
         >
           <CardContent sx={{ p: 2 }}>

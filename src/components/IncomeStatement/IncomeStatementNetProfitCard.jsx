@@ -4,16 +4,17 @@ import { AccountBalanceWallet, Info } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { formatNumber } from './incomeStatementUtils';
 
-const IncomeStatementNetProfitCard = ({ incomeData }) => {
+const IncomeStatementNetProfitCard = ({ incomeData, isSmallScreen = false }) => {
   const theme = useTheme();
 
   return (
     <Paper
       elevation={0}
       sx={{
-        p: 4,
+        p: { xs: 2, sm: 3, md: 4 },
         width: '100%',
-        color: 'white',
+        bgcolor: 'transparent',
+        color: 'text.primary',
         textAlign: 'center',
         borderRadius: 3,
         position: 'relative',
@@ -23,14 +24,23 @@ const IncomeStatementNetProfitCard = ({ incomeData }) => {
       <Box sx={{ position: 'relative', zIndex: 1 }}>
         <AccountBalanceWallet
           sx={{
-            fontSize: 48,
+            fontSize: { xs: 36, sm: 42, md: 48 },
             color: theme.palette.primary.main,
             mb: 2,
             opacity: 0.9,
           }}
         />
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-          <Typography sx={{ fontSize: '1.25rem', fontWeight: 'bold', opacity: 0.9, mr: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: isSmallScreen ? 'column' : 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 2,
+            gap: 0.5,
+          }}
+        >
+          <Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }, fontWeight: 'bold', mr: isSmallScreen ? 0 : 1 }}>
             {incomeData.netProfit >= 0 ? 'صافي الربح القابل للتوزيع' : 'صافي الخسارة'}
           </Typography>
           <Tooltip title="صافي الربح = إجمالي الإيرادات - إجمالي المصروفات" arrow>
@@ -39,7 +49,7 @@ const IncomeStatementNetProfitCard = ({ incomeData }) => {
         </Box>
         <Typography
           sx={{
-            fontSize: '3rem',
+            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
             color: incomeData.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main,
             fontWeight: 900,
             mb: 1,
@@ -47,7 +57,13 @@ const IncomeStatementNetProfitCard = ({ incomeData }) => {
         >
           {formatNumber(Math.abs(incomeData.netProfit))}
         </Typography>
-        <Typography sx={{ fontSize: '0.875rem', opacity: 0.8 }}>
+        <Typography
+          sx={{
+            fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
+            color: 'text.secondary',
+            px: { xs: 1, md: 0 },
+          }}
+        >
           المبلغ المتبقي بعد خصم جميع المصروفات - جاهز للتوزيع على المساهمين
         </Typography>
       </Box>

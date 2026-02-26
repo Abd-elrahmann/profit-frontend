@@ -261,7 +261,7 @@ const LogsToolbar = ({
   const renderMobileView = () => (
     <>
       {exportButtons && (
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1 }}>
           {exportButtons}
         </Box>
       )}
@@ -269,6 +269,7 @@ const LogsToolbar = ({
       <Accordion 
         sx={{ 
           boxShadow: 'none',
+          bgcolor: 'transparent',
           border: '1px solid',
           borderColor: 'divider',
           '&:before': { display: 'none' }
@@ -277,7 +278,7 @@ const LogsToolbar = ({
         <AccordionSummary
           expandIcon={<ExpandMore />}
           sx={{
-            bgcolor: 'background.paper',
+            bgcolor: 'transparent',
             borderBottom: hasActiveFilters ? '2px solid' : 'none',
             borderColor: 'primary.main',
             minHeight: '60px !important',
@@ -299,7 +300,7 @@ const LogsToolbar = ({
           </Box>
         </AccordionSummary>
       
-      <AccordionDetails sx={{ p: 2 }}>
+      <AccordionDetails sx={{ p: 2, bgcolor: 'transparent' }}>
         <Stack spacing={2}>
           <FormControl fullWidth size="small">
             <InputLabel>نوع الإجراء</InputLabel>
@@ -404,10 +405,8 @@ const LogsToolbar = ({
   return (
     <Box 
       sx={{ 
-        bgcolor: "background.paper", 
+        bgcolor: "transparent", 
         borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
         mb: 3,
         overflow: 'hidden'
       }}
@@ -417,9 +416,7 @@ const LogsToolbar = ({
       {hasActiveFilters && (
         <Box sx={{ 
           p: isMobile ? 1.5 : 2, 
-          bgcolor: 'grey.50', 
-          borderTop: '1px solid',
-          borderColor: 'divider'
+          bgcolor: 'transparent', 
         }}>
           <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
             الفلاتر النشطة:

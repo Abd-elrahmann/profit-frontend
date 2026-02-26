@@ -38,18 +38,19 @@ function KafeelFormFields({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* المعلومات الشخصية */}
-      <Box
-        className="flex items-center gap-2 pb-2 mb-3"
-        sx={{ borderBottom: "1px solid", borderColor: "divider" }}
-      >
-        <AccountCircle sx={{ fontSize: 24, color: 'primary.main' }} />
-        <Typography variant="subtitle1" fontWeight="bold">
-          المعلومات الشخصية
-        </Typography>
-      </Box>
-      <Grid container spacing={3}>
+      <Box>
+        <Box
+          className="flex items-center gap-2 pb-2 mb-3"
+          sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+        >
+          <AccountCircle sx={{ fontSize: 24, color: 'primary.main' }} />
+          <Typography variant="subtitle1" fontWeight="bold">
+            المعلومات الشخصية
+          </Typography>
+        </Box>
+        <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>اسم الكفيل</Typography>
           <TextField
@@ -103,11 +104,12 @@ function KafeelFormFields({
           />
         </Grid>
       </Grid>
+      </Box>
 
-      {/* بيانات العنوان - سطر جديد كامل، ثم حقوله تحته */}
-      <Box sx={{ width: "100%", mt: 4 }}>
+      {/* بيانات العنوان */}
+      <Box sx={{ width: "100%" }}>
         <Box
-          className="flex items-center gap-2 pb-2 mb-2"
+          className="flex items-center gap-2 pb-2 mb-3"
           sx={{ borderBottom: "1px solid", borderColor: "divider" }}
         >
           <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
@@ -139,10 +141,10 @@ function KafeelFormFields({
         </Grid>
       </Box>
 
-      {/* بيانات العمل والدخل - سطر جديد كامل، ثم حقوله تحته */}
-      <Box sx={{ width: "100%", mt: 4 }}>
+      {/* بيانات العمل والدخل */}
+      <Box sx={{ width: "100%" }}>
         <Box
-          className="flex items-center gap-2 pb-2 mb-2"
+          className="flex items-center gap-2 pb-2 mb-3"
           sx={{ borderBottom: "1px solid", borderColor: "divider" }}
         >
           <Work sx={{ fontSize: 24, color: 'primary.main' }} />
@@ -194,9 +196,10 @@ export default function ClientsKafeelTab({
   selectedClient,
   editMode,
   selectedKafeelId,
-  kafeelFormData = {}, // Default to empty object
-  permissions = [], // Default to empty array
+  kafeelFormData = {},
+  permissions = [],
   isDarkMode,
+  isMobile = false,
   onAddKafeel,
   onEditKafeel,
   onCancelEdit,
@@ -210,13 +213,17 @@ export default function ClientsKafeelTab({
 
   if (!clientDetails) return null;
 
+  const btnSize = isMobile ? "small" : "medium";
+
   return (
-    <Paper sx={{ p: 3 }}>
+    <Paper sx={{ p: { xs: 2, md: 3 } }}>
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: 2,
           mb: 3,
         }}
       >
@@ -224,6 +231,7 @@ export default function ClientsKafeelTab({
         {selectedClient && permissions.includes("clients_Add") && (
           <Button
             variant="contained"
+            size={btnSize}
             startIcon={<Add />}
             onClick={onAddKafeel}
             sx={{
@@ -253,8 +261,10 @@ export default function ClientsKafeelTab({
                 <Box
                   sx={{
                     display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
                     justifyContent: "space-between",
-                    alignItems: "center",
+                    alignItems: { xs: "stretch", sm: "center" },
+                    gap: 1,
                     mb: 2,
                   }}
                 >
@@ -264,12 +274,13 @@ export default function ClientsKafeelTab({
                       ? currentFormData?.name || kafeel.name
                       : kafeel.name}
                   </Typography>
-                  <Box sx={{ display: "flex", gap: 1 }}>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                     {permissions.includes("clients_Update") && (
                       <>
                         {!isEditingThisKafeel ? (
                           <Button
                             variant="outlined"
+                            size={btnSize}
                             startIcon={<Edit sx={{ ml: 1 }} />}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -285,11 +296,12 @@ export default function ClientsKafeelTab({
                           </Button>
                         ) : (
                           <>
-                            <Button variant="outlined" onClick={onCancelEdit}>
+                            <Button variant="outlined" size={btnSize} onClick={onCancelEdit}>
                               إلغاء
                             </Button>
                             <Button
                               variant="contained"
+                              size={btnSize}
                               startIcon={<Save sx={{ ml: 1 }} />}
                               sx={{
                                 bgcolor: "primary.main",
@@ -307,6 +319,7 @@ export default function ClientsKafeelTab({
                       !isEditingThisKafeel && (
                       <Button
                         variant="outlined"
+                        size={btnSize}
                         color="error"
                         startIcon={<Delete sx={{ ml: 1 }} />}
                         onClick={(e) => {

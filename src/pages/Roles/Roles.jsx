@@ -19,7 +19,6 @@ import {
   Stack,
   Divider,
   Typography,
-  Grid,
 } from "@mui/material";
 import {
   Add,
@@ -29,6 +28,7 @@ import {
   Dashboard,
 } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
+import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
 import Api from "../../config/Api";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -125,7 +125,7 @@ export default function Roles() {
   };
 
   const renderTable = () => (
-    <TableContainer  sx={{ borderRadius: 2 }}>
+    <TableContainer sx={{ borderRadius: 2, overflowX: 'auto' }}>
       <Table stickyHeader>
         <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
           <StyledTableRow>
@@ -212,19 +212,19 @@ export default function Roles() {
   );
 
   const renderCards = () => (
-    <Box sx={{ p: isMobile ? 1 : 2 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 }, width: '100%', maxWidth: '100%' }}>
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress size={30} />
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {rolesData?.roles?.map((role) => (
-            <Grid item xs={12} md={6} lg={4} key={role.id}>
-              <Card 
-                sx={{ 
-                  border: '1px solid #e0e0e0',
-                  width: '400px',
+            <Card 
+              key={role.id}
+              sx={{ 
+                border: '1px solid #e0e0e0',
+                width: '100%',
                   borderRadius: 2,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   '&:hover': {
@@ -295,7 +295,7 @@ export default function Roles() {
 
                     <Divider />
 
-                    <Box>
+                    <Box sx={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                         الوصف:
                       </Typography>
@@ -320,21 +320,20 @@ export default function Roles() {
                   </Stack>
                 </CardContent>
               </Card>
-            </Grid>
           ))}
-        </Grid>
+        </Stack>
       )}
     </Box>
   );
 
   return (
-    <Box sx={{  minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: '100%', overflowX: 'hidden' }}>
       <Helmet>
         <title>الأدوار</title>
         <meta name="description" content="الأدوار" />
       </Helmet>
       
-      <Box sx={{ p: isMobile ? 2 : 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, maxWidth: '100%', overflowX: 'hidden' }}>
         <Box
           sx={{
             display: "flex",
@@ -352,8 +351,8 @@ export default function Roles() {
             sx={{
               flex: 1,
               borderRadius: 2,
-              "& fieldset": { border: "none" },
               minWidth: isSmallScreen ? '100%' : 'auto',
+              ...transparentSearchTextFieldSx,
             }}
             InputProps={{
               startAdornment: (
@@ -387,6 +386,7 @@ export default function Roles() {
 
         <Paper sx={{ 
           width: "100%", 
+          maxWidth: '100%',
           overflow: "hidden", 
           borderRadius: 2,
           minHeight: 400

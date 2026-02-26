@@ -1,12 +1,12 @@
 import React from "react";
-import { Box, Grid, Card, CardContent, Typography } from "@mui/material";
+import { Box, Grid, Card, CardContent, Typography, Stack } from "@mui/material";
 import {
   TrendingDown as DebitIcon,
   TrendingUp as CreditIcon,
   Balance as BalanceIcon,
 } from "@mui/icons-material";
 
-export default function JournalsSummaryCards({ totals, isDarkMode = false }) {
+export default function JournalsSummaryCards({ totals, isDarkMode = false, isSmallScreen = false }) {
   const formatNumber = (value) =>
     value ? Math.round(value).toLocaleString() : "0";
 
@@ -40,11 +40,8 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false }) {
     },
   ];
 
-  return (
-    <Grid container spacing={3} sx={{ mt: 4, mb: 3 }}>
-      {cards.map((card) => (
-        <Grid item xs={12} md={4} key={card.label}>
-          <Card
+  const cardContent = (card) => (
+    <Card
             sx={{
               bgcolor: isDarkMode ? "background.paper" : "#ffffff",
               p: 3,
@@ -117,6 +114,25 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false }) {
               </Box>
             </CardContent>
           </Card>
+  );
+
+  if (isSmallScreen) {
+    return (
+      <Stack spacing={2} sx={{ mt: 4, mb: 3, maxWidth: 420, mx: "auto", width: "100%" }}>
+        {cards.map((card) => (
+          <Box key={card.label} sx={{ width: "100%" }}>
+            {cardContent(card)}
+          </Box>
+        ))}
+      </Stack>
+    );
+  }
+
+  return (
+    <Grid container spacing={3} sx={{ mt: 4, mb: 3 }}>
+      {cards.map((card) => (
+        <Grid item xs={12} md={4} key={card.label}>
+          {cardContent(card)}
         </Grid>
       ))}
     </Grid>

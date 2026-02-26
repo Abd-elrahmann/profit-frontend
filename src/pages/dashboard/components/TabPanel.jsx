@@ -3,13 +3,14 @@ import PageSkeleton from '../../../components/PageSkeleton';
 import { useDashboardFilter } from '../DashboardFilterContext';
 
 const TabPanel = React.memo(({ children, value, index, tabTitle }) => {
-  const { setTabTitle } = useDashboardFilter();
+  const { setTabTitle, setTabSubtitle } = useDashboardFilter();
 
   useEffect(() => {
     if (value === index && tabTitle) {
       setTabTitle(tabTitle);
+      setTabSubtitle('');
     }
-  }, [value, index, tabTitle, setTabTitle]);
+  }, [value, index, tabTitle, setTabTitle, setTabSubtitle]);
 
   return (
     <div

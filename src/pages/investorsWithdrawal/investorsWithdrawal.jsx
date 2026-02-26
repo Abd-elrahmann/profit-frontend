@@ -8,6 +8,10 @@ import {
   CircularProgress,
   Alert,
   Button,
+  useMediaQuery,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,6 +50,7 @@ import {
   Stack,
   Tooltip,
   IconButton,
+  Divider,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -83,6 +88,9 @@ export default function InvestorsWithdrawal() {
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
   const withdrawReceiptGeneratorRef = useRef(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
+  const isSmallScreen = isMobile || isTablet;
 
   useEffect(() => {
     if (location.state) {
@@ -213,6 +221,7 @@ export default function InvestorsWithdrawal() {
       notifySuccess(`تم الموافقة على دفعة شهر ${monthName} بنجاح`);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       refetchDetails();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء الموافقة على الدفعة");
@@ -244,6 +253,7 @@ export default function InvestorsWithdrawal() {
       setSelectedScheduleId(null);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       refetchDetails();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض الدفعة");
@@ -307,6 +317,7 @@ export default function InvestorsWithdrawal() {
       setSelectedScheduleId(null);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       refetchDetails();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تسجيل السداد الجزئي");
@@ -346,6 +357,7 @@ export default function InvestorsWithdrawal() {
       queryClient.invalidateQueries({ queryKey: ['investor-details', withdrawalDetails.partner.id] });
       queryClient.invalidateQueries({ queryKey: ['investors'] });
       queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestorId] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       await refetchDetails();
 
       setIsPreviewOpen(false);
@@ -449,28 +461,41 @@ export default function InvestorsWithdrawal() {
       </Helmet>
       {/* Tabs */}
       <Box sx={{ bgcolor: "background.default", borderBottom: "1px solid #ddd", p: 1 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          textColor="primary"
-          indicatorColor="primary"
-          sx={{
-            px: 2,
-            "& .MuiTab-root": {
-              color: "text.primary",
-              "&.Mui-selected": {
-                color: "primary.main",
+        {isSmallScreen ? (
+          <Box sx={{ display: "flex", justifyContent: "center", px: 2 }}>
+            <FormControl sx={{ minWidth: 200, maxWidth: 320, width: "100%" }} size="small">
+              <Select
+                value={activeTab}
+                onChange={(e) => handleTabChange(null, e.target.value)}
+                sx={{ "& .MuiSelect-select": { textAlign: "center", py: 1.25 } }}
+              >
+                <MenuItem value={0}>جدول السحب</MenuItem>
+                <MenuItem value={1} disabled={!selectedInvestorId}>التفاصيل</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        ) : (
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            textColor="primary"
+            indicatorColor="primary"
+            sx={{
+              px: 2,
+              "& .MuiTab-root": {
+                color: "text.primary",
+                "&.Mui-selected": { color: "primary.main" },
               },
-            },
-          }}
-        >
-          <Tab label="جدول السحب" />
-          <Tab label="التفاصيل" disabled={!selectedInvestorId} />
-        </Tabs>
+            }}
+          >
+            <Tab label="جدول السحب" />
+            <Tab label="التفاصيل" disabled={!selectedInvestorId} />
+          </Tabs>
+        )}
       </Box>
 
       {/* Content */}
-      <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
+      <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: 'background.paper' }}>
         {activeTab === 0 && (
           <InvestorsWithdrawalTable
             data={withdrawingInvestorsData}
@@ -478,6 +503,7 @@ export default function InvestorsWithdrawal() {
             onViewDetails={handleViewDetails}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
+            isMobile={isSmallScreen}
           />
         )}
 
@@ -485,27 +511,37 @@ export default function InvestorsWithdrawal() {
           <Box sx={{ bgcolor: 'background.paper', minHeight: '100%' }}>
             {/* Success notification when withdrawal receipt exists */}
             {withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: "center",
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
                 <Alert
                   severity="success"
                   sx={{
                     flex: 1,
-                    fontSize: "16px",
+                    width: "100%",
+                    fontSize: { xs: "14px", md: "16px" },
                     fontWeight: "bold",
-                    textAlign: "center"
+                    textAlign: "center",
                   }}
                 >
                   تم سداد دفعات المساهم وإنشاء المخالصة بنجاح
                 </Alert>
                 <Button
                   variant="contained"
-                  startIcon={<Visibility sx={{marginLeft: "5px"}} />}
-                  onClick={() => window.open(withdrawalDetails.withdrawal.WITHDRAWAL_RECEIPT, '_blank')}
+                  size={isMobile ? "small" : "medium"}
+                  startIcon={<Visibility sx={{ marginLeft: "5px" }} />}
+                  onClick={() => window.open(withdrawalDetails.withdrawal.WITHDRAWAL_RECEIPT, "_blank")}
                   sx={{
                     bgcolor: "#2e7d32",
                     "&:hover": { bgcolor: "#1b5e20" },
                     fontWeight: "bold",
-                    whiteSpace: "nowrap"
+                    whiteSpace: "nowrap",
                   }}
                 >
                   عرض المخالصة
@@ -523,9 +559,10 @@ export default function InvestorsWithdrawal() {
               <Box>
                 {/* Export Buttons */}
                 {permissions.includes("partners-withdraw_Export") && (
-                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
                   <Button
                     variant="outlined"
+                    size={isMobile ? "small" : "medium"}
                     startIcon={<PictureAsPdf sx={{ marginLeft: "5px" }} />}
                     onClick={handleExportPDF}
                     disabled={isExporting}
@@ -540,6 +577,7 @@ export default function InvestorsWithdrawal() {
                   </Button>
                   <Button
                     variant="outlined"
+                    size={isMobile ? "small" : "medium"}
                     startIcon={<TableChart sx={{ marginLeft: "5px" }} />}
                     onClick={handleExportExcel}
                     disabled={isExporting}
@@ -556,7 +594,7 @@ export default function InvestorsWithdrawal() {
                 )}
 
                 {/* Partner Info */}
-                <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
+                <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, bgcolor: 'background.paper' }}>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                     معلومات المستثمر
                   </Typography>
@@ -644,7 +682,7 @@ export default function InvestorsWithdrawal() {
 
                 {/* Withdrawal Request Info */}
                 {withdrawalDetails.withdrawal && (
-                  <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
+                  <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, bgcolor: 'background.paper' }}>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                       معلومات طلب الانسحاب
                     </Typography>
@@ -754,14 +792,24 @@ export default function InvestorsWithdrawal() {
                 )}
 
                 {withdrawalDetails.schedule && withdrawalDetails.schedule.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                  <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, bgcolor: 'background.paper' }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        justifyContent: "space-between",
+                        alignItems: { xs: "stretch", sm: "center" },
+                        gap: 2,
+                        mb: 2,
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: "bold" ,color: "primary.main"}}>
                         جدول السحب
                       </Typography>
                       {allSchedulesPaid && !withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
                         <Button
                           variant="contained"
+                          size={isMobile ? "small" : "medium"}
                           startIcon={<Description />}
                           onClick={handleOpenPreview}
                           sx={{
@@ -842,6 +890,119 @@ export default function InvestorsWithdrawal() {
                         ))}
                       </Box>
                     )}
+                    {isSmallScreen ? (
+                      <Stack spacing={2}>
+                        {withdrawalDetails.schedule.map((schedule) => (
+                          <Card
+                            key={schedule.id}
+                            sx={{
+                              border: "1px solid",
+                              borderColor: "divider",
+                              borderRadius: 2,
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <CardContent sx={{ p: 2 }}>
+                              <Stack spacing={1.5}>
+                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <Typography variant="subtitle1" fontWeight="bold">
+                                    {getMonthName(schedule.month)} {schedule.year}
+                                  </Typography>
+                                  <Chip
+                                    label={getStatusText(schedule.status)}
+                                    color={getStatusColor(schedule.status)}
+                                    size="small"
+                                  />
+                                </Box>
+                                <Divider />
+                                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Typography variant="caption" color="text.secondary">المبلغ</Typography>
+                                    <Typography variant="body2">{schedule.amount?.toLocaleString()}</Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Typography variant="caption" color="text.secondary">المبلغ المرحل</Typography>
+                                    <Typography variant="body2">{schedule.carryAmount?.toLocaleString() || 0}</Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Typography variant="caption" color="text.secondary">إجمالي المبلغ</Typography>
+                                    <Typography variant="body2" fontWeight="600">
+                                      {(schedule.amount + (schedule.carryAmount || 0))?.toLocaleString()}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Typography variant="caption" color="text.secondary">المدفوع</Typography>
+                                    <Typography variant="body2">{schedule.paidAmount?.toLocaleString() || 0}</Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Typography variant="caption" color="text.secondary">المتبقي</Typography>
+                                    <Typography variant="body2">
+                                      {(schedule.remaining ?? Math.max(0, (schedule.amount || 0) + (schedule.carryAmount || 0) - (schedule.paidAmount || 0)))?.toLocaleString() || 0}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Typography variant="caption" color="text.secondary">تاريخ الدفع</Typography>
+                                    <Typography variant="body2">
+                                      {schedule.paidAt ? dayjs(schedule.paidAt).format("DD/MM/YYYY") : "-"}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                                {permissions.includes("partners-withdraw_Post") && (
+                                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                                    {schedule.status !== "PAID" && !schedule.isPaid && (
+                                      <>
+                                        <Button
+                                          size="small"
+                                          variant="outlined"
+                                          color="success"
+                                          startIcon={<CheckCircle />}
+                                          onClick={() => handleApprove(schedule.id)}
+                                          disabled={isProcessing}
+                                        >
+                                          موافقة
+                                        </Button>
+                                        <Button
+                                          size="small"
+                                          variant="outlined"
+                                          color="error"
+                                          startIcon={<Cancel />}
+                                          onClick={() => handleOpenRejectModal(schedule.id)}
+                                          disabled={isProcessing}
+                                        >
+                                          رفض
+                                        </Button>
+                                        <Button
+                                          size="small"
+                                          variant="outlined"
+                                          color="warning"
+                                          startIcon={<AttachMoney />}
+                                          onClick={() => handleOpenPartialPayDialog(schedule.id)}
+                                          disabled={isProcessing}
+                                        >
+                                          دفع جزئي
+                                        </Button>
+                                      </>
+                                    )}
+                                    {schedule.status === "PAID" && (
+                                      <Button
+                                        size="small"
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<Cancel />}
+                                        onClick={() => handleOpenRejectModal(schedule.id)}
+                                        disabled={isProcessing}
+                                      >
+                                        رفض
+                                      </Button>
+                                    )}
+                                  </Box>
+                                )}
+                              </Stack>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </Stack>
+                    ) : (
                     <TableContainer sx={{ bgcolor: 'background.paper' }}>
                       <Table>
                         <TableHead sx={{ bgcolor: 'background.paper' }}>
@@ -985,14 +1146,69 @@ export default function InvestorsWithdrawal() {
                         </TableBody>
                       </Table>
                     </TableContainer>
+                    )}
                   </Paper>
                 )}
 
                 {withdrawalDetails.journals && withdrawalDetails.journals.length > 0 && (
-                  <Paper sx={{ p: 3 }}>
+                  <Paper sx={{ p: { xs: 2, md: 3 } }}>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                       القيود المحاسبية
                     </Typography>
+                    {isSmallScreen ? (
+                      <Stack spacing={2}>
+                        {withdrawalDetails.journals.map((journal) => (
+                          <Card
+                            key={journal.id}
+                            sx={{
+                              border: "1px solid",
+                              borderColor: "divider",
+                              borderRadius: 2,
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <CardContent sx={{ p: 2 }}>
+                              <Stack spacing={1.5}>
+                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <Typography variant="subtitle1" fontWeight="bold">
+                                    {journal.reference}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {journal.createdAt ? dayjs(journal.createdAt).format("DD/MM/YYYY") : "-"}
+                                  </Typography>
+                                </Box>
+                                <Divider />
+                                <Typography variant="body2" color="text.secondary">
+                                  {journal.description}
+                                </Typography>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<Visibility sx={{ marginLeft: "5px" }} />}
+                                  onClick={() => {
+                                    navigate("/journal-entries", {
+                                      state: {
+                                        journalId: journal.id,
+                                        activeTab: 1,
+                                        fromInvestorsWithdrawal: true,
+                                        investorId: selectedInvestorId,
+                                      },
+                                    });
+                                  }}
+                                  sx={{
+                                    borderColor: "primary.main",
+                                    color: "primary.main",
+                                    alignSelf: "flex-start",
+                                  }}
+                                >
+                                  عرض التفاصيل
+                                </Button>
+                              </Stack>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </Stack>
+                    ) : (
                     <TableContainer sx={{ bgcolor: 'background.paper' }}>
                       <Table>
                         <TableHead sx={{ bgcolor: 'background.paper' }}>
@@ -1057,6 +1273,7 @@ export default function InvestorsWithdrawal() {
                         </TableBody>
                       </Table>
                     </TableContainer>
+                    )}
                   </Paper>
                 )}
               </Box>

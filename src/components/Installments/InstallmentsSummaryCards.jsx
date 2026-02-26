@@ -39,17 +39,17 @@ export default function InstallmentsSummaryCards({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm ${
+          className={`bg-white dark:bg-slate-900 p-3 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm ${
             card.highlight ? 'border-r-4 border-r-amber-500' : ''
           }`}
         >
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{card.label}</p>
-          <div className="flex items-baseline gap-2 mt-2">
-            <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">{card.label}</p>
+          <div className="flex items-baseline gap-2 mt-1 sm:mt-2">
+            <p className={`text-xl sm:text-2xl font-bold ${card.color}`}>{card.value}</p>
             {!card.label.includes('الدفعات') && <span className="text-xs text-slate-400">ر.س</span>}
           </div>
         </div>

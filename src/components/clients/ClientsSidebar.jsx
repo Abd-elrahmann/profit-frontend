@@ -13,6 +13,7 @@ import {
 import { Add, Search, Delete } from "@mui/icons-material";
 import { STATUS_FILTERS } from "./constants";
 import { getStatusColor, getClientStatusColor } from "./clientsUtils";
+import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
 
 export default function ClientsSidebar({
   permissions,
@@ -30,18 +31,21 @@ export default function ClientsSidebar({
   onClientSelect,
   onDeleteClient,
   listScrollRef,
+  isMobile = false,
 }) {
 
   return (
     <Box
       ref={listScrollRef}
       sx={{
-        width: "350px",
-        borderRight: "1px solid #ddd",
+        width: { xs: "100%", md: "350px" },
+        minWidth: { xs: 0, md: "350px" },
+        borderRight: { xs: "none", md: "1px solid #ddd" },
         bgcolor: isDarkMode ? "background.paper" : "#fafafa",
         height: "100%",
         overflowY: "auto",
         flexShrink: 0,
+        flex: isMobile ? 1 : "none",
       }}
     >
       <Box
@@ -75,7 +79,9 @@ export default function ClientsSidebar({
           placeholder="البحث بالاسم أو رقم الهوية"
           fullWidth
           size="small"
+          variant="outlined"
           onChange={onSearchChange}
+          sx={transparentSearchTextFieldSx}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

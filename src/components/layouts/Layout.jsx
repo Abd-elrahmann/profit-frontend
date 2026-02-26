@@ -15,6 +15,9 @@ const Layout = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isHoverExpanded, setIsHoverExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   useEffect(() => {
     const initializeSidebar = () => {
@@ -59,6 +62,16 @@ const Layout = ({ children }) => {
       window.removeEventListener('authFailed', handleAuthFailed);
     };
   }, [location]);
+
+  useEffect(() => {
+    const check = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsSmallScreen(window.innerWidth < 1024);
+    };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const handleMenuToggle = () => {
     const newState = !isSidebarOpen;
@@ -107,25 +120,33 @@ const Layout = ({ children }) => {
     return <>{children}</>;
   }
 
-  const sidebarWidth = 256;
-  const showSidebar = isLoggedIn && isInitialized && isSidebarOpen;
+  const isExpanded = isSidebarOpen || isHoverExpanded;
+  const expandedWidth = isSmallScreen ? 220 : 256;
+  const collapsedWidth = isSmallScreen ? 56 : 70;
+  const sidebarWidth = !isLoggedIn || !isInitialized
+    ? 0
+    : isMobile
+      ? 0
+      : isExpanded
+        ? expandedWidth
+        : collapsedWidth;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
       <Navbar onMenuToggle={handleMenuToggle} />
 
       <main
-        className="flex-1 flex flex-col overflow-hidden transition-all duration-200 pt-16"
+        className="flex-1 flex flex-col overflow-hidden transition-all duration-300 pt-8"
         style={{
-          marginRight: showSidebar ? sidebarWidth : 0,
+          marginRight: sidebarWidth,
         }}
       >
         <div
           className="flex-1 overflow-y-auto overflow-x-hidden bg-background-light dark:bg-background-dark"
-          style={{ minHeight: 'calc(100vh - 64px)' }}
+          style={{ minHeight: 'calc(100vh - 48px)' }}
         >
           {isLoggedIn ? (
-            <div className="p-4 md:p-6 lg:p-8">
+            <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
               {children}
             </div>
           ) : (
@@ -135,7 +156,13 @@ const Layout = ({ children }) => {
       </main>
 
       {isLoggedIn && isInitialized && (
-        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={handleSidebarClose}
+          isMobile={isMobile}
+          isSmallScreen={isSmallScreen}
+          onHoverExpand={setIsHoverExpanded}
+        />
       )}
 
       {isLoggedIn && !isAuthPage && !isPaymentReceiptPage && (

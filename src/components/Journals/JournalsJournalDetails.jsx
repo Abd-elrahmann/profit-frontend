@@ -1,5 +1,5 @@
 import React from "react";
-import { Paper, Divider } from "@mui/material";
+import { Paper, Divider, Box } from "@mui/material";
 import JournalsDetailsForm from "./JournalsDetailsForm";
 import JournalsLinesForm from "./JournalsLinesForm";
 import JournalsLinesList from "./JournalsLinesList";
@@ -40,8 +40,11 @@ export default function JournalsJournalDetails({
 }) {
   if (isSmallScreen) {
     return (
-      <>
-        <JournalsSummaryCards totals={totals} isDarkMode={isDarkMode} />
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", maxWidth: 420, mx: "auto" }}>
+        <Box sx={{ width: "100%" }}>
+          <JournalsSummaryCards totals={totals} isDarkMode={isDarkMode} isSmallScreen />
+        </Box>
+        <Box sx={{ width: "100%", mt: 2 }}>
         <JournalsActions
           totals={totals}
           isAddMode={isAddMode}
@@ -60,6 +63,8 @@ export default function JournalsJournalDetails({
           onCancelEdit={onCancelEdit}
           onUnpostJournal={onUnpostJournal}
         />
+        </Box>
+        <Box sx={{ width: "100%", mt: 2 }}>
         <JournalsDetailsForm
           journalData={journalData}
           editForm={editForm}
@@ -69,7 +74,9 @@ export default function JournalsJournalDetails({
           onInputChange={onInputChange}
           variant="mobile"
         />
+        </Box>
         {(isEditMode || isAddMode) && (
+          <Box sx={{ width: "100%", mt: 2 }}>
           <JournalsLinesForm
             currentLine={currentLine}
             chartAccounts={chartAccounts}
@@ -77,7 +84,9 @@ export default function JournalsJournalDetails({
             onLineInputChange={onLineInputChange}
             onAddLine={onAddLine}
           />
+          </Box>
         )}
+        <Box sx={{ width: "100%", mt: 2 }}>
         <JournalsLinesList
           journalLines={journalLines}
           totalsForTable={totalsForTable}
@@ -88,7 +97,8 @@ export default function JournalsJournalDetails({
           onEditLine={onEditLine}
           onDeleteLine={onDeleteLine}
         />
-      </>
+        </Box>
+      </Box>
     );
   }
 

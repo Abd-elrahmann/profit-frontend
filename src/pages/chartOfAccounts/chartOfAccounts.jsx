@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircularProgress, Alert } from '@mui/material';
+import { CircularProgress, Alert, useMediaQuery } from '@mui/material';
 import { getAccountsTree, deleteAccount } from './chartApi';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
@@ -19,6 +19,9 @@ import { exportChartOfAccountsToPDF, exportChartOfAccountsToExcel } from '../../
 const ChartOfAccount = () => {
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isSmallScreen = isMobile || isTablet;
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('tree');
   const [expandedIds, setExpandedIds] = useState(() => new Set());
@@ -162,12 +165,13 @@ const ChartOfAccount = () => {
           onExportPDF={handleExportPDF}
           onExportExcel={handleExportExcel}
           canAdd={canAdd}
+          isSmallScreen={isSmallScreen}
         />
 
-        <div className="flex-1 p-6 md:p-8 space-y-6">
-          <section className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <ChartOfAccountsSearch value={searchQuery} onChange={setSearchQuery} />
-            <ChartOfAccountsViewToggle view={viewMode} onChange={setViewMode} />
+        <div className={`flex-1 space-y-6 ${isSmallScreen ? 'p-4' : 'p-6 md:p-8'}`}>
+          <section className={`flex flex-col gap-4 ${isSmallScreen ? '' : 'md:flex-row md:items-center md:justify-between'}`}>
+            <ChartOfAccountsSearch value={searchQuery} onChange={setSearchQuery} isSmallScreen={isSmallScreen} />
+            <ChartOfAccountsViewToggle view={viewMode} onChange={setViewMode} isSmallScreen={isSmallScreen} />
           </section>
 
           <section>
@@ -182,6 +186,7 @@ const ChartOfAccount = () => {
               canUpdate={canUpdate}
               canDelete={canDelete}
               viewMode={viewMode}
+              isSmallScreen={isSmallScreen}
             />
           </section>
         </div>

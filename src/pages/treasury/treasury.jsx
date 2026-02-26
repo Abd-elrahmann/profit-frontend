@@ -51,8 +51,8 @@ export default function Treasury() {
   const [limit] = useState(20);
   const { isDarkMode } = useTheme();
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   const { permissions } = usePermissions();

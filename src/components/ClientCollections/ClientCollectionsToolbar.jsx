@@ -38,6 +38,7 @@ const ClientCollectionsToolbar = ({
       >
         <Button
           variant="contained"
+          size={isSmallScreen ? 'small' : 'medium'}
           color="warning"
           startIcon={<ViewColumnIcon sx={iconSx} />}
           onClick={onColumnMenuClick}
@@ -49,6 +50,7 @@ const ClientCollectionsToolbar = ({
 
         <Button
           variant="contained"
+          size={isSmallScreen ? 'small' : 'medium'}
           color="primary"
           startIcon={<PrintIcon sx={iconSx} />}
           onClick={onPrint}
@@ -61,6 +63,7 @@ const ClientCollectionsToolbar = ({
 
         <Button
           variant="contained"
+          size={isSmallScreen ? 'small' : 'medium'}
           color="error"
           startIcon={<FileDownloadIcon sx={iconSx} />}
           onClick={onExportPDF}
@@ -73,6 +76,7 @@ const ClientCollectionsToolbar = ({
 
         <Button
           variant="contained"
+          size={isSmallScreen ? 'small' : 'medium'}
           color="success"
           startIcon={<FileDownloadIcon sx={iconSx} />}
           onClick={onExportExcel}
@@ -91,6 +95,7 @@ const ClientCollectionsToolbar = ({
         onColumnToggle={onColumnToggle}
         onSelectAll={onSelectAllColumns}
         onDeselectAll={onDeselectAllColumns}
+        isSmallScreen={isSmallScreen}
       />
     </>
   );

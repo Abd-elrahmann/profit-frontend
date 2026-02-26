@@ -11,6 +11,7 @@ import {
   Chip,
 } from '@mui/material';
 import { EXPENSE_TYPES } from '../../utilities/expenseConstants';
+import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
 
 const ExpenseExportFilterModal = ({
   open,
@@ -42,7 +43,7 @@ const ExpenseExportFilterModal = ({
             value={selectedExpenseTypes}
             onChange={handleExpenseTypesChange}
             renderInput={(params) => (
-              <TextField {...params} label="اختر أنواع المصروفات" placeholder="ابحث عن نوع..." />
+              <TextField {...params} label="اختر أنواع المصروفات" placeholder="ابحث عن نوع..." sx={transparentSearchTextFieldSx} />
             )}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => {
@@ -60,7 +61,7 @@ const ExpenseExportFilterModal = ({
               value={selectedEmployees}
               onChange={(event, newValue) => onEmployeesChange(newValue)}
               renderInput={(params) => (
-                <TextField {...params} label="اختر الموظفين (اختياري)" placeholder="ابحث عن موظف..." />
+                <TextField {...params} label="اختر الموظفين (اختياري)" placeholder="ابحث عن موظف..." sx={transparentSearchTextFieldSx} />
               )}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => {

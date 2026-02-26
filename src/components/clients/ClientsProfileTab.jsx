@@ -7,6 +7,7 @@ export default function ClientsProfileTab({
   clientFormData,
   editMode,
   isDarkMode,
+  isMobile = false,
   onClientInputChange,
 }) {
   const client = clientDetails?.client;
@@ -34,9 +35,13 @@ export default function ClientsProfileTab({
     },
   });
 
+  const containerSx = isMobile
+    ? { display: "flex", flexDirection: "column", gap: 3, alignItems: "center", maxWidth: 520, width: "100%", mx: "auto" }
+    : { display: "flex", flexDirection: "column", gap: 3 };
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Paper sx={{ p: 3, mb: 0 }}>
+    <Box sx={containerSx}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, mb: 0, width: "100%", maxWidth: isMobile ? 520 : "none" }}>
         {/* المعلومات الشخصية */}
         <Box
           className="flex items-center gap-2 pb-2 mb-4"
@@ -47,7 +52,7 @@ export default function ClientsProfileTab({
             المعلومات الشخصية
           </Typography>
         </Box>
-        <Grid container spacing={3}>
+        <Grid container spacing={3} justifyContent={isMobile ? "center" : "flex-start"}>
           <Grid item xs={12} md={6}>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>الاسم الكامل</Typography>
             <TextField
@@ -55,7 +60,7 @@ export default function ClientsProfileTab({
               onChange={(e) => onClientInputChange("name", e.target.value)}
               fullWidth
               disabled={!editMode}
-              sx={{ ...textFieldSx(editMode), "& .MuiOutlinedInput-root": { width: "280px" } }}
+              sx={textFieldSx(editMode)}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -65,12 +70,12 @@ export default function ClientsProfileTab({
               onChange={(e) => onClientInputChange("email", e.target.value)}
               fullWidth
               disabled={!editMode}
-              sx={{ "& .MuiOutlinedInput-root": { width: "280px" } }}
+              sx={textFieldSx(editMode)}
             />
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>رقم الهوية الوطنية</Typography>
-            <TextField value={client.nationalId} fullWidth disabled sx={{ "& .MuiOutlinedInput-root": { width: "280px" } }} />
+            <TextField value={client.nationalId} fullWidth disabled sx={textFieldSx(false)} />
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>رقم الجوال</Typography>
@@ -112,7 +117,7 @@ export default function ClientsProfileTab({
               بيانات العنوان
             </Typography>
           </Box>
-          <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid container spacing={3} sx={{ mt: 2 }} justifyContent={isMobile ? "center" : "flex-start"}>
             <Grid item xs={12} md={6}>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>المدينة</Typography>
               <TextField
@@ -157,7 +162,7 @@ export default function ClientsProfileTab({
               بيانات العمل والدخل
             </Typography>
           </Box>
-          <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid container spacing={3} sx={{ mt: 2 }} justifyContent={isMobile ? "center" : "flex-start"}>
             <Grid item xs={12} md={6}>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>جهة العمل</Typography>
               <TextField
@@ -204,7 +209,7 @@ export default function ClientsProfileTab({
         </Box>
       </Paper>
 
-      <Paper sx={{ p: 3 }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, width: "100%", maxWidth: isMobile ? 520 : "none" }}>
         <Box
           className="flex items-center gap-2 pb-2 mb-4"
           sx={{ borderBottom: "1px solid", borderColor: "divider" }}

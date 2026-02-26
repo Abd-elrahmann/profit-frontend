@@ -24,11 +24,10 @@ export default function ProfitDistributionTable({
   isLoading,
   permissions,
   onViewDetails,
-  onOpenDistributionDialog,
 }) {
   return (
-    <TableContainer sx={{ height: "100%", width: "100%" }}>
-      <Table stickyHeader sx={{ width: "100%" }}>
+    <TableContainer>
+      <Table stickyHeader>
         <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>

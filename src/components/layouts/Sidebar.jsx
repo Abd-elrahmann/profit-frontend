@@ -1,363 +1,340 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import {
-  Box,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Collapse
-} from '@mui/material';
-import {
-  MdExpandMore as ExpandMoreIcon,
-  MdExpandLess as ExpandLessIcon
-} from 'react-icons/md';
-import { RadioButtonUnchecked } from '@mui/icons-material';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { MdExpandMore as ExpandMoreIcon, MdExpandLess as ExpandLessIcon } from 'react-icons/md';
 import { getSidebarMenuItems } from '../../sidebar.config';
 import { usePermissions } from '../Contexts/PermissionsContext';
-import { useTheme } from '../../theme/ThemeContext';
 import { usePrefetch } from '../../hooks/usePrefetch';
+import { debounce } from '../../utilities/debounce';
 
-const Sidebar = ({ isOpen, onClose }) => {
+const STORAGE_KEY = 'sidebarOpenGroup';
+
+const linkBase =
+  'flex flex-row-reverse justify-between items-center rounded-lg mb-1 py-2 px-3 no-underline transition-all duration-100 ease-out';
+const linkSingle = `${linkBase} text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm hover:shadow-primary/20 hover:-translate-x-1 hover:scale-[1.02]`;
+const linkActive =
+  'bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary relative before:content-[""] before:absolute before:right-0 before:top-0 before:h-full before:w-1 before:bg-primary before:rounded-l';
+
+const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onHoverExpand }) => {
   const sidebarRef = useRef(null);
-  const { isDarkMode } = useTheme();
-  const [openGroup, setOpenGroup] = useState(null);
+  const listRef = useRef(null);
+  const location = useLocation();
+  const [isHovering, setIsHovering] = useState(false);
+  const [openGroup, setOpenGroupState] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) || null;
+    } catch {
+      return null;
+    }
+  });
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
-  const { permissions, loading } = usePermissions();
+  const { permissions } = usePermissions();
   const { prefetchPage } = usePrefetch();
+
+  const debouncedPrefetch = useMemo(
+    () => debounce((module) => prefetchPage(module), 100),
+    [prefetchPage]
+  );
+
+  const setOpenGroup = useCallback((valueOrUpdater) => {
+    setOpenGroupState((prev) => {
+      const value = typeof valueOrUpdater === 'function' ? valueOrUpdater(prev) : valueOrUpdater;
+      try {
+        if (value) {
+          localStorage.setItem(STORAGE_KEY, value);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch {
+        // ignore
+      }
+      return value;
+    });
+  }, []);
+
+  const isExpanded = isOpen || isHovering;
+
+  useEffect(() => {
+    onHoverExpand?.(isHovering);
+  }, [isHovering, onHoverExpand]);
+
+  useEffect(() => () => onHoverExpand?.(false), [onHoverExpand]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target) && isOpen) {
+      if (event.target.closest('[data-sidebar-toggle]')) return;
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target) && isOpen && isMobile) {
         onClose();
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  }, [isOpen, isMobile, onClose]);
 
-  
+  const handleMouseEnter = useCallback(() => {
+    if (!isMobile && !isOpen) {
+      setIsHovering(true);
+    }
+  }, [isMobile, isOpen]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!isMobile && !isOpen) {
+      setIsHovering(false);
+    }
+  }, [isMobile, isOpen]);
+
+  // Pre-filter menu: filter by permissions once, attach filtered children to groups
   useEffect(() => {
     const menuItems = getSidebarMenuItems();
-    
-    const filtered = menuItems.filter(item => {
-      if (!item.requiresPermissions) return true;
-      if (item.children) {
-        const filteredChildren = item.children.filter(child => permissions.includes(`${child.module}_View`));
-        return filteredChildren.length > 0;
-      }
-      return permissions.includes(`${item.module}_View`);
-    });
-    
+    const filtered = menuItems
+      .map((item) => {
+        if (item.children) {
+          const filteredChildren = item.children.filter(
+            (child) => !child.requiresPermissions || permissions.includes(`${child.module}_View`)
+          );
+          if (filteredChildren.length === 0) return null;
+          return { ...item, children: filteredChildren };
+        }
+        if (!item.requiresPermissions) return item;
+        return permissions.includes(`${item.module}_View`) ? item : null;
+      })
+      .filter(Boolean);
     setFilteredMenuItems(filtered);
   }, [permissions]);
 
-  const singleItems = filteredMenuItems.filter(item => !item.children);
-  const groupItems = filteredMenuItems.filter(item => item.children);
+  // Auto-open group when current path matches a child
+  useEffect(() => {
+    const pathname = location.pathname;
+    for (const item of filteredMenuItems) {
+      if (item.children) {
+        const hasActiveChild = item.children.some(
+          (child) => pathname === child.path || pathname.startsWith(`${child.path}/`)
+        );
+        if (hasActiveChild) {
+          setOpenGroup(item.label);
+          return;
+        }
+      }
+    }
+  }, [location.pathname, filteredMenuItems, setOpenGroup]);
 
-  const toggleGroup = (groupLabel) => {
-    setOpenGroup(prev => prev === groupLabel ? null : groupLabel);
-  };
+  const singleItems = useMemo(
+    () => filteredMenuItems.filter((item) => !item.children),
+    [filteredMenuItems]
+  );
+  const groupItems = useMemo(
+    () => filteredMenuItems.filter((item) => item.children),
+    [filteredMenuItems]
+  );
 
-  const renderSingleMenuItem = (item, index) => {
-    return (
-      <ListItem
-        key={item.path}
-        component={NavLink}
-        to={item.path}
-        onClick={onClose}
-        onMouseEnter={() => prefetchPage(item.module)}
-        sx={{
-          flexDirection: 'row-reverse',
-          justifyContent: 'space-between',
-          borderRadius: 2,
-          mb: 1,
-          mt: index === 0 ? 1 : 0,
-          textDecoration: 'none',
-          color: 'text.primary',
-          opacity: isOpen ? 1 : 0,
-          transition: `all 0.1s ease-out ${index * 0.02}s`,
-          '&:hover': {
-            backgroundColor: 'rgba(46, 139, 69, 0.1)',
-            transform: isOpen ? 'translateX(-4px) scale(1.02)' : 'translateX(30px)',
-            boxShadow: '0 2px 8px rgba(46, 139, 69, 0.2)',
-            '& .MuiListItemText-primary': {
-              color: '#2E8B45',
-              fontWeight: 600
-            },
-            '& .MuiListItemIcon-root:not(.single-icon):not(.parent-icon)': {
-              color: '#2E8B45'
-            }
-          },
-          '&.active': {
-            backgroundColor: 'rgba(46, 139, 69, 0.15)',
-            borderRight: '4px solid',
-            borderRightColor: '#2E8B45',
-            '& .MuiListItemIcon-root': {
-              color: 'primary.main'
-            },
-            '& .MuiListItemText-primary': {
-              color: 'primary.main',
-              fontWeight: 600
-            }
+  const toggleGroup = useCallback(
+    (groupLabel) => {
+      setOpenGroup((prev) => (prev === groupLabel ? null : groupLabel));
+    },
+    [setOpenGroup]
+  );
+
+  // Keyboard navigation
+  useEffect(() => {
+    const listEl = listRef.current;
+    if (!isExpanded || !listEl) return;
+
+    const items = listEl.querySelectorAll('a[href], button');
+    const focusable = Array.from(items);
+
+    const handleKeyDown = (e) => {
+      if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
+
+      const currentIndex = focusable.findIndex((el) => el === document.activeElement);
+      if (currentIndex === -1 && e.key !== 'Enter') return;
+
+      e.preventDefault();
+
+      if (e.key === 'ArrowDown') {
+        const nextIndex = currentIndex < focusable.length - 1 ? currentIndex + 1 : 0;
+        focusable[nextIndex]?.focus();
+      } else if (e.key === 'ArrowUp') {
+        const prevIndex = currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1;
+        focusable[prevIndex]?.focus();
+      } else if (e.key === 'Enter' && document.activeElement?.tagName === 'BUTTON') {
+        document.activeElement.click();
+      }
+    };
+
+    listEl.addEventListener('keydown', handleKeyDown);
+    return () => listEl.removeEventListener('keydown', handleKeyDown);
+  }, [isExpanded, singleItems, groupItems]);
+
+  const renderSingleMenuItem = useCallback(
+    (item, index) => (
+      <li key={item.path} className={!isExpanded ? 'w-full' : ''}>
+        <NavLink
+          to={item.path}
+          onClick={() => isMobile && onClose()}
+          onMouseEnter={() => debouncedPrefetch(item.module)}
+          title={item.label}
+          className={({ isActive }) =>
+            `${linkBase} ${index === 0 ? 'mt-1' : ''} ${
+              isExpanded ? 'justify-between flex-row-reverse' : 'justify-center items-center'
+            } text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm hover:shadow-primary/20 hover:-translate-x-1 hover:scale-[1.02] ${
+              isActive ? linkActive : ''
+            }`
           }
-        }}
-      >
-        <ListItemText
-          primary={item.label}
-          sx={{
-            '& .MuiListItemText-primary': {
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              color: 'text.primary',
-              textAlign: 'right'
-            }
-          }}
-        />
-        {item.icon && (
-          <ListItemIcon
-            className="single-icon"
-            sx={{
-              minWidth: 0,
-              marginLeft: '10px',
-              justifyContent: 'center',
-              color: item.color || 'text.primary',
-              transition: 'transform 0.03s ease',
-              transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
-              '& > *': {
-                fontSize: '1.3rem !important'
-              }
-            }}
-          >
-            <item.icon />
-          </ListItemIcon>
-        )}
-      </ListItem>
-    );
-  };
-
-  const renderGroupMenuItem = (item, index) => {
-    const isGroupOpen = openGroup === item.label;
-    
-    const filteredChildren = item.children.filter(child => 
-      !child.requiresPermissions || permissions.includes(`${child.module}_View`)
-    );
-
-    if (filteredChildren.length === 0) return null;
-
-    return (
-      <Box key={item.label}>
-        <ListItem
-          button
-          onClick={() => toggleGroup(item.label)}
-          sx={{
-            flexDirection: 'row-reverse',
-            justifyContent: 'space-between',
-            borderRadius: 2,
-            mb: 1,
-            mt: index === 0 && singleItems.length === 0 ? 1 : 0,
-            textDecoration: 'none',
-            color: 'text.primary',
-            opacity: isOpen ? 1 : 0,
-            transition: `all 0.1s ease-out ${index * 0.02}s`,
-            '&:hover': {
-              backgroundColor: 'rgba(46, 139, 69, 0.1)',
-              cursor: 'pointer',
-              transform: isOpen ? 'translateX(-4px) scale(1.02)' : 'translateX(30px)',
-              boxShadow: '0 2px 8px rgba(46, 139, 69, 0.2)',
-              '& .MuiListItemText-primary': {
-                color: '#2E8B45',
-                fontWeight: 700
-              },
-              '& .MuiListItemIcon-root:not(.parent-icon)': {
-                color: '#2E8B45'
-              }
-            }
-          }}
+          style={{ transitionDelay: `${index * 20}ms` }}
         >
-          <ListItemText
-            primary={item.label}
-            sx={{
-              '& .MuiListItemText-primary': {
-                fontSize: '0.95rem',
-                fontWeight: 'bold',
-                color: 'text.primary',
-                textAlign: 'right'
-              }
-            }}
-          />
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            marginLeft: '10px',
-          }}>
-            {item.icon && (
-              <ListItemIcon
-                className="parent-icon"
-                sx={{
-                  minWidth: 0,
-                  justifyContent: 'center',
-                  color: item.color || 'text.primary',
-                  transition: 'transform 0.03s ease',
-                  transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
-                  '& > *': {
-                    fontSize: '1.3rem !important'
-                  }
-                }}
-              >
-                <item.icon />
-              </ListItemIcon>
+          {isExpanded && (
+            <span className="flex-1 min-w-0 overflow-hidden text-right text-[0.95rem] font-semibold truncate">
+              {item.label}
+            </span>
+          )}
+          {item.icon && (
+            <span
+              className="flex shrink-0 justify-center text-[1rem] [&>svg]:w-[1em] [&>svg]:h-[1em]"
+              style={{
+                color: item.color || 'inherit',
+                marginLeft: isExpanded ? '0.625rem' : 0,
+              }}
+            >
+              <item.icon />
+            </span>
+          )}
+        </NavLink>
+      </li>
+    ),
+    [isExpanded, isMobile, onClose, debouncedPrefetch]
+  );
+
+  const renderGroupMenuItem = useCallback(
+    (item, index) => {
+      const isGroupOpen = openGroup === item.label;
+      const { children: filteredChildren } = item;
+
+      return (
+        <li key={item.label} className={`mb-3 ${!isExpanded ? 'w-full' : ''}`}>
+          <button
+            type="button"
+            onClick={() => isExpanded && toggleGroup(item.label)}
+            title={item.label}
+            className={`${linkBase} w-full cursor-pointer ${
+              index === 0 && singleItems.length === 0 ? 'mt-1' : ''
+            } ${
+              isExpanded ? 'justify-between flex-row-reverse' : 'justify-center items-center'
+            } text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary`}
+            style={{ transitionDelay: `${index * 20}ms` }}
+          >
+            {isExpanded && (
+              <span className="flex-1 min-w-0 overflow-hidden text-right text-[0.88rem] font-bold truncate">
+                {item.label}
+              </span>
             )}
-            <ListItemIcon sx={{
-              minWidth: 0,
-              justifyContent: 'center',
-              color: 'text.primary',
-              transition: 'transform 0.03s ease',
-              transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
-            }}>
-              {isGroupOpen ? <ExpandLessIcon size={20} /> : <ExpandMoreIcon size={20} />}
-            </ListItemIcon>
-          </Box>
-        </ListItem>
-        
-        <Collapse in={isGroupOpen && isOpen} timeout="auto">
-          <List component="div" disablePadding sx={{ pr: 2 }}>
-            {filteredChildren.map((child, childIndex) => (
-              <ListItem
-                key={child.path}
-                component={NavLink}
-                to={child.path}
-                onClick={onClose}
-                onMouseEnter={() => prefetchPage(child.module)}
-                sx={{
-                  flexDirection: 'row-reverse',
-                  justifyContent: 'space-between',
-                  borderRadius: 2,
-                  mb: 1,
-                  pr: 3, 
-                  textDecoration: 'none',
-                  color: 'text.primary',
-                  opacity: isOpen ? 1 : 0,
-                  transition: `all 0.1s ease-out ${childIndex * 0.02}s`,
-                  '&:hover': {
-                    backgroundColor: 'rgba(46, 139, 69, 0.1)',
-                    transform: isOpen ? 'translateX(-4px) scale(1.02)' : 'translateX(30px)',
-                    boxShadow: '0 2px 8px rgba(46, 139, 69, 0.2)',
-                    '& .MuiListItemText-primary': {
-                      color: '#2E8B45',
-                      fontWeight: 600
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: '#2E8B45'
+            <div
+              className={`flex items-center gap-1 ${isExpanded ? '' : 'justify-center'}`}
+              style={{ marginLeft: isExpanded ? '0.625rem' : 0 }}
+            >
+              {item.icon && (
+                <span
+                  className="flex justify-center text-[1rem] [&>svg]:w-[1em] [&>svg]:h-[1em]"
+                  style={{ color: item.color || 'inherit' }}
+                >
+                  <item.icon />
+                </span>
+              )}
+              {isExpanded && (
+                <span className="flex justify-center text-slate-600 dark:text-slate-400">
+                  {isGroupOpen ? <ExpandLessIcon size={16} /> : <ExpandMoreIcon size={16} />}
+                </span>
+              )}
+            </div>
+          </button>
+
+          <div
+            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+              isGroupOpen && isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            }`}
+          >
+            <div className="overflow-hidden">
+              <nav className="pr-2 mr-5">
+                {filteredChildren.map((child, childIndex) => (
+                  <NavLink
+                    key={child.path}
+                    to={child.path}
+                    onClick={() => isMobile && onClose()}
+                    onMouseEnter={() => debouncedPrefetch(child.module)}
+                    title={child.label}
+                    className={({ isActive }) =>
+                      `${linkSingle} pr-6 ${isExpanded ? 'opacity-100' : 'opacity-0'} ${
+                        isActive ? linkActive : ''
+                      }`
                     }
-                  },
-                  '&.active': {
-                    backgroundColor: 'rgba(46, 139, 69, 0.15)',
-                    borderRight: '4px solid',
-                    borderRightColor: '#2E8B45',
-                    '& .MuiListItemIcon-root': {
-                      color: 'primary.main'
-                    },
-                    '& .MuiListItemText-primary': {
-                      color: 'primary.main',
-                      fontWeight: 600
-                    }
-                  }
-                }}
-              >
-                <ListItemText
-                  primary={child.label}
-                  sx={{
-                    '& .MuiListItemText-primary': {
-                      fontSize: '0.95rem',
-                      fontWeight: 600,
-                      color: 'text.primary',
-                      textAlign: 'right'
-                    }
-                  }}
-                />
-                <ListItemIcon sx={{ 
-                  minWidth: 0,
-                  marginLeft: '10px',
-                  justifyContent: 'center',
-                  color: 'text.primary',
-                  transition: 'transform 0.03s ease',
-                  transform: isOpen ? 'scale(1) rotate(0deg)' : 'scale(0.7) rotate(180deg)',
-                  '& > *': {
-                    fontSize: '1rem !important'
-                  }
-                }}>
-                  <RadioButtonUnchecked />
-                </ListItemIcon>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
-      </Box>
-    );
-  };
+                    style={{ transitionDelay: `${childIndex * 20}ms` }}
+                  >
+                    {isExpanded && (
+                      <span className="flex-1 min-w-0 overflow-hidden text-right text-[0.95rem] font-semibold truncate">
+                        {child.label}
+                      </span>
+                    )}
+                    <span
+                      className="flex shrink-0 justify-center text-slate-500 dark:text-slate-400"
+                      style={{ marginLeft: isExpanded ? '0.625rem' : 0 }}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
+                    </span>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </li>
+      );
+    },
+    [openGroup, isExpanded, singleItems, isMobile, onClose, toggleGroup, debouncedPrefetch]
+  );
+
+  const isHidden = isMobile && !isOpen;
+  const expandedW = isSmallScreen ? 'w-[220px] min-w-[220px]' : 'w-64 min-w-64';
+  const collapsedW = isSmallScreen ? 'w-14 min-w-14' : 'w-[70px] min-w-[70px]';
+  const translateHidden = isSmallScreen ? '-translate-x-[220px]' : '-translate-x-64';
+  const widthClass = isHidden
+    ? `w-0 min-w-0 ${translateHidden} opacity-0`
+    : isExpanded
+      ? `${expandedW} opacity-100 translate-x-0 shadow-lg`
+      : `${collapsedW} opacity-100 translate-x-0 shadow-md`;
 
   return (
-    <Box
+    <aside
       ref={sidebarRef}
-      sx={{
-        width: isOpen ? 250 : 0,
-        minWidth: isOpen ? 250 : 0,
-        flexShrink: 0,
-        transition: 'all 0.05s ease-out',
-        overflow: 'hidden',
-        position: 'fixed',
-        top: 64,
-        right: isOpen ? 0 : -250,
-        bottom: 0,
-        zIndex: 1200,
-        backgroundColor: 'background.paper',
-        borderLeft: '1px solid #e0e0e0',
-        display: 'flex',
-        flexDirection: 'column',
-        opacity: isOpen ? 1 : 0,
-        transform: `translateX(${isOpen ? 0 : 250}px)`,
-        boxShadow: isOpen ? '0 4px 20px rgba(0, 0, 0, 0.15)' : 'none'
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`
+        fixed top-16 right-0 bottom-0 z-[1200] flex flex-col shrink-0 overflow-hidden
+        bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700
+        transition-all duration-300 ease-out
+        ${widthClass}
+      `}
     >
-      <Box
-        sx={{
-          width: 250,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          opacity: isOpen ? 1 : 0,
-          transition: 'all 0.05s ease-out',
-          transform: isOpen ? 'translateX(0)' : 'translateX(50px)'
-        }}
+      <div
+        className={`
+          h-full flex flex-col transition-all duration-300 ease-out
+          ${isHidden ? 'opacity-0 translate-x-[50px]' : 'opacity-100 translate-x-0'}
+          ${isExpanded ? (isSmallScreen ? 'w-[220px]' : 'w-64') : (isSmallScreen ? 'w-14' : 'w-[70px]')}
+        `}
       >
-        <List sx={{ 
-          flexGrow: 1, 
-          px: 1, 
-          py: 2, 
-          overflowY: 'auto', 
-          scrollbarWidth: 'thin',
-          '&::-webkit-scrollbar': {
-            width: '6px'
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: 'transparent'
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: isDarkMode ? '#555' : '#c5cae9',
-            borderRadius: '8px'
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: isDarkMode ? '#777' : '#9fa8da'
-          },
-        }}>
+        <ul
+          ref={listRef}
+          className={`flex-1 py-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            isExpanded ? 'px-1' : 'px-2'
+          }`}
+          tabIndex={-1}
+        >
           {singleItems.map((item, index) => renderSingleMenuItem(item, index))}
+          {isExpanded && singleItems.length > 0 && groupItems.length > 0 && (
+            <hr className="my-2 border-slate-200 dark:border-slate-700" />
+          )}
           {groupItems.map((item, index) => renderGroupMenuItem(item, index))}
-        </List>
-      </Box>
-    </Box>
+        </ul>
+      </div>
+    </aside>
   );
 };
 

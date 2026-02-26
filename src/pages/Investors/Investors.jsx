@@ -9,12 +9,14 @@ import {
   Alert,
   Skeleton,
   Button,
+  useMediaQuery,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import WarningIcon from "@mui/icons-material/Warning";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { checkUnpostedOpeningJournals } from "../Journals/journalsApi";
 import { debounce } from '../../utilities/debounce';
 import DeleteModal from "../../components/modals/DeleteModal";
 import TransactionModal from "../../components/modals/TransactionModal";
@@ -82,7 +84,6 @@ export default function Investors() {
     amount: ""
   });
   const [transactionsPage, setTransactionsPage] = useState(1);
-  const [showAlert, setShowAlert] = useState(true);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
 
@@ -122,6 +123,9 @@ export default function Investors() {
 
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
+  const isSmallScreen = isMobile || isTablet;
 
   const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
     queryKey: [QUERY_KEYS.INVESTORS, currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus],
@@ -140,12 +144,6 @@ export default function Investors() {
     queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, selectedInvestor?.id, transactionsPage],
     queryFn: () => selectedInvestor ? getPartnerTransactions(selectedInvestor.id, transactionsPage) : null,
     enabled: !!selectedInvestor,
-    retry: 1,
-  });
-
-  const { data: openingJournalsCheck } = useQuery({
-    queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK],
-    queryFn: () => checkUnpostedOpeningJournals(),
     retry: 1,
   });
 
@@ -387,6 +385,7 @@ export default function Investors() {
       const refetchedData = await refetch();
       
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.OPENING_JOURNALS_CHECK] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       
       if (selectedInvestor?.id === investorId) {
         if (nextInvestorId) {
@@ -483,6 +482,7 @@ export default function Investors() {
       });
       
       invalidateAllInvestorQueries(queryClient, selectedInvestor.id);
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       
       notifySuccess(`تم إلغاء انسحاب المستثمر ${selectedInvestor.name} بنجاح`);
       setIsCancelWithdrawModalOpen(false);
@@ -553,11 +553,13 @@ export default function Investors() {
       if (isWithdrawEditMode) {
         await updatePartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
         invalidateAllInvestorQueries(queryClient, selectedInvestor.id);
+        queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
         notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
       } else {
         await createPartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
         setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
         invalidateInvestorQueries(queryClient, selectedInvestor.id);
+        queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
         notifySuccess(`تم إنسحاب المستثمر ${selectedInvestor.name} من توزيعات الأرباح بنجاح`);
       }
       
@@ -645,6 +647,7 @@ export default function Investors() {
 
       invalidateInvestorQueries(queryClient, selectedInvestor.id);
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       
       notifySuccess("تم إضافة العملية المالية بنجاح");
       setIsTransactionModalOpen(false);
@@ -668,6 +671,7 @@ export default function Investors() {
       
       invalidateInvestorQueries(queryClient, selectedInvestor.id);
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, selectedInvestor.id] });
+      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       
       notifySuccess("تم حذف العملية المالية بنجاح");
       setIsDeleteTransactionModalOpen(false);
@@ -748,7 +752,7 @@ export default function Investors() {
   };
   
   useEffect(() => {
-    if (investorsData?.partners?.length > 0 && !selectedInvestor) {
+    if (investorsData?.partners?.length > 0 && !selectedInvestor && !isMobile) {
       setSelectedInvestor(investorsData.partners[0]);
     }
     else if (selectedInvestor && investorsData?.partners?.length > 0) {
@@ -760,7 +764,7 @@ export default function Investors() {
     else if (selectedInvestor && (!investorsData?.partners || investorsData.partners.length === 0)) {
       setSelectedInvestor(null);
     }
-  }, [investorsData, selectedInvestor]);
+  }, [investorsData, selectedInvestor, isMobile]);
 
   useEffect(() => {
     if (investorDetails) {
@@ -782,66 +786,8 @@ export default function Investors() {
         <meta name="description" content="المستثمرين" />
       </Helmet>
 
-      {/* Opening Journals Alert */}
-      {showAlert && openingJournalsCheck?.hasUnpostedOpeningJournals && (
-        <Alert
-          severity="warning"
-          icon={<WarningIcon />}
-          action={
-            <IconButton size="small" onClick={() => setShowAlert(false)}>
-              <CloseIcon />
-            </IconButton>
-          }
-          sx={{
-            mx: 2,
-            mt: 2,
-            mb: 1,
-            borderRadius: 2,
-            boxShadow: 2,
-            border: '2px solid #f59e0b',
-            '& .MuiAlert-message': {
-              width: '100%',
-            },
-            '& .MuiAlert-icon': {
-              fontSize: '1.5rem'
-            }
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-              flexWrap: 'wrap'
-            }}
-          >
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                ⚠️ تنبيه مهم: يوجد {openingJournalsCheck.count} قيد افتتاحي غير معتمد
-              </Typography>
-              <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
-                يرجى مراجعة صفحة القيود والتأكد من اعتماد جميع القيود الافتتاحية قبل إجراء أي معاملات لضمان سلامة البيانات المحاسبية.
-              </Typography>
-            </Box>
-            <Button
-              size="small"
-              color="primary"
-              onClick={() => navigate('/journal-entries')}
-              sx={{
-                fontWeight: 600,
-                textTransform: 'none',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              الذهاب للقيود
-            </Button>
-          </Box>
-        </Alert>
-      )}
-
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* Investors List Sidebar */}
+        {(!isMobile || !selectedInvestor) && (
         <InvestorsList
           investorsData={investorsData}
           isLoading={isInvestorsLoading}
@@ -867,14 +813,17 @@ export default function Investors() {
           permissions={permissions}
           isDarkMode={isDarkMode}
           listScrollRef={listScrollRef}
+          isMobile={isMobile}
         />
+        )}
 
-        {/* Main Content */}
-        {selectedInvestor && investorDetails ? (
-          <Box sx={{ flex: 1, bgcolor: "background.paper", display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-            {/* Header */}
+        {(!isMobile || selectedInvestor) && (
+          selectedInvestor && investorDetails ? (
+            <Box sx={{ flex: 1, bgcolor: "background.paper", display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
             <InvestorHeader
               investorDetails={investorDetails}
+              isMobile={isMobile}
+              onBackToList={() => setSelectedInvestor(null)}
               isExporting={isExporting}
               exportMenuAnchor={exportMenuAnchor}
               onExportMenuOpen={handleExportMenuOpen}
@@ -887,7 +836,7 @@ export default function Investors() {
               permissions={permissions}
             />
 
-            <Box ref={contentScrollRef} sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
+            <Box ref={contentScrollRef} sx={{ flex: 1, overflowY: 'auto', p: { xs: 2, sm: 3 } }}>
               {/* Withdrawn Alert */}
               {(withdrawnInvestors.has(selectedInvestor?.id) || 
                 investorDetails?.WithdrawingStatus === 'WITHDRAWING' || 
@@ -907,26 +856,44 @@ export default function Investors() {
               )}
 
               {/* Tabs */}
-              <Tabs
-                value={tab}
-                onChange={handleTabChange}
-                textColor="primary"
-                indicatorColor="primary"
-                sx={{
-                  mb: 3,
-                  '& .MuiTab-root': {
-                    color: 'text.primary',
-                    '&.Mui-selected': {
-                      color: 'primary.main',
+              {(isMobile || isSmallScreen) ? (
+                <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+                  <FormControl sx={{ minWidth: 200, maxWidth: 320, width: "100%" }}>
+                    <Select
+                      value={tab}
+                      onChange={(e) => handleTabChange(null, e.target.value)}
+                      size="small"
+                      sx={{
+                        "& .MuiSelect-select": { textAlign: "center", py: 1.25 },
+                      }}
+                    >
+                      <MenuItem value={0}>التفاصيل الشخصية</MenuItem>
+                      <MenuItem value={1}>المعلومات المالية</MenuItem>
+                      <MenuItem value={2}>العمليات المالية</MenuItem>
+                      <MenuItem value={3}>المستندات</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              ) : (
+                <Tabs
+                  value={tab}
+                  onChange={handleTabChange}
+                  textColor="primary"
+                  indicatorColor="primary"
+                  sx={{
+                    mb: 3,
+                    "& .MuiTab-root": {
+                      color: "text.primary",
+                      "&.Mui-selected": { color: "primary.main" },
                     },
-                  },
-                }}
-              >
-                <Tab label="التفاصيل الشخصية" />
-                <Tab label="المعلومات المالية" />
-                <Tab label="العمليات المالية" />
-                <Tab label="المستندات" />
-              </Tabs>
+                  }}
+                >
+                  <Tab label="التفاصيل الشخصية" />
+                  <Tab label="المعلومات المالية" />
+                  <Tab label="العمليات المالية" />
+                  <Tab label="المستندات" />
+                </Tabs>
+              )}
 
               <Divider sx={{ mb: 3 }} />
 
@@ -936,6 +903,7 @@ export default function Investors() {
                   investorDetails={investorDetails}
                   editMode={editMode}
                   editFormData={editFormData}
+                  isMobile={isMobile}
                   onEditModeToggle={() => setEditMode(!editMode)}
                   onInputChange={handleInputChange}
                   onSaveChanges={handleSaveChanges}
@@ -947,6 +915,7 @@ export default function Investors() {
               {tab === 1 && (
                 <FinancialInfoTab
                   investorDetails={investorDetails}
+                  isMobile={isMobile}
                   editMode={editMode}
                   editFormData={editFormData}
                   hasDataChanged={hasDataChanged}
@@ -982,6 +951,7 @@ export default function Investors() {
                   onDeleteTransaction={openDeleteTransactionModal}
                   permissions={permissions}
                   isDarkMode={isDarkMode}
+                  isMobile={isSmallScreen}
                 />
               )}
 
@@ -996,9 +966,9 @@ export default function Investors() {
                 />
               )}
             </Box>
-          </Box>
-        ) : (
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2 }}>
+            </Box>
+          ) : (
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", gap: 2 }}>
             <Typography variant="h6" color="text.secondary">
               {selectedInvestor ? 'جاري تحميل البيانات...' : 'اختر مستثمراً لعرض التفاصيل'}
             </Typography>
@@ -1009,7 +979,8 @@ export default function Investors() {
                 <Skeleton variant="text" width="60%" height={24} />
               </Box>
             )}
-          </Box>
+            </Box>
+          )
         )}
       </Box>
 

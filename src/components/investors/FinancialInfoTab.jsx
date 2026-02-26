@@ -28,10 +28,8 @@ import InfoIcon from "@mui/icons-material/Info";
  * Shows investment details, profits, savings, ratios, and zakat information
  */
 const FinancialInfoTab = ({
-  // Investor data
   investorDetails,
-  
-  // Edit mode
+  isMobile = false,
   editMode,
   editFormData,
   hasDataChanged,
@@ -46,7 +44,7 @@ const FinancialInfoTab = ({
   isDarkMode,
 }) => {
   return (
-    <Paper sx={{ p: 3 }}>
+    <Paper sx={{ p: { xs: 2, md: 3 } }}>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
@@ -421,49 +419,77 @@ const FinancialInfoTab = ({
       })()}
 
       {/* Edit Actions & Editable Fields */}
-      <div className="border-2 border-primary/10 rounded-xl p-6 bg-primary/5 dark:bg-primary/10 mt-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <EditIcon sx={{ color: 'primary.main' }} />
+      <Box
+        sx={{
+          border: "2px solid",
+          borderColor: "primary.main",
+          borderRadius: 2,
+          p: { xs: 2, md: 3 },
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark" ? "rgba(46, 139, 69, 0.1)" : "rgba(46, 139, 69, 0.05)",
+          mt: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold" sx={{ color: "text.primary", display: "flex", alignItems: "center", gap: 1 }}>
+            <EditIcon sx={{ color: "primary.main" }} />
             تعديل البيانات المالية
-          </h3>
-          {investorDetails?.WithdrawingStatus !== 'WITHDRAWING' && investorDetails?.WithdrawingStatus !== 'WITHDRAWN' && (
-            <div className="flex gap-2">
-              {permissions.includes("partners_Update") && (
-                <button
-                  type="button"
-                  onClick={onEditModeToggle}
-                  className="px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
-                >
-                  <EditIcon sx={{ fontSize: 20 }} />
-                  {editMode ? 'إلغاء التعديل' : 'تعديل'}
-                </button>
-              )}
-              {permissions.includes("partners_Add") && (
-                <button
-                  type="button"
-                  onClick={onSaveChanges}
-                  disabled={!editMode || isSaving}
-                  className="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70"
-                >
-                  {isSaving ? (
-                    <>
-                      <span className="animate-spin inline-block"><AutorenewIcon sx={{ fontSize: 20 }} /></span>
-                      جاري الحفظ...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircleIcon sx={{ fontSize: 20 }} />
-                      حفظ التغييرات
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+          </Typography>
+          {investorDetails?.WithdrawingStatus !== "WITHDRAWING" &&
+            investorDetails?.WithdrawingStatus !== "WITHDRAWN" && (
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                {permissions.includes("partners_Update") && (
+                  <Button
+                    variant="outlined"
+                    size={isMobile ? "small" : "medium"}
+                    onClick={onEditModeToggle}
+                    startIcon={<EditIcon />}
+                    sx={{
+                      color: "text.secondary",
+                      borderColor: "divider",
+                      "&:hover": { bgcolor: "action.hover", borderColor: "text.secondary" },
+                    }}
+                  >
+                    {editMode ? "إلغاء التعديل" : "تعديل"}
+                  </Button>
+                )}
+                {permissions.includes("partners_Add") && (
+                  <Button
+                    variant="contained"
+                    size={isMobile ? "small" : "medium"}
+                    onClick={onSaveChanges}
+                    disabled={!editMode || isSaving}
+                    startIcon={
+                      isSaving ? (
+                        <span className="animate-spin inline-block">
+                          <AutorenewIcon sx={{ fontSize: 20 }} />
+                        </span>
+                      ) : (
+                        <CheckCircleIcon />
+                      )
+                    }
+                    sx={{
+                      bgcolor: "primary.main",
+                      "&:hover": { bgcolor: "primary.dark" },
+                    }}
+                  >
+                    {isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
+                  </Button>
+                )}
+              </Box>
+            )}
+        </Box>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
           <div>
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">رأس المال</label>
             <input
@@ -515,21 +541,26 @@ const FinancialInfoTab = ({
               className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 px-3 py-2 text-slate-600 dark:text-slate-400 cursor-not-allowed"
             />
           </div>
-        </div>
+        </Box>
 
         {hasDataChanged && (
-          <div className="mt-6 flex justify-end">
-            <button
-              type="button"
+          <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              size={isMobile ? "small" : "medium"}
               onClick={onGenerateContract}
-              className="px-4 py-2 rounded-lg border-2 border-red-500 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+              startIcon={<PictureAsPdfIcon />}
+              sx={{
+                borderColor: "error.main",
+                color: "error.main",
+                "&:hover": { borderColor: "error.dark", bgcolor: "error.50" },
+              }}
             >
-              <PictureAsPdfIcon sx={{ fontSize: 24 }} />
               توليد عقد مضاربة جديد
-            </button>
-          </div>
+            </Button>
+          </Box>
         )}
-      </div>
+      </Box>
     </Paper>
   );
 };

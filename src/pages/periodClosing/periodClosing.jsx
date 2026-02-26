@@ -22,7 +22,6 @@ import {
 import { notifyInfo } from "../../utilities/toastify";
 
 import PeriodClosingHeader from "../../components/PeriodClosing/PeriodClosingHeader";
-import PeriodClosingSidebar from "../../components/PeriodClosing/PeriodClosingSidebar";
 import PeriodClosingDetails from "../../components/PeriodClosing/PeriodClosingDetails";
 
 const PeriodClosing = () => {
@@ -194,22 +193,12 @@ const PeriodClosing = () => {
       <Box
         sx={{
           display: "flex",
-          flexDirection: isSmallScreen ? "column" : "row-reverse",
+          flexDirection: "column",
           flex: 1,
           height: isSmallScreen ? "auto" : "calc(100vh - 80px)",
           width: "100%",
         }}
       >
-        {!isSmallScreen && activeTab === 1 && periodData && (
-          <PeriodClosingSidebar
-            periodData={periodData}
-            theme={theme}
-            permissions={permissions}
-            onClosePeriod={handleClosePeriod}
-            onUnpostClosing={handleUnpostClosing}
-          />
-        )}
-
         <Box
           sx={{
             flex: 1,
@@ -283,6 +272,7 @@ const PeriodClosing = () => {
                       handleNavigateToProfitDistribution
                     }
                     onViewJournal={handleViewJournal}
+                    onBackToList={handleBackToList}
                   />
                 ) : (
                   <Alert severity="error">

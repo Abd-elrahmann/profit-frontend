@@ -7,12 +7,16 @@ import {
   InputBase,
   IconButton,
   Stack,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   PictureAsPdf as PDFIcon,
   TableRows as ExcelIcon,
 } from "@mui/icons-material";
+import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 
 export default function ProfitDistributionHeader({
   activeTab,
@@ -43,6 +47,19 @@ export default function ProfitDistributionHeader({
   if (isSmallScreen) {
     return (
       <Box sx={{ mb: 3 }}>
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <Select
+            value={activeTab}
+            onChange={(e) => onTabChange(Number(e.target.value))}
+            sx={{
+              fontWeight: "bold",
+              "& .MuiSelect-select": { textAlign: "right", py: 1.5 },
+            }}
+          >
+            <MenuItem value={0}>الفترات المقفلة</MenuItem>
+            <MenuItem value={1}>{selectedPeriod ? "تفاصيل التوزيع" : "توزيع محدد"}</MenuItem>
+          </Select>
+        </FormControl>
         {activeTab === 1 ? (
           <Box
             sx={{
@@ -114,7 +131,7 @@ export default function ProfitDistributionHeader({
                 borderRadius: "6px",
                 p: 1,
                 border: `1px solid ${theme.palette.divider}`,
-                bgcolor: "background.paper",
+                ...transparentSearchInputBaseSx,
               }}
             />
           </Box>

@@ -13,6 +13,7 @@ const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { AuthProvider, useAuth } from './components/Contexts/AuthContext';
+import { NotificationsProvider } from './components/Contexts/NotificationsContext';
 import { notifyError } from './utilities/toastify';
 import { convertModuleToPermission } from './utilities/moduleConverter';
 import Box from '@mui/material/Box';
@@ -296,7 +297,9 @@ function App() {
       <Router>
         <AuthProvider>
           <PermissionProvider>
-            <AppLayout />
+            <NotificationsProvider>
+              <AppLayout />
+            </NotificationsProvider>
           </PermissionProvider>
         </AuthProvider>
         <Toaster

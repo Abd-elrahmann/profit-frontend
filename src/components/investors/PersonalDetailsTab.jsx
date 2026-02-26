@@ -26,23 +26,24 @@ const PersonalDetailsTab = ({
   onSaveChanges,
   isSaving = false,
   permissions,
+  isMobile = false,
 }) => {
   return (
-    <div className="space-y-8">
-      <div className="border-2 border-primary/10 rounded-xl p-6 bg-primary/5 dark:bg-primary/10">
-        <div className="flex items-center justify-between mb-6">
+    <div className={`space-y-8 ${isMobile ? "flex flex-col items-center max-w-[520px] w-full mx-auto" : ""}`}>
+      <div className={`border-2 border-primary/10 rounded-xl bg-primary/5 dark:bg-primary/10 ${isMobile ? "p-4 w-full max-w-[520px]" : "p-6"}`}>
+        <div className={`flex items-center justify-between mb-6 ${isMobile ? "flex-col gap-3 items-stretch" : ""}`}>
           <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <AccountCircle sx={{ color: 'primary.main' }} />
             ملخص المستثمر
           </h2>
           {investorDetails?.WithdrawingStatus !== "WITHDRAWING" &&
             investorDetails?.WithdrawingStatus !== "WITHDRAWN" && (
-              <div className="flex gap-2">
+              <div className={`flex gap-2 ${isMobile ? "flex-wrap" : ""}`}>
                 {permissions.includes("partners_Update") && (
                   <button
                     type="button"
                     onClick={onEditModeToggle}
-                    className="px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                    className={`px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 ${isMobile ? "text-sm py-1.5" : ""}`}
                   >
                     <Edit sx={{ fontSize: 20 }} />
                     {editMode ? "إلغاء التعديل" : "تعديل"}
@@ -53,7 +54,7 @@ const PersonalDetailsTab = ({
                     type="button"
                     onClick={onSaveChanges}
                     disabled={!editMode || isSaving}
-                    className="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70"
+                    className={`px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70 ${isMobile ? "text-sm py-1.5" : ""}`}
                   >
                     {isSaving ? (
                       <>

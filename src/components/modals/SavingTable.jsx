@@ -25,7 +25,8 @@ const SavingTable = ({ isLoading, savingData }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 480px)');
+  const isSmallMobile = useMediaQuery('(max-width: 400px)');
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -41,8 +42,8 @@ const SavingTable = ({ isLoading, savingData }) => {
   };
 
   const renderDesktopTable = () => (
-    <TableContainer component={Paper} sx={{ boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
-      <Table>
+    <TableContainer component={Paper} sx={{ boxShadow: '0 2px 12px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
+      <Table sx={{ minWidth: 500 }}>
         <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center" sx={{ fontWeight: 'bold' }}>
@@ -254,7 +255,7 @@ const SavingTable = ({ isLoading, savingData }) => {
                         />
                       </Box>
 
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: isSmallMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: 1 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="body2" color={theme.palette.primary.main}>
                             فترات الادخار

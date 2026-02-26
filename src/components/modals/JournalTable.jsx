@@ -94,6 +94,10 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       notifySuccess(`تم اعتماد ${selectedJournals.length} قيد بنجاح`);
       setSelectedJournals([]);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+      queryClient.invalidateQueries(["opening-journals-check"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء اعتماد القيود");
     } finally {
@@ -123,6 +127,10 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       notifySuccess(`تم إلغاء اعتماد ${selectedJournals.length} قيد بنجاح`);
       setSelectedJournals([]);
       queryClient.invalidateQueries(["journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
+      queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+      queryClient.invalidateQueries(["opening-journals-check"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء إلغاء اعتماد القيود");
     } finally {
@@ -541,14 +549,14 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       }}
     >
       {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8 mb-6">
+        <div className={`grid grid-cols-1 gap-4 mt-4 mb-4 ${isMobile ? 'md:grid-cols-2' : 'md:grid-cols-3 lg:grid-cols-5'}`}>
           <JournalsListSummaryCards
             total={journalsData.journals.length}
             posted={journalsData.journals.filter((j) => j.status === "POSTED").length}
             draft={journalsData.journals.filter((j) => j.status !== "POSTED").length}
           />
           {canExport && (
-            <div className="lg:col-span-2 flex flex-row flex-wrap items-center gap-2">
+            <div className={`flex flex-row flex-wrap items-center gap-2 ${isMobile ? '' : 'lg:col-span-2'}`}>
               <Button
                 variant="outlined"
                 color="error"
@@ -574,11 +582,11 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
   
       {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
         <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: "#f5f5f5" }}>
-          <Stack direction="row" spacing={2} alignItems="center" sx={{gap: 2}}>
+          <Stack direction={isMobile ? "column" : "row"} spacing={2} alignItems={isMobile ? "stretch" : "center"} sx={{ gap: 2 }}>
             <Typography variant="body2" color="text.secondary">
               تم اختيار {selectedJournals.length} قيد
             </Typography>
-            <Stack direction="row" sx={{ gap: 2 }}>
+            <Stack direction={isMobile ? "column" : "row"} sx={{ gap: 2 }}>
               {permissions.includes("journals_Post") && (
                 <Button
                   variant="contained"

@@ -104,6 +104,7 @@ export default function ClientsDocumentsTab({
   documentsTab,
   permissions,
   isDarkMode,
+  isMobile = false,
   onDocumentsTabChange,
   onEditDocuments,
   onEditKafeelDocuments,

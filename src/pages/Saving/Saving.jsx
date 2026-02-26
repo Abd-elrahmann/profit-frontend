@@ -5,6 +5,9 @@ import {
   Tabs,
   Tab,
   Paper,
+  FormControl,
+  Select,
+  MenuItem,
   Grid,
   Stack,
   Divider,
@@ -83,37 +86,43 @@ const Saving = () => {
   };
 
   const renderAccountSummary = () => (
-    <Box sx={{ display: 'flex', gap: 2, mb: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
-      <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
-        <BalanceIcon color={theme.palette.primary.main} sx={{ fontSize: 40, mb: 1 }} />
-        <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main} sx={{ wordBreak: 'break-word' }}>
+    <Box sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+      gap: 2,
+      mb: 4,
+      width: '100%',
+    }}>
+      <Card sx={{ bgcolor: "primary.50", textAlign: "center", p: 2, minWidth: 0 }}>
+        <BalanceIcon color={theme.palette.primary.main} sx={{ fontSize: { xs: 32, sm: 40 }, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main} sx={{ wordBreak: 'break-word', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
           {formatCurrency(accountReport?.account?.balance)}
         </Typography>
         <Typography variant="body2" color={theme.palette.primary.main}>
           رصيد الصندوق
         </Typography>
       </Card>
-      <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
-        <DepositIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-        <Typography variant="h5" fontWeight="bold" color="success.main" sx={{ wordBreak: 'break-word' }}>
+      <Card sx={{ bgcolor: "success.50", textAlign: "center", p: 2, minWidth: 0 }}>
+        <DepositIcon color="success" sx={{ fontSize: { xs: 32, sm: 40 }, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color="success.main" sx={{ wordBreak: 'break-word', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
           {formatCurrency(accountReport?.account?.debit)}
         </Typography>
         <Typography variant="body2" color="success.main">
           إجمالي الإيداعات
         </Typography>
       </Card>
-      <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
-        <WithdrawalIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
-        <Typography variant="h5" fontWeight="bold" color="warning.main" sx={{ wordBreak: 'break-word' }}>
+      <Card sx={{ bgcolor: "warning.50", textAlign: "center", p: 2, minWidth: 0 }}>
+        <WithdrawalIcon color="warning" sx={{ fontSize: { xs: 32, sm: 40 }, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color="warning.main" sx={{ wordBreak: 'break-word', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
           {formatCurrency(accountReport?.account?.credit)}
         </Typography>
         <Typography variant="body2" color="warning.main">
           إجمالي السحوبات
         </Typography>
       </Card>
-      <Card sx={{ bgcolor: "info.50", textAlign: "center", p: 2, minWidth: "200px", maxWidth: "300px", flex: "1 1 auto" }}>
-        <CalendarIcon color="info" sx={{ fontSize: 40, mb: 1 }} />
-        <Typography variant="h5" fontWeight="bold" color="info.main" sx={{ wordBreak: 'break-word' }}>
+      <Card sx={{ bgcolor: "info.50", textAlign: "center", p: 2, minWidth: 0 }}>
+        <CalendarIcon color="info" sx={{ fontSize: { xs: 32, sm: 40 }, mb: 1 }} />
+        <Typography variant="h5" fontWeight="bold" color="info.main" sx={{ wordBreak: 'break-word', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
           {accountReport?.totalJournalEntries || 0}
         </Typography>
         <Typography variant="body2" color="info.main">
@@ -135,64 +144,89 @@ const Saving = () => {
     }
 
     return (
-      <Card sx={{ p: 3 }}>
-        <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mb: 3, textAlign: "center" }}>
+      <Card sx={{ p: { xs: 2, sm: 3 }, overflow: 'hidden' }}>
+        <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mb: 3, textAlign: "center", fontSize: { xs: '1rem', sm: '1.25rem' } }}>
           العمليات المالية
         </Typography>
         
         {Object.entries(accountReport.journalsByMonth).map(([month, data]) => (
           <Box key={month} sx={{ mb: 4 }}>
-            <Typography variant="h6" color="primary" sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="h6" color="primary" sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1, fontSize: { xs: '0.95rem', sm: '1rem' } }}>
               شهر {month}
             </Typography>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <StyledTableRow>
-                    <StyledTableCell align="center">التاريخ</StyledTableCell>
-                    <StyledTableCell align="center">الوصف</StyledTableCell>
-                    <StyledTableCell align="center">مدين</StyledTableCell>
-                    <StyledTableCell align="center">دائن</StyledTableCell>
-                    <StyledTableCell align="center">الرصيد</StyledTableCell>
-                  </StyledTableRow>
-                </TableHead>
-                <TableBody>
-                  {data.entries.map((entry) => (
-                    <StyledTableRow key={entry.id}>
-                      <StyledTableCell align="center">
-                        {formatArabicDate(entry.date)}
+            {isMobile ? (
+              <Stack spacing={2}>
+                {data.entries.map((entry) => (
+                  <Card key={entry.id} variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      {formatArabicDate(entry.date)}
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium" sx={{ mb: 1 }}>
+                      {entry.description}
+                    </Typography>
+                    <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ gap: 1 }}>
+                      <Typography variant="body2">مدين: <strong>{formatCurrency(entry.debit)}</strong></Typography>
+                      <Typography variant="body2">دائن: <strong>{formatCurrency(entry.credit)}</strong></Typography>
+                      <Typography variant="body2">الرصيد: <strong>{formatCurrency(entry.balance)}</strong></Typography>
+                    </Stack>
+                  </Card>
+                ))}
+                <Card sx={{ bgcolor: 'grey.100', p: 2 }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    الإجمالي - مدين: {formatCurrency(data.totalDebit)} | دائن: {formatCurrency(data.totalCredit)} | الرصيد: {formatCurrency(data.totalBalance)}
+                  </Typography>
+                </Card>
+              </Stack>
+            ) : (
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 400 }}>
+                  <TableHead>
+                    <StyledTableRow>
+                      <StyledTableCell align="center">التاريخ</StyledTableCell>
+                      <StyledTableCell align="center">الوصف</StyledTableCell>
+                      <StyledTableCell align="center">مدين</StyledTableCell>
+                      <StyledTableCell align="center">دائن</StyledTableCell>
+                      <StyledTableCell align="center">الرصيد</StyledTableCell>
+                    </StyledTableRow>
+                  </TableHead>
+                  <TableBody>
+                    {data.entries.map((entry) => (
+                      <StyledTableRow key={entry.id}>
+                        <StyledTableCell align="center">
+                          {formatArabicDate(entry.date)}
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          {entry.description}
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          {formatCurrency(entry.debit)}
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          {formatCurrency(entry.credit)}
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          {formatCurrency(entry.balance)}
+                        </StyledTableCell>
+                      </StyledTableRow>
+                    ))}
+                    <StyledTableRow sx={{ bgcolor: 'grey.100', '& .MuiTableCell-root': { fontWeight: 'bold' } }}>
+                      <StyledTableCell align="center" colSpan={2}>
+                        الإجمالي
                       </StyledTableCell>
                       <StyledTableCell align="center">
-                        {entry.description}
+                        {formatCurrency(data.totalDebit)}
                       </StyledTableCell>
                       <StyledTableCell align="center">
-                        {formatCurrency(entry.debit)}
+                        {formatCurrency(data.totalCredit)}
                       </StyledTableCell>
                       <StyledTableCell align="center">
-                        {formatCurrency(entry.credit)}
-                      </StyledTableCell>
-                      <StyledTableCell align="center">
-                        {formatCurrency(entry.balance)}
+                        {formatCurrency(data.totalBalance)}
                       </StyledTableCell>
                     </StyledTableRow>
-                  ))}
-                  <StyledTableRow sx={{ bgcolor: 'grey.100', '& .MuiTableCell-root': { fontWeight: 'bold' } }}>
-                    <StyledTableCell align="center" colSpan={2}>
-                      الإجمالي
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {formatCurrency(data.totalDebit)}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {formatCurrency(data.totalCredit)}
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      {formatCurrency(data.totalBalance)}
-                    </StyledTableCell>
-                  </StyledTableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Box>
         ))}
       </Card>
@@ -222,11 +256,13 @@ const Saving = () => {
 
   return (
     <Box
+      dir="rtl"
       sx={{
         bgcolor: theme.palette.background.default,
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
+        overflowX: 'hidden',
       }}
     >
       <Helmet>
@@ -237,18 +273,34 @@ const Saving = () => {
       <Box
         sx={{
           flex: 1,
-          p: isSmallScreen ? 2 : 4,
+          p: { xs: 2, sm: 3, md: 4 },
           bgcolor: theme.palette.background.paper,
+          overflowX: 'hidden',
         }}
       >
         <Box sx={{ width: "100%" }}>
-          {!isSmallScreen ? (
-            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
+          {isMobile ? (
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <Select
+                  value={activeTab}
+                  onChange={(e) => setActiveTab(Number(e.target.value))}
+                  sx={{
+                    fontWeight: "bold",
+                    "& .MuiSelect-select": { textAlign: "right", py: 1.5 },
+                  }}
+                >
+                  <MenuItem value={0}>كشف المدخرات العام</MenuItem>
+                  <MenuItem value={1}>صندوق الادخار</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          ) : (
+            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4, overflowX: 'auto' }}>
               <Tabs
                 value={activeTab}
-                onChange={(e, newValue) => {
-                  setActiveTab(newValue);
-                }}
+                onChange={(e, newValue) => setActiveTab(newValue)}
+                sx={{ '& .MuiTab-root': { minWidth: 160 } }}
               >
                 <Tab
                   label="كشف المدخرات العام"
@@ -268,18 +320,6 @@ const Saving = () => {
                 />
               </Tabs>
             </Box>
-          ) : (
-            <Box sx={{ mb: 3 }}>
-              {activeTab === 1 ? (
-                <Typography variant="h6" fontWeight="bold" mb={2}>
-                  صندوق الادخار
-                </Typography>
-              ) : (
-                <Typography variant="h6" fontWeight="bold" mb={2}>
-                  إدارة المدخرات
-                </Typography>
-              )}
-            </Box>
           )}
 
           {activeTab === 0 ? (
@@ -291,13 +331,19 @@ const Saving = () => {
                 borderRadius: 2,
               }}
             >
-              <Box sx={{ p: 2, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Box sx={{
+                p: { xs: 1.5, sm: 2 },
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, auto)' },
+                gap: 1.5,
+                justifyContent: { sm: 'center' },
+              }}>
                 <Button
                   variant="contained"
                   color="error"
                   onClick={() => setWithdrawModalOpen(true)}
                   disabled={isSavingLoading || !savingData?.data?.length}
-                  sx={{ minWidth: 120, fontWeight: 'bold' }}
+                  sx={{ fontWeight: 'bold', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                 >
                   سحب مبلغ ادخار
                 </Button>
@@ -306,7 +352,7 @@ const Saving = () => {
                   color="error"
                   onClick={() => exportSavingsToPDF(savingData)}
                   disabled={isSavingLoading || !savingData?.data?.length}
-                  sx={{ minWidth: 120,fontWeight: 'bold' }}
+                  sx={{ fontWeight: 'bold', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                 >
                   تصدير PDF
                 </Button>
@@ -315,7 +361,7 @@ const Saving = () => {
                   color="success"
                   onClick={() => exportSavingsToExcel(savingData)}
                   disabled={isSavingLoading || !savingData?.data?.length}
-                  sx={{ minWidth: 120,fontWeight: 'bold' }}
+                  sx={{ fontWeight: 'bold', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                 >
                   تصدير Excel
                 </Button>

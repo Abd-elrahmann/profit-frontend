@@ -15,6 +15,7 @@ export const DashboardFilterProvider = ({ children }) => {
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [tabTitle, setTabTitle] = useState('لوحة التحكم');
+  const [tabSubtitle, setTabSubtitle] = useState('');
 
   const getApiFilter = useCallback(() => {
     if (filter === 'all') return 'all';
@@ -33,6 +34,8 @@ export const DashboardFilterProvider = ({ children }) => {
     setCustomTo,
     tabTitle,
     setTabTitle,
+    tabSubtitle,
+    setTabSubtitle,
     FILTER_OPTIONS,
     getApiFilter,
     isCustom: filter === 'custom',

@@ -10,25 +10,42 @@ export default function InstallmentsToolbar({
   isSettlementCompleted,
   hasPendingInstallments,
   hasEarlyPaymentPermission,
+  isSmallScreen = false,
+  isMobile = false,
 }) {
   const showEarlyPayment =
     !isSettlementCompleted && hasPendingInstallments && hasEarlyPaymentPermission;
 
+  // موبايل: أزرار أصغر | تابلت/ديسكتوب: أزرار أعلى
+  const btnSx = {
+    height: isMobile ? '32px' : '38px',
+    fontSize: isMobile ? '13px' : '14px',
+    fontWeight: 'bold',
+    minWidth: isSmallScreen ? 0 : '150px',
+    borderRadius: 2,
+    px: isMobile ? 1.5 : 2,
+  };
+
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: isSmallScreen ? 1 : 2,
+        mb: 2,
+      }}
+    >
       <Button
         variant="contained"
-        startIcon={<PDFIcon sx={{ marginLeft: '8px' }} />}
+        size={isMobile ? 'small' : 'medium'}
+        startIcon={<PDFIcon sx={{ marginLeft: '6px' }} />}
         onClick={onExportPDF}
         disabled={isExporting}
         sx={{
           bgcolor: '#d32f2f',
           '&:hover': { bgcolor: '#b71c1c' },
-          height: '36px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          minWidth: '150px',
-          borderRadius: 2,
+          ...btnSx,
         }}
       >
         تصدير PDF
@@ -38,7 +55,8 @@ export default function InstallmentsToolbar({
       </Button>
       <Button
         variant="outlined"
-        startIcon={<ExcelIcon sx={{ marginLeft: '8px' }} />}
+        size={isMobile ? 'small' : 'medium'}
+        startIcon={<ExcelIcon sx={{ marginLeft: '6px' }} />}
         onClick={onExportExcel}
         disabled={isExporting}
         sx={{
@@ -48,11 +66,7 @@ export default function InstallmentsToolbar({
             bgcolor: 'success.50',
             borderColor: 'success.dark',
           },
-          height: '36px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          minWidth: '150px',
-          borderRadius: 2,
+          ...btnSx,
         }}
       >
         تصدير Excel
@@ -63,15 +77,12 @@ export default function InstallmentsToolbar({
       {showEarlyPayment && (
         <Button
           variant="contained"
+          size={isMobile ? 'small' : 'medium'}
           onClick={onEarlyPayment}
           sx={{
             bgcolor: 'success.main',
             '&:hover': { bgcolor: 'success.dark' },
-            height: '36px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            minWidth: '150px',
-            borderRadius: 2,
+            ...btnSx,
           }}
         >
           سداد مبكر

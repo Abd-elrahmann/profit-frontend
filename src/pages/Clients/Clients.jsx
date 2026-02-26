@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Typography, CircularProgress } from "@mui/material";
+import { Box, Typography, CircularProgress, useMediaQuery } from "@mui/material";
 import { InsertDriveFile } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,6 +59,9 @@ export default function Clients() {
   const navigate = useNavigate();
   const { permissions } = usePermissions();
   const { isDarkMode } = useTheme();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
+  const isSmallScreen = isMobile || isTablet;
 
   const { data: clientsData, isLoading: isClientsLoading, refetch } = useQuery({
     queryKey: ["clients", currentPage, search, selectedStatus],
@@ -413,12 +416,16 @@ export default function Clients() {
   );
 
   useEffect(() => {
-    if (clientsData?.clients?.length > 0 && !selectedClient) {
-      setSelectedClient(clientsData.clients[0].client);
-    } else if (clientsData?.clients?.length === 0 && selectedClient) {
+    if (clientsData?.clients?.length === 0 && selectedClient) {
       setSelectedClient(null);
+    } else if (
+      clientsData?.clients?.length > 0 &&
+      !selectedClient &&
+      !isMobile
+    ) {
+      setSelectedClient(clientsData.clients[0].client);
     }
-  }, [clientsData, selectedClient]);
+  }, [clientsData, selectedClient, isMobile]);
 
   useEffect(() => {
     if (clientDetails?.client) {
@@ -470,11 +477,12 @@ export default function Clients() {
             clientFormData={clientFormData}
             editMode={editMode}
             isDarkMode={isDarkMode}
+            isMobile={isMobile}
             onClientInputChange={handleClientInputChange}
           />
         );
       case 1:
-        return <ClientsFinancialTab clientDetails={clientDetails} />;
+        return <ClientsFinancialTab clientDetails={clientDetails} isMobile={isMobile} />;
       case 2:
         return (
           <ClientsKafeelTab
@@ -485,6 +493,7 @@ export default function Clients() {
             kafeelFormData={kafeelFormData}
             permissions={permissions}
             isDarkMode={isDarkMode}
+            isMobile={isMobile}
             onAddKafeel={() => navigate(`/clients/${selectedClient?.id}/add-kafeel`)}
             onEditKafeel={handleEditKafeel}
             onCancelEdit={handleCancelKafeelEdit}
@@ -500,6 +509,7 @@ export default function Clients() {
             documentsTab={documentsTab}
             permissions={permissions}
             isDarkMode={isDarkMode}
+            isMobile={isMobile}
             onDocumentsTabChange={setDocumentsTab}
             onEditDocuments={() => navigate(`/clients/${selectedClient?.id}/edit-documents`)}
             onEditKafeelDocuments={(kafeel) =>
@@ -518,6 +528,7 @@ export default function Clients() {
             toDate={toDate}
             permissions={permissions}
             isDarkMode={isDarkMode}
+            isMobile={isSmallScreen}
             onDateFilterChange={handleDateFilterChange}
             onExportPDF={handleExportPDF}
             onExportExcel={handleExportExcel}
@@ -530,6 +541,7 @@ export default function Clients() {
             loansPage={loansPage}
             permissions={permissions}
             isDarkMode={isDarkMode}
+            isMobile={isSmallScreen}
             onLoansPageChange={(e, p) => setLoansPage(p)}
             onViewLoanDetails={handleViewLoanDetails}
           />
@@ -554,63 +566,73 @@ export default function Clients() {
       </Helmet>
 
       <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <ClientsSidebar
-          permissions={permissions}
-          isDarkMode={isDarkMode}
-          clientsData={clientsData}
-          isClientsLoading={isClientsLoading}
-          search={search}
-          selectedStatus={selectedStatus}
-          currentPage={currentPage}
-          selectedClient={selectedClient}
-          onAddClient={handleAddClient}
-          onSearchChange={handleSearchChange}
-          onStatusChange={handleStatusChange}
-          onPageChange={handlePageChange}
-          onClientSelect={handleClientSelect}
-          onDeleteClient={openDeleteModal}
-          listScrollRef={listScrollRef}
-        />
+        {/* على الموبايل: عرض القائمة افتراضياً، وعرض التفاصيل عند اختيار عميل */}
+        {(!isMobile || !selectedClient) && (
+          <ClientsSidebar
+            permissions={permissions}
+            isDarkMode={isDarkMode}
+            clientsData={clientsData}
+            isClientsLoading={isClientsLoading}
+            search={search}
+            selectedStatus={selectedStatus}
+            currentPage={currentPage}
+            selectedClient={selectedClient}
+            onAddClient={handleAddClient}
+            onSearchChange={handleSearchChange}
+            onStatusChange={handleStatusChange}
+            onPageChange={handlePageChange}
+            onClientSelect={handleClientSelect}
+            onDeleteClient={openDeleteModal}
+            listScrollRef={listScrollRef}
+            isMobile={isMobile}
+          />
+        )}
 
-        {selectedClient && clientDetails ? (
-          <Box
-            ref={contentScrollRef}
-            sx={{
-              flex: 1,
-              p: 4,
-              bgcolor: "background.paper",
-              overflowY: "auto",
-            }}
-          >
-            <ClientsHeader
-              clientDetails={clientDetails}
-              tab={tab}
-              editMode={editMode}
-              permissions={permissions}
-              onTabChange={handleTabChange}
-              onEditModeToggle={() => setEditMode(!editMode)}
-              onSaveChanges={() => handleSaveChanges()}
-            />
-            {renderTabContent()}
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            <Typography variant="h6" color="text.secondary">
-              {selectedClient
-                ? "جاري تحميل البيانات..."
-                : "اختر عميلاً لعرض التفاصيل"}
-            </Typography>
-            {selectedClient && <CircularProgress size={40} />}
-          </Box>
+        {(!isMobile || selectedClient) && (
+          selectedClient && clientDetails ? (
+            <Box
+              ref={contentScrollRef}
+              sx={{
+                flex: 1,
+                p: { xs: 2, sm: 3, md: 4 },
+                bgcolor: "background.paper",
+                overflowY: "auto",
+                minWidth: 0,
+              }}
+            >
+              <ClientsHeader
+                clientDetails={clientDetails}
+                tab={tab}
+                editMode={editMode}
+                permissions={permissions}
+                isMobile={isMobile}
+                isSmallScreen={isSmallScreen}
+                onTabChange={handleTabChange}
+                onEditModeToggle={() => setEditMode(!editMode)}
+                onSaveChanges={() => handleSaveChanges()}
+                onBackToList={() => setSelectedClient(null)}
+              />
+              {renderTabContent()}
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                {selectedClient
+                  ? "جاري تحميل البيانات..."
+                  : "اختر عميلاً لعرض التفاصيل"}
+              </Typography>
+              {selectedClient && <CircularProgress size={40} />}
+            </Box>
+          )
         )}
       </Box>
 

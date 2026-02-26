@@ -29,7 +29,6 @@ import SavingPercentage from "../../components/modals/SavingPercentage";
 import { exportProfitDistributionToPDF, exportProfitDistributionToExcel } from "../../utilities/ProfitDistributionExporter";
 import {
   ProfitDistributionHeader,
-  ProfitDistributionSidebar,
   ProfitDistributionTable,
   ProfitDistributionCards,
   ProfitDistributionDetails,
@@ -62,6 +61,7 @@ const ProfitDistribution = () => {
 
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
+  const isTabletOrSmaller = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   const queryClient = useQueryClient();
@@ -242,21 +242,6 @@ const ProfitDistribution = () => {
     savingPercentage
   );
 
-  const renderDesktopSidebar = () => (
-    <ProfitDistributionSidebar
-      periodData={periodData}
-      theme={theme}
-      permissions={permissions}
-      enableSaving={enableSaving}
-      savingPercentage={savingPercentage}
-      profitAfterSaving={profitAfterSaving}
-      onEnableSavingChange={setEnableSaving}
-      onOpenSavingDialog={handleOpenSavingDialog}
-      onOpenDistributionDialog={handleOpenDistributionDialog}
-      selectedPeriod={selectedPeriod}
-    />
-  );
-
   const renderClosedPeriodsTable = () => (
     <ProfitDistributionTable
       closedPeriods={closedPeriods}
@@ -293,6 +278,7 @@ const ProfitDistribution = () => {
       onOpenSavingDialog={handleOpenSavingDialog}
       onOpenDistributionDialog={handleOpenDistributionDialog}
       selectedPeriod={selectedPeriod}
+      onBackToList={handleBackToList}
     />
   );
 
@@ -386,17 +372,12 @@ const ProfitDistribution = () => {
       <Box
         sx={{
           display: "flex",
-          flexDirection: isSmallScreen ? "column" : "row-reverse",
+          flexDirection: "column",
           flex: 1,
           height: isSmallScreen ? "auto" : "calc(100vh - 80px)",
           width: "100%",
         }}
       >
-        {!isSmallScreen &&
-          activeTab === 1 &&
-          periodData &&
-          renderDesktopSidebar()}
-
         <Box
           sx={{
             flex: 1,
@@ -434,11 +415,12 @@ const ProfitDistribution = () => {
                 sx={{
                   flex: 1,
                   width: "100%",
+                  maxWidth: "100%",
                   overflow: "hidden",
                   borderRadius: 2,
                 }}
               >
-                {isSmallScreen
+                {isMobile
                   ? renderClosedPeriodsCards()
                   : renderClosedPeriodsTable()}
               </Paper>

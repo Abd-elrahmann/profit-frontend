@@ -21,10 +21,12 @@ import {
 
 const formatCurrency = (amount) => amount?.toLocaleString() || '0';
 
-const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
+const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmallScreen: isSmallScreenProp }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const showCards = isSmallScreenProp ?? (isMobile || isTablet);
 
   const handleChangePage = (event, newPage) => setPage(newPage);
 
@@ -202,12 +204,12 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
         </Box>
       ) : !clientsData?.data?.length ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Typography variant="h6" color="textSecondary">
+          <Typography variant="body1" color="textSecondary">
             لا توجد عملاء
           </Typography>
         </Box>
       ) : (
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {clientsData.data
             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
             .map((client, index) => (
@@ -219,54 +221,45 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
               >
-                <CardContent sx={{ p: 2 }}>
-                  <Stack spacing={2}>
-                    <Typography variant="body2" color="textSecondary">
+                <CardContent sx={{ p: 1.5 }}>
+                  <Stack spacing={1.5} sx={{ alignItems: 'center', textAlign: 'center' }}>
+                    <Typography variant="caption" color="textSecondary">
                       رقم: {index + 1 + page * rowsPerPage}
                     </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ whiteSpace: 'pre-line' }}>
+                    <Typography variant="subtitle2" fontWeight="bold" color="primary.main" sx={{ whiteSpace: 'pre-line', fontSize: '0.9rem' }}>
                       {client.name}
                       {'\n'}📞 {client.phone}
                     </Typography>
-                    {visibleColumns
-                      .filter((col) => !['id', 'client'].includes(col.id))
-                      .map((col) =>
-                        col.id === 'loansCount' ? (
-                          <Box key={col.id} sx={{ textAlign: 'center' }}>
-                            <Typography variant="body2" color="textSecondary" gutterBottom>
-                              عدد السلف:
-                            </Typography>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="body2" color="textSecondary">إجمالي</Typography>
-                                <Chip label={client.loansSummary.loansCount} color="primary" variant="outlined" size="small" />
-                              </Box>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="body2" color="textSecondary">النشطة</Typography>
-                                <Chip label={client.loansSummary.activeLoans} color="success" size="small" />
-                              </Box>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="body2" color="textSecondary">المكتملة</Typography>
-                                <Chip label={client.loansSummary.completedLoans} color="info" size="small" />
+                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+                      {visibleColumns
+                        .filter((col) => !['id', 'client'].includes(col.id))
+                        .map((col) =>
+                          col.id === 'loansCount' ? (
+                            <Box key={col.id} sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <Typography variant="caption" color="textSecondary" sx={{ mb: 0.5 }}>
+                                السلف وعددها
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'center' }}>
+                                <Chip label={`${client.loansSummary.loansCount} إجمالي`} color="primary" variant="outlined" size="small" sx={{ fontSize: '0.7rem' }} />
+                                <Chip label={`${client.loansSummary.activeLoans} نشط`} color="success" size="small" sx={{ fontSize: '0.7rem' }} />
+                                <Chip label={`${client.loansSummary.completedLoans} مكتمل`} color="info" size="small" sx={{ fontSize: '0.7rem' }} />
+                                {client.loansSummary.overdueLoans > 0 && (
+                                  <Chip label={`${client.loansSummary.overdueLoans} متأخر`} color="error" size="small" sx={{ fontSize: '0.7rem' }} />
+                                )}
                               </Box>
                             </Box>
-                            {client.loansSummary.overdueLoans > 0 && (
-                              <Box sx={{ mt: 1, textAlign: 'center' }}>
-                                <Chip label={`${client.loansSummary.overdueLoans} متأخر`} color="error" size="small" />
-                              </Box>
-                            )}
-                          </Box>
-                        ) : (
-                          <Box key={col.id} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" color="textSecondary">{col.label}:</Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                              {getColumnValue(client, col.id, index)}
-                            </Typography>
-                          </Box>
-                        )
-                      )}
-                    <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0', textAlign: 'right' }}>
-                      <Typography variant="body2" color="textSecondary">ملاحظات: -</Typography>
+                          ) : (
+                            <Box key={col.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                              <Typography variant="caption" color="textSecondary">{col.label}</Typography>
+                              <Typography variant="body2" fontWeight="600" sx={{ fontSize: '0.85rem' }}>
+                                {getColumnValue(client, col.id, index)}
+                              </Typography>
+                            </Box>
+                          )
+                        )}
+                    </Box>
+                    <Box sx={{ pt: 1, borderTop: '1px solid #e0e0e0', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="caption" color="textSecondary">ملاحظات: -</Typography>
                     </Box>
                   </Stack>
                 </CardContent>
@@ -282,7 +275,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns }) => {
     </Box>
   );
 
-  return isMobile ? renderMobileCards() : renderDesktopTable();
+  return showCards ? renderMobileCards() : renderDesktopTable();
 };
 
 export default ClientCollectionsTable;

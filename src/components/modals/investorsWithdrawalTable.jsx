@@ -11,6 +11,11 @@ import {
   Typography,
   Chip,
   IconButton,
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  Button,
 } from "@mui/material";
 import { Visibility } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
@@ -22,6 +27,7 @@ const InvestorsWithdrawalTable = ({
   onViewDetails,
   currentPage,
   onPageChange,
+  isMobile = false,
 }) => {
   const getStatusColor = (status) => {
     switch (status) {
@@ -63,7 +69,95 @@ const InvestorsWithdrawalTable = ({
     );
   }
 
-  return (
+  const renderCards = () => (
+    <Box sx={{ width: "100%" }}>
+      <Stack spacing={2}>
+        {data.data.map((investor) => (
+          <Card
+            key={investor.id}
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Stack spacing={1.5}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {investor.name}
+                  </Typography>
+                  <Chip
+                    label={getStatusText(investor.withdrawingStatus)}
+                    color={getStatusColor(investor.withdrawingStatus)}
+                    size="small"
+                  />
+                </Box>
+                <Divider />
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">رقم الهوية</Typography>
+                    <Typography variant="body2">{investor.nationalId}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">إجمالي المنسحب</Typography>
+                    <Typography variant="body2" fontWeight="600">
+                      {investor.withdrawalRequest?.remainingCapital != null
+                        ? Number(investor.withdrawalRequest.remainingCapital).toLocaleString()
+                        : investor.totalAmount?.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">الدفعات المصروفة</Typography>
+                    <Typography variant="body2">
+                      {investor.totalPaidSoFar != null ? Number(investor.totalPaidSoFar).toLocaleString() : "0"}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">المتبقي</Typography>
+                    <Typography variant="body2">
+                      {investor.remainingToPay != null ? Number(investor.remainingToPay).toLocaleString() : "-"}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" color="text.secondary">الحالة</Typography>
+                    <Chip
+                      label={investor.isFrozen ? "مجمّد" : "نشط"}
+                      color={investor.isFrozen ? "error" : "success"}
+                      size="small"
+                    />
+                  </Box>
+                </Box>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Visibility />}
+                  onClick={() => onViewDetails(investor.id)}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  عرض التفاصيل
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
+      {data.totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination
+            count={data.totalPages}
+            page={currentPage}
+            onChange={(_, p) => onPageChange(p)}
+            color="primary"
+            size="small"
+          />
+        </Box>
+      )}
+    </Box>
+  );
+
+  const renderTable = () => (
     <Box>
       <Paper sx={{ width: "100%", overflow: "hidden", bgcolor: "background.default" }}>
         <TableContainer>
@@ -181,6 +275,8 @@ const InvestorsWithdrawalTable = ({
       </Paper>
     </Box>
   );
+
+  return isMobile ? renderCards() : renderTable();
 };
 
 export default InvestorsWithdrawalTable;

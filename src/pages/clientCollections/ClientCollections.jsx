@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Paper, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Paper, useMediaQuery, useTheme, FormControl, Select, MenuItem } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import {
@@ -21,7 +21,9 @@ const ClientCollections = () => {
   const [columns, setColumns] = useState(AVAILABLE_COLUMNS);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const isSmallScreen = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isSmallScreen = isMobile || isTablet;
   const { permissions } = usePermissions();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -116,11 +118,26 @@ const ClientCollections = () => {
                 gap: 2,
               }}
             >
-              <ClientCollectionsTabs
-                value={clientsTab}
-                onChange={setClientsTab}
-                isSmallScreen={isSmallScreen}
-              />
+              {isSmallScreen ? (
+                <Box sx={{ width: '100%', maxWidth: 320, alignSelf: 'center' }}>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={clientsTab}
+                      onChange={(e) => setClientsTab(e.target.value)}
+                      sx={{ "& .MuiSelect-select": { textAlign: "center", py: 1.25 } }}
+                    >
+                      <MenuItem value={0}>النشط</MenuItem>
+                      <MenuItem value={1}>المكتمل</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              ) : (
+                <ClientCollectionsTabs
+                  value={clientsTab}
+                  onChange={setClientsTab}
+                  isSmallScreen={false}
+                />
+              )}
 
               <ClientCollectionsToolbar
                 isSmallScreen={isSmallScreen}
@@ -153,6 +170,7 @@ const ClientCollections = () => {
               isLoading={isClientsLoading}
               clientsData={clientsData}
               visibleColumns={visibleColumns}
+              isSmallScreen={isSmallScreen}
             />
           </Paper>
         </Box>

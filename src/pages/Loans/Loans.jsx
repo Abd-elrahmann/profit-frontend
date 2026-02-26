@@ -10,8 +10,6 @@ import {
   getPartners,
   convertLoanClient,
   transferPartialLoanAmount,
-  getUnpostedSmallLoanJournals,
-  getUnpostedLoanJournals,
   getLoans,
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
@@ -111,8 +109,8 @@ const Loans = () => {
   const previousSourceRef = useRef(loanForm.source);
 
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
 
@@ -160,20 +158,6 @@ const Loans = () => {
       return allLoans;
     },
     enabled: !!selectedClient?.client?.id && activeTab === 6,
-    retry: 1,
-  });
-
-  const { data: unpostedSmallLoanJournals } = useQuery({
-    queryKey: ["unposted-small-loan-journals"],
-    queryFn: getUnpostedSmallLoanJournals,
-    enabled: activeTab === 2 || activeTab === 3,
-    retry: 1,
-  });
-
-  const { data: unpostedLoanJournals } = useQuery({
-    queryKey: ["unposted-loan-journals"],
-    queryFn: getUnpostedLoanJournals,
-    enabled: activeTab === 0 || activeTab === 1,
     retry: 1,
   });
 
@@ -330,6 +314,7 @@ const Loans = () => {
     setActiveTab(0);
     queryClient.invalidateQueries(["loans"]);
     queryClient.invalidateQueries(["unposted-loan-journals"]);
+    queryClient.invalidateQueries(["unposted-journals-all"]);
   }, [queryClient]);
 
   const calculateRemainingAmount = (loan) => {
@@ -669,6 +654,7 @@ const Loans = () => {
 
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       if (loanDataToUse?.id) {
         queryClient.invalidateQueries(["loan", loanDataToUse.id]);
       }
@@ -934,6 +920,7 @@ const Loans = () => {
 
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
 
       setTimeout(async () => {
         try {
@@ -1075,6 +1062,7 @@ const Loans = () => {
 
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       setIsEditMode(false);
       setIsViewMode(true);
     } catch (error) {
@@ -1641,54 +1629,6 @@ const Loans = () => {
               onSearchChange={(e) => setLoansTableSearchQuery(e.target.value)}
             />
 
-            {(activeTab === 0 || activeTab === 1) && unpostedLoanJournals?.count > 0 && (
-              <div className="mb-4 flex flex-col gap-3 rounded-xl border-2 border-amber-500 bg-amber-50 p-4 shadow-sm dark:border-amber-600 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                    {unpostedLoanJournals.count === 1
-                      ? `يوجد ${unpostedLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedLoanJournals.items?.[0]?.clientName || unpostedLoanJournals.items?.[0]?.loanCode || ""}.`
-                      : `يوجد ${unpostedLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${[...new Set(unpostedLoanJournals.items?.map((i) => i.clientName || i.loanCode).filter(Boolean) || [])].join("، ")}.`}
-                  </p>
-                  <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                    {unpostedLoanJournals.count === 1
-                      ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
-                      : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate("/journal-entries")}
-                  className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
-                >
-                  الذهاب للقيود
-                </button>
-              </div>
-            )}
-
-            {(activeTab === 2 || activeTab === 3) && unpostedSmallLoanJournals?.count > 0 && (
-              <div className="mb-4 flex flex-col gap-3 rounded-xl border-2 border-amber-500 bg-amber-50 p-4 shadow-sm dark:border-amber-600 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                    {unpostedSmallLoanJournals.count === 1
-                      ? `يوجد ${unpostedSmallLoanJournals.count} قيد غير معتمد خاص بالسلفة الخاصة بـ ${unpostedSmallLoanJournals.items?.[0]?.loanName || ""}.`
-                      : `يوجد ${unpostedSmallLoanJournals.count} قيود غير معتمدة خاصة بالسلف الخاصة بـ ${[...new Set(unpostedSmallLoanJournals.items?.map((i) => i.loanName).filter(Boolean) || [])].join("، ")}.`}
-                  </p>
-                  <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                    {unpostedSmallLoanJournals.count === 1
-                      ? "يرجى اعتماد القيد قبل إنشاء سلفة جديدة."
-                      : "يرجى اعتماد القيود قبل إنشاء سلفة جديدة."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate("/journal-entries")}
-                  className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
-                >
-                  الذهاب للقيود
-                </button>
-              </div>
-            )}
-
             {activeTab === 0 ? (
               <div className="flex w-full flex-col">
                 <LoanMainTab
@@ -1825,6 +1765,7 @@ const Loans = () => {
                     setIsSmallLoanEditMode(false);
                     setActiveTab(3);
                     queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+                    queryClient.invalidateQueries(["unposted-journals-all"]);
                     queryClient.invalidateQueries(["small-loans"]);
                   }}
                 />

@@ -62,11 +62,11 @@ const ResponsiveTable = ({
       </div>
 
       {/* Mobile/Tablet: Cards */}
-      <div className="lg:hidden space-y-4">
+      <div className="lg:hidden space-y-3 sm:space-y-4">
         {data.map((row, idx) => (
           <div
             key={row[keyField] ?? idx}
-            className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm ${cardClassName}`}
+            className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 shadow-sm overflow-hidden ${cardClassName}`}
           >
             {columns.map((col) => {
               const value = row[col.id];

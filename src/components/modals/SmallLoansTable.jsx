@@ -40,6 +40,7 @@ import {
 } from "../../pages/Loans/loanApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import DeleteModal from "../../components/modals/DeleteModal";
+import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -60,8 +61,9 @@ const SmallLoansTable = ({ onEditLoan }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isSmallScreen = isMobile;
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
+  const isSmallScreen = isMobile || isTablet;
 
   const PAGE_SIZE = 15;
 
@@ -103,6 +105,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
       notifySuccess("تم حذف السلفة الصغيرة بنجاح");
       queryClient.invalidateQueries(["small-loans"]);
       queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       setIsDeleteModalOpen(false);
       setLoanToDelete(null);
     } catch (error) {
@@ -159,6 +162,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
 
       queryClient.invalidateQueries(["small-loans"]);
       queryClient.invalidateQueries(["unposted-small-loan-journals"]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       handleClosePayModal();
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء سداد الدفعة");
@@ -219,9 +223,9 @@ const SmallLoansTable = ({ onEditLoan }) => {
   };
 
   const renderMobileLoanCards = () => (
-    <Stack spacing={2} sx={{ p: 2 }}>
+    <Stack spacing={1.5} sx={{ p: 1, width: "100%" }}>
       {smallLoansData?.data?.map((loan) => (
-        <Paper key={loan.id} variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
+        <Paper key={loan.id} variant="outlined" sx={{ borderRadius: 2, p: 2, width: "100%", border: "1px solid", borderColor: "divider", boxShadow: "0 2px 4px rgba(0,0,0,0.08)" }}>
           <Stack spacing={1.5}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Box>
@@ -440,6 +444,7 @@ const SmallLoansTable = ({ onEditLoan }) => {
             width: isSmallScreen ? "100%" : "280px",
             borderRadius: "6px",
             p: isSmallScreen ? 1 : 0.5,
+            ...transparentSearchInputBaseSx,
           }}
         />
       </Box>

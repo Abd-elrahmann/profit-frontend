@@ -33,7 +33,7 @@ const EXPENSE_TYPES = [
   "مصروفات اخرى"
 ];
 
-const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) => {
+const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false, isSmallScreen }) => {
   const [expenses, setExpenses] = useState([
     { type: "", amount: "", description: "", userId: null }
   ]);
@@ -184,7 +184,7 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false }) =>
       maxWidth="sm"
       fullWidth
       dir="rtl"
-      fullScreen={isMobile}
+      fullScreen={isSmallScreen ?? isMobile}
     >
       <DialogTitle sx={{ fontWeight: "bold", color: "primary.main" }}>
         تعديل المصروف

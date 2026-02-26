@@ -47,6 +47,7 @@ const IncomeStatementPeriodFilter = ({
   onPeriodChange,
   accountingPeriods,
   years,
+  isSmallScreen = false,
 }) => {
   const theme = useTheme();
 
@@ -55,10 +56,8 @@ const IncomeStatementPeriodFilter = ({
       elevation={0}
       sx={{
         p: 2,
-        bgcolor: theme.palette.background.paper,
+        bgcolor: 'transparent',
         borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        boxShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(255,255,255,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
       }}
     >
       <Grid container spacing={2} alignItems="center">
@@ -70,10 +69,9 @@ const IncomeStatementPeriodFilter = ({
             onChange={(e) => onPeriodTypeChange(e.target.value)}
             sx={selectSx(theme)}
           >
-            <MenuItem value="monthly" sx={{ textAlign: 'center' }}>شهري</MenuItem>
-            <MenuItem value="yearly" sx={{ textAlign: 'center' }}>سنوي</MenuItem>
-            <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
             <MenuItem value="period" sx={{ textAlign: 'center' }}>فترة محاسبية</MenuItem>
+            <MenuItem value="monthly" sx={{ textAlign: 'center' }}>شهري</MenuItem>
+            <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
           </Select>
         </Grid>
 
@@ -102,7 +100,7 @@ const IncomeStatementPeriodFilter = ({
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ width: '350px', ...inputSx(theme) }}
+                  sx={{ width: isSmallScreen ? '100%' : '350px', maxWidth: '100%', ...inputSx(theme) }}
                 />
               )}
             />
@@ -127,7 +125,7 @@ const IncomeStatementPeriodFilter = ({
           </Grid>
         )}
 
-        {(periodType === 'monthly' || periodType === 'yearly') && (
+        {periodType === 'monthly' && (
           <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
             <Autocomplete
               fullWidth

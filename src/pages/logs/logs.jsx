@@ -65,7 +65,7 @@ const Logs = () => {
       setDeleteModalOpen(false);
       notifySuccess(data.message || "تم حذف جميع السجلات بنجاح");
     },
-    onError: (error) => {
+    onError: () => {
       notifyError("حدث خطأ أثناء حذف السجلات");
     },
   });
@@ -437,20 +437,20 @@ const Logs = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: '100%', overflowX: 'hidden' }}>
       <Helmet>
         <title>سجلات النشاطات</title>
         <meta name="description" content="سجلات النشاطات" />
       </Helmet>
       
-      <Box sx={{ p: isMobile ? 2 : 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, maxWidth: '100%', overflowX: 'hidden' }}>
         <LogsToolbar
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
-          isMobile={isMobile}
+          isMobile={isSmallScreen}
           exportButtons={
-            <MuiStack direction="row" spacing={1}>
+            <MuiStack direction={isSmallScreen ? "column" : "row"} spacing={1} sx={{ width: isSmallScreen ? '100%' : 'auto' }}>
               {permissions.includes("logs_Export") && (
                 <>
                   <Button
@@ -464,6 +464,7 @@ const Logs = () => {
                       "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
                       borderRadius: 2,
                       px: 2,
+                      py: isSmallScreen ? 1.5 : 1,
                       fontWeight: "bold",
                     }}
                   >
@@ -480,6 +481,7 @@ const Logs = () => {
                       "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
                       borderRadius: 2,
                       px: 2,
+                      py: isSmallScreen ? 1.5 : 1,
                       fontWeight: "bold",
                     }}
                   >
@@ -497,6 +499,7 @@ const Logs = () => {
                   sx={{
                     borderRadius: 2,
                     px: 2,
+                    py: isSmallScreen ? 1.5 : 1,
                     fontWeight: "bold",
                   }}
                 >
@@ -509,6 +512,7 @@ const Logs = () => {
 
         <Paper sx={{ 
           width: "100%", 
+          maxWidth: '100%',
           overflow: "hidden", 
           borderRadius: 2,
           minHeight: 400

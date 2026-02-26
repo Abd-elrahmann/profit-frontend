@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
@@ -253,6 +254,7 @@ const PeriodsAdvancedSearch = ({
               value={filters.name}
               onChange={(e) => handleFilterChange('name', e.target.value)}
               placeholder="ابحث باسم الفترة..."
+              sx={transparentSearchTextFieldSx}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

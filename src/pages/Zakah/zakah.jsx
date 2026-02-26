@@ -239,6 +239,7 @@ const Zakah = () => {
               onTabChange={handleTabChange}
               selectedPartner={selectedPartner}
               isCompact={isSmallScreen}
+              isMobile={isMobile}
             />
 
             {activeTab === 0 && (
@@ -247,7 +248,7 @@ const Zakah = () => {
                   <ZakahStatsCards totals={statsTotals} />
                 )}
                 <div className="bg-white dark:bg-background-dark rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
                         تفاصيل زكاة الشركاء
@@ -257,10 +258,12 @@ const Zakah = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <ZakahPartnersTable
                       onViewDetails={handleViewDetails}
                       isMobile={isMobile}
+                      isTablet={isTablet}
+                      isSmallScreen={isSmallScreen}
                       selectedYear={tableYear}
                       onYearChange={setTableYear}
                       onTotalsChange={handleTotalsChange}
@@ -285,6 +288,7 @@ const Zakah = () => {
                     partnerZakahData={partnerZakahData}
                     selectedYear={selectedYear}
                     isSmallScreen={isSmallScreen}
+                    isMobile={isMobile}
                     isPartnerLoading={isPartnerLoading}
                     isExporting={isExporting}
                     hasPartnerExportData={hasPartnerExportData}
@@ -317,6 +321,7 @@ const Zakah = () => {
                 hasAccountExportData={hasAccountExportData}
                 permissions={permissions}
                 isSmallScreen={isSmallScreen}
+                isMobile={isMobile}
               />
             )}
           </div>

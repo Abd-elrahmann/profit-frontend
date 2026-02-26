@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon, Search as SearchIcon } from "@mui/icons-material";
 import { debounce } from "../../utilities/debounce";
+import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
 import Api from "../../config/Api";
 
 const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
@@ -147,7 +148,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <TextField
-              sx={{ width: "250px" }}
+              sx={{ width: "250px", ...transparentSearchTextFieldSx }}
               label="رقم القيد"
               value={searchFilters.reference}
               onChange={(e) => handleFilterChange("reference", e.target.value)}
@@ -157,7 +158,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           
           <Grid item xs={12} md={6}>
             <TextField
-              sx={{ width: "250px" }}
+              sx={{ width: "250px", ...transparentSearchTextFieldSx }}
               label="الوصف"
               value={searchFilters.description}
               onChange={(e) => handleFilterChange("description", e.target.value)}
@@ -210,6 +211,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
                   {...params}
                   label="اسم المعتمد"
                   placeholder="ابحث باسم المعتمد..."
+                  sx={{ width: "250px", ...transparentSearchTextFieldSx }}
                 />
               )}
               isOptionEqualToValue={(option, value) => option.id === value.id}

@@ -184,7 +184,9 @@ const Installments = () => {
       notifySuccess(`تم رفض ${selectedInstallments.length} دفعة بنجاح`);
       setSelectedInstallments([]);
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء رفض الدفعات");
     } finally {
@@ -203,8 +205,8 @@ const Installments = () => {
   const [isLoadingAllForEarlyPayment, setIsLoadingAllForEarlyPayment] = useState(false);
   const paymentProofGeneratorRef = useRef(null);
 
-  const isMobile = useMediaQuery("(max-width: 480px)");
-  const isTablet = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
 
   useEffect(() => {
@@ -358,8 +360,10 @@ const Installments = () => {
         );
         notifySuccess("تم تطبيق خصم على الدفعة بنجاح");
         queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
         queryClient.invalidateQueries(["repayments", loanId]);
         queryClient.invalidateQueries(["repayment", discountInstallment.id]);
+        queryClient.invalidateQueries(["unposted-journals-all"]);
         setDiscountInstallment(null);
         setConfirmedDiscount({ discount: 0, notes: '' });
         return;
@@ -439,9 +443,11 @@ const Installments = () => {
       }, 2000);
 
       setTimeout(() => {
-        queryClient.invalidateQueries(["loan", loanId]);
-        queryClient.invalidateQueries(["repayments", loanId]);
-        queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
+      queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
+      queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["repayment", selectedProofInstallment.id]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       }, 400);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال");
@@ -486,7 +492,9 @@ const Installments = () => {
       setSelectedInstallments([]);
 
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ الإيصال المجمع");
     } finally {
@@ -506,7 +514,9 @@ const Installments = () => {
       await rejectRepayment(selectedActionInstallment.id, "تم رفض الإيصال");
       notifySuccess("تم رفض السداد");
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       setActiveStep(0);
       setRejectModalOpen(false);
       setSelectedActionInstallment(null);
@@ -654,7 +664,9 @@ const Installments = () => {
       setPaidAmount("");
 
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       console.error("Partial payment proof error:", error);
       notifyError(
@@ -679,7 +691,9 @@ const Installments = () => {
       );
       notifySuccess("تم تأجيل الدفعة بنجاح");
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       setPostponeModalOpen(false);
       setNewDueDate("");
       setPostponeReason("");
@@ -717,7 +731,9 @@ const Installments = () => {
       setDiscountAmount("0");
 
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {
       notifyError(
         error.response?.data?.message || "حدث خطأ أثناء السداد المبكر"
@@ -860,6 +876,7 @@ const Installments = () => {
       }, 300);
 
       queryClient.invalidateQueries(["loan", loanId]);
+      queryClient.invalidateQueries(["unposted-journals-all"]);
 
       setTimeout(() => {
         setSettlementJustSaved(false);
@@ -1055,6 +1072,7 @@ const Installments = () => {
             reviewStepsVisible={reviewStepsVisible}
             onToggleReviewSteps={() => setReviewStepsVisible(!reviewStepsVisible)}
             isSettlementCompleted={isSettlementCompleted()}
+            isSmallScreen={isSmallScreen}
           />
 
           {hasOverdue && !overdueAlertDismissed && (
@@ -1075,6 +1093,8 @@ const Installments = () => {
             isSettlementCompleted={isSettlementCompleted()}
             hasPendingInstallments={sortedInstallments.some((inst) => inst.status === "PENDING")}
             hasEarlyPaymentPermission={permissions.includes("repayments_Post")}
+            isSmallScreen={isSmallScreen}
+            isMobile={isMobile}
           />
 
           <InstallmentsSummaryCards
@@ -1088,11 +1108,12 @@ const Installments = () => {
             totalRepayments={loanData?.pagination?.totalRepayments}
           />
 
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, width: isSmallScreen ? "100%" : "auto" }}>
             <InstallmentsStatusFilter
               value={statusFilter}
               onChange={setStatusFilter}
               options={STATUS_FILTER_OPTIONS}
+              fullWidth={isSmallScreen}
             />
           </Box>
 
@@ -1107,6 +1128,8 @@ const Installments = () => {
                 const inst = sortedInstallments.find((i) => i.id === id);
                 return inst && ["PAID", "PARTIAL_PAID", "EARLY_PAID", "COMPLETED"].includes(inst.status);
               })}
+              isSmallScreen={isSmallScreen}
+              isMobile={isMobile}
             />
           )}
 
@@ -1144,14 +1167,15 @@ const Installments = () => {
               {permissions.includes("repayments_Post") && (
                 <Button
                   variant="contained"
+                  size={isSmallScreen ? "small" : "medium"}
                   onClick={handleSettlement}
                   sx={{
                     bgcolor: "success.main",
                     "&:hover": { bgcolor: "success.dark" },
                     fontWeight: "bold",
                     borderRadius: 2,
-                    px: 4,
-                    py: 1.5,
+                    px: isSmallScreen ? 3 : 4,
+                    py: isSmallScreen ? 1 : 1.5,
                   }}
                 >
                   تسوية الدفعة النهائي
@@ -1411,7 +1435,7 @@ const Installments = () => {
             page={page}
             onChange={handleChangePage}
             color="primary"
-            size="large"
+            size={isSmallScreen ? "small" : "large"}
             showFirstButton
             showLastButton
           />

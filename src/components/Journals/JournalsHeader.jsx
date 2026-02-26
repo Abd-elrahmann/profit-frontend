@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon, ArrowBack as ArrowBackIcon } from "@mui/icons-material";
+import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 
 const tabStyles = (isActive) => ({
   fontWeight: "bold",
@@ -71,38 +72,29 @@ export default function JournalsHeader({
           </Box>
         ) : (
           <Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 2,
-              }}
-            >
-              <Typography variant="h6" fontWeight="bold">
-                القيود المحاسبية
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              القيود المحاسبية
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<SearchIcon />}
+                onClick={onOpenAdvancedSearch}
+                size="small"
+                sx={buttonStyles}
+              >
+                بحث متقدم
+              </Button>
+              {canAdd && (
                 <Button
-                  variant="outlined"
-                  startIcon={<SearchIcon />}
-                  onClick={onOpenAdvancedSearch}
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={onAddNew}
                   size="small"
-                  sx={buttonStyles}
                 >
-                  بحث متقدم
+                  إضافة
                 </Button>
-                {canAdd && (
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={onAddNew}
-                    size="small"
-                  >
-                    إضافة
-                  </Button>
-                )}
-              </Box>
+              )}
             </Box>
             <Box sx={{ mb: 2 }}>
               <InputBase
@@ -114,7 +106,7 @@ export default function JournalsHeader({
                   borderRadius: "6px",
                   p: 1,
                   border: "1px solid #e0e0e0",
-                  bgcolor: "background.paper",
+                  ...transparentSearchInputBaseSx,
                 }}
               />
               {hasSearch && (
@@ -176,7 +168,7 @@ export default function JournalsHeader({
                 borderRadius: "6px",
                 p: 1,
                 border: "1px solid #e0e0e0",
-                bgcolor: "background.paper",
+                ...transparentSearchInputBaseSx,
               }}
             />
           )}

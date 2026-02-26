@@ -12,6 +12,9 @@ import {
   IconButton,
   Stack,
   Chip,
+  Card,
+  CardContent,
+  Divider,
 } from "@mui/material";
 import { ChevronLeft, ChevronRight, Visibility } from "@mui/icons-material";
 import dayjs from "dayjs";
@@ -27,6 +30,7 @@ export default function ClientsLoansTab({
   loansPage,
   permissions,
   isDarkMode,
+  isMobile = false,
   onLoansPageChange,
   onViewLoanDetails,
 }) {
@@ -35,9 +39,9 @@ export default function ClientsLoansTab({
   const totalPages = clientLoans?.totalPages || 1;
   const total = clientLoans?.total || 0;
 
-  return (
+  const renderTable = () => (
     <Box>
-      <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: { xs: 2, md: 3 }, overflow: "auto" }}>
         <Typography variant="h6" mb={3}>
           سلفات العميل
         </Typography>
@@ -316,4 +320,116 @@ export default function ClientsLoansTab({
       </Paper>
     </Box>
   );
+
+  const renderCards = () => (
+    <Box>
+      <Typography variant="h6" mb={3}>
+        سلفات العميل
+      </Typography>
+      {hasLoans ? (
+        <Stack spacing={2}>
+          {loans.map((loan) => (
+            <Card
+              key={loan.id}
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+                boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+              }}
+            >
+              <CardContent sx={{ p: 2 }}>
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                      {loan.code}
+                    </Typography>
+                    <Chip
+                      label={getStatusText(loan.status)}
+                      color={getStatusColor(loan.status)}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </Box>
+                  <Divider />
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">المبلغ</Typography>
+                      <Typography variant="body2" fontWeight="600">
+                        {loan.amount?.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">الشريك</Typography>
+                      <Typography variant="body2">{loan.partner?.name || "-"}</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">الكفيل</Typography>
+                      <Typography variant="body2">{loan.kafeel?.name || "-"}</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">النوع</Typography>
+                      <Typography variant="body2">{getTypeText(loan.type)}</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">تاريخ الإنشاء</Typography>
+                      <Typography variant="body2">{dayjs(loan.createdAt).format("DD/MM/YYYY")}</Typography>
+                    </Box>
+                  </Box>
+                  {permissions.includes("loans_View") && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Visibility />}
+                      onClick={() => onViewLoanDetails(loan.id)}
+                      sx={{ mt: 1, alignSelf: "flex-start" }}
+                    >
+                      عرض التفاصيل
+                    </Button>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      ) : (
+        <Paper sx={{ p: 3, textAlign: "center" }}>
+          <Typography color="text.secondary">لا توجد سلفات لهذا العميل</Typography>
+        </Paper>
+      )}
+      {hasLoans && totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1, flexWrap: "wrap" }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<ChevronRight />}
+            disabled={loansPage === 1}
+            onClick={() => onLoansPageChange(null, loansPage - 1)}
+          >
+            السابق
+          </Button>
+          <Pagination
+            count={totalPages}
+            page={loansPage}
+            onChange={onLoansPageChange}
+            color="primary"
+            size="small"
+            siblingCount={0}
+            boundaryCount={1}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            endIcon={<ChevronLeft />}
+            disabled={loansPage === totalPages}
+            onClick={() => onLoansPageChange(null, loansPage + 1)}
+          >
+            التالي
+          </Button>
+        </Box>
+      )}
+    </Box>
+  );
+
+  return isMobile ? renderCards() : renderTable();
 }
