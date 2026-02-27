@@ -3,17 +3,14 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import {
+  registerArabicFonts,
+  drawReportHeader,
+  drawSeparatorLine,
+  drawReportFooter,
+  getCenteredTableMargins,
+} from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams) => {
   return new Promise((resolve, reject) => {
@@ -30,29 +27,17 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-      
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('دفتر الأستاذ العام', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
-      doc.setFontSize(13);
-      doc.setFont('Amiri', 'bold');
-      doc.text(`الحساب: ${account.name} (${account.code})`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
-      
-      if (searchParams.fromDate || searchParams.toDate) {
-        const fromDate = searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'بداية';
-        const toDate = searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'نهاية';
-        doc.setFontSize(11);
-        doc.text(`الفترة: من ${fromDate} إلى ${toDate}`, doc.internal.pageSize.width / 2, 42, { align: 'center' });
-      }
-      
+      const reportTitle = `دفتر الأستاذ - ${account.name} (${account.code})`;
+      const headerEndY = drawReportHeader(doc, {
+        reportTitle,
+        metadata: {
+          date: dayjs().format('YYYY/MM/DD'),
+          time: dayjs().format('hh:mm A'),
+        },
+      });
+
+      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
+
       const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
         return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
       }, 0) || 0;
@@ -63,13 +48,19 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       
       const closingBalance = ledgerData.account?.balance || 0;
       
+      const pageWidth = doc.internal.pageSize.width;
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      const summaryY = 55;
+      const summaryY = separatorEndY + 6;
+      if (searchParams.fromDate || searchParams.toDate) {
+        const fromDate = searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'بداية';
+        const toDate = searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'نهاية';
+        doc.text(`الفترة: من ${fromDate} إلى ${toDate}`, pageWidth / 2, summaryY, { align: 'center' });
+      }
       const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')}  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')}  |  الرصيد الختامي: ${closingBalance.toLocaleString('en-US')}  |  عدد القيود: ${ledgerData.totalJournals || 0}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
+      doc.text(summaryText, pageWidth / 2, summaryY + 8, { align: 'center' });
       
-      let yPosition = summaryY + 12;
+      let yPosition = summaryY + 18;
       
       const tableData = [];
       ledgerData.journals?.forEach(journal => {
@@ -89,8 +80,6 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         ['الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
       ];
 
-      const pageWidth = doc.internal.pageSize.width;
-      
       const columnWidths = {
         1: 26, 
         2: 22, 
@@ -101,25 +90,24 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       };
       
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
       
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX, 
         head: headers,
         body: tableData,
         ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
+        styles: { ...pdfTableBaseStyles.styles, fontSize: 9 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, cellPadding: 4 },
         columnStyles: {
-          1: { cellWidth: columnWidths[1], fontSize: 8 }, 
-          2: { cellWidth: columnWidths[2], fontSize: 8 }, 
-          3: { cellWidth: columnWidths[3], fontSize: 8 }, 
-          4: { cellWidth: columnWidths[4], fontSize: 7, halign: 'right' }, 
-          5: { cellWidth: columnWidths[5], fontSize: 7 }, 
-          6: { cellWidth: columnWidths[6], fontSize: 7 }  
+          1: { cellWidth: columnWidths[1], fontSize: 9 }, 
+          2: { cellWidth: columnWidths[2], fontSize: 9 }, 
+          3: { cellWidth: columnWidths[3], fontSize: 9 }, 
+          4: { cellWidth: columnWidths[4], fontSize: 9, halign: 'right', overflow: 'linebreak' }, 
+          5: { cellWidth: columnWidths[5], fontSize: 9 }, 
+          6: { cellWidth: columnWidths[6], fontSize: 9 }  
         },
-        margin: { top: yPosition, bottom: 20 },
+        margin: { top: yPosition, bottom: 25, left: tableMargins.left, right: tableMargins.right },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false, 
         pageBreak: 'auto',
@@ -136,39 +124,8 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
       });
       
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       const fileName = `دفتر_الأستاذ_${account.name}_${dayjs().format('YYYY-MM-DD')}.pdf`;

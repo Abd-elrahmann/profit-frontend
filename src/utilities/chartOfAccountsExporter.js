@@ -1,15 +1,9 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getAccountTypeLabel } from '../components/ChartOfAccounts';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found', error);
-  }
-};
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
+import { createDidDrawTable } from './pdfTableStyles';
+import dayjs from 'dayjs';
 
 const flattenAll = (accounts, depth = 0) => {
   const result = [];
@@ -29,9 +23,11 @@ export const exportChartOfAccountsToPDF = async (accountsTree) => {
   const doc = new jsPDF();
   registerArabicFonts(doc);
 
-  doc.setFont('Amiri', 'bold');
-  doc.setFontSize(18);
-  doc.text('شجرة الحسابات', doc.internal.pageSize.width / 2, 20, { align: 'center' });
+  let yPosition = drawReportHeader(doc, {
+    reportTitle: 'شجرة الحسابات',
+    metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+  });
+  yPosition = drawSeparatorLine(doc, yPosition);
 
   const rows = flatAccounts.map((a) => [
     a.code,
@@ -41,13 +37,25 @@ export const exportChartOfAccountsToPDF = async (accountsTree) => {
     a.isActive !== false ? 'نشط' : 'غير نشط',
   ]);
 
+  const tableWidth = 170;
+  const tableMargins = getCenteredTableMargins(doc, tableWidth);
+
   autoTable(doc, {
     head: [['كود الحساب', 'اسم الحساب', 'النوع', 'الرصيد', 'الحالة']],
     body: rows,
-    startY: 30,
-    styles: { font: 'Amiri' },
-    headStyles: { fillColor: [46, 139, 69] },
+    startY: yPosition,
+    styles: { font: 'Amiri', fontSize: 9, cellPadding: 4 },
+    headStyles: { fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+    bodyStyles: { fontSize: 9, cellPadding: 4 },
+    margin: { top: yPosition, left: tableMargins.left, right: tableMargins.right, bottom: 25 },
+    tableWidth,
+    didDrawTable: createDidDrawTable(doc)
   });
+
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    drawReportFooter(doc, i, pageCount);
+  }
 
   doc.save('شجرة-الحسابات.pdf');
 };

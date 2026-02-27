@@ -2,18 +2,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 // Normalize partner data from different endpoints to a consistent format
 const normalizePartnerData = (partnerData) => {
@@ -162,26 +152,17 @@ export const exportInvestorsToPDF = async (investorsData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
-      doc.setFont('Amiri', 'bold');
-      
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      // Title section - with more spacing to avoid overlap
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير المستثمرين', doc.internal.pageSize.width / 2, 30, { align: 'center' });
-      
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير المستثمرين',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
+
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      const summaryText = `إجمالي المستثمرين: ${investorsData.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 45, { align: 'center' });
-      
+      doc.text(`إجمالي المستثمرين: ${investorsData.length}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 12;
+
       const pageWidth = doc.internal.pageSize.width;
 
       // Process each investor - each investor gets a new page
@@ -192,9 +173,10 @@ export const exportInvestorsToPDF = async (investorsData) => {
         // Start new page for each investor (except first one)
         if (index > 0) {
           doc.addPage();
+          yPosition = 20;
         }
 
-        let yPosition = 55; // Starting position
+        // yPosition continues from header for first investor
 
         // Investor header - Name and National ID with better styling
         doc.setFontSize(16);
@@ -247,8 +229,8 @@ export const exportInvestorsToPDF = async (investorsData) => {
             direction: 'rtl'
           },
           headStyles: {
-fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
             fontStyle: 'bold',
             fontSize: 10,
             halign: 'right',
@@ -322,8 +304,8 @@ fillColor: [240, 240, 240],
             direction: 'rtl'
           },
           headStyles: {
-fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
             fontStyle: 'bold',
             fontSize: 10,
             halign: 'right',
@@ -416,8 +398,8 @@ fillColor: [240, 240, 240],
               direction: 'rtl'
             },
             headStyles: {
-fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
               fontStyle: 'bold',
               fontSize: 10,
               halign: 'right',
@@ -499,8 +481,8 @@ fillColor: [240, 240, 240],
               direction: 'rtl'
             },
             headStyles: {
-fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
               fontStyle: 'bold',
               fontSize: 10,
               halign: 'right',
@@ -535,46 +517,9 @@ fillColor: [240, 240, 240],
         }
       });
       
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       // Save PDF

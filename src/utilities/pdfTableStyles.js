@@ -14,27 +14,29 @@ export const pdfTableBaseStyles = {
     halign: 'center',
     valign: 'middle',
     overflow: 'linebreak',
-    minCellHeight: 12,
+    minCellHeight: 14,
     textColor: [0, 0, 0]
   },
   headStyles: {
-    fillColor: [240, 240, 240],
-    textColor: [46, 139, 69],
+    fillColor: [46, 139, 69],
+    textColor: [255, 255, 255],
     fontStyle: 'bold',
     fontSize: 10,
     halign: 'center',
     valign: 'middle',
     cellPadding: 5,
     lineWidth: 0.1,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    minCellHeight: 10
   },
   bodyStyles: {
     fontStyle: 'normal',
     fontSize: 9,
     halign: 'center',
     valign: 'middle',
-    cellPadding: 3,
-    lineWidth: 0.1
+    cellPadding: 4,
+    lineWidth: 0.1,
+    overflow: 'linebreak'
   },
   alternateRowStyles: {
     fillColor: [250, 250, 250]

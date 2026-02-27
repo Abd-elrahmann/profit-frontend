@@ -29,6 +29,7 @@ import {
   getClients,
   getClientDetails,
   getClientStatement,
+  getClientStatementForExport,
   getClientLoans,
   isImageFile,
 } from "../../components/clients";
@@ -312,9 +313,19 @@ export default function Clients() {
   };
 
   const handleExportPDF = async () => {
-    if (!clientStatement) return;
+    if (!selectedClient) return;
     try {
-      await exportStatementToPDF(clientStatement, clientDetails.client.name);
+      const exportData = await getClientStatementForExport(
+        selectedClient.id,
+        fromDate,
+        toDate
+      );
+      await exportStatementToPDF(
+        exportData,
+        clientDetails?.client?.name || exportData.client?.name,
+        fromDate,
+        toDate
+      );
       notifySuccess("تم تصدير كشف الحساب بصيغة PDF بنجاح");
     } catch {
       notifyError("حدث خطأ أثناء تصدير PDF");
@@ -322,9 +333,19 @@ export default function Clients() {
   };
 
   const handleExportExcel = async () => {
-    if (!clientStatement) return;
+    if (!selectedClient) return;
     try {
-      await exportStatementToExcel(clientStatement, clientDetails.client.name);
+      const exportData = await getClientStatementForExport(
+        selectedClient.id,
+        fromDate,
+        toDate
+      );
+      await exportStatementToExcel(
+        exportData,
+        clientDetails?.client?.name || exportData.client?.name,
+        fromDate,
+        toDate
+      );
       notifySuccess("تم تصدير كشف الحساب بصيغة Excel بنجاح");
     } catch {
       notifyError("حدث خطأ أثناء تصدير Excel");
@@ -524,11 +545,14 @@ export default function Clients() {
         return (
           <ClientsStatementTab
             clientStatement={clientStatement}
+            clientDetails={clientDetails}
             fromDate={fromDate}
             toDate={toDate}
             permissions={permissions}
             isDarkMode={isDarkMode}
             isMobile={isSmallScreen}
+            statementPage={statementPage}
+            onStatementPageChange={(e, p) => setStatementPage(p)}
             onDateFilterChange={handleDateFilterChange}
             onExportPDF={handleExportPDF}
             onExportExcel={handleExportExcel}

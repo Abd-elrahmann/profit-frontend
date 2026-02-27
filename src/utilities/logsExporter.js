@@ -3,18 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportLogsToPDF = async (logsData, filters = {}) => {
   return new Promise((resolve, reject) => {
@@ -34,22 +24,12 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
-      doc.setFont('Amiri', 'bold');
-      
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      // Title section - start after logo
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('سجلات النشاطات', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
-      // Filters info if exists
+      const headerEndY = drawReportHeader(doc, {
+        reportTitle: 'سجلات النشاطات',
+        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') }
+      });
+      let yPosition = drawSeparatorLine(doc, headerEndY + 4);
+
       let filtersInfo = '';
       if (filters.search) filtersInfo += `بحث: "${filters.search}" `;
       if (filters.screen) filtersInfo += `شاشة: ${getScreenText(filters.screen)} `;
@@ -61,20 +41,16 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
       if (filtersInfo) {
         doc.setFontSize(10);
         doc.setFont('Amiri', 'bold');
-        doc.text(filtersInfo, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+        doc.text(filtersInfo, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+        yPosition += 8;
       }
       
-      // Summary section
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
-      const summaryY = filtersInfo ? 45 : 35;
       const totalLogs = logsData.length;
       const dateRange = getDateRangeText(logsData);
-      
-      const summaryText = `إجمالي السجلات: ${totalLogs} | ${dateRange} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
-      
-      let yPosition = summaryY + 12;
+      doc.setFontSize(11);
+      doc.setFont('Amiri', 'bold');
+      doc.text(`إجمالي السجلات: ${totalLogs} | ${dateRange}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 12;
       
       // Prepare table data (RTL order)
       const tableData = logsData.map(log => [
@@ -102,26 +78,25 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
         4: 30  // المستخدم
       };
       
-      // Calculate table width to center it properly
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
       
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX,
         head: headers,
         body: tableData,
         ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 7 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
         columnStyles: {
-          0: { cellWidth: columnWidths[0], fontSize: 7 }, // التاريخ والوقت
-          1: { cellWidth: columnWidths[1], fontSize: 6, halign: 'right' }, // الوصف
-          2: { cellWidth: columnWidths[2], fontSize: 7 }, // الإجراء
-          3: { cellWidth: columnWidths[3], fontSize: 7 }, // الشاشة
-          4: { cellWidth: columnWidths[4], fontSize: 7 }  // المستخدم
+          0: { cellWidth: columnWidths[0], fontSize: 9 }, // التاريخ والوقت
+          1: { cellWidth: columnWidths[1], fontSize: 9, halign: 'right' }, // الوصف
+          2: { cellWidth: columnWidths[2], fontSize: 9 }, // الإجراء
+          3: { cellWidth: columnWidths[3], fontSize: 9 }, // الشاشة
+          4: { cellWidth: columnWidths[4], fontSize: 9 }  // المستخدم
         },
-        margin: { top: yPosition, bottom: 20 },
+        margin: { top: yPosition, left: tableMargins.left, right: tableMargins.right, bottom: 25 },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
@@ -129,46 +104,9 @@ export const exportLogsToPDF = async (logsData, filters = {}) => {
         didDrawTable: createDidDrawTable(doc)
       });
       
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       // Save PDF

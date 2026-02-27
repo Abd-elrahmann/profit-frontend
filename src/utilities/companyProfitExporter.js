@@ -3,17 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportCompanyProfitToPDF = async (profitData) => {
   return new Promise((resolve, reject) => {
@@ -34,21 +25,16 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير أرباح الشركة', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير أرباح الشركة',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       doc.setFontSize(13);
       doc.setFont('Amiri', 'bold');
-      doc.text('ملخص أرباح الشركة', doc.internal.pageSize.width / 2, 40, { align: 'center' });
+      doc.text('ملخص أرباح الشركة', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 10;
 
       const availableAmount = profitData.availableAmount || 0;
       const upcomingProfit = profitData.upcomingProfit || 0;
@@ -60,7 +46,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
 
       doc.setFontSize(10);
       doc.setFont('Amiri', 'bold');
-      const summaryY = 50;
+      const summaryY = yPosition;
 
       const summaryText1 = `صافي الأرباح القادمة للشركة: ${upcomingProfit.toLocaleString('en-US')}  |  باقي أرباح الشركاء: ${cents.toLocaleString('en-US')}`;
       doc.text(summaryText1, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
@@ -108,15 +94,15 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         const periodsTotalColumnWidth = Object.values(periodsColumnWidths).reduce((sum, width) => sum + width, 0);
         const periodsTableStartX = (doc.internal.pageSize.width - periodsTotalColumnWidth) / 2;
 
+        const periodsTableMargins = getCenteredTableMargins(doc, periodsTotalColumnWidth);
         autoTable(doc, {
           startY: yPosition,
-          startX: periodsTableStartX,
           head: periodsHeaders,
           body: periodsTableData,
           ...pdfTableBaseStyles,
-          styles: { ...pdfTableBaseStyles.styles, fontSize: 11, cellPadding: 3, fontStyle: 'bold' },
-          headStyles: { ...pdfTableBaseStyles.headStyles, cellPadding: 2 },
-          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
+          styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
+          headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
           columnStyles: {
             0: { cellWidth: periodsColumnWidths[0], halign: 'center', fontStyle: 'bold' }, 
             1: { cellWidth: periodsColumnWidths[1], halign: 'center', fontStyle: 'bold' }, 
@@ -125,7 +111,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
             4: { cellWidth: periodsColumnWidths[4], halign: 'center', fontStyle: 'bold' }, 
             5: { cellWidth: periodsColumnWidths[5], halign: 'center', fontStyle: 'bold' } 
           },
-          margin: { left: 14, right: 14 },
+          margin: { left: periodsTableMargins.left, right: periodsTableMargins.right, bottom: 25 },
           tableWidth: periodsTotalColumnWidth,
           horizontalPageBreak: false,
           pageBreak: 'auto',
@@ -166,21 +152,21 @@ export const exportCompanyProfitToPDF = async (profitData) => {
         const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
         const tableStartX = (pageWidth - totalColumnWidth) / 2;
 
+        const withdrawalsTableMargins = getCenteredTableMargins(doc, totalColumnWidth);
         autoTable(doc, {
           startY: yPosition,
-          startX: tableStartX, 
           head: headers,
           body: tableData,
           ...pdfTableBaseStyles,
-          styles: { ...pdfTableBaseStyles.styles, fontSize: 11, cellPadding: 3, fontStyle: 'bold' },
-          headStyles: { ...pdfTableBaseStyles.headStyles, cellPadding: 2 },
-          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
+          styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
+          headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
           columnStyles: {
             0: { cellWidth: columnWidths[0], halign: 'center', fontStyle: 'bold' }, 
             1: { cellWidth: columnWidths[1], halign: 'center', fontStyle: 'bold' }, 
             2: { cellWidth: columnWidths[2], halign: 'center', fontStyle: 'bold' }  
           },
-          margin: { left: 14, right: 14 },
+          margin: { left: withdrawalsTableMargins.left, right: withdrawalsTableMargins.right, bottom: 25 },
           tableWidth: totalColumnWidth,
           horizontalPageBreak: false,
           pageBreak: 'auto',
@@ -199,39 +185,8 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       }
 
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       const fileName = `تقرير_أرباح_الشركة_${dayjs().format('YYYY-MM-DD')}.pdf`;

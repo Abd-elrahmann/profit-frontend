@@ -3,17 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 // Helper function to reverse row order for RTL tables
 const reverseRow = (row) => [...row].reverse();
@@ -48,26 +39,17 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
         creator: 'نظام إدارة الأرباح'
       });
 
-      // Set Arabic as primary font
-      doc.setFont('Amiri', 'bold');
-
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage('/assets/images/logo.webp', 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      // Title section - with more spacing to avoid overlap
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير توزيع الأرباح', doc.internal.pageSize.width / 2, 30, { align: 'center' });
+      const periodName = periodData.name || 'غير محدد';
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير توزيع الأرباح',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      const periodName = periodData.name || 'غير محدد';
-      const summaryText = `الفترة: ${periodName} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 45, { align: 'center' });
+      doc.text(`الفترة: ${periodName}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 10;
 
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
@@ -123,21 +105,23 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
         summaryData.splice(4, 0, [formatNumber(savedAmount), 'المبلغ المدخر']);
       }
 
+      const summaryTableWidth = 100;
+      const summaryTableMargins = getCenteredTableMargins(doc, summaryTableWidth);
       autoTable(doc, {
         startY: yPosition,
         head: summaryHeaders,
         body: summaryData,
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'right' },
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
           bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
           0: { cellWidth: 'auto', halign: 'right' },
           1: { cellWidth: 'auto', halign: 'right' }
         },
-        margin: { top: yPosition, left: tableMargin, right: tableMargin },
-        tableWidth: 'auto',
+        margin: { top: yPosition, left: summaryTableMargins.left, right: summaryTableMargins.right, bottom: 25 },
+        tableWidth: summaryTableWidth,
         horizontalPageBreak: false,
         didDrawTable: createDidDrawTable(doc)
       });
@@ -206,18 +190,20 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
           3: { cellWidth: 'auto', minCellWidth: 40, halign: 'right' }  // اسم الشريك
         };
 
+        const partnersTableWidth = 170;
+        const partnersTableMargins = getCenteredTableMargins(doc, partnersTableWidth);
         autoTable(doc, {
           startY: yPosition,
           head: [reverseRow(partnersHeaders[0])],
           body: partnersTableData.map(row => reverseRow(row)),
           ...getPdfTableStyles({
-            styles: { halign: 'right', fontStyle: 'bold' },
-            headStyles: { halign: 'right', cellPadding: 5 },
+            styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+            headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
             bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
           }),
           columnStyles: columnStyles,
-          margin: { top: yPosition, left: 10, right: 10 },
-          tableWidth: 'auto',
+          margin: { top: yPosition, left: partnersTableMargins.left, right: partnersTableMargins.right, bottom: 25 },
+          tableWidth: partnersTableWidth,
           horizontalPageBreak: false,
           pageBreak: 'auto',
           showHead: 'everyPage',
@@ -228,46 +214,9 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
       }
 
 
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       // Save PDF

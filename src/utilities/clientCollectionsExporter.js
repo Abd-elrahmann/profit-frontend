@@ -3,17 +3,15 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import {
+  registerArabicFonts,
+  drawReportHeader,
+  drawSeparatorLine,
+  drawReportFooter,
+  getCenteredTableMargins,
+  PRIMARY_COLOR,
+} from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 const formatCurrency = (amount) => {
   return amount?.toLocaleString('en-US') || '0';
@@ -101,34 +99,25 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-      
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text(documentTitle, doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
+      const headerEndY = drawReportHeader(doc, {
+        reportTitle: documentTitle,
+        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') },
+      });
+      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
+
+      const pageWidth = doc.internal.pageSize.width;
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 35, { align: 'center' });
-      
+      doc.text(summaryText, pageWidth / 2, separatorEndY + 6, { align: 'center' });
+
       const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
       const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
       const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
-      
-      doc.setFontSize(10);
-      doc.setFont('Amiri', 'bold');
       const financialSummary = `إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | إجمالي المتبقي: ${formatCurrency(totalRemaining)}`;
-      doc.text(financialSummary, doc.internal.pageSize.width / 2, 43, { align: 'center' });
-      
-      const pageWidth = doc.internal.pageSize.width;
-      let yPosition = 52;
+      doc.text(financialSummary, pageWidth / 2, separatorEndY + 14, { align: 'center' });
+
+      let yPosition = separatorEndY + 24;
 
       const tableData = clientsData.data.map((client, index) => 
         columnsToExport.map(column => getFormattedColumnValue(client, column.id, index))
@@ -193,20 +182,19 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
       });
 
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
 
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX,
         head: headers,
         body: tableData.map(row => row.reverse()),
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold', fontSize: 7, cellPadding: 2, overflow: 'ellipsize' },
-          headStyles: { halign: 'right', fontSize: 8, cellPadding: 3, overflow: 'ellipsize' },
-          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 2, fontSize: 7 }
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 8, cellPadding: 3 },
+          headStyles: { halign: 'right', fontSize: 9, cellPadding: 4, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255] },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3, fontSize: 8 }
         }),
         columnStyles: columnWidths,
-        margin: { left: 8, right: 8, top: yPosition, bottom: 15 },
+        margin: { left: tableMargins.left, right: tableMargins.right, top: yPosition, bottom: 25 },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
@@ -215,39 +203,8 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
       });
       
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
@@ -386,34 +343,30 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
       ];
 
       const doc = new jsPDF('landscape');
-      
       registerArabicFonts(doc);
       
       const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
       const documentTitle = `كشف تحصيل ${statusTitle}`;
       
-        doc.setFont('Amiri', 'bold');
-      
-      doc.setFontSize(16);
-      doc.setFont('Amiri', 'bold');
-      doc.text(documentTitle, doc.internal.pageSize.width / 2, 20, { align: 'center' });
-      
-      doc.setFontSize(10);
+      const headerEndY = drawReportHeader(doc, {
+        reportTitle: documentTitle,
+        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') },
+      });
+      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
+
+      const pageWidth = doc.internal.pageSize.width;
+      doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
       const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ الطباعة: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 28, { align: 'center' });
-      
+      doc.text(summaryText, pageWidth / 2, separatorEndY + 6, { align: 'center' });
+
       const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
       const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
       const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
-      
-      doc.setFontSize(9);
-      doc.setFont('Amiri', 'bold');
       const financialSummary = `إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | إجمالي المتبقي: ${formatCurrency(totalRemaining)}`;
-      doc.text(financialSummary, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.text(financialSummary, pageWidth / 2, separatorEndY + 14, { align: 'center' });
       
-      const pageWidth = doc.internal.pageSize.width;
-      let yPosition = 42;
+      let yPosition = separatorEndY + 24;
 
       const tableData = clientsData.data.map((client, index) => 
         columnsToExport.map(column => getFormattedColumnValue(client, column.id, index))
@@ -478,27 +431,31 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
       });
 
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
 
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX,
         head: headers,
         body: tableData.map(row => row.reverse()),
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold', fontSize: 7, cellPadding: 2, overflow: 'ellipsize' },
-          headStyles: { halign: 'right', fontSize: 8, cellPadding: 3, overflow: 'ellipsize' },
-          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 2, fontSize: 7 }
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 8, cellPadding: 3 },
+          headStyles: { halign: 'right', fontSize: 9, cellPadding: 4, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255] },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3, fontSize: 8 }
         }),
         columnStyles: columnWidths,
-        margin: { left: 8, right: 8, top: yPosition, bottom: 15 },
+        margin: { left: tableMargins.left, right: tableMargins.right, top: yPosition, bottom: 25 },
         tableWidth: totalColumnWidth,
         pageBreak: 'auto',
         showHead: 'everyPage',
         didDrawTable: createDidDrawTable(doc)
       });
       
-        const pdfBlob = doc.output('blob');
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        drawReportFooter(doc, i, pageCount);
+      }
+      
+      const pdfBlob = doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const printWindow = window.open(pdfUrl);
       

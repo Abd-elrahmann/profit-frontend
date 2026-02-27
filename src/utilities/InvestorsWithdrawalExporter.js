@@ -3,8 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
 
 // دالة لتحميل PDF
 const loadPDFFromURL = async (url) => {
@@ -19,16 +19,6 @@ const loadPDFFromURL = async (url) => {
   } catch (error) {
     console.error('خطأ في تحميل ملف PDF:', error);
     throw error;
-  }
-};
-
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
   }
 };
 
@@ -130,34 +120,14 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-      
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
       
-      // ============================================
-      // الهيدر (شكل كما كان سابقاً)
-      // ============================================
-      
-      // Logo positioned on the right
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = pageWidth - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      // Title section
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير انسحاب المستثمر', pageWidth / 2, 30, { align: 'center' });
-      
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
-      doc.setTextColor(100, 100, 100);
-      doc.text(`تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`, pageWidth / 2, 40, { align: 'center' });
-      doc.setTextColor(0, 0, 0);
-
-      let yPosition = 55;
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير انسحاب المستثمر',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       // ============================================
       // Table 1: معلومات المستثمر
@@ -193,8 +163,8 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
           direction: 'rtl'
         },
         headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+          fillColor: PRIMARY_COLOR,
+          textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 11,
           halign: 'right',
@@ -248,8 +218,8 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             direction: 'rtl'
           },
           headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
             fontStyle: 'bold',
             fontSize: 11,
             halign: 'right',
@@ -311,8 +281,8 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
             fontStyle: 'bold',
             fontSize: 9,
             halign: 'center',
@@ -335,40 +305,9 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
         });
       }
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          pageHeight - 15,
-          pageWidth - footerMargin,
-          pageHeight - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          pageWidth / 2,
-          pageHeight - 8,
-          { align: 'center' }
-        );
-        
-        doc.text(
-          `تم الإنشاء في: ${dayjs().format('DD/MM/YYYY HH:mm')}`,
-          pageWidth - footerMargin,
-          pageHeight - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       // ============================================

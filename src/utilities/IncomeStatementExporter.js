@@ -2,8 +2,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
 
 // eslint-disable-next-line no-unused-vars
 const loadPDFFromURL = async (url) => {
@@ -18,15 +18,6 @@ const loadPDFFromURL = async (url) => {
   } catch (error) {
     console.error('خطأ في تحميل ملف PDF:', error);
     throw error;
-  }
-};
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
   }
 };
 
@@ -342,13 +333,16 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
     }
   });
 
+    const sectionTableWidth = 190;
+    const sectionTableMargins = getCenteredTableMargins(doc, sectionTableWidth);
     autoTable(doc, {
       head: [['المبلغ', 'البند والتفاصيل', 'ملاحظات إضافية']],
       body: tableRows,
       startY: tableStartY,
       ...pdfTableBaseStyles,
-      styles: { ...pdfTableBaseStyles.styles, fontSize: 10, fontStyle: 'bold' },
-      bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
+      styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
+      headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+      bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
       columnStyles: {
         0: {
           cellWidth: 45,
@@ -367,7 +361,8 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
           fontStyle: 'bold'
         }
       },
-        margin: { left: 14, right: 14 },
+        margin: { left: sectionTableMargins.left, right: sectionTableMargins.right, bottom: 25 },
+        tableWidth: sectionTableWidth,
         pageBreak: 'auto',
         rowPageBreak: 'auto',
       didParseCell: function(data) {
@@ -415,33 +410,25 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
 
       registerArabicFonts(doc);
 
-      doc.setFont('Amiri', 'bold');
-
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
       const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
 
-      doc.setFontSize(20);
-      doc.setFont('Amiri', 'bold');
-      doc.text('قائمة الدخل', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'قائمة الدخل',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       doc.setFontSize(14);
       doc.setFont('Amiri', 'bold');
-      doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 8;
 
       if (periodInfo) {
         doc.setFontSize(12);
         doc.setFont('Amiri', 'bold');
-        doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, 45, { align: 'center' });
+        doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+        yPosition += 8;
       }
-
-      doc.setFontSize(10);
-      doc.setFont('Amiri', 'bold');
-      doc.text(`تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`, doc.internal.pageSize.width / 2, 55, { align: 'center' });
 
       const summaryData = [
         ['المبلغ', 'البيان'],
@@ -461,13 +448,16 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
         [formatAmount(Math.abs(incomeData.netProfit || 0)), incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة']
       );
 
+      const summaryTableWidth = 180;
+      const summaryTableMargins = getCenteredTableMargins(doc, summaryTableWidth);
       autoTable(doc, {
         head: [['المبلغ', 'البيان']],
         body: summaryData.slice(1),
-        startY: 60,
+        startY: yPosition,
         ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontSize: 11, cellPadding: 5, fontStyle: 'bold' },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold' },
+        styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
+        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
         columnStyles: {
           0: {
             cellWidth: 60,
@@ -478,7 +468,8 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
             halign: 'center'
           }
         },
-        margin: { left: 14, right: 14 },
+        margin: { left: summaryTableMargins.left, right: summaryTableMargins.right, bottom: 25 },
+        tableWidth: summaryTableWidth,
         pageBreak: 'avoid',
         didDrawTable: createDidDrawTable(doc),
         rowPageBreak: 'avoid'
@@ -493,10 +484,7 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
 
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont('Amiri', 'bold');
-        doc.text(`صفحة ${i} من ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+        drawReportFooter(doc, i, pageCount);
       }
 
       const fileName = `قائمة_الدخل_${periodInfo ? periodInfo.text.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') : 'تقرير'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
@@ -752,46 +740,35 @@ export const printIncomeStatement = async (incomeData, periodType, selectedMonth
 
       registerArabicFonts(doc);
 
-      doc.setFont('Amiri', 'bold');
-
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
       const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
 
-      doc.setFontSize(20);
-      doc.setFont('Amiri', 'bold');
-      doc.text('قائمة الدخل', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      let printYPosition = drawReportHeader(doc, {
+        reportTitle: 'قائمة الدخل',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      printYPosition = drawSeparatorLine(doc, printYPosition);
 
       doc.setFontSize(14);
       doc.setFont('Amiri', 'bold');
-      doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, printYPosition, { align: 'center' });
+      printYPosition += 8;
 
       if (periodInfo) {
         doc.setFontSize(12);
         doc.setFont('Amiri', 'bold');
-        doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, 45, { align: 'center' });
+        doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, printYPosition, { align: 'center' });
+        printYPosition += 8;
       }
-
-      doc.setFontSize(10);
-      doc.setFont('Amiri', 'bold');
-      doc.text(`تاريخ الطباعة: ${dayjs().format('DD/MM/YYYY HH:mm')}`, doc.internal.pageSize.width / 2, 55, { align: 'center' });
 
       const allData = getAllData(incomeData);
 
       if (allData.length > 0) {
-        addSectionTable(doc, allData, '', 60);
+        addSectionTable(doc, allData, '', printYPosition);
       }
 
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont('Amiri', 'bold');
-        doc.text(`صفحة ${i} من ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+        drawReportFooter(doc, i, pageCount);
       }
 
       const pdfBlob = doc.output('blob');

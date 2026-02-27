@@ -2,17 +2,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 const getJournalTypeArabic = (type) => {
   const typeMap = {
@@ -48,24 +39,18 @@ export const exportPeriodClosingToPDF = async (periodData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-
-      // Logo
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      // Title
-      doc.setFontSize(18);
-      doc.text('تقرير تقفيل الفترة', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير تقفيل الفترة',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       doc.setFontSize(13);
-      doc.text(`${periodData.name}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.setFont('Amiri', 'bold');
+      doc.text(`${periodData.name}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 10;
 
       // Period Info Table
-      let yPosition = 42;
       const periodInfoData = [
         [periodData.name || '-', 'اسم الفترة'],
         [dayjs(periodData.startDate).format('DD/MM/YYYY'), 'تاريخ البداية'],
@@ -76,26 +61,23 @@ export const exportPeriodClosingToPDF = async (periodData) => {
 
       const pageWidth = doc.internal.pageSize.width;
 
+      const periodInfoTableWidth = 100;
+      const periodInfoMargins = getCenteredTableMargins(doc, periodInfoTableWidth);
       autoTable(doc, {
         startY: yPosition,
         head: [['القيمة', 'المعلومة']],
         body: periodInfoData,
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'center' },
-          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3 }
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'center', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
           0: { cellWidth: 'auto', halign: 'right', fontStyle: 'bold' },
           1: { cellWidth: 'auto', halign: 'right' }
         },
-        margin: { 
-          top: yPosition, 
-          left: 10,
-          right: 10,
-          bottom: 5 
-        },
-        tableWidth: 'auto',
+        margin: { top: yPosition, left: periodInfoMargins.left, right: periodInfoMargins.right, bottom: 25 },
+        tableWidth: periodInfoTableWidth,
         horizontalPageBreak: false,
         didDrawTable: createDidDrawTable(doc)
       });
@@ -121,24 +103,23 @@ export const exportPeriodClosingToPDF = async (periodData) => {
         [(periodData.totalProfit || 0).toLocaleString('en-US'), 'صافي الأرباح']
       ];
 
+      const summaryTableWidth = 100;
+      const summaryMargins = getCenteredTableMargins(doc, summaryTableWidth);
       autoTable(doc, {
         startY: yPosition,
         head: [['القيمة', 'البيان']],
         body: summaryData,
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'center' },
-          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3 }
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'center', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
           0: { cellWidth: 'auto', halign: 'right', fontStyle: 'bold' },
           1: { cellWidth: 'auto', halign: 'right' }
         },
-        margin: { 
-          left: 10,
-          right: 10
-        },
-        tableWidth: 'auto',
+        margin: { left: summaryMargins.left, right: summaryMargins.right, bottom: 25 },
+        tableWidth: summaryTableWidth,
         didDrawTable: createDidDrawTable(doc)
       });
 
@@ -166,14 +147,16 @@ export const exportPeriodClosingToPDF = async (periodData) => {
           'الإجمالي'
         ]);
 
+        const partnerTableWidth = 170;
+        const partnerMargins = getCenteredTableMargins(doc, partnerTableWidth);
         autoTable(doc, {
           startY: yPosition,
           head: partnerHeaders,
           body: partnerBody,
           ...getPdfTableStyles({
-            styles: { halign: 'right', fontStyle: 'bold', fontSize: 9 },
-            headStyles: { halign: 'center' },
-            bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3 }
+            styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+            headStyles: { halign: 'center', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+            bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
           }),
           columnStyles: {
             0: { cellWidth: 'auto' },
@@ -181,8 +164,8 @@ export const exportPeriodClosingToPDF = async (periodData) => {
             2: { cellWidth: 'auto' },
             3: { cellWidth: 'auto' }
           },
-          margin: { left: 10, right: 10 },
-          tableWidth: 'auto',
+          margin: { left: partnerMargins.left, right: partnerMargins.right, bottom: 25 },
+          tableWidth: partnerTableWidth,
           didParseCell: function (data) {
             if (data.row.index === partnerBody.length - 1) {
               data.cell.styles.fillColor = [240, 240, 240];
@@ -223,14 +206,16 @@ export const exportPeriodClosingToPDF = async (periodData) => {
           ''
         ]);
 
+        const journalTableWidth = 170;
+        const journalMargins = getCenteredTableMargins(doc, journalTableWidth);
         autoTable(doc, {
           startY: yPosition,
           head: journalHeaders,
           body: journalBody,
           ...getPdfTableStyles({
-            styles: { halign: 'right', fontStyle: 'bold', fontSize: 8 },
-            headStyles: { halign: 'center', fontSize: 9 },
-            bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 2 }
+            styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+            headStyles: { halign: 'center', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+            bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
           }),
           columnStyles: {
             0: { cellWidth: 'auto' },
@@ -241,8 +226,8 @@ export const exportPeriodClosingToPDF = async (periodData) => {
             5: { cellWidth: 'auto' },
             6: { cellWidth: 'auto' }
           },
-          margin: { left: 10, right: 10 },
-          tableWidth: 'auto',
+          margin: { left: journalMargins.left, right: journalMargins.right, bottom: 25 },
+          tableWidth: journalTableWidth,
           pageBreak: 'auto',
           showHead: 'everyPage',
           didParseCell: function (data) {
@@ -256,41 +241,9 @@ export const exportPeriodClosingToPDF = async (periodData) => {
         });
       }
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       const fileName = `تقرير_تقفيل_الفترة_${periodData.name}_${dayjs().format('YYYY-MM-DD')}.pdf`;

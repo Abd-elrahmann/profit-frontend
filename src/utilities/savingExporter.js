@@ -3,18 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportSavingsToPDF = async (savingData) => {
   return new Promise((resolve, reject) => {
@@ -39,25 +29,16 @@ export const exportSavingsToPDF = async (savingData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
-      doc.setFont('Amiri', 'bold');
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'كشف المدخرات العام',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      // Title section - start after logo
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('كشف المدخرات العام', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-
-      // Summary section
       doc.setFontSize(13);
       doc.setFont('Amiri', 'bold');
-      doc.text('ملخص المدخرات', doc.internal.pageSize.width / 2, 40, { align: 'center' });
+      doc.text('ملخص المدخرات', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 8;
 
       // Calculate totals
       const partners = savingData.data || [];
@@ -84,11 +65,9 @@ export const exportSavingsToPDF = async (savingData) => {
         return sum + (lastPeriod?.currentBalance || 0);
       }, 0);
 
-      // Summary data with better spacing
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      const summaryY = 50;
-      let currentY = summaryY;
+      let currentY = yPosition;
       
       const summaryText1 = `إجمالي الشركاء: ${totalPartners}  |  شركاء لديهم مدخرات: ${partnersWithSavings.length}`;
       doc.text(summaryText1, doc.internal.pageSize.width / 2, currentY, { align: 'center' });
@@ -135,10 +114,7 @@ export const exportSavingsToPDF = async (savingData) => {
           ['الرصيد الحالي', 'إجمالي السحوبات', 'إجمالي المدخرات', 'آخر فترة', 'عدد فترات الادخار', 'اسم الشريك']
         ];
 
-        // Create table with RTL support - full width with margins
         const pageWidth = doc.internal.pageSize.width;
-        const pageMargin = 15;
-        const availableWidth = pageWidth - (pageMargin * 2);
 
         // Wider column widths for better readability
         const columnWidths = {
@@ -150,27 +126,26 @@ export const exportSavingsToPDF = async (savingData) => {
           5: 37  // اسم الشريك
         };
 
-        // Calculate table width
         const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-        const tableStartX = pageMargin;
+        const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
 
         autoTable(doc, {
           startY: yPosition,
-          startX: tableStartX,
           head: headers,
           body: tableData,
           ...pdfTableBaseStyles,
-          styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9 },
-          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 3 },
+          styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
           columnStyles: {
             0: { cellWidth: columnWidths[0], fontSize: 9 }, // الرصيد الحالي
             1: { cellWidth: columnWidths[1], fontSize: 9 }, // إجمالي السحوبات
             2: { cellWidth: columnWidths[2], fontSize: 9 }, // إجمالي المدخرات
             3: { cellWidth: columnWidths[3], fontSize: 9, halign: 'right' }, // آخر فترة
             4: { cellWidth: columnWidths[4], fontSize: 9 }, // عدد فترات الادخار
-            5: { cellWidth: columnWidths[5], fontSize: 10, halign: 'right' } // اسم الشريك
+            5: { cellWidth: columnWidths[5], fontSize: 9, halign: 'right' } // اسم الشريك
           },
-          margin: { top: yPosition, bottom: 20 },
+          margin: { top: yPosition, left: tableMargins.left, right: tableMargins.right, bottom: 25 },
           tableWidth: totalColumnWidth,
           horizontalPageBreak: false, // Disable horizontal page break to keep headers together
           pageBreak: 'auto',
@@ -193,46 +168,9 @@ export const exportSavingsToPDF = async (savingData) => {
         });
       }
 
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       // Save PDF

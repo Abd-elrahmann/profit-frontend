@@ -56,6 +56,30 @@ export const getClientStatement = async (
   return response.data;
 };
 
+export const getClientStatementForExport = async (
+  clientId,
+  fromDate = "",
+  toDate = ""
+) => {
+  const queryParams = new URLSearchParams();
+
+  if (fromDate.trim()) {
+    queryParams.append("from", fromDate.trim());
+  }
+
+  if (toDate.trim()) {
+    queryParams.append("to", toDate.trim());
+  }
+
+  const queryString = queryParams.toString();
+  const url = `/api/clients/${clientId}/statement/export${
+    queryString ? `?${queryString}` : ""
+  }`;
+
+  const response = await Api.get(url);
+  return response.data;
+};
+
 export const getClientLoans = async (clientId, page = 1) => {
   const response = await Api.get(
     `/api/loans/all/${page}?clientId=${clientId}`

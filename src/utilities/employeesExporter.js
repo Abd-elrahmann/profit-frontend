@@ -3,17 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
   return new Promise((resolve, reject) => {
@@ -29,27 +20,22 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
         keywords: 'موظفين, إدارة, سلف',
         creator: 'نظام إدارة السلف'
       });
-      doc.setFont('Amiri', 'bold');
-      
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('قائمة الموظفين', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'قائمة الموظفين',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
       
       if (searchQuery) {
         doc.setFontSize(11);
         doc.setFont('Amiri', 'bold');
-        doc.text(`نتائج البحث عن: "${searchQuery}"`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+        doc.text(`نتائج البحث عن: "${searchQuery}"`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+        yPosition += 10;
       }
       
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      const summaryY = searchQuery ? 45 : 35;
+      const summaryY = yPosition;
       const activeEmployees = employeesData.filter(emp => emp.isActive).length;
       const inactiveEmployees = employeesData.filter(emp => !emp.isActive).length;
       const totalEmployees = employeesData.length;
@@ -86,26 +72,26 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
       };
       
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
       
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX,
         head: headers,
         body: tableData,
         ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
         columnStyles: {
-            0: { cellWidth: columnWidths[0], fontSize: 7 }, 
-          1: { cellWidth: columnWidths[1], fontSize: 8 }, 
-          2: { cellWidth: columnWidths[2], fontSize: 8 }, 
-          3: { cellWidth: columnWidths[3], fontSize: 8 }, 
-          4: { cellWidth: columnWidths[4], fontSize: 7 }, 
-          5: { cellWidth: columnWidths[5], fontSize: 8 }, 
-          6: { cellWidth: columnWidths[6], fontSize: 8 }  
+          0: { cellWidth: columnWidths[0], fontSize: 9 }, 
+          1: { cellWidth: columnWidths[1], fontSize: 9 }, 
+          2: { cellWidth: columnWidths[2], fontSize: 9 }, 
+          3: { cellWidth: columnWidths[3], fontSize: 9 }, 
+          4: { cellWidth: columnWidths[4], fontSize: 9 }, 
+          5: { cellWidth: columnWidths[5], fontSize: 9 }, 
+          6: { cellWidth: columnWidths[6], fontSize: 9 }  
         },
-        margin: { top: yPosition, bottom: 20 },
+        margin: { top: yPosition, left: tableMargins.left, right: tableMargins.right, bottom: 25 },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
@@ -114,39 +100,8 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
       });
       
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       const fileName = `الموظفين_${dayjs().format('YYYY-MM-DD')}.pdf`;

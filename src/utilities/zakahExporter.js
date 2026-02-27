@@ -3,23 +3,14 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-import logo from '/assets/images/logo.webp';
 
 const formatInt = (value) => {
   const num = Number(value || 0);
   if (!Number.isFinite(num)) return '0';
   return num.toLocaleString();
-};
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
 };
 
 export const exportZakahToPDF = async (zakahData, filters = {}) => {
@@ -37,21 +28,11 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-
-      // إضافة الشعار
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      // العنوان الرئيسي
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير الزكاة', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-
-      let yPosition = 35;
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير الزكاة',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
       
       // إضافة معلومات التصفية
       if (filters.month && filters.year) {
@@ -201,39 +182,22 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           ];
         }
 
-        // حساب عرض الأعمدة بناءً على نوع البيانات - مساحات أكبر
         const pageWidth = doc.internal.pageSize.getWidth();
-        const margins = { left: 5, right: 5 }; // هوامش أقل لعرض أكبر
-        const availableWidth = pageWidth - margins.left - margins.right;
         
         let columnWidths;
+        let tableWidth;
         if (isAccountData) {
-          // حساب نسب الأعمدة
-          columnWidths = {
-            0: availableWidth * 0.25, // التاريخ
-            1: availableWidth * 0.35, // الوصف
-            2: availableWidth * 0.13, // مدين
-            3: availableWidth * 0.13, // دائن
-            4: availableWidth * 0.14  // الرصيد
-          };
+          columnWidths = { 0: 45, 1: 65, 2: 25, 3: 25, 4: 30 };
+          tableWidth = 190;
         } else if (isPartnerArray) {
-          columnWidths = {
-            0: availableWidth * 0.15, // الشهر
-            1: availableWidth * 0.20, // التاريخ
-            2: availableWidth * 0.45, // الوصف
-            3: availableWidth * 0.20  // المبلغ
-          };
+          columnWidths = { 0: 28, 1: 38, 2: 85, 3: 38 };
+          tableWidth = 189;
         } else {
-          // أبعاد أكبر مع ترتيب مقلوب
-          columnWidths = {
-            0: availableWidth * 0.12, // المتبقي
-            1: availableWidth * 0.12, // المدفوع
-            2: availableWidth * 0.16, // الزكاة السنوية
-            3: availableWidth * 0.16, // رأس المال
-            4: availableWidth * 0.12, // السنة
-            5: availableWidth * 0.32  // اسم الشريك (أوسع)
-          };
+          columnWidths = { 0: 23, 1: 23, 2: 31, 3: 31, 4: 23, 5: 61 };
+          tableWidth = 192;
         }
+
+        const tableMargins = getCenteredTableMargins(doc, tableWidth);
 
         autoTable(doc, {
           startY: yPosition + 5,
@@ -241,6 +205,9 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           body: tableData,
           rtl: true,
           ...pdfTableBaseStyles,
+          styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4 },
+          headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontSize: 9, cellPadding: 4 },
           columnStyles: Object.keys(columnWidths).reduce((styles, key) => {
             styles[key] = { 
               cellWidth: columnWidths[key],
@@ -251,11 +218,11 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
           }, {}),
           margin: { 
             top: yPosition, 
-            bottom: 30, 
-            left: margins.left, 
-            right: margins.right 
+            bottom: 25, 
+            left: tableMargins.left, 
+            right: tableMargins.right 
           },
-          tableWidth: 'auto',
+          tableWidth,
           horizontalPageBreak: false,
           pageBreak: 'auto',
           showHead: 'everyPage',
@@ -286,41 +253,9 @@ export const exportZakahToPDF = async (zakahData, filters = {}) => {
         doc.text('لا توجد عمليات مالية في الفترة المحددة', doc.internal.pageSize.width / 2, yPosition + 20, { align: 'center' });
       }
 
-      // تذييل الصفحات
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       const fileName = `تقرير_الزكاة_${dayjs().format('YYYY-MM-DD')}.pdf`;

@@ -3,17 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 // Helper function to reverse row order for RTL tables
 const reverseRow = (row) => [...row].reverse();
@@ -41,38 +32,21 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
-      doc.setFont('Amiri', 'bold');
-
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage('/assets/images/logo.webp', 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      // Title section - with more spacing to avoid overlap
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير دفعات السلفه', doc.internal.pageSize.width / 2, 30, { align: 'center' });
-
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
       const clientName = loanData?.client?.name || 'غير محدد';
-      const summaryText = `العميل: ${clientName} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 45, { align: 'center' });
+      const headerEndY = drawReportHeader(doc, {
+        reportTitle: 'تقرير دفعات السلفه',
+        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') }
+      });
+      let yPosition = drawSeparatorLine(doc, headerEndY + 4);
 
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      const tableMargin = 10;
-
-      let yPosition = 55;
 
       // Loan summary section
       doc.setFontSize(12);
       doc.setFont('Amiri', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text('ملخص السلفة', pageWidth / 2, yPosition, { align: 'center' });
+      doc.text(`ملخص السلفة - العميل: ${clientName}`, pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 8;
 
       // حساب إجمالي الخصومات من الدفعات
@@ -88,21 +62,23 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
         [totalDiscounts.toLocaleString('en-US'), 'إجمالي الخصومات'],
       ];
 
+      const summaryTableWidth = 100;
+      const summaryTableMargins = getCenteredTableMargins(doc, summaryTableWidth);
       autoTable(doc, {
         startY: yPosition,
         head: summaryHeaders,
         body: summaryData,
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'right' },
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
           bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
           0: { cellWidth: 'auto', halign: 'right' },
           1: { cellWidth: 'auto', halign: 'right' }
         },
-        margin: { top: yPosition, left: tableMargin, right: tableMargin },
-        tableWidth: 'auto',
+        margin: { top: yPosition, left: summaryTableMargins.left, right: summaryTableMargins.right, bottom: 25 },
+        tableWidth: summaryTableWidth,
         horizontalPageBreak: false,
         didDrawTable: createDidDrawTable(doc)
       });
@@ -143,13 +119,16 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
         ];
       });
 
+      const repaymentsColumnWidths = [25, 25, 20, 25, 25, 25, 30, 20];
+      const repaymentsTableWidth = repaymentsColumnWidths.reduce((a, b) => a + b, 0);
+      const repaymentsTableMargins = getCenteredTableMargins(doc, repaymentsTableWidth);
       autoTable(doc, {
         startY: yPosition,
         head: [reverseRow(repaymentsHeaders[0])],
         body: repaymentsTableData.map(row => reverseRow(row)),
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'right', cellPadding: 4 },
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
           bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
@@ -162,54 +141,17 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
           6: { cellWidth: 'auto', minCellWidth: 30, halign: 'right', valign: 'middle', cellPadding: { top: 6, bottom: 6, left: 4, right: 4 } }, // تاريخ الاستحقاق (مع التاريخ الهجري)
           7: { cellWidth: 'auto', minCellWidth: 20, halign: 'right' }  // رقم الدفعة (الأخير من اليمين)
         },
-        margin: { top: 20, left: 15, right: 15 },
-        tableWidth: 'auto',
+        margin: { top: yPosition, left: repaymentsTableMargins.left, right: repaymentsTableMargins.right, bottom: 25 },
+        tableWidth: repaymentsTableWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
         showHead: 'everyPage',
         didDrawTable: createDidDrawTable(doc)
       });
 
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       // Save PDF

@@ -3,17 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportJournalsToPDF = async (journalData, accountName) => {
   return new Promise((resolve, reject) => {
@@ -35,21 +26,16 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-      
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('سجل القيود المحاسبية', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'سجل القيود المحاسبية',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
+
       doc.setFontSize(13);
       doc.setFont('Amiri', 'bold');
-      doc.text(`الحساب: ${accountName}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.text(`الحساب: ${accountName}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 10;
       
       const allJournals = [];
       if (journalData.journalsByMonth) {
@@ -73,7 +59,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       
       doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      const summaryY = 45;
+      const summaryY = yPosition;
       const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')}  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')}  |  الرصيد الحالي: ${currentBalance.toLocaleString('en-US')}  |  عدد القيود: ${totalJournals}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
@@ -107,25 +93,25 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       };
       
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
       
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX,
         head: headers,
         body: tableData,
         ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
         columnStyles: {
-          0: { cellWidth: columnWidths[0], fontSize: 8 },
-          1: { cellWidth: columnWidths[1], fontSize: 8 },
-          2: { cellWidth: columnWidths[2], fontSize: 8 },
-          3: { cellWidth: columnWidths[3], fontSize: 7, halign: 'right' },
-          4: { cellWidth: columnWidths[4], fontSize: 7 },
-          5: { cellWidth: columnWidths[5], fontSize: 7 }
+          0: { cellWidth: columnWidths[0], fontSize: 9 },
+          1: { cellWidth: columnWidths[1], fontSize: 9 },
+          2: { cellWidth: columnWidths[2], fontSize: 9 },
+          3: { cellWidth: columnWidths[3], fontSize: 9, halign: 'right' },
+          4: { cellWidth: columnWidths[4], fontSize: 9 },
+          5: { cellWidth: columnWidths[5], fontSize: 9 }
         },
-        margin: { top: yPosition, bottom: 20 },
+        margin: { top: yPosition, left: tableMargins.left, right: tableMargins.right, bottom: 25 },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
@@ -157,39 +143,8 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       });
       
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        const creationDate = dayjs().format('DD/MM/YYYY hh:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       const fileName = `سجل_القيود_${accountName}_${dayjs().format('YYYY-MM-DD')}.pdf`;
@@ -325,21 +280,16 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-      
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('إحصائيات الصندوق', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
+      let statsYPosition = drawReportHeader(doc, {
+        reportTitle: 'إحصائيات الصندوق',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      statsYPosition = drawSeparatorLine(doc, statsYPosition);
+
       doc.setFontSize(13);
       doc.setFont('Amiri', 'bold');
-      doc.text(`الحساب: ${accountName}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.text(`الحساب: ${accountName}`, doc.internal.pageSize.width / 2, statsYPosition, { align: 'center' });
+      statsYPosition += 10;
       
       const availableBalance = statisticsData.account?.balance || 0;
       const totalDebit = statisticsData.account?.debit || 0;
@@ -370,8 +320,7 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           : 0;
       
       const pageWidth = doc.internal.pageSize.width;
-      const headerHeight = 45;
-      const yPosition = headerHeight + 15;
+      const yPosition = statsYPosition + 5;
       
       const statisticsDataTable = [
         [availableBalance.toLocaleString('en-US'), 'الرصيد المتاح'],
@@ -407,13 +356,13 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
           valign: 'middle'
         },
         headStyles: {
-          fillColor: [240, 240, 240],
-          textColor: [46, 139, 69],
+          fillColor: PRIMARY_COLOR,
+          textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 11, // smaller header font
+          fontSize: 9,
           halign: 'center',
           valign: 'middle',
-          cellPadding: 6,
+          cellPadding: 4,
           lineColor: [13, 64, 165],
           lineWidth: 0.1
         },
@@ -476,8 +425,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [46, 139, 69],
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
             fontStyle: 'bold',
           fontSize: 11, // smaller header font
             halign: 'center',
@@ -565,8 +514,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
             valign: 'middle'
           },
           headStyles: {
-            fillColor: [240, 240, 240], // خلفية فاتحة
-            textColor: [46, 139, 69], // نص أخضر داكن
+            fillColor: PRIMARY_COLOR, // خلفية فاتحة
+            textColor: [255, 255, 255], // نص أخضر داكن
             fontStyle: 'bold',
             fontSize: 11,
             halign: 'center',
@@ -621,39 +570,8 @@ export const exportStatisticsToPDF = async (statisticsData, accountName) => {
       }
       
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        const creationDate = dayjs().format('DD/MM/YYYY hh:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       const fileName = `إحصائيات_الصندوق_${accountName}_${dayjs().format('YYYY-MM-DD')}.pdf`;

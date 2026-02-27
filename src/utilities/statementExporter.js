@@ -3,10 +3,16 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
+import {
+  registerArabicFonts,
+  drawReportHeader,
+  drawSeparatorLine,
+  drawReportFooter,
+  getCenteredTableMargins,
+  PRIMARY_COLOR,
+} from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
 
-// Format numbers with commas and no decimals (truncate fractional part)
 const formatAmount = (value) => {
   const numeric = Number(value || 0);
   const truncated = Number.isFinite(numeric) ? Math.trunc(numeric) : 0;
@@ -16,26 +22,23 @@ const formatAmount = (value) => {
   });
 };
 
-// Register Arabic fonts (make sure these font files exist in your public/assets/fonts directory)
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
+const getRepaymentStatusText = (status) => {
+  const textMap = {
+    PENDING: 'قيد الانتظار',
+    COMPLETED: 'مكتمل',
+    PAID: 'مدفوع',
+    PARTIAL_PAID: 'مدفوع جزئياً',
+    OVERDUE: 'متأخر',
+    EARLY_PAID: 'مدفوع مبكراً',
+  };
+  return textMap[status] || status;
 };
 
-export const exportStatementToPDF = async (statementData, clientName) => {
+export const exportStatementToPDF = async (statementData, clientName, fromDate = '', toDate = '') => {
   return new Promise((resolve, reject) => {
     try {
-      // Create new PDF document
       const doc = new jsPDF();
-      
-      // Register Arabic fonts
       registerArabicFonts(doc);
-      
-      // Set document properties
       doc.setProperties({
         title: `كشف حساب - ${clientName}`,
         subject: 'كشف حساب العميل',
@@ -44,143 +47,96 @@ export const exportStatementToPDF = async (statementData, clientName) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
-      doc.setFont('Amiri', 'bold');
-      
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      // Title section - start after logo
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('كشف حساب العميل', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
-      doc.setFontSize(13);
-      doc.setFont('Amiri', 'bold');
-      doc.text(`العميل: ${clientName}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
-      doc.setFontSize(11);
-      doc.text(`رقم الهوية: ${statementData.client.nationalId}`, doc.internal.pageSize.width / 2, 42, { align: 'center' });
-      
-      // Summary section - single row, centered
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
-      const summaryY = 55;
-      const summaryText = `الرصيد الافتتاحي: ${formatAmount(statementData.openingBalance)}  |  الرصيد الختامي: ${formatAmount(statementData.closingBalance)}  |  إجمالي المدين: ${formatAmount(statementData.client.debit)}  |  إجمالي الدائن: ${formatAmount(statementData.client.credit)}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
-      
-      let yPosition = summaryY + 12;
-      
-      // Prepare table data (RTL order - reversed columns)
-      const tableData = statementData.transactions.map(transaction => [
-        formatAmount(transaction.balance),
-        transaction.credit > 0 ? formatAmount(transaction.credit) : '0',
-        transaction.debit > 0 ? formatAmount(transaction.debit) : '0',
-        transaction.description,
-        getTransactionTypeArabic(transaction.type),
-        dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
-      ]);
-      
-      // Table headers (RTL order - reversed)
-      const headers = [
-        ['الرصيد', 'دائن', 'مدين', 'الوصف', 'نوع المعاملة', 'التاريخ']
-      ];
-      
-      // Optimize column widths to fit on one page
-      const columnWidths = {
-        0: 38, // الرصيد (أعرض للأرقام الكبيرة)
-        1: 32, // دائن
-        2: 32, // مدين
-        3: 35, // الوصف (أضيق لإتاحة مساحة للأرقام)
-        4: 25, // نوع المعاملة
-        5: 26  // التاريخ
-      };
-      
-      // Calculate table width to center it properly
-      const pageWidth = doc.internal.pageSize.width;
-      const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
-      
-      // Create table with RTL support - centered and larger, no extra borders
-      autoTable(doc, {
-        startY: yPosition,
-        startX: tableStartX,
-        head: headers,
-        body: tableData,
-        ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
-        columnStyles: {
-          0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد
-          1: { cellWidth: columnWidths[1], fontSize: 8 }, // دائن
-          2: { cellWidth: columnWidths[2], fontSize: 8 }, // مدين
-          3: { cellWidth: columnWidths[3], fontSize: 7, halign: 'right' }, // الوصف
-          4: { cellWidth: columnWidths[4], fontSize: 7 }, // نوع المعاملة
-          5: { cellWidth: columnWidths[5], fontSize: 7 }  // التاريخ
+      const reportTitle = `كشف حساب - ${clientName}`;
+      const headerEndY = drawReportHeader(doc, {
+        reportTitle,
+        metadata: {
+          date: dayjs().format('YYYY/MM/DD'),
+          time: dayjs().format('hh:mm A'),
         },
-        margin: { top: yPosition, bottom: 20 },
-        tableWidth: totalColumnWidth,
-        horizontalPageBreak: false, // Disable horizontal page break to keep headers together
-        pageBreak: 'auto',
-        showHead: 'everyPage',
-        didParseCell: function (data) {
-          // Prevent cell content from being too wide
-          if (data.cell.text && data.cell.text.length > 0) {
-            const maxLength = data.column.index === 3 ? 32 : 20; // Tighter description width
-            if (data.cell.text[0].length > maxLength) {
-              data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
-            }
-          }
-        },
-        didDrawTable: createDidDrawTable(doc)
       });
-      
-      // Footer - Professional styling
-      const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        // Reset text color
+
+      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
+
+      // Summary section - filter info + totals (template style)
+      const pageWidth = doc.internal.pageSize.width;
+      doc.setFont('Amiri', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+
+      const summaryY = separatorEndY + 6;
+      doc.text(`اسم الحساب: ${clientName}`, pageWidth / 2, summaryY, { align: 'center' });
+      doc.text(`رقم الهوية: ${statementData.client?.nationalId || '—'}`, pageWidth / 2, summaryY + 5, { align: 'center' });
+      doc.text(`من تاريخ: ${fromDate || '—'}  إلى تاريخ: ${toDate || '—'}`, pageWidth / 2, summaryY + 10, { align: 'center' });
+
+      const summaryLineY = summaryY + 18;
+      const summaryText = `إجمالي المدين: ${formatAmount(statementData.client?.debit)}  |  إجمالي الدائن: ${formatAmount(statementData.client?.credit)}  |  الرصيد الحالي: ${formatAmount(statementData.client?.balance)}  |  عدد المعاملات: ${statementData.totalTransactions || 0}  |  الدفعات المدفوعة: ${statementData.paidRepaymentsCount || 0}  |  المتبقي: ${formatAmount(statementData.totalRemainingAmount)}`;
+      doc.text(summaryText, pageWidth / 2, summaryLineY, { align: 'center' });
+
+      let yPosition = summaryLineY + 8;
+      if ((statementData.client?.balance || 0) > 0) {
+        doc.setFontSize(11);
+        doc.setTextColor(...PRIMARY_COLOR);
+        doc.text(`مدين/عليه ${formatAmount(statementData.client?.balance)} ريال سعودي`, pageWidth / 2, yPosition, { align: 'center' });
         doc.setTextColor(0, 0, 0);
+        yPosition += 10;
       }
-      
-      // Save PDF
+      yPosition += 4;
+
+      const repayments = statementData.repayments || [];
+      if (repayments.length > 0) {
+        const tableData = repayments.map((r) => [
+          formatAmount(r.remaining),
+          formatAmount(r.paidAmount),
+          formatAmount(r.amount),
+          getRepaymentStatusText(r.status),
+          r.paymentDate ? dayjs(r.paymentDate).format('DD/MM/YYYY') : '—',
+          r.dueDate ? dayjs(r.dueDate).format('DD/MM/YYYY') : '—',
+          r.loanCode || r.loanId || '—',
+          r.count || '—'
+        ]);
+
+        // كلمتين = الكلمة الثانية على سطر جديد. عرض أعمدة واسع لتفادي تقطيع الكلمات
+        const headers = [['المتبقي', 'المدفوع', 'المبلغ', 'الحالة', 'تاريخ\nالدفع', 'تاريخ\nالاستحقاق', 'رقم\nالسلفة', 'رقم\nالدفعة']];
+        const columnWidths = [22, 24, 22, 22, 24, 32, 24, 24];
+        const totalColumnWidth = columnWidths.reduce((a, b) => a + b, 0);
+        const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
+
+        autoTable(doc, {
+          startY: yPosition,
+          head: headers,
+          body: tableData,
+          ...pdfTableBaseStyles,
+          headStyles: {
+            ...pdfTableBaseStyles.headStyles,
+            fillColor: PRIMARY_COLOR,
+            textColor: [255, 255, 255],
+            minCellHeight: 14,
+          },
+          styles: { ...pdfTableBaseStyles.styles, fontSize: 9 },
+          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, cellPadding: 4 },
+          columnStyles: columnWidths.reduce((acc, w, i) => ({
+            ...acc,
+            [i]: {
+              cellWidth: w,
+              fontSize: 9,
+              overflow: [4, 5, 6, 7].includes(i) ? 'linebreak' : 'hidden',
+            }
+          }), {}),
+          margin: { top: yPosition, bottom: 25, left: tableMargins.left, right: tableMargins.right },
+          tableWidth: totalColumnWidth,
+          horizontalPageBreak: false,
+          pageBreak: 'auto',
+          showHead: 'everyPage',
+          didDrawTable: createDidDrawTable(doc)
+        });
+      }
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        drawReportFooter(doc, i, pageCount);
+      }
+
       const fileName = `كشف_حساب_${clientName}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
@@ -191,70 +147,55 @@ export const exportStatementToPDF = async (statementData, clientName) => {
   });
 };
 
-export const exportStatementToExcel = async (statementData, clientName) => {
+export const exportStatementToExcel = async (statementData, clientName, fromDate = '', toDate = '') => {
   try {
-    // Lazy load XLSX library
     const XLSX = await import('xlsx');
 
-    // Create workbook
     const workbook = XLSX.utils.book_new();
-    
-    // Summary data
+
     const summaryData = [
       ['كشف حساب العميل'],
-      [`العميل: ${clientName}`],
-      [`رقم الهوية: ${statementData.client.nationalId}`],
+      [`اسم الحساب: ${clientName}`],
+      [`رقم الهوية: ${statementData.client?.nationalId || '—'}`],
+      [`من تاريخ: ${fromDate || '—'}  إلى تاريخ: ${toDate || '—'}`],
       [''],
-      ['الرصيد الافتتاحي', statementData.openingBalance],
-      ['الرصيد الختامي', statementData.closingBalance],
-      ['إجمالي المدين', formatAmount(statementData.client.debit)],
-      ['إجمالي الدائن', formatAmount(statementData.client.credit)],
+      ['إجمالي المدين', formatAmount(statementData.client?.debit)],
+      ['إجمالي الدائن', formatAmount(statementData.client?.credit)],
+      ['الرصيد الحالي', formatAmount(statementData.client?.balance)],
+      ['عدد المعاملات', statementData.totalTransactions || 0],
+      ['الدفعات المدفوعة', statementData.paidRepaymentsCount || 0],
+      ['المتبقي', formatAmount(statementData.totalRemainingAmount)],
+      ...((statementData.client?.balance || 0) > 0 ? [['مدين ب', `${formatAmount(statementData.client?.balance)} ريال`]] : []),
       ['']
     ];
-    
-    // Transactions data (RTL order - matching PDF)
-    const transactionsData = statementData.transactions.map(transaction => ({
-      'الرصيد': formatAmount(transaction.balance),
-      'دائن': transaction.credit > 0 ? formatAmount(transaction.credit) : '-',
-      'مدين': transaction.debit > 0 ? formatAmount(transaction.debit) : '-',
-      'الوصف': transaction.description,
-      'نوع المعاملة': getTransactionTypeArabic(transaction.type),
-      'التاريخ': dayjs(transaction.date).format('DD/MM/YYYY HH:mm')
+
+    const repayments = statementData.repayments || [];
+    const repaymentsData = repayments.map((r) => ({
+      'رقم الدفعة': r.count,
+      'رقم السلفة': r.loanCode || r.loanId,
+      'تاريخ الاستحقاق': r.dueDate ? dayjs(r.dueDate).format('DD/MM/YYYY') : '—',
+      'تاريخ الدفع': r.paymentDate ? dayjs(r.paymentDate).format('DD/MM/YYYY') : '—',
+      'المبلغ': formatAmount(r.amount),
+      'المدفوع': formatAmount(r.paidAmount),
+      'المتبقي': formatAmount(r.remaining),
+      'الحالة': getRepaymentStatusText(r.status),
     }));
-    
-    // Create summary sheet
+
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    
-    // Create transactions sheet
-    const transactionsSheet = XLSX.utils.json_to_sheet(transactionsData);
-    
-    // Add sheets to workbook
+    const repaymentsSheet = XLSX.utils.json_to_sheet(repaymentsData);
+
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص');
-    XLSX.utils.book_append_sheet(workbook, transactionsSheet, 'المعاملات');
-    
-    // Generate Excel file
+    XLSX.utils.book_append_sheet(workbook, repaymentsSheet, 'جدول الدفعات');
+
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    
+
     const fileName = `كشف_حساب_${clientName}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
-    
   } catch (error) {
     console.error('Excel export error:', error.message);
     throw error;
   }
 };
-
-const getTransactionTypeArabic = (type) => {
-  const types = {
-    'LOAN_DISBURSEMENT': 'صرف سلفة',
-    'REPAYMENT': 'سداد',
-    'ADJUSTMENT': 'تعديل',
-    'INTEREST': 'فائدة',
-    'EARLY_PAYMENT': 'سداد مبكر'
-  };
-  return types[type] || type;
-};
-

@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   TextField,
-  Grid,
   Paper,
   Button,
   Table,
@@ -11,20 +10,33 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Card,
-  CardContent,
+  Pagination,
   Stack,
-  Divider,
 } from "@mui/material";
 import { PictureAsPdf, TableChart } from "@mui/icons-material";
 import {
   StyledTableCell,
   StyledTableRow,
 } from "../layouts/tableLayout";
-import { formatDate } from "./clientsUtils";
+import { formatDate, numberToArabicWords } from "./clientsUtils";
+
+const SYSTEM_GREEN = "#2E8B45";
+
+const getRepaymentStatusText = (status) => {
+  const textMap = {
+    PENDING: "قيد الانتظار",
+    COMPLETED: "مكتمل",
+    PAID: "مدفوع",
+    PARTIAL_PAID: "مدفوع جزئياً",
+    OVERDUE: "متأخر",
+    EARLY_PAID: "مدفوع مبكراً",
+  };
+  return textMap[status] || status;
+};
 
 export default function ClientsStatementTab({
   clientStatement,
+  clientDetails,
   fromDate,
   toDate,
   permissions,
@@ -33,9 +45,13 @@ export default function ClientsStatementTab({
   onDateFilterChange,
   onExportPDF,
   onExportExcel,
+  statementPage,
+  onStatementPageChange,
 }) {
-  const transactions = clientStatement?.transactions || [];
-  const hasTransactions = transactions.length > 0;
+  const repayments = clientStatement?.repayments || [];
+  const hasRepayments = repayments.length > 0;
+  const totalRepayments = clientStatement?.totalRepayments || 0;
+  const totalPages = Math.ceil(totalRepayments / 20) || 1;
 
   const renderTable = () => (
     <Box>
@@ -78,11 +94,11 @@ export default function ClientsStatementTab({
               onClick={onExportPDF}
               disabled={!clientStatement}
               sx={{
-                borderColor: "#d32f2f",
-                color: "#d32f2f",
+                borderColor: "error.main",
+                color: "error.main",
                 "&:hover": {
-                  borderColor: "#b71c1c",
-                  backgroundColor: "rgba(211, 47, 47, 0.04)",
+                  borderColor: "error.dark",
+                  backgroundColor: "rgba(211, 47, 47, 0.08)",
                 },
               }}
             >
@@ -95,11 +111,11 @@ export default function ClientsStatementTab({
               onClick={onExportExcel}
               disabled={!clientStatement}
               sx={{
-                borderColor: "#2e7d32",
-                color: "#2e7d32",
+                borderColor: SYSTEM_GREEN,
+                color: SYSTEM_GREEN,
                 "&:hover": {
-                  borderColor: "#1b5e20",
-                  backgroundColor: "rgba(46, 125, 50, 0.04)",
+                  borderColor: "#256B36",
+                  backgroundColor: "rgba(46, 139, 69, 0.08)",
                 },
               }}
             >
@@ -110,160 +126,136 @@ export default function ClientsStatementTab({
       </Box>
 
       {clientStatement && (
-        <Paper
-          sx={{
-            p: 3,
-            mb: 3,
-            bgcolor: isDarkMode ? "background.paper" : "#f8f9fa",
-          }}
-        >
-          <Grid
-            container
-            spacing={6}
-            justifyContent="center"
-            alignItems="center"
+        <>
+          <div
+            className={`p-4 sm:p-6 mb-6 rounded-xl border-r-4 border-r-primary shadow-sm ${
+              isDarkMode ? "bg-[#141e16]" : "bg-[#f8f9fa]"
+            }`}
           >
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                إجمالي المدين
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="error">
-                {clientStatement.client?.debit?.toLocaleString() || 0}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                إجمالي الدائن
-              </Typography>
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                color="success.main"
-              >
-                {clientStatement.client?.credit?.toLocaleString() || 0}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                الرصيد الحالي
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="primary">
-                {clientStatement.client?.balance?.toLocaleString() || 0}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                عدد المعاملات
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="info.main">
-                {clientStatement.totalTransactions || 0}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Paper>
+            <h3 className="text-lg font-bold text-primary mb-2 text-center">
+              كشف حساب - {clientDetails?.client?.name || clientStatement.client?.name}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center">
+              من تاريخ: {fromDate || "—"} إلى تاريخ: {toDate || "—"}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+              <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">إجمالي المدين</p>
+                <p className="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">
+                  {(clientStatement.client?.debit || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">إجمالي الدائن</p>
+                <p className="text-2xl md:text-3xl font-bold text-primary">
+                  {(clientStatement.client?.credit || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">الرصيد الحالي</p>
+                <p className="text-2xl md:text-3xl font-bold text-primary">
+                  {(clientStatement.client?.balance || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">عدد المعاملات</p>
+                <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">
+                  {clientStatement.totalTransactions || 0}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">الدفعات المدفوعة</p>
+                <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">
+                  {clientStatement.paidRepaymentsCount || 0}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">المتبقي</p>
+                <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">
+                  {(clientStatement.totalRemainingAmount || 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            {(clientStatement.client?.balance || 0) > 0 && (
+              <div className="mt-4 p-4 bg-primary/10 rounded-lg">
+                <p className="text-base font-bold text-primary">
+                  مدين/عليه {numberToArabicWords(clientStatement.client?.balance || 0)} ريال سعودي
+                </p>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader aria-label="كشف حساب العميل">
+          <Table stickyHeader aria-label="جدول الدفعات">
             <TableHead>
-              <TableRow>
-                <StyledTableCell
-                  align="center"
-                  sx={{ fontWeight: "bold", minWidth: 120 }}
-                >
-                  التاريخ
+              <TableRow sx={{ bgcolor: `${SYSTEM_GREEN}15` }}>
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 60 }}>
+                  #
                 </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ fontWeight: "bold", minWidth: 100 }}
-                >
-                  المرجع
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 90 }}>
+                  رقم السلفة
                 </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ fontWeight: "bold", minWidth: 200 }}
-                >
-                  الوصف
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 110 }}>
+                  تاريخ الاستحقاق
                 </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ fontWeight: "bold", minWidth: 120 }}
-                >
-                  مدين
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 90 }}>
+                  المبلغ
                 </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ fontWeight: "bold", minWidth: 120 }}
-                >
-                  دائن
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 90 }}>
+                  المدفوع
                 </StyledTableCell>
-                <StyledTableCell
-                  align="center"
-                  sx={{ fontWeight: "bold", minWidth: 120 }}
-                >
-                  الرصيد
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 90 }}>
+                  المتبقي
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 100 }}>
+                  الحالة
+                </StyledTableCell>
+                <StyledTableCell align="center" sx={{ fontWeight: "bold", minWidth: 110 }}>
+                  تاريخ الدفع
                 </StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {hasTransactions ? (
-                transactions.map((transaction) => (
-                  <StyledTableRow key={transaction.id} hover>
+              {hasRepayments ? (
+                repayments.map((repayment) => (
+                  <StyledTableRow key={repayment.id} hover>
+                    <StyledTableCell align="center">{repayment.count}</StyledTableCell>
+                    <StyledTableCell align="center">{repayment.loanCode || repayment.loanId}</StyledTableCell>
                     <StyledTableCell align="center">
-                      {formatDate(transaction.date)}
+                      {typeof repayment.dueDate === "string"
+                        ? repayment.dueDate.split(" ")[0]
+                        : formatDate(repayment.dueDate)}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      <Typography variant="body2" fontWeight="500">
-                        {transaction.reference}
-                      </Typography>
+                      {(repayment.amount || 0).toLocaleString()}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {transaction.description}
+                      {(repayment.paidAmount || 0).toLocaleString()}
                     </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{
-                        color:
-                          transaction.debit > 0
-                            ? "error.main"
-                            : "text.primary",
-                      }}
-                    >
-                      {transaction.debit > 0
-                        ? transaction.debit.toLocaleString()
-                        : 0}
+                    <StyledTableCell align="center">
+                      {(repayment.remaining || 0).toLocaleString()}
                     </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{
-                        color:
-                          transaction.credit > 0
-                            ? "success.main"
-                            : "text.primary",
-                      }}
-                    >
-                      {transaction.credit > 0
-                        ? transaction.credit.toLocaleString()
-                        : 0}
+                    <StyledTableCell align="center">
+                      {getRepaymentStatusText(repayment.status)}
                     </StyledTableCell>
-                    <StyledTableCell
-                      align="center"
-                      sx={{ fontWeight: "bold" }}
-                    >
-                      {transaction.balance.toLocaleString()}
+                    <StyledTableCell align="center">
+                      {repayment.paymentDate
+                        ? (typeof repayment.paymentDate === "string"
+                            ? repayment.paymentDate
+                            : formatDate(repayment.paymentDate)
+                          ).split(" ")[0]
+                        : "—"}
                     </StyledTableCell>
                   </StyledTableRow>
                 ))
               ) : (
                 <StyledTableRow>
-                  <StyledTableCell
-                    colSpan={6}
-                    align="center"
-                    sx={{ py: 3 }}
-                  >
+                  <StyledTableCell colSpan={8} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="text.secondary">
-                      لا توجد معاملات
+                      لا توجد دفعات
                     </Typography>
                   </StyledTableCell>
                 </StyledTableRow>
@@ -272,21 +264,26 @@ export default function ClientsStatementTab({
           </Table>
         </TableContainer>
 
-        {hasTransactions && (
+        {hasRepayments && totalRepayments > 20 && (
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "center",
               alignItems: "center",
               p: 2,
-              borderTop: "1px solid #e0e0e0",
+              borderTop: "1px solid",
+              borderColor: "divider",
               bgcolor: isDarkMode ? "background.paper" : "#fafafa",
             }}
           >
-            <Typography variant="body2" color="text.secondary">
-              إجمالي المعاملات:{" "}
-              {clientStatement.totalTransactions || transactions.length}
-            </Typography>
+            <Pagination
+              count={totalPages}
+              page={statementPage}
+              onChange={(e, p) => onStatementPageChange(e, p)}
+              color="primary"
+              showFirstButton
+              showLastButton
+            />
           </Box>
         )}
       </Paper>
@@ -295,14 +292,7 @@ export default function ClientsStatementTab({
 
   const renderCards = () => (
     <Box sx={{ width: "100%" }}>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          mb: 3,
-        }}
-      >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <TextField
             label="من تاريخ"
@@ -332,12 +322,9 @@ export default function ClientsStatementTab({
               onClick={onExportPDF}
               disabled={!clientStatement}
               sx={{
-                borderColor: "#d32f2f",
-                color: "#d32f2f",
-                "&:hover": {
-                  borderColor: "#b71c1c",
-                  backgroundColor: "rgba(211, 47, 47, 0.04)",
-                },
+                borderColor: "error.main",
+                color: "error.main",
+                "&:hover": { backgroundColor: "rgba(211, 47, 47, 0.08)" },
               }}
             >
               PDF
@@ -349,12 +336,9 @@ export default function ClientsStatementTab({
               onClick={onExportExcel}
               disabled={!clientStatement}
               sx={{
-                borderColor: "#2e7d32",
-                color: "#2e7d32",
-                "&:hover": {
-                  borderColor: "#1b5e20",
-                  backgroundColor: "rgba(46, 125, 50, 0.04)",
-                },
+                borderColor: SYSTEM_GREEN,
+                color: SYSTEM_GREEN,
+                "&:hover": { backgroundColor: "rgba(46, 139, 69, 0.08)" },
               }}
             >
               Excel
@@ -364,105 +348,97 @@ export default function ClientsStatementTab({
       </Box>
 
       {clientStatement && (
-        <Paper
-          sx={{
-            p: 2,
-            mb: 3,
-            bgcolor: isDarkMode ? "background.paper" : "#f8f9fa",
-          }}
+        <div
+          className={`p-4 mb-6 rounded-xl border-r-4 border-r-primary shadow-sm ${
+            isDarkMode ? "bg-[#141e16]" : "bg-[#f8f9fa]"
+          }`}
         >
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={6}>
-              <Typography variant="caption" color="text.secondary">إجمالي المدين</Typography>
-              <Typography variant="body1" fontWeight="bold" color="error">
-                {clientStatement.client?.debit?.toLocaleString() || 0}
-              </Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="caption" color="text.secondary">إجمالي الدائن</Typography>
-              <Typography variant="body1" fontWeight="bold" color="success.main">
-                {clientStatement.client?.credit?.toLocaleString() || 0}
-              </Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="caption" color="text.secondary">الرصيد الحالي</Typography>
-              <Typography variant="body1" fontWeight="bold" color="primary">
-                {clientStatement.client?.balance?.toLocaleString() || 0}
-              </Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="caption" color="text.secondary">عدد المعاملات</Typography>
-              <Typography variant="body1" fontWeight="bold" color="info.main">
+          <h3 className="text-base font-bold text-primary mb-4 text-center">
+            كشف حساب - {clientDetails?.client?.name || clientStatement.client?.name}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-[#141e16] p-4 rounded-xl border border-primary/10 shadow-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">إجمالي المدين</p>
+              <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                {(clientStatement.client?.debit || 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-[#141e16] p-4 rounded-xl border border-primary/10 shadow-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">إجمالي الدائن</p>
+              <p className="text-lg font-bold text-primary">
+                {(clientStatement.client?.credit || 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-[#141e16] p-4 rounded-xl border border-primary/10 shadow-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">الرصيد الحالي</p>
+              <p className="text-lg font-bold text-primary">
+                {(clientStatement.client?.balance || 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-[#141e16] p-4 rounded-xl border border-primary/10 shadow-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">عدد المعاملات</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 {clientStatement.totalTransactions || 0}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Paper>
+              </p>
+            </div>
+            <div className="bg-white dark:bg-[#141e16] p-4 rounded-xl border border-primary/10 shadow-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">الدفعات المدفوعة</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {clientStatement.paidRepaymentsCount || 0}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-[#141e16] p-4 rounded-xl border border-primary/10 shadow-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">المتبقي</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {(clientStatement.totalRemainingAmount || 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+          {(clientStatement.client?.balance || 0) > 0 && (
+            <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+              <p className="text-sm font-bold text-primary">
+                مدين/عليه {numberToArabicWords(clientStatement.client?.balance || 0)} ريال سعودي
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
-      {hasTransactions ? (
+      {hasRepayments ? (
         <Stack spacing={2}>
-          {transactions.map((transaction) => (
-            <Card
-              key={transaction.id}
+          {repayments.map((repayment) => (
+            <Paper
+              key={repayment.id}
               sx={{
+                p: 2,
                 border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 2,
-                boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+                borderRight: `3px solid ${SYSTEM_GREEN}`,
               }}
             >
-              <CardContent sx={{ p: 2 }}>
-                <Stack spacing={1.5}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="body2" fontWeight="600">
-                      {formatDate(transaction.date)}
-                    </Typography>
-                    <Typography variant="body2" fontWeight="500">
-                      {transaction.reference}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {transaction.description}
-                  </Typography>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">مدين</Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight="500"
-                        color={transaction.debit > 0 ? "error.main" : "text.secondary"}
-                      >
-                        {transaction.debit > 0 ? transaction.debit.toLocaleString() : 0}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">دائن</Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight="500"
-                        color={transaction.credit > 0 ? "success.main" : "text.secondary"}
-                      >
-                        {transaction.credit > 0 ? transaction.credit.toLocaleString() : 0}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">الرصيد</Typography>
-                      <Typography variant="body2" fontWeight="bold">
-                        {transaction.balance.toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                <Typography variant="body2" fontWeight="600">
+                  دفعة #{repayment.count} - سلفة {repayment.loanCode || repayment.loanId}
+                </Typography>
+                <Typography variant="body2" sx={{ color: SYSTEM_GREEN }}>
+                  {getRepaymentStatusText(repayment.status)}
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                استحقاق: {typeof repayment.dueDate === "string" ? repayment.dueDate.split(" ")[0] : formatDate(repayment.dueDate)}
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2, mt: 1, flexWrap: "wrap" }}>
+                <Typography variant="body2">المبلغ: {(repayment.amount || 0).toLocaleString()}</Typography>
+                <Typography variant="body2">المدفوع: {(repayment.paidAmount || 0).toLocaleString()}</Typography>
+                <Typography variant="body2">المتبقي: {(repayment.remaining || 0).toLocaleString()}</Typography>
+              </Box>
+            </Paper>
           ))}
         </Stack>
       ) : (
         <Paper sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body1" color="text.secondary">
-            لا توجد معاملات
+            لا توجد دفعات
           </Typography>
         </Paper>
       )}

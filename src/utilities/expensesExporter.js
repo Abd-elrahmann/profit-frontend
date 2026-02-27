@@ -3,17 +3,8 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
-
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 const generateExcelRows = (expenses) => {
   const rows = [];
@@ -56,32 +47,24 @@ export const exportExpensesToPDF = async (expenses, expenseType = "", employeeNa
         creator: 'نظام إدارة السلف',
       });
 
-      doc.setFont('Amiri', 'bold');
-
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      doc.setFontSize(18);
-      let title = 'تقرير المصروفات';
+      let reportTitle = 'تقرير المصروفات';
       if (employeeNames) {
-        title = `تقرير مصروفات رواتب للموظف ${employeeNames}`;
+        reportTitle = `تقرير مصروفات رواتب للموظف ${employeeNames}`;
       } else if (expenseType) {
-        title = `تقرير المصروفات - ${expenseType}`;
+        reportTitle = `تقرير المصروفات - ${expenseType}`;
       }
-      doc.text(title, doc.internal.pageSize.width / 2, 30, {
-        align: 'center',
+
+      let yPosition = drawReportHeader(doc, {
+        reportTitle,
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
       });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-
       doc.setFontSize(11);
-      const summaryText = `إجمالي المصروفات: ${expenses.length} مصروف | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 45, {
-        align: 'center',
-      });
+      doc.setFont('Amiri', 'bold');
+      doc.text(`إجمالي المصروفات: ${expenses.length} مصروف | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 12;
 
       const headers = [['التاريخ', 'الموظف', 'الوصف', 'المبلغ', 'النوع']];
       const body = expenses.map((expense) => {
@@ -94,21 +77,23 @@ export const exportExpensesToPDF = async (expenses, expenseType = "", employeeNa
         ];
       });
 
+      const expensesTableWidth = 170;
+      const expensesTableMargins = getCenteredTableMargins(doc, expensesTableWidth);
       autoTable(doc, {
-        startY: 60,
+        startY: yPosition,
         head: headers,
         body,
         ...getPdfTableStyles({
-          styles: { halign: 'right', valign: 'top', fontStyle: 'bold', fontSize: 8 },
-          headStyles: { halign: 'right' },
+          styles: { halign: 'right', valign: 'top', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
           bodyStyles: { halign: 'right', valign: 'top', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
           2: { cellWidth: 'auto', minCellWidth: 60 }, 
           3: { cellWidth: 'auto', minCellWidth: 40 }, 
         },
-        margin: { top: 60, left: 10, right: 10 },
-        tableWidth: 'auto',
+        margin: { top: yPosition, left: expensesTableMargins.left, right: expensesTableMargins.right, bottom: 25 },
+        tableWidth: expensesTableWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
         showHead: 'everyPage',
@@ -116,36 +101,8 @@ export const exportExpensesToPDF = async (expenses, expenseType = "", employeeNa
       });
 
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       let fileName = `تقرير_المصروفات_${dayjs().format('YYYY-MM-DD')}.pdf`;

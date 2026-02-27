@@ -3,18 +3,9 @@ import autoTable from 'jspdf-autotable';
 
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-import logo from '/assets/images/logo.webp';
 import * as XLSX from 'xlsx';
-// Register Arabic fonts
-const registerArabicFonts = (doc) => {
-  try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
-  } catch (error) {
-    console.warn('Arabic fonts not found, using default fonts', error);
-  }
-};
 
 export const exportJournalToPDF = async (journalData) => {
   return new Promise((resolve, reject) => {
@@ -34,27 +25,19 @@ export const exportJournalToPDF = async (journalData) => {
         creator: 'نظام إدارة السلف'
       });
 
-      // Set Arabic as primary font
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تفاصيل القيد المحاسبي',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
+
+      doc.setFontSize(11);
       doc.setFont('Amiri', 'bold');
-      
-      // Logo positioned on the right - small and at the very top
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      
-      // Title section - start after logo
-      doc.setFontSize(18);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تفاصيل القيد المحاسبي', doc.internal.pageSize.width / 2, 25, { align: 'center' });
-      
-      doc.setFontSize(13);
-      doc.setFont('Amiri', 'bold');
-      doc.text(`رقم القيد: ${journalData.reference || journalData.id}`, doc.internal.pageSize.width / 2, 35, { align: 'center' });
-      
+      doc.text(`رقم القيد: ${journalData.reference || journalData.id}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 8;
+
       // Journal header info as a table
-      const headerTableY = 42;
+      const headerTableY = yPosition;
       const headerTableData = [
         ['التاريخ', dayjs(journalData.date).format('DD/MM/YYYY')],
         ['نوع القيد', getJournalTypeArabic(journalData.type)],
@@ -67,17 +50,16 @@ export const exportJournalToPDF = async (journalData) => {
       const headerTableHeaders = [['المعلومة', 'القيمة']];
       const pageWidth = doc.internal.pageSize.width;
       const headerTableWidth = 100;
-      // Calculate left margin to center the table exactly
-      const leftMargin = (pageWidth - headerTableWidth) / 2;
+      const headerTableMargins = getCenteredTableMargins(doc, headerTableWidth);
       
       autoTable(doc, {
         startY: headerTableY,
         head: headerTableHeaders,
         body: headerTableData,
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'center' },
-          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3 }
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'center', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+          bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
         columnStyles: {
           0: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }, // المعلومة
@@ -85,9 +67,9 @@ export const exportJournalToPDF = async (journalData) => {
         },
         margin: { 
           top: headerTableY, 
-          left: leftMargin,
-          right: leftMargin,
-          bottom: 5 
+          left: headerTableMargins.left,
+          right: headerTableMargins.right,
+          bottom: 25 
         },
         tableWidth: headerTableWidth,
         horizontalPageBreak: false,
@@ -145,26 +127,25 @@ export const exportJournalToPDF = async (journalData) => {
         4: 55  // الحساب - increased to show full account name
       };
       
-      // Calculate table width to center it properly
       const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableStartX = (pageWidth - totalColumnWidth) / 2;
+      const journalTableMargins = getCenteredTableMargins(doc, totalColumnWidth);
       
       autoTable(doc, {
         startY: yPosition,
-        startX: tableStartX,
         head: headers,
         body: tableData,
         ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 8 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 2 },
+        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
+        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
         columnStyles: {
-          0: { cellWidth: columnWidths[0], fontSize: 8 }, // الرصيد
-          1: { cellWidth: columnWidths[1], fontSize: 8 }, // دائن
-          2: { cellWidth: columnWidths[2], fontSize: 8 }, // مدين
-          3: { cellWidth: columnWidths[3], fontSize: 7, halign: 'right' }, // الوصف
-          4: { cellWidth: columnWidths[4], fontSize: 7, halign: 'right', overflow: 'linebreak' }  // الحساب - allow wrapping
+          0: { cellWidth: columnWidths[0], fontSize: 9 }, // الرصيد
+          1: { cellWidth: columnWidths[1], fontSize: 9 }, // دائن
+          2: { cellWidth: columnWidths[2], fontSize: 9 }, // مدين
+          3: { cellWidth: columnWidths[3], fontSize: 9, halign: 'right' }, // الوصف
+          4: { cellWidth: columnWidths[4], fontSize: 9, halign: 'right', overflow: 'linebreak' }  // الحساب - allow wrapping
         },
-        margin: { top: yPosition, bottom: 20 },
+        margin: { top: yPosition, left: journalTableMargins.left, right: journalTableMargins.right, bottom: 25 },
         tableWidth: totalColumnWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
@@ -195,46 +176,9 @@ export const exportJournalToPDF = async (journalData) => {
         didDrawTable: createDidDrawTable(doc)
       });
       
-      // Footer - Professional styling
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        
-        // Draw footer line
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-        
-        // Footer text
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        
-        // Page number - centered
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-        
-        // Creation date - right aligned
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
       
       // Save PDF
@@ -431,22 +375,16 @@ export const exportJournalsTableToPDF = async (journals) => {
         creator: 'نظام إدارة السلف'
       });
 
-      doc.setFont('Amiri', 'bold');
-
-      // Logo
-      const logoWidth = 10;
-      const logoHeight = 10;
-      const logoX = doc.internal.pageSize.width - logoWidth - 5;
-      const logoY = 5;
-      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
-
-      // Title
-      doc.setFontSize(18);
-      doc.text('تقرير القيود المحاسبية', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+      let yPosition = drawReportHeader(doc, {
+        reportTitle: 'تقرير القيود المحاسبية',
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+      });
+      yPosition = drawSeparatorLine(doc, yPosition);
 
       doc.setFontSize(11);
-      const summaryText = `إجمالي القيود: ${journals.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, doc.internal.pageSize.width / 2, 35, { align: 'center' });
+      doc.setFont('Amiri', 'bold');
+      doc.text(`إجمالي القيود: ${journals.length}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
+      yPosition += 10;
 
       // Table data
       const headers = [['تاريخ الإنشاء', 'المعتمد بواسطة', 'المصدر', 'الحالة', 'النوع']];
@@ -461,17 +399,19 @@ export const exportJournalsTableToPDF = async (journals) => {
         ];
       });
 
+      const journalsTableWidth = 170;
+      const journalsTableMargins = getCenteredTableMargins(doc, journalsTableWidth);
       autoTable(doc, {
-        startY: 45,
+        startY: yPosition,
         head: headers,
         body,
         ...getPdfTableStyles({
-          styles: { halign: 'right', fontStyle: 'bold' },
-          headStyles: { halign: 'right' },
+          styles: { halign: 'right', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
+          headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
           bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 4 }
         }),
-        margin: { top: 45, left: 10, right: 10 },
-        tableWidth: 'auto',
+        margin: { top: yPosition, left: journalsTableMargins.left, right: journalsTableMargins.right, bottom: 25 },
+        tableWidth: journalsTableWidth,
         horizontalPageBreak: false,
         pageBreak: 'auto',
         showHead: 'everyPage',
@@ -485,38 +425,9 @@ export const exportJournalsTableToPDF = async (journals) => {
         didDrawTable: createDidDrawTable(doc)
       });
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
-      const footerMargin = 10;
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.line(
-          footerMargin,
-          doc.internal.pageSize.height - 15,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 15
-        );
-
-        doc.setFontSize(9);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(100, 100, 100);
-        doc.text(
-          `صفحة ${i} من ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 8,
-          { align: 'center' }
-        );
-
-        const creationDate = dayjs().format('DD/MM/YYYY HH:mm');
-        doc.text(
-          `تم الإنشاء في: ${creationDate}`,
-          doc.internal.pageSize.width - footerMargin,
-          doc.internal.pageSize.height - 8,
-          { align: 'right' }
-        );
-        doc.setTextColor(0, 0, 0);
+        drawReportFooter(doc, i, pageCount);
       }
 
       const fileName = `تقرير_القيود_${dayjs().format('YYYY-MM-DD')}.pdf`;
