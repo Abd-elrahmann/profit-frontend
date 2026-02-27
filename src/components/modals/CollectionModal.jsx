@@ -118,7 +118,7 @@ const CollectionModal = ({
                     <Button 
                       startIcon={<CopyIcon sx={{marginLeft:'10px'}} />} 
                       onClick={handleCopyLink}
-                      sx={{ color: '#1E40AF' }}
+                      sx={{ color: '#2E8B45' }}
                     >
                       نسخ الرابط
                     </Button>
@@ -149,7 +149,7 @@ const CollectionModal = ({
                 onClick={() => setActiveTab("SMS")}
                 sx={{ 
                   mr: 1,
-                  bgcolor: activeTab === "SMS" ? "#1E40AF" : "transparent",
+                  bgcolor: activeTab === "SMS" ? "#2E8B45" : "transparent",
                   color: activeTab === "SMS" ? "white" : "grey.600"
                 }}
               >
@@ -159,7 +159,7 @@ const CollectionModal = ({
                 variant={activeTab === "Telegram" ? "contained" : "outlined"}
                 onClick={() => setActiveTab("Telegram")}
                 sx={{ 
-                  bgcolor: activeTab === "Telegram" ? "#1E40AF" : "transparent",
+                  bgcolor: activeTab === "Telegram" ? "#2E8B45" : "transparent",
                   color: activeTab === "Telegram" ? "white" : "grey.600"
                 }}
               >
@@ -177,10 +177,10 @@ const CollectionModal = ({
               sx={{
                 "& .MuiOutlinedInput-root": {
                   "&:hover fieldset": {
-                    borderColor: "#1E40AF",
+                    borderColor: "#2E8B45",
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: "#1E40AF",
+                    borderColor: "#2E8B45",
                   },
                 }
               }}
@@ -201,9 +201,9 @@ const CollectionModal = ({
           onClick={handleSendNotification}
           disabled={!linkCreated}
           sx={{
-            bgcolor: linkCreated ? "#1E40AF" : "grey.400",
+            bgcolor: linkCreated ? "#2E8B45" : "grey.400",
             "&:hover": { 
-              bgcolor: linkCreated ? "#153482" : "grey.400" 
+              bgcolor: linkCreated ? "#256B36" : "grey.400" 
             }
           }}
         >

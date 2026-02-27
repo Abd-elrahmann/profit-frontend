@@ -63,7 +63,7 @@ const ExpenseStats = React.memo(() => {
     const map = {
       'مصروف رواتب': 'bg-primary/10 text-primary',
       'مصروف بنزين': 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-      'مصروفات انترنت': 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+      'مصروفات انترنت': 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary',
       'مصروفات ورقية': 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400',
       'مصروفات كهرباء': 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
       'مصروفات تشغيلية': 'bg-primary/10 text-primary',

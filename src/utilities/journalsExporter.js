@@ -76,7 +76,7 @@ export const exportJournalToPDF = async (journalData) => {
         didDrawTable: createDidDrawTable(doc)
       });
       
-      let yPosition = doc.lastAutoTable.finalY + 8;
+      yPosition = doc.lastAutoTable.finalY + 8;
       
       // Calculate totals
       const totalDebit = journalData.lines?.reduce((sum, line) => sum + (line.debit || 0), 0) || 0;

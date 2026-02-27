@@ -13,11 +13,9 @@ const StatCard = ({ icon: Icon, label, value, variant = 'default', badge }) => (
     <div className="flex justify-between items-start mb-4">
       <div
         className={`p-2 rounded-lg ${
-          variant === 'blue'
-            ? 'bg-blue-50 text-blue-600'
-            : variant === 'primary'
-              ? 'bg-primary/10 text-primary'
-              : variant === 'emerald'
+          variant === 'primary'
+            ? 'bg-primary/10 text-primary'
+            : variant === 'emerald'
                 ? 'bg-emerald-50 text-emerald-600'
                 : variant === 'orange'
                   ? 'bg-orange-50 text-orange-600'
@@ -48,7 +46,7 @@ const ZakahStatsCards = ({ totals }) => {
         icon={AccountBalance}
         label="إجمالي رأس المال"
         value={formatCurrency(capitalAmount)}
-        variant="blue"
+        variant="primary"
         badge="+2.5%"
       />
       <StatCard

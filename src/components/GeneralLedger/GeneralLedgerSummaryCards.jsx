@@ -5,7 +5,7 @@ import React from 'react';
 const CARD_CONFIG = [
   { key: 'debit', valueKey: 'totalDebit', label: 'إجمالي مدين', color: 'primary', bgColor: 'white' },
   { key: 'credit', valueKey: 'totalCredit', label: 'إجمالي دائن', color: 'error', bgColor: 'white' },
-  { key: 'journals', valueKey: 'totalJournals', label: 'عدد القيود', color: 'info', bgColor: 'white' },
+  { key: 'journals', valueKey: 'totalJournals', label: 'عدد القيود', color: 'primary', bgColor: 'white' },
   { key: 'balance', valueKey: 'closingBalance', label: 'الرصيد الحالي', color: 'primary', bgColor: 'transparent' },
 ];
 

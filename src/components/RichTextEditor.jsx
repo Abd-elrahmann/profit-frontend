@@ -99,12 +99,12 @@ const RichTextEditor = ({ value, onChange, variables = [], height = "500px" }) =
         variableSpan.contentEditable = 'false';
         variableSpan.className = 'template-variable';
         variableSpan.style.cssText = `
-          background-color: #e3f2fd;
+          background-color: #f0fdf4;
           padding: 2px 6px;
           border-radius: 4px;
           margin: 0 2px;
-          color: #1976d2;
-          border: 1px solid #90caf9;
+          color: #2E8B45;
+          border: 1px solid #86efac;
           cursor: default;
           font-family: 'Cairo', sans-serif;
         `;

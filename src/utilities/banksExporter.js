@@ -44,7 +44,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
       const summaryText = `إجمالي الحسابات: ${totalBanks} | نشطة: ${activeBanks} | منتهية: ${expiredBanks} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
-      let yPosition = summaryY + 12;
+      yPosition = summaryY + 12;
       
       const tableData = banksData.map(bank => [
         getStatusArabic(bank.status),

@@ -63,7 +63,7 @@ export const exportJournalsToPDF = async (journalData, accountName) => {
       const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')}  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')}  |  الرصيد الحالي: ${currentBalance.toLocaleString('en-US')}  |  عدد القيود: ${totalJournals}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
-      let yPosition = summaryY + 12;
+      yPosition = summaryY + 12;
       
       const tableData = [];
       allJournals.forEach(journal => {

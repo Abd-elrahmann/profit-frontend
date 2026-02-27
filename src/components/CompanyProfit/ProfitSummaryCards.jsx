@@ -21,7 +21,7 @@ const CARD_CONFIG = [
   {
     key: 'totalUpcoming',
     icon: TrendingUp,
-    color: 'info',
+    color: 'primary',
     label: 'إجمالي الأرباح',
     chipLabel: 'إجمالي',
   },

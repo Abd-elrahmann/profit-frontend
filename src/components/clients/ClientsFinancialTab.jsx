@@ -4,9 +4,9 @@ import { getStatusColor } from "./clientsUtils";
 
 const cardStyles = {
   blue: {
-    bg: { light: "#eff6ff", dark: "rgba(59, 130, 246, 0.15)" },
-    border: { light: "#bfdbfe", dark: "rgba(59, 130, 246, 0.4)" },
-    label: { light: "#1e40af", dark: "#93c5fd" },
+    bg: { light: "#f0fdf4", dark: "rgba(46, 139, 69, 0.15)" },
+    border: { light: "#bbf7d0", dark: "rgba(46, 139, 69, 0.4)" },
+    label: { light: "#166534", dark: "#86efac" },
     value: "primary.main",
   },
   green: {

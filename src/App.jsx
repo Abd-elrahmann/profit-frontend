@@ -144,7 +144,9 @@ const AppLayout = () => {
               path={route.path}
               element={
                 <PublicRoute>
-                  <route.element />
+                  <Suspense fallback={<LoadingFallback />}>
+                    <route.element />
+                  </Suspense>
                 </PublicRoute>
               }
             />
@@ -154,7 +156,9 @@ const AppLayout = () => {
           path="/forgot-password" 
           element={
             <PublicRoute>
-              <ForgotPassword />
+              <Suspense fallback={<LoadingFallback />}>
+                <ForgotPassword />
+              </Suspense>
             </PublicRoute>
           } 
         />
@@ -162,14 +166,20 @@ const AppLayout = () => {
           path="/reset-password" 
           element={
             <PublicRoute>
-              <ResetPassword />
+              <Suspense fallback={<LoadingFallback />}>
+                <ResetPassword />
+              </Suspense>
             </PublicRoute>
           } 
         />
         
         <Route 
           path="/check-connection" 
-          element={<CheckConnection />} 
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <CheckConnection />
+            </Suspense>
+          } 
         />
         
         
@@ -181,7 +191,9 @@ const AppLayout = () => {
               path={route.path}
               element={
                 <ProtectedRoute route={route}>
-                  <route.element />
+                  <Suspense fallback={<LoadingFallback />}>
+                    <route.element />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
@@ -192,8 +204,24 @@ const AppLayout = () => {
           element={<RootRedirect />} 
         />
 
-        <Route path="/installments/:loanId" element={<Installments />} />
-        <Route path="/payment-receipt" element={<RestrictedNavigationRoute><PaymentReceipt /></RestrictedNavigationRoute>} />
+        <Route 
+          path="/installments/:loanId" 
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Installments />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/payment-receipt" 
+          element={
+            <RestrictedNavigationRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <PaymentReceipt />
+              </Suspense>
+            </RestrictedNavigationRoute>
+          } 
+        />
         </Routes>
       </Suspense>
     </Layout>

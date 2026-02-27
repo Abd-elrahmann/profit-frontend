@@ -100,7 +100,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
       />
       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center' }}>
         <Chip label={`${client.loansSummary.activeLoans} نشط`} size="small" color="success" sx={{ fontSize: '0.7rem' }} />
-        <Chip label={`${client.loansSummary.completedLoans} مكتمل`} size="small" color="info" sx={{ fontSize: '0.7rem' }} />
+        <Chip label={`${client.loansSummary.completedLoans} مكتمل`} size="small" color="primary" sx={{ fontSize: '0.7rem' }} />
         {client.loansSummary.overdueLoans > 0 && (
           <Chip label={`${client.loansSummary.overdueLoans} متأخر`} size="small" color="error" sx={{ fontSize: '0.7rem' }} />
         )}
@@ -242,7 +242,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
                               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'center' }}>
                                 <Chip label={`${client.loansSummary.loansCount} إجمالي`} color="primary" variant="outlined" size="small" sx={{ fontSize: '0.7rem' }} />
                                 <Chip label={`${client.loansSummary.activeLoans} نشط`} color="success" size="small" sx={{ fontSize: '0.7rem' }} />
-                                <Chip label={`${client.loansSummary.completedLoans} مكتمل`} color="info" size="small" sx={{ fontSize: '0.7rem' }} />
+                                <Chip label={`${client.loansSummary.completedLoans} مكتمل`} color="primary" size="small" sx={{ fontSize: '0.7rem' }} />
                                 {client.loansSummary.overdueLoans > 0 && (
                                   <Chip label={`${client.loansSummary.overdueLoans} متأخر`} color="error" size="small" sx={{ fontSize: '0.7rem' }} />
                                 )}

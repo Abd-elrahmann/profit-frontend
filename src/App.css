@@ -32,10 +32,10 @@ body {
   background-color: #777;
 }
 :not(.dark) .sidebar-nav::-webkit-scrollbar-thumb {
-  background-color: #c5cae9;
+  background-color: #63947F;
 }
 :not(.dark) .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background-color: #9fa8da;
+  background-color: #2E8B45;
 }
 
 @media print {

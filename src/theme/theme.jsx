@@ -12,6 +12,12 @@ const commonPalette = {
     light: '#e44479',
     dark: '#970f3c',
     contrastText: '#ffffff'
+  },
+  info: {
+    main: '#2E8B45',
+    light: '#63947F',
+    dark: '#256B36',
+    contrastText: '#ffffff'
   }
 };
 
@@ -28,13 +34,13 @@ const lightTheme = createTheme({
     },
     background: {
       default: '#fafafa',
-      main: '#1E40AF',
+      main: '#f6f8f6',
       paper: '#ffffff'
     },
     text: {
       main: '#ffffff',
       primary: '#2a2a2a',
-      secondary: '#1E40AF',
+      secondary: '#6b7280',
       black: '#2a2a2a'
     }
   },
@@ -69,7 +75,7 @@ const lightTheme = createTheme({
         },
         containedPrimary: {
           '&:hover': {
-            backgroundColor: '#2563EB'
+            backgroundColor: '#257239'
           }
         },
         containedSecondary: {
@@ -115,13 +121,13 @@ const darkTheme = createTheme({
     },
     background: {
       default: '#1a1a1a', 
-      main: '#1E40AF',
+      main: '#141e16',
       paper: '#1e1e1e'
     },
     text: {
       main: '#ffffff',
       primary: '#ffffff',
-      secondary: '#90caf9',
+      secondary: '#63947F',
       black: '#ffffff'
     }
   },
@@ -156,7 +162,7 @@ const darkTheme = createTheme({
         },
         containedPrimary: {
           '&:hover': {
-            backgroundColor: '#2563EB'
+            backgroundColor: '#257239'
           }
         },
         containedSecondary: {

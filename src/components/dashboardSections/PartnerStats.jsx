@@ -137,7 +137,7 @@ const PartnerStats = React.memo(() => {
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <p className="text-slate-500 text-sm font-medium">إجمالي الأرباح الموزعة</p>
-            <div className="bg-blue-500/10 text-blue-500 p-2 rounded-lg">
+            <div className="bg-primary/10 text-primary p-2 rounded-lg">
               <TrendingUp className="size-5" />
             </div>
           </div>

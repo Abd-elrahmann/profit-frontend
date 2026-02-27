@@ -225,8 +225,8 @@ export default function Employees() {
                 <Chip
                   label={user.role?.name || "بدون دور"}
                   sx={{
-                    bgcolor: user.role?.name ? "rgba(59,130,246,0.1)" : "#E5E7EB",
-                    color: user.role?.name ? "#3B82F6" : "#6B7280",
+                    bgcolor: user.role?.name ? "rgba(46,139,69,0.1)" : "#E5E7EB",
+                    color: user.role?.name ? "#2E8B45" : "#6B7280",
                     fontWeight: "bold",
                   }}
                 />
@@ -417,8 +417,8 @@ export default function Employees() {
                       <Chip
                         label={user.role?.name || "بدون دور"}
                         sx={{
-                          bgcolor: user.role?.name ? "rgba(59,130,246,0.1)" : "#E5E7EB",
-                          color: user.role?.name ? "#3B82F6" : "#6B7280",
+                          bgcolor: user.role?.name ? "rgba(46,139,69,0.1)" : "#E5E7EB",
+                          color: user.role?.name ? "#2E8B45" : "#6B7280",
                           fontWeight: "bold",
                           fontSize: isMobile ? '0.75rem' : '0.875rem'
                         }}

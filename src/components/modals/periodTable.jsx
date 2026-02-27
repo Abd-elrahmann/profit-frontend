@@ -200,7 +200,7 @@ const PeriodTable = ({
             py: 1.5,
             borderRadius: 2,
             fontWeight: 'bold',
-            boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+            boxShadow: '0 4px 12px rgba(46, 139, 69, 0.3)'
           }}
         >
           مقارنة الفترتين المحددتين

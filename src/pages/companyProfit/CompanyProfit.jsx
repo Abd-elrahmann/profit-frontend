@@ -126,10 +126,10 @@ export default function CompanyProfit() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-primary/5 shadow-sm">
             <div className="flex justify-between items-start mb-4">
-              <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-bold">
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">
                 أرباح قادمة
               </span>
-              <TrendingUp className="text-blue-400" sx={{ fontSize: 24 }} />
+              <TrendingUp className="text-primary" sx={{ fontSize: 24 }} />
             </div>
             <p className="text-slate-500 text-sm font-medium">صافي الأرباح القادمة</p>
             <div className="flex items-baseline gap-1 mt-1">

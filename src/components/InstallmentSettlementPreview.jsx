@@ -217,7 +217,7 @@ const InstallmentSettlementPreview = ({
           disabled={loading || !settlementHtml}
           sx={{
             bgcolor: "primary.main",
-            "&:hover": { bgcolor: "#2563EB" },
+            "&:hover": { bgcolor: "#257239" },
             minWidth: '140px'
           }}
         >

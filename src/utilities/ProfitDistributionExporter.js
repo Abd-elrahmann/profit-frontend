@@ -55,7 +55,7 @@ export const exportProfitDistributionToPDF = async (periodData, enableSaving = f
       const pageHeight = doc.internal.pageSize.height;
       const tableMargin = 10;
 
-      let yPosition = 55;
+      yPosition = 55;
 
       // Period summary section
       doc.setFontSize(12);

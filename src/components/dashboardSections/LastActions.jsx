@@ -57,9 +57,9 @@ const LastActions = React.memo(() => {
       },
       Journals: {
         icon: FileText,
-        bg: 'bg-blue-500',
+        bg: 'bg-primary',
         tag: 'قيود',
-        tagClass: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+        tagClass: 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary',
       },
       Partners: {
         icon: Users,

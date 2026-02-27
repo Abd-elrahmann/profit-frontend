@@ -85,7 +85,7 @@ export const exportSavingsToPDF = async (savingData) => {
       doc.text(summaryText4, doc.internal.pageSize.width / 2, currentY, { align: 'center' });
       currentY += 10;
 
-      let yPosition = currentY;
+      yPosition = currentY;
 
       // Check if there are partners to display
       if (partners.length === 0) {

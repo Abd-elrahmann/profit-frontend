@@ -1463,7 +1463,7 @@ const Loans = () => {
                   </div>
                 </div>
               ) : !isViewMode && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary dark:border-primary/50 dark:bg-primary/20 dark:text-primary">
                   أدخل بيانات السلفة لعرض المحاكاة
                 </div>
               )}

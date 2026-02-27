@@ -43,7 +43,7 @@ export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
       const summaryText = `إجمالي الموظفين: ${totalEmployees} | نشطين: ${activeEmployees} | غير نشطين: ${inactiveEmployees} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
       doc.text(summaryText, doc.internal.pageSize.width / 2, summaryY, { align: 'center' });
       
-      let yPosition = summaryY + 12;
+      yPosition = summaryY + 12;
       
       const tableData = employeesData.map(employee => [
         dayjs(employee.createdAt).format('DD/MM/YYYY'),

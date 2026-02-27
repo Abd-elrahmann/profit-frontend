@@ -176,7 +176,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
                       size="small"
                       sx={{
                         bgcolor: 'rgba(59,130,246,0.1)',
-                        color: '#3B82F6',
+                        color: '#2E8B45',
                         fontWeight: 'bold',
                       }}
                     />
@@ -244,7 +244,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
                     p: 2,
                     border: '1px solid',
                     borderColor: isCurrentRole ? '#10B981' : 
-                                selectedRoleId === role.id ? '#1E40AF' : '#E5E7EB',
+                                selectedRoleId === role.id ? '#2E8B45' : '#E5E7EB',
                     borderRadius: 2,
                     bgcolor: isCurrentRole ? 'rgba(16,185,129,0.05)' : 
                              selectedRoleId === role.id ? 'rgba(30, 64, 175, 0.05)' : 'transparent',
@@ -318,7 +318,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
                     <AddIcon 
                       sx={{ 
                         color: isCurrentRole ? '#10B981' : 
-                              selectedRoleId === role.id ? '#1E40AF' : '#9CA3AF',
+                              selectedRoleId === role.id ? '#2E8B45' : '#9CA3AF',
                         transition: 'color 0.2s ease-in-out'
                       }} 
                     />
@@ -369,7 +369,7 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
             disabled={isSubmitting || !selectedRoleId}
             fullWidth={isMobile}
             sx={{
-              bgcolor: "#1E40AF",
+              bgcolor: "#2E8B45",
               "&:hover": { bgcolor: "#1E3A8A" },
               minWidth: isMobile ? 'auto' : 120,
               '&:disabled': {

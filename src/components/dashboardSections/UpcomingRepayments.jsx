@@ -188,7 +188,7 @@ const UpcomingRepayments = React.memo(() => {
                   className={`px-2 py-1 rounded-full text-[10px] font-bold ${
                     row.status === 'قيد المراجعة'
                       ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary'
                   }`}
                 >
                   {row.status}

@@ -53,8 +53,8 @@ export default function InstallmentActionsMenu({
         </MenuItem>
       )}
       {canPartialPayment && (
-        <MenuItem onClick={onPartialPayment} sx={{ color: 'blue' }}>
-          <PartialPaymentIcon sx={{ mr: 1, color: 'blue', marginLeft: '10px' }} />
+        <MenuItem onClick={onPartialPayment} sx={{ color: 'primary.main' }}>
+          <PartialPaymentIcon sx={{ mr: 1, color: 'primary.main', marginLeft: '10px' }} />
           إضافة دفع جزئي
         </MenuItem>
       )}

@@ -58,7 +58,7 @@ export const exportCompanyProfitToPDF = async (profitData) => {
       const summaryText3 = `إجمالي عمليات السحب: ${totalWithdrawals}  |  إجمالي المبالغ المسحوبة: ${totalWithdrawnAmount.toLocaleString('en-US')}`;
       doc.text(summaryText3, doc.internal.pageSize.width / 2, summaryY + 20, { align: 'center' });
 
-      let yPosition = summaryY + 30;
+      yPosition = summaryY + 30;
 
       if (periodsProfit && periodsProfit.periods && periodsProfit.periods.length > 0) {
         doc.setFontSize(13);
