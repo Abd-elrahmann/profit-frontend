@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, IconButton, CircularProgress } from '@mui/material';
-import NavigationLoader from '../ui/NavigationLoader';
 import { Sync as SyncIcon } from '@mui/icons-material';
 import Api from '../../config/Api';
 import { notifyError, notifySuccess } from '../../utilities/toastify';
@@ -106,12 +105,7 @@ const Layout = ({ children }) => {
     );
   }
   if (isAuthPage || isPaymentReceiptPage || isCheckConnectionPage) {
-    return (
-      <>
-        <NavigationLoader />
-        {children}
-      </>
-    );
+    return <>{children}</>;
   }
   const isExpanded = isSidebarOpen || isHoverExpanded;
   const expandedWidth = isSmallScreen ? 220 : 256;
@@ -125,7 +119,6 @@ const Layout = ({ children }) => {
         : collapsedWidth;
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
-      <NavigationLoader />
       <Navbar onMenuToggle={handleMenuToggle} />
       <main
         className="flex-1 flex flex-col overflow-hidden transition-all duration-300 pt-12"

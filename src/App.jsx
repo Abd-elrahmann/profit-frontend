@@ -14,7 +14,6 @@ const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 import { PermissionProvider, usePermissions } from './components/Contexts/PermissionsContext';
 import { AuthProvider, useAuth } from './components/Contexts/AuthContext';
 import { NotificationsProvider } from './components/Contexts/NotificationsContext';
-import { NavigationProvider } from './components/Contexts/NavigationContext';
 import { notifyError } from './utilities/toastify';
 import { convertModuleToPermission } from './utilities/moduleConverter';
 import Box from '@mui/material/Box';
@@ -270,9 +269,7 @@ function App() {
         <AuthProvider>
           <PermissionProvider>
             <NotificationsProvider>
-              <NavigationProvider>
-                <AppLayout />
-              </NavigationProvider>
+              <AppLayout />
             </NotificationsProvider>
           </PermissionProvider>
         </AuthProvider>
