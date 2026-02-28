@@ -22,6 +22,7 @@ const Profile = () => {
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', phone: '' });
   const [passwordForm, setPasswordForm] = useState({
     oldPassword: '',
@@ -91,9 +92,7 @@ const Profile = () => {
     try {
       const formData = new FormData();
       formData.append('profileImage', acceptedFiles[0]);
-      const response = await Api.patch('/api/auth/update-profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await Api.patch('/api/auth/upload-profile-image', formData);
       setUserData((prev) => ({ ...prev, ...response.data?.user }));
       updateUser(response.data?.user);
       window.dispatchEvent(new Event('profileUpdated'));
@@ -106,11 +105,28 @@ const Profile = () => {
     }
   }, [updateUser, fetchProfile]);
 
+  const handleDeleteProfileImage = useCallback(async () => {
+    if (!userData?.profileImage) return;
+    setDeleting(true);
+    try {
+      const response = await Api.delete('/api/auth/profile-image');
+      setUserData((prev) => ({ ...prev, profileImage: null }));
+      updateUser(response.data?.user);
+      window.dispatchEvent(new Event('profileUpdated'));
+      notifySuccess('تم حذف صورة الملف الشخصي بنجاح');
+      fetchProfile();
+    } catch (error) {
+      notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف الصورة');
+    } finally {
+      setDeleting(false);
+    }
+  }, [userData?.profileImage, updateUser, fetchProfile]);
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'image/*': ['.png', '.jpg', '.jpeg'] },
     onDrop: handleProfileImageDrop,
     multiple: false,
-    disabled: uploading,
+    disabled: uploading || deleting,
   });
 
   if (loading) {
@@ -133,7 +149,9 @@ const Profile = () => {
           getRootProps={getRootProps}
           getInputProps={getInputProps}
           uploading={uploading}
+          deleting={deleting}
           onEditClick={() => setEditModalOpen(true)}
+          onDeleteImage={handleDeleteProfileImage}
         />
         <ProfilePersonalInfoCard userData={userData} userRole={userRole} username={username} />
         <ProfileSecurityCard onPasswordClick={() => setPasswordModalOpen(true)} />

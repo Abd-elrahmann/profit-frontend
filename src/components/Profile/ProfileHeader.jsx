@@ -1,5 +1,5 @@
 import React from 'react';
-import { Person as PersonIcon, Edit as EditIcon, PhotoCamera as PhotoCameraIcon, CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
+import { Person as PersonIcon, Edit as EditIcon, PhotoCamera as PhotoCameraIcon, CalendarMonth as CalendarMonthIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { formatProfileDate } from './profileUtils';
 const ProfileHeader = ({
   userData,
@@ -7,7 +7,9 @@ const ProfileHeader = ({
   getRootProps,
   getInputProps,
   uploading,
+  deleting,
   onEditClick,
+  onDeleteImage,
 }) => {
   return (
     <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -23,6 +25,24 @@ const ProfileHeader = ({
               </div>
             )}
           </div>
+          {userData?.profileImage && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteImage?.();
+              }}
+              disabled={deleting || uploading}
+              className="absolute top-0 left-0 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed z-10"
+              title="حذف الصورة"
+            >
+              {deleting ? (
+                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              )}
+            </button>
+          )}
           <div className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform flex items-center justify-center pointer-events-none">
             {uploading ? (
               <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -62,4 +82,4 @@ const ProfileHeader = ({
     </div>
   );
 };
-export default ProfileHeader;
+export default ProfileHeader;
