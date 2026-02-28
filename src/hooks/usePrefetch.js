@@ -1,6 +1,5 @@
 import { useCallback, useRef } from 'react';
 
-/** خريطة من module (من السايدبار) إلى دالة الاستيراد */
 const MODULE_IMPORTS = {
   dashboard: () => import('../pages/dashboard/Dashboard'),
   logs: () => import('../pages/logs/logs'),
@@ -29,6 +28,18 @@ const MODULE_IMPORTS = {
   profile: () => import('../pages/Profile'),
 };
 
+const COMMON_MODULES = [
+  'dashboard',
+  'clients',
+  'loans',
+  'banks',
+  'repayments',
+  'expenses',
+  'partners',
+  'treasury',
+  'settings',
+];
+
 export const usePrefetch = () => {
   const prefetchedPages = useRef(new Set());
   const prefetchPage = useCallback(async (moduleName) => {
@@ -44,12 +55,13 @@ export const usePrefetch = () => {
       console.warn(`Failed to prefetch ${moduleName}:`, error);
     }
   }, []);
+
   const prefetchCommonPages = useCallback(() => {
-    setTimeout(() => {
-      prefetchPage('dashboard');
-      prefetchPage('clients');
-      prefetchPage('loans');
-    }, 2000);
+    // تشغيل فوري بدون تأخير - import() غير متزامن ولا يعطل الواجهة
+    COMMON_MODULES.forEach((moduleName) => {
+      prefetchPage(moduleName);
+    });
   }, [prefetchPage]);
+
   return { prefetchPage, prefetchCommonPages };
 };

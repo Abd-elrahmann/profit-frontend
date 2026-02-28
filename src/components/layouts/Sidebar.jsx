@@ -27,11 +27,11 @@ const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onH
   const { permissions } = usePermissions();
   const { prefetchPage } = usePrefetch();
   const debouncedPrefetch = useMemo(
-    () => debounce((module) => prefetchPage(module), 50),
+    () => debounce((module) => prefetchPage(module), 16),
     [prefetchPage]
   );
   const debouncedPrefetchGroup = useMemo(
-    () => debounce((modules) => modules.forEach((m) => prefetchPage(m)), 50),
+    () => debounce((modules) => modules.forEach((m) => prefetchPage(m)), 16),
     [prefetchPage]
   );
   const setOpenGroup = useCallback((valueOrUpdater) => {
