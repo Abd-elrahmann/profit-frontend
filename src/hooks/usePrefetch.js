@@ -1,90 +1,47 @@
 import { useCallback, useRef } from 'react';
+
+/** خريطة من module (من السايدبار) إلى دالة الاستيراد */
+const MODULE_IMPORTS = {
+  dashboard: () => import('../pages/dashboard/Dashboard'),
+  logs: () => import('../pages/logs/logs'),
+  settings: () => import('../pages/Settings/Settings'),
+  users: () => import('../pages/Employees/Employees'),
+  roles: () => import('../pages/Roles/Roles'),
+  clients: () => import('../pages/Clients/Clients'),
+  'client-report': () => import('../pages/clientCollections/ClientCollections'),
+  partners: () => import('../pages/Investors/Investors'),
+  'partners-withdraw': () => import('../pages/investorsWithdrawal/investorsWithdrawal'),
+  expenses: () => import('../pages/Expenses/Expenses'),
+  'income-statement': () => import('../pages/incomeStatement/incomeStatement'),
+  accounts: () => import('../pages/chartOfAccounts/chartOfAccounts'),
+  journals: () => import('../pages/Journals/Journals'),
+  'general-ledger': () => import('../pages/generalLedger/GeneralLedger'),
+  period: () => import('../pages/periodClosing/periodClosing'),
+  loans: () => import('../pages/Loans/Loans'),
+  banks: () => import('../pages/Banks/Banks'),
+  repayments: () => import('../pages/Installments/Installments'),
+  treasury: () => import('../pages/treasury/treasury'),
+  company: () => import('../pages/companyProfit/CompanyProfit'),
+  distribution: () => import('../pages/profit/ProfitDistribution'),
+  zakat: () => import('../pages/Zakah/zakah'),
+  saving: () => import('../pages/Saving/Saving'),
+  templates: () => import('../pages/Templates/ContractTemplates'),
+  profile: () => import('../pages/Profile'),
+};
+
 export const usePrefetch = () => {
   const prefetchedPages = useRef(new Set());
-  const prefetchPage = useCallback(async (pageName) => {
-    if (prefetchedPages.current.has(pageName)) {
+  const prefetchPage = useCallback(async (moduleName) => {
+    if (!moduleName || prefetchedPages.current.has(moduleName)) {
       return;
     }
+    const importFn = MODULE_IMPORTS[moduleName];
+    if (!importFn) return;
     try {
-      switch (pageName) {
-        case 'dashboard':
-          await import('../pages/dashboard/Dashboard');
-          break;
-        case 'clients':
-          await import('../pages/Clients/Clients');
-          break;
-        case 'loans':
-          await import('../pages/Loans/Loans');
-          break;
-        case 'investors':
-          await import('../pages/Investors/Investors');
-          break;
-        case 'treasury':
-          await import('../pages/treasury/treasury');
-          break;
-        case 'journals':
-          await import('../pages/Journals/Journals');
-          break;
-        case 'banks':
-          await import('../pages/Banks/Banks');
-          break;
-        case 'employees':
-          await import('../pages/Employees/Employees');
-          break;
-        case 'expenses':
-          await import('../pages/Expenses/Expenses');
-          break;
-        case 'saving':
-          await import('../pages/Saving/Saving');
-          break;
-        case 'zakah':
-          await import('../pages/Zakah/zakah');
-          break;
-        case 'contract-templates':
-          await import('../pages/Templates/ContractTemplates');
-          break;
-        case 'messages-templates':
-          await import('../pages/Templates/MessagesTemplates');
-          break;
-        case 'chart-of-accounts':
-          await import('../pages/chartOfAccounts/chartOfAccounts');
-          break;
-        case 'general-ledger':
-          await import('../pages/generalLedger/GeneralLedger');
-          break;
-        case 'income-statement':
-          await import('../pages/incomeStatement/incomeStatement');
-          break;
-        case 'company-profit':
-          await import('../pages/companyProfit/CompanyProfit');
-          break;
-        case 'profit-distribution':
-          await import('../pages/profit/ProfitDistribution');
-          break;
-        case 'period-closing':
-          await import('../pages/periodClosing/periodClosing');
-          break;
-        case 'investors-withdraw':
-          await import('../pages/investorsWithdrawal/investorsWithdrawal');
-          break;
-        case 'client-collections':
-          await import('../pages/clientCollections/ClientCollections');
-          break;
-        case 'logs':
-          await import('../pages/logs/logs');
-          break;
-        case 'roles':
-          await import('../pages/Roles/Roles');
-          break;
-        case 'profile':
-          await import('../pages/Profile');
-          break;
-        default:
-          break;
-      }
-      prefetchedPages.current.add(pageName);
+      await importFn();
+      prefetchedPages.current.add(moduleName);
     } catch (error) {
-      console.warn(`Failed to prefetch ${pageName}:`, error);
+      console.warn(`Failed to prefetch ${moduleName}:`, error);
     }
   }, []);
   const prefetchCommonPages = useCallback(() => {
@@ -95,4 +52,4 @@ export const usePrefetch = () => {
     }, 2000);
   }, [prefetchPage]);
   return { prefetchPage, prefetchCommonPages };
-};
+};

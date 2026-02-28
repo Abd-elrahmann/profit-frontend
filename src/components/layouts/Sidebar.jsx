@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { MdExpandMore as ExpandMoreIcon, MdExpandLess as ExpandLessIcon } from 'react-icons/md';
 import { getSidebarMenuItems } from '../../sidebar.config';
 import { usePermissions } from '../Contexts/PermissionsContext';
+import { useNavigationLoader } from '../Contexts/NavigationContext';
 import { usePrefetch } from '../../hooks/usePrefetch';
 import { debounce } from '../../utilities/debounce';
 const STORAGE_KEY = 'sidebarOpenGroup';
@@ -25,9 +26,10 @@ const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onH
   });
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
   const { permissions } = usePermissions();
+  const { startNavigation } = useNavigationLoader();
   const { prefetchPage } = usePrefetch();
   const debouncedPrefetch = useMemo(
-    () => debounce((module) => prefetchPage(module), 100),
+    () => debounce((module) => prefetchPage(module), 50),
     [prefetchPage]
   );
   const setOpenGroup = useCallback((valueOrUpdater) => {
@@ -142,6 +144,7 @@ const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onH
       <li key={item.path} className={!isExpanded ? 'w-full' : ''}>
         <NavLink
           to={item.path}
+          onMouseDown={() => startNavigation()}
           onClick={() => isMobile && onClose()}
           onMouseEnter={() => debouncedPrefetch(item.module)}
           title={item.label}
@@ -173,7 +176,7 @@ const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onH
         </NavLink>
       </li>
     ),
-    [isExpanded, isMobile, onClose, debouncedPrefetch]
+    [isExpanded, isMobile, onClose, debouncedPrefetch, startNavigation]
   );
   const renderGroupMenuItem = useCallback(
     (item, index) => {
@@ -227,6 +230,7 @@ const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onH
                   <NavLink
                     key={child.path}
                     to={child.path}
+                    onMouseDown={() => startNavigation()}
                     onClick={() => isMobile && onClose()}
                     onMouseEnter={() => debouncedPrefetch(child.module)}
                     title={child.label}
@@ -258,7 +262,7 @@ const Sidebar = ({ isOpen, onClose, isMobile = false, isSmallScreen = false, onH
         </li>
       );
     },
-    [openGroup, isExpanded, singleItems, isMobile, onClose, toggleGroup, debouncedPrefetch]
+    [openGroup, isExpanded, singleItems, isMobile, onClose, toggleGroup, debouncedPrefetch, startNavigation]
   );
   const isHidden = isMobile && !isOpen;
   const expandedW = isSmallScreen ? 'w-[220px] min-w-[220px]' : 'w-64 min-w-64';

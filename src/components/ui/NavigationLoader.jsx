@@ -1,22 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
+import { useNavigationLoader } from '../Contexts/NavigationContext';
 
 const MIN_DISPLAY_MS = 400;
 
 /**
  * يعرض لودر كامل الشاشة أثناء التنقل بين الصفحات
- * يظهر عند تغيير الراوت ويختفي بعد تحميل الصفحة الجديدة
+ * يظهر فور النقر على الرابط أو عند تغيير الراوت
  */
 const NavigationLoader = () => {
   const location = useLocation();
   const theme = useTheme();
-  const [isNavigating, setIsNavigating] = useState(false);
+  const { isNavigating: contextNavigating, stopNavigation } = useNavigationLoader();
+  const [locationNavigating, setLocationNavigating] = useState(false);
   const prevPathRef = useRef(location.pathname);
   const isInitialMount = useRef(true);
 
+  const isNavigating = contextNavigating || locationNavigating;
+
   useEffect(() => {
-    // تجاهل أول تحميل للتطبيق
     if (isInitialMount.current) {
       isInitialMount.current = false;
       prevPathRef.current = location.pathname;
@@ -25,15 +28,16 @@ const NavigationLoader = () => {
 
     if (location.pathname !== prevPathRef.current) {
       prevPathRef.current = location.pathname;
-      setIsNavigating(true);
+      setLocationNavigating(true);
+      stopNavigation();
 
       const timer = setTimeout(() => {
-        setIsNavigating(false);
+        setLocationNavigating(false);
       }, MIN_DISPLAY_MS);
 
       return () => clearTimeout(timer);
     }
-  }, [location.pathname]);
+  }, [location.pathname, stopNavigation]);
 
   if (!isNavigating) return null;
 
