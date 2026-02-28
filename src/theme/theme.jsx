@@ -1,5 +1,4 @@
 import { createTheme } from '@mui/material';
-
 const commonPalette = {
   primary: {
     main: '#2E8B45',       
@@ -20,7 +19,6 @@ const commonPalette = {
     contrastText: '#ffffff'
   }
 };
-
 const lightTheme = createTheme({
   direction: 'rtl',
   palette: {
@@ -44,7 +42,6 @@ const lightTheme = createTheme({
       black: '#2a2a2a'
     }
   },
-
   typography: {
     fontFamily: '"Cairo", "Tajawal", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
@@ -63,7 +60,6 @@ const lightTheme = createTheme({
       color: '#2a2a2a'
     }
   },
-
   components: {
     MuiButton: {
       styleOverrides: {
@@ -85,7 +81,6 @@ const lightTheme = createTheme({
         }
       }
     },
-
     MuiCard: {
       styleOverrides: {
         root: {
@@ -94,7 +89,6 @@ const lightTheme = createTheme({
         }
       }
     },
-
     MuiTextField: {
       styleOverrides: {
         root: {
@@ -107,7 +101,6 @@ const lightTheme = createTheme({
     }
   }
 });
-
 const darkTheme = createTheme({
   direction: 'rtl',
   palette: {
@@ -131,7 +124,6 @@ const darkTheme = createTheme({
       black: '#ffffff'
     }
   },
-
   typography: {
     fontFamily: '"Cairo", "Tajawal", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
@@ -150,7 +142,6 @@ const darkTheme = createTheme({
       color: '#ffffff'
     }
   },
-
   components: {
     MuiButton: {
       styleOverrides: {
@@ -172,7 +163,6 @@ const darkTheme = createTheme({
         }
       }
     },
-
     MuiCard: {
       styleOverrides: {
         root: {
@@ -182,7 +172,6 @@ const darkTheme = createTheme({
         }
       }
     },
-
     MuiTextField: {
       styleOverrides: {
         root: {
@@ -193,7 +182,6 @@ const darkTheme = createTheme({
         }
       }
     },
-
     MuiAppBar: {
       styleOverrides: {
         root: {
@@ -203,9 +191,7 @@ const darkTheme = createTheme({
     }
   }
 });
-
 export const getTheme = (isDarkMode) => {
   return isDarkMode ? darkTheme : lightTheme;
 };
-
 export default lightTheme;

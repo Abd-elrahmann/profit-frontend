@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Button } from "@mui/material";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DescriptionIcon from "@mui/icons-material/Description";
-
 export default function PeriodClosingExportButtons({
   onExportPDF,
   onExportExcel,
@@ -12,7 +11,6 @@ export default function PeriodClosingExportButtons({
   variant = "outlined",
 }) {
   if (!permissions?.includes("period_Export")) return null;
-
   return (
     <Box sx={{ display: "flex", gap: 1 }}>
       <Button
@@ -51,4 +49,4 @@ export default function PeriodClosingExportButtons({
       </Button>
     </Box>
   );
-}
+}

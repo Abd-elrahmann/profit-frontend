@@ -5,7 +5,6 @@ import {
   MdCheckCircle as CheckCircleIcon,
 } from "react-icons/md";
 import Logo from "/assets/images/logo.webp";
-
 const AuthSidebar = ({ title, subtitle, features }) => {
   return (
     <Box
@@ -30,7 +29,6 @@ const AuthSidebar = ({ title, subtitle, features }) => {
             "radial-gradient(circle at 30% 20%, #fff, transparent 28%), radial-gradient(circle at 70% 80%, #fff, transparent 22%)",
         }}
       />
-
       <Box sx={{ position: "relative", zIndex: 1 }}>
         <Stack direction="row" alignItems="center" spacing={1.5}>
           <img src={Logo} alt="Logo" style={{ width: 34, height: 34 }} />
@@ -42,7 +40,6 @@ const AuthSidebar = ({ title, subtitle, features }) => {
           منصة مالية موثوقة لإدارة السلف والاستحقاقات بسهولة وأمان.
         </Typography>
       </Box>
-
       <Box sx={{ position: "relative", zIndex: 1 }}>
         <Typography sx={{ fontSize: 28, fontWeight: 800, mb: 1, color: "#fff" }}>
           {title}
@@ -50,7 +47,6 @@ const AuthSidebar = ({ title, subtitle, features }) => {
         <Typography sx={{ color: "rgba(255,255,255,0.88)", mb: 3 }}>
           {subtitle}
         </Typography>
-
         <Stack spacing={1.5}>
           {features.map((item, idx) => (
             <Stack
@@ -89,5 +85,4 @@ const AuthSidebar = ({ title, subtitle, features }) => {
     </Box>
   );
 };
-
 export default AuthSidebar;

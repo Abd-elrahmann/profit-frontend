@@ -19,9 +19,7 @@ import {
   StyledTableRow,
 } from "../layouts/tableLayout";
 import { formatDate, numberToArabicWords } from "./clientsUtils";
-
 const SYSTEM_GREEN = "#2E8B45";
-
 const getRepaymentStatusText = (status) => {
   const textMap = {
     PENDING: "قيد الانتظار",
@@ -33,7 +31,6 @@ const getRepaymentStatusText = (status) => {
   };
   return textMap[status] || status;
 };
-
 export default function ClientsStatementTab({
   clientStatement,
   clientDetails,
@@ -52,7 +49,6 @@ export default function ClientsStatementTab({
   const hasRepayments = repayments.length > 0;
   const totalRepayments = clientStatement?.totalRepayments || 0;
   const totalPages = Math.ceil(totalRepayments / 20) || 1;
-
   const renderTable = () => (
     <Box>
       <Box
@@ -124,7 +120,6 @@ export default function ClientsStatementTab({
           </Box>
         )}
       </Box>
-
       {clientStatement && (
         <>
           <div
@@ -186,7 +181,6 @@ export default function ClientsStatementTab({
           </div>
         </>
       )}
-
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <TableContainer sx={{ maxHeight: 600 }}>
           <Table stickyHeader aria-label="جدول الدفعات">
@@ -263,7 +257,6 @@ export default function ClientsStatementTab({
             </TableBody>
           </Table>
         </TableContainer>
-
         {hasRepayments && totalRepayments > 20 && (
           <Box
             sx={{
@@ -289,7 +282,6 @@ export default function ClientsStatementTab({
       </Paper>
     </Box>
   );
-
   const renderCards = () => (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
@@ -346,7 +338,6 @@ export default function ClientsStatementTab({
           </Box>
         )}
       </Box>
-
       {clientStatement && (
         <div
           className={`p-4 mb-6 rounded-xl border-r-4 border-r-primary shadow-sm ${
@@ -403,7 +394,6 @@ export default function ClientsStatementTab({
           )}
         </div>
       )}
-
       {hasRepayments ? (
         <Stack spacing={2}>
           {repayments.map((repayment) => (
@@ -444,6 +434,5 @@ export default function ClientsStatementTab({
       )}
     </Box>
   );
-
   return isMobile ? renderCards() : renderTable();
 }

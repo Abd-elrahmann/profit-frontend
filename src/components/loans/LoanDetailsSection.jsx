@@ -10,7 +10,6 @@ import {
   Box,
   Alert,
 } from "@mui/material";
-
 const LoanDetailsSection = ({
   isSmallScreen,
   isViewMode,
@@ -56,7 +55,6 @@ const LoanDetailsSection = ({
             ? "تعديل تفاصيل السلفة"
             : "حدد تفاصيل السلفة")}
       </Typography>
-
       <Grid
         container
         spacing={isSmallScreen ? 2 : 3}
@@ -84,7 +82,6 @@ const LoanDetailsSection = ({
             <MenuItem value="MIX">عام و رأس مال جديد</MenuItem>
           </TextField>
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <Box
             sx={{
@@ -175,7 +172,6 @@ const LoanDetailsSection = ({
                     {(() => {
                       const loanAmount = parseFloat(loanForm.amount.replace(/,/g, "") || 0);
                       if (isNaN(loanAmount) || loanAmount === 0) return null;
-
                       if (loanForm.source === "MIX") {
                         const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
                         const remaining = totalBalances - loanAmount;
@@ -212,7 +208,6 @@ const LoanDetailsSection = ({
             )}
           </Box>
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <Box
             sx={{
@@ -249,7 +244,6 @@ const LoanDetailsSection = ({
             )}
           </Box>
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -270,7 +264,6 @@ const LoanDetailsSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -294,7 +287,6 @@ const LoanDetailsSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -317,7 +309,6 @@ const LoanDetailsSection = ({
             <MenuItem value="MONTHLY">شهري</MenuItem>
           </TextField>
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -340,7 +331,6 @@ const LoanDetailsSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -362,7 +352,6 @@ const LoanDetailsSection = ({
             helperText="إذا تُرك فارغاً، سيتم استخدام التاريخ الحالي"
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -384,7 +373,6 @@ const LoanDetailsSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -406,7 +394,6 @@ const LoanDetailsSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -428,7 +415,6 @@ const LoanDetailsSection = ({
             <MenuItem value="manual">تحديد تاريخ يدوي</MenuItem>
           </TextField>
         </Grid>
-
         {(loanForm.promissoryNoteType === "manual" || (isViewMode && selectedLoan?.promissoryNoteType === "manual")) && (
           <Grid item xs={12} sm={6} md={6}>
             <TextField
@@ -451,7 +437,6 @@ const LoanDetailsSection = ({
             />
           </Grid>
         )}
-
         <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={banksData?.data || []}
@@ -490,7 +475,6 @@ const LoanDetailsSection = ({
             )}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={partnersData?.partners || []}
@@ -529,10 +513,8 @@ const LoanDetailsSection = ({
             )}
           />
         </Grid>
-
       </Grid>
     </Paper>
   );
 };
-
-export default LoanDetailsSection;
+export default LoanDetailsSection;

@@ -16,7 +16,6 @@ import {
 import { saveAs } from 'file-saver';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
 const DocumentDropzone = ({
   fieldName,
   label,
@@ -34,11 +33,9 @@ const DocumentDropzone = ({
     onDrop: (files) => onDrop(files, fieldName),
     multiple: false,
   });
-
   const file = uploadedFiles[fieldName];
   const isDeleted = deleteFields.includes(fieldName);
   const [imgLoadFailed, setImgLoadFailed] = useState(false);
-
   const handleDownloadFile = async (fileUrl, fileName) => {
     try {
       const response = await fetch(fileUrl);
@@ -48,17 +45,14 @@ const DocumentDropzone = ({
       notifyError('حدث خطأ أثناء تحميل الملف');
     }
   };
-
   const handlePrintFile = (fileUrl) => {
     const printWindow = window.open(fileUrl, '_blank');
     printWindow?.print();
   };
-
   const getFilePreview = (f) => {
     if (f?.type?.startsWith('image/')) return URL.createObjectURL(f);
     return null;
   };
-
   if (existingFile && !isDeleted && !file) {
     const fileName = decodeURIComponent(existingFile.split('/').pop());
     const acceptsImage = acceptedTypes && Object.keys(acceptedTypes).some((k) => k.startsWith('image'));
@@ -117,7 +111,6 @@ const DocumentDropzone = ({
       </div>
     );
   }
-
   if (isDeleted && !file) {
     return (
       <div className="border-2 border-red-200 dark:border-red-800 rounded-xl p-6 bg-red-50 dark:bg-red-900/20 flex flex-col gap-3">
@@ -132,7 +125,6 @@ const DocumentDropzone = ({
       </div>
     );
   }
-
   return (
     <div
       {...getRootProps()}
@@ -175,19 +167,16 @@ const DocumentDropzone = ({
     </div>
   );
 };
-
 export default function EditDocumentsForm({ clientId, clientName, documents, hasKafeel, onSuccess, onCancel }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [deleteFields, setDeleteFields] = useState([]);
   const queryClient = useQueryClient();
-
   const handleDrop = (acceptedFiles, fieldName) => {
     if (acceptedFiles.length > 0) {
       setUploadedFiles((prev) => ({ ...prev, [fieldName]: acceptedFiles[0] }));
     }
   };
-
   const removeFile = (fieldName) => {
     setUploadedFiles((prev) => {
       const next = { ...prev };
@@ -195,21 +184,17 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
       return next;
     });
   };
-
   const handleDeleteExisting = (fieldName) => setDeleteFields((prev) => [...prev, fieldName]);
   const handleUndoDelete = (fieldName) => setDeleteFields((prev) => prev.filter((f) => f !== fieldName));
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       Object.keys(uploadedFiles).forEach((key) => formData.append(key, uploadedFiles[key]));
       if (deleteFields.length > 0) formData.append('deleteFields', JSON.stringify(deleteFields));
-
       await Api.patch(`/api/clients/${clientId}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       notifySuccess('تم تحديث المستندات بنجاح');
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['client-details', clientId] });
@@ -220,7 +205,6 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
       setIsSubmitting(false);
     }
   };
-
   const dropzoneProps = {
     uploadedFiles,
     deleteFields,
@@ -229,7 +213,6 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
     onDeleteExisting: handleDeleteExisting,
     onUndoDelete: handleUndoDelete,
   };
-
   return (
     <div dir="rtl">
       <div className="mb-8">
@@ -238,7 +221,6 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">تحديث مستندات العميل</p>
       </div>
-
       <div className="space-y-8">
         <div>
           <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
@@ -247,92 +229,38 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <DocumentDropzone
+              {...dropzoneProps}
               fieldName="clientIdImage"
               label="صورة هوية العميل"
-              acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
+              acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'], 'application/pdf': ['.pdf'] }}
               existingFile={documents?.clientIdImage}
-              {...dropzoneProps}
             />
             <DocumentDropzone
+              {...dropzoneProps}
               fieldName="clientWorkCard"
               label="بطاقة عمل العميل"
-              acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }}
+              acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'], 'application/pdf': ['.pdf'] }}
               existingFile={documents?.clientWorkCard}
-              {...dropzoneProps}
-            />
-            <DocumentDropzone
-              fieldName="salaryReport"
-              label="تقرير الراتب"
-              acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }}
-              existingFile={documents?.salaryReport}
-              {...dropzoneProps}
-            />
-            <DocumentDropzone
-              fieldName="simaReport"
-              label="تقرير سمة"
-              acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }}
-              existingFile={documents?.simaReport}
-              {...dropzoneProps}
             />
           </div>
         </div>
-
-        {hasKafeel && (
-          <>
-            <div className="border-t border-primary/10 pt-8" />
-            <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
-                <Group sx={{ color: 'primary.main' }} />
-                مرفقات الكفيل
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <DocumentDropzone
-                  fieldName="kafeelIdImage"
-                  label="صورة هوية الكفيل"
-                  acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
-                  existingFile={documents?.kafeelIdImage}
-                  {...dropzoneProps}
-                />
-                <DocumentDropzone
-                  fieldName="kafeelWorkCard"
-                  label="بطاقة عمل الكفيل"
-                  acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }}
-                  existingFile={documents?.kafeelWorkCard}
-                  {...dropzoneProps}
-                />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="px-0 py-6 mt-8 border-t border-primary/10 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        >
-          إلغاء
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting || (Object.keys(uploadedFiles).length === 0 && deleteFields.length === 0)}
-          className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <>
-              <span className="animate-spin inline-block"><Autorenew sx={{ fontSize: 20 }} /></span>
-              جاري الحفظ...
-            </>
-          ) : (
-            <>
-              <CheckCircle sx={{ fontSize: 20 }} />
-              حفظ التغييرات
-            </>
-          )}
-        </button>
+        <div className="flex gap-3 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+          >
+            إلغاء
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white hover:bg-primary/90 disabled:opacity-70 transition-all"
+          >
+            {isSubmitting ? 'جاري الحفظ...' : 'حفظ'}
+          </button>
+        </div>
       </div>
     </div>
   );

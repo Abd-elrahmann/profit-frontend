@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Grid, Paper, Typography } from '@mui/material';
-
 export default function TreasuryBalanceChart({
   availableBalance,
   totalCredit,
@@ -15,9 +14,7 @@ export default function TreasuryBalanceChart({
     if (val >= 1000) return `${(val / 1000).toFixed(0)} ألف`;
     return val.toLocaleString('en-US');
   };
-
   const size = isSmallScreen ? 150 : 200;
-
   return (
     <Grid container spacing={3} sx={{ mb: 4 }}>
       <Grid item xs={12}>
@@ -33,7 +30,6 @@ export default function TreasuryBalanceChart({
           <Typography variant="h6" fontWeight="bold" color="text.primary" sx={{ mb: 3 }}>
             رصيد الصندوق
           </Typography>
-
           <Box
             sx={{
               display: 'flex',
@@ -81,7 +77,6 @@ export default function TreasuryBalanceChart({
                   style={{ transition: 'stroke-dasharray 0.5s ease' }}
                 />
               </svg>
-
               <Box
                 sx={{
                   position: 'absolute',
@@ -96,7 +91,6 @@ export default function TreasuryBalanceChart({
                 </Typography>
               </Box>
             </Box>
-
             <Box
               sx={{
                 display: 'flex',
@@ -118,7 +112,6 @@ export default function TreasuryBalanceChart({
                   {formatValue(totalCredit)}
                 </Typography>
               </Box>
-
               <Box sx={{ textAlign: 'center', minWidth: 150 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center', mb: 1 }}>
                   <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: isDarkMode ? '#616161' : 'grey.300' }} />
@@ -136,4 +129,4 @@ export default function TreasuryBalanceChart({
       </Grid>
     </Grid>
   );
-}
+}

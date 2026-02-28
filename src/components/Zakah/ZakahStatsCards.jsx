@@ -5,9 +5,7 @@ import {
   CheckCircle,
   PendingActions,
 } from '@mui/icons-material';
-
 const formatCurrency = (amount) => amount?.toLocaleString() ?? '0';
-
 const StatCard = ({ icon: Icon, label, value, variant = 'default', badge }) => (
   <div className="bg-white dark:bg-background-dark p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
     <div className="flex justify-between items-start mb-4">
@@ -36,10 +34,8 @@ const StatCard = ({ icon: Icon, label, value, variant = 'default', badge }) => (
     </h3>
   </div>
 );
-
 const ZakahStatsCards = ({ totals }) => {
   const { capitalAmount, annualZakat, totalPaid, remaining } = totals ?? {};
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       <StatCard
@@ -70,5 +66,4 @@ const ZakahStatsCards = ({ totals }) => {
     </div>
   );
 };
-
-export default ZakahStatsCards;
+export default ZakahStatsCards;

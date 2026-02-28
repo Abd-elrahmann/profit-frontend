@@ -1,9 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { PictureAsPdf, TableChart } from '@mui/icons-material';
-
 const iconSx = { marginLeft: '10px' };
-
 const CompanyProfitToolbar = ({
   isSmallScreen,
   hasWithdrawPermission,
@@ -59,7 +57,6 @@ const CompanyProfitToolbar = ({
         >
           {isExporting ? <CircularProgress size={16} /> : 'تصدير PDF'}
         </Button>
-
         <Button
           variant="outlined"
           startIcon={<TableChart sx={iconSx} />}
@@ -87,5 +84,4 @@ const CompanyProfitToolbar = ({
     )}
   </Box>
 );
-
-export default React.memo(CompanyProfitToolbar);
+export default React.memo(CompanyProfitToolbar);

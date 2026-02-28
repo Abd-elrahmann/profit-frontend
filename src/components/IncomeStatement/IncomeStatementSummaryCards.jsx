@@ -3,7 +3,6 @@ import { Box, Grid, Paper, Typography } from '@mui/material';
 import { MonetizationOn, TrendingUp as TrendingUpIcon, MoneyOff } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { formatNumber } from './incomeStatementUtils';
-
 const cardSx = (theme, isSmallScreen) => ({
   p: isSmallScreen ? 2 : 3,
   bgcolor: theme.palette.background.paper,
@@ -16,14 +15,11 @@ const cardSx = (theme, isSmallScreen) => ({
     boxShadow: theme.palette.mode === 'dark' ? '0 4px 8px rgba(255,255,255,0.1)' : '0 4px 8px rgba(0,0,0,0.1)',
   },
 });
-
 const IncomeStatementSummaryCards = ({ incomeData, isSmallScreen = false }) => {
   const theme = useTheme();
   const cardWidth = isSmallScreen ? '100%' : '280px';
-
   const totalCompanyRevenue = incomeData.revenueByClient?.reduce((sum, c) => sum + (c.companyRevenue || 0), 0) || 0;
   const totalPartnersRevenue = incomeData.revenueByClient?.reduce((sum, c) => sum + (c.partnersRevenue || 0), 0) || 0;
-
   return (
     <Grid container spacing={2} sx={{ mb: 4, textAlign: 'center' }} justifyContent="center">
       <Grid item xs={12} sm={6} md={4} sx={{ width: cardWidth, maxWidth: '100%', minWidth: 0 }}>
@@ -37,7 +33,6 @@ const IncomeStatementSummaryCards = ({ incomeData, isSmallScreen = false }) => {
           </Typography>
         </Paper>
       </Grid>
-
       <Grid item xs={12} sm={6} md={4} sx={{ width: cardWidth, maxWidth: '100%', minWidth: 0 }}>
         <Paper elevation={1} sx={cardSx(theme, isSmallScreen)}>
           <TrendingUpIcon sx={{ color: theme.palette.success.main, fontSize: 32, mb: 1 }} />
@@ -63,7 +58,6 @@ const IncomeStatementSummaryCards = ({ incomeData, isSmallScreen = false }) => {
           )}
         </Paper>
       </Grid>
-
       <Grid item xs={12} sm={6} md={4} sx={{ width: cardWidth, maxWidth: '100%', minWidth: 0 }}>
         <Paper elevation={1} sx={cardSx(theme, isSmallScreen)}>
           <MoneyOff sx={{ color: theme.palette.error.main, fontSize: 32, mb: 1 }} />
@@ -78,5 +72,4 @@ const IncomeStatementSummaryCards = ({ incomeData, isSmallScreen = false }) => {
     </Grid>
   );
 };
-
-export default React.memo(IncomeStatementSummaryCards);
+export default React.memo(IncomeStatementSummaryCards);

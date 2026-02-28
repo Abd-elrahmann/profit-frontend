@@ -17,7 +17,6 @@ import {
 } from '../../components/Expenses';
 import { exportExpensesToExcel, exportExpensesToPDF } from '../../utilities/expensesExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
 const Expenses = () => {
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -32,27 +31,22 @@ const Expenses = () => {
   const [selectedExpenseTypes, setSelectedExpenseTypes] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [exportFormat, setExportFormat] = useState('');
-
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
-
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
   const canExport = permissions.includes('expenses_Export');
-
   const { data: expensesData, isLoading } = useQuery({
     queryKey: ['expenses', page],
     queryFn: () => getExpenses(page),
     retry: 1,
   });
-
   const { data: employeesData } = useQuery({
     queryKey: ['employees-for-expenses'],
     queryFn: () => getUsersForExpenses(),
     retry: 1,
   });
-
   const deleteExpenseMutation = useMutation({
     mutationFn: deleteExpense,
     onSuccess: () => {
@@ -63,9 +57,7 @@ const Expenses = () => {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف المصروفات');
     },
   });
-
   const groupedExpenses = expensesData ? groupExpensesByJournal(expensesData.expenses) : [];
-
   const filterAndExport = useCallback(
     (expenseTypes, employeeIds, exportFn) => {
       const rows = expensesData?.expenses || [];
@@ -73,14 +65,12 @@ const Expenses = () => {
         notifyError('لا توجد بيانات للتصدير');
         return;
       }
-
       let filtered = expenseTypes.length > 0 ? rows.filter((exp) => expenseTypes.includes(exp.type)) : rows;
       if (employeeIds.length > 0) {
         filtered = filtered.filter((exp) =>
           exp.employee && employeeIds.includes(exp.employee.id || exp.employee._id)
         );
       }
-
       if (!filtered.length) {
         const msg =
           employeeIds.length > 0
@@ -91,14 +81,12 @@ const Expenses = () => {
         notifyError(msg);
         return;
       }
-
       const typeLabel = expenseTypes.length > 0 ? expenseTypes.join(', ') : '';
       const employeeNamesLabel = selectedEmployees.length > 0 ? selectedEmployees.map((e) => e.name).join('، ') : '';
       exportFn(filtered, typeLabel, employeeNamesLabel);
     },
     [expensesData, selectedEmployees]
   );
-
   const handleExportPDF = useCallback(
     (expenseTypes = [], employeeIds = []) => {
       filterAndExport(expenseTypes, employeeIds, exportExpensesToPDF);
@@ -106,7 +94,6 @@ const Expenses = () => {
     },
     [filterAndExport]
   );
-
   const handleExportExcel = useCallback(
     (expenseTypes = [], employeeIds = []) => {
       filterAndExport(expenseTypes, employeeIds, exportExpensesToExcel);
@@ -114,7 +101,6 @@ const Expenses = () => {
     },
     [filterAndExport]
   );
-
   const handleOpenExportFilterModal = (format) => {
     setExportFormat(format);
     setSelectedExpenseTypes([]);
@@ -123,14 +109,12 @@ const Expenses = () => {
     setPdfAnchorEl(null);
     setExcelAnchorEl(null);
   };
-
   const handleCloseExportFilterModal = () => {
     setIsExportFilterModalOpen(false);
     setSelectedExpenseTypes([]);
     setSelectedEmployees([]);
     setExportFormat('');
   };
-
   const handleConfirmExport = () => {
     const employeeIds = selectedEmployees.map((emp) => emp.id || emp._id);
     if (exportFormat === 'pdf') {
@@ -140,34 +124,29 @@ const Expenses = () => {
     }
     handleCloseExportFilterModal();
   };
-
   const toggleRowExpansion = (journalId) => {
     setExpandedRows((prev) =>
       prev.includes(journalId) ? prev.filter((id) => id !== journalId) : [...prev, journalId]
     );
   };
-
   const handleSuccess = () => {
     queryClient.invalidateQueries(['expenses']);
     queryClient.invalidateQueries(['unposted-journals-all']);
     setExpandedRows([]);
   };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
     setExpandedRows([]);
   };
-
   const totalAmount = expensesData?.expenses?.reduce((sum, e) => sum + e.amount, 0) ?? 0;
   const totalCount = expensesData?.expenses?.length ?? 0;
-
   return (
     <>
       <Helmet>
         <title>المصروفات - نظام إدارة السلف</title>
       </Helmet>
       <div className="w-full space-y-8 bg-background-light dark:bg-background-dark">
-        {/* Page Title and Actions */}
+        {}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">إدارة المصروفات</h2>
@@ -191,13 +170,11 @@ const Expenses = () => {
             onExportFilterExcel={() => handleOpenExportFilterModal('excel')}
           />
         </div>
-
-        {/* KPI Section */}
+        {}
         {!isLoading && expensesData?.expenses?.length > 0 && (
           <ExpensesSummaryCards totalAmount={totalAmount} totalCount={totalCount} />
         )}
-
-        {/* Table Section */}
+        {}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-primary/5">
             <h4 className="font-bold text-slate-800 dark:text-slate-200">سجل المصروفات</h4>
@@ -244,8 +221,7 @@ const Expenses = () => {
               />
             )}
           </div>
-
-          {/* Pagination */}
+          {}
           {expensesData && expensesData.total > 0 && (
             <div className="p-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-primary/5">
               <TablePagination
@@ -269,9 +245,7 @@ const Expenses = () => {
           )}
         </div>
       </div>
-
       <AddExpense open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={handleSuccess} isMobile={isMobile} />
-
       {selectedExpense && (
         <EditExpense
           open={isEditModalOpen}
@@ -284,7 +258,6 @@ const Expenses = () => {
           isSmallScreen={isSmallScreen}
         />
       )}
-
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {
@@ -303,7 +276,6 @@ const Expenses = () => {
         isLoading={deleteExpenseMutation.isLoading}
         ButtonText="حذف المصروفات"
       />
-
       <ExpenseExportFilterModal
         open={isExportFilterModalOpen}
         onClose={handleCloseExportFilterModal}
@@ -317,5 +289,4 @@ const Expenses = () => {
     </>
   );
 };
-
 export default Expenses;

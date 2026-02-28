@@ -7,4 +7,4 @@ export {
   getAccountTypeBadgeClass,
   flattenAccountsTree,
   generateChildCode,
-} from './chartOfAccountsUtils';
+} from './chartOfAccountsUtils';

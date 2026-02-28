@@ -21,16 +21,13 @@ import {
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-
 const formatCurrency = (amount) => amount?.toLocaleString() ?? '0';
-
 const formatArabicDate = (date) =>
   dayjs(date)
     .locale('ar')
     .format('D [من] MMMM [الساعة] h:mm') +
   ' ' +
   (dayjs(date).hour() < 12 ? 'صباحًا' : 'مساءً');
-
 const monthOptions = [
   { value: 1, label: 'يناير' },
   { value: 2, label: 'فبراير' },
@@ -45,12 +42,10 @@ const monthOptions = [
   { value: 11, label: 'نوفمبر' },
   { value: 12, label: 'ديسمبر' },
 ];
-
 const yearOptions = Array.from({ length: 31 }, (_, i) => ({
   value: 2020 + i,
   label: (2020 + i).toString(),
 }));
-
 const SummaryCard = ({ icon: Icon, label, value }) => (
   <div className="flex flex-col gap-2 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800 border border-primary/10 shadow-sm">
     <div className="flex items-center justify-between text-primary/60">
@@ -62,7 +57,6 @@ const SummaryCard = ({ icon: Icon, label, value }) => (
     </p>
   </div>
 );
-
 const ZakahAccountTab = ({
   accountReport,
   isAccountLoading,
@@ -87,10 +81,9 @@ const ZakahAccountTab = ({
       </div>
     );
   }
-
   return (
     <div className="flex flex-col max-w-[1200px] w-full space-y-8">
-      {/* Filters */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center flex-wrap">
         <Autocomplete
           value={monthOptions.find((o) => o.value === selectedFilterMonth) || null}
@@ -117,8 +110,7 @@ const ZakahAccountTab = ({
           sx={{ width: { xs: '100%', sm: 250 } }}
         />
       </div>
-
-      {/* Export Buttons */}
+      {}
       {permissions.includes('zakat_Export') && accountReport && (
         <div className="flex flex-wrap justify-center gap-2">
           <Button
@@ -141,14 +133,12 @@ const ZakahAccountTab = ({
           </Button>
         </div>
       )}
-
       {accountError && !isAccountLoading && (
         <Alert severity="error" className="mb-4">
           فشل في تحميل بيانات الزكاة: {accountError.message || 'حدث خطأ غير متوقع'}
         </Alert>
       )}
-
-      {/* Summary Cards */}
+      {}
       {!isAccountLoading && !accountError && accountReport && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <SummaryCard
@@ -173,8 +163,7 @@ const ZakahAccountTab = ({
           />
         </div>
       )}
-
-      {/* Withdraw Button (mobile only) */}
+      {}
       {permissions.includes('zakat_Add') && accountReport && isSmallScreen && (
         <div className="flex justify-center">
           <Button
@@ -189,8 +178,7 @@ const ZakahAccountTab = ({
           </Button>
         </div>
       )}
-
-      {/* Financial Operations Table */}
+      {}
       {accountReport?.journalsByMonth &&
       Object.keys(accountReport.journalsByMonth).length > 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
@@ -300,5 +288,4 @@ const ZakahAccountTab = ({
     </div>
   );
 };
-
-export default ZakahAccountTab;
+export default ZakahAccountTab;

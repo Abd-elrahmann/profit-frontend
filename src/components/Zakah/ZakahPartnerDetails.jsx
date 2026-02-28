@@ -18,19 +18,15 @@ import {
   TableChart,
 } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
-
 const formatCurrency = (amount) => amount?.toLocaleString() ?? '0';
-
 const MONTH_NAMES = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
 ];
-
 const getMonthName = (month, year) => {
   const name = MONTH_NAMES[month - 1] || month;
   return `${name} ${year}`;
 };
-
 const getStatusBadge = (status) => {
   if (status === 'PAID') {
     return (
@@ -45,7 +41,6 @@ const getStatusBadge = (status) => {
     </span>
   );
 };
-
 const SummaryCard = ({ icon: Icon, label, value, variant = 'default' }) => (
   <div className="flex flex-col gap-2 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800 border border-primary/10 shadow-sm">
     <div className="flex items-center justify-between text-primary/60">
@@ -65,7 +60,6 @@ const SummaryCard = ({ icon: Icon, label, value, variant = 'default' }) => (
     </p>
   </div>
 );
-
 const ZakahPartnerDetails = ({
   partnerZakahData,
   selectedYear,
@@ -82,10 +76,8 @@ const ZakahPartnerDetails = ({
   const currentYearData = Array.isArray(partnerZakahData)
     ? partnerZakahData.find((item) => item.year === selectedYear)
     : partnerZakahData;
-
   const partnerName = currentYearData?.partnerName || partnerZakahData?.partnerName || '—';
   const monthlyBreakdown = currentYearData?.monthlyBreakdown || [];
-
   if (isPartnerLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
@@ -93,7 +85,6 @@ const ZakahPartnerDetails = ({
       </div>
     );
   }
-
   if (!partnerZakahData) {
     return (
       <Alert severity="error" className="mt-4">
@@ -101,10 +92,9 @@ const ZakahPartnerDetails = ({
       </Alert>
     );
   }
-
   return (
     <div className="flex flex-col max-w-[1200px] w-full space-y-8">
-      {/* Breadcrumbs */}
+      {}
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -118,8 +108,7 @@ const ZakahPartnerDetails = ({
           تفاصيل زكاة الشريك
         </span>
       </div>
-
-      {/* Page Header & Actions */}
+      {}
       <div className="flex flex-col sm:flex-row flex-wrap justify-between items-stretch sm:items-end gap-4">
         <div className="flex flex-col gap-2 min-w-0">
           <h1 className="text-slate-900 dark:text-slate-100 text-xl sm:text-2xl md:text-3xl font-black leading-tight break-words">
@@ -153,8 +142,7 @@ const ZakahPartnerDetails = ({
           </div>
         )}
       </div>
-
-      {/* Summary Cards */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <SummaryCard
           icon={Payments}
@@ -179,8 +167,7 @@ const ZakahPartnerDetails = ({
           variant={currentYearData?.remaining > 0 ? 'error' : 'default'}
         />
       </div>
-
-      {/* Monthly Breakdown Table */}
+      {}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-primary/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <h2 className="text-slate-900 dark:text-slate-100 text-lg sm:text-xl font-bold">
@@ -259,5 +246,4 @@ const ZakahPartnerDetails = ({
     </div>
   );
 };
-
-export default ZakahPartnerDetails;
+export default ZakahPartnerDetails;

@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
-
 export default function TreasuryJournalTable({ journals, isDarkMode }) {
   return (
     <TableContainer>
@@ -108,4 +107,4 @@ export default function TreasuryJournalTable({ journals, isDarkMode }) {
       </Table>
     </TableContainer>
   );
-}
+}

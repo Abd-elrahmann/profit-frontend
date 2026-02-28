@@ -2,9 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { getTheme } from './theme';
-
 const ThemeContext = createContext();
-
 // eslint-disable-next-line react-refresh/only-export-components
 export const useTheme = () => {
   const context = useContext(ThemeContext);
@@ -13,26 +11,20 @@ export const useTheme = () => {
   }
   return context;
 };
-
 export const ThemeProviderWrapper = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode ? JSON.parse(savedMode) : false;
   });
-
   const theme = getTheme(isDarkMode);
-
   const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     localStorage.setItem('darkMode', JSON.stringify(newMode));
   };
-
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
-
-  // Sync dark class for Tailwind dark mode
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -40,13 +32,11 @@ export const ThemeProviderWrapper = ({ children }) => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
-
   const value = {
     isDarkMode,
     toggleTheme,
     theme
   };
-
   return (
     <ThemeContext.Provider value={value}>
       <ThemeProvider theme={theme}>
@@ -56,5 +46,4 @@ export const ThemeProviderWrapper = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
-
-export default ThemeContext;
+export default ThemeContext;

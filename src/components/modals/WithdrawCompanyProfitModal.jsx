@@ -1,18 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import { withdrawCompanyProfit } from '../../pages/companyProfit/CompanyProfitApi';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
 const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess }) => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-
   const handleClose = useCallback(() => {
     onClose();
     setWithdrawAmount('');
     setWithdrawError('');
   }, [onClose]);
-
   const validateAmount = useCallback(
     (value) => {
       if (!value || !availableAmount) return '';
@@ -25,13 +22,11 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
     },
     [availableAmount]
   );
-
   const handleAmountChange = (e) => {
     const value = e.target.value;
     setWithdrawAmount(value);
     setWithdrawError(validateAmount(value));
   };
-
   const handleSubmit = async () => {
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
@@ -42,7 +37,6 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
       notifyError('يرجى تصحيح الأخطاء قبل المتابعة');
       return;
     }
-
     setIsWithdrawing(true);
     try {
       await withdrawCompanyProfit(amount);
@@ -56,15 +50,12 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
       setIsWithdrawing(false);
     }
   };
-
   const isSubmitDisabled =
     isWithdrawing ||
     !withdrawAmount ||
     parseFloat(withdrawAmount) <= 0 ||
     !!withdrawError;
-
   if (!open) return null;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -82,7 +73,6 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
             سحب أرباح الشركة
           </h3>
         </div>
-
         <div className="p-6 space-y-4">
           <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
             الرصيد المتاح: {(availableAmount || 0).toLocaleString('en-US')}
@@ -109,7 +99,6 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
             </p>
           </div>
         </div>
-
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-between gap-3 flex-row-reverse">
           <button
             onClick={handleSubmit}
@@ -134,5 +123,4 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
     </div>
   );
 };
-
-export default WithdrawCompanyProfitModal;
+export default WithdrawCompanyProfitModal;

@@ -1,23 +1,13 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-
-/**
- * Formats a date string for display
- */
 export const formatDate = (dateString) => {
   if (!dateString) return "لم تنتهي بعد";
   return new Date(dateString).toLocaleDateString("en-US");
 };
-
-/**
- * Formats date with Hijri for display (returns JSX)
- */
 export const formatDateWithHijri = (dateString, hijriDate) => {
   if (!dateString) return "لم تنتهي بعد";
-
   const gregorianDate = new Date(dateString).toLocaleDateString("en-US");
   const hijriText = hijriDate || "لم تنتهي بعد";
-
   return (
     <Box>
       <Typography variant="body1" sx={{ fontWeight: "bold" }}>
@@ -32,10 +22,6 @@ export const formatDateWithHijri = (dateString, hijriDate) => {
     </Box>
   );
 };
-
-/**
- * Calculates totals from journals array
- */
 export const calculateJournalTotals = (journals = []) => {
   const totalDebit = journals.reduce(
     (sum, journal) => sum + (journal.totalDebit || 0),
@@ -48,10 +34,6 @@ export const calculateJournalTotals = (journals = []) => {
   const totalBalance = totalDebit - totalCredit;
   return { totalDebit, totalCredit, totalBalance };
 };
-
-/**
- * Maps journal type to Arabic text
- */
 export const getJournalTypeText = (type) => {
   const typeMap = {
     GENERAL: "عام",
@@ -61,10 +43,6 @@ export const getJournalTypeText = (type) => {
   };
   return typeMap[type] || type;
 };
-
-/**
- * Maps journal status to Arabic text
- */
 export const getJournalStatusText = (status) => {
   const statusMap = {
     DRAFT: "مسودة",
@@ -73,9 +51,5 @@ export const getJournalStatusText = (status) => {
   };
   return statusMap[status] || status;
 };
-
-/**
- * Formats number for display
- */
 export const formatNumber = (value) =>
-  Math.round(value || 0).toLocaleString("en-US");
+  Math.round(value || 0).toLocaleString("en-US");

@@ -1,6 +1,4 @@
-
 import React from "react";
-
 const InstallmentSettlementReceipt = () => {
 return `
 <style>
@@ -15,7 +13,6 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .contract-container {
     max-width: 900px;
     margin: auto;
@@ -24,7 +21,6 @@ return `
     border-radius: 12px;
     padding: 30px;
   }
-
   .header {
     display: flex;
     justify-content: space-between;
@@ -51,14 +47,12 @@ return `
     font-size: 10px;
     white-space: nowrap;
   }
-
   .grid-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 15px;
   }
-
   .details-box {
     background: rgba(46, 139, 69, 0.05);
     padding: 15px;
@@ -86,13 +80,11 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .content-box {
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
-
   .amount-box {
     text-align: center;
     border: 1px solid rgba(46, 139, 69, 0.2);
@@ -121,7 +113,6 @@ return `
     font-weight: bold;
     text-align: center;
   }
-
   .section-title {
     font-size: 18px;
     font-weight: bold;
@@ -131,7 +122,6 @@ return `
     padding: 8px 12px;
     border-radius: 6px;
   }
-
   .text-box {
     background: rgba(46, 139, 69, 0.03);
     padding: 12px 15px;
@@ -146,7 +136,6 @@ return `
     letter-spacing: normal;
     text-align: justify;
   }
-
   .strong {
     font-weight: bold;
     margin-top: 6px;
@@ -159,7 +148,6 @@ return `
     font-weight: bold;
     color: #000;
   }
-
   .signatures {
     display: grid;
     grid-template-columns: 1fr;
@@ -175,7 +163,6 @@ return `
     margin: auto;
     border-bottom: 2px solid #666;
   }
-
   @media (max-width: 768px) {
     .grid-wrapper {
       grid-template-columns: 1fr;
@@ -184,13 +171,11 @@ return `
       grid-template-columns: 1fr;
     }
   }
-
   @media print {
     @page {
       size: A4;
       margin: 10mm;
     }
-
     .contract-wrapper {
       background: #fff !important;
       margin: 0 !important;
@@ -200,7 +185,6 @@ return `
       width: 100% !important;
       max-width: 100% !important;
     }
-
     .contract-container {
       margin: 0 !important;
       padding: 20px !important;
@@ -210,12 +194,10 @@ return `
       border: none !important;
       background: #fff !important;
     }
-
     .grid-wrapper {
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
     }
-  
     .details-box,
     .content-box,
     .text-box,
@@ -223,12 +205,10 @@ return `
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
-
     * {
       max-height: none !important;
       overflow: visible !important;
     }
-
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -236,10 +216,8 @@ return `
     }
   }
 </style>
-
 <div class="contract-wrapper">
   <div class="contract-container">
-
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
@@ -247,9 +225,7 @@ return `
       </div>
       <p class="sub-text">{{التاريخ_الميلادي}}</p>
     </div>
-
     <div class="grid-wrapper">
-
       <div class="details-box">
         <h2>معلومات العميل والسلفة</h2>
         <div class="row"><p>اسم العميل:</p> <span>{{اسم_العميل}}</span></div>
@@ -257,7 +233,6 @@ return `
         <div class="row"><p>تاريخ الإشعار:</p> <span>{{التاريخ_الميلادي}}</span></div>
         <div class="row"><p>المكان:</p> <span>الرياض</span></div>
       </div>
-
       <div class="content-box">
         <div class="amount-box">
           <h3>المبلغ المسدد بالكامل</h3>
@@ -265,15 +240,12 @@ return `
           <p>{{المبلغ_كتابة}}</p>
         </div>
       </div>
-
     </div>
-
     <div class="text-box">
       <p>
         أُقر أنا الموقع أدناه <span class="highlight-text">{{اسم_المستثمر}}</span>، بأن السيد <span class="highlight-text">{{اسم_العميل}}</span> رقم الهوية الوطنية: <span class="highlight-text">{{رقم_هوية_العميل}}</span> قد قام بسداد كامل مبلغ السلفة الممنوحة له بموجب: • سند أمر رقم (<span class="highlight-text">{{رقم_السند}}</span>) • إقرار دين وتعهد بالسداد رقم (<span class="highlight-text">{{رقم_الإقرار}}</span>) وذلك بمبلغ وقدره (<span class="highlight-text">{{المبلغ_كتابة}}</span>) {{معلومات_الخصم}}. وبناءً على ذلك، فقد تم استلام المبلغ كاملًا وتُعتبر هذه السلفة مقفلة نهائيًا، ولا يترتب على السيد {{اسم_العميل}} أي التزامات مالية أخرى تخص السلفة أو السند المشار إليهما أعلاه. ويُعد هذا الإشعار خلو طرف نهائي صادر بناءً على السداد الكامل والمطابقة مع المستندات الرسمية.
       </p>
     </div>
-
     <div class="signatures">
       <div>
         <p class="strong">توقيع الدائن:</p>
@@ -281,10 +253,8 @@ return `
         <p>{{توقيع_الدائن}}</p>
       </div>
     </div>
-
   </div>
 </div>
 `;
 };
-
 export default InstallmentSettlementReceipt;

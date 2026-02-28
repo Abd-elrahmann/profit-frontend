@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import { JOURNAL_TYPES } from "./constants";
 import { getJournalSourceTypeText, getStatusText } from "./journalsUtils";
-
 export default function JournalsDetailsForm({
   journalData,
   editForm,
@@ -25,12 +24,10 @@ export default function JournalsDetailsForm({
   const form = isAddMode ? newJournalForm : editForm;
   const isEditable = isEditMode || isAddMode;
   const isDesktop = variant === "desktop";
-
   const getTypeLabel = (type) => {
     const found = JOURNAL_TYPES.find((t) => t.value === type);
     return found?.label || "-";
   };
-
   const dateValue = isAddMode
     ? newJournalForm.date
     : isEditMode
@@ -38,19 +35,16 @@ export default function JournalsDetailsForm({
     : journalData?.date
     ? journalData.date.split("T")[0]
     : "";
-
   const typeValue = isAddMode
     ? newJournalForm.type
     : isEditMode
     ? editForm.type
     : journalData?.type || "";
-
   const descriptionValue = isAddMode
     ? newJournalForm.description
     : isEditMode
     ? editForm.description
     : journalData?.description || "";
-
   if (isDesktop) {
     const desktopContent = (
       <>
@@ -63,7 +57,6 @@ export default function JournalsDetailsForm({
         >
           {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
         </Typography>
-
         <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
           {!isAddMode && (
             <Grid item xs={12} md={6}>
@@ -154,7 +147,6 @@ export default function JournalsDetailsForm({
         </Grid>
       </>
     );
-
     if (embed) {
       return desktopContent;
     }
@@ -164,7 +156,6 @@ export default function JournalsDetailsForm({
       </Paper>
     );
   }
-
   return (
     <Paper
       sx={{
@@ -177,7 +168,6 @@ export default function JournalsDetailsForm({
       <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
         معلومات القيد
       </Typography>
-
       <Stack spacing={2}>
         {!isAddMode && (
           <Box>
@@ -189,7 +179,6 @@ export default function JournalsDetailsForm({
             </Typography>
           </Box>
         )}
-
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             التاريخ
@@ -209,7 +198,6 @@ export default function JournalsDetailsForm({
             </Typography>
           )}
         </Box>
-
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             نوع القيد
@@ -234,7 +222,6 @@ export default function JournalsDetailsForm({
             </Typography>
           )}
         </Box>
-
         {!isAddMode && (
           <>
             <Box>
@@ -245,7 +232,6 @@ export default function JournalsDetailsForm({
                 {getJournalSourceTypeText(journalData?.sourceType)}
               </Typography>
             </Box>
-
             <Box>
               <Typography variant="body2" color="textSecondary" gutterBottom>
                 الحالة
@@ -262,7 +248,6 @@ export default function JournalsDetailsForm({
                 size="small"
               />
             </Box>
-
             <Box>
               <Typography variant="body2" color="textSecondary" gutterBottom>
                 المعتمد بواسطة
@@ -273,7 +258,6 @@ export default function JournalsDetailsForm({
             </Box>
           </>
         )}
-
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             الوصف
@@ -296,4 +280,4 @@ export default function JournalsDetailsForm({
       </Stack>
     </Paper>
   );
-}
+}

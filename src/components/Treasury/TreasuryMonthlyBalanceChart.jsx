@@ -10,14 +10,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-
 export default function TreasuryMonthlyBalanceChart({
   data,
   isSmallScreen,
   isDarkMode,
 }) {
   if (!data || data.length === 0) return null;
-
   return (
     <Grid container spacing={3} sx={{ mb: 3 }}>
       <Grid item xs={12}>
@@ -60,4 +58,4 @@ export default function TreasuryMonthlyBalanceChart({
       </Grid>
     </Grid>
   );
-}
+}

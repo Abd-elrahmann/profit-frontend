@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { isJournalBalanced } from "./journalsUtils";
-
 export default function JournalsLinesCards({
   journalLines,
   totalsForTable,
@@ -23,18 +22,15 @@ export default function JournalsLinesCards({
 }) {
   const formatNumber = (value) =>
     value ? Math.round(value).toLocaleString() : "0";
-
   const getBalanceColor = (balance) => {
     if ((balance || 0) === 0) return "text.primary";
     return (balance || 0) > 0 ? "error" : "success.main";
   };
-
   const canEdit = isEditMode || isAddMode;
   const unbalanced = !isJournalBalanced(
     totalsForTable.totalDebit,
     totalsForTable.totalCredit
   );
-
   return (
     <Stack spacing={2} sx={{ alignItems: "center", maxWidth: 420, mx: "auto", width: "100%" }}>
       {journalLines.map((line, index) => (
@@ -89,7 +85,6 @@ export default function JournalsLinesCards({
                   </Box>
                 )}
               </Box>
-
               <Box>
                 <Box
                   sx={{
@@ -108,7 +103,6 @@ export default function JournalsLinesCards({
                     variant="outlined"
                   />
                 </Box>
-
                 <Box
                   sx={{ display: "flex", justifyContent: "space-between" }}
                 >
@@ -123,7 +117,6 @@ export default function JournalsLinesCards({
                     {formatNumber(line.debit)}
                   </Typography>
                 </Box>
-
                 <Box
                   sx={{ display: "flex", justifyContent: "space-between" }}
                 >
@@ -138,7 +131,6 @@ export default function JournalsLinesCards({
                     {formatNumber(line.credit)}
                   </Typography>
                 </Box>
-
                 <Box
                   sx={{ display: "flex", justifyContent: "space-between" }}
                 >
@@ -160,7 +152,6 @@ export default function JournalsLinesCards({
           </CardContent>
         </Card>
       ))}
-
       <Card
         variant="outlined"
         sx={{
@@ -203,7 +194,6 @@ export default function JournalsLinesCards({
           </Stack>
         </CardContent>
       </Card>
-
       {unbalanced && (
         <Alert severity="error">
           القيد غير متوازن! إجمالي المدين:{" "}

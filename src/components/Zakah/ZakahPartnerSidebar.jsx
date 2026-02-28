@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Typography, Stack, Button } from '@mui/material';
-
 const formatCurrency = (amount) => amount?.toLocaleString() ?? '0';
-
 const ZakahPartnerSidebar = ({
   partnerZakahData,
   selectedYear,
@@ -11,7 +9,6 @@ const ZakahPartnerSidebar = ({
   const currentYearData = Array.isArray(partnerZakahData)
     ? partnerZakahData.find((item) => item.year === selectedYear)
     : partnerZakahData;
-
   return (
     <div className="w-80 flex-shrink-0 border-r border-primary/10 bg-white dark:bg-background-dark h-full overflow-y-auto">
       <div className="p-6 border-b border-primary/10">
@@ -54,7 +51,6 @@ const ZakahPartnerSidebar = ({
           </Box>
         </Stack>
       </div>
-
       <div className="p-6">
         <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
           السنوات المتاحة
@@ -81,5 +77,4 @@ const ZakahPartnerSidebar = ({
     </div>
   );
 };
-
-export default ZakahPartnerSidebar;
+export default ZakahPartnerSidebar;

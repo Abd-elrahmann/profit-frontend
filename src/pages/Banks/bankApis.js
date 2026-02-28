@@ -1,5 +1,4 @@
 import Api, { handleApiError } from '../../config/Api';
-
 export const getBanks = async (page = 1, search = '') => {
   try {
     const url = search 
@@ -12,7 +11,6 @@ export const getBanks = async (page = 1, search = '') => {
     throw error;
   }
 };
-
 export const createBank = async (bankData) => {
   try {
     const response = await Api.post('/api/bank', bankData);
@@ -22,7 +20,6 @@ export const createBank = async (bankData) => {
     throw error;
   }
 };
-
 export const updateBank = async (bankId, bankData) => {
   try {
     const response = await Api.patch(`/api/bank/${bankId}`, bankData);
@@ -32,7 +29,6 @@ export const updateBank = async (bankId, bankData) => {
     throw error;
   }
 };
-
 export const deleteBank = async (bankId) => {
   try {
     const response = await Api.delete(`/api/bank/${bankId}`);
@@ -42,7 +38,6 @@ export const deleteBank = async (bankId) => {
     throw error;
   }
 };
-
 export const getBankById = async (bankId) => {
   try {
     const response = await Api.get(`/api/bank/${bankId}`);

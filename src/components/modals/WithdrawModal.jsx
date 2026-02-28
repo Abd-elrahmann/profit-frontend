@@ -22,7 +22,6 @@ import {
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { StyledTableCell, StyledTableRow } from '../../components/layouts/tableLayout';
-
 const WithdrawModal = ({
   isOpen,
   onClose,
@@ -43,54 +42,43 @@ const WithdrawModal = ({
 }) => {
   const [amountError, setAmountError] = useState("");
   const [touched, setTouched] = useState(false);
-
   const validateAmount = (value) => {
     if (!value || value.trim() === "") {
       return "مبلغ السحب مطلوب";
     }
-
     const amount = parseFloat(value);
     if (isNaN(amount)) {
       return "يرجى إدخال مبلغ صحيح";
     }
-
     if (amount <= 0) {
       return "مبلغ السحب يجب أن يكون أكبر من صفر";
     }
-
     if (amount > 1000000) {
       return "مبلغ السحب الشهري يجب أن يكون أقل من 1,000,000 ريال";
     }
-
     if (investorDetails?.total && amount > investorDetails.total * 0.5) {
       return "مبلغ السحب الشهري يجب أن يكون أقل من 50% من رأس المال";
     }
-
     return "";
   };
-
   const handleAmountChange = (value) => {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setWithdrawAmount(value);
-
       if (amountError) {
         setAmountError("");
       }
     }
   };
-
   const handleAmountBlur = () => {
     setTouched(true);
     const error = validateAmount(withdrawAmount);
     setAmountError(error);
   };
-
   const handleClose = () => {
     onClose();
     setAmountError("");
     setTouched(false);
   };
-
   return (
     <Dialog
       open={isOpen}
@@ -135,7 +123,6 @@ const WithdrawModal = ({
               </Typography>
             </Alert>
           )}
-
           <Paper sx={{ p: 2.5, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -164,7 +151,6 @@ const WithdrawModal = ({
               </Grid>
             </Grid>
           </Paper>
-
           {isEditMode && investorDetails?.withdrawalInfo?.monthlyAmount && (
             <Paper sx={{ p: 2, bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
               <Typography variant="body2" color="text.secondary" mb={0.5}>المبلغ الشهري الحالي</Typography>
@@ -173,7 +159,6 @@ const WithdrawModal = ({
               </Typography>
             </Paper>
           )}
-
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <TextField
@@ -229,7 +214,6 @@ const WithdrawModal = ({
               />
             </Grid>
           </Grid>
-
           {withdrawAmount && !firstPaymentDate && (
             <Alert severity="warning" sx={{ mb: 2 }}>
               <Typography variant="body2">
@@ -237,13 +221,11 @@ const WithdrawModal = ({
               </Typography>
             </Alert>
           )}
-
           {withdrawalPreview && firstPaymentDate && (isEditMode || (
            investorDetails?.WithdrawingStatus !== 'WITHDRAWING' &&
            investorDetails?.WithdrawingStatus !== 'WITHDRAWN')) && (
               <>
                 <Divider sx={{ my: 1 }} />
-
                 <Paper sx={{ p: 2.5, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
                   <Typography variant="subtitle2" fontWeight="bold" mb={2} color="success.main">
                     📊 محاكاة العملية الحسابية :
@@ -259,7 +241,6 @@ const WithdrawModal = ({
                         </Typography>
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={4}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -270,7 +251,6 @@ const WithdrawModal = ({
                         </Typography>
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={4}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -284,7 +264,6 @@ const WithdrawModal = ({
                         </Typography>
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -298,7 +277,6 @@ const WithdrawModal = ({
                         </Typography>
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '2px solid', borderColor: 'primary.main' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -312,7 +290,6 @@ const WithdrawModal = ({
                         </Typography>
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: isDarkMode ? 'background.default' : '#fffef0', borderRadius: 1, border: '1px solid #ffd700' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -326,7 +303,6 @@ const WithdrawModal = ({
                         </Typography>
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                         <Typography variant="body2" color="text.secondary" mb={0.5}>
@@ -352,7 +328,6 @@ const WithdrawModal = ({
                     </Grid>
                   </Grid>
                 </Paper>
-
                 <Paper sx={{ p: 2.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200' }}>
                   <Typography variant="subtitle2" fontWeight="bold" mb={2} color="info.main">
                     📅 جدول السداد الكامل ({withdrawalPreview.totalMonths} دفعة):
@@ -387,7 +362,6 @@ const WithdrawModal = ({
                     </Table>
                   </TableContainer>
                 </Paper>
-
                 <Alert severity="info" icon={<InfoIcon />}>
                   <Typography variant="body2">
                     ℹ️ <strong> منطق حساب الإنسحاب</strong>
@@ -417,7 +391,6 @@ const WithdrawModal = ({
               const error = validateAmount(withdrawAmount);
               setAmountError(error);
               setTouched(true);
-
               if (!error && firstPaymentDate) {
                 onWithdraw(firstPaymentDate);
               }
@@ -443,5 +416,4 @@ const WithdrawModal = ({
     </Dialog>
   );
 };
-
 export default WithdrawModal;

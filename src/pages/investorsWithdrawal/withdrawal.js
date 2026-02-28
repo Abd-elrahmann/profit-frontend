@@ -1,5 +1,4 @@
 import Api, { handleApiError } from '../../config/Api';
-
 export const getWithdrawingInvestors = async (page = 1) => {
   try {
     const response = await Api.get(`/api/partner-withdraw/all-withdrawing/${page}?limit=10`);
@@ -9,7 +8,6 @@ export const getWithdrawingInvestors = async (page = 1) => {
     throw error;
   }
 };
-
 export const getWithdrawalDetails = async (partnerId) => {
   try {
     const response = await Api.get(`/api/partner-withdraw/details/${partnerId}`);
@@ -19,7 +17,6 @@ export const getWithdrawalDetails = async (partnerId) => {
     throw error;
   }
 };
-
 export const approveWithdrawal = async (scheduleId) => {
   try {
     const response = await Api.post(`/api/partner-withdraw/approve/${scheduleId}`);
@@ -29,7 +26,6 @@ export const approveWithdrawal = async (scheduleId) => {
     throw error;
   }
 };
-
 export const rejectWithdrawal = async (scheduleId) => {
   try {
     const response = await Api.post(`/api/partner-withdraw/reject/${scheduleId}`);
@@ -39,7 +35,6 @@ export const rejectWithdrawal = async (scheduleId) => {
     throw error;
   }
 };
-
 export const partialPayWithdrawal = async (scheduleId, paidAmount) => {
   try {
     const response = await Api.post(`/api/partner-withdraw/partial/${scheduleId}`, {
@@ -51,7 +46,6 @@ export const partialPayWithdrawal = async (scheduleId, paidAmount) => {
     throw error;
   }
 };
-
 export const uploadWithdrawalReceipt = async (withdrawalId, formData) => {
   try {
     const response = await Api.post(

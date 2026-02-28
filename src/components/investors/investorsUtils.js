@@ -1,7 +1,5 @@
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
-
-// Query keys constants for consistency
 export const QUERY_KEYS = {
   INVESTORS: 'investors',
   INVESTOR_DETAILS: 'investor-details',
@@ -9,24 +7,15 @@ export const QUERY_KEYS = {
   WITHDRAWAL_DETAILS: 'withdrawal-details',
   OPENING_JOURNALS_CHECK: 'opening-journals-check',
 };
-
-/**
- * Invalidate common investor-related queries
- */
 export const invalidateInvestorQueries = (queryClient, investorId) => {
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTOR_DETAILS, investorId] });
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTORS] });
 };
-
-/**
- * Invalidate all investor-related queries including transactions and withdrawals
- */
 export const invalidateAllInvestorQueries = (queryClient, investorId) => {
   invalidateInvestorQueries(queryClient, investorId);
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PARTNER_TRANSACTIONS, investorId] });
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WITHDRAWAL_DETAILS, investorId] });
 };
-
 export const formatArabicDate = (date) => {
   return dayjs(date)
     .locale("ar")
@@ -34,13 +23,11 @@ export const formatArabicDate = (date) => {
     + " "
     + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
 };
-
 export const formatArabicDateOnly = (date) => {
   return dayjs(date)
     .locale("ar")
     .format("D MMMM YYYY");
 };
-
 export const getMonthName = (monthNumber) => {
   const months = [
     'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -48,13 +35,11 @@ export const getMonthName = (monthNumber) => {
   ];
   return months[monthNumber - 1] || monthNumber;
 };
-
 export const getInvestorStatus = (investor) => {
   if (investor?.WithdrawingStatus === 'WITHDRAWING' || investor?.WithdrawingStatus === 'WITHDRAWN') return 'WITHDRAWN';
   if (investor?.isNewPartner) return 'NEW';
   return 'OLD';
 };
-
 export const getStatusColor = (investor) => {
   const status = typeof investor === 'object' ? getInvestorStatus(investor) : investor;
   switch (status) {
@@ -68,7 +53,6 @@ export const getStatusColor = (investor) => {
       return 'default';
   }
 };
-
 export const getStatusText = (investor) => {
   const status = typeof investor === 'object' ? getInvestorStatus(investor) : investor;
   switch (status) {
@@ -82,7 +66,6 @@ export const getStatusText = (investor) => {
       return 'غير معروف';
   }
 };
-
 export const getTransactionTypeText = (type) => {
   switch (type) {
     case "DEPOSIT":
@@ -97,7 +80,6 @@ export const getTransactionTypeText = (type) => {
       return type;
   }
 };
-
 export const getTransactionTypeColor = (type) => {
   switch (type) {
     case "DEPOSIT":
@@ -112,16 +94,8 @@ export const getTransactionTypeColor = (type) => {
       return "default";
   }
 };
-
-export const isImageFile = (url) => {
-  if (!url) return false;
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
-  const lowerUrl = url.toLowerCase();
-  return imageExtensions.some(ext => lowerUrl.includes(ext));
-};
-
+export { isImageFile } from "../../utilities/fileUtils";
 export const normalizeDecimal = (value) => parseFloat(Number(value).toFixed(2));
-
 export const calculateWithdrawalPreview = (
   withdrawAmount,
   investorDetails,
@@ -132,43 +106,32 @@ export const calculateWithdrawalPreview = (
   if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !investorDetails) {
     return null;
   }
-
   const monthlyAmount = parseFloat(Number(withdrawAmount).toFixed(2));
   if (monthlyAmount <= 0) return null;
-
   let partnerDefaultShare = withdrawPreviewData?.partnerDefaultShare || 0;
-
   if (partnerDefaultShare < 0) partnerDefaultShare = 0;
   partnerDefaultShare = normalizeDecimal(partnerDefaultShare);
-
   const totalAmount = investorDetails.totalAmount + (investorDetails.totalProfit || 0);
   const remainingCapital = normalizeDecimal(totalAmount - partnerDefaultShare);
-
   const savingsAmount = investorDetails.totalSaving || 0;
-
   const monthlyPayment = normalizeDecimal(monthlyAmount);
   const schedule = [];
   let remaining = remainingCapital;
   let monthIndex = 0;
   const startDate = firstPaymentDate ? new Date(firstPaymentDate) : new Date();
-
   while (remaining > 0 && schedule.length < 100) {
     const amount = remaining - monthlyPayment > 0 ? monthlyPayment : remaining;
-
     const payDate = new Date(startDate);
     payDate.setMonth(startDate.getMonth() + monthIndex);
-
     schedule.push({
       month: monthIndex + 1,
       date: formatArabicDateOnly(payDate),
       amount: normalizeDecimal(amount),
       remaining: normalizeDecimal(remaining - amount)
     });
-
     remaining = normalizeDecimal(remaining - amount);
     monthIndex++;
   }
-
   return {
     originalCapital: investorDetails.totalAmount,
     totalProfit: investorDetails.totalProfit || 0,
@@ -181,17 +144,14 @@ export const calculateWithdrawalPreview = (
     schedule: schedule
   };
 };
-
 export const extractCapitalAmount = (freshInvestorData, selectedInvestor, investorDetails) => {
   let capitalAmount = null;
-
   if (freshInvestorData?.newCapitalAmount !== null && freshInvestorData?.newCapitalAmount !== undefined) {
     const newCapitalValue = Number(freshInvestorData.newCapitalAmount);
     if (!isNaN(newCapitalValue) && newCapitalValue > 0) {
       capitalAmount = newCapitalValue;
     }
   }
-
   if (!capitalAmount && freshInvestorData?.PartnerNewCapital && Array.isArray(freshInvestorData.PartnerNewCapital) && freshInvestorData.PartnerNewCapital.length > 0) {
     const newCapital = freshInvestorData.PartnerNewCapital[0];
     if (newCapital?.amount !== null && newCapital?.amount !== undefined) {
@@ -201,21 +161,18 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
       }
     }
   }
-
   if (!capitalAmount && freshInvestorData?.total !== null && freshInvestorData?.total !== undefined) {
     const totalValue = Number(freshInvestorData.total);
     if (!isNaN(totalValue) && totalValue > 0) {
       capitalAmount = totalValue;
     }
   }
-
   if (!capitalAmount && freshInvestorData?.capitalAmount !== null && freshInvestorData?.capitalAmount !== undefined) {
     const capitalValue = Number(freshInvestorData.capitalAmount);
     if (!isNaN(capitalValue) && capitalValue > 0) {
       capitalAmount = capitalValue;
     }
   }
-
   if (!capitalAmount && selectedInvestor) {
     if (selectedInvestor.newCapitalAmount !== null && selectedInvestor.newCapitalAmount !== undefined) {
       const newCapitalValue = Number(selectedInvestor.newCapitalAmount);
@@ -223,7 +180,6 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
         capitalAmount = newCapitalValue;
       }
     }
-
     if (!capitalAmount && selectedInvestor.PartnerNewCapital && Array.isArray(selectedInvestor.PartnerNewCapital) && selectedInvestor.PartnerNewCapital.length > 0) {
       const newCapital = selectedInvestor.PartnerNewCapital[0];
       if (newCapital?.amount !== null && newCapital?.amount !== undefined) {
@@ -233,14 +189,12 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
         }
       }
     }
-
     if (!capitalAmount && selectedInvestor.total !== null && selectedInvestor.total !== undefined) {
       const totalValue = Number(selectedInvestor.total);
       if (!isNaN(totalValue) && totalValue > 0) {
         capitalAmount = totalValue;
       }
     }
-
     if (!capitalAmount && selectedInvestor.capitalAmount !== null && selectedInvestor.capitalAmount !== undefined) {
       const capitalValue = Number(selectedInvestor.capitalAmount);
       if (!isNaN(capitalValue) && capitalValue > 0) {
@@ -248,7 +202,6 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
       }
     }
   }
-
   if (!capitalAmount && investorDetails) {
     const cachedData = investorDetails.partner || investorDetails;
     if (cachedData) {
@@ -258,7 +211,6 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
           capitalAmount = newCapitalValue;
         }
       }
-
       if (!capitalAmount && cachedData.PartnerNewCapital && Array.isArray(cachedData.PartnerNewCapital) && cachedData.PartnerNewCapital.length > 0) {
         const newCapital = cachedData.PartnerNewCapital[0];
         if (newCapital?.amount !== null && newCapital?.amount !== undefined) {
@@ -268,14 +220,12 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
           }
         }
       }
-
       if (!capitalAmount && cachedData.total !== null && cachedData.total !== undefined) {
         const totalValue = Number(cachedData.total);
         if (!isNaN(totalValue) && totalValue > 0) {
           capitalAmount = totalValue;
         }
       }
-
       if (!capitalAmount && cachedData.capitalAmount !== null && cachedData.capitalAmount !== undefined) {
         const capitalValue = Number(cachedData.capitalAmount);
         if (!isNaN(capitalValue) && capitalValue > 0) {
@@ -284,18 +234,11 @@ export const extractCapitalAmount = (freshInvestorData, selectedInvestor, invest
       }
     }
   }
-
   if (!capitalAmount) {
     capitalAmount = 0;
   }
-
   return capitalAmount;
 };
-
-/**
- * Extract investor data from API response
- * Handles different response structures from the API
- */
 export const extractInvestorDataFromResponse = (response) => {
   if (response?.partner) {
     return response.partner;
@@ -308,15 +251,9 @@ export const extractInvestorDataFromResponse = (response) => {
   }
   return response;
 };
-
-/**
- * Build edit form data from investor details
- */
 export const buildEditFormData = (investorDetails, selectedInvestor) => {
   if (!investorDetails) return {};
-  
   const capitalAmount = extractCapitalAmount(investorDetails, selectedInvestor, investorDetails);
-  
   return {
     name: investorDetails.name || '',
     phone: investorDetails.phone || '',
@@ -330,13 +267,8 @@ export const buildEditFormData = (investorDetails, selectedInvestor) => {
     isActive: investorDetails.isActive !== undefined ? investorDetails.isActive : true,
   };
 };
-
-/**
- * Get original field value from investor details for change tracking
- */
 export const getOriginalFieldValue = (field, investorDetails, selectedInvestor) => {
   if (!investorDetails) return undefined;
-  
   switch(field) {
     case 'capitalAmount':
       return extractCapitalAmount(investorDetails, selectedInvestor, investorDetails)?.toString();
@@ -357,4 +289,4 @@ export const getOriginalFieldValue = (field, investorDetails, selectedInvestor) 
     default:
       return investorDetails[field];
   }
-};
+};

@@ -5,11 +5,9 @@ import {
   TrendingUp as CreditIcon,
   Balance as BalanceIcon,
 } from "@mui/icons-material";
-
 export default function JournalsSummaryCards({ totals, isDarkMode = false, isSmallScreen = false }) {
   const formatNumber = (value) =>
     value ? Math.round(value).toLocaleString() : "0";
-
   const cards = [
     {
       label: "إجمالي المدين",
@@ -39,7 +37,6 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false, isSma
       valueColor: (totals.totalBalance || 0) === 0 ? "#2E8B45" : "#D91656",
     },
   ];
-
   const cardContent = (card) => (
     <Card
             sx={{
@@ -115,7 +112,6 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false, isSma
             </CardContent>
           </Card>
   );
-
   if (isSmallScreen) {
     return (
       <Stack spacing={2} sx={{ mt: 4, mb: 3, maxWidth: 420, mx: "auto", width: "100%" }}>
@@ -127,7 +123,6 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false, isSma
       </Stack>
     );
   }
-
   return (
     <Grid container spacing={3} sx={{ mt: 4, mb: 3 }}>
       {cards.map((card) => (

@@ -1,12 +1,10 @@
 import toast, { Toaster } from 'react-hot-toast';
-
 export const notifySuccess = (msg) => {
   toast.success(msg, {
     pauseOnHover: true,
     className: 'toast-success',
   });
 }
-
 export const notifyInfo = (msg, icon) => {
   toast(msg, {
     icon: icon,
@@ -19,7 +17,6 @@ export const notifyInfo = (msg, icon) => {
     },
   });
 };
-
 export const notifyError = (msg) => {
   toast.error(msg, {
     pauseOnHover: true,
@@ -35,7 +32,4 @@ export const notifyWarning = (msg) => {
       padding: '16px',
     },
   });
-};
-
-
-
+};

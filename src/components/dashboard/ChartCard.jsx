@@ -1,17 +1,10 @@
 import React from 'react';
 import { Card, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
-/**
- * Reusable chart wrapper card for dashboard sections
- * @param {string} variant - 'default' | 'glass' | 'simple'
- * @param {string} color - MUI palette color for gradient (when variant='default')
- */
 const ChartCard = React.memo(({ title, children, variant = 'default', color = 'primary', sx = {} }) => {
   const theme = useTheme();
   const isGlass = variant === 'glass';
   const isSimple = variant === 'simple';
-
   const cardStyles = isGlass
     ? {
         backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
@@ -33,7 +26,6 @@ const ChartCard = React.memo(({ title, children, variant = 'default', color = 'p
           inset 0 1px 0 rgba(255,255,255,0.5)
         `,
       };
-
   return (
     <Card
       sx={{
@@ -69,7 +61,5 @@ const ChartCard = React.memo(({ title, children, variant = 'default', color = 'p
     </Card>
   );
 });
-
 ChartCard.displayName = 'ChartCard';
-
-export default ChartCard;
+export default ChartCard;

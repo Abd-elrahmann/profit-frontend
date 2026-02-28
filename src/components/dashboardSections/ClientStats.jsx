@@ -6,40 +6,32 @@ import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext
 import { useCountUp } from '../../hooks/useCountUp';
 import { Link } from 'react-router-dom';
 import ResponsiveTable from './ResponsiveTable';
-
 const MONTHS_FIRST = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
 const MONTHS_LAST = ['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-
 const ClientStats = React.memo(() => {
   const { getApiFilter } = useDashboardFilter();
   const [chartPeriod, setChartPeriod] = useState('first');
   const [hoveredBar, setHoveredBar] = useState(null);
   const apiFilter = getApiFilter();
-
   const { data: stats, isLoading } = useQuery({
     queryKey: ['client-stats', apiFilter],
     queryFn: () => getClientStats(apiFilter),
   });
-
   const { data: loanStats } = useQuery({
     queryKey: ['dashboard', 'loan-stats', apiFilter],
     queryFn: () => getLoanStats(apiFilter),
   });
-
   const { data: topClients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['dashboard', 'top-committed-clients'],
     queryFn: () => getTopCommittedClients(5),
   });
-
   const { data: clientGrowth = [] } = useQuery({
     queryKey: ['dashboard', 'client-registration-growth', chartPeriod],
     queryFn: () => getClientRegistrationGrowth(6, chartPeriod),
   });
-
   const animatedCount = useCountUp(stats?.count || 0, 600, !isLoading);
   const animatedActiveLoans = useCountUp(loanStats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
   const animatedTotalAmount = useCountUp(loanStats?.loans?.totalAmount || 0, 600, !isLoading);
-
   const pieData = useMemo(() => {
     const total = stats?.count || 1;
     const active = stats?.activeCount || 0;
@@ -51,7 +43,6 @@ const ClientStats = React.memo(() => {
       { label: 'متعثر', value: Math.round((defaulted / total) * 100) || 0, color: '#ef4444' },
     ];
   }, [stats]);
-
   const barChartData = useMemo(() => {
     if (clientGrowth?.length > 0) {
       return clientGrowth.map((item) => ({
@@ -61,18 +52,15 @@ const ClientStats = React.memo(() => {
     }
     return (chartPeriod === 'last' ? MONTHS_LAST : MONTHS_FIRST).map((m) => ({ month: m, value: 0 }));
   }, [clientGrowth, chartPeriod]);
-
   const formatAmount = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     return Number(n).toLocaleString('en-US');
   };
-
   const getCommitmentLabel = (pct) => {
     if (pct >= 95) return 'ملتزم تماماً';
     if (pct >= 85) return 'ملتزم';
     return 'جيد';
   };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -80,10 +68,9 @@ const ClientStats = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* KPI Cards Row */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between">
           <div>
@@ -178,10 +165,9 @@ const ClientStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Charts Section */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Pie Chart: تصنيف العملاء */}
+        {}
         <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h4 className="font-bold text-lg text-slate-900 dark:text-slate-100">تصنيف العملاء</h4>
@@ -247,8 +233,7 @@ const ClientStats = React.memo(() => {
             ))}
           </div>
         </div>
-
-        {/* Bar Chart: نمو تسجيل العملاء */}
+        {}
         <div className="bg-white dark:bg-[#141e16] p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -314,8 +299,7 @@ const ClientStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Table: أفضل 5 عملاء ملتزمين */}
+      {}
       <div className="bg-white dark:bg-[#141e16] rounded-xl border border-primary/10 shadow-sm overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-primary/5">
           <h4 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -413,7 +397,5 @@ const ClientStats = React.memo(() => {
     </div>
   );
 });
-
 ClientStats.displayName = 'ClientStats';
-
-export default ClientStats;
+export default ClientStats;

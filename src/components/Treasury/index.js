@@ -4,6 +4,7 @@ export { default as TreasuryMonthYearFilter } from './TreasuryMonthYearFilter';
 export { default as TreasuryStatCard } from './TreasuryStatCard';
 export { default as TreasuryJournalTable } from './TreasuryJournalTable';
 export { default as TreasuryJournalCards } from './TreasuryJournalCards';
+export { default as TreasuryJournalsSection } from './TreasuryJournalsSection';
 export { default as TreasuryBankSummaryCards } from './TreasuryBankSummaryCards';
 export { default as TreasuryCapitalSummaryCards } from './TreasuryCapitalSummaryCards';
 export { default as TreasuryBalanceChart } from './TreasuryBalanceChart';
@@ -13,4 +14,4 @@ export { default as TreasuryStatusDistributionChart } from './TreasuryStatusDist
 export { default as TreasuryRepaymentsChart } from './TreasuryRepaymentsChart';
 export { getBankAccountData } from './treasuryApi';
 export { COLORS, ALL_MONTHS, getYears } from './constants';
-export { getMonthName, getCurrentJournals } from './treasuryUtils';
+export { getMonthName, getCurrentJournals } from './treasuryUtils';

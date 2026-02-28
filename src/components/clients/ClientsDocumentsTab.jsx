@@ -15,14 +15,13 @@ import {
   Share,
   Visibility,
   CheckCircle,
-  InsertDriveFile,
 } from "@mui/icons-material";
+import FileThumbnail from "../ui/FileThumbnail";
 import {
   CLIENT_DOCUMENT_TYPES,
   KAFEEL_DOCUMENT_TYPES,
   getOrdinalText,
 } from "./clientsUtils";
-
 function DocumentCard({
   doc,
   docType,
@@ -31,7 +30,6 @@ function DocumentCard({
   permissions,
   onDownload,
   onShare,
-  renderFileThumbnail,
 }) {
   return (
     <Grid item xs={12} sm={6} md={4} lg={3} key={`${doc.key}-${doc.index}`}>
@@ -46,7 +44,11 @@ function DocumentCard({
         }}
         elevation={2}
       >
-        {renderFileThumbnail(doc.value, CLIENT_DOCUMENT_TYPES[docType])}
+        <FileThumbnail
+          fileUrl={doc.value}
+          label={CLIENT_DOCUMENT_TYPES[docType]}
+          isDarkMode={isDarkMode}
+        />
         <Box sx={{ mt: 2 }}>
           <Box display="flex" alignItems="center" gap={1} mb={1}>
             <CheckCircle color="success" fontSize="small" />
@@ -98,7 +100,6 @@ function DocumentCard({
     </Grid>
   );
 }
-
 export default function ClientsDocumentsTab({
   clientDetails,
   documentsTab,
@@ -110,19 +111,15 @@ export default function ClientsDocumentsTab({
   onEditKafeelDocuments,
   onDownloadFile,
   onShareFile,
-  renderFileThumbnail,
 }) {
   if (!clientDetails) return null;
-
   const client = clientDetails.client;
   const hasKafeel =
     (clientDetails.kafeels && clientDetails.kafeels.length > 0) ||
     clientDetails.kafeel;
-
   const processClientDocuments = () => {
     const clientGeneralDocs = [];
     const loanDocsById = {};
-
     clientDetails.documents?.forEach((doc, docIndex) => {
       Object.entries(doc).forEach(([key, value]) => {
         if (value && key !== "loanId") {
@@ -144,12 +141,9 @@ export default function ClientsDocumentsTab({
         }
       });
     });
-
     return { clientGeneralDocs, loanDocsById };
   };
-
   const { clientGeneralDocs, loanDocsById } = processClientDocuments();
-
   return (
     <Box>
       <Tabs
@@ -168,7 +162,6 @@ export default function ClientsDocumentsTab({
         <Tab label="مرفقات العميل" />
         {hasKafeel && <Tab label="مرفقات الكفيل" />}
       </Tabs>
-
       {documentsTab === 0 && (
         <Box>
           {clientDetails.documents && clientDetails.documents.length > 0 ? (
@@ -207,7 +200,6 @@ export default function ClientsDocumentsTab({
                         permissions={permissions}
                         onDownload={onDownloadFile}
                         onShare={onShareFile}
-                        renderFileThumbnail={renderFileThumbnail}
                       />
                     ))}
                   </Grid>
@@ -245,7 +237,6 @@ export default function ClientsDocumentsTab({
                               permissions={permissions}
                               onDownload={onDownloadFile}
                               onShare={onShareFile}
-                              renderFileThumbnail={renderFileThumbnail}
                             />
                           ))}
                         </Grid>
@@ -287,7 +278,6 @@ export default function ClientsDocumentsTab({
           )}
         </Box>
       )}
-
       {documentsTab === 1 && (
         <Box>
           {clientDetails.kafeels && clientDetails.kafeels.length > 0 ? (
@@ -305,7 +295,6 @@ export default function ClientsDocumentsTab({
                     label: "بطاقة عمل الكفيل",
                   },
                 ].filter((doc) => doc.value);
-
                 return (
                   <Box key={kafeel.id || kafeelIndex}>
                     <Box
@@ -351,7 +340,11 @@ export default function ClientsDocumentsTab({
                               }}
                               elevation={2}
                             >
-                              {renderFileThumbnail(doc.value, doc.label)}
+                              <FileThumbnail
+                                fileUrl={doc.value}
+                                label={doc.label}
+                                isDarkMode={isDarkMode}
+                              />
                               <Box sx={{ mt: 2 }}>
                                 <Box
                                   display="flex"
@@ -490,10 +483,11 @@ export default function ClientsDocumentsTab({
                               }}
                               elevation={2}
                             >
-                              {renderFileThumbnail(
-                                value,
-                                KAFEEL_DOCUMENT_TYPES[key]
-                              )}
+                              <FileThumbnail
+                                fileUrl={value}
+                                label={KAFEEL_DOCUMENT_TYPES[key]}
+                                isDarkMode={isDarkMode}
+                              />
                               <Box sx={{ mt: 2 }}>
                                 <Box
                                   display="flex"
@@ -585,4 +579,4 @@ export default function ClientsDocumentsTab({
       )}
     </Box>
   );
-}
+}

@@ -9,7 +9,6 @@ import {
   Button,
   Alert,
 } from "@mui/material";
-
 const PartialPaymentModal = ({
   open,
   onClose,
@@ -20,72 +19,57 @@ const PartialPaymentModal = ({
 }) => {
   const [amountError, setAmountError] = useState("");
   const [touched, setTouched] = useState(false);
-
   useEffect(() => {
     if (open) {
       setAmountError("");
       setTouched(false);
     }
   }, [open]);
-
   const validateAmount = (value) => {
     if (!value || value.trim() === "") {
       return "مبلغ الدفع مطلوب";
     }
-
     const amount = parseFloat(value);
     if (isNaN(amount)) {
       return "يرجى إدخال مبلغ صحيح";
     }
-
     if (amount <= 0) {
       return "مبلغ الدفع يجب أن يكون أكبر من صفر";
     }
-
     const remaining = selectedActionInstallment?.remaining || 0;
     if (amount > remaining) {
       return `مبلغ الدفع يجب أن يكون أقل من أو يساوي المبلغ المتبقي (${remaining.toFixed(2)} ريال)`;
     }
-
     if (remaining > 1 && amount < 1) {
       return "مبلغ الدفع الجزئي يجب أن يكون على الأقل 1 ريال";
     }
-
     return "";
   };
-
   const handleAmountChange = (e) => {
     const value = e.target.value;
-
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       onAmountChange(e);
-      
       if (amountError) {
         setAmountError("");
       }
     }
   };
-
   const handleAmountBlur = () => {
     setTouched(true);
     const error = validateAmount(paidAmount);
     setAmountError(error);
   };
-
   const handleConfirm = () => {
     setTouched(true);
     const error = validateAmount(paidAmount);
     setAmountError(error);
-
     if (!error) {
       onConfirm();
     }
   };
-
   const remainingAmount = selectedActionInstallment?.remaining || 0;
   const paidAmountNum = parseFloat(paidAmount) || 0;
   const remainingAfterPayment = Math.max(0, remainingAmount - paidAmountNum);
-
   return (
     <Dialog
       maxWidth="md"
@@ -98,20 +82,17 @@ const PartialPaymentModal = ({
           الدفعة: #{selectedActionInstallment?.count} - المبلغ الأصلي:{" "}
           {selectedActionInstallment?.amount?.toFixed(2)} ريال
         </Typography>
-
         <Typography variant="body2" color="primary" fontWeight="bold" mb={1}>
           المبلغ المتبقي الحالي: {remainingAmount.toFixed(2)} ريال
         </Typography>
         <Typography variant="body2" color="text.secondary" mb={2}>
           المبلغ المتبقي بعد الدفع: <strong>{remainingAfterPayment.toFixed(2)}</strong> ريال
         </Typography>
-
         {touched && amountError && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {amountError}
           </Alert>
         )}
-
         <TextField
           fullWidth
           type="number"
@@ -156,5 +137,4 @@ const PartialPaymentModal = ({
     </Dialog>
   );
 };
-
 export default PartialPaymentModal;

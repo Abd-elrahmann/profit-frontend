@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search, Notifications, Help } from '@mui/icons-material';
-
 const GeneralLedgerHeader = () => (
   <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 md:px-8 py-4 flex items-center justify-between sticky top-0 z-10">
     <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">دفتر الأستاذ العام</h2>
@@ -35,5 +34,4 @@ const GeneralLedgerHeader = () => (
     </div>
   </header>
 );
-
 export default React.memo(GeneralLedgerHeader);

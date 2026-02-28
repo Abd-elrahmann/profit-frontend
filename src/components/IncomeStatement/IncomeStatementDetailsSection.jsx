@@ -25,29 +25,24 @@ import {
   negformatCapitalNumber,
   getChipColor,
 } from './incomeStatementUtils';
-
 const accordionSx = (theme, color) => ({
   mb: 2,
   borderRadius: 2,
   '&:before': { display: 'none' },
   boxShadow: theme.palette.mode === 'dark' ? '0 1px 3px rgba(255,255,255,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
 });
-
 const summarySx = (theme, color) => ({
   bgcolor: theme.palette[color].main + '08',
   borderRadius: 2,
   '&:hover': { bgcolor: theme.palette[color].main + '12' },
 });
-
 const IncomeStatementDetailsSection = ({ incomeData, isSmallScreen = false }) => {
   const theme = useTheme();
-
   const accordionSummarySx = (color) => ({
     ...summarySx(theme, color),
     flexDirection: isSmallScreen ? 'column' : 'row',
     alignItems: isSmallScreen ? 'flex-start' : 'center',
   });
-
   return (
     <Box sx={{ mb: 3, overflowX: 'auto' }}>
       <Typography
@@ -74,8 +69,7 @@ const IncomeStatementDetailsSection = ({ incomeData, isSmallScreen = false }) =>
       >
         تفاصيل مصادر الدخل والمصروفات - اضغط على أي قسم لرؤية التفاصيل الكاملة
       </Typography>
-
-      {/* Capital Section */}
+      {}
       <Accordion defaultExpanded={false} sx={accordionSx(theme, 'primary')}>
         <AccordionSummary expandIcon={<ExpandMore />} sx={accordionSummarySx('primary')}>
           <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', alignItems: isSmallScreen ? 'flex-start' : 'center', width: '100%', gap: isSmallScreen ? 1 : 0 }}>
@@ -160,8 +154,7 @@ const IncomeStatementDetailsSection = ({ incomeData, isSmallScreen = false }) =>
           )}
         </AccordionDetails>
       </Accordion>
-
-      {/* Revenue Section */}
+      {}
       <Accordion defaultExpanded={true} sx={accordionSx(theme, 'success')}>
         <AccordionSummary expandIcon={<ExpandMore />} sx={accordionSummarySx('success')}>
           <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', alignItems: isSmallScreen ? 'flex-start' : 'center', width: '100%', gap: isSmallScreen ? 1 : 0 }}>
@@ -287,8 +280,7 @@ const IncomeStatementDetailsSection = ({ incomeData, isSmallScreen = false }) =>
           </Box>
         </AccordionDetails>
       </Accordion>
-
-      {/* Expenses Section */}
+      {}
       <Accordion defaultExpanded={true} sx={accordionSx(theme, 'error')}>
         <AccordionSummary expandIcon={<ExpandMore />} sx={accordionSummarySx('error')}>
           <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', alignItems: isSmallScreen ? 'flex-start' : 'center', width: '100%', gap: isSmallScreen ? 1 : 0 }}>
@@ -370,5 +362,4 @@ const IncomeStatementDetailsSection = ({ incomeData, isSmallScreen = false }) =>
     </Box>
   );
 };
-
-export default React.memo(IncomeStatementDetailsSection);
+export default React.memo(IncomeStatementDetailsSection);

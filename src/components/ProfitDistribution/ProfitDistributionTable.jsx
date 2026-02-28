@@ -18,7 +18,6 @@ import {
   formatArabicDate,
   hasDistribution,
 } from "./profitDistributionUtils";
-
 export default function ProfitDistributionTable({
   closedPeriods,
   isLoading,
@@ -169,4 +168,4 @@ export default function ProfitDistributionTable({
       </Table>
     </TableContainer>
   );
-}
+}

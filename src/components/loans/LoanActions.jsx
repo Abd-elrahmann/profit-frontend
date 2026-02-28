@@ -7,7 +7,6 @@ import {
   Alert,
   Button,
 } from "@mui/material";
-
 const LoanActions = ({
   isViewMode,
   selectedLoan,
@@ -58,7 +57,6 @@ const LoanActions = ({
             >
               تأكيد نقل المديونيه
             </Button>
-
             <Button
               variant="outlined"
               onClick={onCancelConversion}
@@ -77,7 +75,6 @@ const LoanActions = ({
             </Button>
           </>
         )}
-
         {isViewMode && selectedLoan?.status === "ACTIVE" && (
           <Alert
             severity="warning"
@@ -96,7 +93,6 @@ const LoanActions = ({
             لا يمكنك تعديل هذه السلفة لأنها في حالة نشطة. للتعديل يجب إلغاء تفعيل السلفة أولاً.
           </Alert>
         )}
-
         {!isViewMode && !isClientConversion && (
           <Button
             variant="contained"
@@ -114,7 +110,6 @@ const LoanActions = ({
             {isClientConversion ? "تأكيد نقل المديونيه" : isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
           </Button>
         )}
-
         {isViewMode && canEditLoan && (
           <Button
             variant="contained"
@@ -131,7 +126,6 @@ const LoanActions = ({
             تعديل السلفة
           </Button>
         )}
-
         {!isClientConversion && (
           <Button
             variant="outlined"
@@ -150,7 +144,6 @@ const LoanActions = ({
             معاينة العقود
           </Button>
         )}
-
         {isEditMode && (
           <Button
             variant="outlined"
@@ -172,5 +165,4 @@ const LoanActions = ({
     </Paper>
   );
 };
-
 export default LoanActions;

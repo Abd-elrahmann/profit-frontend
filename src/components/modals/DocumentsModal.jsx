@@ -15,7 +15,6 @@ import {
   Download,
 } from "@mui/icons-material";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-
 const downloadFile = async (url, filename) => {
   try {
     const response = await fetch(url);
@@ -37,25 +36,20 @@ const downloadFile = async (url, filename) => {
     notifyError('حدث خطأ أثناء تحميل الملف');
   }
 };
-
 const extractFileName = (url) => {
   if (!url) return "ملف غير معروف";
-
   if (Array.isArray(url)) {
     if (url.length === 0) return "ملف غير معروف";
     url = url[0];
   }
-
   const parts = url.split("/");
   const encodedFileName = parts[parts.length - 1] || "ملف غير معروف";
-
   try {
     return decodeURIComponent(encodedFileName);
   } catch {
     return encodedFileName;
   }
 };
-
 const DocumentsModal = ({
   open,
   onClose,
@@ -109,12 +103,10 @@ const DocumentsModal = ({
                             const response = await fetch(attachment);
                             const blob = await response.blob();
                             const url = URL.createObjectURL(blob);
-
                             const iframe = document.createElement('iframe');
                             iframe.style.display = 'none';
                             iframe.src = url;
                             document.body.appendChild(iframe);
-
                             iframe.onload = () => {
                               iframe.contentWindow.print();
                               setTimeout(() => {
@@ -139,7 +131,6 @@ const DocumentsModal = ({
                             const response = await fetch(attachment);
                             const blob = await response.blob();
                             const file = new File([blob], extractFileName(attachment), { type: blob.type });
-
                             if (navigator.share && navigator.canShare({ files: [file] })) {
                               await navigator.share({
                                 title: extractFileName(attachment),
@@ -190,7 +181,6 @@ const DocumentsModal = ({
               )}
             </Box>
           )}
-
         {selectedDocumentsInstallment?.PaymentProof && (
           <Box>
             <Typography variant="h6" gutterBottom>
@@ -225,12 +215,10 @@ const DocumentsModal = ({
                       const response = await fetch(selectedDocumentsInstallment.PaymentProof);
                       const blob = await response.blob();
                       const url = URL.createObjectURL(blob);
-
                       const iframe = document.createElement('iframe');
                       iframe.style.display = 'none';
                       iframe.src = url;
                       document.body.appendChild(iframe);
-
                       iframe.onload = () => {
                         iframe.contentWindow.print();
                         setTimeout(() => {
@@ -255,7 +243,6 @@ const DocumentsModal = ({
                       const response = await fetch(selectedDocumentsInstallment.PaymentProof);
                       const blob = await response.blob();
                       const file = new File([blob], extractFileName(selectedDocumentsInstallment.PaymentProof), { type: blob.type });
-
                       if (navigator.share && navigator.canShare({ files: [file] })) {
                         await navigator.share({
                           title: extractFileName(selectedDocumentsInstallment.PaymentProof),
@@ -307,7 +294,6 @@ const DocumentsModal = ({
             </Box>
           </Box>
         )}
-
         {(!selectedDocumentsInstallment?.attachments ||
           selectedDocumentsInstallment.attachments.length === 0) &&
           !selectedDocumentsInstallment?.PaymentProof && (
@@ -327,5 +313,4 @@ const DocumentsModal = ({
     </Dialog>
   );
 };
-
 export default DocumentsModal;

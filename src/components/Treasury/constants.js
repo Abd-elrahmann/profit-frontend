@@ -1,5 +1,4 @@
 export const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
 export const ALL_MONTHS = [
   { value: 1, label: 'يناير' },
   { value: 2, label: 'فبراير' },
@@ -14,7 +13,6 @@ export const ALL_MONTHS = [
   { value: 11, label: 'نوفمبر' },
   { value: 12, label: 'ديسمبر' },
 ];
-
 export const getYears = () => {
   const maxYear = new Date().getFullYear();
   const years = [];
@@ -22,4 +20,4 @@ export const getYears = () => {
     years.push({ value: year, label: year.toString() });
   }
   return years;
-};
+};

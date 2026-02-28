@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Paper, useMediaQuery, useTheme, FormControl, Select, MenuItem } from '@mui/material';
+import { Box, Paper, useMediaQuery, useTheme } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import {
@@ -15,24 +15,19 @@ import {
   useClientCollectionsData,
   AVAILABLE_COLUMNS,
 } from '../../components/ClientCollections';
-
 const ClientCollections = () => {
   const [clientsTab, setClientsTab] = useState(0);
   const [columns, setColumns] = useState(AVAILABLE_COLUMNS);
   const [anchorEl, setAnchorEl] = useState(null);
-
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
   const { permissions } = usePermissions();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-
   const { data: clientsData, isLoading: isClientsLoading } = useClientCollectionsData(clientsTab);
-
   const handleColumnMenuClick = (e) => setAnchorEl(e.currentTarget);
   const handleColumnMenuClose = () => setAnchorEl(null);
-
   const handleColumnToggle = useCallback((columnId) => {
     setColumns((prev) =>
       prev.map((col) =>
@@ -40,20 +35,16 @@ const ClientCollections = () => {
       )
     );
   }, []);
-
   const handleSelectAllColumns = useCallback(() => {
     setColumns((prev) => prev.map((col) => ({ ...col, show: true })));
   }, []);
-
   const handleDeselectAllColumns = useCallback(() => {
     setColumns((prev) =>
       prev.map((col) => (col.required ? col : { ...col, show: false }))
     );
   }, []);
-
   const status = clientsTab === 0 ? 'ACTIVE' : 'COMPLETE';
   const visibleColumns = columns.filter((col) => col.show);
-
   const handleExportPDF = useCallback(async () => {
     try {
       await exportClientCollectionsToPDF(clientsData, status, visibleColumns);
@@ -63,7 +54,6 @@ const ClientCollections = () => {
       notifyError('حدث خطأ أثناء تصدير ملف PDF');
     }
   }, [clientsData, status, visibleColumns]);
-
   const handleExportExcel = useCallback(async () => {
     try {
       await exportClientCollectionsToExcel(clientsData, status, visibleColumns);
@@ -73,7 +63,6 @@ const ClientCollections = () => {
       notifyError('حدث خطأ أثناء تصدير ملف Excel');
     }
   }, [clientsData, status, visibleColumns]);
-
   const handlePrint = useCallback(async () => {
     try {
       await printClientCollections(clientsData, status, visibleColumns);
@@ -82,10 +71,8 @@ const ClientCollections = () => {
       notifyError('حدث خطأ أثناء الطباعة');
     }
   }, [clientsData, status, visibleColumns]);
-
   const hasExportPermission = permissions.includes('client-report_Export');
   const hasData = Boolean(clientsData?.data?.length);
-
   return (
     <Box
       sx={{
@@ -99,7 +86,6 @@ const ClientCollections = () => {
         <title>كشف تحصيل العملاء</title>
         <meta name="description" content="إدارة تحصيل العملاء والمستحقات" />
       </Helmet>
-
       <Box
         sx={{
           flex: 1,
@@ -118,27 +104,11 @@ const ClientCollections = () => {
                 gap: 2,
               }}
             >
-              {isSmallScreen ? (
-                <Box sx={{ width: '100%', maxWidth: 320, alignSelf: 'center' }}>
-                  <FormControl fullWidth size="small">
-                    <Select
-                      value={clientsTab}
-                      onChange={(e) => setClientsTab(e.target.value)}
-                      sx={{ "& .MuiSelect-select": { textAlign: "center", py: 1.25 } }}
-                    >
-                      <MenuItem value={0}>النشط</MenuItem>
-                      <MenuItem value={1}>المكتمل</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              ) : (
-                <ClientCollectionsTabs
-                  value={clientsTab}
-                  onChange={setClientsTab}
-                  isSmallScreen={false}
-                />
-              )}
-
+              <ClientCollectionsTabs
+                value={clientsTab}
+                onChange={setClientsTab}
+                isSmallScreen={isSmallScreen}
+              />
               <ClientCollectionsToolbar
                 isSmallScreen={isSmallScreen}
                 hasExportPermission={hasExportPermission}
@@ -157,7 +127,6 @@ const ClientCollections = () => {
               />
             </Box>
           </Box>
-
           <Paper
             sx={{
               flex: 1,
@@ -178,5 +147,4 @@ const ClientCollections = () => {
     </Box>
   );
 };
-
 export default ClientCollections;

@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { Delete, Close } from "@mui/icons-material";
-
 const DeleteModal = ({
   open,
   onClose,
@@ -88,5 +87,4 @@ const DeleteModal = ({
     </Dialog>
   );
 };
-
 export default DeleteModal;

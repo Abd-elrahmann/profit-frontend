@@ -3,8 +3,6 @@ import { Box, Typography, Stepper, Step, StepLabel, Alert, Divider } from '@mui/
 import { Download, Share as ShareIcon } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import { extractFileName, hasFiles } from './installmentsUtils';
-import { downloadFile, handleShareFile } from './installmentsUtils';
-
 export default function InstallmentsReviewSteps({
   activeStep,
   steps,
@@ -19,13 +17,11 @@ export default function InstallmentsReviewSteps({
     2: 'تم إتمام العملية بنجاح',
   };
   const stepSeverity = { 0: 'info', 1: 'warning', 2: 'success' };
-
   return (
     <Box>
       <Typography variant="h6" fontWeight="bold" mb={2}>
         خطوات المراجعة
       </Typography>
-
       <Stepper orientation="vertical" activeStep={activeStep} sx={{ mb: 2 }}>
         {steps.map((label, index) => (
           <Step key={index}>
@@ -33,31 +29,25 @@ export default function InstallmentsReviewSteps({
           </Step>
         ))}
       </Stepper>
-
       <Divider sx={{ my: 2 }} />
-
       {activeInstallmentId ? (
         <Box>
           <Typography variant="body2" color="text.secondary" mb={1}>
             الدفعة المحددة: #{selectedInstallment?.count}
           </Typography>
-
           {selectedInstallment && (
             <Typography variant="body2" color="text.secondary" mb={2}>
               المبلغ: {selectedInstallment.amount?.toFixed(2)}
             </Typography>
           )}
-
           <Alert severity={stepSeverity[activeStep]} sx={{ mb: 2 }}>
             {stepMessages[activeStep]}
           </Alert>
-
           {hasFiles(selectedInstallment) ? (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2" gutterBottom>
                 الملفات المرفوعة:
               </Typography>
-
               {selectedInstallment?.attachments && selectedInstallment.attachments.length > 0 && (
                 <Box
                   sx={{
@@ -101,7 +91,6 @@ export default function InstallmentsReviewSteps({
                   ))}
                 </Box>
               )}
-
               {selectedInstallment?.RepaymentPayment?.length > 0 && (
                 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
                   <Typography variant="body2" fontWeight="bold" gutterBottom>
@@ -164,4 +153,4 @@ export default function InstallmentsReviewSteps({
       )}
     </Box>
   );
-}
+}

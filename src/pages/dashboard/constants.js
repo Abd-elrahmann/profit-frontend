@@ -1,5 +1,4 @@
 import React from 'react';
-
 export const DASHBOARD_MODULES = [
   'client-stats',
   'partner-stats',
@@ -9,7 +8,6 @@ export const DASHBOARD_MODULES = [
   'Upcoming-Repayments',
   'Last-Actions',
 ];
-
 export const DASHBOARD_TABS = [
   { label: 'إحصائيات العملاء', permission: 'client-stats', index: 0, Component: React.lazy(() => import('../../components/dashboardSections/ClientStats')) },
   { label: 'إحصائيات الشركاء', permission: 'partner-stats', index: 1, Component: React.lazy(() => import('../../components/dashboardSections/PartnerStats')) },
@@ -19,6 +17,4 @@ export const DASHBOARD_TABS = [
   { label: 'الدفعات القادمة', permission: 'Upcoming-Repayments', index: 5, Component: React.lazy(() => import('../../components/dashboardSections/UpcomingRepayments')) },
   { label: 'آخر الأنشطة', permission: 'Last-Actions', index: 6, Component: React.lazy(() => import('../../components/dashboardSections/LastActions')) },
 ];
-
-/** عرض موحد للمحتوى - يستخدم في كل أقسام الداشبورد */
-export const DASHBOARD_CONTENT_MAX_WIDTH = 1200;
+export const DASHBOARD_CONTENT_MAX_WIDTH = 1200;

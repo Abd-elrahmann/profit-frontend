@@ -14,7 +14,6 @@ import {
   TextField,
 } from "@mui/material";
 import { FaExchangeAlt } from "react-icons/fa";
-
 const LoanConversionConfirmModal = ({
   open,
   onClose,
@@ -34,7 +33,6 @@ const LoanConversionConfirmModal = ({
   const [localPartialAmount, setLocalPartialAmount] = useState(partialAmount || "");
   const [localPaymentAmount, setLocalPaymentAmount] = useState(paymentAmount || "");
   const [localRepaymentDay, setLocalRepaymentDay] = useState(repaymentDay || "");
-
   useEffect(() => {
     if (open) {
       if (transferType === "partial") {
@@ -44,7 +42,6 @@ const LoanConversionConfirmModal = ({
       setLocalRepaymentDay(repaymentDay || "");
     }
   }, [open, partialAmount, transferType, paymentAmount, repaymentDay]);
-
   const handlePartialAmountChange = (value) => {
     const numericValue = value.replace(/,/g, "");
     if (!isNaN(numericValue) && numericValue >= 0) {
@@ -55,7 +52,6 @@ const LoanConversionConfirmModal = ({
       }
     }
   };
-
   const handlePaymentAmountChange = (value) => {
     const numericValue = value.replace(/,/g, "");
     if (!isNaN(numericValue) && numericValue >= 0) {
@@ -63,20 +59,14 @@ const LoanConversionConfirmModal = ({
       setLocalPaymentAmount(formatted);
     }
   };
-
   const handleRepaymentDayChange = (value) => {
     setLocalRepaymentDay(value);
   };
-
   const isPartialValid = transferType === "full" || (localPartialAmount && parseFloat(localPartialAmount.replace(/,/g, "")) > 0);
-
   const referenceAmount = parseFloat(String(remainingAmount || "0").replace(/,/g, ""));
-
   const actualRemainingAmount = transferType === "partial" && localPartialAmount
     ? referenceAmount - parseFloat(localPartialAmount.replace(/,/g, ""))
     : referenceAmount;
-
-
   return (
     <Dialog
       open={open}
@@ -92,7 +82,6 @@ const LoanConversionConfirmModal = ({
           </Typography>
         </Box>
       </DialogTitle>
-
       <DialogContent>
         <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Alert severity="warning" sx={{ mb: 3, maxWidth: 500, width: '100%' }}>
@@ -106,7 +95,6 @@ const LoanConversionConfirmModal = ({
               }
             </Typography>
           </Alert>
-
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2, mb: 3, flexWrap: "wrap" }}>
             <Paper
               sx={{
@@ -146,11 +134,9 @@ const LoanConversionConfirmModal = ({
                 </Grid>
               </Grid>
             </Paper>
-
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: 1 }}>
               <FaExchangeAlt size={32} color="#1976d2" />
             </Box>
-
             <Paper
               sx={{
                 p: 2,
@@ -190,7 +176,6 @@ const LoanConversionConfirmModal = ({
               </Grid>
             </Paper>
           </Box>
-
           {selectedKafeel && (
             <Paper
               sx={{
@@ -231,7 +216,6 @@ const LoanConversionConfirmModal = ({
               </Grid>
             </Paper>
           )}
-
           {transferType === "partial" && (
             <Paper
               sx={{
@@ -239,7 +223,6 @@ const LoanConversionConfirmModal = ({
                 mb: 2,
                 minWidth: 800,
                 maxWidth: 800,
-
               }}
             >
               <Typography
@@ -269,7 +252,6 @@ const LoanConversionConfirmModal = ({
               </Grid>
             </Paper>
           )}
-
           <Paper
             sx={{
               p: 2,
@@ -315,7 +297,6 @@ const LoanConversionConfirmModal = ({
               </Grid>
             </Grid>
           </Paper>
-              
           <Alert severity="info" sx={{ minWidth: 800, maxWidth: 800, width: '100%' }}>
             <Typography variant="body2" fontWeight="bold" mb={1}>
               ملاحظات مهمة:
@@ -337,7 +318,6 @@ const LoanConversionConfirmModal = ({
           </Alert>
         </Box>
       </DialogContent>
-
       <DialogActions
         sx={{
           display: "flex",
@@ -380,5 +360,4 @@ const LoanConversionConfirmModal = ({
     </Dialog>
   );
 };
-
-export default LoanConversionConfirmModal;
+export default LoanConversionConfirmModal;

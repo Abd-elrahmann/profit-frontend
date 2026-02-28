@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Box,
@@ -26,10 +25,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getLogs } from "../../pages/logs/logsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import dayjs from "dayjs";
-
 const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
   const [page, setPage] = useState(1);
-
   const { data: logsData, isLoading } = useQuery({
     queryKey: ["logs", page, userId],
     queryFn: () => getLogs(page, { 
@@ -37,11 +34,9 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
     }),
     enabled: open,
   });
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
   };
-  
   const getActionText = (action) => {
     switch (action) {
       case "CREATE":
@@ -62,7 +57,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
         return action;
     }
   };
-
   const getActionColor = (action) => {
     switch (action) {
       case "CREATE":
@@ -81,7 +75,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
         return "default";
     }
   };
-
   const getScreenText = (screen) => {
     const screenTranslations = {
       "Auth": "المصادقة",
@@ -97,7 +90,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
     };
     return screenTranslations[screen] || screen;
   };
-
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
       <Table stickyHeader sx={{ width: "100%" }}>
@@ -173,7 +165,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
       </Table>
     </TableContainer>
   );
-
   const renderCards = () => (
     <Box sx={{ p: 1 }}>
       {isLoading ? (
@@ -201,9 +192,7 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
                         {log.user?.email}
                       </Typography>
                     </Box>
-
                     <Divider />
-
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Chip
                         label={getActionText(log.action)}
@@ -214,7 +203,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
                         {getScreenText(log.screen)}
                       </Typography>
                     </Box>
-
                     <Box>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                         الوصف:
@@ -223,7 +211,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
                         {log.description}
                       </Typography>
                     </Box>
-
                     <Typography variant="caption" color="textSecondary" align="center">
                       {dayjs(log.createdAt).format("DD/MM/YYYY HH:mm")}
                     </Typography>
@@ -236,7 +223,6 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
       )}
     </Box>
   );
-
   return (
     <Dialog 
       open={open} 
@@ -267,13 +253,11 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
           </IconButton>
         </Box>
       </DialogTitle>
-      
       <DialogContent sx={{ p: 0 }}>
         <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
           <Paper sx={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 0 }}>
             {isMobile ? renderCards() : renderTable()}
           </Paper>
-      
           {logsData && (
             <TablePagination
               component="div"
@@ -302,5 +286,4 @@ const LogsTable = ({ open, onClose, userId, userName, isMobile = false }) => {
     </Dialog>
   );
 };
-
 export default LogsTable;

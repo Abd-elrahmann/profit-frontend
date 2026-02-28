@@ -1,7 +1,6 @@
 import React from "react";
 import { Search } from "lucide-react";
 import { FormControl, Select, MenuItem } from "@mui/material";
-
 const LoanTabs = ({
   activeTab,
   setActiveTab,
@@ -21,7 +20,6 @@ const LoanTabs = ({
       resetLoanForm();
     }
   };
-
   const tabs = [
     { actualIndex: 0, label: "جميع السلفات" },
     ...(permissions.includes("loans_Add")
@@ -43,10 +41,9 @@ const LoanTabs = ({
     { actualIndex: 2, label: "إنشاء سلفة بدون فائدة" },
     { actualIndex: 3, label: "عرض السلفات بدون فائدة" },
   ];
-
   return (
     <div className={`mb-4 ${isSmallScreen ? "mb-4" : "mb-8"}`}>
-      {/* Tabs row */}
+      {}
       {isSmallScreen ? (
         <div className="flex justify-center px-4 py-2">
           <FormControl size="small" sx={{ minWidth: 220, maxWidth: "100%" }} fullWidth>
@@ -85,8 +82,7 @@ const LoanTabs = ({
           })}
         </div>
       )}
-
-      {/* Search row - below tabs */}
+      {}
       {activeTab === 0 && (
         <div className="px-4 pt-4">
           <div className={`relative ${isSmallScreen ? "w-full" : "inline-flex items-center"}`}>
@@ -106,5 +102,4 @@ const LoanTabs = ({
     </div>
   );
 };
-
-export default LoanTabs;
+export default LoanTabs;

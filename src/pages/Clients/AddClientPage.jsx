@@ -4,12 +4,10 @@ import { Box, Breadcrumbs, Link, Typography, Paper } from '@mui/material';
 import { NavigateNext, Home, People, PersonAdd } from '@mui/icons-material';
 import AddClientForm from '../../components/forms/AddClientForm';
 import { Helmet } from 'react-helmet-async';
-
 const AddClientPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('returnTo');
-
   const handleSuccess = () => {
     if (returnTo === 'loans') {
       navigate('/loans');
@@ -17,7 +15,6 @@ const AddClientPage = () => {
       navigate('/clients');
     }
   };
-
   const handleCancel = () => {
     if (returnTo === 'loans') {
       navigate('/loans');
@@ -25,14 +22,12 @@ const AddClientPage = () => {
       navigate('/clients');
     }
   };
-
   return (
     <Box sx={{ p: 3 }} dir="rtl">
       <Helmet>
         <title>إضافة عميل جديد - النظام المالي</title>
       </Helmet>
-
-      {/* Breadcrumb */}
+      {}
       <Breadcrumbs
         separator={<NavigateNext fontSize="small" />}
         sx={{ mb: 3 }}
@@ -59,7 +54,6 @@ const AddClientPage = () => {
           إضافة عميل
         </Typography>
       </Breadcrumbs>
-
       <Paper
         sx={{
           p: { xs: 2, md: 4 },
@@ -72,5 +66,4 @@ const AddClientPage = () => {
     </Box>
   );
 };
-
-export default AddClientPage;
+export default AddClientPage;

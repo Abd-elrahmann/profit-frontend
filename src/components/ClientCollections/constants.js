@@ -13,8 +13,7 @@ export const AVAILABLE_COLUMNS = [
   { id: 'remaining', label: 'المتبقي', show: true },
   { id: 'note', label: 'ملاحظات', show: true },
 ];
-
 export const TAB_CONFIG = {
-  ACTIVE: { label: 'العملاء المديونين', color: '#d32f2f' },
-  COMPLETE: { label: 'العملاء المسددين', color: '#2e7d32' },
-};
+  ACTIVE: { label: 'العملاء المديونين', shortLabel: 'النشط', color: '#d32f2f' },
+  COMPLETE: { label: 'العملاء المسددين', shortLabel: 'المكتمل', color: '#2e7d32' },
+};

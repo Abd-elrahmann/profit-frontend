@@ -1,21 +1,17 @@
 import React from 'react';
 import { ChevronRight, ChevronLeft } from '@mui/icons-material';
-
 const GeneralLedgerPagination = ({ currentPage, totalPages, onPageChange }) => {
   if (!totalPages || totalPages <= 1) return null;
-
   const pages = [];
   let start = Math.max(1, currentPage - 2);
   let end = Math.min(totalPages, start + 4);
   if (end - start < 4) start = Math.max(1, end - 4);
   for (let p = start; p <= end; p++) pages.push(p);
-
   const showStart = start > 1;
   const showEnd = end < totalPages;
   const showEndDots = end < totalPages - 1;
   const isFirstPage = currentPage <= 1;
   const isLastPage = currentPage >= totalPages;
-
   return (
     <div className="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
       <button
@@ -79,5 +75,4 @@ const GeneralLedgerPagination = ({ currentPage, totalPages, onPageChange }) => {
     </div>
   );
 };
-
-export default React.memo(GeneralLedgerPagination);
+export default React.memo(GeneralLedgerPagination);

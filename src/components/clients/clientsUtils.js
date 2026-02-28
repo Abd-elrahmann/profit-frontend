@@ -1,6 +1,5 @@
 export const getStatusColor = (status) => {
   if (!status) return "default";
-
   const normalized = status.toString().trim();
   switch (normalized.toUpperCase()) {
     case "PENDING":
@@ -26,7 +25,6 @@ export const getStatusColor = (status) => {
       }
   }
 };
-
 export const getStatusText = (status) => {
   switch (status) {
     case "PENDING":
@@ -41,7 +39,6 @@ export const getStatusText = (status) => {
       return status;
   }
 };
-
 export const getTypeText = (type) => {
   switch (type) {
     case "DAILY":
@@ -54,7 +51,6 @@ export const getTypeText = (type) => {
       return type;
   }
 };
-
 export const getSourceText = (source) => {
   switch (source) {
     case "GENERAL":
@@ -67,7 +63,6 @@ export const getSourceText = (source) => {
       return source || "غير محدد";
   }
 };
-
 export const getClientStatusColor = (status) => {
   switch (status) {
     case "الكل":
@@ -82,7 +77,6 @@ export const getClientStatusColor = (status) => {
       return "default";
   }
 };
-
 export const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
@@ -90,22 +84,7 @@ export const formatDate = (dateString) => {
     day: "2-digit",
   });
 };
-
-export const isImageFile = (url) => {
-  if (!url) return false;
-  const imageExtensions = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-    ".bmp",
-    ".svg",
-  ];
-  const lowerUrl = url.toLowerCase();
-  return imageExtensions.some((ext) => lowerUrl.includes(ext));
-};
-
+export { isImageFile } from "../../utilities/fileUtils";
 export const CLIENT_DOCUMENT_TYPES = {
   clientIdImage: "صورة هوية العميل",
   clientWorkCard: "بطاقة عمل العميل",
@@ -115,28 +94,20 @@ export const CLIENT_DOCUMENT_TYPES = {
   PROMISSORY_NOTE: "سند الأمر",
   SETTLEMENT: " تسوية سلفة ",
 };
-
 export const KAFEEL_DOCUMENT_TYPES = {
   kafeelIdImage: "صورة هوية الكفيل",
   kafeelWorkCard: "بطاقة عمل الكفيل",
 };
-
-/**
- * Converts a number to Arabic words (e.g. 11500 -> "احد عشر الف وخمسمائة")
- */
 export const numberToArabicWords = (num) => {
   if (num === null || num === undefined || isNaN(num)) return "صفر";
   const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
   const tens = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
   const teens = ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
   const hundreds = ["", "مائة", "مئتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"];
-
   if (num === 0) return "صفر";
   if (num < 0) return "سالب " + numberToArabicWords(-num);
-
   let result = "";
   let hasThousands = false;
-
   if (num >= 1000000) {
     const millionsPart = Math.floor(num / 1000000);
     if (millionsPart === 1) result += "مليون ";
@@ -145,7 +116,6 @@ export const numberToArabicWords = (num) => {
     else result += numberToArabicWords(millionsPart) + " مليون ";
     num %= 1000000;
   }
-
   if (num >= 1000) {
     const thousandsPart = Math.floor(num / 1000);
     if (thousandsPart === 1) result += "ألف ";
@@ -156,7 +126,6 @@ export const numberToArabicWords = (num) => {
     num %= 1000;
     hasThousands = true;
   }
-
   if (num >= 100) {
     const hundredsPart = Math.floor(num / 100);
     if (hundredsPart > 0) {
@@ -165,7 +134,6 @@ export const numberToArabicWords = (num) => {
     }
     num %= 100;
   }
-
   if (num >= 20) {
     const tensPart = Math.floor(num / 10);
     const onesPart = num % 10;
@@ -178,10 +146,8 @@ export const numberToArabicWords = (num) => {
     if (result.length > 0) result += result.trim().endsWith("و") ? " " : " و ";
     result += ones[num];
   }
-
   return result.trim();
 };
-
 export const getOrdinalText = (num) => {
   const ordinals = [
     "الأولى",
@@ -206,4 +172,4 @@ export const getOrdinalText = (num) => {
     "العشرون",
   ];
   return ordinals[num] || `ال${num + 1}`;
-};
+};

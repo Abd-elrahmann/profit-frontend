@@ -10,19 +10,16 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon, ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
-
 const tabStyles = (isActive) => ({
   fontWeight: "bold",
   borderBottom: isActive ? "3px solid #0d40a5" : "none",
   color: isActive ? "#0d40a5" : "text.primary",
 });
-
 const buttonStyles = {
   borderColor: "#0d40a5",
   color: "#0d40a5",
   "&:hover": { bgcolor: "rgba(13, 64, 165, 0.1)" },
 };
-
 export default function JournalsHeader({
   activeTab,
   onTabChange,
@@ -46,7 +43,6 @@ export default function JournalsHeader({
 }) {
   const hasSearch = Object.keys(searchFilters || {}).length > 0 || searchQuery;
   const canAdd = permissions?.includes("journals_Add");
-
   if (isSmallScreen) {
     return (
       <Box sx={{ mb: 3 }}>
@@ -127,7 +123,6 @@ export default function JournalsHeader({
       </Box>
     );
   }
-
   return (
     <Box
       sx={{
@@ -155,7 +150,6 @@ export default function JournalsHeader({
           sx={tabStyles(activeTab === 1)}
         />
       </Tabs>
-
       {activeTab === 0 && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {canAdd && (
@@ -204,7 +198,6 @@ export default function JournalsHeader({
           )}
         </Box>
       )}
-
       {activeTab === 1 && fromPeriod && (
         <Button
           variant="outlined"

@@ -16,7 +16,6 @@ import {
   Cancel as CancelIcon,
 } from "@mui/icons-material";
 import { formatNumber, formatDate, hasDistribution } from "./profitDistributionUtils";
-
 export default function ProfitDistributionCards({
   closedPeriods,
   isLoading,
@@ -32,7 +31,6 @@ export default function ProfitDistributionCards({
       </Box>
     );
   }
-
   if (closedPeriods?.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
@@ -42,7 +40,6 @@ export default function ProfitDistributionCards({
       </Box>
     );
   }
-
   const cardSx = {
     width: "100%",
     minWidth: "100%",
@@ -63,7 +60,6 @@ export default function ProfitDistributionCards({
     cursor: "pointer",
     minHeight: 280,
   };
-
   const rowSx = {
     display: "flex",
     justifyContent: "space-between",
@@ -71,7 +67,6 @@ export default function ProfitDistributionCards({
     py: 1,
     borderBottom: `1px solid ${theme.palette.divider}`,
   };
-
   return (
     <Box sx={{ width: "100%", py: 2, px: 0, boxSizing: "border-box" }}>
       <Grid container spacing={2} sx={{ width: "100%" }}>
@@ -196,4 +191,4 @@ export default function ProfitDistributionCards({
       </Grid>
     </Box>
   );
-}
+}

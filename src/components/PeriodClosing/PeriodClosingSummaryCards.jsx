@@ -1,13 +1,11 @@
 import React from "react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { calculateJournalTotals, formatNumber } from "./periodClosingUtils.jsx";
-
 export default function PeriodClosingSummaryCards({ periodData }) {
   const journals = periodData?.journals || [];
   const { totalDebit, totalCredit, totalBalance } =
     calculateJournalTotals(journals);
   const balanceColor = totalBalance >= 0 ? "success.main" : "error.main";
-
   const cards = [
     {
       label: "القيود",
@@ -55,7 +53,6 @@ export default function PeriodClosingSummaryCards({ periodData }) {
       color: "success.main",
     },
   ];
-
   return (
     <Grid container spacing={2} mb={3}>
       {cards.map((card) => (
@@ -74,4 +71,4 @@ export default function PeriodClosingSummaryCards({ periodData }) {
       ))}
     </Grid>
   );
-}
+}

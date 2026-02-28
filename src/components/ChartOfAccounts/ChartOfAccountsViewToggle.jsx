@@ -1,6 +1,5 @@
 import React from 'react';
 import { AccountTree, List } from '@mui/icons-material';
-
 const ChartOfAccountsViewToggle = ({ view, onChange, isSmallScreen }) => (
   <div className="dark:bg-slate-800 dark:border-slate-600 p-1 rounded-lg flex gap-1">
     <button
@@ -29,5 +28,4 @@ const ChartOfAccountsViewToggle = ({ view, onChange, isSmallScreen }) => (
     </button>
   </div>
 );
-
 export default React.memo(ChartOfAccountsViewToggle);

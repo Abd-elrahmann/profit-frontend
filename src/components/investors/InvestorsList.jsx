@@ -16,7 +16,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { getStatusText, getStatusColor } from "./investorsUtils";
 import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
-
 const InvestorsList = ({
   investorsData,
   isLoading,
@@ -93,7 +92,6 @@ const InvestorsList = ({
             عرض المنسحبين
           </Button>
         </Box>
-
         <TextField
           placeholder="البحث بالاسم أو رقم الهوية"
           fullWidth
@@ -109,7 +107,6 @@ const InvestorsList = ({
             ),
           }}
         />
-
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
           <Chip
             label="الكل"
@@ -136,7 +133,6 @@ const InvestorsList = ({
             onClick={() => onStatusChange("منسحب")}
           />
         </Box>
-
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
           <Chip
             label="نشط"
@@ -152,7 +148,6 @@ const InvestorsList = ({
           />
         </Box>
       </Box>
-
       {investorsData && !isLoading && investorsData.partners && investorsData.partners.length > 0 && (
         <Box sx={{ p: 2, borderBottom: '1px solid #eee', bgcolor: isDarkMode ? 'background.paper' : '#f9f9f9', flexShrink: 0 }}>
           <Typography variant="body2" color="text.primary" sx={{ mb: 2 }}>
@@ -182,7 +177,6 @@ const InvestorsList = ({
           )}
         </Box>
       )}
-
       <Box ref={listScrollRef} sx={{ flex: 1, overflowY: 'auto' }}>
         {isLoading ? (
           <Box sx={{ p: 2 }}>
@@ -269,7 +263,6 @@ const InvestorsList = ({
                         />
                       </Box>
                     </Box>
-
                     <Box sx={{ mb: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
                         رأس المال الكلي
@@ -278,7 +271,6 @@ const InvestorsList = ({
                         {(investor.capitalAmount + investor.newCapitalAmount + (investor.totalProfit || 0))?.toLocaleString()}
                       </Typography>
                     </Box>
-
                     <Box sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                       <Typography variant="body2" component="div" sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between' }}>
                         <span>رأس مال أصلي:</span>
@@ -327,5 +319,4 @@ const InvestorsList = ({
     </Box>
   );
 };
-
-export default InvestorsList;
+export default InvestorsList;

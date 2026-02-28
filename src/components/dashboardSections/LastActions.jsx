@@ -12,20 +12,16 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getLastActions, getLastActionsStats } from '../../pages/dashboard/dashboardApi';
-
 const LastActions = React.memo(() => {
   const [screenFilter, setScreenFilter] = useState('all');
-
   const { data: actions = [], isLoading, refetch } = useQuery({
     queryKey: ['last-actions', 10, screenFilter],
     queryFn: () => getLastActions(10, screenFilter === 'all' ? undefined : screenFilter),
   });
-
   const { data: stats } = useQuery({
     queryKey: ['last-actions-stats'],
     queryFn: getLastActionsStats,
   });
-
   const formatRelativeTime = (date) => {
     const now = new Date();
     const actionTime = new Date(date);
@@ -33,14 +29,12 @@ const LastActions = React.memo(() => {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
     if (diffMins < 1) return 'الآن';
     if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
     if (diffHours < 24) return `منذ ${diffHours} ساعة`;
     if (diffDays < 7) return `منذ ${diffDays} يوم`;
     return actionTime.toLocaleDateString('ar-SA');
   };
-
   const getActionConfig = (screen) => {
     const configs = {
       Loans: {
@@ -81,7 +75,6 @@ const LastActions = React.memo(() => {
       tagClass: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
     };
   };
-
   const getScreenTitle = (screen) => {
     const map = {
       Loans: 'السلف والطلبات',
@@ -92,7 +85,6 @@ const LastActions = React.memo(() => {
     };
     return map[screen] || screen;
   };
-
   const getActionLabelArabic = (action) => {
     const map = {
       CREATE: 'إنشاء',
@@ -105,7 +97,6 @@ const LastActions = React.memo(() => {
     };
     return map[action] || action;
   };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -113,10 +104,9 @@ const LastActions = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="flex flex-col max-w-[960px] mx-auto">
-      {/* Header */}
+      {}
       <div className="flex flex-wrap justify-between items-end gap-6 mb-8">
         <div className="flex flex-col gap-2">
           <h1 className="text-slate-900 dark:text-white text-3xl md:text-4xl font-black leading-tight">
@@ -157,8 +147,7 @@ const LastActions = React.memo(() => {
           </button>
         </div>
       </div>
-
-      {/* Timeline */}
+      {}
       <div className="relative">
         <div className="absolute right-[19px] top-0 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
         <div className="flex flex-col gap-8">
@@ -216,8 +205,7 @@ const LastActions = React.memo(() => {
             })
           )}
         </div>
-
-        {/* Load More */}
+        {}
         {actions.length > 0 && (
           <div className="mt-12 flex justify-center relative">
             <button
@@ -230,8 +218,7 @@ const LastActions = React.memo(() => {
           </div>
         )}
       </div>
-
-      {/* Footer Summary */}
+      {}
       <div className="mt-16 bg-primary/5 rounded-2xl p-8 border border-primary/10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div className="flex flex-col gap-1">
@@ -255,7 +242,5 @@ const LastActions = React.memo(() => {
     </div>
   );
 });
-
 LastActions.displayName = 'LastActions';
-
-export default LastActions;
+export default LastActions;

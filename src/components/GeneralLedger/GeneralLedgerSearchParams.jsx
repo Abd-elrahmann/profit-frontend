@@ -2,10 +2,8 @@ import React from 'react';
 import { Paper, Grid, Typography, Box, Chip } from '@mui/material';
 import dayjs from 'dayjs';
 import { getAccountTypeArabic } from './generalLedgerUtils';
-
 const GeneralLedgerSearchParams = ({ searchParams, isSmallScreen }) => {
   if (!searchParams) return null;
-
   return (
     <Paper
       sx={{
@@ -49,5 +47,4 @@ const GeneralLedgerSearchParams = ({ searchParams, isSmallScreen }) => {
     </Paper>
   );
 };
-
-export default React.memo(GeneralLedgerSearchParams);
+export default React.memo(GeneralLedgerSearchParams);

@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Tabs, Tab, Typography, InputBase, IconButton } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
-
 export default function PeriodClosingHeader({
   activeTab,
   onTabChange,
@@ -17,7 +16,6 @@ export default function PeriodClosingHeader({
     borderBottom: isActive ? `3px solid ${theme.palette.primary.main}` : "none",
     color: isActive ? theme.palette.primary.main : theme.palette.text.primary,
   });
-
   return isSmallScreen ? (
     <Box sx={{ mb: 3 }}>
       {activeTab === 1 ? (
@@ -66,4 +64,4 @@ export default function PeriodClosingHeader({
       </Tabs>
     </Box>
   );
-}
+}

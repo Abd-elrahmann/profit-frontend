@@ -1,5 +1,4 @@
 import Api, { handleApiError } from '../../config/Api';
-
 export const decodePaymentToken = async (token) => {
   try {
     const response = await Api.post('/api/notifications/decode-token', { token });
@@ -9,7 +8,6 @@ export const decodePaymentToken = async (token) => {
     throw error;
   }
 };
-
 export const getLoanById = async (loanId, page = 1, limit = 10) => {
   try {
     const response = await Api.get(`/api/loans/${loanId}/${page}?limit=${limit}`);
@@ -19,7 +17,6 @@ export const getLoanById = async (loanId, page = 1, limit = 10) => {
     throw error;
   }
 };
-
 export const getRepaymentById = async (repaymentId) => {
   try {
     const response = await Api.get(`/api/repayments/repayment/${repaymentId}`);
@@ -29,15 +26,12 @@ export const getRepaymentById = async (repaymentId) => {
     throw error;
   }
 };
-
 export const uploadAttachment = async (installmentId, files) => {
   try {
     const formData = new FormData();
-    
     files.forEach((file) => {
       formData.append(`file`, file);
     });
-    
     const response = await Api.post(`/api/repayments/upload/${installmentId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -49,12 +43,10 @@ export const uploadAttachment = async (installmentId, files) => {
     throw error;
   }
 };
-
 export const uploadPaymentProof = async (installmentId, file) => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    
     const response = await Api.post(`/api/repayments/PaymentProof/${installmentId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -66,7 +58,6 @@ export const uploadPaymentProof = async (installmentId, file) => {
     throw error;
   }
 };
-
 export const approveRepayment = async (installmentId, amount, reason, discount = 0) => {
   try {
     const response = await Api.patch(`/api/repayments/approve/${installmentId}`, {
@@ -80,7 +71,6 @@ export const approveRepayment = async (installmentId, amount, reason, discount =
     throw error;
   }
 };
-
 export const rejectRepayment = async (installmentId) => {
   try {
     const response = await Api.patch(`/api/repayments/reject/${installmentId}`);
@@ -90,7 +80,6 @@ export const rejectRepayment = async (installmentId) => {
     throw error;
   }
 };
-
 export const postponeRepayment = async (installmentId, newDueDate, reason) => {
   try {
     const response = await Api.patch(`/api/repayments/postpone/${installmentId}`, {
@@ -103,7 +92,6 @@ export const postponeRepayment = async (installmentId, newDueDate, reason) => {
     throw error;
   }
 };
-
 export const markAsPartialPaid = async (installmentId, paidAmount) => {
   try {
     const response = await Api.patch(`/api/repayments/partial-paid/${installmentId}`, {
@@ -115,7 +103,6 @@ export const markAsPartialPaid = async (installmentId, paidAmount) => {
     throw error;
   }
 };
-
 export const earlyPayment = async (loanId, discount = 0) => {
   try {
     const response = await Api.patch(`/api/repayments/early-pay/${loanId}`, {
@@ -127,7 +114,6 @@ export const earlyPayment = async (loanId, discount = 0) => {
     throw error;
   }
 };
-
 export const approveMultipleRepayments = async (repaymentIds, reason) => {
   try {
     const response = await Api.post('/api/repayments/approve-many', {
@@ -140,7 +126,6 @@ export const approveMultipleRepayments = async (repaymentIds, reason) => {
     throw error;
   }
 };
-
 export const rejectMultipleRepayments = async (repaymentIds) => {
   try {
     const response = await Api.post('/api/repayments/reject-many', {

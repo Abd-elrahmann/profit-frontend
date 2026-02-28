@@ -13,7 +13,6 @@ import { useTheme } from '@mui/material/styles';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-
 const formatArabicDate = (date) => {
   return (
     dayjs(date).locale('ar').format('D [من] MMMM [الساعة] h:mm') +
@@ -21,7 +20,6 @@ const formatArabicDate = (date) => {
     (dayjs(date).hour() < 12 ? 'صباحًا' : 'مساءً')
   );
 };
-
 const WithdrawalHistoryTable = ({
   withdrawals,
   totalPages,
@@ -30,7 +28,6 @@ const WithdrawalHistoryTable = ({
   isSmallScreen,
 }) => {
   const theme = useTheme();
-
   if (!withdrawals?.length) {
     return (
       <Box sx={{ p: isSmallScreen ? 2 : 3 }}>
@@ -49,13 +46,11 @@ const WithdrawalHistoryTable = ({
       </Box>
     );
   }
-
   return (
     <Box sx={{ p: isSmallScreen ? 2 : 3 }}>
       <Typography variant="h6" fontWeight="bold" mb={3}>
         سجل السحوبات
       </Typography>
-
       <TableContainer>
         <Table>
           <TableHead>
@@ -100,7 +95,6 @@ const WithdrawalHistoryTable = ({
           </TableBody>
         </Table>
       </TableContainer>
-
       {totalPages > 1 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Pagination count={totalPages} page={currentPage} onChange={onPageChange} color="primary" />
@@ -109,5 +103,4 @@ const WithdrawalHistoryTable = ({
     </Box>
   );
 };
-
-export default React.memo(WithdrawalHistoryTable);
+export default React.memo(WithdrawalHistoryTable);

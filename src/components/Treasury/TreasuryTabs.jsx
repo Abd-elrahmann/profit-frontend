@@ -1,13 +1,11 @@
 import React from 'react';
 import { Box, Tabs, Tab, FormControl, Select, MenuItem } from '@mui/material';
 import { TrendingUp, AccountBalance } from '@mui/icons-material';
-
 const TAB_LABELS = [
   { value: 0, label: 'الصندوق العام' },
   { value: 1, label: 'الصندوق الخاص (رؤوس الأموال الجديدة)' },
   { value: 2, label: 'سجل القيود' },
 ];
-
 export default function TreasuryTabs({ value, onChange, isSmallScreen, isDarkMode }) {
   if (isSmallScreen) {
     return (
@@ -28,7 +26,6 @@ export default function TreasuryTabs({ value, onChange, isSmallScreen, isDarkMod
       </Box>
     );
   }
-
   return (
     <Tabs
       value={value}
@@ -71,4 +68,4 @@ export default function TreasuryTabs({ value, onChange, isSmallScreen, isDarkMod
       />
     </Tabs>
   );
-}
+}

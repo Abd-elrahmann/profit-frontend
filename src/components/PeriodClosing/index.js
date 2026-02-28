@@ -1,3 +1,4 @@
+export { default as PeriodTable } from "./PeriodTable";
 export { default as PeriodClosingHeader } from "./PeriodClosingHeader";
 export { default as PeriodClosingSidebar } from "./PeriodClosingSidebar";
 export { default as PeriodClosingActions } from "./PeriodClosingActions";
@@ -8,4 +9,4 @@ export { default as PeriodClosingJournalsTable } from "./PeriodClosingJournalsTa
 export { default as PeriodClosingJournalsCards } from "./PeriodClosingJournalsCards";
 export { default as PeriodClosingDetails } from "./PeriodClosingDetails";
 export * from "./periodClosingUtils.jsx";
-export * from "./constants";
+export * from "./constants";

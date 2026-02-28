@@ -3,12 +3,10 @@ import { useEffect, useRef, useMemo } from 'react';
 import Api, { handleApiError } from '../../config/Api';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { DASHBOARD_MODULES, DASHBOARD_TABS } from './constants';
-
 export function useDashboardPermissions() {
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
   const prevPermissionsLength = useRef(permissions?.length || 0);
-
   const { data: dashboardPermissions, isLoading: permissionsLoading } = useQuery({
     queryKey: ['dashboard-permissions', permissions?.length || 0],
     queryFn: async () => {
@@ -28,7 +26,6 @@ export function useDashboardPermissions() {
     refetchOnWindowFocus: false,
     enabled: !!permissions?.length,
   });
-
   useEffect(() => {
     const currentLength = permissions?.length || 0;
     if (currentLength !== prevPermissionsLength.current && currentLength > 0) {
@@ -36,7 +33,6 @@ export function useDashboardPermissions() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-permissions'] });
     }
   }, [permissions, queryClient]);
-
   const availableTabs = useMemo(() => {
     if (!dashboardPermissions) return [];
     return DASHBOARD_TABS.filter((tab) =>
@@ -45,6 +41,5 @@ export function useDashboardPermissions() {
       )
     );
   }, [dashboardPermissions]);
-
   return { dashboardPermissions, permissionsLoading, availableTabs };
-}
+}

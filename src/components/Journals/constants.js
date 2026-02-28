@@ -3,4 +3,4 @@ export const JOURNAL_TYPES = [
   { value: "OPENING", label: "افتتاحي" },
   { value: "CLOSING", label: "ختامي" },
   { value: "ADJUSTMENT", label: "تسوية" },
-];
+];

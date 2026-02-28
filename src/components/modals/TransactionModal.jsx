@@ -13,7 +13,6 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-
 const TransactionModal = ({
   isOpen,
   onClose,
@@ -25,14 +24,11 @@ const TransactionModal = ({
 }) => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-
   const validateForm = () => {
     const newErrors = {};
-
     if (!transactionForm.type || transactionForm.type.trim() === "") {
       newErrors.type = "نوع العملية مطلوب";
     }
-
     if (!transactionForm.amount || transactionForm.amount.trim() === "") {
       newErrors.amount = "المبلغ مطلوب";
     } else {
@@ -45,14 +41,11 @@ const TransactionModal = ({
         newErrors.amount = "المبلغ يجب أن يكون أقل من 10,000,000 ريال";
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleInputChange = (field, value) => {
     onInputChange(field, value);
-
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -60,28 +53,23 @@ const TransactionModal = ({
       }));
     }
   };
-
   const handleBlur = (field) => {
     setTouched(prev => ({
       ...prev,
       [field]: true
     }));
   };
-
   const handleSave = () => {
     setTouched({ type: true, amount: true });
-
     if (validateForm()) {
       onSave();
     }
   };
-
   const handleClose = () => {
     setErrors({});
     setTouched({});
     onClose();
   };
-
   return (
     <Dialog
       open={isOpen}
@@ -101,7 +89,6 @@ const TransactionModal = ({
               يرجى تصحيح الأخطاء أدناه قبل الحفظ
             </Alert>
           )}
-
           <FormControl fullWidth size="small" error={touched.type && !!errors.type}>
             <TextField
               select
@@ -119,7 +106,6 @@ const TransactionModal = ({
               <MenuItem value="SAVING_WITHDRAWAL">سحب ادخار</MenuItem>
             </TextField>
           </FormControl>
-
           <TextField
             label="المبلغ (بالريال السعودي)"
             type="number"
@@ -171,5 +157,4 @@ const TransactionModal = ({
     </Dialog>
   );
 };
-
 export default TransactionModal;

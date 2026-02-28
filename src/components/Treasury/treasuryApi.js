@@ -1,5 +1,4 @@
 import Api from '../../config/Api';
-
 export const getBankAccountData = async (
   accountType = 'bank',
   month = null,
@@ -13,11 +12,10 @@ export const getBankAccountData = async (
     params.append('month', formatted);
   }
   params.append('limit', limit.toString());
-
   const queryString = params.toString();
   const endpoint = accountType === 'capital' ? 'NewBank' : 'bank';
   const response = await Api.get(
     `/api/accounts/${endpoint}/${page}${queryString ? `?${queryString}` : ''}`
   );
   return response.data;
-};
+};

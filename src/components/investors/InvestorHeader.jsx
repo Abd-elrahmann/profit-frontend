@@ -15,11 +15,6 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableChartIcon from "@mui/icons-material/TableChart";
-
-/**
- * InvestorHeader Component - Header section with investor info and actions
- * Displays investor name, ID, duration and action buttons
- */
 const InvestorHeader = ({
   investorDetails,
   isMobile = false,
@@ -30,13 +25,9 @@ const InvestorHeader = ({
   onExportMenuClose,
   onExportExcel,
   onExportPDF,
-  
-  // Actions
   onWithdraw,
   onEdit,
   onDelete,
-  
-  // Permissions
   permissions,
 }) => {
   return (
@@ -88,10 +79,9 @@ const InvestorHeader = ({
         )}
         </Box>
       </Box>
-      
-      {/* Action Buttons */}
+      {}
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", justifyContent: 'flex-end' }}>
-        {/* Withdraw/Cancel Withdraw Button */}
+        {}
         {permissions.includes("partners_Add") && (
           <>
             <Button
@@ -123,8 +113,7 @@ const InvestorHeader = ({
                 ? 'إلغاء الانسحاب' 
                 : 'انسحاب المستثمر'}
             </Button>
-            
-            {/* Edit Withdrawal Button */}
+            {}
             {investorDetails?.WithdrawingStatus === 'WITHDRAWING' && (
               <Button
                 variant="outlined"
@@ -143,8 +132,7 @@ const InvestorHeader = ({
                 تعديل مبلغ الانسحاب
               </Button>
             )}
-
-            {/* Delete Button */}
+            {}
             {permissions.includes("partners_Delete") && (
               <Button
                 variant="contained"
@@ -165,8 +153,7 @@ const InvestorHeader = ({
             )}
           </>
         )}
-
-        {/* Export Menu */}
+        {}
         {permissions.includes("partners_Export") && (
           <>
             <Button
@@ -224,5 +211,4 @@ const InvestorHeader = ({
     </Box>
   );
 };
-
-export default InvestorHeader;
+export default InvestorHeader;

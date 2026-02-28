@@ -1,33 +1,18 @@
 import React from 'react';
 import { Box, Button, CircularProgress } from '@mui/material';
-import { PictureAsPdf, TableChart } from '@mui/icons-material';
-
+import { TableChart } from '@mui/icons-material';
 export default function TreasuryExportButtons({
   tab,
   isExporting,
   hasData,
   hasJournals,
-  onExportStatisticsPDF,
   onExportStatisticsExcel,
-  onExportPDF,
   onExportExcel,
   isSmallScreen,
 }) {
   if (tab === 0 || tab === 1) {
     return (
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}>
-        <Button
-          variant="outlined"
-          startIcon={
-            isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{ marginLeft: '5px' }} />
-          }
-          onClick={onExportStatisticsPDF}
-          disabled={isExporting || !hasData}
-          size={isSmallScreen ? 'small' : 'medium'}
-          sx={{ color: 'error.main', borderColor: 'error.main' }}
-        >
-          {isSmallScreen ? 'PDF' : 'تصدير إحصائيات PDF'}
-        </Button>
         <Button
           variant="outlined"
           startIcon={
@@ -43,22 +28,9 @@ export default function TreasuryExportButtons({
       </Box>
     );
   }
-
   if (tab === 2) {
     return (
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}>
-        <Button
-          variant="outlined"
-          startIcon={
-            isExporting ? <CircularProgress size={16} /> : <PictureAsPdf sx={{ marginLeft: '5px' }} />
-          }
-          onClick={onExportPDF}
-          disabled={isExporting || !hasJournals}
-          size={isSmallScreen ? 'small' : 'medium'}
-          sx={{ color: 'error.main', borderColor: 'error.main' }}
-        >
-          {isSmallScreen ? 'PDF' : 'تصدير PDF'}
-        </Button>
         <Button
           variant="outlined"
           startIcon={
@@ -74,6 +46,5 @@ export default function TreasuryExportButtons({
       </Box>
     );
   }
-
   return null;
-}
+}

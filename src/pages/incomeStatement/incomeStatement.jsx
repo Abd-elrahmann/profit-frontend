@@ -5,13 +5,7 @@ import { Popover } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import {
-  Calendar, ChevronDown, TrendingUp, Wallet, FileText, Table2, Printer,
-  List, BarChart3, PieChart, Lightbulb, Receipt,
-} from 'lucide-react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from 'recharts';
+import { Calendar, ChevronDown, FileText, Table2, Printer } from 'lucide-react';
 import { incomeStatementApi } from './incomeStatementApi';
 import { notifyError, notifySuccess } from '../../utilities/toastify';
 import {
@@ -21,13 +15,13 @@ import {
 } from '../../utilities/IncomeStatementExporter';
 import {
   IncomeStatementPeriodFilter,
+  IncomeStatementKPICards,
+  IncomeStatementLineItemsTable,
+  IncomeStatementChartsSection,
   getPeriodInfo,
 } from '../../components/IncomeStatement';
-import { formatNumber } from '../../components/IncomeStatement/incomeStatementUtils';
 import { MONTHS } from '../../components/IncomeStatement/constants';
-
 const years = Array.from({ length: 21 }, (_, i) => 2020 + i);
-
 const IncomeStatement = () => {
   const [periodType, setPeriodType] = useState('period');
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month());
@@ -36,12 +30,10 @@ const IncomeStatement = () => {
   const [toDate, setToDate] = useState(dayjs().endOf('month'));
   const [selectedPeriodId, setSelectedPeriodId] = useState('');
   const [isInitializing, setIsInitializing] = useState(true);
-
   const { data: accountingPeriods = [] } = useQuery({
     queryKey: ['accountingPeriods'],
     queryFn: () => incomeStatementApi.getAccountingPeriods(1, 1),
   });
-
   useEffect(() => {
     if (accountingPeriods.length > 0 && !selectedPeriodId) {
       const activePeriod = accountingPeriods.find(
@@ -57,16 +49,13 @@ const IncomeStatement = () => {
       setIsInitializing(false);
     }
   }, [accountingPeriods, selectedPeriodId, periodType]);
-
   const getQueryParams = useCallback(() => {
     if (periodType === 'period') return { periodId: selectedPeriodId };
     if (periodType === 'custom') return { from: fromDate.format('YYYY-MM-DD'), to: toDate.format('YYYY-MM-DD') };
     if (periodType === 'monthly') return { month: selectedMonth + 1, year: selectedYear };
     return {};
   }, [periodType, selectedPeriodId, fromDate, toDate, selectedMonth, selectedYear]);
-
   const queryParams = getQueryParams();
-
   const { data: incomeData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['incomeStatement', periodType, selectedMonth, selectedYear, fromDate, toDate, selectedPeriodId, queryParams],
     queryFn: () => incomeStatementApi.getIncomeStatement(queryParams),
@@ -76,7 +65,6 @@ const IncomeStatement = () => {
       notifyError(err.response?.data?.message || 'حدث خطأ أثناء تحميل قائمة الدخل');
     },
   });
-
   const handlePrint = useCallback(async () => {
     if (!incomeData) {
       notifyError('لا توجد بيانات للطباعة');
@@ -88,7 +76,6 @@ const IncomeStatement = () => {
       notifyError(err.message || 'حدث خطأ أثناء الطباعة');
     }
   }, [incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate]);
-
   const handleExportPDF = useCallback(async () => {
     if (!incomeData) {
       notifyError('لا توجد بيانات للتصدير');
@@ -101,7 +88,6 @@ const IncomeStatement = () => {
       notifyError(err.message || 'حدث خطأ أثناء تصدير PDF');
     }
   }, [incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate]);
-
   const handleExportExcel = useCallback(async () => {
     if (!incomeData) {
       notifyError('لا توجد بيانات للتصدير');
@@ -114,7 +100,6 @@ const IncomeStatement = () => {
       notifyError(err.message || 'حدث خطأ أثناء تصدير Excel');
     }
   }, [incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate]);
-
   const handlePeriodTypeChange = useCallback((value) => {
     setPeriodType(value);
     if (value !== 'period') {
@@ -122,12 +107,10 @@ const IncomeStatement = () => {
       setIsInitializing(false);
     }
   }, []);
-
   const periodInfo = useMemo(
     () => getPeriodInfo(incomeData, selectedMonth, selectedYear),
     [incomeData, selectedMonth, selectedYear]
   );
-
   const [periodAnchorEl, setPeriodAnchorEl] = useState(null);
   const periodLabel = useMemo(() => {
     if (periodInfo?.source === 'MONTH') return `${MONTHS[selectedMonth]} ${selectedYear}`;
@@ -148,30 +131,15 @@ const IncomeStatement = () => {
     }
     return periodInfo?.text || 'اختر الفترة';
   }, [periodInfo, periodType, selectedPeriodId, accountingPeriods, selectedMonth, selectedYear]);
-
   const showContent = !isLoading && !isInitializing && !isError && incomeData;
   const showEmpty = !isLoading && !isInitializing && !isError && !incomeData && (periodType !== 'period' || selectedPeriodId);
-
-  const revenueLineItems = incomeData?.revenueLineItems?.length
-    ? incomeData.revenueLineItems
-    : incomeData?.revenues?.total != null
-      ? [{ label: 'فوائد السلف المحصلة', amount: incomeData.revenues.total }]
-      : [];
-
-  const expenseByType = incomeData?.expenseByType || [];
-  const monthlyBreakdown = useMemo(
-    () => incomeData?.monthlyBreakdown ?? [],
-    [incomeData?.monthlyBreakdown]
-  );
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ar">
       <Helmet>
         <title>قائمة الدخل التقديرية - نظام إدارة السلف</title>
       </Helmet>
-
       <div className="flex flex-col w-full max-w-full">
-        {/* Page Header & Filters */}
+        {}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
@@ -247,15 +215,13 @@ const IncomeStatement = () => {
             )}
           </div>
         </div>
-
-        {/* Loading */}
+        {}
         {(isLoading || isInitializing) && (
           <div className="flex justify-center items-center py-20">
             <div className="w-14 h-14 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-
-        {/* Error */}
+        {}
         {isError && (
           <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-200 dark:border-red-800 text-center mb-6">
             <p className="text-red-700 dark:text-red-300 font-semibold mb-2">حدث خطأ في تحميل البيانات</p>
@@ -269,265 +235,21 @@ const IncomeStatement = () => {
             </button>
           </div>
         )}
-
-        {/* Content */}
+        {}
         {showContent && (
           <>
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <TrendingUp className="size-5 text-primary" />
-                  </div>
-                </div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">إجمالي الإيرادات</h3>
-                <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-2">
-                  {formatNumber(incomeData.revenues?.total || 0)} <span className="text-sm font-normal text-slate-400">ر.س</span>
-                </p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-                    <Receipt className="size-5 text-orange-600" />
-                  </div>
-                </div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">إجمالي المصروفات</h3>
-                <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-2">
-                  {formatNumber(incomeData.totalExpenses || 0)} <span className="text-sm font-normal text-slate-400">ر.س</span>
-                </p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm ring-2 ring-primary/20">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-2 bg-primary rounded-lg">
-                    <Wallet className="size-5 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">صافي الربح</h3>
-                <p className="text-3xl font-extrabold text-primary mt-2">
-                  {formatNumber(incomeData.netProfit || 0)} <span className="text-sm font-normal text-slate-400">ر.س</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Main content grid */}
+            <IncomeStatementKPICards incomeData={incomeData} />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Income Statement Table */}
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <h3 className="text-lg font-bold flex items-center gap-2">
-                      <List className="size-5 text-primary" />
-                      بنود قائمة الدخل
-                    </h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse">
-                      <thead>
-                        <tr className="text-slate-400 text-sm uppercase tracking-wider border-b border-slate-50 dark:border-slate-700">
-                          <th className="px-6 py-4 font-semibold">البند المحاسبي</th>
-                          <th className="px-6 py-4 font-semibold text-left">المبلغ (ر.س)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-slate-700 dark:text-slate-300">
-                        {/* Revenue Section */}
-                        <tr className="bg-primary/5">
-                          <td className="px-6 py-3 font-bold text-primary text-sm uppercase tracking-wide" colSpan={2}>
-                            قسم الإيرادات
-                          </td>
-                        </tr>
-                        {revenueLineItems.map((item, idx) => (
-                          <tr
-                            key={idx}
-                            className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
-                          >
-                            <td className="px-6 py-4 pr-10">{item.label}</td>
-                            <td className="px-6 py-4 text-left font-medium">{formatNumber(item.amount)}</td>
-                          </tr>
-                        ))}
-                        <tr className="bg-slate-50/80 dark:bg-slate-700/50 font-extrabold text-slate-900 dark:text-white border-b-2 border-primary/20">
-                          <td className="px-6 py-5">إجمالي الإيرادات التشغيلية</td>
-                          <td className="px-6 py-5 text-left text-primary">{formatNumber(incomeData.revenues?.total || 0)}</td>
-                        </tr>
-                        {/* Expenses Section */}
-                        <tr className="bg-orange-50/50 dark:bg-orange-900/10">
-                          <td className="px-6 py-3 font-bold text-orange-700 dark:text-orange-400 text-sm uppercase tracking-wide" colSpan={2}>
-                            قسم المصروفات
-                          </td>
-                        </tr>
-                        {expenseByType.length > 0 ? (
-                          expenseByType.map((item, idx) => (
-                            <tr
-                              key={idx}
-                              className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
-                            >
-                              <td className="px-6 py-4 pr-10">{item.type}</td>
-                              <td className="px-6 py-4 text-left font-medium">{formatNumber(item.amount)}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          incomeData.detailedExpenses?.map((exp, idx) => (
-                            <tr
-                              key={idx}
-                              className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
-                            >
-                              <td className="px-6 py-4 pr-10">{exp.description || exp.type}</td>
-                              <td className="px-6 py-4 text-left font-medium">{formatNumber(exp.amount)}</td>
-                            </tr>
-                          )) || (
-                            <tr className="border-b border-slate-50 dark:border-slate-700">
-                              <td className="px-6 py-4 pr-10 text-slate-400">لا توجد مصروفات</td>
-                              <td className="px-6 py-4 text-left font-medium">0</td>
-                            </tr>
-                          )
-                        )}
-                        <tr className="bg-slate-50/80 dark:bg-slate-700/50 font-extrabold text-slate-900 dark:text-white border-b-2 border-orange-200 dark:border-orange-800">
-                          <td className="px-6 py-5">إجمالي المصروفات التشغيلية</td>
-                          <td className="px-6 py-5 text-left text-orange-600">({formatNumber(incomeData.totalExpenses || 0)})</td>
-                        </tr>
-                        {/* Final Result */}
-                        <tr className="bg-primary/5 font-bold">
-                          <td className="px-6 py-6 text-lg">صافي الربح</td>
-                          <td className="px-6 py-6 text-left text-xl text-primary font-black">
-                            {formatNumber(incomeData.netProfit || 0)}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <IncomeStatementLineItemsTable incomeData={incomeData} />
               </div>
-
-              {/* Sidebar */}
               <div className="space-y-6">
-                {/* Revenue & Expenses Bar Chart (merged) */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                  <h3 className="text-sm font-bold mb-6 flex items-center gap-2">
-                    <BarChart3 className="size-5 text-primary" />
-                    الإيرادات والمصروفات (شهرياً)
-                  </h3>
-                  {monthlyBreakdown.length > 0 ? (
-                    <div className="h-64 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={monthlyBreakdown}
-                          margin={{ top: 10, right: 10, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-600" />
-                          <XAxis
-                            dataKey="monthName"
-                            tick={{ fill: 'currentColor', fontSize: 11 }}
-                            className="text-slate-500"
-                          />
-                          <YAxis
-                            tick={{ fill: 'currentColor', fontSize: 11 }}
-                            tickFormatter={(v) => formatNumber(v)}
-                            className="text-slate-500"
-                          />
-                          <Tooltip
-                            formatter={(value, name) => [
-                              formatNumber(value),
-                              name === 'revenue' ? 'إيرادات' : 'مصروفات',
-                            ]}
-                            labelFormatter={(label) => label}
-                            contentStyle={{
-                              borderRadius: '8px',
-                              border: '1px solid rgb(226 232 240)',
-                            }}
-                          />
-                          <Legend />
-                          <Bar dataKey="revenue" name="إيرادات" fill="#2e8a45" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="expenses" name="مصروفات" fill="#ea580c" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
-                      لا توجد بيانات شهرية للفترة المحددة
-                    </div>
-                  )}
-                </div>
-
-                {/* Donut Chart - expense types: مصروف بنزين، انترنت، كهرباء */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                  <h3 className="text-sm font-bold mb-6 flex items-center gap-2">
-                    <PieChart className="size-5 text-primary" />
-                    توزيع المصروفات التشغيلية
-                  </h3>
-                  {expenseByType.length > 0 ? (
-                    <>
-                      <div className="relative flex justify-center items-center py-4">
-                        <div className="size-48 rounded-full border-[18px] border-slate-100 dark:border-slate-700 relative flex items-center justify-center overflow-hidden">
-                          <div
-                            className="absolute inset-0 rounded-full"
-                            style={{
-                              background: (() => {
-                                let acc = 0;
-                                const stops = expenseByType.slice(0, 5).map((item, idx) => {
-                                  const start = acc;
-                                  acc += item.percentage;
-                                  const colors = ['rgb(46 138 69)', 'rgb(46 138 69 / 0.7)', 'rgb(46 138 69 / 0.5)', 'rgb(46 138 69 / 0.35)', 'rgb(46 138 69 / 0.2)'];
-                                  return `${colors[idx % 5]} ${start}% ${acc}%`;
-                                });
-                                return `conic-gradient(from 0deg, ${stops.join(', ')})`;
-                              })(),
-                            }}
-                          />
-                          <div className="text-center relative z-10 bg-white dark:bg-slate-800 rounded-full size-28 flex items-center justify-center m-2">
-                            <div>
-                              <span className="text-xs text-slate-400 block">الإجمالي</span>
-                              <span className="text-xl font-black text-slate-800 dark:text-white">
-                                {formatNumber(incomeData.totalExpenses || 0)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        {expenseByType.slice(0, 5).map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="size-2 rounded-full"
-                                style={{
-                                  backgroundColor: idx === 0 ? 'rgb(46 138 69)' : idx === 1 ? 'rgb(46 138 69 / 0.6)' : 'rgb(46 138 69 / 0.3)',
-                                }}
-                              />
-                              <span>{item.type}</span>
-                            </div>
-                            <span className="font-bold">{item.percentage}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="py-8 flex flex-col items-center justify-center text-slate-400 text-sm">
-                      <div className="size-24 rounded-full border-4 border-slate-200 dark:border-slate-600 flex items-center justify-center mb-4">
-                        <span className="text-lg font-bold">0</span>
-                      </div>
-                      لا توجد مصروفات للفترة
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick Insights */}
-                <div className="bg-gradient-to-br from-primary to-emerald-700 p-6 rounded-xl text-white shadow-lg shadow-primary/20">
-                  <h4 className="font-bold mb-2 flex items-center gap-2">
-                    <Lightbulb className="size-5 text-white/80" />
-                    رؤى ذكية
-                  </h4>
-                  <p className="text-sm text-white/90 leading-relaxed">
-                    {incomeData.netProfit >= 0
-                      ? `صافي الربح بلغ ${formatNumber(incomeData.netProfit)} ر.س. الإيرادات التشغيلية ${formatNumber(incomeData.revenues?.total || 0)} ر.س والمصروفات ${formatNumber(incomeData.totalExpenses || 0)} ر.س.`
-                      : `صافي الخسارة بلغ ${formatNumber(Math.abs(incomeData.netProfit))} ر.س. المصروفات تجاوزت الإيرادات خلال هذه الفترة.`}
-                  </p>
-                </div>
+                <IncomeStatementChartsSection incomeData={incomeData} />
               </div>
             </div>
           </>
         )}
-
-        {/* Empty State */}
+        {}
         {showEmpty && (
           <div className="bg-white dark:bg-slate-800 p-12 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
             <p className="text-lg font-semibold text-slate-600 dark:text-slate-400 mb-2">لا توجد بيانات للفترة المحددة</p>
@@ -538,5 +260,4 @@ const IncomeStatement = () => {
     </LocalizationProvider>
   );
 };
-
 export default IncomeStatement;

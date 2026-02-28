@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, Typography, Grid } from "@mui/material";
 import { getStatusColor } from "./clientsUtils";
-
 const cardStyles = {
   blue: {
     bg: { light: "#f0fdf4", dark: "rgba(46, 139, 69, 0.15)" },
@@ -22,11 +21,9 @@ const cardStyles = {
     value: "error.main",
   },
 };
-
 export default function ClientsFinancialTab({ clientDetails, isMobile = false }) {
   const client = clientDetails?.client;
   if (!client) return null;
-
   const FinancialCard = ({ label, value, styleKey, unit }) => {
     const s = cardStyles[styleKey];
     return (
@@ -63,7 +60,6 @@ export default function ClientsFinancialTab({ clientDetails, isMobile = false })
       </Box>
     );
   };
-
   return (
     <Box sx={{ pt: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
       <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: "text.primary" }}>
@@ -135,4 +131,4 @@ export default function ClientsFinancialTab({ clientDetails, isMobile = false })
       </Grid>
     </Box>
   );
-}
+}

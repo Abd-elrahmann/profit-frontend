@@ -8,7 +8,6 @@ import {
   Autocomplete,
 } from "@mui/material";
 import { Add as AddIcon, Save as SaveIcon } from "@mui/icons-material";
-
 export default function JournalsLinesForm({
   currentLine,
   chartAccounts,
@@ -21,13 +20,11 @@ export default function JournalsLinesForm({
     if (val.includes("-")) return;
     onLineInputChange("debit", val);
   };
-
   const handleCreditChange = (e) => {
     const val = e.target.value;
     if (val.includes("-")) return;
     onLineInputChange("credit", val);
   };
-
   return (
     <Paper
       sx={{
@@ -40,7 +37,6 @@ export default function JournalsLinesForm({
       <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
         {editingLineIndex !== null ? "تعديل البند" : "إضافة بند جديد"}
       </Typography>
-
       <Grid container spacing={2} alignItems="center" justifyContent="center">
         <Grid item xs={12} md={3}>
           <Autocomplete
@@ -66,7 +62,6 @@ export default function JournalsLinesForm({
             isOptionEqualToValue={(option, value) => option.id === value.id}
           />
         </Grid>
-
         <Grid item xs={12} md={2}>
           <TextField
             label="مدين"
@@ -77,7 +72,6 @@ export default function JournalsLinesForm({
             sx={{ width: "200px" }}
           />
         </Grid>
-
         <Grid item xs={12} md={2}>
           <TextField
             label="دائن"
@@ -88,7 +82,6 @@ export default function JournalsLinesForm({
             sx={{ width: "200px" }}
           />
         </Grid>
-
         <Grid item xs={12} md={3}>
           <TextField
             label="الوصف"
@@ -97,7 +90,6 @@ export default function JournalsLinesForm({
             sx={{ width: "250px" }}
           />
         </Grid>
-
         <Grid item xs={12} md={2}>
           <Button
             fullWidth
@@ -119,4 +111,4 @@ export default function JournalsLinesForm({
       </Grid>
     </Paper>
   );
-}
+}

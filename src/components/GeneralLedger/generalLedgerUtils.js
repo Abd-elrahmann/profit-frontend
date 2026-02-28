@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-
 export const formatArabicDate = (date) => {
   return (
     dayjs(date).locale('ar').format('D [من] MMMM [الساعة] h:mm') +
@@ -8,7 +7,6 @@ export const formatArabicDate = (date) => {
     (dayjs(date).hour() < 12 ? 'صباحًا' : 'مساءً')
   );
 };
-
 export const getAccountTypeArabic = (type) => {
   const typeMap = {
     ASSET: 'أصول',
@@ -18,4 +16,4 @@ export const getAccountTypeArabic = (type) => {
     EXPENSE: 'مصروفات',
   };
   return typeMap[type] || type;
-};
+};

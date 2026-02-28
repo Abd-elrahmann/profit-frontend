@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Alert, CircularProgress, useMediaQuery } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-
 import {
   getJournalById,
   updateJournal,
@@ -14,14 +13,13 @@ import {
   getChartOfAccounts,
 } from "./journalsApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import JournalTable from "../../components/modals/JournalTable";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AdvancedSearchModal from "../../components/modals/AdvancedSearchModal";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { useTheme } from "../../theme/ThemeContext";
 import { exportJournalToPDF, exportJournalToExcel } from "../../utilities/journalsExporter";
-
 import {
+  JournalTable,
   JournalsHeader,
   JournalsSidebar,
   JournalsJournalDetails,
@@ -31,7 +29,6 @@ import {
   calculateTotals,
   calculateTotalsForTable,
 } from "../../components/Journals";
-
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -61,28 +58,23 @@ const Journals = () => {
     description: "",
   });
   const [chartAccounts, setChartAccounts] = useState([]);
-
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
   const { isDarkMode } = useTheme();
-
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
-
   const fromPeriod = location.state?.fromPeriod;
   const fromProfitDistribution = location.state?.fromProfitDistribution;
   const fromInvestorsWithdrawal = location.state?.fromInvestorsWithdrawal;
   const investorId = location.state?.investorId;
-
   const { data: journalData, isLoading: isJournalLoading } = useQuery({
     queryKey: ["journal", selectedJournal],
     queryFn: () => getJournalById(selectedJournal),
     enabled: !!selectedJournal && activeTab === 1,
   });
-
   useEffect(() => {
     if (journalData && selectedJournal) {
       setEditForm({
@@ -95,7 +87,6 @@ const Journals = () => {
       setJournalLines([]);
     }
   }, [journalData, selectedJournal]);
-
   useEffect(() => {
     const fetchChartAccounts = async () => {
       try {
@@ -107,7 +98,6 @@ const Journals = () => {
     };
     fetchChartAccounts();
   }, []);
-
   useEffect(() => {
     const { journalId, activeTab: targetTab } = location.state || {};
     if (journalId) {
@@ -117,7 +107,6 @@ const Journals = () => {
       setIsAddMode(false);
     }
   }, [location.state]);
-
   const handleTabChange = (newValue) => {
     setActiveTab(newValue);
     if (newValue === 0) {
@@ -127,19 +116,16 @@ const Journals = () => {
       setJournalLines([]);
     }
   };
-
   const handleSearchChange = (value) => {
     setSearchQuery(value);
     if (value) setSearchFilters({});
   };
-
   const handleViewDetails = (journalId) => {
     setSelectedJournal(journalId);
     setActiveTab(1);
     setIsEditMode(false);
     setIsAddMode(false);
   };
-
   const handleBackToList = () => {
     setActiveTab(0);
     setSelectedJournal(null);
@@ -149,7 +135,6 @@ const Journals = () => {
     setEditingLineIndex(null);
     setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
   };
-
   const handleAddNewClick = () => {
     setIsAddMode(true);
     setIsEditMode(false);
@@ -164,14 +149,11 @@ const Journals = () => {
       type: "GENERAL",
     });
   };
-
   const handleBackToPeriodClosing = () => navigate("/period-closing");
   const handleBackToProfitDistribution = () => navigate("/profit-distribution");
   const handleBackToInvestorsWithdrawal = () =>
     navigate("/investors-withdraw", { state: { investorId, activeTab: 1 } });
-
   const handleEditClick = () => setIsEditMode(true);
-
   const handleCancelEdit = () => {
     setIsEditMode(false);
     if (journalData) {
@@ -183,7 +165,6 @@ const Journals = () => {
       setJournalLines(mapJournalLinesFromApi(journalData.lines));
     }
   };
-
   const handleCancelAdd = () => {
     setIsAddMode(false);
     setJournalLines([]);
@@ -195,13 +176,11 @@ const Journals = () => {
       type: "GENERAL",
     });
   };
-
   const handleAddLine = () => {
     if (!currentLine.accountId) {
       notifyError("يجب اختيار حساب");
       return;
     }
-
     const selectedAccount = chartAccounts.find(
       (acc) => acc.id === currentLine.accountId
     );
@@ -214,7 +193,6 @@ const Journals = () => {
       account: selectedAccount,
       balance: (currentLine.debit || 0) - (currentLine.credit || 0),
     };
-
     if (editingLineIndex !== null) {
       const updatedLines = [...journalLines];
       updatedLines[editingLineIndex] = newLine;
@@ -223,10 +201,8 @@ const Journals = () => {
     } else {
       setJournalLines((prev) => [...prev, newLine]);
     }
-
     setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
   };
-
   const handleEditLine = (index) => {
     const line = journalLines[index];
     setCurrentLine({
@@ -237,7 +213,6 @@ const Journals = () => {
     });
     setEditingLineIndex(index);
   };
-
   const handleDeleteLine = (index) => {
     setJournalLines((prev) => prev.filter((_, i) => i !== index));
     if (editingLineIndex === index) {
@@ -245,11 +220,9 @@ const Journals = () => {
       setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
     }
   };
-
   const handleLineInputChange = (field, value) => {
     setCurrentLine((prev) => ({ ...prev, [field]: value }));
   };
-
   const handleInputChange = (field, value) => {
     if (isAddMode) {
       setNewJournalForm((prev) => ({ ...prev, [field]: value }));
@@ -257,13 +230,11 @@ const Journals = () => {
       setEditForm((prev) => ({ ...prev, [field]: value }));
     }
   };
-
   const handleCreateJournal = async () => {
     if (journalLines.length === 0) {
       notifyError("يجب إضافة بنود للقيد");
       return;
     }
-
     const totalDebit = journalLines.reduce(
       (sum, line) => sum + parseFloat(line.debit || 0),
       0
@@ -272,14 +243,12 @@ const Journals = () => {
       (sum, line) => sum + parseFloat(line.credit || 0),
       0
     );
-
     if (!isJournalBalanced(totalDebit, totalCredit)) {
       notifyError(
         `القيد غير متوازن! إجمالي المدين: ${Math.round(totalDebit).toLocaleString()} ≠ إجمالي الدائن: ${Math.round(totalCredit).toLocaleString()}`
       );
       return;
     }
-
     try {
       await createJournal({
         description: newJournalForm.description,
@@ -302,13 +271,11 @@ const Journals = () => {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء إنشاء القيد");
     }
   };
-
   const handleUpdateJournal = async () => {
     if (journalLines.length === 0) {
       notifyError("يجب إضافة بنود للقيد");
       return;
     }
-
     const totalDebit = journalLines.reduce(
       (sum, line) => sum + parseFloat(line.debit || 0),
       0
@@ -317,14 +284,12 @@ const Journals = () => {
       (sum, line) => sum + parseFloat(line.credit || 0),
       0
     );
-
     if (!isJournalBalanced(totalDebit, totalCredit)) {
       notifyError(
         `القيد غير متوازن! إجمالي المدين: ${Math.round(totalDebit).toLocaleString()} ≠ إجمالي الدائن: ${Math.round(totalCredit).toLocaleString()}`
       );
       return;
     }
-
     try {
       await updateJournal(selectedJournal, {
         description: editForm.description,
@@ -346,7 +311,6 @@ const Journals = () => {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء تعديل القيد");
     }
   };
-
   const handleDeleteJournal = async () => {
     try {
       await deleteJournal(journalToDelete);
@@ -361,7 +325,6 @@ const Journals = () => {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حذف القيد");
     }
   };
-
   const handlePostJournal = async () => {
     try {
       await postJournal(selectedJournal);
@@ -378,7 +341,6 @@ const Journals = () => {
       );
     }
   };
-
   const handleUnpostJournal = async () => {
     try {
       await unpostJournal(selectedJournal);
@@ -395,7 +357,6 @@ const Journals = () => {
       );
     }
   };
-
   const handleExportPDF = async () => {
     if (!journalData) return;
     try {
@@ -406,7 +367,6 @@ const Journals = () => {
       console.error("PDF export error:", error);
     }
   };
-
   const handleExportExcel = async () => {
     if (!journalData) return;
     try {
@@ -417,12 +377,10 @@ const Journals = () => {
       console.error("Excel export error:", error);
     }
   };
-
   const handleAdvancedSearch = (filters) => {
     setSearchFilters(filters);
     setSearchQuery("");
   };
-
   const totals = calculateTotals(
     journalData,
     journalLines,
@@ -430,14 +388,11 @@ const Journals = () => {
     currentLine
   );
   const totalsForTable = calculateTotalsForTable(journalData, journalLines);
-
   const searchFiltersForTable = searchQuery
     ? { search: searchQuery }
     : searchFilters;
-
   const showJournalDetails =
     (selectedJournal && journalData) || (isAddMode && activeTab === 1);
-
   return (
     <Box
       sx={{
@@ -451,7 +406,6 @@ const Journals = () => {
         <title>القيود المحاسبية</title>
         <meta name="description" content="القيود المحاسبية" />
       </Helmet>
-
       <Box
         sx={{
           display: "flex",
@@ -487,7 +441,6 @@ const Journals = () => {
               onUnpostJournal={handleUnpostJournal}
             />
           )}
-
         <Box
           sx={{
             flex: 1,
@@ -522,7 +475,6 @@ const Journals = () => {
               isSmallScreen={isSmallScreen}
               permissions={permissions}
             />
-
             {activeTab === 0 ||
             (isSmallScreen && !selectedJournal && !isAddMode) ? (
               <JournalTable
@@ -591,7 +543,6 @@ const Journals = () => {
           </Box>
         </Box>
       </Box>
-
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {
@@ -603,7 +554,6 @@ const Journals = () => {
         message="هل أنت متأكد من حذف هذا القيد؟"
         ButtonText="حذف"
       />
-
       <AdvancedSearchModal
         open={isAdvancedSearchOpen}
         onClose={() => setIsAdvancedSearchOpen(false)}
@@ -612,5 +562,4 @@ const Journals = () => {
     </Box>
   );
 };
-
 export default Journals;

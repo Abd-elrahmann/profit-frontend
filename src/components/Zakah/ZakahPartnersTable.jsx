@@ -25,13 +25,11 @@ import { getZakahByYear } from '../../pages/Zakah/zakahApi';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { usePermissions } from '../Contexts/PermissionsContext';
 import { exportZakahToPDF, exportZakahToExcel } from '../../utilities/zakahExporter';
-
 const formatInt = (value) => {
   const num = Number(value ?? 0);
   if (!Number.isFinite(num)) return '0';
   return num.toLocaleString();
 };
-
 const ZakahPartnersTable = ({
   onViewDetails,
   isMobile = false,
@@ -48,17 +46,14 @@ const ZakahPartnersTable = ({
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [isExporting, setIsExporting] = useState({ pdf: false, excel: false });
   const { permissions } = usePermissions();
-
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2019 + 2 }, (_, i) => 2020 + i);
-
   const { data: zakahResponse, isLoading, error } = useQuery({
     queryKey: ['zakah-year', selectedYear, page + 1, rowsPerPage],
     queryFn: () => getZakahByYear(selectedYear, page + 1, rowsPerPage),
     enabled: !!selectedYear && selectedYear >= 2000 && selectedYear <= 2100,
     staleTime: 30000,
   });
-
   const zakahData = zakahResponse?.data || [];
   const pagination = zakahResponse?.pagination || {
     totalPartners: 0,
@@ -66,21 +61,17 @@ const ZakahPartnersTable = ({
     currentPage: 1,
     limit: 10,
   };
-
   const handleYearChange = (event, newValue) => {
     if (newValue !== null && newValue !== undefined) {
       setSelectedYear(newValue);
       setPage(0);
     }
   };
-
   const handleChangePage = (event, newPage) => setPage(newPage);
-
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const fetchAllZakahByYear = async () => {
     const totalPages = zakahResponse?.pagination?.totalPages || 1;
     const limit = rowsPerPage || 10;
@@ -93,7 +84,6 @@ const ZakahPartnersTable = ({
     }
     return all;
   };
-
   const handleExport = async (type) => {
     if (!zakahData || zakahData.length === 0) {
       alert('لا توجد بيانات للتصدير');
@@ -114,7 +104,6 @@ const ZakahPartnersTable = ({
       setIsExporting((prev) => ({ ...prev, [type]: false }));
     }
   };
-
   const totals =
     zakahData?.reduce(
       (acc, item) => ({
@@ -132,7 +121,6 @@ const ZakahPartnersTable = ({
       totalPaid: 0,
       remaining: 0,
     };
-
   React.useEffect(() => {
     if (onTotalsChange && zakahData?.length) {
       onTotalsChange(totals);
@@ -145,7 +133,6 @@ const ZakahPartnersTable = ({
     totals.totalPaid,
     totals.remaining,
   ]);
-
   const renderTable = () => (
     <>
       {permissions.includes('zakat_Export') && (
@@ -337,7 +324,6 @@ const ZakahPartnersTable = ({
       )}
     </>
   );
-
   const renderCards = () => (
     <div className="p-4 space-y-4">
       {permissions.includes('zakat_Export') && (
@@ -524,9 +510,7 @@ const ZakahPartnersTable = ({
       )}
     </div>
   );
-
   const showCards = isMobile;
-
   return (
     <div className="flex flex-col w-full">
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-4 gap-2">
@@ -550,12 +534,10 @@ const ZakahPartnersTable = ({
           عدد الشركاء: {zakahData?.length || 0}
         </Typography>
       </div>
-
       <div className="bg-white dark:bg-background-dark rounded-xl border border-primary/10 shadow-sm overflow-hidden">
         {showCards ? renderCards() : renderTable()}
       </div>
     </div>
   );
 };
-
-export default ZakahPartnersTable;
+export default ZakahPartnersTable;

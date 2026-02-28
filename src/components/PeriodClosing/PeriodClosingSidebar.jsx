@@ -11,7 +11,6 @@ import {
   formatNumber,
   calculateJournalTotals,
 } from "./periodClosingUtils.jsx";
-
 export default function PeriodClosingSidebar({
   periodData,
   theme,
@@ -22,9 +21,7 @@ export default function PeriodClosingSidebar({
   const journals = periodData?.journals || [];
   const { totalDebit, totalCredit, totalBalance } =
     calculateJournalTotals(journals);
-
   const balanceColor = totalBalance >= 0 ? "success.main" : "error.main";
-
   return (
     <Box
       sx={{
@@ -51,7 +48,6 @@ export default function PeriodClosingSidebar({
             <Typography>عدد القيود:</Typography>
             <Typography fontWeight="bold">{journals.length}</Typography>
           </Box>
-
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>إجمالي المدين:</Typography>
             <Typography fontWeight="bold" color="success.main">
@@ -70,9 +66,7 @@ export default function PeriodClosingSidebar({
               {formatNumber(totalBalance)}
             </Typography>
           </Box>
-
           <Divider sx={{ my: 1 }} />
-
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
             <Typography fontWeight="bold">
               الأرباح الإجمالية (قبل الخصم):
@@ -103,16 +97,13 @@ export default function PeriodClosingSidebar({
               {(periodData?.grossProfit?.total || 0).toLocaleString()}
             </Typography>
           </Box>
-
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
             <Typography fontWeight="bold">المصروفات المخصومة:</Typography>
             <Typography fontWeight="bold" color="error.main">
               -{(periodData?.expenseDistribution?.totalExpenses || 0).toLocaleString()}
             </Typography>
           </Box>
-
           <Divider sx={{ my: 1 }} />
-
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
             <Typography fontWeight="bold">صافي الأرباح (بعد الخصم):</Typography>
           </Box>
@@ -142,7 +133,6 @@ export default function PeriodClosingSidebar({
           </Box>
         </Stack>
       </Box>
-
       <Box sx={{ p: 3 }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
           الإجراءات
@@ -161,7 +151,6 @@ export default function PeriodClosingSidebar({
               تقفيل الفترة
             </Button>
           )}
-
           {periodData?.isClosed && permissions.includes("period_Post") && (
             <Button
               variant="outlined"
@@ -180,4 +169,4 @@ export default function PeriodClosingSidebar({
       </Box>
     </Box>
   );
-}
+}

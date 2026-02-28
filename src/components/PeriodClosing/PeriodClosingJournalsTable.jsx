@@ -16,7 +16,6 @@ import {
   formatNumber,
   calculateJournalTotals,
 } from "./periodClosingUtils.jsx";
-
 export default function PeriodClosingJournalsTable({
   journals,
   theme,
@@ -24,18 +23,15 @@ export default function PeriodClosingJournalsTable({
 }) {
   const { totalDebit, totalCredit, totalBalance } =
     calculateJournalTotals(journals);
-
   const formatDate = (dateString) => {
     if (!dateString) return "لم تنتهي بعد";
     return new Date(dateString).toLocaleDateString("en-US");
   };
-
   const getBalanceColor = (balance) => {
     if (balance > 0) return "#2e7d32";
     if (balance < 0) return "#d32f2f";
     return "inherit";
   };
-
   return (
     <TableContainer component={Paper} variant="outlined">
       <Table>
@@ -134,4 +130,4 @@ export default function PeriodClosingJournalsTable({
       </Table>
     </TableContainer>
   );
-}
+}

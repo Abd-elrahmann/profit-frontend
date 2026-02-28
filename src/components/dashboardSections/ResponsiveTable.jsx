@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
 import TableLayout from '../layouts/tableLayout';
-
-/**
- * Responsive table: shows TableLayout on lg screens, cards on mobile/tablet
- * columns: [{ id, label, format?, render? }]
- * data: array of row objects
- */
 const ResponsiveTable = ({
   columns = [],
   data = [],
@@ -16,7 +10,6 @@ const ResponsiveTable = ({
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
   const tableLayoutColumns = columns.map((col) => ({
     id: col.id,
     label: col.label,
@@ -24,9 +17,7 @@ const ResponsiveTable = ({
     align: 'center',
     format: col.render || col.format || ((v) => v),
   }));
-
   const paginatedData = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -34,7 +25,6 @@ const ResponsiveTable = ({
       </div>
     );
   }
-
   if (!data || data.length === 0) {
     return (
       <div className="py-12 text-center text-slate-500">
@@ -42,10 +32,9 @@ const ResponsiveTable = ({
       </div>
     );
   }
-
   return (
     <>
-      {/* Desktop (lg+): TableLayout */}
+      {}
       <div className="hidden lg:block">
         <TableLayout
           columns={tableLayoutColumns}
@@ -60,8 +49,7 @@ const ResponsiveTable = ({
           maxHeight={400}
         />
       </div>
-
-      {/* Mobile/Tablet: Cards */}
+      {}
       <div className="lg:hidden space-y-3 sm:space-y-4">
         {data.map((row, idx) => (
           <div
@@ -95,5 +83,4 @@ const ResponsiveTable = ({
     </>
   );
 };
-
-export default ResponsiveTable;
+export default ResponsiveTable;

@@ -2,37 +2,22 @@ import React, { useState } from "react";
 import {
   Box,
   Paper,
-  Table,
-  TableBody,
-  TableContainer,
-  TableHead,
   TablePagination,
-  Chip,
-  Typography,
-  CircularProgress,
-  useMediaQuery,
-  Card,
-  CardContent,
-  Stack,
-  Divider,
-  Grid,
   Button,
-  Stack as MuiStack
+  Stack as MuiStack,
+  useMediaQuery,
 } from "@mui/material";
 import { PictureAsPdf as PdfIcon, TableChart as ExcelIcon, DeleteSweep } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getLogs, getAllLogsForExport, deleteAllLogs } from "./logsApi";
-import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
-import dayjs from "dayjs";
-import "dayjs/locale/ar";
 import LogsToolbar from "../../components/modals/LogsToolbar";
+import { LogsTable, LogsCards } from "../../components/logs";
 import { Helmet } from "react-helmet-async";
 import { exportLogsToPDF, exportLogsToExcel } from "../../utilities/logsExporter";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { useTheme } from '../../theme/ThemeContext';
 import DeleteModal from '../../components/modals/DeleteModal';
-
 const Logs = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -45,19 +30,15 @@ const Logs = () => {
   });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const queryClient = useQueryClient();
-
   const { permissions } = usePermissions();
   const { isDarkMode } = useTheme();
-
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
-
   const { data: logsData, isLoading } = useQuery({
     queryKey: ["allLogs", page, filters],
     queryFn: () => getLogs(page, filters),
   });
-
   const deleteAllMutation = useMutation({
     mutationFn: deleteAllLogs,
     onSuccess: (data) => {
@@ -69,25 +50,14 @@ const Logs = () => {
       notifyError("حدث خطأ أثناء حذف السجلات");
     },
   });
-
-  const formatArabicDate = (date) => {
-    return dayjs(date)
-      .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm")
-      + " " 
-      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
-  };
-  
   const handleExportPDF = async () => {
     try {
       notifySuccess("جاري جلب جميع السجلات...");
       const allLogs = await getAllLogsForExport(filters);
-      
       if (!allLogs || allLogs.length === 0) {
         notifyError("لا توجد بيانات للتصدير");
         return;
       }
-      
       await exportLogsToPDF(allLogs, filters);
       notifySuccess(`تم تصدير ${allLogs.length} سجل إلى PDF بنجاح`);
     } catch (error) {
@@ -95,17 +65,14 @@ const Logs = () => {
       console.error('PDF export error:', error);
     }
   };
-
   const handleExportExcel = async () => {
     try {
       notifySuccess("جاري جلب جميع السجلات...");
       const allLogs = await getAllLogsForExport(filters);
-      
       if (!allLogs || allLogs.length === 0) {
         notifyError("لا توجد بيانات للتصدير");
         return;
       }
-      
       await exportLogsToExcel(allLogs, filters);
       notifySuccess(`تم تصدير ${allLogs.length} سجل إلى Excel بنجاح`);
     } catch (error) {
@@ -113,24 +80,10 @@ const Logs = () => {
       console.error('Excel export error:', error);
     }
   };
-
-  const handleDeleteAll = () => {
-    setDeleteModalOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    deleteAllMutation.mutate();
-  };
-
-
   const handleFilterChange = (filterName, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterName]: value
-    }));
+    setFilters(prev => ({ ...prev, [filterName]: value }));
     setPage(1);
   };
-
   const handleResetFilters = () => {
     setFilters({
       search: "",
@@ -142,307 +95,15 @@ const Logs = () => {
     });
     setPage(1);
   };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
   };
-
-  const getActionText = (action) => {
-    switch (action) {
-      case "CREATE":
-        return "إنشاء";
-      case "UPDATE":
-        return "تعديل";
-      case "DELETE":
-        return "حذف";
-      case "VIEW":
-        return "عرض";
-      case "POST":
-        return "اعتماد";
-      case "UNPOST":
-        return "إلغاء الاعتماد";
-      case "login":
-        return "تسجيل دخول";
-      case "logout":
-        return "تسجيل خروج";
-      default:
-        return action;
-    }
-  };
-
-  const getActionColor = (action) => {
-    switch (action) {
-      case "CREATE":
-        return "success";
-      case "UPDATE":
-        return "warning";
-      case "DELETE":
-        return "error";
-      case "VIEW":
-        return "info";
-      case "POST":
-        return "success";
-      case "UNPOST":
-        return "error";
-      case "login":
-        return "primary";
-      case "logout":
-        return "secondary";
-      default:
-        return "default";
-    }
-  };
-
-  const getScreenText = (screen) => {
-    const screenTranslations = {
-      "Auth": "المصادقة",
-      "Dashboard": "لوحة التحكم",
-      "Logs": "السجلات",
-      "Users": "الموظفين",
-      "Employees": "الموظفين",
-      "Roles": "الصلاحيات",
-      "Clients": "العملاء",
-      "Client Collections": "كشف التحصيلات",
-      "Partners": "المستثمرين",
-      "Investors": "المستثمرين",
-      "PartnerWithdrawals": "الانسحابات",
-      "Expenses": "المصروفات",
-      "Income Statement": "قائمة الدخل",
-      "Chart of Accounts": "شجرة الحسابات",
-      "Journals": "القيود اليومية",
-      "Journal Entries": "القيود اليومية",
-      "General Ledger": "دفتر الأستاذ العام",
-      "Period": "إقفال الفترات",
-      "Loans": "السلف",
-      "Banks": "الحسابات البنكية",
-      "Bank Accounts": "الحسابات البنكية",
-      "Repayments": "الدفعات",
-      "Installments": "الدفعات",
-      "Treasury": "الصندوق",
-      "Company Profit": "أرباح الشركة",
-      "Distribution": "توزيع الأرباح",
-      "Profit Distribution": "توزيع الأرباح",
-      "Zakah": "الزكاة",
-      "Saving": "الادخار",
-      "Templates": "القوالب العقدية",
-      "Contract Templates": "القوالب العقدية",
-      "Messages Templates": "قوالب الرسائل",
-      "Profile": "الملف الشخصي",
-    };
-    return screenTranslations[screen] || screen;
-  };
-
-  const renderTable = () => (
-    <TableContainer>
-      <Table stickyHeader>
-        <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
-          <StyledTableRow>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-              المستخدم
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-              الشاشة
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-              الإجراء
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-              الوصف
-            </StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-              التاريخ والوقت
-            </StyledTableCell>
-          </StyledTableRow>
-        </TableHead>
-        <TableBody>
-          {isLoading ? (
-            <StyledTableRow>
-              <StyledTableCell colSpan={5} align="center">
-                <CircularProgress size={20} />
-              </StyledTableCell>
-            </StyledTableRow>
-          ) : logsData?.data?.length === 0 ? (
-            <StyledTableRow>
-              <StyledTableCell colSpan={5} align="center">
-                <Typography>
-                  لا توجد سجلات أنشطة
-                </Typography>
-              </StyledTableCell>
-            </StyledTableRow>
-          ) : (
-            logsData?.data?.map((log) => (
-              <StyledTableRow key={log.id} hover>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  {log.user.name}
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  {getScreenText(log.screen)}
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  <Chip
-                    label={getActionText(log.action)}
-                    color={getActionColor(log.action)}
-                    size="small"
-                  />
-                </StyledTableCell>
-                <StyledTableCell align="center" style={{ wordWrap: "break-word", maxWidth: "170px" }}>
-                  <Typography variant="body2">
-                    {log.description}
-                  </Typography>
-                </StyledTableCell>
-                <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                      {formatArabicDate(log.createdAt)}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                      {log.createdAtHijri}
-                    </Typography>
-                  </Box>
-                </StyledTableCell>
-              </StyledTableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-
-  const renderCards = () => (
-    <Box sx={{ p: isMobile ? 1 : 2 }}>
-      {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={30} />
-        </Box>
-      ) : logsData?.data?.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Typography variant="h6" color="textSecondary">
-            لا توجد سجلات أنشطة
-          </Typography>
-        </Box>
-      ) : (
-        <Grid container spacing={2}>
-          {logsData?.data?.map((log) => (
-            <Grid item xs={12} key={log.id}>
-              <Card 
-                sx={{ 
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 2,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-                  }
-                }}
-              >
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Stack spacing={2}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'flex-start',
-                      flexDirection: isMobile ? 'column' : 'row',
-                      gap: 1
-                    }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {log.user.name}
-                      </Typography>
-                      <Chip
-                        label={getActionText(log.action)}
-                        color={getActionColor(log.action)}
-                        size={isMobile ? "small" : "medium"}
-                      />
-                    </Box>
-
-                    <Divider />
-
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexDirection: isMobile ? 'column' : 'row',
-                      gap: 1
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body2" color="textSecondary">
-                          الشاشة:
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {getScreenText(log.screen)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          color="textSecondary"
-                          sx={{
-                            fontSize: isMobile ? '0.75rem' : '0.875rem',
-                            direction: 'ltr',
-                            display: 'block',
-                            mb: 0.5
-                          }}
-                        >
-                          {formatArabicDate(log.createdAt)}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'primary.main',
-                            fontWeight: 'bold',
-                            fontSize: isMobile ? '0.65rem' : '0.85rem',
-                            direction: 'ltr',
-                            display: 'block'
-                          }}
-                        >
-                          {log.createdAtHijri}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Box>
-                      <Typography 
-                        variant="body2" 
-                        color="textSecondary" 
-                        sx={{ mb: 1 }}
-                      >
-                        الوصف:
-                      </Typography>
-                      <Paper 
-                        variant="outlined" 
-                        sx={{ 
-                          p: 2, 
-                          bgcolor: 'background.paper',
-                          borderRadius: 1,
-                          border: '1px solid #e0e0e0'
-                        }}
-                      >
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            lineHeight: 1.6,
-                            textAlign: 'right'
-                          }}
-                        >
-                          {log.description}
-                        </Typography>
-                      </Paper>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-    </Box>
-  );
-
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: '100%', overflowX: 'hidden' }}>
       <Helmet>
         <title>سجلات النشاطات</title>
         <meta name="description" content="سجلات النشاطات" />
       </Helmet>
-      
       <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, maxWidth: '100%', overflowX: 'hidden' }}>
         <LogsToolbar
           filters={filters}
@@ -494,7 +155,7 @@ const Logs = () => {
                   variant="contained"
                   color="error"
                   startIcon={<DeleteSweep sx={{ marginLeft: "10px" }} />}
-                  onClick={handleDeleteAll}
+                  onClick={() => setDeleteModalOpen(true)}
                   disabled={!logsData?.data || logsData.data.length === 0}
                   sx={{
                     borderRadius: 2,
@@ -509,16 +170,20 @@ const Logs = () => {
             </MuiStack>
           }
         />
-
-        <Paper sx={{ 
-          width: "100%", 
-          maxWidth: '100%',
-          overflow: "hidden", 
-          borderRadius: 2,
-          minHeight: 400
-        }}>
-          {isSmallScreen ? renderCards() : renderTable()}
-        
+        <Paper sx={{ width: "100%", maxWidth: '100%', overflow: "hidden", borderRadius: 2, minHeight: 400 }}>
+          {isSmallScreen ? (
+            <LogsCards
+              logsData={logsData?.data}
+              isLoading={isLoading}
+              isMobile={isMobile}
+            />
+          ) : (
+            <LogsTable
+              logsData={logsData?.data}
+              isLoading={isLoading}
+              isDarkMode={isDarkMode}
+            />
+          )}
           {logsData && (
             <TablePagination
               component="div"
@@ -527,9 +192,7 @@ const Logs = () => {
               onPageChange={handleChangePage}
               rowsPerPage={10}
               rowsPerPageOptions={[10]}
-              labelDisplayedRows={({ from, to, count }) =>
-                `عرض ${from}-${to} من ${count}`
-              }
+              labelDisplayedRows={({ from, to, count }) => `عرض ${from}-${to} من ${count}`}
               labelRowsPerPage="صفوف لكل صفحة:"
               sx={{
                 '& .MuiTablePagination-toolbar': {
@@ -545,11 +208,10 @@ const Logs = () => {
           )}
         </Paper>
       </Box>
-
       <DeleteModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={() => deleteAllMutation.mutate()}
         title="حذف جميع السجلات"
         message="هل أنت متأكد من حذف جميع سجلات النشاطات؟ هذا الإجراء لا يمكن التراجع عنه."
         isLoading={deleteAllMutation.isPending}
@@ -558,5 +220,4 @@ const Logs = () => {
     </Box>
   );
 };
-
 export default Logs;

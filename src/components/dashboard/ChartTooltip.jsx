@@ -1,19 +1,12 @@
 import React from 'react';
 import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
-
-/**
- * Reusable tooltip for Recharts - supports dark/light mode
- */
 const ChartTooltip = React.memo(({ active, payload, label, formatter }) => {
   const { isDarkMode } = useCustomTheme();
-
   if (!active || !payload?.length) return null;
-
   const formatValue = (entry) => {
     if (formatter) return formatter(entry.value);
     return typeof entry.value === 'number' ? Math.round(entry.value).toLocaleString() : entry.value;
   };
-
   return (
     <div
       style={{
@@ -42,7 +35,5 @@ const ChartTooltip = React.memo(({ active, payload, label, formatter }) => {
     </div>
   );
 });
-
 ChartTooltip.displayName = 'ChartTooltip';
-
-export default ChartTooltip;
+export default ChartTooltip;

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Box, Typography, CircularProgress, useMediaQuery } from "@mui/material";
-import { InsertDriveFile } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from "../../utilities/debounce";
@@ -14,9 +13,7 @@ import {
   exportStatementToPDF,
   exportStatementToExcel,
 } from "../../utilities/statementExporter";
-
 import DeleteModal from "../../components/modals/DeleteModal";
-
 import {
   ClientsSidebar,
   ClientsHeader,
@@ -31,9 +28,7 @@ import {
   getClientStatement,
   getClientStatementForExport,
   getClientLoans,
-  isImageFile,
 } from "../../components/clients";
-
 export default function Clients() {
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
@@ -55,7 +50,6 @@ export default function Clients() {
   const [loansPage, setLoansPage] = useState(1);
   const contentScrollRef = useRef(null);
   const listScrollRef = useRef(null);
-
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { permissions } = usePermissions();
@@ -63,13 +57,11 @@ export default function Clients() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
-
   const { data: clientsData, isLoading: isClientsLoading, refetch } = useQuery({
     queryKey: ["clients", currentPage, search, selectedStatus],
     queryFn: () => getClients(currentPage, search, selectedStatus),
     retry: 1,
   });
-
   const { data: clientDetails, refetch: refetchClientDetails } = useQuery({
     queryKey: ["client-details", selectedClient?.id],
     queryFn: () =>
@@ -77,7 +69,6 @@ export default function Clients() {
     enabled: !!selectedClient,
     retry: 1,
   });
-
   const { data: clientStatement } = useQuery({
     queryKey: [
       "client-statement",
@@ -93,7 +84,6 @@ export default function Clients() {
     enabled: !!selectedClient && tab === 4,
     retry: 1,
   });
-
   const { data: clientLoans } = useQuery({
     queryKey: ["client-loans", selectedClient?.id, loansPage],
     queryFn: () =>
@@ -101,14 +91,11 @@ export default function Clients() {
     enabled: !!selectedClient && tab === 5,
     retry: 1,
   });
-
   const debouncedSearch = debounce((value) => {
     setSearch(value);
     setCurrentPage(1);
   }, 500);
-
   const handleSearchChange = (e) => debouncedSearch(e.target.value);
-
   const handleStatusChange = (status) => {
     if (status === "الكل") {
       setSelectedStatus("الكل");
@@ -117,17 +104,13 @@ export default function Clients() {
     }
     setCurrentPage(1);
   };
-
   const handlePageChange = (e, newPage) => setCurrentPage(newPage);
-
   const handleDateFilterChange = (field, value) => {
     if (field === "from") setFromDate(value);
     else if (field === "to") setToDate(value);
     setStatementPage(1);
   };
-
   const handleTabChange = (e, newValue) => setTab(newValue);
-
   const handleClientSelect = (client) => {
     setSelectedClient(client);
     setEditMode(false);
@@ -136,7 +119,6 @@ export default function Clients() {
     setFromDate("");
     setToDate("");
   };
-
   useEffect(() => {
     if (selectedClient) {
       listScrollRef.current?.scrollTo?.(0, 0);
@@ -148,11 +130,9 @@ export default function Clients() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scroll on selection change only, not on object ref changes
   }, [selectedClient?.id, clientDetails?.client?.id]);
-
   const handleClientInputChange = (field, value) => {
     setClientFormData((prev) => ({ ...prev, [field]: value }));
   };
-
   const handleKafeelInputChange = (field, value) => {
     setKafeelFormData((prev) => ({
       ...prev,
@@ -162,7 +142,6 @@ export default function Clients() {
           : value,
     }));
   };
-
   const handleSaveChanges = async (kafeelIdOverride = null) => {
     try {
       if (tab === 0) {
@@ -188,16 +167,13 @@ export default function Clients() {
           notifySuccess("تم تحديث بيانات الكفيل بنجاح");
         }
       }
-
       setKafeelFormData({});
       setEditMode(false);
       setSelectedKafeelId(null);
-
       queryClient.invalidateQueries({
         queryKey: ["client-details", selectedClient.id],
       });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-
       if (selectedClient?.id) await refetchClientDetails();
     } catch (error) {
       notifyError(
@@ -206,9 +182,7 @@ export default function Clients() {
       handleApiError(error);
     }
   };
-
   const handleAddClient = () => navigate("/clients/add");
-
   const handleDeleteClient = async (clientId) => {
     try {
       await Api.delete(`/api/clients/${clientId}`);
@@ -222,31 +196,25 @@ export default function Clients() {
       handleApiError(error);
     }
   };
-
   const openDeleteModal = (client) => {
     setClientToDelete(client);
     setIsDeleteModalOpen(true);
   };
-
   const openDeleteKafeelModal = (kafeel) => {
     setKafeelToDelete(kafeel);
     setIsDeleteKafeelModalOpen(true);
   };
-
   const handleDeleteKafeel = async (kafeelId) => {
     try {
       await Api.delete(`/api/clients/kafeel/${kafeelId}`);
       notifySuccess("تم حذف الكفيل بنجاح");
       setIsDeleteKafeelModalOpen(false);
       setKafeelToDelete(null);
-
       queryClient.invalidateQueries({
         queryKey: ["client-details", selectedClient.id],
       });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-
       if (selectedClient?.id) await refetchClientDetails();
-
       if (selectedKafeelId === kafeelId) {
         setEditMode(false);
         setSelectedKafeelId(null);
@@ -257,7 +225,6 @@ export default function Clients() {
       handleApiError(error);
     }
   };
-
   const handleDownloadFile = async (
     fileUrl,
     fileName,
@@ -275,13 +242,11 @@ export default function Clients() {
       handleApiError(error);
     }
   };
-
   const handleShareFile = async (fileUrl, fileName, clientName) => {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
       const file = new File([blob], fileName + ".pdf", { type: blob.type });
-
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: fileName + ".pdf",
@@ -311,7 +276,6 @@ export default function Clients() {
       notifyError("حدث خطأ أثناء مشاركة الملف");
     }
   };
-
   const handleExportPDF = async () => {
     if (!selectedClient) return;
     try {
@@ -331,7 +295,6 @@ export default function Clients() {
       notifyError("حدث خطأ أثناء تصدير PDF");
     }
   };
-
   const handleExportExcel = async () => {
     if (!selectedClient) return;
     try {
@@ -351,11 +314,9 @@ export default function Clients() {
       notifyError("حدث خطأ أثناء تصدير Excel");
     }
   };
-
   const handleViewLoanDetails = (loanId) => {
     window.location.href = `/installments/${loanId}`;
   };
-
   const handleEditKafeel = (kafeel) => {
     const kafeelIdToEdit = Number(kafeel.id);
     if (!kafeelIdToEdit || isNaN(kafeelIdToEdit)) return;
@@ -376,66 +337,11 @@ export default function Clients() {
       email: kafeel.email || "",
     });
   };
-
   const handleCancelKafeelEdit = () => {
     setEditMode(false);
     setSelectedKafeelId(null);
     setKafeelFormData({});
   };
-
-  const renderFileThumbnail = useCallback(
-    (fileUrl, label) => {
-      if (!fileUrl) return null;
-
-      if (isImageFile(fileUrl)) {
-        return (
-          <Box
-            component="img"
-            src={fileUrl}
-            alt={label}
-            sx={{
-              width: "100%",
-              height: 180,
-              objectFit: "cover",
-              borderRadius: 1,
-              cursor: "pointer",
-              transition: "transform 0.2s",
-              "&:hover": { transform: "scale(1.02)" },
-            }}
-            onClick={() => window.open(fileUrl, "_blank")}
-          />
-        );
-      }
-
-      return (
-        <Box
-          sx={{
-            width: "100%",
-            height: 180,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: isDarkMode ? "background.default" : "#f5f5f5",
-            borderRadius: 1,
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-            "&:hover": {
-              backgroundColor: isDarkMode ? "action.hover" : "#e0e0e0",
-            },
-          }}
-          onClick={() => window.open(fileUrl, "_blank")}
-        >
-          <InsertDriveFile sx={{ fontSize: 60, color: "#757575" }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-            اضغط للعرض
-          </Typography>
-        </Box>
-      );
-    },
-    [isDarkMode]
-  );
-
   useEffect(() => {
     if (clientsData?.clients?.length === 0 && selectedClient) {
       setSelectedClient(null);
@@ -447,7 +353,6 @@ export default function Clients() {
       setSelectedClient(clientsData.clients[0].client);
     }
   }, [clientsData, selectedClient, isMobile]);
-
   useEffect(() => {
     if (clientDetails?.client) {
       const c = clientDetails.client;
@@ -488,7 +393,6 @@ export default function Clients() {
       setKafeelFormData({});
     }
   }, [clientDetails]);
-
   const renderTabContent = () => {
     switch (tab) {
       case 0:
@@ -538,7 +442,6 @@ export default function Clients() {
             }
             onDownloadFile={handleDownloadFile}
             onShareFile={handleShareFile}
-            renderFileThumbnail={renderFileThumbnail}
           />
         );
       case 4:
@@ -574,7 +477,6 @@ export default function Clients() {
         return null;
     }
   };
-
   return (
     <Box
       sx={{
@@ -588,9 +490,8 @@ export default function Clients() {
         <title>العملاء</title>
         <meta name="description" content="العملاء" />
       </Helmet>
-
       <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
-        {/* على الموبايل: عرض القائمة افتراضياً، وعرض التفاصيل عند اختيار عميل */}
+        {}
         {(!isMobile || !selectedClient) && (
           <ClientsSidebar
             permissions={permissions}
@@ -611,7 +512,6 @@ export default function Clients() {
             isMobile={isMobile}
           />
         )}
-
         {(!isMobile || selectedClient) && (
           selectedClient && clientDetails ? (
             <Box
@@ -659,7 +559,6 @@ export default function Clients() {
           )
         )}
       </Box>
-
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={() => {
@@ -671,7 +570,6 @@ export default function Clients() {
         message={`هل أنت متأكد من حذف العميل ${clientToDelete?.name}؟`}
         ButtonText="حذف"
       />
-
       <DeleteModal
         open={isDeleteKafeelModalOpen}
         onClose={() => {

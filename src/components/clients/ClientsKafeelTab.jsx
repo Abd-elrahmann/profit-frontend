@@ -8,7 +8,6 @@ import {
   Paper,
   Button,
 } from "@mui/material";
-
 const inputSx = (isEditing, isDarkMode) => ({
   "& .MuiOutlinedInput-root": {
     backgroundColor: isEditing
@@ -21,7 +20,6 @@ const inputSx = (isEditing, isDarkMode) => ({
     borderRadius: "6px",
   },
 });
-
 function KafeelFormFields({
   kafeel,
   formData,
@@ -36,10 +34,9 @@ function KafeelFormFields({
     }
     return kafeel?.[field] ?? "";
   };
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {/* المعلومات الشخصية */}
+      {}
       <Box>
         <Box
           className="flex items-center gap-2 pb-2 mb-3"
@@ -105,8 +102,7 @@ function KafeelFormFields({
         </Grid>
       </Grid>
       </Box>
-
-      {/* بيانات العنوان */}
+      {}
       <Box sx={{ width: "100%" }}>
         <Box
           className="flex items-center gap-2 pb-2 mb-3"
@@ -140,8 +136,7 @@ function KafeelFormFields({
           </Grid>
         </Grid>
       </Box>
-
-      {/* بيانات العمل والدخل */}
+      {}
       <Box sx={{ width: "100%" }}>
         <Box
           className="flex items-center gap-2 pb-2 mb-3"
@@ -190,7 +185,6 @@ function KafeelFormFields({
     </Box>
   );
 }
-
 export default function ClientsKafeelTab({
   clientDetails,
   selectedClient,
@@ -210,11 +204,8 @@ export default function ClientsKafeelTab({
   const hasMultipleKafeels =
     clientDetails?.kafeels && clientDetails.kafeels.length > 0;
   const hasSingleKafeel = clientDetails?.kafeel;
-
   if (!clientDetails) return null;
-
   const btnSize = isMobile ? "small" : "medium";
-
   return (
     <Paper sx={{ p: { xs: 2, md: 3 } }}>
       <Box
@@ -244,7 +235,6 @@ export default function ClientsKafeelTab({
           </Button>
         )}
       </Box>
-
       {hasMultipleKafeels ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {clientDetails.kafeels.map((kafeel, index) => {
@@ -255,7 +245,6 @@ export default function ClientsKafeelTab({
             const currentFormData = isEditingThisKafeel
               ? kafeelFormData
               : kafeel;
-
             return (
               <Box key={kafeel.id || index}>
                 <Box

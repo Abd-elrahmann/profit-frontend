@@ -13,7 +13,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useTheme } from '@mui/material/styles';
 import dayjs from 'dayjs';
 import { MONTHS } from './constants';
-
 const selectSx = (theme) => ({
   bgcolor: theme.palette.background.default,
   '& .MuiSelect-select': {
@@ -22,7 +21,6 @@ const selectSx = (theme) => ({
     textAlign: 'center',
   },
 });
-
 const inputSx = (theme) => ({
   bgcolor: theme.palette.background.default,
   '& .MuiInputBase-input': {
@@ -31,7 +29,6 @@ const inputSx = (theme) => ({
     textAlign: 'center',
   },
 });
-
 const IncomeStatementPeriodFilter = ({
   periodType,
   onPeriodTypeChange,
@@ -50,7 +47,6 @@ const IncomeStatementPeriodFilter = ({
   isSmallScreen = false,
 }) => {
   const theme = useTheme();
-
   return (
     <Paper
       elevation={0}
@@ -74,7 +70,6 @@ const IncomeStatementPeriodFilter = ({
             <MenuItem value="custom" sx={{ textAlign: 'center' }}>فترة مخصصة</MenuItem>
           </Select>
         </Grid>
-
         {periodType === 'period' && (
           <Grid item xs={12} md={3}>
             <Autocomplete
@@ -106,7 +101,6 @@ const IncomeStatementPeriodFilter = ({
             />
           </Grid>
         )}
-
         {periodType === 'monthly' && (
           <Grid item xs={12} md={3}>
             <Select
@@ -124,7 +118,6 @@ const IncomeStatementPeriodFilter = ({
             </Select>
           </Grid>
         )}
-
         {periodType === 'monthly' && (
           <Grid item xs={12} md={3} sx={{ width: '250px', maxWidth: '100%' }}>
             <Autocomplete
@@ -152,7 +145,6 @@ const IncomeStatementPeriodFilter = ({
             />
           </Grid>
         )}
-
         {periodType === 'custom' && (
           <>
             <Grid item xs={12} md={3}>
@@ -203,5 +195,4 @@ const IncomeStatementPeriodFilter = ({
     </Paper>
   );
 };
-
-export default React.memo(IncomeStatementPeriodFilter);
+export default React.memo(IncomeStatementPeriodFilter);

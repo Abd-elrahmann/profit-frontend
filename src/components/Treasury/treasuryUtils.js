@@ -15,15 +15,12 @@ export const getMonthName = (monthKey) => {
     return monthKey;
   }
 };
-
 export const getCurrentJournals = (currentData, monthParam) => {
   if (!currentData?.journalsByMonth) return [];
-
   if (monthParam && currentData.journalsByMonth[monthParam]) {
     return currentData.journalsByMonth[monthParam].entries;
   }
-
   return Object.values(currentData.journalsByMonth)
     .flatMap((month) => month.entries)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-};
+};

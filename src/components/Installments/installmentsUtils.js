@@ -1,5 +1,4 @@
 import { notifyError, notifySuccess } from '../../utilities/toastify';
-
 export const downloadFile = async (url, filename) => {
   try {
     const response = await fetch(url);
@@ -21,14 +20,12 @@ export const downloadFile = async (url, filename) => {
     notifyError('حدث خطأ أثناء تحميل الملف');
   }
 };
-
 export const handleShareFile = async (fileUrl, filename) => {
   try {
     const response = await fetch(fileUrl);
     const blob = await response.blob();
     const decodedFilename = decodeURIComponent(filename);
     const file = new File([blob], decodedFilename, { type: blob.type });
-
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         title: decodedFilename,
@@ -44,7 +41,6 @@ export const handleShareFile = async (fileUrl, filename) => {
     notifyError('حدث خطأ أثناء مشاركة الملف');
   }
 };
-
 export const extractFileName = (url) => {
   if (!url) return 'ملف غير معروف';
   if (Array.isArray(url)) {
@@ -59,17 +55,14 @@ export const extractFileName = (url) => {
     return encodedFileName;
   }
 };
-
 export const getStatusColor = (status, installment) => {
   if (checkIfOverdue(installment)) return 'error';
-
   const effectiveStatus =
     status === 'PENDING' &&
     installment.attachments &&
     installment.attachments.length > 0
       ? 'PENDING_REVIEW'
       : status;
-
   const colorMap = {
     PENDING: 'warning',
     PENDING_REVIEW: 'warning',
@@ -81,17 +74,14 @@ export const getStatusColor = (status, installment) => {
   };
   return colorMap[effectiveStatus] || 'default';
 };
-
 export const getStatusText = (status, installment) => {
   if (checkIfOverdue(installment)) return 'متأخر';
-
   const effectiveStatus =
     status === 'PENDING' &&
     installment.attachments &&
     installment.attachments.length > 0
       ? 'PENDING_REVIEW'
       : status;
-
   const textMap = {
     PENDING: 'قيد الانتظار',
     PENDING_REVIEW: 'قيد المراجعة',
@@ -103,36 +93,29 @@ export const getStatusText = (status, installment) => {
   };
   return textMap[effectiveStatus] || status;
 };
-
 export const checkIfOverdue = (installment) => {
   if (installment.status === 'PAID') return false;
   const dueDate = new Date(installment.dueDate);
   const today = new Date();
   return dueDate < today;
 };
-
 export const hasPendingDocuments = (installment) =>
   installment.attachments &&
   installment.attachments.length > 0 &&
   installment.status === 'PENDING';
-
 export const hasFiles = (installment) =>
   (installment.attachments && installment.attachments.length > 0) ||
   installment.PaymentProof;
-
 export const sortInstallments = (installments) =>
   [...(installments || [])].sort(
     (a, b) => a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate)
   );
-
 export const filterInstallmentsByStatus = (installments, statusFilter, checkIfOverdueFn) => {
   if (!statusFilter || statusFilter === 'ALL') return installments || [];
   const list = installments || [];
-
   if (statusFilter === 'OVERDUE') {
     return list.filter((inst) => checkIfOverdueFn(inst));
   }
-
   if (statusFilter === 'PENDING_REVIEW') {
     return list.filter(
       (inst) =>
@@ -142,7 +125,6 @@ export const filterInstallmentsByStatus = (installments, statusFilter, checkIfOv
         !checkIfOverdueFn(inst)
     );
   }
-
   if (statusFilter === 'PENDING') {
     return list.filter(
       (inst) =>
@@ -151,6 +133,5 @@ export const filterInstallmentsByStatus = (installments, statusFilter, checkIfOv
         !checkIfOverdueFn(inst)
     );
   }
-
   return list.filter((inst) => inst.status === statusFilter);
-};
+};

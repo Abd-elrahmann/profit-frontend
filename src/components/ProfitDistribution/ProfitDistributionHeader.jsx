@@ -17,7 +17,6 @@ import {
   TableRows as ExcelIcon,
 } from "@mui/icons-material";
 import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
-
 export default function ProfitDistributionHeader({
   activeTab,
   onTabChange,
@@ -43,7 +42,6 @@ export default function ProfitDistributionHeader({
       : "none",
     color: isActive ? theme.palette.primary.main : theme.palette.text.primary,
   });
-
   if (isSmallScreen) {
     return (
       <Box sx={{ mb: 3 }}>
@@ -139,7 +137,6 @@ export default function ProfitDistributionHeader({
       </Box>
     );
   }
-
   return (
     <>
       {(cameFromSaving || cameFromPeriodClosing) && activeTab === 1 && (
@@ -165,7 +162,6 @@ export default function ProfitDistributionHeader({
           </Typography>
         </Box>
       )}
-
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
         <Tabs value={activeTab} onChange={(e, newValue) => onTabChange(newValue)}>
           <Tab
@@ -180,4 +176,4 @@ export default function ProfitDistributionHeader({
       </Box>
     </>
   );
-}
+}

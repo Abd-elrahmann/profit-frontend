@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Chip, Stack } from '@mui/material';
 import dayjs from 'dayjs';
-
 export default function TreasuryJournalCards({ journals, isDarkMode }) {
   return (
     <Stack spacing={1.5} sx={{ p: 1, width: '100%' }}>
@@ -37,7 +36,6 @@ export default function TreasuryJournalCards({ journals, isDarkMode }) {
                   sx={{ fontWeight: 'bold', fontSize: '0.7rem' }}
                 />
               </Box>
-
               <Box>
                 <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
                   {journal.description}
@@ -48,7 +46,6 @@ export default function TreasuryJournalCards({ journals, isDarkMode }) {
                   </Typography>
                 )}
               </Box>
-
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="caption" color="text.secondary">
@@ -93,4 +90,4 @@ export default function TreasuryJournalCards({ journals, isDarkMode }) {
       ))}
     </Stack>
   );
-}
+}

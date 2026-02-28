@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
 import { formatArabicDate } from './generalLedgerUtils';
-
 const GeneralLedgerCards = ({ journals }) => (
   <Stack spacing={1.5} sx={{ width: '100%' }}>
     {journals?.map((journal) =>
@@ -27,7 +26,6 @@ const GeneralLedgerCards = ({ journals }) => (
                   </Box>
                 </Box>
               </Box>
-
               <Box>
                 <Typography variant="body2" sx={{ mb: 0.5 }} fontWeight="medium">
                   {line.description}
@@ -38,7 +36,6 @@ const GeneralLedgerCards = ({ journals }) => (
                   </Typography>
                 )}
               </Box>
-
               <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                 <Box sx={{ textAlign: 'center', flex: 1 }}>
                   <Typography variant="caption" color="text.secondary" display="block">
@@ -52,7 +49,6 @@ const GeneralLedgerCards = ({ journals }) => (
                     {line.debit > 0 ? line.debit.toLocaleString('en-US') : '0'}
                   </Typography>
                 </Box>
-
                 <Box sx={{ textAlign: 'center', flex: 1 }}>
                   <Typography variant="caption" color="text.secondary" display="block">
                     دائن
@@ -65,7 +61,6 @@ const GeneralLedgerCards = ({ journals }) => (
                     {line.credit > 0 ? line.credit.toLocaleString('en-US') : '0'}
                   </Typography>
                 </Box>
-
                 <Box sx={{ textAlign: 'center', flex: 1 }}>
                   <Typography variant="caption" color="text.secondary" display="block">
                     الرصيد
@@ -86,5 +81,4 @@ const GeneralLedgerCards = ({ journals }) => (
     )}
   </Stack>
 );
-
-export default React.memo(GeneralLedgerCards);
+export default React.memo(GeneralLedgerCards);

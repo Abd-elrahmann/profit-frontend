@@ -3,10 +3,8 @@ import { Box, Typography, Paper, Tooltip } from '@mui/material';
 import { AccountBalanceWallet, Info } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { formatNumber } from './incomeStatementUtils';
-
 const IncomeStatementNetProfitCard = ({ incomeData, isSmallScreen = false }) => {
   const theme = useTheme();
-
   return (
     <Paper
       elevation={0}
@@ -70,5 +68,4 @@ const IncomeStatementNetProfitCard = ({ incomeData, isSmallScreen = false }) => 
     </Paper>
   );
 };
-
-export default React.memo(IncomeStatementNetProfitCard);
+export default React.memo(IncomeStatementNetProfitCard);

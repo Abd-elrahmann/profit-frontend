@@ -5,7 +5,6 @@ import JournalsLinesForm from "./JournalsLinesForm";
 import JournalsLinesList from "./JournalsLinesList";
 import JournalsSummaryCards from "./JournalsSummaryCards";
 import JournalsActions from "./JournalsActions";
-
 export default function JournalsJournalDetails({
   journalData,
   editForm,
@@ -101,7 +100,6 @@ export default function JournalsJournalDetails({
       </Box>
     );
   }
-
   return (
     <Paper sx={{ p: 4, borderRadius: 2, bgcolor: "background.paper" }}>
       <JournalsDetailsForm

@@ -16,7 +16,6 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
 const countryCodes = [
   { code: '+20', country: 'مصر', flag: '🇪🇬' },
   { code: '+966', country: 'السعودية', flag: '🇸🇦' },
@@ -33,7 +32,6 @@ const countryCodes = [
   { code: '+1', country: 'الولايات المتحدة', flag: '🇺🇸' },
   { code: '+44', country: 'المملكة المتحدة', flag: '🇬🇧' },
 ];
-
 const kafeelValidationSchema = Yup.object().shape({
   name: Yup.string().required('اسم الكفيل مطلوب'),
   nationalId: Yup.string().required('رقم هوية الكفيل مطلوب'),
@@ -50,18 +48,15 @@ const kafeelValidationSchema = Yup.object().shape({
   city: Yup.string().required('المدينة مطلوبة'),
   district: Yup.string().required('الحي مطلوب'),
 });
-
 const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const queryClient = useQueryClient();
-
   const steps = [
     { label: 'بيانات الكفيل', icon: Group },
     { label: 'مرفقات الكفيل', icon: CloudUpload },
   ];
-
   const initialValues = {
     name: '',
     nationalId: '',
@@ -75,16 +70,13 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
     phone: '',
     email: '',
   };
-
   const handleNext = () => setActiveStep((prev) => prev + 1);
   const handleBack = () => setActiveStep((prev) => prev - 1);
-
   const handleDrop = (acceptedFiles, fieldName) => {
     if (acceptedFiles.length > 0) {
       setUploadedFiles((prev) => ({ ...prev, [fieldName]: acceptedFiles[0] }));
     }
   };
-
   const removeFile = (fieldName) => {
     setUploadedFiles((prev) => {
       const next = { ...prev };
@@ -92,12 +84,10 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
       return next;
     });
   };
-
   const getFilePreview = (file) => {
     if (file?.type?.startsWith('image/')) return URL.createObjectURL(file);
     return null;
   };
-
   const handleSubmit = async (values) => {
     setIsSubmitting(true);
     try {
@@ -112,15 +102,12 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
       formData.append('salary', String(values.salary || ''));
       formData.append('obligations', String(values.obligations || ''));
       if (values.email?.trim()) formData.append('email', String(values.email));
-
       Object.keys(uploadedFiles).forEach((key) => {
         formData.append(key, uploadedFiles[key]);
       });
-
       await Api.post(`/api/clients/${clientId}/kafeels`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       notifySuccess('تم إضافة الكفيل بنجاح');
       queryClient.invalidateQueries({ queryKey: ['client-details', clientId] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -131,12 +118,10 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
       setIsSubmitting(false);
     }
   };
-
   const inputBase =
     'w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100';
   const labelBase = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
   const fieldError = 'text-xs text-red-500 mt-0.5';
-
   const DocumentDropzone = ({ fieldName, label, acceptedTypes }) => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       accept: acceptedTypes,
@@ -179,14 +164,12 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
       </div>
     );
   };
-
   return (
     <div dir="rtl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة كفيل جديد</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">يرجى إكمال خطوات إضافة بيانات الكفيل ومرفقاته</p>
       </div>
-
       <div className="flex items-center justify-between max-w-3xl mb-8">
         {steps.map((step, idx) => {
           const StepIcon = step.icon;
@@ -207,7 +190,6 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
           );
         })}
       </div>
-
       <Formik
         initialValues={initialValues}
         validationSchema={kafeelValidationSchema}
@@ -243,11 +225,11 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
                   ))}
                   <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>رقم جوال الكفيل</label>
-                    <div className="flex gap-2">
-                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} w-28 shrink-0`}>
+                    <div className="flex gap-3">
+                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} w-36 min-w-[7rem] shrink-0`}>
                         {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
                       </select>
-                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} text-left`} dir="ltr" />
+                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} flex-1 min-w-0 text-left`} dir="ltr" />
                     </div>
                     {touched.phone && errors.phone && <span className={fieldError}>{errors.phone}</span>}
                   </div>
@@ -291,43 +273,30 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
                   </div>
                 </div>
               )}
-
               {activeStep === 1 && (
                 <div className="space-y-6">
                   <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2"><ContactPage sx={{ color: 'primary.main' }} />مستندات الكفيل</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">صورة هوية الكفيل وبطاقة العمل اختيارية</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <DocumentDropzone fieldName="kafeelIdImage" label="صورة هوية الكفيل (اختياري)" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                    <DocumentDropzone fieldName="kafeelWorkCard" label="بطاقة عمل الكفيل (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
+                    <DocumentDropzone fieldName="kafeelIdImage" label="صورة هوية الكفيل (اختياري)" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'], 'application/pdf': ['.pdf'] }} />
+                    <DocumentDropzone fieldName="kafeelWorkCard" label="بطاقة العمل (اختياري)" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'], 'application/pdf': ['.pdf'] }} />
                   </div>
                 </div>
               )}
             </div>
-
-            <div className="px-0 py-6 mt-8 border-t border-primary/10 flex justify-between items-center">
-              <button type="button" onClick={onCancel} className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                إلغاء العملية
+            <div className="flex justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <button type="button" onClick={handleBack} className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                رجوع
               </button>
-              <div className="flex gap-3">
-                {activeStep > 0 && (
-                  <button type="button" onClick={handleBack} disabled={isSubmitting} className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
-                    <ArrowForward sx={{ fontSize: 20 }} />رجوع
-                  </button>
-                )}
-                {activeStep < steps.length - 1 ? (
-                  <button
-                    type="button"
-                    onClick={handleNextClick}
-                    className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
-                  >
-                    التالي<span className="rotate-180 inline-block"><ArrowForward sx={{ fontSize: 20 }} /></span>
-                  </button>
-                ) : (
-                  <button type="button" onClick={handleSubmitClick} disabled={isSubmitting} className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70">
-                    {isSubmitting ? <><span className="animate-spin inline-block"><Autorenew sx={{ fontSize: 20 }} /></span>جاري الإضافة...</> : <><CheckCircle sx={{ fontSize: 20 }} />إضافة الكفيل</>}
-                  </button>
-                )}
-              </div>
+              {activeStep < 1 ? (
+                <button type="button" onClick={handleNextClick} className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white">
+                  التالي
+                </button>
+              ) : (
+                <button type="button" onClick={handleSubmitClick} className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white" disabled={isSubmitting}>
+                  {isSubmitting ? 'جاري الإضافة...' : 'إضافة الكفيل'}
+                </button>
+              )}
             </div>
           </Form>
           );

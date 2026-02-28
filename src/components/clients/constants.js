@@ -6,7 +6,6 @@ export const CLIENT_TABS = {
   STATEMENT: 4,
   LOANS: 5,
 };
-
 export const TAB_LABELS = [
   "الملف الشخصي",
   "المعلومات المالية",
@@ -15,5 +14,4 @@ export const TAB_LABELS = [
   "كشف حساب",
   "السلفات",
 ];
-
-export const STATUS_FILTERS = ["الكل", "نشط", "منتهي", "متعثر"];
+export const STATUS_FILTERS = ["الكل", "نشط", "منتهي", "متعثر"];

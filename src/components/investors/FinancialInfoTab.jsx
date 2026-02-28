@@ -22,11 +22,6 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import MosqueIcon from "@mui/icons-material/Mosque";
 import SavingsIcon from "@mui/icons-material/Savings";
 import InfoIcon from "@mui/icons-material/Info";
-
-/**
- * FinancialInfoTab Component - Tab displaying financial information
- * Shows investment details, profits, savings, ratios, and zakat information
- */
 const FinancialInfoTab = ({
   investorDetails,
   isMobile = false,
@@ -38,22 +33,19 @@ const FinancialInfoTab = ({
   onSaveChanges,
   onGenerateContract,
   isSaving = false,
-  
-  // Permissions & Theme
   permissions,
   isDarkMode,
 }) => {
   return (
     <Paper sx={{ p: { xs: 2, md: 3 } }}>
-      {/* Header */}
+      {}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 2 }}>
           الأرباح والمعاملات
         </Typography>
         <Divider sx={{ mb: 3 }} />
       </Box>
-
-      {/* Investment Group */}
+      {}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
           <AccountBalanceWalletIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -140,8 +132,7 @@ const FinancialInfoTab = ({
           </Grid>
         </Grid>
       </Box>
-
-      {/* Profits Group */}
+      {}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
           <TrendingUpIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -209,8 +200,7 @@ const FinancialInfoTab = ({
           </Grid>
         </Grid>
       </Box>
-
-      {/* Savings Details Group */}
+      {}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
           <SavingsIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -259,8 +249,7 @@ const FinancialInfoTab = ({
           </Grid>
         </Grid>
       </Box>
-
-      {/* Ratios Group */}
+      {}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
           <AssessmentIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -309,8 +298,7 @@ const FinancialInfoTab = ({
           </Grid>
         </Grid>
       </Box>
-
-      {/* Zakat Group */}
+      {}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
           <MosqueIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -378,18 +366,14 @@ const FinancialInfoTab = ({
           </Grid>
         </Grid>
       </Box>
-
-      {/* Saving Progress Alert */}
+      {}
       {(() => {
-        // للمستثمرين الجدد: capitalAmount = 0، ورأس المال الفعلي في newCapitalAmount
         const capital = investorDetails.capitalAmount > 0
           ? investorDetails.capitalAmount
           : (investorDetails.newCapitalAmount || investorDetails.total || 0);
         const saving = investorDetails.totalSaving || 0;
         const difference = capital - saving;
-
         if (saving === 0) return null;
-
         return (
           <Alert
             severity={difference <= 0 ? "success" : "info"}
@@ -417,8 +401,7 @@ const FinancialInfoTab = ({
           </Alert>
         );
       })()}
-
-      {/* Edit Actions & Editable Fields */}
+      {}
       <Box
         sx={{
           border: "2px solid",
@@ -488,7 +471,6 @@ const FinancialInfoTab = ({
               </Box>
             )}
         </Box>
-
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
           <div>
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">رأس المال</label>
@@ -542,7 +524,6 @@ const FinancialInfoTab = ({
             />
           </div>
         </Box>
-
         {hasDataChanged && (
           <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", flexWrap: "wrap" }}>
             <Button
@@ -564,5 +545,4 @@ const FinancialInfoTab = ({
     </Paper>
   );
 };
-
-export default FinancialInfoTab;
+export default FinancialInfoTab;

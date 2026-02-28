@@ -7,7 +7,6 @@ import {
   Divider,
   Chip,
 } from "@mui/material";
-
 const LoanSimulation = ({
   isSmallScreen,
   simulationSummary,
@@ -63,7 +62,6 @@ const LoanSimulation = ({
                   {simulationSummary.durationText}
                 </Typography>
               </Box>
-
               <Box
                 sx={{
                   display: "flex",
@@ -78,7 +76,6 @@ const LoanSimulation = ({
                   {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
                 </Typography>
               </Box>
-
               <Box
                 sx={{
                   display: "flex",
@@ -93,10 +90,7 @@ const LoanSimulation = ({
                   {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
                 </Typography>
               </Box>
-
-
               <Divider />
-
               <Box
                 sx={{
                   display: "flex",
@@ -136,7 +130,6 @@ const LoanSimulation = ({
       </Box>
     );
   }
-
   return (
     <Box
       sx={{
@@ -172,7 +165,6 @@ const LoanSimulation = ({
               {formatAmount(simulationSummary.paymentAmount.toString())}{" "}
             </Typography>
           </Box>
-
           <Box
             sx={{
               display: "flex",
@@ -191,7 +183,6 @@ const LoanSimulation = ({
               {simulationSummary.durationText}
             </Typography>
           </Box>
-
           <Box
             sx={{
               display: "flex",
@@ -206,7 +197,6 @@ const LoanSimulation = ({
               {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
             </Typography>
           </Box>
-
           <Box
             sx={{
               display: "flex",
@@ -221,9 +211,7 @@ const LoanSimulation = ({
               {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
             </Typography>
           </Box>
-
           <Divider />
-
           <Box
             sx={{
               display: "flex",
@@ -267,5 +255,4 @@ const LoanSimulation = ({
     </Box>
   );
 };
-
 export default LoanSimulation;

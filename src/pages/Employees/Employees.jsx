@@ -2,44 +2,21 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
-  IconButton,
   TextField,
   InputAdornment,
-  TableContainer,
-  TableHead,
-  TableBody,
   Paper,
-  Chip,
-  Table,
   TablePagination,
-  CircularProgress,
   useMediaQuery,
-  Card,
-  CardContent,
   Stack,
-  Divider,
-  Typography,
 } from "@mui/material";
-import {
-  Add,
-  Search,
-  Edit,
-  Delete,
-  AdminPanelSettingsOutlined as AdminPanelSettings,
-  History as HistoryIcon,
-  PictureAsPdf as PdfIcon,
-  TableChart as ExcelIcon
-} from "@mui/icons-material";
-
-import {StyledTableCell, StyledTableRow} from '../../components/layouts/tableLayout';
+import { Add, Search, PictureAsPdf as PdfIcon, TableChart as ExcelIcon } from "@mui/icons-material";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import "dayjs/locale/ar";
 import AddEmployee from "../../components/modals/AddEmployee";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AssignRole from "../../components/modals/AssignRole";
 import LogsTable from "../../components/modals/LogsTable";
+import { EmployeesTable, EmployeesCards } from "../../components/employees";
 import { debounce } from '../../utilities/debounce';
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
@@ -47,12 +24,10 @@ import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportEmployeesToPDF, exportEmployeesToExcel } from "../../utilities/employeesExporter";
 import { useTheme } from '../../theme/ThemeContext';
 import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
-
 const getUsers = async (page = 1, searchQuery = '') => {
   const response = await Api.get(`/api/users/${page}?name=${searchQuery}`);
-  return response.data.users;
+  return response.data;
 };
-
 export default function Employees() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -66,85 +41,59 @@ export default function Employees() {
   const [userForRoleAssignment, setUserForRoleAssignment] = useState(null);
   const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
   const [selectedUserForLogs, setSelectedUserForLogs] = useState(null);
-  
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
   const { isDarkMode } = useTheme();
-
   const { permissions } = usePermissions();
-  const { data: usersData, isLoading, refetch } = useQuery({ 
-    queryKey: ["employees", page + 1, searchQuery], 
+  const { data: usersData, isLoading, refetch } = useQuery({
+    queryKey: ["employees", page + 1, searchQuery],
     queryFn: () => getUsers(page + 1, searchQuery),
-    retry:1,
+    retry: 1,
   });
-
-  const formatArabicDate = (date) => {
-    return dayjs(date)
-      .locale("ar")
-      .format("D [من] MMMM [الساعة] h:mm")
-      + " " 
-      + (dayjs(date).hour() < 12 ? "صباحًا" : "مساءً");
-  };
   const handleExportPDF = async () => {
-    if (!usersData || usersData.length === 0) {
+    if (!usersData?.users?.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
-    
     try {
-      await exportEmployeesToPDF(usersData, searchQuery);
+      await exportEmployeesToPDF(usersData.users, searchQuery);
       notifySuccess("تم تصدير بيانات الموظفين إلى PDF بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير PDF");
       handleApiError(error);
     }
   };
-
   const handleExportExcel = async () => {
-    if (!usersData || usersData.length === 0) {
+    if (!usersData?.users?.length) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
-    
     try {
-      await exportEmployeesToExcel(usersData, searchQuery);
+      await exportEmployeesToExcel(usersData.users, searchQuery);
       notifySuccess("تم تصدير بيانات الموظفين إلى Excel بنجاح");
     } catch (error) {
       notifyError("حدث خطأ أثناء تصدير Excel");
       handleApiError(error);
     }
   };
-
-  const debouncedSearch = debounce((value) => {
-    setSearchQuery(value);
-  }, 500);
-
-  const handleSearchChange = (event) => {
-    debouncedSearch(event.target.value);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  const debouncedSearch = debounce((value) => setSearchQuery(value), 500);
+  const handleSearchChange = (event) => debouncedSearch(event.target.value);
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const handleEdit = (user) => {
     setSelectedUser(user);
     setEditMode('edit');
     setIsAddModalOpen(true);
   };
-
   const handleAdd = () => {
     setSelectedUser(null);
     setEditMode('add');
     setIsAddModalOpen(true);
   };
-
   const handleDelete = async (id) => {
     try {
       await Api.delete(`/api/users/${id}`);
@@ -156,290 +105,24 @@ export default function Employees() {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حذف الموظف");
     }
   };
-
   const handleAssignRole = (user) => {
     setUserForRoleAssignment(user);
     setIsAssignRoleModalOpen(true);
   };
-
   const handleViewLogs = (user) => {
     setSelectedUserForLogs(user);
     setIsLogsModalOpen(true);
   };
-
   const openDeleteModal = (userId) => {
     setSelectedUserId(userId);
     setIsDeleteModalOpen(true);
   };
-
-  const renderTable = () => (
-    <TableContainer sx={{ borderRadius: 2, overflowX: 'auto' }}>
-      <Table stickyHeader>
-        <TableHead sx={{ bgcolor: isDarkMode ? 'background.paper' : '#F3F4F6' }}>
-          <StyledTableRow>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الاسم</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>البريد الإلكتروني</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>رقم الهاتف</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الحالة</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الدور</StyledTableCell>
-            <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الإنشاء</StyledTableCell>
-            {(permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add")) && (
-              <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
-            )}
-          </StyledTableRow>
-        </TableHead>
-        <TableBody>
-          {isLoading ? (
-            <StyledTableRow>
-              <StyledTableCell colSpan={7} align="center">
-                <CircularProgress />
-              </StyledTableCell>
-            </StyledTableRow>
-          ) : usersData?.map((user) => (
-            <StyledTableRow key={user.id} hover>
-              <StyledTableCell align="center">{user.name}</StyledTableCell>
-              <StyledTableCell align="center" sx={{ color: "gray" }}>{user.email}</StyledTableCell>
-              <StyledTableCell align="center" sx={{ color: "gray" }}>{user.phone}</StyledTableCell>
-              <StyledTableCell align="center">
-                {user.isActive ? (
-                  <Chip
-                    label="نشط"
-                    sx={{
-                      bgcolor: "rgba(16,185,129,0.1)",
-                      color: "#10B981",
-                      fontWeight: "bold",
-                    }}
-                  />
-                ) : (
-                  <Chip
-                    label="غير نشط"
-                    sx={{
-                      bgcolor: "#E5E7EB",
-                      color: "#6B7280",
-                      fontWeight: "bold",
-                    }}
-                  />
-                )}
-              </StyledTableCell>
-              <StyledTableCell align="center">
-                <Chip
-                  label={user.role?.name || "بدون دور"}
-                  sx={{
-                    bgcolor: user.role?.name ? "rgba(46,139,69,0.1)" : "#E5E7EB",
-                    color: user.role?.name ? "#2E8B45" : "#6B7280",
-                    fontWeight: "bold",
-                  }}
-                />
-              </StyledTableCell>
-              <StyledTableCell align="center" sx={{ color: "gray" }}>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                    {formatArabicDate(user.createdAt)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'primary.main',fontWeight: 'bold', fontSize: '0.85rem' }}>
-                    {user.hijriCreatedAt}
-                  </Typography>
-                </Box>
-              </StyledTableCell>
-              {(permissions.includes("users_Update") || permissions.includes("users_Delete") || permissions.includes("users_Add")) && (
-                <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>
-                {permissions.includes("users_Update") && (
-                <IconButton color="primary" onClick={() => handleEdit(user)} title="تعديل">
-                  <Edit />
-                </IconButton>
-                )}
-                {permissions.includes("users_Delete") && (
-                <IconButton color="error" onClick={() => openDeleteModal(user.id)} title="حذف">
-                  <Delete />
-                </IconButton>
-                )}
-                {permissions.includes("users_Add") && (
-                <IconButton 
-                  color="info" 
-                  onClick={() => handleAssignRole(user)}
-                  title="تعيين دور"
-                >
-                  <AdminPanelSettings />
-                </IconButton>
-                )}
-                <IconButton 
-                  color="black" 
-                  onClick={() => handleViewLogs(user)}
-                  title="عرض سجل الأنشطة"
-                >
-                  <HistoryIcon />
-                </IconButton>
-                </StyledTableCell>
-              )}
-            </StyledTableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <TablePagination
-        component="div"
-        count={usersData?.totalUsers || 0}
-        page={page}
-        onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="عدد العناصر في الصفحة"
-      />
-    </TableContainer>
-  );
-
-  const renderCards = () => (
-    <Box sx={{ p: { xs: 1, sm: 2 }, width: '100%', maxWidth: '100%' }}>
-      {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={30} />
-        </Box>
-      ) : (
-        <Stack spacing={2}>
-          {usersData?.map((user) => (
-            <Card 
-              key={user.id}
-              sx={{ 
-                border: '1px solid #e0e0e0',
-                width: '100%',
-                borderRadius: 2,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-                  }
-                }}
-              >
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Stack spacing={2}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'flex-start',
-                      flexDirection: isMobile ? 'column' : 'row',
-                      gap: 1
-                    }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                          {user.name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {user.email}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {permissions.includes("users_Update") && (
-                          <IconButton 
-                            color="primary" 
-                            onClick={() => handleEdit(user)}
-                            size="small"
-                            title="تعديل"
-                          >
-                            <Edit fontSize={isMobile ? "small" : "medium"} />
-                          </IconButton>
-                        )}
-                        {permissions.includes("users_Delete") && (
-                          <IconButton 
-                            color="error" 
-                            onClick={() => openDeleteModal(user.id)}
-                            size="small"
-                            title="حذف"
-                          >
-                            <Delete fontSize={isMobile ? "small" : "medium"} />
-                          </IconButton>
-                        )}
-                        {permissions.includes("users_Update") && (
-                          <IconButton 
-                            color="info" 
-                            onClick={() => handleAssignRole(user)}
-                            size="small"
-                            title="تعيين دور"
-                          >
-                            <AdminPanelSettings fontSize={isMobile ? "small" : "medium"} />
-                          </IconButton>
-                        )}
-                        {permissions.includes("users_View") && (
-                        <IconButton 
-                          color="black" 
-                          onClick={() => handleViewLogs(user)}
-                          size="small"
-                          title="عرض سجل الأنشطة"
-                        >
-                            <HistoryIcon fontSize={isMobile ? "small" : "medium"} />
-                          </IconButton>
-                        )}
-                      </Box>
-                    </Box>
-
-                    <Divider />
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2 }}>
-                      <Box>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
-                          رقم الهاتف:
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {user.phone}
-                        </Typography>
-                      </Box>
-                      
-                      <Box>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
-                          تاريخ الإنشاء:
-                        </Typography>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                            {formatArabicDate(user.createdAt)}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'primary.main',fontWeight: 'bold', fontSize: '0.85rem' }}>
-                            {user.hijriCreatedAt}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                      flexDirection: 'row',
-                      gap: 1,
-                      width: '100%'
-                    }}>
-                      <Chip
-                        label={user.isActive ? "نشط" : "غير نشط"}
-                        sx={{
-                          bgcolor: user.isActive ? "rgba(16,185,129,0.1)" : "#E5E7EB",
-                          color: user.isActive ? "#10B981" : "#6B7280",
-                          fontWeight: "bold",
-                          fontSize: isMobile ? '0.75rem' : '0.875rem'
-                        }}
-                      />
-                      
-                      <Chip
-                        label={user.role?.name || "بدون دور"}
-                        sx={{
-                          bgcolor: user.role?.name ? "rgba(46,139,69,0.1)" : "#E5E7EB",
-                          color: user.role?.name ? "#2E8B45" : "#6B7280",
-                          fontWeight: "bold",
-                          fontSize: isMobile ? '0.75rem' : '0.875rem'
-                        }}
-                      />
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-          ))}
-        </Stack>
-      )}
-    </Box>
-  );
-
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: '100%', overflowX: 'hidden' }}>
       <Helmet>
         <title>الموظفين</title>
         <meta name="description" content="الموظفين" />
       </Helmet>
-      
       <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, maxWidth: '100%', overflowX: 'hidden' }}>
         <Box
           sx={{
@@ -469,9 +152,8 @@ export default function Employees() {
               ),
             }}
           />
-          
-          <Stack 
-            direction={isSmallScreen ? "column" : "row"} 
+          <Stack
+            direction={isSmallScreen ? "column" : "row"}
             spacing={1}
             alignItems={isSmallScreen ? "center" : "stretch"}
             sx={{ minWidth: isSmallScreen ? '100%' : 'auto', flexWrap: 'wrap' }}
@@ -494,59 +176,77 @@ export default function Employees() {
               </Button>
             )}
             {permissions.includes("users_Export") && (
-            <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={isSmallScreen ? "center" : "flex-start"} sx={{ width: isSmallScreen ? '100%' : 'auto' }}>
-              <Button
-                variant="outlined"
-                startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleExportPDF}
-                disabled={!usersData || usersData.length === 0}
-                sx={{
-                  borderColor: "#d32f2f",
-                  color: "#d32f2f",
-                  "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
-                  borderRadius: 2,
-                  px: 2,
-                  py: isSmallScreen ? 1.5 : 1,
-                  fontWeight: "bold",
-                  minWidth: isSmallScreen ? '50%' : 'auto',
-                  flex: isSmallScreen ? 1 : 'none',
-                }}
-              >
-                PDF
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
-                onClick={handleExportExcel}
-                disabled={!usersData || usersData.length === 0}
-                sx={{
-                  borderColor: "#2e7d32",
-                  color: "#2e7d32",
-                  "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
-                  borderRadius: 2,
-                  px: 2,
-                  py: isSmallScreen ? 1.5 : 1,
-                  fontWeight: "bold",
-                  minWidth: isSmallScreen ? '50%' : 'auto',
-                  flex: isSmallScreen ? 1 : 'none',
-                }}
-              >
-                Excel
-              </Button>
-            </Stack>
+              <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={isSmallScreen ? "center" : "flex-start"} sx={{ width: isSmallScreen ? '100%' : 'auto' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<PdfIcon sx={{ marginLeft: "10px" }} />}
+                  onClick={handleExportPDF}
+                  disabled={!usersData?.users?.length}
+                  sx={{
+                    borderColor: "#d32f2f",
+                    color: "#d32f2f",
+                    "&:hover": { bgcolor: "rgba(211, 47, 47, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    py: isSmallScreen ? 1.5 : 1,
+                    fontWeight: "bold",
+                    minWidth: isSmallScreen ? '50%' : 'auto',
+                    flex: isSmallScreen ? 1 : 'none',
+                  }}
+                >
+                  PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+                  onClick={handleExportExcel}
+                  disabled={!usersData?.users?.length}
+                  sx={{
+                    borderColor: "#2e7d32",
+                    color: "#2e7d32",
+                    "&:hover": { bgcolor: "rgba(46, 125, 50, 0.1)" },
+                    borderRadius: 2,
+                    px: 2,
+                    py: isSmallScreen ? 1.5 : 1,
+                    fontWeight: "bold",
+                    minWidth: isSmallScreen ? '50%' : 'auto',
+                    flex: isSmallScreen ? 1 : 'none',
+                  }}
+                >
+                  Excel
+                </Button>
+              </Stack>
             )}
           </Stack>
         </Box>
-
-        <Paper sx={{ 
-          width: "100%", 
-          maxWidth: '100%',
-          overflow: "hidden", 
-          borderRadius: 2,
-          minHeight: 400
-        }}>
-          {isSmallScreen ? renderCards() : renderTable()}
-
+        <Paper sx={{ width: "100%", maxWidth: '100%', overflow: "hidden", borderRadius: 2, minHeight: 400 }}>
+          {isSmallScreen ? (
+            <EmployeesCards
+              usersData={usersData?.users}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onDelete={openDeleteModal}
+              onAssignRole={handleAssignRole}
+              onViewLogs={handleViewLogs}
+              permissions={permissions}
+              isMobile={isMobile}
+            />
+          ) : (
+            <EmployeesTable
+              usersData={usersData?.users}
+              isLoading={isLoading}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              onEdit={handleEdit}
+              onDelete={openDeleteModal}
+              onAssignRole={handleAssignRole}
+              onViewLogs={handleViewLogs}
+              permissions={permissions}
+              isDarkMode={isDarkMode}
+            />
+          )}
           {isSmallScreen && usersData && (
             <TablePagination
               component="div"
@@ -570,8 +270,7 @@ export default function Employees() {
           )}
         </Paper>
       </Box>
-
-      <AddEmployee 
+      <AddEmployee
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         refetchUsers={refetch}

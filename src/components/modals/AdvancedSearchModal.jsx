@@ -17,7 +17,6 @@ import { Close as CloseIcon, Search as SearchIcon } from "@mui/icons-material";
 import { debounce } from "../../utilities/debounce";
 import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
 import Api from "../../config/Api";
-
 const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
   const [searchFilters, setSearchFilters] = useState({
     reference: "",
@@ -32,7 +31,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
   useEffect(() => {
     if (open) {
       setSelectedUser(null);
@@ -41,15 +39,12 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
       }
     }
   }, [open, users.length]);
-
   const fetchUsers = async (searchQuery = '') => {
     try {
       setLoadingUsers(true);
       setUsers([]);
-
       const response = await Api.get(`/api/users/1?name=${encodeURIComponent(searchQuery)}`);
       const userResults = response.data.users || [];
-
       setUsers(userResults);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -58,26 +53,22 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
       setLoadingUsers(false);
     }
   };
-
   const debouncedFetchUsers = useRef(
     debounce((searchQuery) => {
       fetchUsers(searchQuery);
     }, 300)
   ).current;
-
   useEffect(() => {
     return () => {
       debouncedFetchUsers.cancel();
     };
   }, [debouncedFetchUsers]);
-
   const handleFilterChange = (field, value) => {
     setSearchFilters(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleSearch = () => {  
     const filters = Object.fromEntries(
       // eslint-disable-next-line no-unused-vars
@@ -86,7 +77,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     onSearch(filters);
     onClose();
   };
-
   const handleReset = () => {
     setSearchFilters({
       reference: "",
@@ -100,7 +90,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     });
     setSelectedUser(null);
   };
-
   const sourceTypeOptions = [
     { value: "LOAN", label: "سلفة" },
     { value: "REPAYMENT", label: "سداد" },
@@ -112,20 +101,17 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     { value: "EXPENSES", label: "مصروف" },
     { value: "OTHER", label: "أخرى" },
   ];
-
   const statusOptions = [
     { value: "DRAFT", label: "مسودة" },
     { value: "POSTED", label: "معتمد" },
     { value: "CANCELLED", label: "ملغي" },
   ];
-
   const typeOptions = [
     { value: "GENERAL", label: "عام" },
     { value: "OPENING", label: "افتتاحي" },
     { value: "CLOSING", label: "ختامي" },
     { value: "ADJUSTMENT", label: "تسوية" },
   ];
-
   return (
     <Dialog 
       open={open} 
@@ -143,7 +129,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           </IconButton>
         </Box>
       </DialogTitle>
-      
       <DialogContent>
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
@@ -155,7 +140,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               placeholder="ابحث برقم القيد..."
             />
           </Grid>
-          
           <Grid item xs={12} md={6}>
             <TextField
               sx={{ width: "250px", ...transparentSearchTextFieldSx }}
@@ -165,7 +149,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               placeholder="ابحث في وصف القيد..."
             />
           </Grid>
-          
           <Grid item xs={12} md={6}>
             <TextField
               sx={{ width: "250px" }}
@@ -182,7 +165,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               ))}
             </TextField>
           </Grid>
-          
           <Grid item xs={12} md={6}>
             <Autocomplete
               sx={{ width: "250px" }}
@@ -196,12 +178,10 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               onInputChange={(event, newInputValue, reason) => {
                 if (reason === 'input') {
                   setSelectedUser(null);
-
                   if (newInputValue.trim() === '') {
                     setUsers([]);
                     return;
                   }
-
                   debouncedFetchUsers(newInputValue);
                 }
               }}
@@ -217,7 +197,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               isOptionEqualToValue={(option, value) => option.id === value.id}
             />
           </Grid>
-          
           <Grid item xs={12} md={6}>
             <TextField
               sx={{ width: "250px" }}
@@ -234,7 +213,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               ))}
             </TextField>
           </Grid>
-          
           <Grid item xs={12} md={6}>
             <TextField
               sx={{ width: "250px" }}
@@ -251,7 +229,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               ))}
             </TextField>
           </Grid>
-
           <Grid item xs={12} md={6}>
             <TextField
               sx={{ width: "250px" }}
@@ -262,7 +239,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-
           <Grid item xs={12} md={6}>
             <TextField
               sx={{ width: "250px" }}
@@ -275,7 +251,6 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           </Grid>
         </Grid>
       </DialogContent>
-      
       <DialogActions sx={{ p: 3, gap: 1,flexDirection: "row-reverse", justifyContent: "space-between" }}>
         <Button 
           onClick={handleReset}
@@ -299,5 +274,4 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     </Dialog>
   );
 };
-
 export default AdvancedSearchModal;

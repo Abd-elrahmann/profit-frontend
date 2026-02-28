@@ -11,7 +11,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-
 export default function TreasuryRepaymentsChart({
   paidRepaymentsUntilNow,
   remainingRepayments,
@@ -20,13 +19,11 @@ export default function TreasuryRepaymentsChart({
   isDarkMode,
 }) {
   if (!totalRepaymentsAmount || totalRepaymentsAmount <= 0) return null;
-
   const chartData = [
     { name: 'الواصل حتى الآن', value: paidRepaymentsUntilNow, color: '#00C49F' },
     { name: 'المتبقي', value: remainingRepayments, color: '#FF8042' },
     { name: 'الإجمالي', value: totalRepaymentsAmount, color: '#9c27b0' },
   ];
-
   return (
     <Box sx={{ mb: 4 }}>
       <Paper
@@ -69,4 +66,4 @@ export default function TreasuryRepaymentsChart({
       </Paper>
     </Box>
   );
-}
+}

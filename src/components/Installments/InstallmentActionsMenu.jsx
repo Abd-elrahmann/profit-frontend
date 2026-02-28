@@ -7,7 +7,6 @@ import {
   Schedule as PostponeIcon,
   Description as DocumentIcon,
 } from '@mui/icons-material';
-
 export default function InstallmentActionsMenu({
   anchorEl,
   onClose,
@@ -37,7 +36,6 @@ export default function InstallmentActionsMenu({
     !shouldDisableActions() &&
     permissions.includes('repayments_Add');
   const showDocuments = selectedInstallment?.status === 'PAID';
-
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       {canApprove && (
@@ -72,4 +70,4 @@ export default function InstallmentActionsMenu({
       )}
     </Menu>
   );
-}
+}

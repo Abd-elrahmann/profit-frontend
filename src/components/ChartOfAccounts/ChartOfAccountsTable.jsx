@@ -17,7 +17,6 @@ import {
 import { AddCircle, Edit, Delete, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { getAccountTypeLabel } from './chartOfAccountsUtils';
-
 const getAccountTypeChipColor = (type) => {
   const map = {
     ASSET: 'info',
@@ -28,7 +27,6 @@ const getAccountTypeChipColor = (type) => {
   };
   return map[type] || 'default';
 };
-
 const ChartOfAccountsTable = ({
   flatAccounts,
   expandedIds,
@@ -51,7 +49,6 @@ const ChartOfAccountsTable = ({
           const isExpanded = expandedIds.has(account.id);
           const depth = account._depth ?? 0;
           const isTreeView = viewMode === 'tree';
-
           return (
             <Card
               key={account.id}
@@ -137,7 +134,6 @@ const ChartOfAccountsTable = ({
       </Stack>
     </Box>
   );
-
   const renderTable = () => (
   <Paper
     elevation={0}
@@ -182,7 +178,6 @@ const ChartOfAccountsTable = ({
             const depth = account._depth ?? 0;
             const isRoot = depth === 0;
             const isTreeView = viewMode === 'tree';
-
             return (
               <StyledTableRow
                 key={account.id}
@@ -280,7 +275,6 @@ const ChartOfAccountsTable = ({
     </Box>
   </Paper>
   );
-
   return isSmallScreen ? (
     <Paper
       elevation={0}
@@ -300,5 +294,4 @@ const ChartOfAccountsTable = ({
     renderTable()
   );
 };
-
 export default React.memo(ChartOfAccountsTable);

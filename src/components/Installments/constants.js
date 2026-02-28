@@ -3,9 +3,7 @@ export const REVIEW_STEPS = [
   'مراجعة الإيصال المرفوع',
   'إتمام العملية',
 ];
-
 export const DEFAULT_EMPLOYEE_NAME = 'ربيش سالم ناصر الهمامي';
-
 export const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'الكل' },
   { value: 'PENDING', label: 'قيد الانتظار' },
@@ -15,4 +13,4 @@ export const STATUS_FILTER_OPTIONS = [
   { value: 'EARLY_PAID', label: 'مدفوع مبكراً' },
   { value: 'COMPLETED', label: 'مكتمل' },
   { value: 'OVERDUE', label: 'متأخر' },
-];
+];

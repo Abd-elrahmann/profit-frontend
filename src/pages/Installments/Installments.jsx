@@ -13,10 +13,10 @@ import {
   rejectMultipleRepayments,
 } from "./InstallmentsApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import PaymentProofGenerator from "../../components/PaymentProofGenerator";
-import PaymentProofPreview from "../../components/PaymentProofPreview";
-import InstallmentSettlementPreview from "../../components/InstallmentSettlementPreview";
-import InstallmentSettlementReceipt from "../../components/InstallmentSettlementReceipt";
+import PaymentProofGenerator from "../../components/receipts/PaymentProofGenerator";
+import PaymentProofPreview from "../../components/receipts/PaymentProofPreview";
+import InstallmentSettlementPreview from "../../components/receipts/InstallmentSettlementPreview";
+import InstallmentSettlementReceipt from "../../components/receipts/InstallmentSettlementReceipt";
 import DeleteModal from "../../components/modals/DeleteModal";
 import DiscountModal from "../../components/modals/DiscountModal";
 import PartialPaymentModal from "../../components/modals/PartialPaymentModal";
@@ -46,7 +46,6 @@ import {
   REVIEW_STEPS,
   STATUS_FILTER_OPTIONS,
 } from "../../components/Installments";
-
 const Installments = () => {
   const { loanId } = useParams();
   const queryClient = useQueryClient();
@@ -60,24 +59,19 @@ const Installments = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [selectedInstallments, setSelectedInstallments] = useState([]);
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
-
   const [postponeModalOpen, setPostponeModalOpen] = useState(false);
   const [newDueDate, setNewDueDate] = useState("");
   const [postponeReason, setPostponeReason] = useState("");
-
   const [partialPaymentModalOpen, setPartialPaymentModalOpen] = useState(false);
   const [paidAmount, setPaidAmount] = useState("");
   const [partialPaymentProofModalOpen, setPartialPaymentProofModalOpen] = useState(false);
   const [partialPaymentProofHtml, setPartialPaymentProofHtml] = useState("");
   const [isGeneratingPartialProof, setIsGeneratingPartialProof] = useState(false);
   const [partialPaymentInstallment, setPartialPaymentInstallment] = useState(null);
-
   const [activeInstallmentId, setActiveInstallmentId] = useState(null);
-
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const [discountInstallment, setDiscountInstallment] = useState(null);
   const [confirmedDiscount, setConfirmedDiscount] = useState({ discount: 0, notes: '' });
-
   const [paymentProofModalOpen, setPaymentProofModalOpen] = useState(false);
   const [selectedProofInstallment, setSelectedProofInstallment] =
     useState(null);
@@ -92,19 +86,16 @@ const Installments = () => {
   const [settlementTemplate, setSettlementTemplate] = useState("");
   const { permissions } = usePermissions();
   const settlementReceiptRef = useRef(null);
-
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [overdueAlertDismissed, setOverdueAlertDismissed] = useState(false);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [bulkPaymentProofModalOpen, setBulkPaymentProofModalOpen] = useState(false);
   const [bulkPaymentProofHtml, setBulkPaymentProofHtml] = useState("");
   const [isGeneratingBulkProof, setIsGeneratingBulkProof] = useState(false);
-
   const handleChangePage = (event, value) => {
     setPage(value);
     setSelectedInstallments([]);
   };
-
   const handleInstallmentSelect = (installmentId) => {
     setSelectedInstallments(prev =>
       prev.includes(installmentId)
@@ -112,7 +103,6 @@ const Installments = () => {
         : [...prev, installmentId]
     );
   };
-
   const handleSelectAll = (filteredList) => {
     if (selectedInstallments.length === filteredList.length) {
       setSelectedInstallments([]);
@@ -120,29 +110,23 @@ const Installments = () => {
       setSelectedInstallments(filteredList.map((inst) => inst.id));
     }
   };
-
   const handleBulkApprove = async () => {
     if (selectedInstallments.length === 0) {
       notifyError("يرجى اختيار الدفعات المراد اعتمادها");
       return;
     }
-
     const installmentsToApprove = sortedInstallments.filter(installment =>
       selectedInstallments.includes(installment.id)
     );
     const alreadyPaid = installmentsToApprove.filter(installment => installment.status === 'PAID' || installment.status === 'EARLY_PAID' || installment.status === 'COMPLETED');
-
     if (alreadyPaid.length > 0) {
       notifyError(`لا يمكن الموافقة على الدفعات التالية لأنها مدفوعة بالفعل: ${alreadyPaid.map(inst => `دفعة ${inst.count}`).join(', ')}`);
       return;
     }
-
     try {
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const bulkProofHtml = await paymentProofGeneratorRef.current.generateContract(
         false,
         {
@@ -153,7 +137,6 @@ const Installments = () => {
           receiptNumber: receiptNumber,
         }
       );
-
       setBulkPaymentProofHtml(bulkProofHtml);
       setBulkPaymentProofModalOpen(true);
     } catch (error) {
@@ -161,23 +144,19 @@ const Installments = () => {
       handleApiError(error);
     }
   };
-
   const handleBulkReject = async () => {
     if (selectedInstallments.length === 0) {
       notifyError("يرجى اختيار الدفعات المراد رفضها");
       return;
     }
-
     const installmentsToReject = sortedInstallments.filter(installment =>
       selectedInstallments.includes(installment.id)
     );
     const completedInstallments = installmentsToReject.filter(installment => installment.status === 'COMPLETED');
-
     if (completedInstallments.length > 0) {
       notifyError(`لا يمكن رفض الدفعات التالية لأنها مكتملة: ${completedInstallments.map(inst => `دفعة ${inst.count}`).join(', ')}`);
       return;
     }
-
     try {
       setIsBulkOperationLoading(true);
       await rejectMultipleRepayments(selectedInstallments);
@@ -195,7 +174,6 @@ const Installments = () => {
   };
   const [selectedDocumentsInstallment, setSelectedDocumentsInstallment] =
     useState(null);
-
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [reviewStepsVisible, setReviewStepsVisible] = useState(true);
   const [rejectLoading, setRejectLoading] = useState(false);
@@ -204,18 +182,15 @@ const Installments = () => {
   const [allInstallmentsForEarlyPayment, setAllInstallmentsForEarlyPayment] = useState(null);
   const [isLoadingAllForEarlyPayment, setIsLoadingAllForEarlyPayment] = useState(false);
   const paymentProofGeneratorRef = useRef(null);
-
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
-
   useEffect(() => {
     if (loanId) {
       fetchPaymentProofTemplate();
       fetchSettlementTemplate();
     }
   }, [loanId]);
-
   const fetchPaymentProofTemplate = async () => {
     try {
       const response = await Api.get("/api/templates/PAYMENT_PROOF");
@@ -224,7 +199,6 @@ const Installments = () => {
       console.warn("Could not fetch payment proof template:", error);
     }
   };
-
   const fetchSettlementTemplate = async () => {
     try {
       const response = await Api.get("/api/templates/SETTLEMENT");
@@ -233,7 +207,6 @@ const Installments = () => {
       console.warn("Could not fetch settlement template:", error);
     }
   };
-
   const {
     data: loanData,
     isLoading,
@@ -243,7 +216,6 @@ const Installments = () => {
     queryFn: () => getLoanById(loanId, page, limit),
     enabled: !!loanId,
   });
-
   const totalPages =
     loanData?.pagination?.totalPages
     ?? (loanData?.pagination?.totalRepayments && limit
@@ -251,9 +223,7 @@ const Installments = () => {
       : loanData?.repayments?.length && limit
         ? Math.max(1, Math.ceil(loanData.repayments.length / limit))
         : 1);
-
   const steps = REVIEW_STEPS;
-
   const installments = Array.isArray(loanData?.repayments) ? loanData.repayments : [];
   const sortedInstallments = sortInstallments(installments);
   const filteredInstallments = filterInstallmentsByStatus(
@@ -261,18 +231,14 @@ const Installments = () => {
     statusFilter,
     checkIfOverdue
   );
-
   useEffect(() => {
     setSelectedInstallments([]);
   }, [statusFilter]);
-
   const overdueInstallments = sortedInstallments.filter((inst) => checkIfOverdue(inst));
   const hasOverdue = overdueInstallments.length > 0;
-
   const handleRowClick = (installment) => {
     setSelectedInstallment(installment);
     setActiveInstallmentId(installment.id);
-
     if (installment.status === "PAID") {
       setActiveStep(2);
     } else if (installment.attachments && installment.attachments.length > 0) {
@@ -281,7 +247,6 @@ const Installments = () => {
       setActiveStep(0);
     }
   };
-
   useEffect(() => {
     const installmentWithDocuments = sortedInstallments.find(
       (inst) =>
@@ -289,18 +254,15 @@ const Installments = () => {
         inst.attachments.length > 0 &&
         inst.status === "PENDING"
     );
-
     if (installmentWithDocuments && !activeInstallmentId) {
       handleRowClick(installmentWithDocuments);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
-
   useEffect(() => {
     setSettlementJustSaved(false);
     setOverdueAlertDismissed(false);
   }, [loanId]);
-
   useEffect(() => {
     if (
       sortedInstallments.length > 0 &&
@@ -315,8 +277,6 @@ const Installments = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments, settlementTemplate, settlementJustSaved, settlementManuallyClosed]);
-
-  // عند فتح مودال السداد المبكر: جلب كل الدفعات (كل الصفحات) لظهور جميع الدفعات المعلقة
   useEffect(() => {
     if (!earlyPaymentModalOpen || !loanId) return;
     setIsLoadingAllForEarlyPayment(true);
@@ -332,25 +292,19 @@ const Installments = () => {
       .finally(() => setIsLoadingAllForEarlyPayment(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchAllRepayments يستخدم loanId و limit من النطاق
   }, [earlyPaymentModalOpen, loanId]);
-
   const handleApprove = (installment) => {
     setDiscountInstallment(installment);
     setDiscountModalOpen(true);
     setAnchorEl(null);
   };
-
   const handleDiscountConfirm = async ({ discount, notes }) => {
     try {
       setConfirmedDiscount({ discount, notes });
       setDiscountModalOpen(false);
-
-      // إذا كانت الدفعة مدفوعة جزئياً، استخدم المبلغ المتبقي بدلاً من المبلغ الأصلي
       const installmentAmount = discountInstallment.status === 'PARTIAL_PAID'
         ? discountInstallment.remaining
         : discountInstallment.amount;
       const isFullDiscount = Number(discount) >= Number(installmentAmount);
-
-      // خصم كامل للدفعة: لا يُفتح سند قبض، فقط موافقة وإشعار نجاح (اشعار خصم لدفعة)
       if (isFullDiscount) {
         await approveRepayment(
           discountInstallment.id,
@@ -368,19 +322,14 @@ const Installments = () => {
         setConfirmedDiscount({ discount: 0, notes: '' });
         return;
       }
-
       const installmentDataForProof = {
         ...discountInstallment,
         amount: installmentAmount
       };
-
       setSelectedProofInstallment(installmentDataForProof);
-
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const proofHtml = await paymentProofGeneratorRef.current.generateContract(
         false,
         {
@@ -392,7 +341,6 @@ const Installments = () => {
           receiptNumber: receiptNumber,
         }
       );
-
       setPaymentProofHtml(proofHtml);
       setPaymentProofModalOpen(true);
     } catch (error) {
@@ -400,16 +348,12 @@ const Installments = () => {
       handleApiError(error);
     }
   };
-
   const handleSavePaymentProof = async () => {
     try {
       setIsGeneratingProof(true);
-
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const finalProofHtml =
         await paymentProofGeneratorRef.current.generateContract(false, {
           installmentData: selectedProofInstallment,
@@ -419,29 +363,22 @@ const Installments = () => {
           discount: confirmedDiscount.discount,
           receiptNumber: receiptNumber,
         }, true);
-
       await paymentProofGeneratorRef.current.generatePDF(finalProofHtml);
-
       notifySuccess("تم حفظ إيصال السداد بنجاح");
-
-      // استخدم المبلغ من selectedProofInstallment الذي تم تعديله في handleDiscountConfirm
       await approveRepayment(
         selectedProofInstallment.id,
         selectedProofInstallment.amount,
         confirmedDiscount.notes || "تمت الموافقة على السداد",
         confirmedDiscount.discount
       );
-
       setPaymentProofModalOpen(false);
       setSelectedProofInstallment(null);
       setActiveStep(2);
-
       setTimeout(() => {
         setActiveStep(0);
         setSelectedInstallment(null);
         setActiveInstallmentId(null);
       }, 2000);
-
       setTimeout(() => {
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
@@ -455,20 +392,15 @@ const Installments = () => {
       setIsGeneratingProof(false);
     }
   };
-
   const handleSaveBulkPaymentProof = async () => {
     try {
       setIsGeneratingBulkProof(true);
-
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const installmentsToApprove = sortedInstallments.filter(installment =>
         selectedInstallments.includes(installment.id)
       );
-
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const finalBulkProofHtml =
         await paymentProofGeneratorRef.current.generateContract(false, {
           installmentsData: installmentsToApprove,
@@ -477,20 +409,15 @@ const Installments = () => {
           employeeName: defaultEmployeeName,
           receiptNumber: receiptNumber,
         }, true);
-
       await paymentProofGeneratorRef.current.generatePDF(
         finalBulkProofHtml,
         true,
         selectedInstallments
       );
-
       notifySuccess("تم حفظ إيصال السداد المجمع بنجاح");
-
       await approveMultipleRepayments(selectedInstallments, null, "تمت الموافقة على الدفعات المجمعة");
-
       setBulkPaymentProofModalOpen(false);
       setSelectedInstallments([]);
-
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
@@ -501,13 +428,11 @@ const Installments = () => {
       setIsGeneratingBulkProof(false);
     }
   };
-
   const handleReject = (installment) => {
     setSelectedActionInstallment(installment);
     setRejectModalOpen(true);
     setAnchorEl(null);
   };
-
   const handleConfirmReject = async () => {
     try {
       setRejectLoading(true);
@@ -526,43 +451,34 @@ const Installments = () => {
       setRejectLoading(false);
     }
   };
-
   const handlePartialPayment = async () => {
     if (!selectedActionInstallment || !paidAmount) {
       notifyError("يرجى إدخال المبلغ المدفوع");
       return;
     }
-
     const paidAmountNum = parseFloat(paidAmount);
     if (isNaN(paidAmountNum) || paidAmountNum <= 0) {
       notifyError("يرجى إدخال مبلغ صحيح");
       return;
     }
-
     if (paidAmountNum > selectedActionInstallment.amount) {
       notifyError("المبلغ المدفوع لا يمكن أن يكون أكبر من قيمة الدفعة");
       return;
     }
-
     try {
       const { data: countData } = await Api.get('/api/repayments/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const partialInstallmentData = {
         ...selectedActionInstallment,
         amount: paidAmountNum,
         isPartialPayment: true
       };
-
       setPartialPaymentInstallment({
         ...partialInstallmentData,
         paidAmountNum: paidAmountNum,
         receiptNumber: receiptNumber
       });
-
-      // توليد HTML للمعاينة
       const proofHtml = await paymentProofGeneratorRef.current.generateContract(
         false,
         {
@@ -574,7 +490,6 @@ const Installments = () => {
           receiptNumber: receiptNumber,
         }
       );
-
       setPartialPaymentProofHtml(proofHtml);
       setPartialPaymentModalOpen(false);
       setPartialPaymentProofModalOpen(true);
@@ -586,22 +501,15 @@ const Installments = () => {
     }
     setAnchorEl(null);
   };
-
   const handleSavePartialPaymentProof = async () => {
     try {
       setIsGeneratingPartialProof(true);
-
-      // إنشاء PDF من HTML
       const html2pdf = (await import('html2pdf.js')).default;
-
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = partialPaymentProofHtml;
-
       const contractWrapper = tempDiv.querySelector('.contract-wrapper');
       const cleanedContent = contractWrapper ? contractWrapper.outerHTML : partialPaymentProofHtml;
-
       const filename = `payment_proof_partial_${partialPaymentInstallment.id}_${Date.now()}.pdf`;
-
       const options = {
         margin: 0,
         filename: filename,
@@ -621,48 +529,35 @@ const Installments = () => {
           compress: true,
         }
       };
-
       const tempElement = document.createElement('div');
       tempElement.style.width = '794px';
       tempElement.style.backgroundColor = 'white';
       tempElement.style.margin = '0 auto';
       tempElement.style.padding = '0';
       tempElement.innerHTML = cleanedContent;
-
       document.body.appendChild(tempElement);
-
       await ensureFontsReady();
-
       const pdfBlob = await html2pdf()
         .from(tempElement)
         .set(options)
         .outputPdf('blob');
-
       document.body.removeChild(tempElement);
-
-      // رفع PDF إلى السيرفر
       const formData = new FormData();
       const pdfFilename = `إيصال_سداد_جزئي_الدفعة_${partialPaymentInstallment.id}_${Date.now()}.pdf`;
       formData.append('file', pdfBlob, pdfFilename);
-
       await Api.post(`/api/repayments/PaymentProof/${partialPaymentInstallment.id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
-      // تسجيل الدفع الجزئي
       await markAsPartialPaid(
         partialPaymentInstallment.id,
         partialPaymentInstallment.paidAmountNum
       );
-
       notifySuccess("تم حفظ سند الدفع الجزئي بنجاح");
-
       setPartialPaymentProofModalOpen(false);
       setPartialPaymentInstallment(null);
       setPaidAmount("");
-
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
@@ -676,13 +571,11 @@ const Installments = () => {
       setIsGeneratingPartialProof(false);
     }
   };
-
   const handlePostpone = async () => {
     if (!selectedActionInstallment || !newDueDate) {
       notifyError("يرجى إدخال تاريخ الاستحقاق الجديد");
       return;
     }
-
     try {
       await postponeRepayment(
         selectedActionInstallment.id,
@@ -702,34 +595,26 @@ const Installments = () => {
     }
     setAnchorEl(null);
   };
-
   const handleEarlyPayment = async () => {
     try {
       const discount = parseFloat(discountAmount) || 0;
-
       if (discount < 0) {
         notifyError("قيمة الخصم لا يمكن أن تكون سالبة");
         return;
       }
-
       const installmentsForEarly = allInstallmentsForEarlyPayment ?? sortedInstallments;
       const pendingInstallments = installmentsForEarly.filter(
         (inst) => inst.status === "PENDING"
       );
-
       if (pendingInstallments.length === 0) {
         notifyError("لا توجد دفعات معلقة للسداد المبكر");
         setEarlyPaymentModalOpen(false);
         return;
       }
-
       await earlyPayment(loanId, discount);
-
       notifySuccess("تم السداد المبكر للدفعات المعلقة بنجاح");
-
       setEarlyPaymentModalOpen(false);
       setDiscountAmount("0");
-
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
       queryClient.invalidateQueries(["repayments", loanId]);
@@ -740,31 +625,25 @@ const Installments = () => {
       );
     }
   };
-
   const handleMenuOpen = (event, installment) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedActionInstallment(installment);
   };
-
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedActionInstallment(null);
   };
-
   const allInstallmentsPaid = () => {
     const totalRepayments = loanData?.pagination?.totalRepayments || 0;
     const paidRepayments = loanData?.pagination?.paidRepayments || 0;
-
     if (totalRepayments > 0) {
       return paidRepayments === totalRepayments;
     }
-
     return sortedInstallments.every(
       (installment) => installment.status === "PAID" || installment.status === "EARLY_PAID"
     );
   };
-
   const isSettlementCompleted = () => {
     return loanData?.SETTLEMENT !== null && loanData?.SETTLEMENT !== undefined;
   };
@@ -777,21 +656,15 @@ const Installments = () => {
   const shouldDisableActions = () => {
     return isSettlementCompleted() || hasEarlyPayment();
   };
-
   const handleSettlement = async () => {
     try {
       setIsGeneratingSettlement(true);
-
-      // جلب كل الدفعات لضمان احتساب إجمالي الخصومات بشكل صحيح (التصفح قد يعرض صفحة واحدة فقط)
       const { repayments: allRepayments } = await fetchAllRepayments();
       const installmentsForSettlement = (allRepayments && allRepayments.length > 0)
         ? [...allRepayments].sort((a, b) => a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate))
         : sortedInstallments;
-
       const lastInstallment = installmentsForSettlement[installmentsForSettlement.length - 1];
-
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const totalContractAmount = Number(loanData?.totalAmount) ||
         (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
       const totalDiscounts = installmentsForSettlement.reduce(
@@ -801,7 +674,6 @@ const Installments = () => {
       const earlyPaymentDiscount = Number(loanData?.earlyPaymentDiscount || 0);
       const effectiveTotalDiscounts = totalDiscounts > 0 ? totalDiscounts : earlyPaymentDiscount;
       const calculatedSettlementAmount = Math.max(0, totalContractAmount - effectiveTotalDiscounts);
-
       const settlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
@@ -814,11 +686,9 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
         });
-
       setSettlementHtml(settlementHtml);
       setSettlementModalOpen(true);
       setSettlementManuallyClosed(false);
-
       setIsGeneratingSettlement(false);
     } catch (error) {
       handleApiError(error);
@@ -826,19 +696,15 @@ const Installments = () => {
       setIsGeneratingSettlement(false);
     }
   };
-
   const handleSaveSettlement = async () => {
     try {
       setIsGeneratingSettlement(true);
-
       const { repayments: allRepayments } = await fetchAllRepayments();
       const installmentsForSettlement = (allRepayments && allRepayments.length > 0)
         ? [...allRepayments].sort((a, b) => a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate))
         : sortedInstallments;
-
       const lastInstallment = installmentsForSettlement[installmentsForSettlement.length - 1];
       const defaultEmployeeName = "ربيش سالم ناصر الهمامي";
-
       const totalContractAmount = Number(loanData?.totalAmount) ||
         (Number(loanData?.amount) || 0) + (Number(loanData?.interestAmount) || 0);
       const totalDiscounts = installmentsForSettlement.reduce(
@@ -848,7 +714,6 @@ const Installments = () => {
       const earlyPaymentDiscount = Number(loanData?.earlyPaymentDiscount || 0);
       const effectiveTotalDiscounts = totalDiscounts > 0 ? totalDiscounts : earlyPaymentDiscount;
       const calculatedSettlementAmount = Math.max(0, totalContractAmount - effectiveTotalDiscounts);
-
       const finalSettlementHtml =
         await settlementReceiptRef.current.generateContract(false, {
           installmentData: lastInstallment,
@@ -861,27 +726,18 @@ const Installments = () => {
           clientData: loanData?.client,
           employeeName: defaultEmployeeName,
         }, true);
-
       await settlementReceiptRef.current.generatePDF(finalSettlementHtml);
-
       notifySuccess("تم حفظ سند التسوية بنجاح");
-
-
       setSettlementModalOpen(false);
-
       setSettlementJustSaved(true);
-
       setTimeout(() => {
         notifySuccess("تم تسوية الدفعة النهائي وإغلاقه بنجاح");
       }, 300);
-
       queryClient.invalidateQueries(["loan", loanId]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
-
       setTimeout(() => {
         setSettlementJustSaved(false);
       }, 2000);
-
       return true;
     } catch (error) {
       handleApiError(error);
@@ -891,52 +747,41 @@ const Installments = () => {
       setIsGeneratingSettlement(false);
     }
   };
-
   const fetchAllRepayments = async () => {
     const allRepayments = [];
     let currentPage = 1;
     let hasMorePages = true;
     let loanInfo = null;
-
     while (hasMorePages) {
       const pageData = await getLoanById(loanId, currentPage, limit);
-
       if (currentPage === 1) {
         loanInfo = pageData;
       }
-
       if (Array.isArray(pageData?.repayments) && pageData.repayments.length > 0) {
         allRepayments.push(...pageData.repayments);
-
         const totalPages = pageData?.pagination?.totalPages ||
           (pageData?.pagination?.totalRepayments && limit
             ? Math.ceil(pageData.pagination.totalRepayments / limit)
             : 1);
-
         hasMorePages = currentPage < totalPages;
         currentPage++;
       } else {
         hasMorePages = false;
       }
     }
-
     return {
       repayments: allRepayments,
       loanData: loanInfo || loanData
     };
   };
-
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
       notifySuccess("جاري جلب جميع البيانات...");
-
       const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
-
       const sortedAllRepayments = [...allRepayments].sort((a, b) => {
         return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
       });
-
       await exportRepaymentsToPDF(sortedAllRepayments, allLoanData);
       notifySuccess("تم تصدير تقرير PDF بنجاح");
     } catch (error) {
@@ -946,18 +791,14 @@ const Installments = () => {
       setIsExporting(false);
     }
   };
-
   const handleExportExcel = async () => {
     try {
       setIsExporting(true);
       notifySuccess("جاري جلب جميع البيانات...");
-
       const { repayments: allRepayments, loanData: allLoanData } = await fetchAllRepayments();
-
       const sortedAllRepayments = [...allRepayments].sort((a, b) => {
         return a.id - b.id || new Date(a.dueDate) - new Date(b.dueDate);
       });
-
       await exportRepaymentsToExcel(sortedAllRepayments, allLoanData);
       notifySuccess("تم تصدير تقرير Excel بنجاح");
     } catch (error) {
@@ -967,8 +808,6 @@ const Installments = () => {
       setIsExporting(false);
     }
   };
-
-
   if (!loanId) {
     return (
       <Box
@@ -996,7 +835,6 @@ const Installments = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             يرجى اختيار دفعة لعرض الإحصائيات والتفاصيل
           </Typography>
-
           <Button
             variant="contained"
             size="large"
@@ -1015,7 +853,6 @@ const Installments = () => {
       </Box>
     );
   }
-
   if (isLoading) {
     return (
       <Box
@@ -1028,7 +865,6 @@ const Installments = () => {
       </Box>
     );
   }
-
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
@@ -1036,7 +872,6 @@ const Installments = () => {
       </Alert>
     );
   }
-
   return (
     <Box
       sx={{
@@ -1074,7 +909,6 @@ const Installments = () => {
             isSettlementCompleted={isSettlementCompleted()}
             isSmallScreen={isSmallScreen}
           />
-
           {hasOverdue && !overdueAlertDismissed && (
             <Alert
               severity="warning"
@@ -1084,7 +918,6 @@ const Installments = () => {
               يوجد {overdueInstallments.length} دفعة متأخرة عن موعد الاستحقاق
             </Alert>
           )}
-
           <InstallmentsToolbar
             onExportPDF={handleExportPDF}
             onExportExcel={handleExportExcel}
@@ -1096,7 +929,6 @@ const Installments = () => {
             isSmallScreen={isSmallScreen}
             isMobile={isMobile}
           />
-
           <InstallmentsSummaryCards
             amount={loanData?.amount}
             interestAmount={loanData?.interestAmount}
@@ -1107,7 +939,6 @@ const Installments = () => {
             paidRepayments={loanData?.pagination?.paidRepayments}
             totalRepayments={loanData?.pagination?.totalRepayments}
           />
-
           <Box sx={{ mb: 2, width: isSmallScreen ? "100%" : "auto" }}>
             <InstallmentsStatusFilter
               value={statusFilter}
@@ -1116,7 +947,6 @@ const Installments = () => {
               fullWidth={isSmallScreen}
             />
           </Box>
-
           {selectedInstallments.length > 0 && permissions.includes("repayments_Post") && (
             <InstallmentsBulkActions
               selectedCount={selectedInstallments.length}
@@ -1132,8 +962,6 @@ const Installments = () => {
               isMobile={isMobile}
             />
           )}
-
-
           {isSmallScreen && !isSettlementCompleted() && reviewStepsVisible && (
             <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "background.default" }}>
               <InstallmentsReviewSteps
@@ -1146,8 +974,7 @@ const Installments = () => {
               />
             </Paper>
           )}
-
-          {/* رسالة التسوية المكتملة للشاشات الصغيرة */}
+          {}
           {isSmallScreen && isSettlementCompleted() && (
             <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "background.default" }}>
               <Box sx={{ textAlign: "center", py: 2 }}>
@@ -1160,8 +987,7 @@ const Installments = () => {
               </Box>
             </Paper>
           )}
-
-          {/* Settlement Button - Only show if all installments are paid AND settlement is not completed */}
+          {}
           {allInstallmentsPaid() && !isSettlementCompleted() && (
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               {permissions.includes("repayments_Post") && (
@@ -1183,14 +1009,12 @@ const Installments = () => {
               )}
             </Box>
           )}
-
-          {/* Show message if settlement is already completed */}
+          {}
           {isSettlementCompleted() && (
             <Alert severity="success" sx={{ mb: 3 }}>
               تم تسوية الدفعة النهائي بنجاح
             </Alert>
           )}
-
           <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
             {isSmallScreen ? (
               <InstallmentsCards
@@ -1221,7 +1045,6 @@ const Installments = () => {
             )}
           </Paper>
         </Box>
-
         {!isSmallScreen && !isSettlementCompleted() && reviewStepsVisible && (
           <Box
             sx={{
@@ -1246,8 +1069,7 @@ const Installments = () => {
             </Box>
           </Box>
         )}
-
-        {/* رسالة التسوية المكتملة للشاشات الكبيرة */}
+        {}
         {!isSmallScreen && isSettlementCompleted() && (
           <Box
             sx={{
@@ -1271,7 +1093,6 @@ const Installments = () => {
           </Box>
         )}
       </Box>
-
       <InstallmentActionsMenu
         anchorEl={anchorEl}
         onClose={handleMenuClose}
@@ -1287,8 +1108,7 @@ const Installments = () => {
         shouldDisableActions={shouldDisableActions}
         permissions={permissions}
       />
-
-      {/* Partial Payment Modal */}
+      {}
       <PartialPaymentModal
         open={partialPaymentModalOpen}
         onClose={() => setPartialPaymentModalOpen(false)}
@@ -1297,7 +1117,6 @@ const Installments = () => {
         onAmountChange={(e) => setPaidAmount(e.target.value)}
         onConfirm={handlePartialPayment}
       />
-
       <PostponeModal
         open={postponeModalOpen}
         onClose={() => setPostponeModalOpen(false)}
@@ -1307,7 +1126,6 @@ const Installments = () => {
         onReasonChange={(e) => setPostponeReason(e.target.value)}
         onConfirm={handlePostpone}
       />
-
       <EarlyPaymentModal
         open={earlyPaymentModalOpen}
         onClose={() => {
@@ -1331,7 +1149,6 @@ const Installments = () => {
         employeeName="الموظف المختص"
         autoGenerate={false}
       />
-
       <PaymentProofPreview
         open={paymentProofModalOpen}
         onClose={() => {
@@ -1346,7 +1163,6 @@ const Installments = () => {
         discount={confirmedDiscount?.discount || 0}
         installmentNumber={selectedProofInstallment?.id || ""}
       />
-
       <InstallmentSettlementReceipt
         ref={settlementReceiptRef}
         installmentData={sortedInstallments[sortedInstallments.length - 1]}
@@ -1356,7 +1172,6 @@ const Installments = () => {
         employeeName="الموظف المختص"
         autoGenerate={false}
       />
-
       <InstallmentSettlementPreview
         open={settlementModalOpen}
         onClose={() => {
@@ -1377,7 +1192,6 @@ const Installments = () => {
         onClose={() => setDocumentsModalOpen(false)}
         selectedDocumentsInstallment={selectedDocumentsInstallment}
       />
-
       <DeleteModal
         open={rejectModalOpen}
         onClose={() => setRejectModalOpen(false)}
@@ -1387,7 +1201,6 @@ const Installments = () => {
         isLoading={rejectLoading}
         ButtonText="رفض"
       />
-
       <PaymentProofPreview
         open={bulkPaymentProofModalOpen}
         onClose={() => {
@@ -1404,8 +1217,7 @@ const Installments = () => {
         discount={0}
         installmentNumber={`مجمع (${selectedInstallments.length} دفعات)`}
       />
-
-      {/* Partial Payment Proof Preview */}
+      {}
       <PaymentProofPreview
         open={partialPaymentProofModalOpen}
         onClose={() => {
@@ -1421,8 +1233,7 @@ const Installments = () => {
         discount={0}
         installmentNumber={`دفعة #${partialPaymentInstallment?.count || ""} (دفع جزئي)`}
       />
-
-      {/* Pagination */}
+      {}
       {totalPages > 1 && (
         <Box sx={{
           display: 'flex',
@@ -1441,8 +1252,7 @@ const Installments = () => {
           />
         </Box>
       )}
-
-      {/* Discount Modal */}
+      {}
       <DiscountModal
         open={discountModalOpen}
         onClose={() => setDiscountModalOpen(false)}
@@ -1453,5 +1263,4 @@ const Installments = () => {
     </Box>
   );
 };
-
-export default Installments;
+export default Installments;

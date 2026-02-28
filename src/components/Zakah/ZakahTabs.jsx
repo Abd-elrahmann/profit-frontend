@@ -1,18 +1,15 @@
 import React from 'react';
 import { FormControl, Select, MenuItem } from '@mui/material';
-
 const TAB_OPTIONS = [
   { value: 0, label: 'عرض جميع الزكاة' },
   { value: 1, label: 'زكاة محددة' },
   { value: 2, label: 'صندوق الزكاة' },
 ];
-
 const ZakahTabs = ({ activeTab, onTabChange, selectedPartner, isCompact = false, isMobile = false }) => {
   const getTabLabel = (value) => {
     if (value === 1) return selectedPartner ? 'تفاصيل الزكاة' : 'زكاة محددة';
     return TAB_OPTIONS.find((t) => t.value === value)?.label || '';
   };
-
   if (isMobile) {
     return (
       <FormControl fullWidth sx={{ mb: 3 }}>
@@ -32,7 +29,6 @@ const ZakahTabs = ({ activeTab, onTabChange, selectedPartner, isCompact = false,
       </FormControl>
     );
   }
-
   return (
     <div className={`border-b border-primary/10 mb-4 sm:mb-6 ${isCompact ? 'overflow-x-auto' : ''}`}>
       <nav className={`flex gap-1 ${isCompact ? 'min-w-max p-1' : ''}`} role="tablist">
@@ -76,5 +72,4 @@ const ZakahTabs = ({ activeTab, onTabChange, selectedPartner, isCompact = false,
     </div>
   );
 };
-
-export default ZakahTabs;
+export default ZakahTabs;

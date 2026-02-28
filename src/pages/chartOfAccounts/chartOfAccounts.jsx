@@ -15,7 +15,6 @@ import {
   flattenAccountsTree,
 } from '../../components/ChartOfAccounts';
 import { exportChartOfAccountsToPDF, exportChartOfAccountsToExcel } from '../../utilities/chartOfAccountsExporter';
-
 const ChartOfAccount = () => {
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
@@ -32,19 +31,16 @@ const ChartOfAccount = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const hasInitialExpand = useRef(false);
-
   const { data: accountsTree = [], isLoading, error } = useQuery({
     queryKey: ['accountsTree'],
     queryFn: getAccountsTree,
   });
-
   useEffect(() => {
     if (accountsTree.length > 0 && !hasInitialExpand.current) {
       hasInitialExpand.current = true;
       setExpandedIds(new Set(accountsTree.map((a) => a.id)));
     }
   }, [accountsTree]);
-
   const flatAccounts = useMemo(
     () =>
       viewMode === 'list'
@@ -52,7 +48,6 @@ const ChartOfAccount = () => {
         : flattenAccountsTree(accountsTree, 0, expandedIds),
     [accountsTree, expandedIds, viewMode]
   );
-
   const filteredAccounts = useMemo(() => {
     if (!searchQuery.trim()) return flatAccounts;
     const q = searchQuery.toLowerCase();
@@ -62,7 +57,6 @@ const ChartOfAccount = () => {
         (a.name && a.name.toLowerCase().includes(q))
     );
   }, [flatAccounts, searchQuery]);
-
   const toggleExpand = useCallback((id) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -71,33 +65,28 @@ const ChartOfAccount = () => {
       return next;
     });
   }, []);
-
   const handleAddRoot = () => {
     setModalMode('add');
     setParentAccount(null);
     setSelectedAccount(null);
     setModalOpen(true);
   };
-
   const handleAddChild = (parent) => {
     setModalMode('add');
     setParentAccount(parent);
     setSelectedAccount(null);
     setModalOpen(true);
   };
-
   const handleEdit = (account) => {
     setModalMode('edit');
     setSelectedAccount(account);
     setParentAccount(null);
     setModalOpen(true);
   };
-
   const handleDelete = (account) => {
     setAccountToDelete(account);
     setDeleteModalOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (!accountToDelete) return;
     try {
@@ -110,7 +99,6 @@ const ChartOfAccount = () => {
       notifyError(err.response?.data?.message || 'فشل الحذف');
     }
   };
-
   const handleExportPDF = async () => {
     try {
       await exportChartOfAccountsToPDF(accountsTree);
@@ -119,7 +107,6 @@ const ChartOfAccount = () => {
       notifyError(err.message || 'حدث خطأ أثناء التصدير');
     }
   };
-
   const handleExportExcel = async () => {
     try {
       await exportChartOfAccountsToExcel(accountsTree);
@@ -128,15 +115,12 @@ const ChartOfAccount = () => {
       notifyError(err.message || 'حدث خطأ أثناء التصدير');
     }
   };
-
   const handleModalSuccess = () => {
     queryClient.invalidateQueries(['accountsTree']);
   };
-
   const canAdd = permissions.includes('accounts_Add');
   const canUpdate = permissions.includes('accounts_Update');
   const canDelete = permissions.includes('accounts_Delete');
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -144,7 +128,6 @@ const ChartOfAccount = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <Alert severity="error">
@@ -152,13 +135,11 @@ const ChartOfAccount = () => {
       </Alert>
     );
   }
-
   return (
     <>
       <Helmet>
         <title>شجرة الحسابات - النظام المالي الذكي</title>
       </Helmet>
-
       <div className="flex flex-col min-h-screen  dark:bg-background-dark">
         <ChartOfAccountsHeader
           onAddClick={handleAddRoot}
@@ -167,13 +148,11 @@ const ChartOfAccount = () => {
           canAdd={canAdd}
           isSmallScreen={isSmallScreen}
         />
-
         <div className={`flex-1 space-y-6 ${isSmallScreen ? 'p-4' : 'p-6 md:p-8'}`}>
           <section className={`flex flex-col gap-4 ${isSmallScreen ? '' : 'md:flex-row md:items-center md:justify-between'}`}>
             <ChartOfAccountsSearch value={searchQuery} onChange={setSearchQuery} isSmallScreen={isSmallScreen} />
             <ChartOfAccountsViewToggle view={viewMode} onChange={setViewMode} isSmallScreen={isSmallScreen} />
           </section>
-
           <section>
             <ChartOfAccountsTable
               flatAccounts={filteredAccounts}
@@ -191,7 +170,6 @@ const ChartOfAccount = () => {
           </section>
         </div>
       </div>
-
       <AddEditAccountModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -200,7 +178,6 @@ const ChartOfAccount = () => {
         onSuccess={handleModalSuccess}
         isEdit={modalMode === 'edit'}
       />
-
       <DeleteModal
         open={deleteModalOpen}
         onClose={() => {
@@ -214,5 +191,4 @@ const ChartOfAccount = () => {
     </>
   );
 };
-
 export default ChartOfAccount;

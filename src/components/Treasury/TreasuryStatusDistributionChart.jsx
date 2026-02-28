@@ -2,14 +2,12 @@ import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { COLORS } from './constants';
-
 export default function TreasuryStatusDistributionChart({
   data,
   isSmallScreen,
   isDarkMode,
 }) {
   if (!data || data.length === 0 || !data.some((item) => item.value > 0)) return null;
-
   return (
     <Box sx={{ mb: 4 }}>
       <Paper
@@ -57,4 +55,4 @@ export default function TreasuryStatusDistributionChart({
       </Paper>
     </Box>
   );
-}
+}

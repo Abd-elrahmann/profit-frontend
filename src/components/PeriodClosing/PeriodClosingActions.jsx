@@ -1,7 +1,6 @@
 import React from "react";
 import { Paper, Typography, Stack, Button } from "@mui/material";
 import { Check as CheckIcon, Cancel as CancelIcon } from "@mui/icons-material";
-
 export default function PeriodClosingActions({
   periodData,
   permissions,
@@ -26,7 +25,6 @@ export default function PeriodClosingActions({
             تقفيل الفترة
           </Button>
         )}
-
         {periodData?.isClosed && permissions.includes("period_Post") && (
           <Button
             variant="outlined"
@@ -42,4 +40,4 @@ export default function PeriodClosingActions({
       </Stack>
     </Paper>
   );
-}
+}

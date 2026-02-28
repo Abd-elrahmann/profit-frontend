@@ -16,7 +16,6 @@ import {
   getStatusText,
   hasPendingDocuments,
 } from './installmentsUtils';
-
 export default function InstallmentsCards({
   installments,
   selectedInstallments,
@@ -37,7 +36,6 @@ export default function InstallmentsCards({
   const totalRemaining = installments.reduce((sum, inst) => sum + (inst.remaining || 0), 0);
   const totalDiscounts = installments.reduce((sum, inst) => sum + (inst.discount || 0), 0);
   const showCheckbox = permissions.includes('repayments_Post') && !isSettlementCompleted();
-
   return (
     <Box sx={{ p: 1 }}>
       {showCheckbox && installments.length > 0 && (
@@ -147,7 +145,6 @@ export default function InstallmentsCards({
                     </IconButton>
                   </Box>
                 </Box>
-
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="caption" color="text.secondary">
@@ -232,7 +229,6 @@ export default function InstallmentsCards({
             </CardContent>
           </Card>
         ))}
-
         <Card
           variant="outlined"
           sx={{
@@ -293,4 +289,4 @@ export default function InstallmentsCards({
       </Stack>
     </Box>
   );
-}
+}

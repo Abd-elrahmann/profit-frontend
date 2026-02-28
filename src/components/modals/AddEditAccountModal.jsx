@@ -17,7 +17,6 @@ import { useFormik } from 'formik';
 import { createAccount, updateAccount } from '../../pages/chartOfAccounts/chartApi';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { generateChildCode } from '../ChartOfAccounts/chartOfAccountsUtils';
-
 const ACCOUNT_TYPES = [
   { value: 'ASSET', label: 'أصول' },
   { value: 'LIABILITY', label: 'خصوم' },
@@ -25,7 +24,6 @@ const ACCOUNT_TYPES = [
   { value: 'REVENUE', label: 'إيرادات' },
   { value: 'EXPENSE', label: 'مصروفات' },
 ];
-
 const ACCOUNT_BASIC_TYPES = [
   { value: 'OTHER', label: 'أخرى' },
   { value: 'BANK', label: 'بنك' },
@@ -37,12 +35,10 @@ const ACCOUNT_BASIC_TYPES = [
   { value: 'COMPANY_SHARES', label: 'حصص الشركة' },
   { value: 'PARTNER_SHARES_EXPENSES', label: 'مصروفات توزيع الأرباح' },
 ];
-
 const NATURE_TYPES = [
   { value: 'DEBIT', label: 'مدين' },
   { value: 'CREDIT', label: 'دائن' },
 ];
-
 const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess, isEdit }) => {
   const formik = useFormik({
     initialValues: {
@@ -71,7 +67,6 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
       }
     },
   });
-
   useEffect(() => {
     if (open) {
       if (isEdit && account) {
@@ -111,7 +106,6 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isEdit, account, parentAccount]);
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{isEdit ? 'تعديل الحساب' : 'إضافة حساب جديد'}</DialogTitle>
@@ -231,5 +225,4 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
     </Dialog>
   );
 };
-
-export default AddEditAccountModal;
+export default AddEditAccountModal;

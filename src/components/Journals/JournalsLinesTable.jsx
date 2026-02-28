@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
-
 export default function JournalsLinesTable({
   journalLines,
   totalsForTable,
@@ -22,14 +21,11 @@ export default function JournalsLinesTable({
 }) {
   const formatNumber = (value) =>
     value ? Math.round(value).toLocaleString() : "0";
-
   const getBalanceColor = (balance) => {
     if ((balance || 0) === 0) return "text.primary";
     return (balance || 0) > 0 ? "error" : "success.main";
   };
-
   const canEdit = isEditMode || isAddMode;
-
   return (
     <TableContainer>
       <Table>
@@ -128,4 +124,4 @@ export default function JournalsLinesTable({
       </Table>
     </TableContainer>
   );
-}
+}

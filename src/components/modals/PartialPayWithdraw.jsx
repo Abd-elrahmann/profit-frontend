@@ -11,7 +11,6 @@ import {
   Stack,
   CircularProgress,
 } from "@mui/material";
-
 const PartialPayWithdraw = ({
   open,
   onClose,
@@ -81,5 +80,4 @@ const PartialPayWithdraw = ({
     </Dialog>
   );
 };
-
 export default PartialPayWithdraw;

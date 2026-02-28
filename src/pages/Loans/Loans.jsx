@@ -14,12 +14,13 @@ import {
 } from "./loanApis";
 import { getBanks } from "../Banks/bankApis";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
-import LoansTable from "../../components/modals/LoansTable";
-import EditSmallLoanForm from "../../components/modals/EditSmallLoanForm";
-import SmallLoansTable from "../../components/modals/SmallLoansTable";
-import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
-import LoanContractGenerator from "../../components/LoanContractGenerator";
-import LoanContractsPreview from "../../components/LoanContractsPreview";
+import {
+  LoansTable,
+  EditSmallLoanForm,
+  SmallLoansTable,
+} from "../../components/loans";
+import LoanContractGenerator from "../../components/contractGenerators/LoanContractGenerator";
+import LoanContractsPreview from "../../components/contractGenerators/LoanContractsPreview";
 import LoanTabs from "../../components/loans/LoanTabs";
 import LoanMainTab from "../../components/loans/LoanMainTab";
 import LoanClientSection from "../../components/loans/LoanClientSection";
@@ -48,7 +49,6 @@ const Loans = () => {
   const [clientsPage, setClientsPage] = useState(1);
   const [banksPage, setBanksPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
-  const [isAddKafeelOpen, setIsAddKafeelOpen] = useState(false);
   const [loanForm, setLoanForm] = useState({
     amount: "",
     totalInterest: "",
@@ -63,14 +63,11 @@ const Loans = () => {
     promissoryNoteType: "",
     promissoryNoteDate: "",
   });
-
-
   const dateToDay = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     return date.getDate().toString();
   };
-
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [installments, setInstallments] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -107,34 +104,29 @@ const Loans = () => {
   const debtAckGeneratorRef = useRef(null);
   const promissoryNoteGeneratorRef = useRef(null);
   const previousSourceRef = useRef(loanForm.source);
-
-
+  const isRestoringFromAddKafeelRef = useRef(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
-
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
     enabled: activeTab === 1,
     retry: 1,
   });
-
   const { data: banksData, isLoading: isBanksLoading } = useQuery({
     queryKey: ["banks", banksPage, banksSearchQuery],
     queryFn: () => getBanks(banksPage, banksSearchQuery),
     enabled: activeTab === 1,
     retry: 1,
   });
-
   const { data: partnersData, isLoading: isPartnersLoading } = useQuery({
     queryKey: ["partners", partnersPage, partnersSearchQuery],
     queryFn: () => getPartners(partnersPage, partnersSearchQuery),
     enabled: activeTab === 1,
     retry: 1,
   });
-
   const { data: clientLoansData } = useQuery({
     queryKey: ["client-loans", selectedClient?.client?.id],
     queryFn: async () => {
@@ -142,31 +134,26 @@ const Loans = () => {
       const allLoans = [];
       let page = 1;
       let hasMore = true;
-
       while (hasMore) {
         const response = await Api.get(`/api/loans/all/${page}?clientId=${selectedClient.client.id}&limit=10`);
         const pageData = response.data?.data || [];
         allLoans.push(...pageData);
-
         if (pageData.length < 10) {
           hasMore = false;
         } else {
           page++;
         }
       }
-
       return allLoans;
     },
     enabled: !!selectedClient?.client?.id && activeTab === 6,
     retry: 1,
   });
-
   const [debouncedLoansSearchForCounts, setDebouncedLoansSearchForCounts] = useState(loansTableSearchQuery);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedLoansSearchForCounts(loansTableSearchQuery), 500);
     return () => clearTimeout(t);
   }, [loansTableSearchQuery]);
-
   const statusCountsQueries = useQueries({
     queries: ["PENDING", "ACTIVE", "COMPLETED"].map((status) => ({
       queryKey: ["loans-count", status, debouncedLoansSearchForCounts],
@@ -175,7 +162,6 @@ const Loans = () => {
       retry: 1,
     })),
   });
-
   const statusCounts = useMemo(
     () => ({
       PENDING: statusCountsQueries[0]?.data?.total ?? 0,
@@ -184,26 +170,22 @@ const Loans = () => {
     }),
     [statusCountsQueries]
   );
-
   const { data: loansNeedingContracts } = useQuery({
     queryKey: ["loans-needing-contracts"],
     queryFn: async () => {
       const allLoans = [];
       let page = 1;
       let hasMore = true;
-
       while (hasMore) {
         const response = await Api.get(`/api/loans/all/${page}?limit=10`);
         const pageData = response.data?.data || [];
         allLoans.push(...pageData);
-
         if (pageData.length < 10) {
           hasMore = false;
         } else {
           page++;
         }
       }
-
       return allLoans.filter(loan =>
         loan.status !== "COMPLETED" &&
         (loan.DEBT_ACKNOWLEDGMENT === null || loan.PROMISSORY_NOTE === null)
@@ -212,8 +194,54 @@ const Loans = () => {
     enabled: activeTab === 0,
     retry: 1,
   });
-
   useEffect(() => {
+    const savedState = sessionStorage.getItem('LOANS_RETURN_STATE');
+    if (savedState) {
+      try {
+        isRestoringFromAddKafeelRef.current = true;
+        const state = JSON.parse(savedState);
+        sessionStorage.removeItem('LOANS_RETURN_STATE');
+        setActiveTab(state.tab ?? 1);
+        if (state.loanForm) {
+          setLoanForm(state.loanForm);
+          previousSourceRef.current = state.loanForm.source ?? '';
+        }
+        const fetchAndRestoreClient = async () => {
+          const search = state.clientNationalId || state.clientName || state.clientId;
+          if (!search) {
+            isRestoringFromAddKafeelRef.current = false;
+            return;
+          }
+          try {
+            const clientsResponse = await getClients(1, String(search));
+            const found = clientsResponse?.clients?.find((c) => c.client.id === state.clientId);
+            if (found) {
+              if (state.isClientConversion) {
+                setSelectedClientForConversion(found);
+                if (state.loanId) {
+                  const loanRes = await getLoanById(state.loanId);
+                  const loanData = loanRes?.loan ?? loanRes;
+                  if (loanData) setLoanForConversion(loanData);
+                }
+                setIsClientConversion(true);
+              } else {
+                setSelectedClient(found);
+              }
+            }
+          } catch (err) {
+            console.error('Error restoring loan state:', err);
+          } finally {
+            isRestoringFromAddKafeelRef.current = false;
+          }
+        };
+        fetchAndRestoreClient();
+      } catch {
+        isRestoringFromAddKafeelRef.current = false;
+      }
+    }
+  }, []);
+  useEffect(() => {
+    if (isRestoringFromAddKafeelRef.current) return;
     if (activeTab !== 1) {
       setIsViewMode(false);
       setIsEditMode(false);
@@ -224,7 +252,6 @@ const Loans = () => {
       setSelectedKafeelForConversion(null);
       setShowConversionConfirmModal(false);
     }
-
     if (activeTab !== 2 && activeTab !== 3) {
       fetchContractTemplates();
     }
@@ -244,24 +271,20 @@ const Loans = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
-
   const fetchContractTemplates = async () => {
     try {
       const [debtResponse, promissoryResponse] = await Promise.all([
         Api.get("/api/templates/DEBT_ACKNOWLEDGMENT"),
         Api.get("/api/templates/PROMISSORY_NOTE"),
       ]);
-
       const debtContent = debtResponse.data.content || "";
       const promissoryContent = promissoryResponse.data.content || "";
-
       setDebtAckTemplate(debtContent);
       setPromissoryNoteTemplate(promissoryContent);
     } catch (error) {
       handleApiError(error);
     }
   };
-
   useEffect(() => {
     if (activeTab === 6) {
       calculateInstallments();
@@ -273,7 +296,6 @@ const Loans = () => {
     loanForm.paymentAmount,
     activeTab,
   ]);
-
   useEffect(() => {
     if (activeTab === 1 || activeTab === 6) {
       calculateInstallments();
@@ -286,14 +308,12 @@ const Loans = () => {
     loanForm.type,
     activeTab,
   ]);
-
   useEffect(() => {
     if (activeTab === 1 && loanForm.source) {
       fetchBankBalance();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source, activeTab]);
-
   useEffect(() => {
     if (activeTab === 1 && loanForm.source && previousSourceRef.current !== loanForm.source && previousSourceRef.current !== null) {
       setLoanForm((prev) => ({
@@ -304,7 +324,6 @@ const Loans = () => {
     previousSourceRef.current = loanForm.source;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source]);
-
   const handleConversionSuccess = useCallback(() => {
     setIsClientConversion(false);
     setLoanForConversion(null);
@@ -316,7 +335,6 @@ const Loans = () => {
     queryClient.invalidateQueries(["unposted-loan-journals"]);
     queryClient.invalidateQueries(["unposted-journals-all"]);
   }, [queryClient]);
-
   const calculateRemainingAmount = (loan) => {
     if (loan?.pagination?.totalRemainingAmount !== undefined) {
       return loan.pagination.totalRemainingAmount;
@@ -335,51 +353,41 @@ const Loans = () => {
         return sum + Math.max(0, remaining);
       }, 0);
   };
-
   const handleOpenPreview = useCallback(async (loanData = null) => {
     try {
       const isEvent = loanData && typeof loanData === 'object' && loanData._reactName;
       const actualLoanData = isEvent ? null : loanData;
-
       const loanDataToUse = actualLoanData || savedLoanData || selectedLoan;
-
       if (!loanDataToUse) {
         notifyError("يرجى حفظ السلفة أولاً قبل عرض معاينة العقود");
         return;
       }
-
       const clientDataToUse = loanDataToUse.client;
-
       if (!debtAckTemplate || !promissoryNoteTemplate) {
         notifyError("جاري تحميل قوالب العقود، يرجى المحاولة مرة أخرى");
         return;
       }
-
       const previewLoanData = {
         ...loanDataToUse,
         client: clientDataToUse,
         partner: loanDataToUse.partner || selectedPartner,
         kafeel: loanDataToUse.kafeel || selectedKafeel,
       };
-
       if (!debtAckGeneratorRef.current || !promissoryNoteGeneratorRef.current) {
         notifyError("مولدات العقود غير جاهزة بعد، يرجى المحاولة مرة أخرى");
         return;
       }
-
       const debtAckHtml = await debtAckGeneratorRef.current.generateContract(
         false,
         previewLoanData,
         selectedKafeel || savedLoanData?.kafeel
       );
-
       const promissoryNoteHtml =
         await promissoryNoteGeneratorRef.current.generateContract(
           false,
           previewLoanData,
           selectedKafeel || savedLoanData?.kafeel
         );
-
       setPreviewContracts({
         debtAck: debtAckHtml,
         promissoryNote: promissoryNoteHtml,
@@ -392,16 +400,13 @@ const Loans = () => {
       );
     }
   }, [savedLoanData, selectedLoan, debtAckTemplate, promissoryNoteTemplate, selectedPartner, selectedKafeel, debtAckGeneratorRef, promissoryNoteGeneratorRef, setPreviewContracts, setPreviewOpen]);
-
   const handleConfirmConversion = useCallback(async (partialAmount = null, paymentAmount = null, repaymentDay = null) => {
     setIsConverting(true);
     try {
       const repaymentDayValue = repaymentDay || null;
       const paymentAmountValue = paymentAmount ? parseFloat(String(paymentAmount).replace(/,/g, "")) : null;
-      
       if (conversionType === "partial") {
         const amount = parseFloat(partialAmount.replace(/,/g, ""));
-        
         await transferPartialLoanAmount(
           loanForConversion.clientId,
           selectedClientForConversion.client.id,
@@ -421,25 +426,19 @@ const Loans = () => {
             paymentAmountValue,
             repaymentDayValue
           );
-
         const updatedLoan = await getLoanById(loanForConversion.id);
-
         const newClientResponse = await getClients(1, selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name);
         const fullNewClientData = newClientResponse?.clients?.find(
           (c) => c.client.id === selectedClientForConversion.client.id
         );
-
         const loanDataForPreview = {
           ...updatedLoan,
           client: fullNewClientData?.client || selectedClientForConversion.client,
           partner: updatedLoan.partner,
           kafeel: updatedLoan.kafeel || null,
         };
-
         setSavedLoanData(loanDataForPreview);
-
         notifySuccess("تم نقل المديونية بنجاح");
-
         setTimeout(async () => {
           try {
             await handleOpenPreview(loanDataForPreview);
@@ -449,7 +448,6 @@ const Loans = () => {
           }
         }, 100);
       }
-
       setShowConversionConfirmModal(false);
       setPartialTransferAmount("");
       handleConversionSuccess();
@@ -460,108 +458,85 @@ const Loans = () => {
       setIsConverting(false);
     }
   }, [conversionType, loanForConversion, selectedClientForConversion, selectedKafeelForConversion, handleConversionSuccess, handleOpenPreview]);
-
   useEffect(() => {
-    const handleOpenAddKafeelModal = () => {
-      setIsAddKafeelOpen(true);
-    };
-
     const handleNavigateToInstallments = (event) => {
       navigate(`/installments/${event.detail}`);
     };
-
-
-
-    window.addEventListener('open-add-kafeel-modal', handleOpenAddKafeelModal);
     window.addEventListener('navigate-to-installments', handleNavigateToInstallments);
-
     return () => {
-      window.removeEventListener('open-add-kafeel-modal', handleOpenAddKafeelModal);
       window.removeEventListener('navigate-to-installments', handleNavigateToInstallments);
     };
-
-  }, [navigate, selectedClient, loanForConversion, queryClient, handleConversionSuccess]);
-
-
+  }, [navigate]);
   const debouncedSearch = debounce((value) => {
     setSearchQuery(value);
     setClientsPage(1);
   }, 500);
-
   const debouncedBanksSearch = debounce((value) => {
     setBanksSearchQuery(value);
     setBanksPage(1);
   }, 500);
-
   const debouncedPartnersSearch = debounce((value) => {
     setPartnersSearchQuery(value);
     setPartnersPage(1);
   }, 500);
-
   const handleSearchChange = (event, value) => {
     debouncedSearch(value);
   };
-
   const handleBanksSearchChange = (event, value) => {
     debouncedBanksSearch(value);
   };
-
   const handlePartnersSearchChange = (event, value) => {
     debouncedPartnersSearch(value);
   };
-
   const handleClientSelect = (event, newValue) => {
     setSelectedClient(newValue);
     setSelectedKafeel(null);
   };
-
+  const handleAddKafeelClick = useCallback((clientId) => {
+    if (!clientId) return;
+    const client = isClientConversion ? selectedClientForConversion?.client : selectedClient?.client;
+    const state = {
+      tab: 1,
+      clientId,
+      clientName: client?.name,
+      clientNationalId: client?.nationalId,
+      loanForm,
+      isClientConversion,
+    };
+    if (isClientConversion && loanForConversion?.id) {
+      state.loanId = loanForConversion.id;
+      state.conversionClientId = selectedClientForConversion?.client?.id;
+      state.conversionClientName = selectedClientForConversion?.client?.name;
+      state.conversionClientNationalId = selectedClientForConversion?.client?.nationalId;
+    }
+    try {
+      sessionStorage.setItem('LOANS_RETURN_STATE', JSON.stringify(state));
+    } catch { /* ignore */ }
+    navigate(`/clients/${clientId}/add-kafeel?returnTo=loans`);
+  }, [isClientConversion, selectedClient, selectedClientForConversion, loanForConversion, loanForm, navigate]);
   const handleKafeelSelect = (event, newValue) => {
     setSelectedKafeel(newValue);
   };
-
-  const refreshSelectedClientData = async () => {
-    if (!selectedClient?.client?.id) return;
-    try {
-      const clientsResponse = await getClients(
-        1,
-        selectedClient.client.nationalId || selectedClient.client.name
-      );
-      const updatedClient = clientsResponse?.clients?.find(
-        (c) => c.client.id === selectedClient.client.id
-      );
-      if (updatedClient) {
-        setSelectedClient(updatedClient);
-      }
-    } catch (error) {
-      console.error("Error refreshing client data:", error);
-    }
-  };
-
   const handleBankSelect = async (event, newValue) => {
     setSelectedBank(newValue);
     setBanksSearchQuery("");
     setBanksPage(1);
     await fetchBankBalance();
   };
-
   const fetchBankBalance = async () => {
     try {
       setIsLoadingBankBalance(true);
-
       if (loanForm.source === "MIX") {
         const [generalResponse, newCapitalResponse] = await Promise.all([
           Api.get(`/api/accounts/bank/1?limit=1`),
           Api.get(`/api/accounts/NewBank/1`)
         ]);
-
         const generalBalance = generalResponse?.data?.account?.balance || 0;
         const newCapitalBalance = newCapitalResponse?.data?.account?.balance || 0;
-
         setMixBalances({ general: generalBalance, newCapital: newCapitalBalance });
         setBankBalance(null);
       } else {
         let balance = 0;
-
         if (loanForm.source === "NEW_CAPITAL") {
           const response = await Api.get(`/api/accounts/NewBank/1`);
           balance = response?.data?.account?.balance || 0;
@@ -572,7 +547,6 @@ const Loans = () => {
           const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
           balance = response?.data?.account?.balance || 0;
         }
-
         setBankBalance(balance);
         setMixBalances({ general: null, newCapital: null });
       }
@@ -584,11 +558,9 @@ const Loans = () => {
       setIsLoadingBankBalance(false);
     }
   };
-
   const handlePartnerSelect = (event, newValue) => {
     setSelectedPartner(newValue);
   };
-
   const formatAmount = (amount) => {
     if (!amount && amount !== 0) return "";
     const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, "")) : amount;
@@ -596,25 +568,19 @@ const Loans = () => {
     const rounded = parseFloat(numAmount.toFixed(2));
     return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-
-
   const handleSaveContracts = async (contractType) => {
     try {
       setIsSavingContracts(true);
-
       const loanDataToUse = savedLoanData || selectedLoan;
-
       if (!loanDataToUse) {
         notifyError("لم يتم تحديد السلفة. يرجى اختيار سلفة أولاً");
         return;
       }
-
       if (contractType === "both" || contractType === "debt-acknowledgment" || contractType === "promissory-note") {
         try {
           const countResponse = await Api.get(`/api/loans/get/counts/${loanDataToUse.id}`);
           const count = countResponse.data.count;
           const contractNumber = count.toString();
-
           const numbersToSave = {};
           if (contractType === "both" || contractType === "debt-acknowledgment") {
             numbersToSave.debtAcknowledgmentNumber = contractNumber;
@@ -622,43 +588,34 @@ const Loans = () => {
           if (contractType === "both" || contractType === "promissory-note") {
             numbersToSave.promissoryNoteNumber = contractNumber;
           }
-
           await Api.post(`/api/loans/${loanDataToUse.id}/save-contract-numbers`, numbersToSave);
-
           if (numbersToSave.debtAcknowledgmentNumber) {
             loanDataToUse.debtAcknowledgmentNumber = contractNumber;
           }
           if (numbersToSave.promissoryNoteNumber) {
             loanDataToUse.promissoryNoteNumber = contractNumber;
           }
-
-          console.log('Saved contract numbers:', numbersToSave);
         } catch (error) {
           console.error('Error fetching loan count:', error);
           notifyError("حدث خطأ في جلب رقم العقد");
           return;
         }
       }
-
       if (contractType === "both" || contractType === "debt-acknowledgment") {
         const debtAckHtml = await debtAckGeneratorRef.current?.generateContract(false, loanDataToUse, selectedKafeel || loanDataToUse?.kafeel, true);
         await debtAckGeneratorRef.current?.generatePDF(debtAckHtml, loanDataToUse);
       }
-
       if (contractType === "both" || contractType === "promissory-note") {
         const promissoryNoteHtml = await promissoryNoteGeneratorRef.current?.generateContract(false, loanDataToUse, selectedKafeel || loanDataToUse?.kafeel, true);
         await promissoryNoteGeneratorRef.current?.generatePDF(promissoryNoteHtml, loanDataToUse);
       }
-
       notifySuccess("تم حفظ العقود بنجاح");
-
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
       if (loanDataToUse?.id) {
         queryClient.invalidateQueries(["loan", loanDataToUse.id]);
       }
-
       setSavedLoanData(null);
       setContractsGenerated(0);
       setPreviewContracts({
@@ -666,7 +623,6 @@ const Loans = () => {
         promissoryNote: "",
       });
       setPreviewOpen(false);
-
     setLoanForm({
       amount: "",
       totalInterest: "",
@@ -681,13 +637,11 @@ const Loans = () => {
       promissoryNoteType: "",
       promissoryNoteDate: "",
     });
-
       setSelectedClient(null);
       setSelectedKafeel(null);
       setSelectedBank(null);
       setSelectedPartner(null);
       setSelectedLoan(null);
-
       setInstallments([]);
       setIsEditMode(false);
       setIsViewMode(false);
@@ -699,34 +653,27 @@ const Loans = () => {
       setIsSavingContracts(false);
     }
   };
-
   const calculateInstallments = () => {
     const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
     let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
     const paymentAmount =
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const loanType = loanForm.type;
-
-    // Calculate interest from rate if totalInterest is empty
     if (totalInterest === 0 && loanForm.interestRate !== "" && amount > 0) {
       const interestRate = parseFloat(loanForm.interestRate) || 0;
       totalInterest = (amount * interestRate) / 100;
     }
-
     if (amount > 0 && paymentAmount > 0 && totalInterest >= 0) {
       const profit = totalInterest;
       const total = amount + profit;
-
       const fullMonths = Math.floor(total / paymentAmount);
       const lastPayment = total - paymentAmount * fullMonths;
       const months = fullMonths;
       const hasRemainder = lastPayment > 0;
-
       const calculatedInstallments = [];
       let remainingPrincipal = amount;
       let remainingInterest = profit;
       let totalPaidSoFar = 0;
-
       for (let i = 1; i <= months; i++) {
         const dueDate = new Date(loanForm.startDate);
         if (loanType === "DAILY") {
@@ -739,15 +686,12 @@ const Loans = () => {
             dueDate.setDate(parseInt(dateToDay(loanForm.repaymentDay)));
           }
         }
-
         let currentAmount = paymentAmount;
         if (i === months && hasRemainder) {
           currentAmount = paymentAmount + lastPayment;
         }
-
         let principalAmount;
         let interestAmount;
-
         if (i === months && hasRemainder) {
           principalAmount = remainingPrincipal;
           interestAmount = remainingInterest;
@@ -761,17 +705,14 @@ const Loans = () => {
             (currentAmount - interestAmount).toFixed(2)
           );
         }
-
         remainingPrincipal = parseFloat(
           (remainingPrincipal - principalAmount).toFixed(2)
         );
         remainingInterest = parseFloat(
           (remainingInterest - interestAmount).toFixed(2)
         );
-
         totalPaidSoFar += currentAmount;
         const remainingBalance = Math.max(0, parseFloat((total - totalPaidSoFar).toFixed(2)));
-
         calculatedInstallments.push({
           installmentNumber: i,
           dueDate: dueDate,
@@ -783,33 +724,26 @@ const Loans = () => {
           paidAmount: 0,
         });
       }
-
       setInstallments(calculatedInstallments);
     } else {
       setInstallments([]);
     }
   };
-
   const getSimulationSummary = () => {
     if (installments.length === 0) return null;
-
     const totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
     const totalAmount =
       (parseFloat(loanForm.amount.replace(/,/g, "")) || 0) + totalInterest;
     const paymentAmount =
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
-
     const installmentsCount = installments.length;
     const loanType = loanForm.type;
-
     const getPluralForm = (count, singular, plural) => {
       return count === 1 ? singular : plural;
     };
-
     let approximateMonths = installmentsCount;
     let durationLabel = "عدد الأشهر";
     let durationText = `${installmentsCount} ${getPluralForm(installmentsCount, 'شهر', 'أشهر')}`;
-
     if (loanType === "DAILY") {
       approximateMonths = Math.ceil(installmentsCount / 30);
       durationLabel = "عدد الأيام";
@@ -819,7 +753,6 @@ const Loans = () => {
       durationLabel = "عدد الأسابيع";
       durationText = `${installmentsCount} ${getPluralForm(installmentsCount, 'أسبوع', 'أسابيع')} (≈ ${approximateMonths} ${getPluralForm(approximateMonths, 'شهر', 'أشهر')})`;
     }
-
     return {
       paymentAmount,
       totalInterest,
@@ -831,18 +764,15 @@ const Loans = () => {
       durationText,
     };
   };
-
   const handleCreateLoan = async () => {
     if (!selectedClient) {
       notifyError("يرجى اختيار عميل");
       return;
     }
-
     if (!selectedPartner) {
       notifyError("يرجى اختيار المستثمر");
       return;
     }
-
     if (loanForm.source === "MIX") {
       const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
       const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
@@ -869,18 +799,14 @@ const Loans = () => {
         return;
       }
     }
-
     try {
       setIsCreatingLoan(true);
-
-      // Calculate TotalInterest from rate if empty
       let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
       if (totalInterest === 0 && loanForm.interestRate !== "") {
         const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
         const interestRate = parseFloat(loanForm.interestRate) || 0;
         totalInterest = (amount * interestRate) / 100;
       }
-
       const loanData = {
         clientId: selectedClient.client.id,
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
@@ -901,27 +827,20 @@ const Loans = () => {
           ? new Date(loanForm.promissoryNoteDate).toISOString()
           : null,
       };
-
       const response = await createLoan(loanData);
       const newLoan = response?.data?.loan || response?.loan;
-
       notifySuccess("تم إنشاء السلفة بنجاح");
-
       const finalPartner = selectedPartner || newLoan.partner;
-
       const loanDataForPreview = {
         ...newLoan,
         partner: finalPartner,
         client: selectedClient.client,
         kafeel: selectedKafeel || null,
       };
-
       setSavedLoanData(loanDataForPreview);
-
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
-
       setTimeout(async () => {
         try {
           await handleOpenPreview(loanDataForPreview);
@@ -939,12 +858,10 @@ const Loans = () => {
       setIsCreatingLoan(false);
     }
   };
-
   const handleContractGenerated = () => {
     const newCount = contractsGenerated + 1;
     setContractsGenerated(newCount);
   };
-
   const resetLoanForm = () => {
     setSelectedClient(null);
     setSelectedKafeel(null);
@@ -974,22 +891,18 @@ const Loans = () => {
     setIsCreatingLoan(false);
     setIsAdditionalLoan(false);
   };
-
   const handleUpdateLoan = async () => {
     if (!selectedLoan) {
       notifyError("لا يوجد سلفة محددة للتعديل");
       return;
     }
-
     try {
-      // Calculate TotalInterest from rate if empty
       let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
       if (totalInterest === 0 && loanForm.interestRate !== "") {
         const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
         const interestRate = parseFloat(loanForm.interestRate) || 0;
         totalInterest = (amount * interestRate) / 100;
       }
-
       const loanData = {
         amount: parseFloat(loanForm.amount.replace(/,/g, "")),
         TotalInterest: totalInterest,
@@ -1009,23 +922,18 @@ const Loans = () => {
           ? new Date(loanForm.promissoryNoteDate).toISOString()
           : null,
       };
-
       const oldAmount = selectedLoan.amount;
       const newAmount = loanData.amount;
       const amountChanged = oldAmount !== newAmount;
-
       await updateLoan(selectedLoan.id, loanData);
       notifySuccess("تم تعديل السلفة بنجاح");
-
       if (amountChanged) {
         const updatedLoan = await getLoanById(selectedLoan.id);
-
         setSavedLoanData({
           ...updatedLoan,
           client: selectedClient?.client || updatedLoan.client,
           kafeel: selectedKafeel || updatedLoan.kafeel || null,
         });
-
         try {
           const previewLoanData = {
             id: updatedLoan.id,
@@ -1035,7 +943,6 @@ const Loans = () => {
             startDate: loanData.startDate,
             client: selectedClient?.client || updatedLoan.client,
           };
-
           const debtAckHtml =
             await debtAckGeneratorRef.current.generateContract(
               false,
@@ -1048,7 +955,6 @@ const Loans = () => {
               previewLoanData,
               selectedKafeel
             );
-
           setPreviewContracts({
             debtAck: debtAckHtml,
             promissoryNote: promissoryNoteHtml,
@@ -1059,7 +965,6 @@ const Loans = () => {
           notifyError("تم تحديث السلفة لكن حدث خطأ أثناء توليد معاينة العقود");
         }
       }
-
       queryClient.invalidateQueries(["loans"]);
       queryClient.invalidateQueries(["unposted-loan-journals"]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
@@ -1072,14 +977,12 @@ const Loans = () => {
       );
     }
   };
-
   const handleViewLoanDetails = async (loanId) => {
     try {
       const loan = await getLoanById(loanId);
       setSelectedLoan(loan);
       setIsViewMode(true);
       setIsEditMode(false);
-
       if (loan.client) {
         try {
           const clientsResponse = await getClients(
@@ -1089,7 +992,6 @@ const Loans = () => {
           const fullClientData = clientsResponse?.clients?.find(
             (c) => c.client.id === loan.client.id
           );
-
           if (fullClientData) {
             setSelectedClient(fullClientData);
           } else {
@@ -1100,7 +1002,6 @@ const Loans = () => {
           setSelectedClient({ client: loan.client, kafeels: [] });
         }
       }
-
       if (loan.bankAccount) {
         setSelectedBank(loan.bankAccount);
         await fetchBankBalance();
@@ -1108,22 +1009,17 @@ const Loans = () => {
         setSelectedBank(null);
         setBankBalance(null);
       }
-
       if (loan.partner) {
         setSelectedPartner(loan.partner);
       }
-
       if (loan.kafeel) {
         setSelectedKafeel(loan.kafeel);
       } else {
         setSelectedKafeel(null);
       }
-
       const repaymentCount = loan.repayments.length;
-
       const principalPerInstallment = loan.amount / repaymentCount;
       const interestPerInstallment = loan.interestAmount / repaymentCount;
-
       let remainingBalance = loan.totalAmount;
       const formattedRepayments = loan.repayments.map((repayment, index) => {
         const currentInstallment = {
@@ -1136,16 +1032,12 @@ const Loans = () => {
           status: repayment.status,
           paidAmount: repayment.paidAmount || 0,
         };
-
         remainingBalance -= repayment.amount;
         return currentInstallment;
       });
-
       setInstallments(formattedRepayments);
-
       const totalInterestAmount = loan.interestAmount || 0;
       const formattedTotalInterest = parseFloat(totalInterestAmount.toFixed(2));
-
       setLoanForm({
         amount: (loan.amount ?? 0).toString(),
         totalInterest: formattedTotalInterest.toString(),
@@ -1160,7 +1052,6 @@ const Loans = () => {
         promissoryNoteType: loan.promissoryNoteType || "",
         promissoryNoteDate: loan.promissoryNoteDate ? loan.promissoryNoteDate.split("T")[0] : "",
       });
-
       setActiveTab(1);
     } catch (error) {
       notifyError(
@@ -1168,17 +1059,14 @@ const Loans = () => {
       );
     }
   };
-
   const handleViewInstallments = (loan) => {
     navigate(`/installments/${loan.id}`);
   };
-
   const handleEditSmallLoan = (loan) => {
     setSelectedLoanForEdit(loan);
     setIsSmallLoanEditMode(true);
     setActiveTab(2);
   };
-
   const handleConvertClient = async (loan) => {
     try {
       const fullLoanData = await getLoanById(loan.id);
@@ -1191,7 +1079,6 @@ const Loans = () => {
       notifyError("حدث خطأ في تحميل بيانات السلفة");
     }
   };
-
   const handleCancelConversion = () => {
     setIsClientConversion(false);
     setLoanForConversion(null);
@@ -1199,10 +1086,8 @@ const Loans = () => {
     setSelectedKafeelForConversion(null);
     setActiveTab(0);
   };
-
   const handleCreateAdditionalLoan = async (client) => {
     resetLoanForm();
-
     try {
       const clientsResponse = await getClients(
         1,
@@ -1211,7 +1096,6 @@ const Loans = () => {
       const fullClientData = clientsResponse?.clients?.find(
         (c) => c.client.id === client.id
       );
-
       if (fullClientData) {
         setSelectedClient(fullClientData);
       } else {
@@ -1221,12 +1105,9 @@ const Loans = () => {
       console.error("Error loading client data:", error);
       setSelectedClient({ client, kafeels: [] });
     }
-
     setIsAdditionalLoan(true);
-
     setActiveTab(1);
   };
-
   const handleEditLoan = () => {
     if (selectedLoan.status !== "PENDING") {
       notifyError("يمكن تعديل القروض في حالة 'قيد المراجعة' فقط");
@@ -1235,16 +1116,13 @@ const Loans = () => {
     setIsEditMode(true);
     setIsViewMode(false);
   };
-
   const handleInputChange = (field, value) => {
     if (field === "amount" || field === "paymentAmount" || field === "totalInterest") {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
-
         if (field === "amount") {
           const numericAmount = parseFloat(rawValue);
-
           if (loanForm.source === "MIX") {
             const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
             if (numericAmount > totalBalances) {
@@ -1272,17 +1150,13 @@ const Loans = () => {
         }
       }
     }
-
     setLoanForm((prev) => {
       const updatedForm = {
         ...prev,
         [field]: value,
       };
-
-      // Handle interest fields logic
       if (field === "totalInterest") {
         if (value !== "") {
-          // Calculate interest rate from totalInterest
           const amount = parseFloat(prev.amount.replace(/,/g, "")) || 0;
           const totalInterest = parseFloat(value.replace(/,/g, "")) || 0;
           if (amount > 0) {
@@ -1290,12 +1164,10 @@ const Loans = () => {
             updatedForm.interestRate = percentage.toFixed(2);
           }
         } else {
-          // Only clear interestRate if totalInterest is completely empty
           updatedForm.interestRate = "";
         }
       } else if (field === "interestRate") {
         if (value !== "") {
-          // Calculate totalInterest from interestRate
           const amount = parseFloat(prev.amount.replace(/,/g, "")) || 0;
           const rate = parseFloat(value) || 0;
           if (amount > 0) {
@@ -1303,26 +1175,20 @@ const Loans = () => {
             updatedForm.totalInterest = formatAmount(calculatedInterest.toFixed(2));
           }
         } else {
-          // Only clear totalInterest if interestRate is completely empty
           updatedForm.totalInterest = "";
         }
       } else if (field === "amount" && value !== "") {
-        // When amount changes, recalculate based on what field has a value
         const amount = parseFloat(value.replace(/,/g, "")) || 0;
-        
         if (prev.interestRate !== "" && amount > 0) {
-          // Recalculate totalInterest from interestRate
           const rate = parseFloat(prev.interestRate) || 0;
           const calculatedInterest = (amount * rate) / 100;
           updatedForm.totalInterest = formatAmount(calculatedInterest.toFixed(2));
         } else if (prev.totalInterest !== "" && amount > 0) {
-          // Recalculate interestRate from totalInterest
           const totalInterest = parseFloat(prev.totalInterest.replace(/,/g, "")) || 0;
           const percentage = totalInterest > 0 ? (totalInterest / amount) * 100 : 0;
           updatedForm.interestRate = percentage.toFixed(2);
         }
       }
-
       if (field === "promissoryNoteType") {
         if (value === "inspection") {
           updatedForm.promissoryNoteDate = "";
@@ -1330,12 +1196,9 @@ const Loans = () => {
           updatedForm.promissoryNoteDate = "";
         }
       }
-
       return updatedForm;
     });
-    
   };
-
   const handleSaveLoan = () => {
     if (isEditMode) {
       handleUpdateLoan();
@@ -1343,22 +1206,17 @@ const Loans = () => {
       handleCreateLoan();
     }
   };
-
   const simulationSummary = getSimulationSummary();
-
   const isFormValid = useMemo(() => {
     const isPromissoryNoteValid = 
       loanForm.promissoryNoteType && 
       loanForm.promissoryNoteType.trim() !== "" &&
       (loanForm.promissoryNoteType === "inspection" ||
         (loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate && loanForm.promissoryNoteDate.trim() !== ""));
-
     const totalInterestValue = loanForm.totalInterest === "" ? null : parseFloat(String(loanForm.totalInterest).replace(/,/g, ""));
     const interestRateValue = loanForm.interestRate === "" ? null : parseFloat(String(loanForm.interestRate));
-    
     const isTotalInterestValid = totalInterestValue !== null && !isNaN(totalInterestValue) && totalInterestValue >= 0;
     const isInterestRateValid = interestRateValue !== null && !isNaN(interestRateValue) && interestRateValue >= 0;
-
     return (
       selectedClient &&
       selectedPartner &&
@@ -1391,11 +1249,8 @@ const Loans = () => {
     loanForm.promissoryNoteType,
     loanForm.promissoryNoteDate
   ]);
-
   const canEditLoan = selectedLoan && selectedLoan.status === "PENDING";
   const isReadOnlyMode = isViewMode;
-
-
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-slate-900">
       <Helmet>
@@ -1426,7 +1281,6 @@ const Loans = () => {
                       {simulationSummary.durationText}
                     </span>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500 dark:text-slate-400">
                       إجمالي الفائدة
@@ -1435,7 +1289,6 @@ const Loans = () => {
                       {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
                     </span>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500 dark:text-slate-400">
                       المبلغ الإجمالي المستحق
@@ -1444,9 +1297,7 @@ const Loans = () => {
                       {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
                     </span>
                   </div>
-
                   <hr className="border-slate-200 dark:border-slate-700" />
-
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500 dark:text-slate-400">حالة السلفة</span>
                     <span
@@ -1469,7 +1320,6 @@ const Loans = () => {
               )}
             </div>
             )}
-
             <div className={isTablet ? "p-4" : "p-6"}>
               <h3 className={`font-bold ${isTablet ? "mb-4 text-base" : "mb-6 text-lg"}`}>
                 الإجراءات
@@ -1500,7 +1350,6 @@ const Loans = () => {
                     >
                       نقل كامل المديونية
                     </button>
-
                     <button
                       type="button"
                       onClick={() => {
@@ -1524,7 +1373,6 @@ const Loans = () => {
                     >
                       نقل جزء من المديونية
                     </button>
-
                     <button
                       type="button"
                       onClick={handleCancelConversion}
@@ -1536,7 +1384,6 @@ const Loans = () => {
                     </button>
                   </>
                 )}
-  
                 {isViewMode && selectedLoan?.status === "ACTIVE" && (
                   <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
                     <span className="text-sm text-amber-800 dark:text-amber-200">
@@ -1551,7 +1398,6 @@ const Loans = () => {
                     </button>
                   </div>
                 )}
-
                 {!isViewMode && !isClientConversion && (
                   <button
                     type="button"
@@ -1564,7 +1410,6 @@ const Loans = () => {
                     {isEditMode ? "حفظ التعديلات" : "إنشاء السلفة"}
                   </button>
                 )}
-
                 {isViewMode && canEditLoan && (
                   <button
                     type="button"
@@ -1576,7 +1421,6 @@ const Loans = () => {
                     تعديل السلفة
                   </button>
                 )}
-
                 {!isClientConversion && (
                   <button
                     type="button"
@@ -1589,7 +1433,6 @@ const Loans = () => {
                     معاينة العقود
                   </button>
                 )}
-
                 {isEditMode && (
                   <button
                     type="button"
@@ -1608,7 +1451,6 @@ const Loans = () => {
             </div>
           </div>
         )}
-
         <div
           className={`flex flex-1 flex-col overflow-y-auto bg-white dark:bg-slate-900 ${
             isSmallScreen ? "p-4" : isLargeScreen ? "p-6" : "p-8"
@@ -1628,7 +1470,6 @@ const Loans = () => {
               searchQuery={loansTableSearchQuery}
               onSearchChange={(e) => setLoansTableSearchQuery(e.target.value)}
             />
-
             {activeTab === 0 ? (
               <div className="flex w-full flex-col">
                 <LoanMainTab
@@ -1638,7 +1479,6 @@ const Loans = () => {
                   handleViewLoanDetails={handleViewLoanDetails}
                   statusCounts={statusCounts}
                 />
-
                 <LoansTable
                   onViewDetails={handleViewLoanDetails}
                   onViewInstallments={handleViewInstallments}
@@ -1664,6 +1504,7 @@ const Loans = () => {
                     onClientSelect={setSelectedClientForConversion}
                     selectedKafeel={selectedKafeelForConversion}
                     onKafeelSelect={setSelectedKafeelForConversion}
+                    onAddKafeelClick={handleAddKafeelClick}
                   />
                 ) : permissions.includes("loans_Add") && (
                   <LoanClientSection
@@ -1677,13 +1518,13 @@ const Loans = () => {
                     isEditMode={isEditMode}
                     isAdditionalLoan={isAdditionalLoan}
                     onAddClientClick={() => navigate("/clients/add?returnTo=loans")}
+                    onAddKafeelClick={handleAddKafeelClick}
                     selectedKafeel={selectedKafeel}
                     handleKafeelSelect={handleKafeelSelect}
                     clientLoansData={clientLoansData}
                     isReadOnlyMode={isReadOnlyMode}
                   />
                 )}
-
                 {((!isViewMode && selectedKafeel) ||
                   (isViewMode && selectedLoan?.kafeel)) && (
                   <LoanKafeelSection
@@ -1693,7 +1534,6 @@ const Loans = () => {
                     isViewMode={isViewMode}
                   />
                 )}
-
                 {permissions.includes("loans_Add") && !isClientConversion && (
                   <LoanDetailsSection
                     isSmallScreen={isSmallScreen}
@@ -1720,7 +1560,6 @@ const Loans = () => {
                     selectedLoan={selectedLoan}
                   />
                 )}
-
                 {activeTab === 1 && isSmallScreen && (
                   <LoanSimulation
                     isSmallScreen={isSmallScreen}
@@ -1731,7 +1570,6 @@ const Loans = () => {
                     formatAmount={formatAmount}
                   />
                 )}
-
                 {activeTab === 1 && isSmallScreen && (
                   <LoanActions
                     isSmallScreen={isSmallScreen}
@@ -1778,35 +1616,6 @@ const Loans = () => {
           </div>
         </div>
       </div>
-
-      <AddAdditionalKafeel
-        open={isAddKafeelOpen}
-        onClose={async () => {
-          setIsAddKafeelOpen(false);
-          queryClient.invalidateQueries(["clients"]);
-
-          if (isClientConversion && selectedClientForConversion?.client?.id) {
-            try {
-              const clientsResponse = await getClients(
-                1,
-                selectedClientForConversion.client.nationalId || selectedClientForConversion.client.name
-              );
-              const updatedClient = clientsResponse?.clients?.find(
-                (c) => c.client.id === selectedClientForConversion.client.id
-              );
-              if (updatedClient) {
-                setSelectedClientForConversion(updatedClient);
-              }
-            } catch (error) {
-              console.error("Error refreshing conversion client data:", error);
-            }
-          } else {
-            await refreshSelectedClientData();
-          }
-        }}
-        clientId={isClientConversion ? selectedClientForConversion?.client?.id : selectedClient?.client?.id}
-      />
-
       {generateContracts && debtAckTemplate && promissoryNoteTemplate && (
         <>
           <LoanContractGenerator
@@ -1819,7 +1628,6 @@ const Loans = () => {
             contractType="DEBT_ACKNOWLEDGMENT"
             autoGenerate={false}
           />
-
           <LoanContractGenerator
             ref={promissoryNoteGeneratorRef}
             loanData={savedLoanData}
@@ -1830,7 +1638,6 @@ const Loans = () => {
             contractType="PROMISSORY_NOTE"
             autoGenerate={false}
           />
-
           <LoanContractsPreview
             open={previewOpen}
             onClose={() => setPreviewOpen(false)}
@@ -1843,7 +1650,6 @@ const Loans = () => {
           />
         </>
       )}
-
       <LoanConversionConfirmModal
         open={showConversionConfirmModal}
         onClose={() => !isConverting && setShowConversionConfirmModal(false)}
@@ -1859,9 +1665,7 @@ const Loans = () => {
         onPartialAmountChange={setPartialTransferAmount}
         maxPartialAmount={calculateRemainingAmount(loanForConversion)}
       />
-
     </div>
   );
 };
-
 export default Loans;

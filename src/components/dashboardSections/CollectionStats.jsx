@@ -17,41 +17,33 @@ import {
 import { useCountUp } from '../../hooks/useCountUp';
 import { Link } from 'react-router-dom';
 import ResponsiveTable from './ResponsiveTable';
-
 const MONTH_NAMES = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
 ];
-
 const CollectionStats = React.memo(() => {
   const [hoveredBar, setHoveredBar] = React.useState(null);
   const { setTabSubtitle } = useDashboardFilter();
-  
   const { data: stats, isLoading } = useQuery({
     queryKey: ['monthly-collection'],
     queryFn: () => getMonthlyCollection(),
   });
-
   const { data: dailyTrend = [], isLoading: dailyLoading } = useQuery({
     queryKey: ['dashboard', 'daily-collection-trend'],
     queryFn: () => getDailyCollectionTrend(7),
   });
-
   const { data: pendingItems = [], isLoading: pendingLoading } = useQuery({
     queryKey: ['dashboard', 'pending-review-repayments'],
     queryFn: () => getPendingReviewRepayments(10),
   });
-
   const collectionPct = stats?.currentMonth?.collectionPercentage ?? 0;
   const animatedPct = useCountUp(collectionPct, 600, !isLoading);
   const targetAmount = stats?.currentMonth?.totalAmount ?? 0;
   const achievedAmount = stats?.currentMonth?.paidUntilNow ?? 0;
-
   const formatAmount = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     return Number(n).toLocaleString('en-US');
   };
-
   const formatDate = (d) => {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('en-US', {
@@ -60,27 +52,22 @@ const CollectionStats = React.memo(() => {
       day: '2-digit',
     });
   };
-
   const maxDailyValue = useMemo(() => {
     const vals = dailyTrend.map((d) => d.collected).filter((v) => v > 0);
     return Math.max(...vals, 1);
   }, [dailyTrend]);
-
   const currentMonthName = useMemo(() => {
     if (stats?.month !== undefined) return MONTH_NAMES[stats.month];
     const d = stats?.range?.startDate ? new Date(stats.range.startDate) : new Date();
     return MONTH_NAMES[d.getMonth()];
   }, [stats?.month, stats?.range?.startDate]);
-
   const currentYear = stats?.year ?? new Date().getFullYear();
-
   useEffect(() => {
     if (!isLoading && stats) {
       setTabSubtitle(`متابعة أداء التحصيلات والتدفقات المالية - ${currentMonthName} ${currentYear}`);
     }
     return () => setTabSubtitle('');
   }, [isLoading, stats, currentMonthName, currentYear, setTabSubtitle]);
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -88,19 +75,18 @@ const CollectionStats = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="space-y-8">
-      {/* Gauge & Comparison Cards */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gauge */}
+        {}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center shadow-sm">
           <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-6">
             نسبة التحصيل لهذا الشهر
           </p>
           <div className="relative w-[200px] h-[110px] mb-2">
             <svg viewBox="0 0 200 110" className="w-full h-full">
-              {/* Background arc */}
+              {}
               <path
                 d="M 10 100 A 90 90 0 0 1 190 100"
                 fill="none"
@@ -109,7 +95,7 @@ const CollectionStats = React.memo(() => {
                 strokeLinecap="round"
                 className="dark:stroke-slate-700"
               />
-              {/* Filled arc based on percentage */}
+              {}
               <path
                 d="M 10 100 A 90 90 0 0 1 190 100"
                 fill="none"
@@ -130,8 +116,7 @@ const CollectionStats = React.memo(() => {
             )}
           </div>
         </div>
-
-        {/* Target & Achieved Cards */}
+        {}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
             <div className="absolute -right-4 -top-4 bg-primary/5 size-24 rounded-full group-hover:scale-110 transition-transform" />
@@ -172,8 +157,7 @@ const CollectionStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Daily Bar Chart */}
+      {}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex justify-between items-center mb-8">
           <h4 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -192,7 +176,7 @@ const CollectionStats = React.memo(() => {
           </div>
         </div>
         <div className="flex gap-4">
-          {/* Y-Axis */}
+          {}
           <div className="flex flex-col justify-between h-48 py-2 text-[10px] text-slate-400 text-right">
             <span>{formatAmount(maxDailyValue)}</span>
             <span>{formatAmount(maxDailyValue * 0.75)}</span>
@@ -200,7 +184,7 @@ const CollectionStats = React.memo(() => {
             <span>{formatAmount(maxDailyValue * 0.25)}</span>
             <span>0</span>
           </div>
-          {/* Bars */}
+          {}
           <div className="flex-1 grid grid-cols-7 gap-4 items-end h-48 px-4 relative">
             {dailyLoading ? (
               <div className="col-span-7 flex justify-center py-12">
@@ -243,8 +227,7 @@ const CollectionStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Pending Table */}
+      {}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
           <h4 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -305,7 +288,5 @@ const CollectionStats = React.memo(() => {
     </div>
   );
 });
-
 CollectionStats.displayName = 'CollectionStats';
-
-export default CollectionStats;
+export default CollectionStats;

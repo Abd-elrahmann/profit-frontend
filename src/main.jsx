@@ -11,7 +11,6 @@ document.documentElement.lang = 'ar'
 document.documentElement.dir = 'rtl'
 i18next.changeLanguage('ar')
 const queryClient = new QueryClient()
-
 createRoot(document.getElementById('root')).render(
     <QueryClientProvider client={queryClient}>
             <HelmetProvider>
@@ -20,4 +19,4 @@ createRoot(document.getElementById('root')).render(
                 </LocalizationProvider>
             </HelmetProvider>
     </QueryClientProvider>
-)
+)

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { useTheme } from "../../theme/ThemeContext";
-
 import {
   getPeriodById,
   closePeriod,
@@ -12,7 +11,7 @@ import {
   comparePeriods,
 } from "./periodApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import PeriodTable from "../../components/modals/periodTable";
+import { PeriodTable } from "../../components/PeriodClosing";
 import PeriodCompareModal from "../../components/modals/PeriodCompareModal";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import {
@@ -20,16 +19,13 @@ import {
   exportPeriodClosingToExcel,
 } from "../../utilities/periodClosingExporter";
 import { notifyInfo } from "../../utilities/toastify";
-
 import PeriodClosingHeader from "../../components/PeriodClosing/PeriodClosingHeader";
 import PeriodClosingDetails from "../../components/PeriodClosing/PeriodClosingDetails";
-
 const PeriodClosing = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
-
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,18 +36,15 @@ const PeriodClosing = () => {
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareData, setCompareData] = useState(null);
   const [isCompareLoading, setIsCompareLoading] = useState(false);
-
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
-
   const { data: periodData, isLoading: isPeriodLoading } = useQuery({
     queryKey: ["period", selectedPeriod],
     queryFn: () => getPeriodById(selectedPeriod),
     enabled: !!selectedPeriod && activeTab === 1,
   });
-
   useEffect(() => {
     if (periodData?.journals) {
       const draftEntries = periodData.journals.filter(
@@ -61,25 +54,21 @@ const PeriodClosing = () => {
       setShowDraftAlert(draftEntries.length > 0);
     }
   }, [periodData]);
-
   const handleViewDetails = (periodId) => {
     setSelectedPeriod(periodId);
     setActiveTab(1);
   };
-
   const handleBackToList = () => {
     setActiveTab(0);
     setSelectedPeriod(null);
     setShowDraftAlert(false);
   };
-
   const handleTabChange = (newValue) => {
     setActiveTab(newValue);
     if (newValue === 0) {
       setSelectedPeriod(null);
     }
   };
-
   const handleClosePeriod = async () => {
     try {
       await closePeriod(selectedPeriod);
@@ -93,7 +82,6 @@ const PeriodClosing = () => {
       );
     }
   };
-
   const handleUnpostClosing = async () => {
     try {
       await unpostClosing(selectedPeriod);
@@ -107,23 +95,19 @@ const PeriodClosing = () => {
       );
     }
   };
-
   const handleViewJournal = (journalId) => {
     navigate("/journal-entries", {
       state: { journalId, activeTab: 1, fromPeriod: true },
     });
   };
-
   const handleNavigateToJournalEntries = () => {
     navigate("/journal-entries");
   };
-
   const handleNavigateToProfitDistribution = () => {
     navigate(
       `/profit-distribution?periodId=${selectedPeriod}&from=period-closing`
     );
   };
-
   const handleComparePeriods = async (periodId1, periodId2) => {
     setIsCompareLoading(true);
     setCompareData(null);
@@ -140,13 +124,11 @@ const PeriodClosing = () => {
       setIsCompareLoading(false);
     }
   };
-
   const handleCloseCompareModal = () => {
     setCompareModalOpen(false);
     setCompareData(null);
     setSelectedPeriods([]);
   };
-
   const handleExportPDF = async () => {
     if (!periodData) return;
     setIsExporting(true);
@@ -160,7 +142,6 @@ const PeriodClosing = () => {
       setIsExporting(false);
     }
   };
-
   const handleExportExcel = async () => {
     if (!periodData) return;
     setIsExporting(true);
@@ -175,7 +156,6 @@ const PeriodClosing = () => {
       setIsExporting(false);
     }
   };
-
   return (
     <Box
       sx={{
@@ -189,7 +169,6 @@ const PeriodClosing = () => {
         <title>تقفيل الفترات</title>
         <meta name="description" content="تقفيل الفترات المحاسبية" />
       </Helmet>
-
       <Box
         sx={{
           display: "flex",
@@ -218,7 +197,6 @@ const PeriodClosing = () => {
               onBackToList={handleBackToList}
               isSmallScreen={isSmallScreen}
             />
-
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
               <>
                 <PeriodTable
@@ -287,5 +265,4 @@ const PeriodClosing = () => {
     </Box>
   );
 };
-
-export default PeriodClosing;
+export default PeriodClosing;

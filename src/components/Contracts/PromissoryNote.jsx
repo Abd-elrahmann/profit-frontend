@@ -1,6 +1,4 @@
-
 import React from "react";
-
 const PromissoryNote = () => {
 return `
 <style>
@@ -9,7 +7,6 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .contract-wrapper {
     background: #f8f9fc;
     padding: 15px;
@@ -18,7 +15,6 @@ return `
     text-align: right;
     width: 100%;
   }
-
   .contract-container {
     max-width: 100%;
     margin: 0 auto;
@@ -28,7 +24,6 @@ return `
     padding: 20px;
     width: 100%;
   }
-
   .header {
     display: flex;
     justify-content: space-between;
@@ -55,7 +50,6 @@ return `
     font-size: 10px;
     white-space: nowrap;
   }
-
   .grid-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -63,7 +57,6 @@ return `
     margin-bottom: 15px;
     align-items: start;
   }
-
   .details-box {
     background: rgba(46, 139, 69, 0.05);
     padding: 15px;
@@ -102,14 +95,12 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .content-box {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     height: 100%;
   }
-
   .amount-box {
     text-align: center;
     border: 1px solid rgba(46, 139, 69, 0.2);
@@ -141,14 +132,12 @@ return `
     text-align: center;
     margin-bottom: 0;
   }
-
   .section-title {
     font-size: 16px;
     font-weight: bold;
     margin: 12px 0 8px;
     color: #2E8B45;
   }
-
   .info-box {
     padding: 8px;
     border-radius: 6px;
@@ -170,14 +159,12 @@ return `
   .info-box .row:first-of-type {
     border-top: none;
   }
-  
   .parties-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 8px;
     margin-bottom: 12px;
   }
-
   .text-box {
     background: rgba(46, 139, 69, 0.03);
     padding: 10px 15px;
@@ -194,7 +181,6 @@ return `
     letter-spacing: normal;
     text-align: justify;
   }
-
   .strong {
     font-weight: bold;
     margin-top: 6px;
@@ -204,7 +190,6 @@ return `
     display: inline-block;
     width: 15px;
   }
-
   .signatures {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -224,7 +209,6 @@ return `
     font-size: 13px;
     margin: 5px 0;
   }
-
   @media (max-width: 768px) {
     .grid-wrapper {
       grid-template-columns: 1fr;
@@ -233,13 +217,11 @@ return `
       grid-template-columns: 1fr;
     }
   }
-
   @media print {
     @page {
       size: A4;
       margin: 15mm;
     }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -248,13 +230,11 @@ return `
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-
     .contract-wrapper {
       background: white;
       padding: 0;
       margin: 0;
     }
-
     .contract-container {
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -263,7 +243,6 @@ return `
       margin: 0;
       page-break-inside: avoid;
     }
-
     .grid-wrapper {
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
@@ -271,11 +250,9 @@ return `
       align-items: start !important;
       page-break-inside: avoid;
     }
-
     .details-box, .amount-box {
       page-break-inside: avoid;
     }
-
     * {
       -webkit-column-break-inside: avoid;
       page-break-inside: avoid;
@@ -283,10 +260,8 @@ return `
     }
   }
 </style>
-
 <div class="contract-wrapper">
   <div class="contract-container">
-
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
@@ -294,9 +269,7 @@ return `
       </div>
       <p class="sub-text">رقم السند: {{رقم_السند}}</p>
     </div>
-
     <div class="grid-wrapper">
-
       <div class="details-box">
         <h2>تفاصيل السند</h2>
         <div class="row"><p>تاريخ الإنشاء:</p> <span>{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</span></div>
@@ -305,7 +278,6 @@ return `
         <div class="row"><p>مدينة الوفاء:</p> <span>{{مدينة_الوفاء}}</span></div>
         <div class="row"><p>سبب الإنشاء:</p> <span>سلفة</span></div>
       </div>
-
       <div class="content-box">
         <div class="amount-box">
           <h3>قيمة السند</h3>
@@ -313,9 +285,7 @@ return `
           <p>{{المبلغ_كتابة}}</p>
         </div>
       </div>
-
     </div>
-
     <div class="section-title">أطراف السند</div>
     <div class="parties-grid">
       <div class="info-box">
@@ -323,20 +293,17 @@ return `
         <div class="row"><p>الاسم:</p> <span>{{اسم_الدائن}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الدائن}}</span></div>
       </div>
-      
       <div class="info-box">
         <h3>تفاصيل المدين</h3>
         <div class="row"><p>الاسم:</p> <span>{{اسم_المدين}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_المدين}}</span></div>
       </div>
-      
       <div class="info-box">
         <h3>تفاصيل الكفيل</h3>
         <div class="row"><p>الاسم:</p> <span>{{اسم_الكفيل}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_الكفيل}}</span></div>
       </div>
     </div>
-
     <div class="text-box">
       <p>
         أتعهد بأن أدفع لأمر {{اسم_الدائن}} دون قيد أو شرط مبلغاً قدره {{المبلغ_رقما}} ريال وفق البيانات المذكورة أعلاه.
@@ -345,7 +312,6 @@ return `
       <p class="strong">اسم المدين:<span class="spacer"></span>{{اسم_المدين}}</p>
       <p class="strong">{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}</p>
     </div>
-
     <div class="signatures">
       <div>
         <p class="strong">توقيع الدائن</p>
@@ -363,10 +329,8 @@ return `
         <p>{{اسم_الكفيل}}</p>
       </div>
     </div>
-
   </div>
 </div>
 `;
 };
-
 export default PromissoryNote;

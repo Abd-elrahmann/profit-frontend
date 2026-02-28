@@ -12,54 +12,41 @@ import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext
 import { useCountUp } from '../../hooks/useCountUp';
 import { Link } from 'react-router-dom';
 import ResponsiveTable from './ResponsiveTable';
-
 const MONTHS_FIRST = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
 const MONTHS_LAST = ['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-
 const PartnerStats = React.memo(() => {
   const { getApiFilter } = useDashboardFilter();
   const apiFilter = getApiFilter();
   const [profitChartPeriod, setProfitChartPeriod] = useState('first');
   const [hoveredProfitBar, setHoveredProfitBar] = useState(null);
-
   const { data: stats, isLoading } = useQuery({
     queryKey: ['partner-stats', apiFilter],
     queryFn: () => getPartnerStats(apiFilter),
   });
-
   const { data: partnerDetails = [], isLoading: detailsLoading } = useQuery({
     queryKey: ['dashboard', 'partner-details'],
     queryFn: () => getPartnerDetails(10),
   });
-
   const { data: profitGrowth = [] } = useQuery({
     queryKey: ['dashboard', 'partner-profit-growth', profitChartPeriod],
     queryFn: () => getPartnerProfitGrowth(6, profitChartPeriod),
   });
-
   const animatedCapital = useCountUp(stats?.totalCapitalAmount || 0, 600, !isLoading);
   const animatedProfit = useCountUp(stats?.totalProfit || 0, 600, !isLoading);
   const animatedActivePartners = useCountUp(stats?.activePartners || 0, 600, !isLoading);
-
   const formatAmount = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     return Number(n).toLocaleString('en-US');
   };
-
   const pieData = useMemo(() => {
     if (partnerDetails.length === 0) {
       return [];
     }
-    
-    // Group by partner type (old vs new)
     const oldPartners = partnerDetails.filter(p => !p.isNewPartner);
     const newPartners = partnerDetails.filter(p => p.isNewPartner);
-    
     const oldTotal = oldPartners.reduce((s, p) => s + p.sharePercent, 0);
     const newTotal = newPartners.reduce((s, p) => s + p.sharePercent, 0);
-    
     const result = [];
-    
     if (oldTotal > 0) {
       result.push({
         label: `الشركاء القدامي (${oldPartners.length})`,
@@ -68,7 +55,6 @@ const PartnerStats = React.memo(() => {
         partners: oldPartners,
       });
     }
-    
     if (newTotal > 0) {
       result.push({
         label: `الشركاء الجدد (${newPartners.length})`,
@@ -77,10 +63,8 @@ const PartnerStats = React.memo(() => {
         partners: newPartners,
       });
     }
-    
     return result;
   }, [partnerDetails]);
-
   const profitChartData = useMemo(() => {
     if (profitGrowth?.length > 0) {
       return profitGrowth.map((item) => ({
@@ -90,13 +74,11 @@ const PartnerStats = React.memo(() => {
     }
     return (profitChartPeriod === 'last' ? MONTHS_LAST : MONTHS_FIRST).map((m) => ({ month: m, value: 0 }));
   }, [profitGrowth, profitChartPeriod]);
-
   const formatDate = (d) => {
     if (!d) return '—';
     const date = new Date(d);
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -104,10 +86,9 @@ const PartnerStats = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
@@ -174,10 +155,9 @@ const PartnerStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Charts Section */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Share Distribution Donut */}
+        {}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <h4 className="font-bold text-slate-900 dark:text-white">توزيع حصص الشركاء</h4>
@@ -246,8 +226,7 @@ const PartnerStats = React.memo(() => {
             ))}
           </div>
         </div>
-
-        {/* Profit Growth Bar Chart */}
+        {}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -320,8 +299,7 @@ const PartnerStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Table: تفاصيل أرصدة الشركاء */}
+      {}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h4 className="font-bold text-slate-900 dark:text-white">تفاصيل أرصدة الشركاء</h4>
@@ -369,7 +347,5 @@ const PartnerStats = React.memo(() => {
     </div>
   );
 });
-
 PartnerStats.displayName = 'PartnerStats';
-
-export default PartnerStats;
+export default PartnerStats;

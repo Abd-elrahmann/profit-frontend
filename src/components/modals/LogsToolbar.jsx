@@ -20,7 +20,6 @@ import {
 } from "@mui/icons-material";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from "dayjs";
-
 const LogsToolbar = ({
   filters,
   onFilterChange,
@@ -36,34 +35,26 @@ const LogsToolbar = ({
     to,
     userName,
   } = filters;
-
   const searchInputRef = useRef(null);
-
   const handleActionChange = (event) => {
     onFilterChange('action', event.target.value);
   };
-
   const handleScreenChange = (event) => {
     onFilterChange('screen', event.target.value);
   };
-
   const handleFromDateChange = (newValue) => {
     onFilterChange('from', newValue ? newValue.format('YYYY-MM-DD') : '');
   };
-
   const handleToDateChange = (newValue) => {
     onFilterChange('to', newValue ? newValue.format('YYYY-MM-DD') : '');
   };
-
   const handleReset = () => {
     if (searchInputRef.current) {
       searchInputRef.current.value = '';
     }
     onResetFilters();
   };
-
   const hasActiveFilters = search || screen || action || from || to || userName;
-
   const screenOptions = [
     { value: "Auth", label: "المصادقة" },
     { value: "Dashboard", label: "لوحة التحكم" },
@@ -91,7 +82,6 @@ const LogsToolbar = ({
     { value: "Messages Templates", label: "قوالب الرسائل" },
     { value: "Profile", label: "الملف الشخصي" },
   ];
-
   const actionOptions = [
     { value: "CREATE", label: "إنشاء" },
     { value: "UPDATE", label: "تعديل" },
@@ -100,7 +90,6 @@ const LogsToolbar = ({
     { value: "login", label: "تسجيل دخول" },
     { value: "logout", label: "تسجيل خروج" },
   ];
-
   const renderDesktopView = () => (
     <>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
@@ -110,13 +99,11 @@ const LogsToolbar = ({
             فلترة السجلات
           </Typography>
         </Box>
-        
         {exportButtons && (
           <Box>
             {exportButtons}
           </Box>
         )}
-        
         {hasActiveFilters && (
           <Chip
             label="بحث مفعل"
@@ -126,7 +113,6 @@ const LogsToolbar = ({
           />
         )}
       </Box>
-
       <Stack 
         direction="row"
         spacing={2}
@@ -155,7 +141,6 @@ const LogsToolbar = ({
               ))}
             </Select>
           </FormControl>
-
           <FormControl sx={{ minWidth: 150 }} size="small">
             <InputLabel shrink>الشاشة</InputLabel>
             <Select
@@ -197,7 +182,6 @@ const LogsToolbar = ({
             </Select>
           </FormControl>
         </Stack>
-
         <Stack 
           direction="row" 
           spacing={2}
@@ -221,7 +205,6 @@ const LogsToolbar = ({
             }}
             format="DD/MM/YYYY"
           />
-          
           <DatePicker
             label="إلى تاريخ"
             value={to ? dayjs(to) : null}
@@ -240,7 +223,6 @@ const LogsToolbar = ({
             format="DD/MM/YYYY"
           />
         </Stack>
-
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           {hasActiveFilters && (
             <Button
@@ -257,7 +239,6 @@ const LogsToolbar = ({
       </Stack>
     </>
   );
-
   const renderMobileView = () => (
     <>
       {exportButtons && (
@@ -265,7 +246,6 @@ const LogsToolbar = ({
           {exportButtons}
         </Box>
       )}
-      
       <Accordion 
         sx={{ 
           boxShadow: 'none',
@@ -299,7 +279,6 @@ const LogsToolbar = ({
             )}
           </Box>
         </AccordionSummary>
-      
       <AccordionDetails sx={{ p: 2, bgcolor: 'transparent' }}>
         <Stack spacing={2}>
           <FormControl fullWidth size="small">
@@ -317,7 +296,6 @@ const LogsToolbar = ({
               ))}
             </Select>
           </FormControl>
-
           <FormControl fullWidth size="small">
             <InputLabel>الشاشة</InputLabel>
             <Select
@@ -357,7 +335,6 @@ const LogsToolbar = ({
               ))}
             </Select>
           </FormControl>
-
           <DatePicker
             label="من تاريخ"
             value={from ? dayjs(from) : null}
@@ -370,7 +347,6 @@ const LogsToolbar = ({
             }}
             format="DD/MM/YYYY"
           />
-          
           <DatePicker
             label="إلى تاريخ"
             value={to ? dayjs(to) : null}
@@ -383,7 +359,6 @@ const LogsToolbar = ({
             }}
             format="DD/MM/YYYY"
           />
-
           {hasActiveFilters && (
             <Button
               variant="outlined"
@@ -401,7 +376,6 @@ const LogsToolbar = ({
     </Accordion>
     </>
   );
-
   return (
     <Box 
       sx={{ 
@@ -412,7 +386,6 @@ const LogsToolbar = ({
       }}
     >
       {isMobile ? renderMobileView() : renderDesktopView()}
-      
       {hasActiveFilters && (
         <Box sx={{ 
           p: isMobile ? 1.5 : 2, 
@@ -476,5 +449,4 @@ const LogsToolbar = ({
     </Box>
   );
 };
-
 export default LogsToolbar;

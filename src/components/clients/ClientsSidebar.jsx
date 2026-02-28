@@ -14,7 +14,6 @@ import { Add, Search, Delete } from "@mui/icons-material";
 import { STATUS_FILTERS } from "./constants";
 import { getStatusColor, getClientStatusColor } from "./clientsUtils";
 import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
-
 export default function ClientsSidebar({
   permissions,
   isDarkMode,
@@ -33,7 +32,6 @@ export default function ClientsSidebar({
   listScrollRef,
   isMobile = false,
 }) {
-
   return (
     <Box
       ref={listScrollRef}
@@ -102,7 +100,6 @@ export default function ClientsSidebar({
           ))}
         </Box>
       </Box>
-
       {clientsData && !isClientsLoading && (
         <Box
           sx={{
@@ -141,7 +138,6 @@ export default function ClientsSidebar({
           )}
         </Box>
       )}
-
       {isClientsLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
           <CircularProgress />
@@ -242,4 +238,4 @@ export default function ClientsSidebar({
       )}
     </Box>
   );
-}
+}

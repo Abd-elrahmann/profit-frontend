@@ -1,7 +1,6 @@
 import React from 'react';
 import { Paper, Stack, Typography, Button, Alert } from '@mui/material';
 import { Check as ApproveIcon, Close as RejectIcon } from '@mui/icons-material';
-
 export default function InstallmentsBulkActions({
   selectedCount,
   onBulkApprove,
@@ -81,4 +80,4 @@ export default function InstallmentsBulkActions({
       )}
     </Paper>
   );
-}
+}

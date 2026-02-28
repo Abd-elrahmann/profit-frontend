@@ -7,7 +7,6 @@ import { notifyError, notifySuccess } from '../../utilities/toastify';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import { useAuth } from '../Contexts/AuthContext';
-
 const Layout = ({ children }) => {
   const location = useLocation();
   const { isLoading: authLoading } = useAuth();
@@ -18,7 +17,6 @@ const Layout = ({ children }) => {
   const [isHoverExpanded, setIsHoverExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
-
   useEffect(() => {
     const initializeSidebar = () => {
       try {
@@ -37,7 +35,6 @@ const Layout = ({ children }) => {
     const timer = setTimeout(initializeSidebar, 100);
     return () => clearTimeout(timer);
   }, []);
-
   useEffect(() => {
     const isProtectedRoute = location.pathname !== '/login'
       && location.pathname !== '/register'
@@ -46,13 +43,11 @@ const Layout = ({ children }) => {
       && location.pathname !== '/check-connection'
       && !location.pathname.startsWith('/payment-receipt');
     setIsLoggedIn(isProtectedRoute);
-
     const showRefreshSuccess = sessionStorage.getItem('showRefreshSuccess');
     if (showRefreshSuccess === 'true') {
       sessionStorage.removeItem('showRefreshSuccess');
       notifySuccess('تم تحديث البيانات بنجاح');
     }
-
     const handleUserLogin = () => setIsLoggedIn(true);
     const handleAuthFailed = () => setIsLoggedIn(false);
     window.addEventListener('userLoggedIn', handleUserLogin);
@@ -62,7 +57,6 @@ const Layout = ({ children }) => {
       window.removeEventListener('authFailed', handleAuthFailed);
     };
   }, [location]);
-
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 768);
@@ -72,17 +66,14 @@ const Layout = ({ children }) => {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
-
   const handleMenuToggle = () => {
     const newState = !isSidebarOpen;
     setIsSidebarOpen(newState);
     localStorage.setItem('sidebarOpen', JSON.stringify(newState));
   };
-
   const handleSidebarClose = () => {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
-
   const handleSync = async () => {
     try {
       setIsSyncing(true);
@@ -99,7 +90,6 @@ const Layout = ({ children }) => {
       setIsSyncing(false);
     }
   };
-
   const isAuthPage = location.pathname === '/login'
     || location.pathname === '/register'
     || location.pathname === '/forgot-password'
@@ -107,7 +97,6 @@ const Layout = ({ children }) => {
     || location.pathname === '/';
   const isPaymentReceiptPage = location.pathname.startsWith('/payment-receipt');
   const isCheckConnectionPage = location.pathname === '/check-connection';
-
   if (authLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-background-light dark:bg-background-dark">
@@ -115,11 +104,9 @@ const Layout = ({ children }) => {
       </div>
     );
   }
-
   if (isAuthPage || isPaymentReceiptPage || isCheckConnectionPage) {
     return <>{children}</>;
   }
-
   const isExpanded = isSidebarOpen || isHoverExpanded;
   const expandedWidth = isSmallScreen ? 220 : 256;
   const collapsedWidth = isSmallScreen ? 56 : 70;
@@ -130,13 +117,11 @@ const Layout = ({ children }) => {
       : isExpanded
         ? expandedWidth
         : collapsedWidth;
-
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
       <Navbar onMenuToggle={handleMenuToggle} />
-
       <main
-        className="flex-1 flex flex-col overflow-hidden transition-all duration-300 pt-8"
+        className="flex-1 flex flex-col overflow-hidden transition-all duration-300 pt-12"
         style={{
           marginRight: sidebarWidth,
         }}
@@ -154,7 +139,6 @@ const Layout = ({ children }) => {
           )}
         </div>
       </main>
-
       {isLoggedIn && isInitialized && (
         <Sidebar
           isOpen={isSidebarOpen}
@@ -164,7 +148,6 @@ const Layout = ({ children }) => {
           onHoverExpand={setIsHoverExpanded}
         />
       )}
-
       {isLoggedIn && !isAuthPage && !isPaymentReceiptPage && (
         <button
           type="button"
@@ -182,5 +165,4 @@ const Layout = ({ children }) => {
     </div>
   );
 };
-
-export default Layout;
+export default Layout;

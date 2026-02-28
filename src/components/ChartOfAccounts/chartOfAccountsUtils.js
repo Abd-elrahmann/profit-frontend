@@ -8,7 +8,6 @@ export const getAccountTypeLabel = (type) => {
   };
   return typeMap[type] || type;
 };
-
 export const getAccountTypeBadgeClass = (type) => {
   const classes = {
     ASSET: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
@@ -19,7 +18,6 @@ export const getAccountTypeBadgeClass = (type) => {
   };
   return classes[type] || 'bg-slate-100 text-slate-700';
 };
-
 export const flattenAccountsTree = (accounts, depth = 0, expandedIds = new Set(), expandAll = false) => {
   const result = [];
   for (const account of accounts || []) {
@@ -32,7 +30,6 @@ export const flattenAccountsTree = (accounts, depth = 0, expandedIds = new Set()
   }
   return result;
 };
-
 export const generateChildCode = (parent) => {
   if (!parent.children || parent.children.length === 0) {
     const baseCode = parseInt(parent.code) || 0;
@@ -41,4 +38,4 @@ export const generateChildCode = (parent) => {
   const lastChild = parent.children[parent.children.length - 1];
   const lastCode = parseInt(lastChild.code) || 0;
   return String(lastCode + 100).padStart(5, '0');
-};
+};

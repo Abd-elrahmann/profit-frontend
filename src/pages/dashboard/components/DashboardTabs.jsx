@@ -1,10 +1,8 @@
 import React from 'react';
 import { Select, MenuItem, FormControl, useMediaQuery } from '@mui/material';
-
 const DashboardTabs = React.memo(({ value, onChange, tabs, variant = 'standalone' }) => {
   const isMobile = useMediaQuery('(max-width: 640px)');
   const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
-
   if (isMobile) {
     return (
       <FormControl size="small" sx={{ minWidth: 180, width: '100%' }}>
@@ -27,7 +25,6 @@ const DashboardTabs = React.memo(({ value, onChange, tabs, variant = 'standalone
       </FormControl>
     );
   }
-
   return (
     <>
       {tabs.map((tab, index) => (
@@ -56,7 +53,5 @@ const DashboardTabs = React.memo(({ value, onChange, tabs, variant = 'standalone
     </>
   );
 });
-
 DashboardTabs.displayName = 'DashboardTabs';
-
-export default DashboardTabs;
+export default DashboardTabs;

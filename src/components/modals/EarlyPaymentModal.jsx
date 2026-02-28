@@ -13,7 +13,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import dayjs from "dayjs";
-
 const EarlyPaymentModal = ({
   open,
   onClose,
@@ -25,71 +24,55 @@ const EarlyPaymentModal = ({
 }) => {
   const [discountError, setDiscountError] = useState("");
   const [touched, setTouched] = useState(false);
-
   const pendingInstallments = (sortedInstallments || []).filter((inst) => inst.status === "PENDING" || inst.status === "PARTIAL_PAID");
-
   useEffect(() => {
     if (open) {
       setDiscountError("");
       setTouched(false);
     }
   }, [open]);
-
   const validateDiscount = (value) => {
     if (!value || value.trim() === "") {
       return "";
     }
-
     const discount = parseFloat(value);
     if (isNaN(discount)) {
       return "يرجى إدخال قيمة خصم صحيحة";
     }
-
     if (discount < 0) {
       return "قيمة الخصم لا يمكن أن تكون سالبة";
     }
-
     const totalPending = pendingInstallments.reduce((sum, inst) => sum + (inst.amount || 0), 0);
-
     if (discount > totalPending) {
       return `قيمة الخصم لا يمكن أن تتجاوز إجمالي الدفعات المعلقة (${totalPending.toLocaleString()} ريال)`;
     }
-
     if (discount > totalPending * 0.5) {
       return "قيمة الخصم لا يمكن أن تتجاوز 50% من إجمالي الدفعات المعلقة";
     }
-
     return "";
   };
-
   const handleDiscountChange = (e) => {
     const value = e.target.value;
-
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       onDiscountChange(e);
-
       if (discountError) {
         setDiscountError("");
       }
     }
   };
-
   const handleDiscountBlur = () => {
     setTouched(true);
     const error = validateDiscount(discountAmount);
     setDiscountError(error);
   };
-
   const handleConfirmClick = () => {
     setTouched(true);
     const error = validateDiscount(discountAmount);
     setDiscountError(error);
-
     if (!error) {
       onConfirm();
     }
   };
-
   return (
     <Dialog
       maxWidth="sm"
@@ -106,7 +89,6 @@ const EarlyPaymentModal = ({
         <Typography variant="body1" color="text.secondary" mb={2}>
           أنت على وشك إجراء سداد مبكر للدفعات المعلقة فقط
         </Typography>
-
         {isLoadingAllRepayments ? (
           <Box sx={{ mb: 2, p: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
             <CircularProgress size={24} />
@@ -156,7 +138,6 @@ const EarlyPaymentModal = ({
           </Box>
         </Box>
         )}
-
         <TextField
           fullWidth
           type="number"
@@ -178,7 +159,6 @@ const EarlyPaymentModal = ({
           }
           sx={{ mt: 2 }}
         />
-
         {discountAmount > 0 && (
           <Box
             sx={{ mt: 2, p: 2, borderRadius: 1 }}
@@ -197,7 +177,6 @@ const EarlyPaymentModal = ({
             </Typography>
           </Box>
         )}
-
         <Alert severity="warning" sx={{ mt: 2 }}>
           <Typography variant="body2" fontWeight="bold">
             تنبيه:
@@ -238,5 +217,4 @@ const EarlyPaymentModal = ({
     </Dialog>
   );
 };
-
 export default EarlyPaymentModal;

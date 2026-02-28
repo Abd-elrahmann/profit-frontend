@@ -7,7 +7,6 @@ import {
   TextField,
   Button,
 } from "@mui/material";
-
 const PostponeModal = ({
   open,
   onClose,
@@ -60,5 +59,4 @@ const PostponeModal = ({
     </Dialog>
   );
 };
-
 export default PostponeModal;

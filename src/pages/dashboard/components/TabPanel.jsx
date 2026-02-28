@@ -1,17 +1,14 @@
 import React, { useEffect } from 'react';
-import PageSkeleton from '../../../components/PageSkeleton';
+import PageSkeleton from '../../../components/ui/PageSkeleton';
 import { useDashboardFilter } from '../DashboardFilterContext';
-
 const TabPanel = React.memo(({ children, value, index, tabTitle }) => {
   const { setTabTitle, setTabSubtitle } = useDashboardFilter();
-
   useEffect(() => {
     if (value === index && tabTitle) {
       setTabTitle(tabTitle);
       setTabSubtitle('');
     }
   }, [value, index, tabTitle, setTabTitle, setTabSubtitle]);
-
   return (
     <div
       role="tabpanel"
@@ -30,7 +27,5 @@ const TabPanel = React.memo(({ children, value, index, tabTitle }) => {
     </div>
   );
 });
-
 TabPanel.displayName = 'TabPanel';
-
-export default TabPanel;
+export default TabPanel;

@@ -9,7 +9,6 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
-
 const LoanClientSection = ({
   isSmallScreen,
   clientsData,
@@ -21,6 +20,7 @@ const LoanClientSection = ({
   isEditMode,
   isAdditionalLoan,
   onAddClientClick,
+  onAddKafeelClick,
   selectedKafeel,
   handleKafeelSelect,
 }) => {
@@ -28,7 +28,6 @@ const LoanClientSection = ({
     if (!selectedClient?.kafeels) return [];
     return selectedClient.kafeels;
   };
-
   return (
     <Paper
       sx={{
@@ -125,7 +124,7 @@ const LoanClientSection = ({
           {selectedClient && !isViewMode && !isEditMode && (
             <Button
               variant="outlined"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-add-kafeel-modal'))}
+              onClick={() => onAddKafeelClick?.(selectedClient?.client?.id)}
               sx={{
                 color: "primary.main",
                 borderColor: "primary.main",
@@ -175,7 +174,6 @@ const LoanClientSection = ({
             />
           </Grid>
         )}
-
         {selectedClient &&
           (!selectedClient.kafeels || selectedClient.kafeels.length === 0) && (
             <Grid item xs={12} sm={10} md={8}>
@@ -192,5 +190,4 @@ const LoanClientSection = ({
     </Paper>
   );
 };
-
 export default LoanClientSection;

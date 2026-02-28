@@ -1,9 +1,7 @@
 import React from 'react';
 import { Box, Typography, Stack, Button } from '@mui/material';
 import { Paid as PaidIcon } from '@mui/icons-material';
-
 const formatCurrency = (amount) => amount?.toLocaleString() ?? '0';
-
 const ZakahAccountSidebar = ({
   accountReport,
   onWithdrawClick,
@@ -55,5 +53,4 @@ const ZakahAccountSidebar = ({
     </div>
   );
 };
-
-export default ZakahAccountSidebar;
+export default ZakahAccountSidebar;

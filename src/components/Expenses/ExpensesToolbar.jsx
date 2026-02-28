@@ -1,7 +1,6 @@
 import React from 'react';
 import { Menu, MenuItem } from '@mui/material';
 import { Add, PictureAsPdf, FileDownload } from '@mui/icons-material';
-
 const ExpensesToolbar = ({
   isSmallScreen,
   hasAddPermission,
@@ -35,7 +34,6 @@ const ExpensesToolbar = ({
           <MenuItem onClick={onExportAllExcel}>تصدير الكل</MenuItem>
           <MenuItem onClick={onExportFilterExcel}>اختيار مصروف محدد</MenuItem>
         </Menu>
-
         <button
           type="button"
           onClick={onPdfMenuOpen}
@@ -51,7 +49,6 @@ const ExpensesToolbar = ({
         </Menu>
       </>
     )}
-
     {hasAddPermission && (
       <button
         type="button"
@@ -64,5 +61,4 @@ const ExpensesToolbar = ({
     )}
   </div>
 );
-
 export default React.memo(ExpensesToolbar);

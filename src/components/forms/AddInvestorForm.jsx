@@ -5,16 +5,14 @@ import * as Yup from 'yup';
 import Api, { handleApiError } from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifyError } from '../../utilities/toastify';
-import ContractGenerator from '../ContractGenerator';
+import ContractGenerator from '../contractGenerators/ContractGenerator';
 import { QUERY_KEYS } from '../../components/investors/investorsUtils';
-
 const formatNumberWithCommas = (value) => {
   if (!value) return '';
   const numValue = value.toString().replace(/,/g, '');
   if (isNaN(numValue) || numValue === '') return value;
   return Number(numValue).toLocaleString('en-US');
 };
-
 const validationSchema = Yup.object().shape({
   name: Yup.string().required('الاسم مطلوب'),
   nationalId: Yup.string().required('رقم الهوية مطلوب'),
@@ -32,18 +30,15 @@ const validationSchema = Yup.object().shape({
     .required('رأس المال مطلوب')
     .min(1, 'رأس المال يجب أن يكون أكبر من صفر'),
 });
-
 const AddInvestorForm = ({ onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [savedInvestorData, setSavedInvestorData] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
   const contractGeneratorRef = useRef(null);
   const queryClient = useQueryClient();
-
   useEffect(() => {
     fetchMudarabahTemplate();
   }, []);
-
   const fetchMudarabahTemplate = async () => {
     try {
       const response = await Api.get('/api/templates/mudarabah');
@@ -52,7 +47,6 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
       console.warn('Could not fetch Mudarabah template');
     }
   };
-
   const initialValues = {
     name: '',
     nationalId: '',
@@ -65,11 +59,9 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
     createdAt: '',
     isNewPartner: true,
   };
-
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      // التحقق من رقم الهوية قبل عرض العقد
       const nationalId = String(values.nationalId || '').trim();
       if (nationalId) {
         const { data } = await Api.get(`/api/partners/check-national-id/${encodeURIComponent(nationalId)}`);
@@ -79,12 +71,9 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
           return;
         }
       }
-
       const capitalClean = String(values.capitalAmount || '').replace(/,/g, '').replace(/[^0-9]/g, '');
       const capitalAmount = parseInt(capitalClean) || 0;
       const orgProfitPercent = parseInt(values.orgProfitPercent) || 0;
-
-      // لا نضيف المستثمر الآن - نعرض العقد أولاً، والمستثمر يُضاف فقط عند حفظ العقد
       const formDataForCreate = {
         name: values.name,
         nationalId: values.nationalId,
@@ -97,7 +86,6 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
         createdAt: values.createdAt || undefined,
         isNewPartner: values.isNewPartner,
       };
-
       const investorDataForContract = {
         name: values.name,
         nationalId: values.nationalId,
@@ -110,13 +98,11 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
         partnerProfitPercent: 100 - orgProfitPercent,
         investorProfitPercent: 100 - orgProfitPercent,
       };
-
       setSavedInvestorData({
         investorData: investorDataForContract,
         formDataForCreate,
         isPendingCreate: true,
       });
-
       if (mudarabahTemplate) {
         requestAnimationFrame(() => {
           setTimeout(() => {
@@ -133,7 +119,6 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
       setLoading(false);
     }
   };
-
   const handleContractGenerated = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTORS] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTOR_DETAILS] });
@@ -141,11 +126,9 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
     queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
     onSuccess?.();
   };
-
   const inputBase =
     'w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100';
   const labelBase = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
-
   if (savedInvestorData && mudarabahTemplate) {
     return (
       <ContractGenerator
@@ -160,14 +143,12 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
       />
     );
   }
-
   return (
     <div dir="rtl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة مستثمر جديد</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">يرجى إكمال بيانات المستثمر</p>
       </div>
-
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -176,7 +157,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
         {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => (
           <Form>
             <div className="space-y-8">
-              {/* المعلومات الشخصية */}
+              {}
               <div>
                 <div className="flex items-center gap-2 pb-2 border-b border-primary/10 mb-6">
                   <AccountCircle sx={{ fontSize: 24, color: 'primary.main' }} />
@@ -292,8 +273,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
                   </div>
                 </div>
               </div>
-
-              {/* المعلومات المالية */}
+              {}
               <div>
                 <div className="flex items-center gap-2 pb-2 border-b border-primary/10 mb-6">
                   <Work sx={{ fontSize: 24, color: 'primary.main' }} />
@@ -333,7 +313,6 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
                 </div>
               </div>
             </div>
-
             <div className="px-0 py-6 mt-8 border-t border-primary/10 flex justify-between items-center">
               <button
                 type="button"
@@ -366,5 +345,4 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
     </div>
   );
 };
-
-export default AddInvestorForm;
+export default AddInvestorForm;

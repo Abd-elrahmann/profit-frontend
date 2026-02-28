@@ -10,13 +10,11 @@ import {
   Info,
 } from "@mui/icons-material";
 import dayjs from "dayjs";
-
 const inputBase =
   "w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100 disabled:opacity-70 disabled:cursor-not-allowed";
 const inputDisabled =
   "w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 px-3 py-2 text-slate-600 dark:text-slate-400 cursor-not-allowed";
 const labelBase = "text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5";
-
 const PersonalDetailsTab = ({
   investorDetails,
   editMode,
@@ -72,7 +70,6 @@ const PersonalDetailsTab = ({
               </div>
             )}
         </div>
-
         <div className="space-y-8">
           <div>
             <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -91,7 +88,6 @@ const PersonalDetailsTab = ({
               </div>
             </div>
           </div>
-
           <div className="border-t border-primary/10 pt-6">
             <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-2">
               <ContactPhone sx={{ fontSize: 20 }} />
@@ -139,7 +135,6 @@ const PersonalDetailsTab = ({
               </div>
             </div>
           </div>
-
           <div className="border-t border-primary/10 pt-6">
             <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-2">
               <Info sx={{ fontSize: 20 }} />
@@ -221,5 +216,4 @@ const PersonalDetailsTab = ({
     </div>
   );
 };
-
-export default PersonalDetailsTab;
+export default PersonalDetailsTab;

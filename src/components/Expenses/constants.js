@@ -1,1 +1,1 @@
-export { EXPENSE_TYPES } from '../../utilities/expenseConstants';
+export { EXPENSE_TYPES } from '../../utilities/expenseConstants';

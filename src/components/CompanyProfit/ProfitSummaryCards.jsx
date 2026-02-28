@@ -2,7 +2,6 @@ import React from 'react';
 import { Grid, Card, CardContent, Typography, Box, Chip } from '@mui/material';
 import { TrendingUp, AccountBalance } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-
 const CARD_CONFIG = [
   {
     key: 'upcomingProfit',
@@ -33,10 +32,8 @@ const CARD_CONFIG = [
     chipLabel: 'متاح للسحب',
   },
 ];
-
 const ProfitSummaryCards = ({ profitData, isSmallScreen }) => {
   const theme = useTheme();
-
   return (
     <Grid container spacing={3} sx={{ p: isSmallScreen ? 2 : 3, justifyContent: 'center' }}>
       {CARD_CONFIG.map(({ key, icon: Icon, color, label, chipLabel }) => (
@@ -68,5 +65,4 @@ const ProfitSummaryCards = ({ profitData, isSmallScreen }) => {
     </Grid>
   );
 };
-
-export default React.memo(ProfitSummaryCards);
+export default React.memo(ProfitSummaryCards);

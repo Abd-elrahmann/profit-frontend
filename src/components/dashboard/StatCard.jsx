@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
 const cardStyles = (theme, color) => ({
   height: { xs: '180px', sm: '100%', md: '200px' },
   width: { xs: '250px', sm: '100%', md: '250px' },
@@ -35,7 +34,6 @@ const cardStyles = (theme, color) => ({
     borderColor: `${theme.palette[color].main}40`,
   },
 });
-
 const iconBoxStyles = (theme, color) => ({
   display: 'inline-flex',
   alignItems: 'center',
@@ -53,20 +51,8 @@ const iconBoxStyles = (theme, color) => ({
     boxShadow: `0 6px 20px ${theme.palette[color].main}30`,
   },
 });
-
-/**
- * Reusable stat card for dashboard sections
- * @param {Object} props
- * @param {React.ReactNode} props.icon - MUI icon component
- * @param {string} props.title - Card title
- * @param {string|number} props.value - Main value to display
- * @param {string} props.color - MUI palette color (primary, success, error, warning, info)
- * @param {Object} props.subtitle - Optional subtitle { label, value, color }
- * @param {Object} props.sx - Additional sx props
- */
 const StatCard = React.memo(({ icon, title, value, color = 'primary', subtitle, sx = {} }) => {
   const theme = useTheme();
-
   return (
     <Card sx={{ ...cardStyles(theme, color), ...sx }}>
       <CardContent sx={{ p: { xs: 2.5, sm: 3 }, textAlign: 'center', position: 'relative', zIndex: 1 }}>
@@ -120,7 +106,5 @@ const StatCard = React.memo(({ icon, title, value, color = 'primary', subtitle, 
     </Card>
   );
 });
-
 StatCard.displayName = 'StatCard';
-
-export default StatCard;
+export default StatCard;

@@ -1,5 +1,4 @@
 import React from 'react';
-
 export default function InstallmentsSummaryCards({
   amount,
   interestAmount,
@@ -11,9 +10,7 @@ export default function InstallmentsSummaryCards({
   totalRepayments,
 }) {
   const remainingRepayments = (totalRepayments || 0) - (paidRepayments || 0);
-
   const formatValue = (val) => (val ?? 0).toLocaleString('en-US');
-
   const cards = [
     { label: 'مبلغ السلفة', value: formatValue(amount), color: 'text-slate-900 dark:text-slate-100' },
     { label: 'إجمالي الفائدة', value: formatValue(interestAmount), color: 'text-slate-900 dark:text-slate-100' },
@@ -37,7 +34,6 @@ export default function InstallmentsSummaryCards({
       color: 'text-slate-900 dark:text-slate-100',
     },
   ];
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
       {cards.map((card) => (
@@ -56,4 +52,4 @@ export default function InstallmentsSummaryCards({
       ))}
     </div>
   );
-}
+}

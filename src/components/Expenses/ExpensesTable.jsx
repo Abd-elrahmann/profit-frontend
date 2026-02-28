@@ -18,7 +18,6 @@ import {
 import { Edit, Delete } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { formatArabicDate } from './expensesUtils';
-
 const ExpenseTypeChip = ({ type }) => (
   <Chip
     label={type}
@@ -27,7 +26,6 @@ const ExpenseTypeChip = ({ type }) => (
     variant="outlined"
   />
 );
-
 const ExpensesTable = ({
   groupedExpenses,
   isLoading,
@@ -125,7 +123,6 @@ const ExpensesTable = ({
                   </Stack>
                 </StyledTableCell>
               </StyledTableRow>
-
               <TableRow>
                 <TableCell colSpan={6} sx={{ p: 0 }}>
                   <Collapse in={expandedRows.includes(group.journalId)} timeout="auto" unmountOnExit>
@@ -176,5 +173,4 @@ const ExpensesTable = ({
     </Table>
   </TableContainer>
 );
-
-export default React.memo(ExpensesTable);
+export default React.memo(ExpensesTable);

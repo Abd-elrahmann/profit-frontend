@@ -1,13 +1,10 @@
 import { useCallback, useRef } from 'react';
-
 export const usePrefetch = () => {
   const prefetchedPages = useRef(new Set());
-
   const prefetchPage = useCallback(async (pageName) => {
     if (prefetchedPages.current.has(pageName)) {
       return;
     }
-
     try {
       switch (pageName) {
         case 'dashboard':
@@ -85,14 +82,11 @@ export const usePrefetch = () => {
         default:
           break;
       }
-
       prefetchedPages.current.add(pageName);
-
     } catch (error) {
       console.warn(`Failed to prefetch ${pageName}:`, error);
     }
   }, []);
-
   const prefetchCommonPages = useCallback(() => {
     setTimeout(() => {
       prefetchPage('dashboard');
@@ -100,6 +94,5 @@ export const usePrefetch = () => {
       prefetchPage('loans');
     }, 2000);
   }, [prefetchPage]);
-
   return { prefetchPage, prefetchCommonPages };
-};
+};

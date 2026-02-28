@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Close as CloseIcon, KeyboardArrowRight as ArrowRightIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-
 export default function InstallmentsHeader({
   clientName,
   reviewStepsVisible,
@@ -11,7 +10,6 @@ export default function InstallmentsHeader({
   isSmallScreen = false,
 }) {
   const navigate = useNavigate();
-
   return (
     <Box
       sx={{
@@ -87,4 +85,4 @@ export default function InstallmentsHeader({
       </Box>
     </Box>
   );
-}
+}

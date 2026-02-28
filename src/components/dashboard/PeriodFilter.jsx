@@ -1,16 +1,11 @@
 import React from 'react';
 import { Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-
 const PERIOD_OPTIONS = [
   { value: 'all', label: 'الكل' },
   { value: 'daily', label: 'يومي' },
   { value: 'monthly', label: 'شهري' },
   { value: 'yearly', label: 'سنوي' },
 ];
-
-/**
- * Reusable period filter for dashboard sections
- */
 const PeriodFilter = React.memo(({ value, onChange, sx = {} }) => (
   <Box
     sx={{
@@ -49,7 +44,5 @@ const PeriodFilter = React.memo(({ value, onChange, sx = {} }) => (
     </FormControl>
   </Box>
 ));
-
 PeriodFilter.displayName = 'PeriodFilter';
-
-export default PeriodFilter;
+export default PeriodFilter;

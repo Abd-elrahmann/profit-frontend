@@ -1,7 +1,6 @@
 import React from "react";
 import { AccountCircle, LocationOn, Work, Note } from "@mui/icons-material";
 import { Box, Typography, TextField, Grid, Paper } from "@mui/material";
-
 export default function ClientsProfileTab({
   clientDetails,
   clientFormData,
@@ -12,13 +11,10 @@ export default function ClientsProfileTab({
 }) {
   const client = clientDetails?.client;
   if (!client) return null;
-
   const getValue = (field) =>
     editMode ? clientFormData[field] : client[field];
-
   const getDisplayValue = (field, fallback = "") =>
     editMode ? clientFormData[field] ?? "" : client[field] ?? fallback;
-
   const textFieldSx = (isEditable) => ({
     "& .MuiOutlinedInput-root": {
       backgroundColor: isEditable
@@ -34,15 +30,13 @@ export default function ClientsProfileTab({
         : undefined,
     },
   });
-
   const containerSx = isMobile
     ? { display: "flex", flexDirection: "column", gap: 3, alignItems: "center", maxWidth: 520, width: "100%", mx: "auto" }
     : { display: "flex", flexDirection: "column", gap: 3 };
-
   return (
     <Box sx={containerSx}>
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 0, width: "100%", maxWidth: isMobile ? 520 : "none" }}>
-        {/* المعلومات الشخصية */}
+        {}
         <Box
           className="flex items-center gap-2 pb-2 mb-4"
           sx={{ borderBottom: "1px solid", borderColor: "divider" }}
@@ -105,8 +99,7 @@ export default function ClientsProfileTab({
             />
           </Grid>
         </Grid>
-
-        {/* بيانات العنوان - سطر جديد كامل، ثم حقوله تحته */}
+        {}
         <Box sx={{ width: "100%", mt: 4 }}>
           <Box
             className="flex items-center gap-2 pb-2 mb-2"
@@ -150,8 +143,7 @@ export default function ClientsProfileTab({
             </Grid>
           </Grid>
         </Box>
-
-        {/* بيانات العمل والدخل - سطر جديد كامل، ثم حقوله تحته */}
+        {}
         <Box sx={{ width: "100%", mt: 4 }}>
           <Box
             className="flex items-center gap-2 pb-2 mb-2"
@@ -208,7 +200,6 @@ export default function ClientsProfileTab({
           </Grid>
         </Box>
       </Paper>
-
       <Paper sx={{ p: { xs: 2, md: 3 }, width: "100%", maxWidth: isMobile ? 520 : "none" }}>
         <Box
           className="flex items-center gap-2 pb-2 mb-4"

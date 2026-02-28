@@ -1,11 +1,3 @@
-/**
- * ContractTemplates
- *
- * Administrative interface for managing contract templates.
- * Templates are loaded from trusted component functions and edited by authorized users.
- * Basic validation is applied to prevent template corruption during editing.
- */
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -20,9 +12,7 @@ import {
 import SaveIcon from "@mui/icons-material/Save";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
-
-
-import RichTextEditor from "../../components/RichTextEditor";
+import RichTextEditor from "../../components/editors/RichTextEditor";
 import { isValidTemplate } from "../../utilities/sanitize";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import MudarabahContract from "../../components/Contracts/MudarabahContract";
@@ -35,7 +25,6 @@ import WithdrawReceipt from "../../components/Contracts/WithdrawReceipt";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
-
 export default function ContractTemplates() {
   const [activeTab, setActiveTab] = useState("debt-acknowledgment");
   const [templates, setTemplates] = useState({
@@ -61,7 +50,6 @@ export default function ContractTemplates() {
   const [viewMode, setViewMode] = useState("preview");
   const { permissions } = usePermissions();
   const theme = useTheme();
-
   const templateNameMap = React.useMemo(() => ({
     "mudarabah": "MUDARABAH",
     "promissory-note": "PROMISSORY_NOTE",
@@ -71,12 +59,6 @@ export default function ContractTemplates() {
     "settlement": "SETTLEMENT",
     "withdrawal-receipt": "WITHDRAWAL_RECEIPT",
   }), []);
-
-
-
-
-
-
   const getStateKey = (tab) => {
     return tab === "promissory-note" ? "promissoryNote" :
            tab === "debt-acknowledgment" ? "debtAcknowledgment" :
@@ -85,9 +67,6 @@ export default function ContractTemplates() {
            tab === "settlement" ? "settlement" :
            tab === "withdrawal-receipt" ? "withdrawalReceipt" : tab;
   };
-
-
-
   const getDefaultTemplate = React.useCallback((templateName) => {
     switch (templateName) {
       case "MUDARABAH":
@@ -108,22 +87,17 @@ export default function ContractTemplates() {
         return "";
     }
   }, []);
-
-
   const loadTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
       const newTemplates = {};
       const newStyles = {};
-
       Object.keys(templateNameMap).forEach((key) => {
         const templateName = templateNameMap[key];
         const stateKey = getStateKey(key);
-
         newTemplates[stateKey] = getDefaultTemplate(templateName);
         newStyles[stateKey] = "";
       });
-
       setTemplates(newTemplates);
       setTemplateStyles(newStyles);
     } catch (error) {
@@ -133,7 +107,6 @@ export default function ContractTemplates() {
       setLoading(false);
     }
   }, [templateNameMap, getDefaultTemplate]);
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -141,19 +114,16 @@ export default function ContractTemplates() {
       const templateName = templateNameMap[currentTemplateKey];
       const stateKey = getStateKey(currentTemplateKey);
       const templateContent = templates[stateKey];
-
       await Api.post("/api/templates", {
         name: templateName,
         description: `Template for ${templateName} agreements`,
         content: templateContent,
       });
-
       if (templateStyles[stateKey] && templateStyles[stateKey].trim() !== "") {
         await Api.post(`/api/templates/${templateName}/styles`, {
           css: templateStyles[stateKey]
         });
       }
-
       notifySuccess("تم حفظ القالب بنجاح");
     } catch (error) {
       notifyError("خطأ في حفظ القالب");
@@ -162,40 +132,29 @@ export default function ContractTemplates() {
       setSaving(false);
     }
   };
-
   const handleTemplateChange = (templateKey, value) => {
     setTemplates(prev => ({
       ...prev,
       [templateKey]: value
     }));
   };
-
-
-
-
-
   const getStyledContent = (content, styles) => {
     if (content && !isValidTemplate(content)) {
       console.error('Template content contains potentially dangerous elements');
       return '<div style="color: red; text-align: center; padding: 20px;">القالب يحتوي على محتوى غير آمن</div>';
     }
-    
     if (styles && styles.trim() !== "" && !isValidTemplate(`<style>${styles}</style>`)) {
       console.error('Template styles contain potentially dangerous content');
       return content;
     }
-
     if (!styles || styles.trim() === "") {
       return content;
     }
     return `<style>${styles}</style>${content}`;
   };
-
-
   const renderTemplateContent = (templateKey, stylesKey) => {
     const content = templates[templateKey];
     const styles = templateStyles[stylesKey];
-    
     return (
       <Paper sx={{
         p: 4,
@@ -218,7 +177,6 @@ export default function ContractTemplates() {
       </Paper>
     );
   };
-
   const renderTemplateEditor = (templateKey) => {
     return (
       <RichTextEditor
@@ -228,26 +186,18 @@ export default function ContractTemplates() {
       />
     );
   };
-
-
-
- 
-
   useEffect(() => {
     loadTemplates();
   }, [loadTemplates]);
-
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: theme.palette.background.default }}>
       <Helmet>
         <title>القوالب المالية</title>
         <meta name="description" content="القوالب المالية" />
       </Helmet>
-
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Box sx={{ p: 4, overflowY: "auto", flex: 1 }}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
-
             <Tabs
               value={activeTab}
               onChange={(e, val) => setActiveTab(val)}
@@ -274,7 +224,6 @@ export default function ContractTemplates() {
               <Tab label="تسوية سلفة وخلو طرف" value="settlement" />
               <Tab label="مخالصة مالية نهائية" value="withdrawal-receipt" />
             </Tabs>
-
             <Box sx={{ mt: 3 }}>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -293,7 +242,6 @@ export default function ContractTemplates() {
                       {activeTab === "settlement" && "إيصال تسوية دفعة"}
                       {activeTab === "withdrawal-receipt" && "مخالصة مالية نهائية"}
                     </Typography>
-                    
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                       <Button
                         variant={viewMode === "preview" ? "contained" : "outlined"}
@@ -324,8 +272,6 @@ export default function ContractTemplates() {
                       )}
                     </Box>
                   </Box>
-
-
                   {activeTab === "mudarabah" && (
                     viewMode === "preview" 
                       ? renderTemplateContent("mudarabah", "mudarabah")
@@ -367,9 +313,6 @@ export default function ContractTemplates() {
           </Paper>
         </Box>
       </Box>
-
-
-
     </Box>
   );
 }

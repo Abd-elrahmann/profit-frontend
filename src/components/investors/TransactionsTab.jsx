@@ -21,8 +21,6 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import { formatArabicDate, getTransactionTypeText, getTransactionTypeColor } from "./investorsUtils";
-
-
 const TransactionsTab = ({
   transactionsData,
   isLoading,
@@ -36,7 +34,6 @@ const TransactionsTab = ({
 }) => {
   const transactions = transactionsData?.transactions || [];
   const hasTransactions = transactions.length > 0;
-
   const renderTable = () => (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
@@ -55,7 +52,6 @@ const TransactionsTab = ({
           </Button>
         )}
       </Box>
-
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
         <TableContainer>
           <Table stickyHeader>
@@ -131,7 +127,6 @@ const TransactionsTab = ({
             </TableBody>
           </Table>
         </TableContainer>
-
         {transactionsData && transactionsData.totalPages > 1 && (
           <Box sx={{ 
             display: 'flex', 
@@ -154,7 +149,6 @@ const TransactionsTab = ({
       </Paper>
     </Box>
   );
-
   const renderCards = () => (
     <Box>
       <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
@@ -256,8 +250,6 @@ const TransactionsTab = ({
       )}
     </Box>
   );
-
   return isMobile ? renderCards() : renderTable();
 };
-
-export default TransactionsTab;
+export default TransactionsTab;

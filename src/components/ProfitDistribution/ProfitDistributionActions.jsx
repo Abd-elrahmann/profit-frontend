@@ -1,7 +1,6 @@
 import React from "react";
 import { Check as CheckIcon, Cancel as CancelIcon, Savings as SavingsIcon } from "@mui/icons-material";
 import { hasDistribution } from "./profitDistributionUtils";
-
 export default function ProfitDistributionActions({
   periodData,
   theme,
@@ -14,11 +13,9 @@ export default function ProfitDistributionActions({
   selectedPeriod,
 }) {
   const distributed = hasDistribution(periodData);
-
   return (
     <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 p-4 shadow-sm">
       <p className="text-sm font-bold text-primary mb-3">الإجراءات</p>
-
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {!distributed && (
           <div className="flex items-center gap-2 flex-wrap">
@@ -53,7 +50,6 @@ export default function ProfitDistributionActions({
             )}
           </div>
         )}
-
         {permissions?.includes("distribution_Post") && (
           <div className="flex gap-2">
             {!distributed && (
@@ -85,4 +81,4 @@ export default function ProfitDistributionActions({
       </div>
     </div>
   );
-}
+}

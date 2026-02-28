@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { Edit, Save, ArrowBack } from "@mui/icons-material";
 import { TAB_LABELS } from "./constants";
-
 export default function ClientsHeader({
   clientDetails,
   tab,
@@ -27,7 +26,6 @@ export default function ClientsHeader({
 }) {
   const showEditButtons =
     tab !== 1 && tab !== 2 && tab !== 3 && tab !== 4 && tab !== 5;
-
   return (
     <>
       <Box
@@ -139,4 +137,4 @@ export default function ClientsHeader({
       )}
     </>
   );
-}
+}

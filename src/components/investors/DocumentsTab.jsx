@@ -1,5 +1,4 @@
 import React from "react";
-import { isImageFile } from "./investorsUtils";
 import {
   Description,
   ContactPage,
@@ -10,34 +9,7 @@ import {
   Visibility,
   PictureAsPdf,
 } from "@mui/icons-material";
-
-const renderFileThumbnail = (fileUrl, label, isDarkMode) => {
-  if (!fileUrl) return null;
-
-  if (isImageFile(fileUrl)) {
-    return (
-      <img
-        src={fileUrl}
-        alt={label}
-        loading="lazy"
-        className="w-full h-[180px] object-cover rounded-lg cursor-pointer transition-transform hover:scale-[1.02]"
-        onClick={() => window.open(fileUrl, "_blank")}
-      />
-    );
-  }
-  return (
-    <div
-      className={`w-full h-[180px] flex flex-col items-center justify-center rounded-lg cursor-pointer transition-colors ${
-        isDarkMode ? "bg-slate-800 hover:bg-slate-700" : "bg-slate-100 hover:bg-slate-200"
-      }`}
-      onClick={() => window.open(fileUrl, "_blank")}
-    >
-      <Description sx={{ fontSize: 60, color: '#64748b' }} />
-      <span className="text-sm text-slate-500 mt-2">اضغط للعرض</span>
-    </div>
-  );
-};
-
+import FileThumbnail from "../ui/FileThumbnail";
 const DocumentsTab = ({
   investorDetails,
   onDownloadFile,
@@ -52,7 +24,6 @@ const DocumentsTab = ({
         <ContactPage sx={{ color: 'primary.main' }} />
         المستندات والعقود
       </h2>
-
       {!investorDetails.mudarabahFileUrl && (
         <div className="border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 bg-amber-50 dark:bg-amber-900/20 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -72,11 +43,14 @@ const DocumentsTab = ({
           </button>
         </div>
       )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {investorDetails.mudarabahFileUrl && (
           <div className="border-2 border-primary/20 rounded-xl p-6 bg-primary/5 dark:bg-primary/10 flex flex-col gap-3">
-            {renderFileThumbnail(investorDetails.mudarabahFileUrl, "عقد المضاربة", isDarkMode)}
+            <FileThumbnail
+              fileUrl={investorDetails.mudarabahFileUrl}
+              label="عقد المضاربة"
+              isDarkMode={isDarkMode}
+            />
             <div className="flex items-center gap-2">
               <CheckCircle sx={{ fontSize: 20, color: '#16a34a' }} />
               <p className="text-sm font-bold text-slate-800 dark:text-white">عقد المضاربة</p>
@@ -111,10 +85,13 @@ const DocumentsTab = ({
             )}
           </div>
         )}
-
         {investorDetails.withdrawalReceipt && (
           <div className="border-2 border-primary/20 rounded-xl p-6 bg-primary/5 dark:bg-primary/10 flex flex-col gap-3">
-            {renderFileThumbnail(investorDetails.withdrawalReceipt, "مخالصة مالية نهائية", isDarkMode)}
+            <FileThumbnail
+              fileUrl={investorDetails.withdrawalReceipt}
+              label="مخالصة مالية نهائية"
+              isDarkMode={isDarkMode}
+            />
             <div className="flex items-center gap-2">
               <PictureAsPdf sx={{ fontSize: 20, color: '#ef4444' }} />
               <p className="text-sm font-bold text-slate-800 dark:text-white">مخالصة مالية نهائية</p>
@@ -150,7 +127,6 @@ const DocumentsTab = ({
             )}
           </div>
         )}
-
         {!investorDetails.mudarabahFileUrl && !investorDetails.withdrawalReceipt && (
           <div className="col-span-full border-2 border-primary/20 rounded-xl p-8 bg-primary/5 dark:bg-primary/10 text-center">
             <p className="text-slate-600 dark:text-slate-400">لا توجد مستندات مرفوعة</p>
@@ -160,5 +136,4 @@ const DocumentsTab = ({
     </div>
   );
 };
-
-export default DocumentsTab;
+export default DocumentsTab;

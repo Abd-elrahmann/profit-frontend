@@ -18,42 +18,34 @@ import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext
 import { useCountUp } from '../../hooks/useCountUp';
 import { Link } from 'react-router-dom';
 import ResponsiveTable from './ResponsiveTable';
-
 const LoanStats = React.memo(() => {
   const { getApiFilter } = useDashboardFilter();
   const apiFilter = getApiFilter();
   const [repaymentPeriod, setRepaymentPeriod] = useState('first');
-
   const { data: stats, isLoading } = useQuery({
     queryKey: ['loan-stats', apiFilter],
     queryFn: () => getLoanStats(apiFilter),
   });
-
   const { data: latestLoans = [], isLoading: loansLoading } = useQuery({
     queryKey: ['dashboard', 'latest-loans'],
     queryFn: () => getLatestLoans(5),
   });
-
   const { data: distribution = [], isLoading: distLoading } = useQuery({
     queryKey: ['dashboard', 'loan-distribution'],
     queryFn: () => getLoanDistribution(),
   });
-
   const { data: repaymentTrend = [], isLoading: trendLoading } = useQuery({
     queryKey: ['dashboard', 'repayment-trend', repaymentPeriod],
     queryFn: () => getRepaymentTrend(6, repaymentPeriod),
   });
-
   const animatedTotalAmount = useCountUp(stats?.loans?.totalAmount || 0, 600, !isLoading);
   const animatedPending = useCountUp(stats?.loans?.byStatus?.PENDING || 0, 600, !isLoading);
   const animatedActive = useCountUp(stats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
   const animatedCompleted = useCountUp(stats?.loans?.byStatus?.COMPLETED || 0, 600, !isLoading);
-
   const formatAmount = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     return Number(n).toLocaleString('en-US');
   };
-
   const formatDate = (d) => {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('en-US', {
@@ -62,16 +54,13 @@ const LoanStats = React.memo(() => {
       day: '2-digit',
     });
   };
-
   const getStatusClass = (status) => {
     if (status === 'نشط') return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
     if (status === 'معلق') return 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400';
     if (status === 'مكتمل') return 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary';
     return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
   };
-
   const maxTrendValue = Math.max(...repaymentTrend.map((d) => d.value), 1);
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -79,10 +68,9 @@ const LoanStats = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110" />
@@ -114,7 +102,6 @@ const LoanStats = React.memo(() => {
             )}
           </div>
         </div>
-
         <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
@@ -133,7 +120,6 @@ const LoanStats = React.memo(() => {
             </p>
           </div>
         </div>
-
         <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm border-r-4 border-r-primary">
           <div className="flex items-center justify-between">
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
@@ -152,7 +138,6 @@ const LoanStats = React.memo(() => {
             </p>
           </div>
         </div>
-
         <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
@@ -172,10 +157,9 @@ const LoanStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Charts */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Repayment Trend Area Chart */}
+        {}
         <div className="lg:col-span-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -297,8 +281,7 @@ const LoanStats = React.memo(() => {
             </div>
           </div>
         </div>
-
-        {/* Loan Distribution by Type */}
+        {}
         <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-6 flex flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg">
@@ -346,8 +329,7 @@ const LoanStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Latest Loans Table */}
+      {}
       <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <h3 className="text-slate-900 dark:text-slate-100 font-bold text-base sm:text-lg">
@@ -390,7 +372,5 @@ const LoanStats = React.memo(() => {
     </div>
   );
 });
-
 LoanStats.displayName = 'LoanStats';
-
-export default LoanStats;
+export default LoanStats;

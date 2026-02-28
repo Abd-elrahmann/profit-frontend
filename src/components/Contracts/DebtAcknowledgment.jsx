@@ -1,6 +1,4 @@
-
 import React from "react";
-
 const DebtAcknowledgment = () => {
 return `
 <style>
@@ -9,7 +7,6 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .contract-wrapper {
     background: #f8f9fc;
     padding: 15px;
@@ -18,7 +15,6 @@ return `
     text-align: right;
     width: 100%;
   }
-
   .contract-container {
     max-width: 100%;
     margin: 0 auto;
@@ -28,7 +24,6 @@ return `
     padding: 25px;
     width: 100%;
   }
-
   .header {
     display: flex;
     justify-content: space-between;
@@ -55,7 +50,6 @@ return `
     font-size: 10px;
     white-space: nowrap;
   }
-
   .grid-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -63,7 +57,6 @@ return `
     margin-bottom: 20px;
     align-items: start;
   }
-
   .details-box {
     background: rgba(46, 139, 69, 0.05);
     padding: 20px;
@@ -96,7 +89,6 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .row-vertical {
     display: flex;
     flex-direction: column;
@@ -116,14 +108,12 @@ return `
     color: #111;
     margin-left: 0;
   }
-
   .content-box {
     display: flex;
     flex-direction: column;
     height: 100%;
     justify-content: flex-start;
   }
-
   .amount-box {
     text-align: center;
     border: 1px solid rgba(46, 139, 69, 0.2);
@@ -155,7 +145,6 @@ return `
     font-weight: bold;
     text-align: center;
   }
-
   .text-box {
     background: rgba(46, 139, 69, 0.03);
     padding: 12px 15px;
@@ -188,7 +177,6 @@ return `
     display: inline-block;
     width: 15px;
   }
-
   .signatures {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -205,7 +193,6 @@ return `
     margin: auto;
     border-bottom: 2px solid #666;
   }
-
   @media (max-width: 768px) {
     .grid-wrapper {
       grid-template-columns: 1fr;
@@ -215,13 +202,11 @@ return `
       gap: 15px;
     }
   }
-
   @media print {
     @page {
       size: A4;
       margin: 15mm;
     }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -230,13 +215,11 @@ return `
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-
     .contract-wrapper {
       background: white;
       padding: 0;
       margin: 0;
     }
-
     .contract-container {
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -245,7 +228,6 @@ return `
       margin: 0;
       page-break-inside: avoid;
     }
-
     .grid-wrapper {
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
@@ -253,11 +235,9 @@ return `
       align-items: start !important;
       page-break-inside: avoid;
     }
-
     .details-box, .amount-box {
       page-break-inside: avoid;
     }
-
     * {
       -webkit-column-break-inside: avoid;
       page-break-inside: avoid;
@@ -265,10 +245,8 @@ return `
     }
   }
 </style>
-
 <div class="contract-wrapper">
   <div class="contract-container">
-
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
@@ -276,9 +254,7 @@ return `
       </div>
       <p class="sub-text">رقم الإقرار: {{رقم_الإقرار}}</p>
     </div>
-
     <div class="grid-wrapper">
-
       <div class="details-box">
         <h2>تفاصيل الإقرار</h2>
         <div class="row"><p>أقر أنا السيد:</p> <span>{{اسم_العميل}}</span></div>
@@ -286,7 +262,6 @@ return `
         <div class="row"><p>مكان إقامتي:</p> <span>{{عنوان_العميل}}</span></div>
         <div class="row-vertical"><p>أنني قد استلمت من السيد:</p> <span>{{اسم_الدائن}}</span></div>
       </div>
-
       <div class="content-box">
         <div class="amount-box">
           <h3>مبلغ وقدره</h3>
@@ -294,9 +269,7 @@ return `
           <p>{{المبلغ_كتابة}}</p>
         </div>
       </div>
-
     </div> <!-- نهاية grid-wrapper -->
-
     <div class="text-box" style="margin-top: 25px;">
       <h3 style="margin-bottom:10px; font-weight:bold; color: #2E8B45;">نص الإقرار</h3>
      <p style="line-height: 1.6; word-spacing: normal; letter-spacing: normal; text-align: justify;">
@@ -304,11 +277,9 @@ return `
   العواقب القانونية والجنائية، وفي حالة أنني لم أقم بسداد المبلغ فإني أقوم بإسقاط حقوقي في التزوير أو التكذيب أو التنكير،
   وأتعهد بحلف اليمين في حالة التشكيك في الوثيقة. وعلى هذا الاتفاق فإني أوافق وأوقع على الوثيقة.
 </p>
-
       <p class="strong">اسم المدين:<span class="spacer"></span>{{اسم_العميل}}</p>
       <p class="strong">التاريخ الهجري:<span class="spacer"></span>{{التاريخ_الهجري}} — الميلادي:<span class="spacer"></span>{{التاريخ_الميلادي}}</p>
     </div>
-
     <div class="signatures">
       <div>
         <p class="strong">توقيع الدائن</p>
@@ -321,10 +292,8 @@ return `
         <p>{{اسم_العميل}}</p>
       </div>
     </div>
-
   </div>
 </div>
 `;
 };
-
 export default DebtAcknowledgment;

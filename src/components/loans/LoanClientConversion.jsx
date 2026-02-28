@@ -15,7 +15,6 @@ import {
 } from "../../pages/Loans/loanApis";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import LoanDetailsSection from "./LoanDetailsSection";
-
 const LoanClientConversion = ({
   loan,
   isSmallScreen,
@@ -23,17 +22,16 @@ const LoanClientConversion = ({
   onClientSelect,
   selectedKafeel,
   onKafeelSelect,
+  onAddKafeelClick,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [clientsPage, setClientsPage] = useState(1);
   const { permissions } = usePermissions();
-
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
     enabled: !!permissions.includes("loans_Add"),
   });
-
   const loanForm = {
     amount: loan?.amount?.toString() || "",
     totalInterest: loan?.interestAmount?.toString() || "",
@@ -46,7 +44,6 @@ const LoanClientConversion = ({
     startDate: loan?.startDate ? new Date(loan.startDate).toISOString().split("T")[0] : "",
     repaymentDay: loan?.repaymentDay ? new Date(loan.repaymentDay).toISOString().split("T")[0] : "",
   };
-
   const handleInputChange = () => {};
   const handleBankSelect = () => {};
   const handleBanksSearchChange = () => {};
@@ -59,20 +56,16 @@ const LoanClientConversion = ({
     const rounded = parseFloat(numAmount.toFixed(2));
     return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-
   const handleClientSelect = (event, newValue) => {
     onClientSelect(newValue);
   };
-
   const handleSearchChange = (event, value) => {
     setSearchQuery(value);
     setClientsPage(1);
   };
-
   const availableClients = clientsData?.clients?.filter(
     (clientOption) => clientOption.client.id !== loan.clientId
   ) || [];
-
   return (
     <Box>
       <Typography
@@ -87,7 +80,6 @@ const LoanClientConversion = ({
           {loan.client?.name}
         </Box>
       </Typography>
-
       <Paper
         sx={{
           p: 3,
@@ -140,7 +132,6 @@ const LoanClientConversion = ({
           </Grid>
         </Grid>
       </Paper>
-
       {loan.kafeel && (
         <Paper
           sx={{
@@ -211,7 +202,6 @@ const LoanClientConversion = ({
           </Grid>
         </Paper>
       )}
-
       <Paper
         sx={{
           p: isSmallScreen ? 2 : 4,
@@ -279,7 +269,6 @@ const LoanClientConversion = ({
           </Grid>
         </Grid>
       </Paper>
-
       {selectedClient && (
         <Paper
           sx={{
@@ -350,7 +339,7 @@ const LoanClientConversion = ({
             >
               <Button
                 variant="outlined"
-                onClick={() => window.dispatchEvent(new CustomEvent('open-add-kafeel-modal'))}
+                onClick={() => onAddKafeelClick?.(selectedClient?.client?.id)}
                 sx={{
                   color: "primary.main",
                   borderColor: "primary.main",
@@ -362,7 +351,6 @@ const LoanClientConversion = ({
                 إضافة كفيل جديد
               </Button>
             </Grid>
-
             {selectedClient &&
               (!selectedClient.kafeels || selectedClient.kafeels.length === 0) && (
                 <Grid item xs={12} sm={10} md={8}>
@@ -378,7 +366,6 @@ const LoanClientConversion = ({
           </Grid>
         </Paper>
       )}
-
       {selectedKafeel && (
         <Paper
           sx={{
@@ -449,7 +436,6 @@ const LoanClientConversion = ({
           </Grid>
         </Paper>
       )}
-
       <LoanDetailsSection
         isSmallScreen={isSmallScreen}
         isMobile={false}
@@ -474,9 +460,7 @@ const LoanClientConversion = ({
         formatAmount={formatAmount}
         selectedLoan={loan}
       />
-
     </Box>
   );
 };
-
 export default LoanClientConversion;

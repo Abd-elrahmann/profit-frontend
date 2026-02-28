@@ -1,7 +1,6 @@
 import React from 'react';
 import { Stack, Button } from '@mui/material';
 import { Print, TableChart, FileUpload } from '@mui/icons-material';
-
 const IncomeStatementToolbar = ({ onPrint, onExportExcel, onExportPDF, isSmallScreen = false }) => (
   <Stack
     direction="row"
@@ -27,7 +26,6 @@ const IncomeStatementToolbar = ({ onPrint, onExportExcel, onExportPDF, isSmallSc
     >
       طباعة
     </Button>
-
     <Button
       variant="contained"
       startIcon={<TableChart />}
@@ -41,7 +39,6 @@ const IncomeStatementToolbar = ({ onPrint, onExportExcel, onExportPDF, isSmallSc
     >
       Excel
     </Button>
-
     <Button
       variant="contained"
       startIcon={<FileUpload />}
@@ -57,5 +54,4 @@ const IncomeStatementToolbar = ({ onPrint, onExportExcel, onExportPDF, isSmallSc
     </Button>
   </Stack>
 );
-
-export default React.memo(IncomeStatementToolbar);
+export default React.memo(IncomeStatementToolbar);

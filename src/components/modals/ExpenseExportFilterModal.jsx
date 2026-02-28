@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import { EXPENSE_TYPES } from '../../utilities/expenseConstants';
 import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
-
 const ExpenseExportFilterModal = ({
   open,
   onClose,
@@ -24,14 +23,12 @@ const ExpenseExportFilterModal = ({
   onConfirm,
 }) => {
   const showEmployeesFilter = selectedExpenseTypes.includes('مصروف رواتب');
-
   const handleExpenseTypesChange = (event, newValue) => {
     onExpenseTypesChange(newValue);
     if (!newValue.includes('مصروف رواتب')) {
       onEmployeesChange([]);
     }
   };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>اختيار أنواع المصروفات</DialogTitle>
@@ -52,7 +49,6 @@ const ExpenseExportFilterModal = ({
               })
             }
           />
-
           {showEmployeesFilter && (
             <Autocomplete
               multiple
@@ -84,5 +80,4 @@ const ExpenseExportFilterModal = ({
     </Dialog>
   );
 };
-
-export default ExpenseExportFilterModal;
+export default ExpenseExportFilterModal;

@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { AccountBalance, TrendingUp, TrendingDown, CheckCircle } from '@mui/icons-material';
 import TreasuryStatCard from './TreasuryStatCard';
-
 export default function TreasuryCapitalSummaryCards({
   animatedAvailableBalance,
   animatedTotalDebit,
@@ -18,7 +17,6 @@ export default function TreasuryCapitalSummaryCards({
     minWidth: isSmallScreen ? '100%' : '350px',
     maxWidth: '100%',
   };
-
   const progressBar = (progress) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -45,7 +43,6 @@ export default function TreasuryCapitalSummaryCards({
       </Box>
     </Box>
   );
-
   const repaymentDetails = (
     <Stack spacing={1}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -67,7 +64,6 @@ export default function TreasuryCapitalSummaryCards({
       {progressBar(repaymentsProgress)}
     </Stack>
   );
-
   return (
     <Box
       sx={{
@@ -90,7 +86,6 @@ export default function TreasuryCapitalSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={TrendingUp}
@@ -102,7 +97,6 @@ export default function TreasuryCapitalSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={TrendingDown}
@@ -114,7 +108,6 @@ export default function TreasuryCapitalSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       {totalRepaymentsAmount > 0 && (
         <Box sx={cardBoxSx}>
           <TreasuryStatCard
@@ -132,4 +125,4 @@ export default function TreasuryCapitalSummaryCards({
       )}
     </Box>
   );
-}
+}

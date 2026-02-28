@@ -14,31 +14,26 @@ import {
   formatNumber,
   calculateJournalTotals,
 } from "./periodClosingUtils.jsx";
-
 const formatDate = (dateString) => {
   if (!dateString) return "لم تنتهي بعد";
   return new Date(dateString).toLocaleDateString("en-US");
 };
-
 export default function PeriodClosingJournalsCards({
   journals,
   onViewJournal,
 }) {
   const { totalDebit, totalCredit, totalBalance } =
     calculateJournalTotals(journals);
-
   const getBalanceColor = (balance) => {
     if (balance > 0) return "success.main";
     if (balance < 0) return "error.main";
     return "text.primary";
   };
-
   return (
     <Paper sx={{ p: 2, borderRadius: 2 }}>
       <Typography variant="h6" fontWeight="bold" mb={2} textAlign="center">
         قيود الفترة ({journals.length})
       </Typography>
-
       <Stack spacing={2}>
         {journals.map((journal) => {
           const balance =
@@ -67,9 +62,7 @@ export default function PeriodClosingJournalsCards({
                       size="small"
                     />
                   </Box>
-
                   <Typography variant="body2">{journal.description}</Typography>
-
                   <Box
                     sx={{ display: "flex", justifyContent: "space-between" }}
                   >
@@ -80,7 +73,6 @@ export default function PeriodClosingJournalsCards({
                       {formatDate(journal.date)}
                     </Typography>
                   </Box>
-
                   <Box
                     sx={{ display: "flex", justifyContent: "space-between" }}
                   >
@@ -114,7 +106,6 @@ export default function PeriodClosingJournalsCards({
             </Card>
           );
         })}
-
         {journals.length > 0 && (
           <Card sx={{ bgcolor: "#f5f5f5", border: "2px solid #e0e0e0" }}>
             <CardContent sx={{ p: 2 }}>
@@ -160,4 +151,4 @@ export default function PeriodClosingJournalsCards({
       </Stack>
     </Paper>
   );
-}
+}

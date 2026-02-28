@@ -1,7 +1,3 @@
-/**
- * أنماط موحدة لجداول PDF - تُستخدم في جميع ملفات التصدير
- * Unified PDF table styles for consistent appearance across all exporters
- */
 export const pdfTableBaseStyles = {
   theme: 'striped',
   styles: {
@@ -42,11 +38,6 @@ export const pdfTableBaseStyles = {
     fillColor: [250, 250, 250]
   }
 };
-
-/**
- * دمج الأنماط الأساسية مع تخصيصات اختيارية
- * Merge base styles with optional overrides
- */
 export const getPdfTableStyles = (overrides = {}) => ({
   ...pdfTableBaseStyles,
   ...overrides,
@@ -55,11 +46,6 @@ export const getPdfTableStyles = (overrides = {}) => ({
   bodyStyles: { ...pdfTableBaseStyles.bodyStyles, ...overrides.bodyStyles },
   alternateRowStyles: { ...pdfTableBaseStyles.alternateRowStyles, ...overrides.alternateRowStyles }
 });
-
-/**
- * يرسم إطار رمادي حول الجدول
- * Draws a gray border around the table
- */
 export const createDidDrawTable = (doc) => (data) => {
   if (data.cursor) {
     doc.setDrawColor(200, 200, 200);
@@ -74,4 +60,4 @@ export const createDidDrawTable = (doc) => (data) => {
       doc.rect(tableX, tableY, tableWidth, tableHeight, 'S');
     }
   }
-};
+};

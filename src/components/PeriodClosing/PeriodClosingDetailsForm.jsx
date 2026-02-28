@@ -8,14 +8,12 @@ import {
   Grid,
 } from "@mui/material";
 import { formatDateWithHijri } from "./periodClosingUtils.jsx";
-
 export default function PeriodClosingDetailsForm({ periodData }) {
   return (
     <Paper sx={{ p: 3, borderRadius: 2, mb: 2 }}>
       <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
         معلومات الفترة
       </Typography>
-
       <Stack spacing={2}>
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -25,7 +23,6 @@ export default function PeriodClosingDetailsForm({ periodData }) {
             {periodData?.name || "-"}
           </Typography>
         </Box>
-
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             تاريخ البداية
@@ -35,7 +32,6 @@ export default function PeriodClosingDetailsForm({ periodData }) {
             periodData?.startDateHijri
           )}
         </Box>
-
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             تاريخ النهاية
@@ -45,7 +41,6 @@ export default function PeriodClosingDetailsForm({ periodData }) {
             periodData?.endDateHijri
           )}
         </Box>
-
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             الحالة
@@ -59,4 +54,4 @@ export default function PeriodClosingDetailsForm({ periodData }) {
       </Stack>
     </Paper>
   );
-}
+}

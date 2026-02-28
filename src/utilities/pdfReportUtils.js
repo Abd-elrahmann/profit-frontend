@@ -1,14 +1,6 @@
-/**
- * أدوات موحدة لتقارير PDF - نظام إدارة السلف
- * Unified PDF report utilities - consistent header, footer, layout across all exporters
- * لا تستخدم أي أيقونات أونلاين - اللوجو محلي فقط
- */
-
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
-
-export const PRIMARY_COLOR = [46, 139, 69]; // #2E8B45
-
+export const PRIMARY_COLOR = [46, 139, 69];
 export const registerArabicFonts = (doc) => {
   try {
     doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
@@ -17,13 +9,6 @@ export const registerArabicFonts = (doc) => {
     console.warn('Arabic fonts not found, using default fonts', error);
   }
 };
-
-/**
- * رسم هيدر التقرير الموحد
- * Right: Logo + نظام إدارة السلف
- * Center: Report title + optional ref
- * Left: Metadata (date, time, user)
- */
 export const drawReportHeader = (doc, options = {}) => {
   const {
     reportTitle = 'تقرير',
@@ -31,13 +16,9 @@ export const drawReportHeader = (doc, options = {}) => {
     metadata = {},
     startY = 8,
   } = options;
-
   const pageWidth = doc.internal.pageSize.width;
   const margin = 10;
-
   doc.setFont('Amiri', 'bold');
-
-  // Right: Logo + نظام إدارة السلف
   const logoWidth = 12;
   const logoHeight = 12;
   const logoX = pageWidth - logoWidth - margin;
@@ -50,8 +31,6 @@ export const drawReportHeader = (doc, options = {}) => {
   doc.setFontSize(14);
   doc.setTextColor(...PRIMARY_COLOR);
   doc.text('نظام إدارة السلف', pageWidth - margin - logoWidth - 2, startY + logoHeight / 2 + 2, { align: 'right' });
-
-  // Center: Report title (with underline effect via line) - منزّل لتحت لتجنب التداخل مع الهيدر
   doc.setFontSize(18);
   doc.setTextColor(0, 0, 0);
   doc.text(reportTitle, pageWidth / 2, startY + 22, { align: 'center' });
@@ -65,8 +44,6 @@ export const drawReportHeader = (doc, options = {}) => {
     doc.text(ref, pageWidth / 2, lineY + 6, { align: 'center' });
     doc.setTextColor(0, 0, 0);
   }
-
-  // Left: Metadata
   doc.setFontSize(10);
   doc.setFont('Amiri', 'normal');
   let metaY = startY + 4;
@@ -81,13 +58,8 @@ export const drawReportHeader = (doc, options = {}) => {
   if (metadata.user !== undefined) {
     doc.text(`المستخدم: ${metadata.user}`, margin, metaY, { align: 'left' });
   }
-
   return lineY + (ref ? 12 : 6);
 };
-
-/**
- * خط فاصل أخضر (Primary)
- */
 export const drawSeparatorLine = (doc, y) => {
   const pageWidth = doc.internal.pageSize.width;
   const margin = 10;
@@ -96,42 +68,23 @@ export const drawSeparatorLine = (doc, y) => {
   doc.line(margin, y, pageWidth - margin, y);
   return y + 8;
 };
-
-/**
- * رسم فوتر التقرير الموحد
- */
 export const drawReportFooter = (doc, pageNum, totalPages, options = {}) => {
   const pageHeight = doc.internal.pageSize.height;
   const pageWidth = doc.internal.pageSize.width;
   const footerMargin = 10;
   const footerY = pageHeight - 12;
-
   doc.setPage(pageNum);
-
-  // Line
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(footerMargin, pageHeight - 15, pageWidth - footerMargin, pageHeight - 15);
-
   doc.setFontSize(9);
   doc.setFont('Amiri', 'bold');
   doc.setTextColor(100, 100, 100);
-
-  // Center: Page number
   doc.text(`صفحة ${pageNum} من ${totalPages}`, pageWidth / 2, footerY, { align: 'center' });
-
-  // Right: Created at
   doc.text(`تم الإنشاء في: ${dayjs().format('DD/MM/YYYY HH:mm')}`, pageWidth - footerMargin, footerY, { align: 'right' });
-
-  // Left: System info
   doc.text('صُدر من خلال نظام إدارة السلف', footerMargin, footerY, { align: 'left' });
-
   doc.setTextColor(0, 0, 0);
 };
-
-/**
- * حساب نقطة البداية للجدول مع ضمان توسيطه
- */
 export const getCenteredTableStartX = (doc, columnWidths) => {
   const totalWidth = Array.isArray(columnWidths)
     ? columnWidths.reduce((a, b) => a + b, 0)
@@ -139,12 +92,33 @@ export const getCenteredTableStartX = (doc, columnWidths) => {
   const pageWidth = doc.internal.pageSize.width;
   return (pageWidth - totalWidth) / 2;
 };
-
-/**
- * حساب الهوامش لتوسيط الجدول أفقياً (يُستخدم مع margin في autoTable)
- */
 export const getCenteredTableMargins = (doc, tableWidth) => {
   const pageWidth = doc.internal.pageSize.width;
   const sideMargin = Math.max(5, (pageWidth - tableWidth) / 2);
   return { left: sideMargin, right: sideMargin };
 };
+export const PAGE_MARGIN = 10;
+export const drawReportSummary = (doc, yPosition, summaryText) => {
+  doc.setFontSize(11);
+  doc.setFont('Amiri', 'bold');
+  doc.setTextColor(0, 0, 0);
+  const pageWidth = doc.internal.pageSize.width;
+  doc.text(summaryText, pageWidth / 2, yPosition, { align: 'center' });
+  return yPosition + 10;
+};
+export const getFullWidthColumnStyles = (doc, baseWidths) => {
+  const pageWidth = doc.internal.pageSize.width;
+  const availableWidth = pageWidth - 2 * PAGE_MARGIN;
+  const widths = Array.isArray(baseWidths)
+    ? baseWidths
+    : Object.keys(baseWidths)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((k) => baseWidths[k]);
+  const totalBase = widths.reduce((a, b) => a + b, 0);
+  const scale = totalBase > 0 ? availableWidth / totalBase : 1;
+  const result = {};
+  widths.forEach((w, i) => {
+    result[i] = { cellWidth: Math.round(w * scale) };
+  });
+  return result;
+};

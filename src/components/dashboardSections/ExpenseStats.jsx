@@ -6,29 +6,23 @@ import { useDashboardFilter } from '../../pages/dashboard/DashboardFilterContext
 import { useCountUp } from '../../hooks/useCountUp';
 import { Link } from 'react-router-dom';
 import ResponsiveTable from './ResponsiveTable';
-
 const MONTHS_FIRST = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
 const MONTHS_LAST = ['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-
 const ExpenseStats = React.memo(() => {
   const { getApiFilter } = useDashboardFilter();
   const apiFilter = getApiFilter();
   const [chartPeriod, setChartPeriod] = useState('first');
   const [hoveredBar, setHoveredBar] = useState(null);
-
   const { data: stats, isLoading } = useQuery({
     queryKey: ['expense-stats', apiFilter, chartPeriod],
     queryFn: () => getExpenseStats(apiFilter, chartPeriod),
   });
-
   const animatedTotal = useCountUp(stats?.totalExpenses || 0, 600, !isLoading);
   const animatedPending = useCountUp(stats?.pendingAmount || 0, 600, !isLoading);
-
   const formatAmount = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     return Number(n).toLocaleString('en-US');
   };
-
   const formatDate = (d) => {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('ar-EG', {
@@ -37,7 +31,6 @@ const ExpenseStats = React.memo(() => {
       day: 'numeric',
     });
   };
-
   const barChartData = useMemo(() => {
     if (stats?.monthlyTrend?.length > 0) {
       return stats.monthlyTrend.map((item) => ({
@@ -47,18 +40,15 @@ const ExpenseStats = React.memo(() => {
     }
     return (chartPeriod === 'last' ? MONTHS_LAST : MONTHS_FIRST).map((m) => ({ month: m, value: 0 }));
   }, [stats?.monthlyTrend, chartPeriod]);
-
   const maxMonthlyValue = useMemo(() => {
     const vals = barChartData.map((d) => d.value);
     return Math.max(...vals, 1);
   }, [barChartData]);
-
   const getStatusClass = (status) => {
     if (status === 'مكتمل') return 'text-green-600 dark:text-green-400';
     if (status === 'معلق') return 'text-red-600 dark:text-red-400';
     return 'text-amber-600 dark:text-amber-400';
   };
-
   const getTypeBadgeClass = (type) => {
     const map = {
       'مصروف رواتب': 'bg-primary/10 text-primary',
@@ -71,7 +61,6 @@ const ExpenseStats = React.memo(() => {
     };
     return map[type] || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400';
   };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -79,10 +68,9 @@ const ExpenseStats = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="space-y-8">
-      {/* Financial Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
@@ -112,7 +100,6 @@ const ExpenseStats = React.memo(() => {
             />
           </div>
         </div>
-
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <p className="text-sm font-medium text-slate-500">المصاريف المعلقة</p>
@@ -137,7 +124,6 @@ const ExpenseStats = React.memo(() => {
             انتظار الموافقة
           </div>
         </div>
-
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <p className="text-sm font-medium text-slate-500">أعلى فئة صرف</p>
@@ -156,10 +142,9 @@ const ExpenseStats = React.memo(() => {
           )}
         </div>
       </div>
-
-      {/* Charts Section */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Trend - Horizontal Bar Chart */}
+        {}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -230,8 +215,7 @@ const ExpenseStats = React.memo(() => {
             })}
           </div>
         </div>
-
-        {/* Category Breakdown Donut */}
+        {}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm">
           <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-6">
             توزيع المصاريف حسب الفئة
@@ -305,8 +289,7 @@ const ExpenseStats = React.memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Recent Expenses Table */}
+      {}
       <div className="bg-white dark:bg-[#141e16] rounded-xl border border-primary/10 shadow-sm overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-primary/5">
           <h4 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -368,7 +351,5 @@ const ExpenseStats = React.memo(() => {
     </div>
   );
 });
-
 ExpenseStats.displayName = 'ExpenseStats';
-
-export default ExpenseStats;
+export default ExpenseStats;

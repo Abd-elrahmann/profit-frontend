@@ -7,19 +7,15 @@ import {
 } from "@mui/material";
 import { X, TrendingUp, TrendingDown, CheckCircle, BarChart3, PieChart } from "lucide-react";
 import dayjs from "dayjs";
-
 const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
   if (!open) return null;
-
   const comparison = data?.comparison;
   const period1 = comparison?.period1;
   const period2 = comparison?.period2;
   const changes = comparison?.changes;
   const performance = comparison?.performance;
-
   const formatDate = (d) => (d ? dayjs(d).format("DD/MM/YYYY") : "-");
   const formatNum = (n) => (n ?? 0).toLocaleString();
-
   const getSummaryText = () => {
     if (!changes || !performance) return "جاري تحميل النتائج...";
     const profitText = changes.netProfitChange >= 0
@@ -30,7 +26,6 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
       : `بينما ارتفع مستوى التعثر بنسبة ${(changes.delinquencyChangePercent || 0).toFixed(1)}%`;
     return `${profitText}، ${delText}.`;
   };
-
   const getOverallStatus = () => {
     if (!performance) return "نتيجة المقارنة";
     if (performance.profitabilityImproved && performance.delinquencyImproved)
@@ -39,7 +34,6 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
       return "نتيجة المقارنة: تراجع في الأداء";
     return "نتيجة المقارنة: أداء متوازن";
   };
-
   const getScore = () => {
     if (!performance) return 85;
     let s = 50;
@@ -47,10 +41,8 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
     if (performance.delinquencyImproved) s += 15;
     return Math.min(100, s);
   };
-
   const score = getScore();
   const scoreDiff = performance?.profitabilityImproved ? 5 : performance?.delinquencyImproved ? 3 : -5;
-
   return (
     <Dialog
       open={open}
@@ -66,7 +58,7 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
       }}
     >
       <DialogContent className="bg-[#f6f8f6] dark:bg-[#141e16] p-0 overflow-y-auto">
-        {/* Header */}
+        {}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a261c] px-6 py-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             مقارنة الأداء المالي للفترات
@@ -75,14 +67,13 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
             <X className="h-5 w-5" />
           </IconButton>
         </div>
-
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
             <CircularProgress size={48} sx={{ color: "#2e8a45" }} />
           </div>
         ) : comparison ? (
           <div className="p-4 md:p-6 space-y-6">
-            {/* Summary Card */}
+            {}
             <div className="bg-white dark:bg-[#1a261c] rounded-xl shadow-sm border-r-4 border-r-primary p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
               <div className="relative z-10 flex items-start gap-4">
@@ -123,10 +114,9 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
                 </div>
               </div>
             </div>
-
-            {/* Two Period Cards */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Period 1 - Primary */}
+              {}
               <div className="bg-white dark:bg-[#1a261c] rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 overflow-hidden flex flex-col h-full ring-1 ring-primary/10">
                 <div className="bg-primary/5 border-b border-primary/10 p-5 relative">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-transparent" />
@@ -230,8 +220,7 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
                   </div>
                 </div>
               </div>
-
-              {/* Period 2 - Comparison */}
+              {}
               <div className="bg-white dark:bg-[#1a261c] rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 overflow-hidden flex flex-col h-full opacity-90 hover:opacity-100 transition-opacity">
                 <div className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 p-5">
                   <div className="flex justify-between items-start">
@@ -287,8 +276,7 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
                 </div>
               </div>
             </div>
-
-            {/* Charts Row */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
               <div className="bg-white dark:bg-[#1a261c] rounded-2xl p-6 border border-gray-100 dark:border-white/5 shadow-sm">
                 <div className="flex items-center justify-between mb-8">
@@ -394,5 +382,4 @@ const PeriodCompareModal = ({ open, onClose, data, isLoading }) => {
     </Dialog>
   );
 };
-
-export default PeriodCompareModal;
+export default PeriodCompareModal;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -20,7 +19,6 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useTheme } from '../../theme/ThemeContext';
-  
 const createValidationSchema = (mode) => {
   return Yup.object().shape({
     name: Yup.string()
@@ -41,7 +39,6 @@ const createValidationSchema = (mode) => {
       .matches(/^[0-9]+$/, 'رقم الهاتف يجب أن يحتوي على أرقام فقط')
   });
 };
-
 const passwordChangeSchema = Yup.object().shape({
   oldPassword: Yup.string().required('كلمة المرور الحالية مطلوبة'),
   newPassword: Yup.string()
@@ -51,7 +48,6 @@ const passwordChangeSchema = Yup.object().shape({
     .required('تأكيد كلمة المرور مطلوب')
     .oneOf([Yup.ref('newPassword')], 'كلمات المرور غير متطابقة')
 });
-
 const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = null, isMobile = false }) => {
   const { isDarkMode } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
@@ -67,7 +63,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
     password: '',
     phone: ''
   });
-
   useEffect(() => {
     if (mode === 'edit' && editData) {
       setInitialValues({
@@ -84,13 +79,11 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
         phone: ''
       });
     }
-    
     setShowPasswordSection(false);
     setShowOldPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
   }, [mode, editData, open]);
-
   const handleSubmit = async (values, { resetForm }) => {
     setIsSubmitting(true);
     try {
@@ -111,7 +104,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
       setIsSubmitting(false);
     }
   };
-
   const handlePasswordChange = async (values, { resetForm }) => {
     setIsUpdatingPassword(true);
     try {
@@ -129,7 +121,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
       setIsUpdatingPassword(false);
     }
   };
-
   return (
     <Dialog 
       open={open} 
@@ -159,7 +150,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Formik
         initialValues={initialValues}
         validationSchema={createValidationSchema(mode)}
@@ -189,7 +179,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                     },
                   }}
                 />
-
                 <TextField
                   fullWidth
                   name="email"
@@ -211,7 +200,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                     },
                   }}
                 />
-
                 {mode === 'add' && (
                   <TextField
                     fullWidth
@@ -245,7 +233,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                     }}
                   />
                 )}
-
                 <TextField
                   fullWidth
                   name="phone"
@@ -265,7 +252,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                     },
                   }}
                 />
-
                 {mode === 'edit' && (
                   <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -280,7 +266,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                         {showPasswordSection ? 'إخفاء' : 'إظهار'}
                       </Button>
                     </Box>
-                    
                     {showPasswordSection && (
                       <Formik
                         initialValues={{
@@ -325,7 +310,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                   ),
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 name="newPassword"
@@ -357,7 +341,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                   ),
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 name="confirmPassword"
@@ -389,7 +372,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                                   ),
                                 }}
                               />
-
                               <Button
                                 type="submit"
                                 variant="contained"
@@ -415,7 +397,6 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
                 )}
               </Stack>
             </DialogContent>
-
             <DialogActions sx={{ 
               px: 3, 
               py: 2, 
@@ -463,5 +444,4 @@ const AddEmployee = ({ open, onClose, refetchUsers, mode = 'add', editData = nul
     </Dialog>
   );
 };
-
 export default AddEmployee;

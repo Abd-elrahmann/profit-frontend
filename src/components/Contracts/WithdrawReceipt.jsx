@@ -1,5 +1,4 @@
 import React from "react";
-
 const WithdrawReceipt = () => {
   return `
 <style>
@@ -14,7 +13,6 @@ const WithdrawReceipt = () => {
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .receipt-container {
     max-width: 900px;
     margin: auto;
@@ -24,7 +22,6 @@ const WithdrawReceipt = () => {
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
-
   .header {
     display: flex;
     justify-content: space-between;
@@ -56,7 +53,6 @@ const WithdrawReceipt = () => {
     color: #555;
     white-space: nowrap;
   }
-
   .parties-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -91,7 +87,6 @@ const WithdrawReceipt = () => {
     color: #111;
     font-weight: bold;
   }
-
   .details-section {
     margin-bottom: 30px;
   }
@@ -104,7 +99,6 @@ const WithdrawReceipt = () => {
     padding: 8px 12px;
     border-radius: 4px;
   }
-
   .financial-table {
     width: 100%;
     border-collapse: collapse;
@@ -135,7 +129,6 @@ const WithdrawReceipt = () => {
     color: #2E8B45;
     font-size: 15px;
   }
-
   .terms-section {
     background: white;
     padding: 20px;
@@ -144,7 +137,6 @@ const WithdrawReceipt = () => {
     margin-bottom: 30px;
     page-break-inside: avoid;
   }
-
   .exit-impact-section {
     background: white;
     padding: 20px;
@@ -153,7 +145,6 @@ const WithdrawReceipt = () => {
     margin-bottom: 30px;
     page-break-inside: avoid;
   }
-
   .impact-table {
     width: 100%;
     border-collapse: collapse;
@@ -207,7 +198,6 @@ const WithdrawReceipt = () => {
     color: #111;
     font-weight: bold;
   }
-
   .declaration-section {
     background: #f8f9fa;
     padding: 20px;
@@ -231,7 +221,6 @@ const WithdrawReceipt = () => {
     line-height: 1.6;
     text-align: justify;
   }
-
   .signatures-section {
     display: flex;
     flex-direction: column;
@@ -311,7 +300,6 @@ const WithdrawReceipt = () => {
   .date-box .signature-value {
     color: #111;
   }
-
   .footer {
     text-align: center;
     margin-top: 20px;
@@ -321,11 +309,9 @@ const WithdrawReceipt = () => {
     color: #777;
     page-break-inside: avoid;
   }
-  
   .signatures-footer-wrapper {
     page-break-inside: avoid;
   }
-
   @media (max-width: 768px) {
     .parties-section {
       grid-template-columns: 1fr;
@@ -356,12 +342,10 @@ const WithdrawReceipt = () => {
       font-size: 12px;
     }
   }
-
   @media print {
     @page {
       margin: 10mm;
     }
-    
     .receipt-wrapper {
       background: #fff;
       padding: 0;
@@ -372,8 +356,6 @@ const WithdrawReceipt = () => {
       padding: 10mm;
       max-width: 100%;
     }
-    
-    /* تقليل المسافات بين الأقسام */
     .parties-section {
       margin-bottom: 15px;
     }
@@ -392,8 +374,6 @@ const WithdrawReceipt = () => {
       margin-bottom: 15px;
       padding: 15px;
     }
-    
-    /* تقليل مسافات الجداول */
     .financial-table,
     .impact-table {
       margin-bottom: 10px;
@@ -405,8 +385,6 @@ const WithdrawReceipt = () => {
       padding: 8px 12px;
       font-size: 13px;
     }
-    
-    /* تقليل مسافات العناوين */
     .section-title,
     .terms-title,
     .declaration-title {
@@ -414,8 +392,6 @@ const WithdrawReceipt = () => {
       padding: 6px 10px;
       font-size: 15px;
     }
-    
-    /* التوقيعات والفوتر */
     .signatures-section {
       padding: 15px 10px 10px;
       margin-top: 15px;
@@ -440,10 +416,8 @@ const WithdrawReceipt = () => {
     }
   }
 </style>
-
 <div class="receipt-wrapper">
   <div class="receipt-container">
-    
     <!-- Header -->
     <div class="header">
       <div class="header-left">
@@ -452,7 +426,6 @@ const WithdrawReceipt = () => {
       </div>
       <p class="reference">رقم المرجع: {{رقم_المرجع}}</p>
     </div>
-
     <!-- Parties Information -->
     <div class="parties-section">
       <div class="party-box">
@@ -466,7 +439,6 @@ const WithdrawReceipt = () => {
           <span class="party-value">{{تاريخ_الخروج}}</span>
         </div>
       </div>
-      
       <div class="party-box">
         <div class="party-title">الطرف الثاني: المساهم</div>
         <div class="party-info">
@@ -483,7 +455,6 @@ const WithdrawReceipt = () => {
         </div>
       </div>
     </div>
-
     <!-- Financial Details -->
     <div class="details-section">
       <h2 class="section-title">التفاصيل المالية</h2>
@@ -514,7 +485,6 @@ const WithdrawReceipt = () => {
         </tbody>
       </table>
     </div>
-
     <!-- Terms and Conditions -->
     <div class="terms-section">
       <h2 class="terms-title">شروط وآلية السداد</h2>
@@ -537,7 +507,6 @@ const WithdrawReceipt = () => {
         </div>
       </div>
     </div>
-
     <!-- Exit Impact on Participation -->
     <div class="exit-impact-section">
       <h2 class="section-title">أثر الخروج على المشاركة</h2>
@@ -568,7 +537,6 @@ const WithdrawReceipt = () => {
         </tbody>
       </table>
     </div>
-
     <!-- Declaration Section -->
     <div class="declaration-section">
       <h3 class="declaration-title">إقرار المخالصة النهائية</h3>
@@ -580,38 +548,31 @@ const WithdrawReceipt = () => {
         <p>• هذه الوثيقة تمثل مخالصة نهائية وشاملة بين الطرفين ملزمة لهما ولخلفهما العام والخاص.</p>
       </div>
     </div>
-
     <!-- Signatures and Footer Wrapper -->
     <div class="signatures-footer-wrapper">
       <!-- Signatures -->
       <div class="signatures-section">
         <div class="signature-title-main">توقيعات الأطراف</div>
-
         <div class="signatures-row">
           <div class="signature-box">
             <div class="signature-title">المضارب</div>
             <div class="signature-line"></div>
             <div class="signature-name">{{اسم_المضارب}}</div>
           </div>
-
           <div class="signature-box">
             <div class="signature-title">المساهم</div>
             <div class="signature-line"></div>
             <div class="signature-name">{{اسم_المساهم}}</div>
           </div>
         </div>
-
         <div class="date-box">
           <span class="signature-label">التاريخ:</span>
           <span class="signature-value">{{التاريخ_الكامل}}</span>
         </div>
       </div>
-
     </div>
-
   </div>
 </div>
 `;
 };
-
 export default WithdrawReceipt;

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-
 const FILTER_OPTIONS = [
   { value: 'all', label: 'الكل' },
   { value: 'weekly', label: 'أسبوعي' },
@@ -7,16 +6,13 @@ const FILTER_OPTIONS = [
   { value: 'yearly', label: 'سنوي' },
   { value: 'custom', label: 'مخصص' },
 ];
-
 const DashboardFilterContext = createContext(null);
-
 export const DashboardFilterProvider = ({ children }) => {
   const [filter, setFilter] = useState('all');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [tabTitle, setTabTitle] = useState('لوحة التحكم');
   const [tabSubtitle, setTabSubtitle] = useState('');
-
   const getApiFilter = useCallback(() => {
     if (filter === 'all') return 'all';
     if (filter === 'custom' && customFrom && customTo) {
@@ -24,7 +20,6 @@ export const DashboardFilterProvider = ({ children }) => {
     }
     return filter;
   }, [filter, customFrom, customTo]);
-
   const value = {
     filter,
     setFilter,
@@ -40,14 +35,13 @@ export const DashboardFilterProvider = ({ children }) => {
     getApiFilter,
     isCustom: filter === 'custom',
   };
-
   return (
     <DashboardFilterContext.Provider value={value}>
       {children}
     </DashboardFilterContext.Provider>
   );
 };
-
+// eslint-disable-next-line react-refresh/only-export-components
 export const useDashboardFilter = () => {
   const ctx = useContext(DashboardFilterContext);
   if (!ctx) throw new Error('useDashboardFilter must be used within DashboardFilterProvider');

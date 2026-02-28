@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search } from '@mui/icons-material';
-
 const ChartOfAccountsSearch = ({ value, onChange, placeholder = 'بحث بكود أو اسم الحساب...', isSmallScreen }) => (
   <div className={`relative ${isSmallScreen ? 'w-full' : 'w-full md:w-96'}`}>
     <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -15,5 +14,4 @@ const ChartOfAccountsSearch = ({ value, onChange, placeholder = 'بحث بكود
     />
   </div>
 );
-
 export default React.memo(ChartOfAccountsSearch);

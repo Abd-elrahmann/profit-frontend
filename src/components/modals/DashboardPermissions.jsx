@@ -22,7 +22,6 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useQueryClient } from '@tanstack/react-query';
-  
 const dashboardSections = [
   {
     module: 'client-stats',
@@ -60,7 +59,6 @@ const dashboardSections = [
     description: 'عرض آخر الأنشطة والعمليات في النظام'
   }
 ];
-
 const validationSchema = Yup.object().shape({
   permissions: Yup.array().of(
     Yup.object().shape({
@@ -69,7 +67,6 @@ const validationSchema = Yup.object().shape({
     })
   )
 });
-
 const DashboardPermissions = ({
   open,
   onClose,
@@ -87,14 +84,12 @@ const DashboardPermissions = ({
       canView: false,
     }))
   });
-
   useEffect(() => {
     if (open && roleId) {
       const fetchCurrentPermissions = async () => {
         setIsLoadingPermissions(true);
         try {
           let permissionsPayload = null;
-
           try {
             const dashRes = await Api.get(`/api/roles/${roleId}/dashboard-permissions`);
             if (dashRes?.data) {
@@ -111,7 +106,6 @@ const DashboardPermissions = ({
             console.warn('Dashboard permissions endpoint not available, falling back to role payload', err);
           }
           if (!permissionsPayload) permissionsPayload = [];
-
           const formattedPermissions = dashboardSections.map((section) => {
             const found = permissionsPayload.find(
               (p) => p.module?.toLowerCase() === section.module.toLowerCase()
@@ -121,7 +115,6 @@ const DashboardPermissions = ({
               canView: found?.canView || false,
               };
             });
-
             setInitialValues({
             permissions: formattedPermissions,
             });
@@ -131,21 +124,17 @@ const DashboardPermissions = ({
           setIsLoadingPermissions(false);
         }
       };
-
       fetchCurrentPermissions();
     }
   }, [open, roleId]);
-
   const handleSubmit = async (values) => {
     setIsSubmitting(true);
     try {
       const payload = {
         permissions: values.permissions
       };
-
       await Api.post(`/api/roles/${roleId}/dashboard-permissions`, payload);
       notifySuccess('تم تحديث صلاحيات الداشبورد بنجاح');
-
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-permissions'] });
       await queryClient.refetchQueries({ queryKey: ['dashboard-permissions'] });
@@ -157,7 +146,6 @@ const DashboardPermissions = ({
       setIsSubmitting(false);
     }
   };
-
   const handlePermissionChange = (values, setFieldValue, sectionIndex, value) => {
     const updatedPermissions = [...values.permissions];
     updatedPermissions[sectionIndex] = {
@@ -166,7 +154,6 @@ const DashboardPermissions = ({
     };
     setFieldValue('permissions', updatedPermissions);
   };
-
   const handleSelectAll = (values, setFieldValue, checked) => {
     const updatedPermissions = values.permissions.map(permission => ({
       ...permission,
@@ -174,12 +161,9 @@ const DashboardPermissions = ({
     }));
     setFieldValue('permissions', updatedPermissions);
   };
-
   const isAllSelected = (values) => {
     return values.permissions.every(permission => permission.canView === true);
   };
-
-
   return (
     <Dialog
       open={open}
@@ -209,9 +193,7 @@ const DashboardPermissions = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Divider />
-
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -250,11 +232,9 @@ const DashboardPermissions = ({
                     {isAllSelected(values) ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
                   </Button>
                 </Box>
-
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
                   حدد الأقسام التي يمكن للمسؤولين الذين لديهم هذا الدور الوصول إليها في لوحة التحكم
                 </Typography>
-
                 <Grid container spacing={2} justifyContent="center">
                   {dashboardSections.map((section, index) => (
                     <Grid item xs={12} sm={6} md={4} key={section.module} sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -299,9 +279,7 @@ const DashboardPermissions = ({
               </Box>
               )}
             </DialogContent>
-
             <Divider />
-
             <DialogActions sx={{ p: 3, pt: 2, justifyContent: 'space-between',flexDirection: 'row-reverse' }}>
               <Button
                 onClick={onClose}
@@ -333,5 +311,4 @@ const DashboardPermissions = ({
     </Dialog>
   );
 };
-
-export default DashboardPermissions;
+export default DashboardPermissions;

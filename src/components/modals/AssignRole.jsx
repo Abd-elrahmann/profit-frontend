@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -20,7 +19,6 @@ import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/i
 import Api from '../../config/Api';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { useQueryClient } from '@tanstack/react-query';
-
 const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => {
   const [roles, setRoles] = useState([]);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
@@ -28,19 +26,16 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRemovingRole, setIsRemovingRole] = useState(false);
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (open) {
       fetchRoles();
     }
   }, [open]);
-
   useEffect(() => {
     if (user && open) {
       setSelectedRoleId(user.role?.id || null);
     }
   }, [user, open]);
-
   const fetchRoles = async () => {
     setIsLoading(true);
     try {
@@ -53,22 +48,18 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
       setIsLoading(false);
     }
   };
-
   const handleRoleChange = (roleId) => {
     if (!user?.role) {
       setSelectedRoleId(roleId);
     }
   };
-
   const handleRemoveCurrentRole = async () => {
     if (!user?.role) return;
-
     setIsRemovingRole(true);
     try {
       await Api.patch(`/api/users/${user.id}/role`, {
         roleId: null
       });
-      
       notifySuccess('تم إزالة الدور من الموظف بنجاح');
       setSelectedRoleId(null);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -80,24 +71,20 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
       setIsRemovingRole(false);
     }
   };
-
   const handleSubmit = async () => {
     if (!selectedRoleId) {
       notifyError('يرجى اختيار دور للموظف');
       return;
     }
-
     if (user?.role) {
       notifyError('لا يمكن تعيين دور جديد للموظف لأنه يمتلك دوراً بالفعل. يرجى إزالة الدور الحالي أولاً.');
       return;
     }
-
     setIsSubmitting(true);
     try {
       await Api.patch(`/api/users/${user.id}/role`, {
         roleId: parseInt(selectedRoleId)
       });
-      
       notifySuccess('تم تعيين الدور للموظف بنجاح');
       onClose();
       setSelectedRoleId(null);
@@ -109,14 +96,11 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
       setIsSubmitting(false);
     }
   };
-
   const handleClose = () => {
     setSelectedRoleId(null);
     onClose();
   };
-
   const hasCurrentRole = user?.role;
-
   const getPermissionCount = (permissions) => {
     if (!permissions) return 0;
     return permissions.reduce((count, perm) => {
@@ -124,7 +108,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
       return count + (hasPermissions ? 1 : 0);
     }, 0);
   };
-
   return (
     <Dialog 
       open={open} 
@@ -156,7 +139,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent sx={{ pb: 1 }}>
         {user && (
           <Box sx={{ mb: 3 }}>
@@ -188,7 +170,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
             </Alert>
           </Box>
         )}
-  
         {hasCurrentRole && (
           <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
             <Button
@@ -215,11 +196,9 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
             </Button>
           </Box>
         )}
-
         <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
           {hasCurrentRole ? 'الأدوار المتاحة (غير مفعلة)' : 'اختر دور للموظف:'}
         </Typography>
-
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
             <CircularProgress />
@@ -233,7 +212,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
             {roles.map((role) => {
               const isCurrentRole = user?.role?.id === role.id;
               const isDisabled = hasCurrentRole && !isCurrentRole;
-              
               return (
                 <Box
                   key={role.id}
@@ -275,7 +253,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
                       }}
                     />
                   )}
-                  
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
                     <FormControlLabel
                       control={
@@ -313,7 +290,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
                       sx={{ width: '100%', mr: 0 }}
                     />
                   </Box>
-                  
                   {!isDisabled && (
                     <AddIcon 
                       sx={{ 
@@ -328,7 +304,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
             })}
           </Stack>
         )}
-
         {hasCurrentRole && (
           <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
             <Typography variant="body2">
@@ -337,7 +312,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
           </Alert>
         )}
       </DialogContent>
-
       <DialogActions sx={{ 
         px: 3, 
         py: 2, 
@@ -361,7 +335,6 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
         >
           إغلاق
         </Button>
-        
         {!hasCurrentRole && (
           <Button
             onClick={handleSubmit}
@@ -389,5 +362,4 @@ const AssignRole = ({ open, onClose, user, refetchUsers, isMobile = false }) => 
     </Dialog>
   );
 };
-
 export default AssignRole;

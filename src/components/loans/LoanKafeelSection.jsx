@@ -5,7 +5,6 @@ import {
   TextField,
   Paper,
 } from "@mui/material";
-
 const LoanKafeelSection = ({
   isSmallScreen,
   selectedKafeel,
@@ -31,7 +30,6 @@ const LoanKafeelSection = ({
       >
         معلومات الكفيل
       </Typography>
-
       <Grid
         container
         spacing={isSmallScreen ? 2 : 3}
@@ -58,7 +56,6 @@ const LoanKafeelSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={4}>
           <TextField
             fullWidth
@@ -80,7 +77,6 @@ const LoanKafeelSection = ({
             }}
           />
         </Grid>
-
         <Grid item xs={12} sm={6} md={4}>
           <TextField
             fullWidth
@@ -106,5 +102,4 @@ const LoanKafeelSection = ({
     </Paper>
   );
 };
-
 export default LoanKafeelSection;

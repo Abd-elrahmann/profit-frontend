@@ -1,5 +1,4 @@
 import Api, { handleApiError } from '../../config/Api';
-
 export const getClients = async (page = 1, search = '') => {
   try {
     const url = search 
@@ -12,7 +11,6 @@ export const getClients = async (page = 1, search = '') => {
     throw error;
   }
 };
-
 export const getPartners = async (page = 1, search = '') => {
   try {
     const url = search
@@ -25,7 +23,6 @@ export const getPartners = async (page = 1, search = '') => {
     throw error;
   }
 };
-
 export const createLoan = async (loanData) => {
   try {
     const response = await Api.post('/api/loans', loanData);
@@ -35,7 +32,6 @@ export const createLoan = async (loanData) => {
     throw error;
   }
 };
-
 export const updateLoan = async (loanId, loanData) => {
   try {
     const response = await Api.patch(`/api/loans/${loanId}`, loanData);
@@ -45,7 +41,6 @@ export const updateLoan = async (loanId, loanData) => {
     throw error;
   }
 };
-
 export const activateLoan = async (loanId) => {
   try {
     const response = await Api.patch(`/api/loans/${loanId}/activate`);
@@ -55,7 +50,6 @@ export const activateLoan = async (loanId) => {
     throw error;
   }
 };
-
 export const deactivateLoan = async (loanId) => {
   try {
     const response = await Api.patch(`/api/loans/${loanId}/deactivate`);
@@ -65,7 +59,6 @@ export const deactivateLoan = async (loanId) => {
     throw error;
   }
 };
-
 export const getLoans = async (page = 1, search = '', limit = 15, status = null) => {
   try {
     const params = new URLSearchParams();
@@ -81,7 +74,6 @@ export const getLoans = async (page = 1, search = '', limit = 15, status = null)
     throw error;
   }
 };
-
 export const getLoanById = async (loanId, page, limit) => {
   try {
     const params = new URLSearchParams();
@@ -89,7 +81,6 @@ export const getLoanById = async (loanId, page, limit) => {
     if (limit) params.append('limit', limit);
     const query = params.toString();
     const url = query ? `/api/loans/${loanId}?${query}` : `/api/loans/${loanId}`;
-
     const response = await Api.get(url);
     return response.data;
   } catch (error) {
@@ -97,7 +88,6 @@ export const getLoanById = async (loanId, page, limit) => {
     throw error;
   }
 };
-
 export const deleteLoan = async (loanId) => {
   try {
     const response = await Api.delete(`/api/loans/${loanId}`);
@@ -107,7 +97,6 @@ export const deleteLoan = async (loanId) => {
     throw error;
   }
 };
-
 export const createSmallLoan = async (smallLoanData) => {
   try {
     const response = await Api.post('/api/small-loans', smallLoanData);
@@ -117,7 +106,6 @@ export const createSmallLoan = async (smallLoanData) => {
     throw error;
   }
 };
-
 export const paySmallLoan = async (loanId, paymentData) => {
   try {
     const response = await Api.post(`/api/small-loans/pay/${loanId}`, paymentData);
@@ -127,7 +115,6 @@ export const paySmallLoan = async (loanId, paymentData) => {
     throw error;
   }
 };
-
 export const updateSmallLoan = async (loanId, updateData) => {
   try {
     const response = await Api.patch(`/api/small-loans/${loanId}`, updateData);
@@ -137,7 +124,6 @@ export const updateSmallLoan = async (loanId, updateData) => {
     throw error;
   }
 };
-
 export const getUnpostedSmallLoanJournals = async () => {
   try {
     const response = await Api.get('/api/small-loans/unposted-journals');
@@ -147,7 +133,6 @@ export const getUnpostedSmallLoanJournals = async () => {
     throw error;
   }
 };
-
 export const getUnpostedLoanJournals = async () => {
   try {
     const response = await Api.get('/api/loans/get/unposted-journals');
@@ -157,7 +142,6 @@ export const getUnpostedLoanJournals = async () => {
     throw error;
   }
 };
-
 export const getSmallLoans = async (page = 1, search = '', limit = 20) => {
   try {
     const params = new URLSearchParams();
@@ -172,7 +156,6 @@ export const getSmallLoans = async (page = 1, search = '', limit = 20) => {
     throw error;
   }
 };
-
 export const deleteSmallLoan = async (loanId) => {
   try {
     const response = await Api.delete(`/api/small-loans/${loanId}`);
@@ -182,7 +165,6 @@ export const deleteSmallLoan = async (loanId) => {
     throw error;
   }
 };
-
 export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeelId, paymentAmount, repaymentDay) => {
   try {
     const response = await Api.patch(`/api/loans/convert-client/${loanId}`, {
@@ -198,7 +180,6 @@ export const convertLoanClient = async (fromClientId, toClientId, loanId, kafeel
     throw error;
   }
 };
-  
 export const transferPartialLoanAmount = async (fromClientId, toClientId, loanId, amount, kafeelId, paymentAmount, repaymentDay) => {
   try {
     const response = await Api.patch(`/api/loans/convert-partial/${loanId}`, {

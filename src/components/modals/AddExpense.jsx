@@ -22,7 +22,6 @@ import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { createExpense } from "../../pages/Expenses/expensesApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api from "../../config/Api";
-
 const EXPENSE_TYPES = [
   "مصروف رواتب",
   "مصروف بنزين",
@@ -32,7 +31,6 @@ const EXPENSE_TYPES = [
   "مصروفات تشغيلية",
   "مصروفات اخرى"
 ];
-
 const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen }) => {
   const [expenses, setExpenses] = useState([
     { type: "", amount: "", description: "", userId: null }
@@ -41,12 +39,10 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
   const [errors, setErrors] = useState([]);
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
-
   useEffect(() => {
     if (open) {
       setExpenses([{ type: "", amount: "", description: "", userId: null }]);
       setErrors([]);
-      
       const fetchUsers = async () => {
         try {
           setUsersLoading(true);
@@ -59,37 +55,29 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
           setUsersLoading(false);
         }
       };
-      
       fetchUsers();
     }
   }, [open]);
-
   const handleAddExpense = () => {
     setExpenses([...expenses, { type: "", amount: "", description: "", userId: null }]);
   };
-
   const handleRemoveExpense = (index) => {
     if (expenses.length > 1) {
       const newExpenses = expenses.filter((_, i) => i !== index);
       setExpenses(newExpenses);
-      
       const newErrors = [...errors];
       newErrors.splice(index, 1);
       setErrors(newErrors);
     }
   };
-
   const handleChange = (index, field) => (event) => {
     const value = event.target.value;
     const newExpenses = [...expenses];
     newExpenses[index][field] = value;
-
     if (field === 'type' && value !== 'مصروف رواتب') {
       newExpenses[index].userId = null;
     }
-
     setExpenses(newExpenses);
-
     if (errors[index]?.[field]) {
       const newErrors = [...errors];
       if (newErrors[index]) {
@@ -101,19 +89,15 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
       }
     }
   };
-
   const validateForm = () => {
     const newErrors = [];
     let isValid = true;
-
     expenses.forEach((expense, index) => {
       const expenseErrors = {};
-
       if (!expense.type || expense.type.trim() === "") {
         expenseErrors.type = "نوع المصروف مطلوب";
         isValid = false;
       }
-
       if (!expense.amount || expense.amount.trim() === "") {
         expenseErrors.amount = "المبلغ مطلوب";
         isValid = false;
@@ -124,27 +108,21 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
           isValid = false;
         }
       }
-
-
       if (expense.type === 'مصروف رواتب' && !expense.userId) {
         expenseErrors.userId = "يجب اختيار الموظف عند إضافة مصروف رواتب";
         isValid = false;
       }
-
       if (Object.keys(expenseErrors).length > 0) {
         newErrors[index] = expenseErrors;
       }
     });
-
     setErrors(newErrors);
     return isValid;
   };
-
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
     }
-
     setLoading(true);
     try {
       const formattedExpenses = expenses.map(expenseItem => ({
@@ -153,7 +131,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
         description: expenseItem.description.trim(),
         ...(expenseItem.userId && { userId: expenseItem.userId })
       }));
-
       await createExpense({ expenses: formattedExpenses });
       notifySuccess("تم إضافة المصروفات بنجاح");
       onSuccess();
@@ -166,7 +143,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
       setLoading(false);
     }
   };
-
   return (
     <Dialog
       open={open}
@@ -186,7 +162,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: "text.primary" }}>
                 مصروف #{index + 1}
               </Typography>
-              
               <Stack spacing={2}>
                 <FormControl fullWidth required error={!!errors[index]?.type}>
                   <InputLabel>نوع المصروف</InputLabel>
@@ -208,7 +183,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
                     </Typography>
                   )}
                 </FormControl>
-
                 {expense.type === 'مصروف رواتب' && (
                   <Autocomplete
                     options={users}
@@ -219,7 +193,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
                       const newExpenses = [...expenses];
                       newExpenses[index].userId = value;
                       setExpenses(newExpenses);
-
                       if (errors[index]?.userId) {
                         const newErrors = [...errors];
                         if (newErrors[index]) {
@@ -254,7 +227,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
                     loadingText="جاري البحث..."
                   />
                 )}
-
                 <TextField
                   name="amount"
                   label="المبلغ"
@@ -267,7 +239,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
                   helperText={errors[index]?.amount}
                   inputProps={{ min: 0, step: 0.01 }}
                 />
-
                 <TextField
                   name="description"
                   label="الوصف"
@@ -289,7 +260,6 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
                   }
                 />
               </Stack>
-
               {expenses.length > 1 && (
                 <IconButton
                   size="small"
@@ -304,11 +274,9 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               )}
-
               {index < expenses.length - 1 && <Divider sx={{ my: 2 }} />}
             </Box>
           ))}
-
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
@@ -335,5 +303,4 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
     </Dialog>
   );
 };
-
 export default AddExpense;

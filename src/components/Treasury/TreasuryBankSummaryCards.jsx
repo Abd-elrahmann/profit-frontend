@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { AccountBalance, TrendingUp, TrendingDown, CheckCircle } from '@mui/icons-material';
 import TreasuryStatCard from './TreasuryStatCard';
-
 export default function TreasuryBankSummaryCards({
   animatedAvailableBalance,
   animatedTotalDebit,
@@ -28,7 +27,6 @@ export default function TreasuryBankSummaryCards({
     minWidth: isSmallScreen ? '100%' : '350px',
     maxWidth: '100%',
   };
-
   const progressBar = (progress, colorKey) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -55,7 +53,6 @@ export default function TreasuryBankSummaryCards({
       </Box>
     </Box>
   );
-
   const repaymentDetails = (paid, remaining, discount, progress, color) => (
     <Stack spacing={1}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -85,7 +82,6 @@ export default function TreasuryBankSummaryCards({
       {progressBar(progress, color)}
     </Stack>
   );
-
   return (
     <Box
       sx={{
@@ -108,7 +104,6 @@ export default function TreasuryBankSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={TrendingUp}
@@ -120,7 +115,6 @@ export default function TreasuryBankSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={TrendingDown}
@@ -132,7 +126,6 @@ export default function TreasuryBankSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={TrendingUp}
@@ -144,7 +137,6 @@ export default function TreasuryBankSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={AccountBalance}
@@ -156,7 +148,6 @@ export default function TreasuryBankSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       <Box sx={cardBoxSx}>
         <TreasuryStatCard
           icon={AccountBalance}
@@ -170,7 +161,6 @@ export default function TreasuryBankSummaryCards({
           isSmallScreen={isSmallScreen}
         />
       </Box>
-
       {currentMonthTotalAmount > 0 && (
         <Box sx={cardBoxSx}>
           <TreasuryStatCard
@@ -192,7 +182,6 @@ export default function TreasuryBankSummaryCards({
           </TreasuryStatCard>
         </Box>
       )}
-
       {totalRepaymentsAmount > 0 && (
         <Box sx={cardBoxSx}>
           <TreasuryStatCard
@@ -216,4 +205,4 @@ export default function TreasuryBankSummaryCards({
       )}
     </Box>
   );
-}
+}

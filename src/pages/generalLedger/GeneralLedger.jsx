@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { handleApiError } from '../../config/Api';
 import { getAccountLedger } from './generalLedgerApi';
-import GeneralLedgerSearch from '../../components/modals/GeneralLedgerSearch';
 import {
+  GeneralLedgerSearch,
   GeneralLedgerToolbar,
   GeneralLedgerSearchParams,
   GeneralLedgerSummaryCards,
@@ -17,20 +17,16 @@ import {
 import { exportGeneralLedgerToPDF, exportGeneralLedgerToExcel } from '../../utilities/GeneralLedgerExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
-
 export default function GeneralLedger() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useState(null);
   const [exportLoading, setExportLoading] = useState({ pdf: false, excel: false });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit] = useState(10);
-
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
-
   const { permissions } = usePermissions();
-
   const { data: ledgerData, isLoading: isLoadingLedger, error } = useQuery({
     queryKey: ['account-ledger', searchParams?.account?.id, searchParams?.fromDate, searchParams?.toDate, currentPage, pageLimit],
     queryFn: () =>
@@ -40,19 +36,15 @@ export default function GeneralLedger() {
     enabled: !!searchParams,
     retry: 1,
   });
-
   const handleSearch = useCallback((params) => {
     setSearchParams(params);
     setCurrentPage(1);
   }, []);
-
   const handleReset = useCallback(() => {
     setSearchParams(null);
     setCurrentPage(1);
   }, []);
-
   const handlePageChange = (event, value) => setCurrentPage(value);
-
   const handleExportPDF = useCallback(async () => {
     if (!ledgerData || !searchParams) return;
     setExportLoading((prev) => ({ ...prev, pdf: true }));
@@ -66,7 +58,6 @@ export default function GeneralLedger() {
       setExportLoading((prev) => ({ ...prev, pdf: false }));
     }
   }, [ledgerData, searchParams]);
-
   const handleExportExcel = useCallback(async () => {
     if (!ledgerData || !searchParams) return;
     setExportLoading((prev) => ({ ...prev, excel: true }));
@@ -80,29 +71,23 @@ export default function GeneralLedger() {
       setExportLoading((prev) => ({ ...prev, excel: false }));
     }
   }, [ledgerData, searchParams]);
-
   const totalDebit =
     ledgerData?.journals?.reduce((sum, journal) => {
       return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
     }, 0) || 0;
-
   const totalCredit =
     ledgerData?.journals?.reduce((sum, journal) => {
       return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
     }, 0) || 0;
-
   const closingBalance = ledgerData?.account?.balance || 0;
-
   const hasExportPermission = permissions.includes('general-ledger_Export');
   const hasJournals = ledgerData?.journals && ledgerData.journals.length > 0;
-
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.paper' }}>
       <Helmet>
         <title>دفتر الأستاذ العام</title>
         <meta name="description" content="دفتر الأستاذ العام للمحاسبة" />
       </Helmet>
-
       <Box
         sx={{
           display: 'flex',
@@ -123,10 +108,8 @@ export default function GeneralLedger() {
             onReset={handleReset}
             onSearchClick={() => setSearchModalOpen(true)}
           />
-
           <GeneralLedgerSearchParams searchParams={searchParams} isSmallScreen={isSmallScreen} />
         </Box>
-
         <Box sx={{ flex: 1 }}>
           {!searchParams ? (
             <Paper
@@ -158,7 +141,6 @@ export default function GeneralLedger() {
                 closingBalance={closingBalance}
                 isSmallScreen={isSmallScreen}
               />
-
               <Paper
                 sx={{
                   borderRadius: 2,
@@ -172,7 +154,6 @@ export default function GeneralLedger() {
                 ) : (
                   <GeneralLedgerTable journals={ledgerData?.journals} />
                 )}
-
                 {!hasJournals && (
                   <Box sx={{ textAlign: 'center', py: 6 }}>
                     <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -183,7 +164,6 @@ export default function GeneralLedger() {
                     </Typography>
                   </Box>
                 )}
-
                 {(ledgerData?.totalPages ?? 0) > 1 && (
                   <GeneralLedgerPagination
                     currentPage={currentPage}
@@ -196,7 +176,6 @@ export default function GeneralLedger() {
           )}
         </Box>
       </Box>
-
       <GeneralLedgerSearch open={searchModalOpen} onClose={() => setSearchModalOpen(false)} onSearch={handleSearch} />
     </Box>
   );

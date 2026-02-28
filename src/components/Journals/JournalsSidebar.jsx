@@ -15,7 +15,6 @@ import {
   PictureAsPdf as PDFIcon,
   TableChart as ExcelIcon,
 } from "@mui/icons-material";
-
 export default function JournalsSidebar({
   totals,
   isAddMode,
@@ -36,7 +35,6 @@ export default function JournalsSidebar({
 }) {
   const formatNumber = (value) =>
     value ? Math.round(value).toLocaleString() : "0";
-
   const showExportButtons =
     !isAddMode && journalData && permissions.includes("journals_Export");
   const isDraft = journalData?.status === "DRAFT";
@@ -45,7 +43,6 @@ export default function JournalsSidebar({
   const canSaveEdit =
     isDraft && isEditMode && permissions.includes("journals_Update");
   const balanced = isJournalBalanced(totals.totalDebit, totals.totalCredit);
-
   return (
     <Box
       sx={{
@@ -84,7 +81,6 @@ export default function JournalsSidebar({
           </Box>
         </Stack>
       </Box>
-
       <Box sx={{ p: 3 }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={3}>
           الإجراءات
@@ -119,7 +115,6 @@ export default function JournalsSidebar({
               <Divider />
             </>
           )}
-
           {isAddMode ? (
             <>
               <Button
@@ -235,4 +230,4 @@ export default function JournalsSidebar({
       </Box>
     </Box>
   );
-}
+}

@@ -2,9 +2,7 @@ import React from 'react';
 import dayjs from 'dayjs';
 import { OpenInNew } from '@mui/icons-material';
 import 'dayjs/locale/ar';
-
 const formatDate = (date) => dayjs(date).locale('ar').format('YYYY-MM-DD');
-
 const GeneralLedgerTable = ({ journals = [], totalDebit = 0, totalCredit = 0, closingBalance = 0 }) => (
     <div className="overflow-x-auto">
       <table className="w-full text-right border-collapse">
@@ -89,5 +87,4 @@ const GeneralLedgerTable = ({ journals = [], totalDebit = 0, totalCredit = 0, cl
       </table>
     </div>
 );
-
-export default React.memo(GeneralLedgerTable);
+export default React.memo(GeneralLedgerTable);

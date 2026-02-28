@@ -1,38 +1,21 @@
-/**
- * Flattens a tree structure of accounts into a single array
- */
 export const flattenAccountsTree = (accounts) => {
   if (!accounts || !Array.isArray(accounts)) return [];
-
   const flattened = [];
-
   const traverse = (account) => {
     if (!account) return;
-
     const { children: _children, ...accountWithoutChildren } = account;
     flattened.push(accountWithoutChildren);
-
     if (account.children && Array.isArray(account.children)) {
       account.children.forEach((child) => traverse(child));
     }
   };
-
   accounts.forEach((account) => traverse(account));
-
   return flattened;
 };
-
-/**
- * Checks if journal debit and credit totals are balanced (within 0.01 tolerance)
- */
 export const isJournalBalanced = (debit, credit) => {
   const difference = Math.abs(debit - credit);
   return difference < 0.01;
 };
-
-/**
- * Maps journal source type to Arabic text
- */
 export const getJournalSourceTypeText = (sourceType) => {
   const sourceTypeMap = {
     LOAN: "سلفة",
@@ -55,10 +38,6 @@ export const getJournalSourceTypeText = (sourceType) => {
   };
   return sourceTypeMap[sourceType] || sourceType || "-";
 };
-
-/**
- * Maps journal status to Arabic text
- */
 export const getStatusText = (status) => {
   const statusMap = {
     DRAFT: "مسودة",
@@ -67,10 +46,18 @@ export const getStatusText = (status) => {
   };
   return statusMap[status] || status;
 };
-
-/**
- * Maps journal type to Arabic text
- */
+export const getStatusColor = (status) => {
+  switch (status) {
+    case "DRAFT":
+      return "warning";
+    case "POSTED":
+      return "success";
+    case "CANCELLED":
+      return "error";
+    default:
+      return "default";
+  }
+};
 export const getJournalTypeText = (type) => {
   const typeMap = {
     GENERAL: "عام",
@@ -80,15 +67,10 @@ export const getJournalTypeText = (type) => {
   };
   return typeMap[type] || type || "-";
 };
-
-/**
- * Calculates totals for table display (from journalData or journalLines)
- */
 export const calculateTotalsForTable = (journalData, journalLines) => {
   if (journalData?.totals) {
     return journalData.totals;
   }
-
   const totalDebit = journalLines.reduce(
     (sum, line) => sum + (line.debit || 0),
     0
@@ -98,13 +80,8 @@ export const calculateTotalsForTable = (journalData, journalLines) => {
     0
   );
   const totalBalance = totalDebit - totalCredit;
-
   return { totalDebit, totalCredit, totalBalance };
 };
-
-/**
- * Calculates totals including current line being edited
- */
 export const calculateTotals = (
   journalData,
   journalLines,
@@ -114,10 +91,8 @@ export const calculateTotals = (
   if (journalData?.totals) {
     return journalData.totals;
   }
-
   let totalDebit = 0;
   let totalCredit = 0;
-
   if (editingLineIndex !== null && journalLines[editingLineIndex]) {
     journalLines.forEach((line, index) => {
       if (index !== editingLineIndex) {
@@ -125,7 +100,6 @@ export const calculateTotals = (
         totalCredit += line.credit || 0;
       }
     });
-
     if (currentLine) {
       totalDebit += currentLine.debit || 0;
       totalCredit += currentLine.credit || 0;
@@ -139,7 +113,6 @@ export const calculateTotals = (
       (sum, line) => sum + (line.credit || 0),
       0
     );
-
     if (
       currentLine &&
       ((currentLine.debit || 0) > 0 || (currentLine.credit || 0) > 0)
@@ -148,18 +121,11 @@ export const calculateTotals = (
       totalCredit += currentLine.credit || 0;
     }
   }
-
   const totalBalance = totalDebit - totalCredit;
-
   return { totalDebit, totalCredit, totalBalance };
 };
-
-/**
- * Maps journal lines from API to form format
- */
 export const mapJournalLinesFromApi = (lines) => {
   if (!lines || !Array.isArray(lines)) return [];
-
   return lines.map((line) => ({
     id: line.id,
     accountId: line.account?.id,
@@ -169,4 +135,4 @@ export const mapJournalLinesFromApi = (lines) => {
     balance: line.balance || 0,
     description: line.description || "",
   }));
-};
+};

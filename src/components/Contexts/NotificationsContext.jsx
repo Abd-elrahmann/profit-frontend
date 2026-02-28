@@ -1,19 +1,15 @@
 import React, { createContext, useContext, useMemo, useRef, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Api from '../../config/Api';
-import { getJournals } from '../../pages/Journals/journalsApi';
-import { postJournal } from '../../pages/Journals/journalsApi';
+import { getJournals, postJournal } from '../../pages/Journals/journalsApi';
 import { getJournalSourceTypeText } from '../Journals/journalsUtils';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
 const NotificationsContext = createContext(null);
-
 export const NotificationsProvider = ({ children }) => {
   const queryClient = useQueryClient();
   const prevCountRef = useRef(0);
   const [shouldShake, setShouldShake] = useState(false);
   const [approvingId, setApprovingId] = useState(null);
-
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
@@ -22,9 +18,7 @@ export const NotificationsProvider = ({ children }) => {
     },
     staleTime: 60 * 1000,
   });
-
   const autoPost = settingsData?.autoPost ?? false;
-
   const { data: unpostedJournalsData } = useQuery({
     queryKey: ['unposted-journals-all'],
     queryFn: () => getJournals(1, { status: 'DRAFT', limit: 100 }),
@@ -32,11 +26,9 @@ export const NotificationsProvider = ({ children }) => {
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
-
   const notifications = useMemo(() => {
     const list = [];
     if (autoPost) return list;
-
     const journals = unpostedJournalsData?.journals || [];
     journals.forEach((j) => {
       const sourceText = getJournalSourceTypeText(j.sourceType);
@@ -53,9 +45,7 @@ export const NotificationsProvider = ({ children }) => {
     });
     return list;
   }, [autoPost, unpostedJournalsData]);
-
   const count = notifications.length;
-
   useEffect(() => {
     if (count > prevCountRef.current) {
       setShouldShake(true);
@@ -65,7 +55,6 @@ export const NotificationsProvider = ({ children }) => {
     }
     prevCountRef.current = count;
   }, [count]);
-
   const invalidateNotifications = () => {
     queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
     queryClient.invalidateQueries({ queryKey: ['journals'] });
@@ -73,7 +62,6 @@ export const NotificationsProvider = ({ children }) => {
     queryClient.invalidateQueries({ queryKey: ['unposted-small-loan-journals'] });
     queryClient.invalidateQueries({ queryKey: ['opening-journals-check'] });
   };
-
   const handleApproveJournal = async (journalId, e) => {
     e?.stopPropagation?.();
     setApprovingId(journalId);
@@ -87,7 +75,6 @@ export const NotificationsProvider = ({ children }) => {
       setApprovingId(null);
     }
   };
-
   const value = {
     notifications,
     count,
@@ -97,14 +84,12 @@ export const NotificationsProvider = ({ children }) => {
     approvingId: approvingId,
     invalidateNotifications,
   };
-
   return (
     <NotificationsContext.Provider value={value}>
       {children}
     </NotificationsContext.Provider>
   );
 };
-
 // eslint-disable-next-line react-refresh/only-export-components
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
@@ -112,4 +97,4 @@ export const useNotifications = () => {
     throw new Error('useNotifications must be used within NotificationsProvider');
   }
   return context;
-};
+};

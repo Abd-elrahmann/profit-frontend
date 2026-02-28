@@ -5,10 +5,8 @@ import {
   Print as PrintIcon,
   ViewColumn as ViewColumnIcon,
 } from '@mui/icons-material';
-import ColumnsVisibilityMenu from '../ColumnsVisibilityMenu';
-
+import ColumnsVisibilityMenu from '../ui/ColumnsVisibilityMenu';
 const iconSx = { marginLeft: '8px' };
-
 const ClientCollectionsToolbar = ({
   isSmallScreen,
   hasExportPermission,
@@ -26,9 +24,7 @@ const ClientCollectionsToolbar = ({
   onDeselectAllColumns,
 }) => {
   if (!hasExportPermission) return null;
-
   const isDisabled = isLoading || !hasData;
-
   return (
     <>
       <Stack
@@ -47,7 +43,6 @@ const ClientCollectionsToolbar = ({
         >
           الأعمدة
         </Button>
-
         <Button
           variant="contained"
           size={isSmallScreen ? 'small' : 'medium'}
@@ -60,7 +55,6 @@ const ClientCollectionsToolbar = ({
         >
           طباعة
         </Button>
-
         <Button
           variant="contained"
           size={isSmallScreen ? 'small' : 'medium'}
@@ -73,7 +67,6 @@ const ClientCollectionsToolbar = ({
         >
           تصدير PDF
         </Button>
-
         <Button
           variant="contained"
           size={isSmallScreen ? 'small' : 'medium'}
@@ -87,7 +80,6 @@ const ClientCollectionsToolbar = ({
           تصدير Excel
         </Button>
       </Stack>
-
       <ColumnsVisibilityMenu
         anchorEl={anchorEl}
         onClose={onColumnMenuClose}
@@ -100,5 +92,4 @@ const ClientCollectionsToolbar = ({
     </>
   );
 };
-
-export default React.memo(ClientCollectionsToolbar);
+export default React.memo(ClientCollectionsToolbar);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Formik, Form } from 'formik';
+import { Formik, Form, setIn } from 'formik';
 import {
   Person,
   Group,
@@ -11,7 +11,6 @@ import {
   VerifiedUser,
   Close,
   ContactPage,
-  Info,
   ArrowForward,
   Autorenew,
   CheckCircle,
@@ -20,7 +19,6 @@ import * as Yup from 'yup';
 import Api from '../../config/Api';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-
 const countryCodes = [
   { code: '+20', country: 'مصر', flag: '🇪🇬' },
   { code: '+966', country: 'السعودية', flag: '🇸🇦' },
@@ -37,7 +35,6 @@ const countryCodes = [
   { code: '+1', country: 'الولايات المتحدة', flag: '🇺🇸' },
   { code: '+44', country: 'المملكة المتحدة', flag: '🇬🇧' },
 ];
-
 const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
   const kafeelSchema = Yup.object().shape({
     name: Yup.string().required('اسم الكفيل مطلوب'),
@@ -49,13 +46,12 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
       .nullable()
       .email('البريد الإلكتروني غير صالح'),
     employer: Yup.string().required('جهة عمل الكفيل مطلوبة'),
-    salary: Yup.number().required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
-    obligations: Yup.number().required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
+    salary: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
+    obligations: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
     birthDate: Yup.string(),
     city: Yup.string().required('المدينة مطلوبة'),
     district: Yup.string().required('الحي مطلوب'),
   });
-
   const baseSchema = {
     name: Yup.string().required('اسم العميل مطلوب'),
     phoneCode: Yup.string().required('رمز الدولة مطلوب'),
@@ -65,13 +61,13 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
       .nullable()
       .email('البريد الإلكتروني غير صالح'),
     nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
-    birthDate: Yup.date().nullable(),
+    birthDate: Yup.date().transform((v, o) => (o === '' || o == null ? null : v)).nullable(),
     city: Yup.string().required('المدينة مطلوبة'),
     district: Yup.string().required('الحي مطلوب'),
     address: Yup.string().required('العنوان مطلوب'),
     employer: Yup.string().required('جهة العمل مطلوبة'),
-    salary: Yup.number().required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
-    obligations: Yup.number().required('الالتزامات مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
+    salary: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
+    obligations: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('الالتزامات مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
     creationReason: Yup.string().required('سبب الإنشاء مطلوب'),
     notes: Yup.string(),
     hasKafeel: Yup.boolean(),
@@ -79,22 +75,44 @@ const createClientValidationSchema = (hasKafeel, kafeelsLength) => {
       ? Yup.array().of(kafeelSchema).min(1, 'يجب إضافة كفيل واحد على الأقل')
       : Yup.array(),
   };
-
   return Yup.object().shape(baseSchema);
 };
-
-const AddClientForm = ({ onSuccess, onCancel }) => {
+const createStep0Schema = () =>
+  Yup.object().shape({
+    name: Yup.string().required('اسم العميل مطلوب'),
+    phoneCode: Yup.string().required('رمز الدولة مطلوب'),
+    phone: Yup.string().required('رقم الجوال مطلوب'),
+    email: Yup.string().transform((v) => (v?.trim() === '' ? null : v)).nullable().email('البريد الإلكتروني غير صالح'),
+    nationalId: Yup.string().required('رقم الهوية الوطنية مطلوب'),
+    birthDate: Yup.date().transform((v, o) => (o === '' || o == null ? null : v)).nullable(),
+    city: Yup.string().required('المدينة مطلوبة'),
+    district: Yup.string().required('الحي مطلوب'),
+    address: Yup.string().required('العنوان مطلوب'),
+    employer: Yup.string().required('جهة العمل مطلوبة'),
+    salary: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('الراتب مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
+    obligations: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('الالتزامات مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
+    creationReason: Yup.string().required('سبب الإنشاء مطلوب'),
+    notes: Yup.string(),
+    hasKafeel: Yup.boolean(),
+    kafeels: Yup.array(),
+  });
+const AddClientForm = ({ onSuccess }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [addAnotherKafeel, setAddAnotherKafeel] = useState(false);
+  const [hasKafeel, setHasKafeel] = useState(false);
   const queryClient = useQueryClient();
-  const steps = [
-    { label: 'بيانات العميل', icon: Person },
-    { label: 'بيانات الكفيل', icon: Group },
-    { label: 'المرفقات', icon: CloudUpload },
-  ];
-
+  const steps = hasKafeel
+    ? [
+        { label: 'بيانات العميل', icon: Person },
+        { label: 'بيانات الكفيل', icon: Group },
+        { label: 'المرفقات', icon: CloudUpload },
+      ]
+    : [
+        { label: 'بيانات العميل', icon: Person },
+        { label: 'المرفقات', icon: CloudUpload },
+      ];
   const getInitialKafeelValues = () => ({
     name: '',
     nationalId: '',
@@ -108,7 +126,6 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
     phone: '',
     email: '',
   });
-
   const initialValues = {
     name: '',
     phoneCode: '+966',
@@ -127,16 +144,13 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
     hasKafeel: false,
     kafeels: [],
   };
-
   const handleNext = () => setActiveStep((prev) => prev + 1);
   const handleBack = () => setActiveStep((prev) => prev - 1);
-
   const handleDrop = (acceptedFiles, fieldName) => {
     if (acceptedFiles.length > 0) {
       setUploadedFiles((prev) => ({ ...prev, [fieldName]: acceptedFiles[0] }));
     }
   };
-
   const removeFile = (fieldName) => {
     setUploadedFiles((prev) => {
       const newFiles = { ...prev };
@@ -144,13 +158,15 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
       return newFiles;
     });
   };
-
   const getFilePreview = (file) => {
     if (file?.type?.startsWith('image/')) return URL.createObjectURL(file);
     return null;
   };
-
   const handleSubmit = async (values) => {
+    if (!uploadedFiles.clientIdImage) {
+      notifyError('صورة هوية العميل مطلوبة');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -163,7 +179,6 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
           formData.append(key, values[key]);
         }
       });
-
       if (values.hasKafeel && values.kafeels?.length > 0) {
         values.kafeels.forEach((kafeel, index) => {
           Object.keys(kafeel).forEach((key) => {
@@ -176,13 +191,11 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
           });
         });
       }
-
       Object.keys(uploadedFiles).forEach((key) => {
         if (!key.startsWith('kafeels[') && !key.startsWith('kafeel[')) {
           formData.append(key, uploadedFiles[key]);
         }
       });
-
       if (values.hasKafeel && values.kafeels?.length > 0) {
         values.kafeels.forEach((kafeel, index) => {
           const kafeelIdImageKey = `kafeels[${index}][kafeelIdImage]`;
@@ -191,7 +204,6 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
           if (uploadedFiles[kafeelWorkCardKey]) formData.append('kafeelWorkCard', uploadedFiles[kafeelWorkCardKey]);
         });
       }
-
       await Api.post('/api/clients', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       notifySuccess('تم إضافة العميل بنجاح');
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -202,12 +214,12 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
       setIsSubmitting(false);
     }
   };
-
   const inputBase =
     'w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100';
+  const inputError = '!border-red-500 dark:!border-red-500 focus:!ring-red-500/50';
   const labelBase = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
+  const labelRequired = 'text-red-500 me-0.5';
   const fieldError = 'text-xs text-red-500 mt-0.5';
-
   const DocumentDropzone = ({ fieldName, label, acceptedTypes }) => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       accept: acceptedTypes,
@@ -250,14 +262,12 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
       </div>
     );
   };
-
   return (
     <div dir="rtl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة عميل جديد</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">يرجى إكمال خطوات إضافة بيانات العميل الجديد في النظام المالي</p>
       </div>
-
       <div className="flex items-center justify-between max-w-3xl mb-8">
         {steps.map((step, idx) => {
           const StepIcon = step.icon;
@@ -278,9 +288,10 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
           );
         })}
       </div>
-
       <Formik
         initialValues={initialValues}
+        validateOnChange={false}
+        validateOnBlur={false}
         validate={(values) => {
           const schema = createClientValidationSchema(values.hasKafeel || false, values.kafeels?.length || 0);
           try {
@@ -295,7 +306,47 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm }) => (
+        {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm, setTouched, setErrors }) => {
+          const handleNextWithValidation = async () => {
+            let errs = {};
+            if (activeStep === 0) {
+              try {
+                createStep0Schema().validateSync(values, { abortEarly: false });
+              } catch (validationErr) {
+                validationErr.inner?.forEach((e) => { if (e.path) errs[e.path] = e.message; });
+              }
+            } else if (activeStep === 1 && values.hasKafeel && values.kafeels?.length > 0) {
+              const kafeelSchema = Yup.object().shape({
+                name: Yup.string().required('اسم الكفيل مطلوب'),
+                nationalId: Yup.string().required('رقم هوية الكفيل مطلوب'),
+                phoneCode: Yup.string().required('رمز الدولة مطلوب'),
+                phone: Yup.string().required('رقم جوال الكفيل مطلوب'),
+                email: Yup.string().transform((v) => (v?.trim() === '' ? null : v)).nullable().email('البريد الإلكتروني غير صالح'),
+                employer: Yup.string().required('جهة عمل الكفيل مطلوبة'),
+                salary: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('راتب الكفيل مطلوب').min(1, 'الراتب يجب أن يكون أكبر من صفر'),
+                obligations: Yup.number().transform((v, o) => (o === '' || o == null ? undefined : v)).required('التزامات الكفيل مطلوبة').min(0, 'الالتزامات يجب أن تكون صفر أو أكثر'),
+                city: Yup.string().required('المدينة مطلوبة'),
+                district: Yup.string().required('الحي مطلوب'),
+              });
+              values.kafeels.forEach((k, i) => {
+                try {
+                  kafeelSchema.validateSync(k, { abortEarly: false });
+                } catch (validationErr) {
+                  validationErr.inner?.forEach((e) => { if (e.path) errs[`kafeels.${i}.${e.path}`] = e.message; });
+                }
+              });
+            }
+            if (Object.keys(errs).length > 0) {
+              let newTouched = { ...touched };
+              Object.keys(errs).forEach((path) => { newTouched = setIn(newTouched, path, true); });
+              setTouched(newTouched);
+              setErrors(errs);
+              return;
+            }
+            setErrors({});
+            handleNext();
+          };
+          return (
           <Form>
             <div className="overflow-y-auto">
               {activeStep === 0 && (
@@ -305,83 +356,83 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                     <h2 className="text-lg font-bold text-slate-800 dark:text-white">المعلومات الشخصية</h2>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>الاسم الكامل</label>
-                    <input name="name" value={values.name} onChange={handleChange} onBlur={handleBlur} placeholder="أدخل اسم العميل الثلاثي" className={inputBase} />
-                    {touched.name && errors.name && <span className={fieldError}>{errors.name}</span>}
+                    <label className={labelBase}>الاسم الكامل <span className={labelRequired}>*</span></label>
+                    <input name="name" value={values.name} onChange={handleChange} onBlur={handleBlur} placeholder="أدخل اسم العميل الثلاثي" className={`${inputBase} ${errors.name ? inputError : ''}`} />
+                    {errors.name && <span className={fieldError}>{errors.name}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>رقم الهوية الوطنية</label>
-                    <input name="nationalId" value={values.nationalId} onChange={handleChange} onBlur={handleBlur} placeholder="1XXXXXXXXX" className={inputBase} />
-                    {touched.nationalId && errors.nationalId && <span className={fieldError}>{errors.nationalId}</span>}
+                    <label className={labelBase}>رقم الهوية الوطنية <span className={labelRequired}>*</span></label>
+                    <input name="nationalId" value={values.nationalId} onChange={handleChange} onBlur={handleBlur} placeholder="1XXXXXXXXX" className={`${inputBase} ${errors.nationalId ? inputError : ''}`} />
+                    {errors.nationalId && <span className={fieldError}>{errors.nationalId}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>تاريخ الميلاد (اختياري)</label>
-                    <input name="birthDate" type="date" value={values.birthDate} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
-                    {touched.birthDate && errors.birthDate && <span className={fieldError}>{errors.birthDate}</span>}
+                    <input name="birthDate" type="date" value={values.birthDate} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors.birthDate ? inputError : ''}`} />
+                    {errors.birthDate && <span className={fieldError}>{errors.birthDate}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className={labelBase}>البريد الإلكتروني (اختياري)</label>
-                    <input name="email" type="email" value={values.email} onChange={handleChange} onBlur={handleBlur} placeholder="example@mail.com" className={inputBase} />
-                    {touched.email && errors.email && <span className={fieldError}>{errors.email}</span>}
+                    <input name="email" type="email" value={values.email} onChange={handleChange} onBlur={handleBlur} placeholder="example@mail.com" className={`${inputBase} ${errors.email ? inputError : ''}`} />
+                    {errors.email && <span className={fieldError}>{errors.email}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>رقم الجوال</label>
-                    <div className="flex gap-2">
-                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={inputBase} style={{ width: '85px', minWidth: '85px', flexShrink: 0 }}>
+                    <label className={labelBase}>رقم الجوال <span className={labelRequired}>*</span></label>
+                    <div className="flex gap-3">
+                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors.phoneCode || errors.phone ? inputError : ''}`} style={{ width: '110px', minWidth: '110px', flexShrink: 0 }}>
                         {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
                       </select>
-                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={inputBase} style={{ flex: 1, minWidth: 0, textAlign: 'left' }} dir="ltr" />
+                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} ${errors.phone ? inputError : ''} flex-1 min-w-[140px]`} style={{ textAlign: 'left' }} dir="ltr" />
                     </div>
-                    {touched.phone && errors.phone && <span className={fieldError}>{errors.phone}</span>}
+                    {(errors.phone || errors.phoneCode) && <span className={fieldError}>{errors.phone || errors.phoneCode}</span>}
                   </div>
                   <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
                     <LocationOn sx={{ fontSize: 24, color: 'primary.main' }} />
                     <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العنوان</h2>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>المدينة</label>
-                    <input name="city" value={values.city} onChange={handleChange} onBlur={handleBlur} placeholder="المدينة" className={inputBase} />
-                    {touched.city && errors.city && <span className={fieldError}>{errors.city}</span>}
+                    <label className={labelBase}>المدينة <span className={labelRequired}>*</span></label>
+                    <input name="city" value={values.city} onChange={handleChange} onBlur={handleBlur} placeholder="المدينة" className={`${inputBase} ${errors.city ? inputError : ''}`} />
+                    {errors.city && <span className={fieldError}>{errors.city}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>الحي</label>
-                    <input name="district" value={values.district} onChange={handleChange} onBlur={handleBlur} placeholder="اسم الحي" className={inputBase} />
-                    {touched.district && errors.district && <span className={fieldError}>{errors.district}</span>}
+                    <label className={labelBase}>الحي <span className={labelRequired}>*</span></label>
+                    <input name="district" value={values.district} onChange={handleChange} onBlur={handleBlur} placeholder="اسم الحي" className={`${inputBase} ${errors.district ? inputError : ''}`} />
+                    {errors.district && <span className={fieldError}>{errors.district}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className={labelBase}>العنوان التفصيلي</label>
-                    <input name="address" value={values.address} onChange={handleChange} onBlur={handleBlur} placeholder="الشارع، رقم المبنى" className={inputBase} />
-                    {touched.address && errors.address && <span className={fieldError}>{errors.address}</span>}
+                    <label className={labelBase}>العنوان التفصيلي <span className={labelRequired}>*</span></label>
+                    <input name="address" value={values.address} onChange={handleChange} onBlur={handleBlur} placeholder="الشارع، رقم المبنى" className={`${inputBase} ${errors.address ? inputError : ''}`} />
+                    {errors.address && <span className={fieldError}>{errors.address}</span>}
                   </div>
                   <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mt-6 mb-2">
                     <Work sx={{ fontSize: 24, color: 'primary.main' }} />
                     <h2 className="text-lg font-bold text-slate-800 dark:text-white">بيانات العمل والدخل</h2>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>جهة العمل</label>
-                    <input name="employer" value={values.employer} onChange={handleChange} onBlur={handleBlur} placeholder="اسم الشركة أو الوزارة" className={inputBase} />
-                    {touched.employer && errors.employer && <span className={fieldError}>{errors.employer}</span>}
+                    <label className={labelBase}>جهة العمل <span className={labelRequired}>*</span></label>
+                    <input name="employer" value={values.employer} onChange={handleChange} onBlur={handleBlur} placeholder="اسم الشركة أو الوزارة" className={`${inputBase} ${errors.employer ? inputError : ''}`} />
+                    {errors.employer && <span className={fieldError}>{errors.employer}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>الراتب الشهري</label>
+                    <label className={labelBase}>الراتب الشهري <span className={labelRequired}>*</span></label>
                     <div className="relative">
-                      <input name="salary" type="number" value={values.salary} onChange={handleChange} onBlur={handleBlur} placeholder="0.00" className={`${inputBase} pl-12`} />
+                      <input name="salary" type="number" value={values.salary} onChange={handleChange} onBlur={handleBlur} placeholder="0.00" className={`${inputBase} pl-12 ${errors.salary ? inputError : ''}`} />
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">ر.س</span>
                     </div>
-                    {touched.salary && errors.salary && <span className={fieldError}>{errors.salary}</span>}
+                    {errors.salary && <span className={fieldError}>{errors.salary}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>الالتزامات الشهرية</label>
+                    <label className={labelBase}>الالتزامات الشهرية <span className={labelRequired}>*</span></label>
                     <div className="relative">
-                      <input name="obligations" type="number" value={values.obligations} onChange={handleChange} onBlur={handleBlur} placeholder="0.00" className={`${inputBase} pl-12`} />
+                      <input name="obligations" type="number" value={values.obligations} onChange={handleChange} onBlur={handleBlur} placeholder="0.00" className={`${inputBase} pl-12 ${errors.obligations ? inputError : ''}`} />
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">ر.س</span>
                     </div>
-                    {touched.obligations && errors.obligations && <span className={fieldError}>{errors.obligations}</span>}
+                    {errors.obligations && <span className={fieldError}>{errors.obligations}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>سبب إنشاء الحساب</label>
-                    <input name="creationReason" value={values.creationReason} onChange={handleChange} onBlur={handleBlur} placeholder="تمويل، تجارة، إلخ" className={inputBase} />
-                    {touched.creationReason && errors.creationReason && <span className={fieldError}>{errors.creationReason}</span>}
+                    <label className={labelBase}>سبب إنشاء الحساب <span className={labelRequired}>*</span></label>
+                    <input name="creationReason" value={values.creationReason} onChange={handleChange} onBlur={handleBlur} placeholder="تمويل، تجارة، إلخ" className={`${inputBase} ${errors.creationReason ? inputError : ''}`} />
+                    {errors.creationReason && <span className={fieldError}>{errors.creationReason}</span>}
                   </div>
                   <div className="md:col-span-2 flex flex-col gap-1.5">
                     <label className={labelBase}>ملاحظات إضافية (اختياري)</label>
@@ -402,10 +453,12 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                         e.stopPropagation();
                         const newValue = !values.hasKafeel;
                         setFieldValue('hasKafeel', newValue, false);
+                        setHasKafeel(newValue);
                         if (newValue && (!values.kafeels || values.kafeels.length === 0)) {
                           setFieldValue('kafeels', [getInitialKafeelValues()], false);
                         } else if (!newValue) {
                           setFieldValue('kafeels', [], false);
+                          if (activeStep > 1) setActiveStep(1);
                         }
                       }}
                       className="relative w-14 h-7 rounded-full transition-colors focus:outline-none"
@@ -418,8 +471,7 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                   </div>
                 </div>
               )}
-
-              {activeStep === 1 && values.hasKafeel && values.kafeels?.length > 0 && (
+              {activeStep === 1 && hasKafeel && values.kafeels?.length > 0 && (
                 <div className="space-y-8">
                   {values.kafeels.map((kafeel, index) => (
                     <div key={index}>
@@ -432,6 +484,8 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                             setFieldValue('kafeels', newKafeels);
                             if (newKafeels.length === 0) {
                               setFieldValue('hasKafeel', false);
+                              setHasKafeel(false);
+                              if (activeStep > 1) setActiveStep(1);
                               setUploadedFiles((prev) => {
                                 const next = { ...prev };
                                 Object.keys(next).forEach((k) => { if (k.startsWith('kafeels[')) delete next[k]; });
@@ -459,30 +513,38 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                         </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {['name', 'nationalId', 'birthDate'].map((field) => (
-                          <div key={field} className="flex flex-col gap-1.5">
-                            <label className={labelBase}>{field === 'name' ? 'اسم الكفيل' : field === 'nationalId' ? 'رقم هوية الكفيل' : 'تاريخ الميلاد (اختياري)'}</label>
-                            <input name={`kafeels[${index}][${field}]`} type={field === 'birthDate' ? 'date' : 'text'} value={kafeel[field] || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
-                            {touched[`kafeels[${index}][${field}]`] && errors[`kafeels[${index}][${field}]`] && <span className={fieldError}>{errors[`kafeels[${index}][${field}]`]}</span>}
-                          </div>
-                        ))}
+                        {['name', 'nationalId', 'birthDate'].map((field) => {
+                          const path = `kafeels.${index}.${field}`;
+                          const err = errors[path];
+                          return (
+                            <div key={field} className="flex flex-col gap-1.5">
+                              <label className={labelBase}>{field === 'name' ? <>اسم الكفيل <span className={labelRequired}>*</span></> : field === 'nationalId' ? <>رقم هوية الكفيل <span className={labelRequired}>*</span></> : 'تاريخ الميلاد (اختياري)'}</label>
+                              <input name={`kafeels[${index}][${field}]`} type={field === 'birthDate' ? 'date' : 'text'} value={kafeel[field] || ''} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${err ? inputError : ''}`} />
+                              {err && <span className={fieldError}>{err}</span>}
+                            </div>
+                          );
+                        })}
                         <div className="flex flex-col gap-1.5">
-                          <label className={labelBase}>رقم جوال الكفيل</label>
-                          <div className="flex gap-2">
-                            <select name={`kafeels[${index}][phoneCode]`} value={kafeel.phoneCode || '+966'} onChange={handleChange} onBlur={handleBlur} className={inputBase} style={{ width: '85px', minWidth: '85px', flexShrink: 0 }}>
+                          <label className={labelBase}>رقم جوال الكفيل <span className={labelRequired}>*</span></label>
+                          <div className="flex gap-3">
+                            <select name={`kafeels[${index}][phoneCode]`} value={kafeel.phoneCode || '+966'} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors[`kafeels.${index}.phoneCode`] || errors[`kafeels.${index}.phone`] ? inputError : ''}`} style={{ width: '110px', minWidth: '110px', flexShrink: 0 }}>
                               {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
                             </select>
-                            <input name={`kafeels[${index}][phone]`} value={kafeel.phone || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} style={{ flex: 1, minWidth: 0, textAlign: 'left' }} dir="ltr" />
+                            <input name={`kafeels[${index}][phone]`} value={kafeel.phone || ''} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors[`kafeels.${index}.phone`] ? inputError : ''} flex-1 min-w-[140px]`} style={{ textAlign: 'left' }} dir="ltr" />
                           </div>
-                          {touched[`kafeels[${index}][phone]`] && errors[`kafeels[${index}][phone]`] && <span className={fieldError}>{errors[`kafeels[${index}][phone]`]}</span>}
+                          {(errors[`kafeels.${index}.phone`] || errors[`kafeels.${index}.phoneCode`]) && <span className={fieldError}>{errors[`kafeels.${index}.phone`] || errors[`kafeels.${index}.phoneCode`]}</span>}
                         </div>
-                        {['email', 'city', 'district', 'employer', 'salary', 'obligations'].map((field) => (
-                          <div key={field} className="flex flex-col gap-1.5">
-                            <label className={labelBase}>{field === 'email' ? 'البريد الإلكتروني (اختياري)' : field === 'city' ? 'المدينة' : field === 'district' ? 'الحي' : field === 'employer' ? 'جهة عمل الكفيل' : field === 'salary' ? 'راتب الكفيل' : 'التزامات الكفيل'}</label>
-                            <input name={`kafeels[${index}][${field}]`} type={field === 'email' ? 'email' : field === 'salary' || field === 'obligations' ? 'number' : 'text'} value={kafeel[field] || ''} onChange={handleChange} onBlur={handleBlur} className={inputBase} />
-                            {touched[`kafeels[${index}][${field}]`] && errors[`kafeels[${index}][${field}]`] && <span className={fieldError}>{errors[`kafeels[${index}][${field}]`]}</span>}
-                          </div>
-                        ))}
+                        {['email', 'city', 'district', 'employer', 'salary', 'obligations'].map((field) => {
+                          const path = `kafeels.${index}.${field}`;
+                          const err = errors[path];
+                          return (
+                            <div key={field} className="flex flex-col gap-1.5">
+                              <label className={labelBase}>{field === 'email' ? 'البريد الإلكتروني (اختياري)' : field === 'city' ? <>المدينة <span className={labelRequired}>*</span></> : field === 'district' ? <>الحي <span className={labelRequired}>*</span></> : field === 'employer' ? <>جهة عمل الكفيل <span className={labelRequired}>*</span></> : field === 'salary' ? <>راتب الكفيل <span className={labelRequired}>*</span></> : <>التزامات الكفيل <span className={labelRequired}>*</span></>}</label>
+                              <input name={`kafeels[${index}][${field}]`} type={field === 'email' ? 'email' : field === 'salary' || field === 'obligations' ? 'number' : 'text'} value={kafeel[field] || ''} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${err ? inputError : ''}`} />
+                              {err && <span className={fieldError}>{err}</span>}
+                            </div>
+                          );
+                        })}
                       </div>
                       {index < values.kafeels.length - 1 && <div className="border-t border-slate-200 dark:border-slate-700 my-6" />}
                     </div>
@@ -496,67 +558,36 @@ const AddClientForm = ({ onSuccess, onCancel }) => {
                   </div>
                 </div>
               )}
-
-              {activeStep === 1 && !values.hasKafeel && (
-                <div className="p-6 bg-primary/5 rounded-xl border border-primary/10 text-center">
-                  <Info sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                  <p className="text-slate-700 dark:text-slate-300">تم تعطيل معلومات الكفيل. يمكنك المتابعة إلى الخطوة التالية.</p>
-                </div>
-              )}
-
-              {activeStep === 2 && (
+              {(activeStep === 2 && hasKafeel) || (activeStep === 1 && !hasKafeel) ? (
                 <div className="space-y-6">
                   <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2"><CloudUpload sx={{ color: 'primary.main' }} />مستندات العميل</h2>
                   {!uploadedFiles.clientIdImage && (
                     <p className="text-sm text-amber-600 dark:text-amber-400">صورة هوية العميل مطلوبة</p>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <DocumentDropzone fieldName="clientIdImage" label="صورة هوية العميل" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                    <DocumentDropzone fieldName="clientWorkCard" label="بطاقة عمل العميل (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                    <DocumentDropzone fieldName="salaryReport" label="تقرير الراتب (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }} />
-                    <DocumentDropzone fieldName="simaReport" label="تقرير سمة (اختياري)" acceptedTypes={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] }} />
+                    <DocumentDropzone fieldName="clientIdImage" label="صورة هوية العميل" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'], 'application/pdf': ['.pdf'] }} />
+                    <DocumentDropzone fieldName="clientWorkCard" label="بطاقة عمل العميل" acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'], 'application/pdf': ['.pdf'] }} />
                   </div>
-                  {values.hasKafeel && values.kafeels?.length > 0 && values.kafeels.map((_, index) => (
-                    <div key={index}>
-                      <h2 className="text-lg font-bold text-slate-800 dark:text-white mt-8 mb-4 flex items-center gap-2"><ContactPage sx={{ color: 'primary.main' }} />مستندات الكفيل {index + 1}</h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <DocumentDropzone fieldName={`kafeels[${index}][kafeelIdImage]`} label={`صورة هوية الكفيل ${index + 1} (اختياري)`} acceptedTypes={{ 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                        <DocumentDropzone fieldName={`kafeels[${index}][kafeelWorkCard]`} label={`بطاقة عمل الكفيل ${index + 1} (اختياري)`} acceptedTypes={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }} />
-                      </div>
-                    </div>
-                  ))}
                 </div>
+              ) : null}
+            </div>
+            <div className="flex justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <button type="button" onClick={handleBack} className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                رجوع
+              </button>
+              {activeStep < (hasKafeel ? 2 : 1) ? (
+                <button type="button" onClick={handleNextWithValidation} className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white">
+                  التالي
+                </button>
+              ) : (
+                <button type="button" onClick={() => submitForm()} className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white" disabled={isSubmitting}>
+                  {isSubmitting ? 'جاري الإضافة...' : 'إضافة العميل'}
+                </button>
               )}
             </div>
-
-            <div className="px-0 py-6 mt-8 border-t border-primary/10 flex justify-between items-center">
-              <button type="button" onClick={onCancel} className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                إلغاء العملية
-              </button>
-              <div className="flex gap-3">
-                {activeStep > 0 && (
-                  <button type="button" onClick={handleBack} disabled={isSubmitting} className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
-                    <ArrowForward sx={{ fontSize: 20 }} />رجوع
-                  </button>
-                )}
-                {activeStep < steps.length - 1 ? (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={(activeStep === 1 && values.hasKafeel && values.kafeels?.some((k) => !k.name || !k.nationalId || !k.phoneCode || !k.phone || !k.city || !k.district || !k.employer || !k.salary || k.obligations === '' || k.obligations == null)) || (activeStep === 0 && (!values.name || !values.phoneCode || !values.phone || !values.nationalId || !values.city || !values.district || !values.address || !values.employer || !values.salary || values.obligations === '' || values.obligations == null || !values.creationReason))}
-                    className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
-                  >
-                    التالي<span className="rotate-180 inline-block"><ArrowForward sx={{ fontSize: 20 }} /></span>
-                  </button>
-                ) : (
-                  <button type="button" onClick={submitForm} disabled={isSubmitting || !uploadedFiles.clientIdImage} className="px-8 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-70">
-                    {isSubmitting ? <><span className="animate-spin inline-block"><Autorenew sx={{ fontSize: 20 }} /></span>جاري الإضافة...</> : <><CheckCircle sx={{ fontSize: 20 }} />إضافة العميل</>}
-                  </button>
-                )}
-              </div>
-            </div>
           </Form>
-        )}
+          );
+        }}
       </Formik>
     </div>
   );

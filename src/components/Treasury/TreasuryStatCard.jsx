@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
-
 export default function TreasuryStatCard({
   icon: Icon,
   iconColor,
@@ -47,4 +46,4 @@ export default function TreasuryStatCard({
       </CardContent>
     </Card>
   );
-}
+}

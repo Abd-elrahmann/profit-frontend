@@ -1,9 +1,7 @@
 import React from 'react';
 import { TrendingUp, ListAlt, CalendarToday, AccountBalanceWallet } from '@mui/icons-material';
-
 const ExpensesSummaryCards = ({ totalAmount, totalCount }) => {
   if (!totalAmount && !totalCount) return null;
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 w-full md:w-auto md:min-w-[400px]">
       <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between overflow-hidden relative group">
@@ -20,7 +18,6 @@ const ExpensesSummaryCards = ({ totalAmount, totalCount }) => {
         </div>
         <div className="absolute -right-4 -bottom-4 size-32 bg-primary/5 rounded-full" />
       </div>
-
       <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-primary/10 shadow-sm flex items-center justify-between overflow-hidden relative group">
         <div className="relative z-10">
           <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">إجمالي مبالغ المصروفات</p>
@@ -40,5 +37,4 @@ const ExpensesSummaryCards = ({ totalAmount, totalCount }) => {
     </div>
   );
 };
-
 export default React.memo(ExpensesSummaryCards);

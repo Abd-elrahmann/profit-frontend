@@ -1,9 +1,7 @@
 import React from 'react';
 import { Box, Button, CircularProgress } from '@mui/material';
 import { PictureAsPdf, TableChart, Search, RestartAlt } from '@mui/icons-material';
-
 const iconSx = { marginLeft: '10px' };
-
 const GeneralLedgerToolbar = ({
   isSmallScreen,
   hasExportPermission,
@@ -81,7 +79,6 @@ const GeneralLedgerToolbar = ({
         </Button>
       </Box>
     )}
-
     <Box
       sx={{
         display: 'flex',
@@ -123,5 +120,4 @@ const GeneralLedgerToolbar = ({
     </Box>
   </Box>
 );
-
-export default React.memo(GeneralLedgerToolbar);
+export default React.memo(GeneralLedgerToolbar);

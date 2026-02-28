@@ -1,7 +1,6 @@
 import React from 'react';
 import { Paper, Grid, Typography, Autocomplete, TextField } from '@mui/material';
 import { ALL_MONTHS } from './constants';
-
 export default function TreasuryMonthYearFilter({
   selectedMonth,
   selectedYear,
@@ -19,7 +18,6 @@ export default function TreasuryMonthYearFilter({
       : selectedYear
         ? `عرض بيانات سنة ${selectedYear}`
         : 'عرض جميع البيانات';
-
   return (
     <Paper
       sx={{
@@ -92,4 +90,4 @@ export default function TreasuryMonthYearFilter({
       </Grid>
     </Paper>
   );
-}
+}

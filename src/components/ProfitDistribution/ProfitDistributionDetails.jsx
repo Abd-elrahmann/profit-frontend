@@ -15,7 +15,6 @@ import {
   calculateProfitAfterSaving,
   getJournalStatusText,
 } from "./profitDistributionUtils";
-
 export default function ProfitDistributionDetails({
   periodData,
   theme,
@@ -38,7 +37,6 @@ export default function ProfitDistributionDetails({
     enableSaving,
     savingPercentage
   );
-
   const partnerProfitDisplay =
     enableSaving && savingPercentage > 0
       ? formatNumber(profitAfterSaving.partnerProfit)
@@ -50,34 +48,28 @@ export default function ProfitDistributionDetails({
             ) ||
             0
         );
-
   const savedAmountDisplay =
     enableSaving && savingPercentage > 0
       ? profitAfterSaving.savedAmount
       : periodData?.totalSaving ||
         periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) ||
         0;
-
   const showSavingCard =
     (enableSaving && savingPercentage > 0) ||
     (periodData?.totalSaving > 0) ||
     periodData?.partners?.some((p) => (p.savingAmount || 0) > 0);
-
   const distributed = hasDistribution(periodData);
   const partners = periodData?.partners || [];
   const distributionJournal = periodData?.distributionJournal;
-
   const fmt = (n) => (n ?? 0).toLocaleString("en-US");
-
   const formatDateDisplay = (dateStr, hijriStr) => {
     if (!dateStr) return "-";
     const g = new Date(dateStr).toISOString().slice(0, 10).replace(/-/g, "/");
     return hijriStr ? `${g} (${hijriStr})` : g;
   };
-
   return (
     <div className="flex flex-col gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto w-full px-2 sm:px-4">
-      {/* Title & Export */}
+      {}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
@@ -116,15 +108,13 @@ export default function ProfitDistributionDetails({
           </div>
         )}
       </div>
-
-      {/* Distribution Alert - at top */}
+      {}
       {distributed && (
         <Alert severity="success" sx={{ flex: 1 }}>
           تم توزيع الأرباح بنجاح
         </Alert>
       )}
-
-      {/* Distribution Actions (saving, distribute, unpost) - when not distributed */}
+      {}
       {!distributed && permissions?.includes("distribution_Post") && (
         <ProfitDistributionActions
           periodData={periodData}
@@ -138,8 +128,7 @@ export default function ProfitDistributionDetails({
           selectedPeriod={selectedPeriod}
         />
       )}
-
-      {/* 1. Summary Cards */}
+      {}
       <div
         className={`grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4 ${
           showSavingCard ? "lg:grid-cols-4" : "lg:grid-cols-3"
@@ -189,8 +178,7 @@ export default function ProfitDistributionDetails({
           </p>
         </div>
       </div>
-
-      {/* Saving Info Alert */}
+      {}
       {(enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) ? (
         <Alert severity="info">
           <div className="space-y-1">
@@ -210,8 +198,7 @@ export default function ProfitDistributionDetails({
           </div>
         </Alert>
       ) : null}
-
-      {/* 2. Partners Table */}
+      {}
       {partners.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -221,7 +208,7 @@ export default function ProfitDistributionDetails({
             </h2>
           </div>
           <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-x-auto shadow-sm">
-            {/* Mobile: Cards */}
+            {}
             <div className="md:hidden divide-y divide-primary/5">
               {partners.map((partner) => (
                 <div key={partner.partnerId} className="p-4">
@@ -251,8 +238,7 @@ export default function ProfitDistributionDetails({
                 </div>
               ))}
             </div>
-
-            {/* Desktop: Table */}
+            {}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-center text-sm">
                 <thead className="bg-primary/5 text-primary border-b border-primary/10">
@@ -322,8 +308,7 @@ export default function ProfitDistributionDetails({
           </div>
         </div>
       )}
-
-      {/* 3. Distribution Journal Card */}
+      {}
       {distributionJournal && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -377,4 +362,4 @@ export default function ProfitDistributionDetails({
       )}
     </div>
   );
-}
+}

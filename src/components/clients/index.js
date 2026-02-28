@@ -8,4 +8,4 @@ export { default as ClientsStatementTab } from "./ClientsStatementTab";
 export { default as ClientsLoansTab } from "./ClientsLoansTab";
 export * from "./clientsApi";
 export * from "./clientsUtils";
-export * from "./constants";
+export * from "./constants";

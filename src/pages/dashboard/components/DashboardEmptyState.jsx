@@ -1,5 +1,4 @@
 import React from 'react';
-
 const DashboardEmptyState = React.memo(() => (
   <div className="min-h-screen flex justify-center items-center bg-[#f6f8f6] dark:bg-[#141e16] py-4">
     <div className="text-center">
@@ -12,7 +11,5 @@ const DashboardEmptyState = React.memo(() => (
     </div>
   </div>
 ));
-
 DashboardEmptyState.displayName = 'DashboardEmptyState';
-
-export default DashboardEmptyState;
+export default DashboardEmptyState;

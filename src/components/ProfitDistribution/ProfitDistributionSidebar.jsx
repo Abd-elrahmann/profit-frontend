@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import { Check as CheckIcon, Cancel as CancelIcon, Savings as SavingsIcon } from "@mui/icons-material";
 import { formatNumber, hasDistribution } from "./profitDistributionUtils";
-
 export default function ProfitDistributionSidebar({
   periodData,
   theme,
@@ -24,7 +23,6 @@ export default function ProfitDistributionSidebar({
   selectedPeriod,
 }) {
   const distributed = hasDistribution(periodData);
-
   const partnerProfitDisplay =
     enableSaving && savingPercentage > 0
       ? formatNumber(profitAfterSaving.partnerProfit)
@@ -36,14 +34,12 @@ export default function ProfitDistributionSidebar({
             ) ||
             0
         );
-
   const savedAmountDisplay =
     enableSaving && savingPercentage > 0
       ? profitAfterSaving.savedAmount
       : periodData?.totalSaving ||
         periodData?.partners?.reduce((sum, p) => sum + (p.savingAmount || 0), 0) ||
         0;
-
   return (
     <Box
       sx={{
@@ -88,7 +84,6 @@ export default function ProfitDistributionSidebar({
                 }
                 label="هل تريد الادخار من هذا التوزيع؟"
               />
-
               {enableSaving && (
                 <Box
                   sx={{
@@ -123,7 +118,6 @@ export default function ProfitDistributionSidebar({
               )}
             </Box>
           )}
-
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>أرباح الشركة:</Typography>
             <Typography fontWeight="bold" color={theme.palette.primary.main}>
@@ -136,7 +130,6 @@ export default function ProfitDistributionSidebar({
               {partnerProfitDisplay}
             </Typography>
           </Box>
-
           {(enableSaving && savingPercentage > 0) || (periodData?.totalSaving > 0) ? (
             <Box
               sx={{
@@ -165,7 +158,6 @@ export default function ProfitDistributionSidebar({
               </Typography>
             </Box>
           ) : null}
-
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>عدد الشركاء:</Typography>
             <Typography fontWeight="bold" color={theme.palette.text.primary}>
@@ -182,7 +174,6 @@ export default function ProfitDistributionSidebar({
           </Box>
         </Stack>
       </Box>
-
       <Box sx={{ p: 3 }}>
         <Typography
           variant="h6"
@@ -212,7 +203,6 @@ export default function ProfitDistributionSidebar({
               توزيع الأرباح
             </Button>
           )}
-
           {distributed && permissions?.includes("distribution_Post") && (
             <Button
               variant="outlined"
@@ -239,4 +229,4 @@ export default function ProfitDistributionSidebar({
       </Box>
     </Box>
   );
-}
+}

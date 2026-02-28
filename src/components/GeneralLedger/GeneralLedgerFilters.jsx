@@ -3,9 +3,7 @@ import { Autocomplete, TextField } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { getAccounts } from '../../pages/generalLedger/generalLedgerApi';
-
 import { AccountTree, Search, ImportExport, PictureAsPdf, TableChart } from '@mui/icons-material';
-
 const GeneralLedgerFilters = ({
   account,
   fromDate,
@@ -23,7 +21,6 @@ const GeneralLedgerFilters = ({
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
-
   useEffect(() => {
     let cancelled = false;
     const fetch = async () => {
@@ -40,11 +37,9 @@ const GeneralLedgerFilters = ({
     fetch();
     return () => { cancelled = true; };
   }, [inputValue]);
-
   const handleSearch = () => {
     if (account) onSearch?.();
   };
-
   return (
     <section className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
@@ -173,5 +168,4 @@ const GeneralLedgerFilters = ({
     </section>
   );
 };
-
 export default React.memo(GeneralLedgerFilters);

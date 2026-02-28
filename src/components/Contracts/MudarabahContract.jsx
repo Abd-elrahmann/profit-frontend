@@ -1,6 +1,4 @@
-
 import React from 'react';
-
 const MudarabahContract = () => {
   return `
 <style>
@@ -8,7 +6,6 @@ const MudarabahContract = () => {
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .contract-wrapper {
     background: #f8f9fc;
     padding: 15px;
@@ -16,7 +13,6 @@ const MudarabahContract = () => {
     direction: rtl;
     text-align: right;
   }
-
   .contract-container {
     max-width: 900px;
     margin: auto;
@@ -26,7 +22,6 @@ const MudarabahContract = () => {
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
-
   .contract-header {
     display: flex;
     justify-content: space-between;
@@ -36,13 +31,11 @@ const MudarabahContract = () => {
     margin-bottom: 15px;
     page-break-inside: avoid;
   }
-
   .header-left {
     display: flex;
     gap: 8px;
     align-items: center;
   }
-
   .contract-logo {
     max-width: 40px;
     max-height: 40px;
@@ -51,23 +44,19 @@ const MudarabahContract = () => {
     object-fit: contain;
     border-radius: 8px;
   }
-
   .contract-title {
     font-size: 24px;
     font-weight: bold;
     color: #2e7d32;
   }
-
   .contract-dates {
     font-size: 14px;
     color: #555;
     text-align: left;
   }
-
   .contract-dates p {
     margin: 5px 0;
   }
-
   .section-title {
     font-size: 18px;
     font-weight: bold;
@@ -76,16 +65,13 @@ const MudarabahContract = () => {
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
   }
-
   .clauses-section {
     page-break-before: always !important;
     page-break-inside: avoid !important;
   }
-
   .clauses-container {
     page-break-inside: avoid;
   }
-
   .parties-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -93,7 +79,6 @@ const MudarabahContract = () => {
     margin-bottom: 30px;
     page-break-inside: avoid;
   }
-
   .party-card {
     background: #ffffff;
     padding: 20px;
@@ -101,7 +86,6 @@ const MudarabahContract = () => {
     border: 1px solid rgba(46, 139, 69, 0.2);
     page-break-inside: avoid;
   }
-
   .party-title {
     font-size: 18px;
     font-weight: bold;
@@ -110,16 +94,13 @@ const MudarabahContract = () => {
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
   }
-
   .sub-party {
     margin-bottom: 20px;
     page-break-inside: avoid;
   }
-
   .sub-party:last-child {
     margin-bottom: 0;
   }
-
   .sub-party-title {
     font-size: 16px;
     font-weight: bold;
@@ -127,11 +108,9 @@ const MudarabahContract = () => {
     margin-bottom: 10px;
     padding-right: 10px;
   }
-
   .party-details {
     margin-bottom: 15px;
   }
-
   .detail-row {
     display: flex;
     justify-content: space-between;
@@ -140,14 +119,12 @@ const MudarabahContract = () => {
     border-bottom: 1px solid rgba(46, 139, 69, 0.1);
     page-break-inside: avoid;
   }
-
   .detail-label {
     color: #666;
     font-weight: 500;
     font-size: 14px;
     min-width: 120px;
   }
-
   .detail-value {
     color: #111;
     font-weight: bold;
@@ -155,7 +132,6 @@ const MudarabahContract = () => {
     text-align: left;
     flex: 1;
   }
-
   .party-reference {
     color: #777;
     font-size: 13px;
@@ -163,7 +139,6 @@ const MudarabahContract = () => {
     padding-top: 10px;
     border-top: 1px solid rgba(46, 139, 69, 0.2);
   }
-
   .preamble-box {
     background: #ffffff;
     padding: 20px;
@@ -173,7 +148,6 @@ const MudarabahContract = () => {
     page-break-inside: avoid;
     page-break-after: avoid !important;
   }
-
   .preamble-title {
     font-size: 18px;
     font-weight: bold;
@@ -182,14 +156,12 @@ const MudarabahContract = () => {
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(46, 139, 69, 0.2);
   }
-
   .preamble-text {
     font-size: 14px;
     color: #333;
     line-height: 1.8;
     text-align: justify;
   }
-
   .clause {
     background: #ffffff;
     padding: 20px;
@@ -198,11 +170,9 @@ const MudarabahContract = () => {
     margin-bottom: 20px;
     page-break-inside: avoid;
   }
-
   .clause:last-child {
     margin-bottom: 10px; 
   }
-
   .clause-title {
     font-size: 16px;
     font-weight: bold;
@@ -213,35 +183,29 @@ const MudarabahContract = () => {
     border-radius: 4px;
     border-bottom: 1px solid rgba(46, 139, 69, 0.2);
   }
-
   .clause-content {
     font-size: 14px;
     color: #333;
     line-height: 1.8;
   }
-
   .clause-content p {
     margin-bottom: 10px;
     page-break-inside: avoid;
   }
-
   .clause-content p:last-child {
     margin-bottom: 0;
   }
-
   .clause-text {
     font-size: 14px;
     color: #333;
     line-height: 1.8;
   }
-
   .clause-list {
     list-style: none;
     padding: 0;
     margin: 15px 0;
     page-break-inside: avoid;
   }
-
   .clause-list li {
     padding: 8px 0;
     padding-right: 25px;
@@ -249,7 +213,6 @@ const MudarabahContract = () => {
     border-bottom: 1px solid rgba(46, 139, 69, 0.1);
     page-break-inside: avoid;
   }
-
   .clause-list li:before {
     content: "•";
     color: #2E8B45;
@@ -259,11 +222,9 @@ const MudarabahContract = () => {
     right: 0;
     top: 5px;
   }
-
   .clause-list li:last-child {
     border-bottom: none;
   }
-
   .percentage {
     display: inline-block;
     background: #2E8B45;
@@ -274,7 +235,6 @@ const MudarabahContract = () => {
     font-weight: 600;
     margin-left: 5px;
   }
-
   .placeholder {
     color: #2E8B45;
     font-weight: 600;
@@ -283,30 +243,25 @@ const MudarabahContract = () => {
     border-radius: 4px;
     border: 1px solid rgba(46, 139, 69, 0.3);
   }
-
   .clause-content strong {
     color: #2E8B45 !important;
   }
-
   .signatures-section {
     margin-top: 30px; 
     padding-top: 20px;
     border-top: 2px solid rgba(46, 139, 69, 0.2);
     page-break-inside: avoid;
   }
-
   .signatures-header {
     text-align: center;
     margin-bottom: 20px; 
     page-break-inside: avoid;
   }
-
   .signatures-title {
     font-size: 18px;
     font-weight: bold;
     color: #2e7d32;
   }
-
   .signatures-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -314,7 +269,6 @@ const MudarabahContract = () => {
     margin-bottom: 15px; 
     page-break-inside: avoid;
   }
-
   .signature-box {
     text-align: center;
     padding: 0;
@@ -322,19 +276,16 @@ const MudarabahContract = () => {
     border: none;
     page-break-inside: avoid;
   }
-
   .signature-party {
     font-size: 16px;
     font-weight: bold;
     color: #000;
       margin-bottom: 15px; 
   }
-
   .signature-details {
     margin-bottom: 15px; 
     page-break-inside: avoid;
   }
-
   .signature-name {
     color: #555;
     font-size: 15px;
@@ -342,59 +293,49 @@ const MudarabahContract = () => {
     margin-bottom: 20px; 
     font-weight: 600;
   }
-
   .signature-line {
     width: 80%;
     height: 1px;
     background: #222;
     margin: 20px auto; 
   }
-
   .signature-fields {
     color: #666;
     font-size: 14px;
     margin-top: 20px; 
   }
-
   .signature-fields p {
     margin: 8px 0; 
   }
-
   .english-number {
     font-family: 'Arial', sans-serif;
     direction: ltr;
     unicode-bidi: embed;
   }
-
   @media (max-width: 768px) {
     .parties-grid,
     .signatures-grid {
       grid-template-columns: 1fr;
     }
-    
     .contract-header {
       flex-direction: column;
       align-items: flex-start;
       gap: 15px;
     }
-    
     .contract-dates {
       text-align: right;
     }
   }
-
   @media print {
     @page {
       size: A4;
       margin: 10mm;
     }
-
     .contract-wrapper {
       background: #fff !important;
       padding: 0 !important;
       margin: 0 !important;
     }
-
     .contract-container {
       margin: 0 auto !important;
       padding: 15mm !important;
@@ -404,27 +345,22 @@ const MudarabahContract = () => {
       max-width: 180mm !important;
       background: #fff !important;
     }
-    
     * {
       word-wrap: break-word !important;
       overflow-wrap: break-word !important;
       -webkit-print-color-adjust: exact !important;
       color-adjust: exact !important;
     }
-    
     .clauses-section {
       page-break-before: always !important;
       break-before: page !important;
     }
-    
     .preamble-box {
       page-break-after: avoid !important;
     }
-    
     .signatures-section { 
       page-break-inside: avoid !important;
     }
-    
     .contract-header,
     .section-title,
     .party-card,
@@ -434,39 +370,31 @@ const MudarabahContract = () => {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
-    
     .parties-grid {
       margin-bottom: 10px;
     }
-    
     .party-card {
       padding: 15px;
     }
-    
     .clause {
       padding: 15px;
       margin-bottom: 15px;
     }
-    
     .clause:last-child {
       margin-bottom: 10px !important;
     }
-    
     .preamble-box {
       padding: 15px;
       margin-bottom: 15px;
     }
-    
     .signatures-grid {
       gap: 15px;
       margin-bottom: 10px;
     }
-    
     .signatures-section {
       margin-top: 15px !important;
       padding-top: 15px !important;
     }
-    
     .clause-content p,
     .preamble-text,
     .clause-text,
@@ -475,83 +403,66 @@ const MudarabahContract = () => {
       widows: 3;
       page-break-inside: avoid;
     }
-    
     .clause-list li {
       page-break-inside: avoid;
     }
-    
     .detail-row,
     .clause-list li,
     .signature-line {
       border-color: #000 !important;
     }
-    
     .signature-box {
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
       padding: 0 !important;
     }
-    
     .percentage {
       background: #2E8B45 !important;
       color: white !important;
     }
-    
     .placeholder {
       background: transparent !important;
       border: 1px dashed #000 !important;
       color: #000 !important;
     }
-    
-  
     .section-title,
     .party-title,
     .preamble-title,
     .signature-party {
       color: #000 !important;
     }
-
     .clause-title {
       color: #2e7d32 !important;
     }
-
     .contract-title {
       color: #2e7d32 !important;
     }
-
     .signatures-title {
       color: #2e7d32 !important;
     }
-    
     .clause-content strong {
       color: #2E8B45 !important;
     }
-    
     .signature-name {
       color: #000 !important;
       font-weight: 700 !important;
     }
-    
     .signature-line {
       width: 80% !important;
       background: #000 !important;
       height: 1px !important;
     }
-    
     .clause:last-child {
       page-break-after: avoid !important;
     }
-    
     .signatures-section {
       page-break-before: avoid !important;
     }
   }
 </style>
-
 <div class="contract-wrapper">
   <div class="contract-container">
-    
     <div class="contract-header">
       <div class="header-left">
         <img src="/assets/images/logo.webp" alt="شعار الشركة" class="contract-logo" />
@@ -562,7 +473,6 @@ const MudarabahContract = () => {
         <p>بتاريخ <span class="placeholder">{{التاريخ_الهجري}}</span> الموافق <span class="placeholder">{{التاريخ_الميلادي}}</span></p>
       </div>
     </div>
-
     <section class="contract-section">
       <h2 class="section-title">أطراف العقد</h2>
       <div class="parties-grid">
@@ -584,10 +494,8 @@ const MudarabahContract = () => {
           </div>
           <p class="party-reference">ويشار إليه في هذا العقد ب "رب المال"</p>
         </div>
-
         <div class="party-card">
           <h3 class="party-title">الطرف الثاني (المضاربون)</h3>
-          
           <div class="sub-party">
             <h4 class="sub-party-title">المضارب الأول:</h4>
             <div class="party-details">
@@ -605,7 +513,6 @@ const MudarabahContract = () => {
               </div>
             </div>
           </div>
-
           <div class="sub-party">
             <h4 class="sub-party-title">المضارب الثاني:</h4>
             <div class="party-details">
@@ -623,12 +530,10 @@ const MudarabahContract = () => {
               </div>
             </div>
           </div>
-          
           <p class="party-reference">ويشار إليهما مجتمعين في هذا العقد ب "المضارب"</p>
         </div>
       </div>
     </section>
-
     <section class="contract-section">
       <div class="preamble-box">
         <h3 class="preamble-title">تمهيد</h3>
@@ -639,10 +544,8 @@ const MudarabahContract = () => {
         </p>
       </div>
     </section>
-
     <section class="contract-section clauses-section">
       <h2 class="section-title">بنود العقد</h2>
-      
       <div class="clauses-container">
         <div class="clause">
           <h4 class="clause-title">البند الأول: موضوع العقد</h4>
@@ -652,7 +555,6 @@ const MudarabahContract = () => {
             العقد.
           </p>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند الثاني: رأس المال</h4>
           <div class="clause-content">
@@ -661,7 +563,6 @@ const MudarabahContract = () => {
             ويعتبر توقيع الطرفين على هذا العقد بمثابة إيصال استلام.</p>
           </div>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند الثالث: طبيعة العمل</h4>
           <div class="clause-content">
@@ -670,14 +571,12 @@ const MudarabahContract = () => {
             <p>3. يُقر المضارب بأنه يعمل بشكل مشترك ومتضامن في إدارة هذه المضاربة، ويكونان مسؤولين بالتضامن تجاه رب المال عن أي التزامات تنشأ عن تعدٍ أو تقصير أو مخالفة لشروط العقد.</p>
           </div>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند الرابع: مدة العقد</h4>
           <p class="clause-text">
             مدة هذا العقد سنتان ميلاديتان كاملتان، تبدأ من تاريخ توقيعه. لا يتم تجديد العقد تلقائياً، ويتطلب تجديده اتفاقاً كتابياً جديداً بين الأطراف.
           </p>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند الخامس: قسمة الأرباح</h4>
           <div class="clause-content">
@@ -689,7 +588,6 @@ const MudarabahContract = () => {
             <p>2. يتم تقييم أصول المشروع وتحديد الأرباح بشكل دوري (ربع سنوي/نصف سنوي/سنوي) بناءً على تقارير مالية يقدمها المضارب.</p>
           </div>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند السادس: الخسارة</h4>
           <div class="clause-content">
@@ -697,14 +595,12 @@ const MudarabahContract = () => {
             <p>2. استثناءً مما ورد أعلاه، يضمن المضارب رأس المال ويتحمل الخسارة إذا ثبت أنها نشأت بسبب تعديه (مثل مخالفة شروط العقد) أو تقصيره (مثل الإهمال الجسيم في إدارة العمل).</p>
           </div>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند السابع: نفقات المضاربة</h4>
           <p class="clause-text">
             للمضارب أن يخصم من رأس مال المضاربة النفقات التشغيلية المعتادة والضرورية لسير العمل، مثل تكاليف التسويق، وشراء البضائع، وأي مصاريف أخرى يتطلبها المشروع، على أن يتم توثيق جميع هذه النفقات بفواتير رسمية.
           </p>
         </div>
-
         <div class="clause">
           <h4 class="clause-title">البند الثامن: إنهاء العقد</h4>
           <div class="clause-content">
@@ -720,7 +616,6 @@ const MudarabahContract = () => {
             <p>5. <strong>عدم المطالبة بالتعويض:</strong> لا يحق لأي طرف مطالبة الطرف الآخر بأي تعويضات عن الإنهاء ذاته، شريطة الالتزام بفترة الإشعار المسبق وإتمام عملية التصفية وتسوية المستحقات وفقاً للعقد.</p>
           </div>
         </div>
-
         <!-- البند التاسع -->
         <div class="clause">
           <h4 class="clause-title">البند التاسع: القوة القاهرة</h4>
@@ -728,7 +623,6 @@ const MudarabahContract = () => {
             لا يُحمّل أي من الأطراف المسؤولية عن أي تأخير أو عدم تنفيذ لالتزاماته نتيجة لظروف قوة قاهرة. ويلتزم الأطراف بالتعاون لمواجهة آثار هذه الظروف بأفضل الطرق الممكنة.
           </p>
         </div>
-
         <!-- البند العاشر -->
         <div class="clause">
           <h4 class="clause-title">البند العاشر: شروط خاصة</h4>
@@ -739,7 +633,6 @@ const MudarabahContract = () => {
             <p>4. بالاتفاق بين الطرفين، يجوز تخصيص نسبة من الأرباح المحققة لادخارها أو إعادة استثمارها بضمها إلى رأس المال، بهدف تعزيز استقرار المشروع المالي. يتم ذلك وفقاً لخطة مالية مدروسة يوافق عليها الطرفان، مع إمكانية مراجعتها وتعديلها بالاتفاق المشترك.</p>
           </div>
         </div>
-
         <!-- البند الحادي عشر -->
         <div class="clause">
           <h4 class="clause-title">البند الحادي عشر: حل النزاعات</h4>
@@ -747,7 +640,6 @@ const MudarabahContract = () => {
             في حال نشوء أي نزاع حول تفسير أو تنفيذ هذا العقد، يسعى الأطراف إلى حله ودياً. فإذا تعذر الحل الودي خلال ثلاثين يوماً، يكون الاختصاص القضائي للمحكمة المختصة في مدينة <span class="placeholder">{{مدينة_العقد}}</span> بالمملكة العربية السعودية.
           </p>
         </div>
-
         <!-- البند الثاني عشر -->
         <div class="clause">
           <h4 class="clause-title">البند الثاني عشر: القانون الحاكم</h4>
@@ -755,7 +647,6 @@ const MudarabahContract = () => {
             يخضع هذا العقد في تفسيره وتنفيذه وكافة جوانبه للأنظمة والقوانين المعمول بها في المملكة العربية السعودية.
           </p>
         </div>
-
         <!-- البند الثالث عشر -->
         <div class="clause">
           <h4 class="clause-title">البند الثالث عشر: أحكام عامة</h4>
@@ -767,13 +658,11 @@ const MudarabahContract = () => {
         </div>
       </div>
     </section>
-
     <!-- التوقيعات - مباشرة تحت آخر بند -->
     <section class="signatures-section">
       <div class="signatures-header">
         <h3 class="signatures-title">وعلى ما ذكر أعلاه، تم التوقيع</h3>
       </div>
-      
       <div class="signatures-grid">
         <!-- توقيع رب المال -->
         <div class="signature-box">
@@ -787,7 +676,6 @@ const MudarabahContract = () => {
             <p>التاريخ: ___________________</p>
           </div>
         </div>
-
         <!-- توقيع المضارب الأول -->
         <div class="signature-box">
           <h4 class="signature-party">الطرف الثاني (المضارب)</h4>
@@ -800,7 +688,6 @@ const MudarabahContract = () => {
             <p>التاريخ: ___________________</p>
           </div>
         </div>
-
         <!-- توقيع المضارب الثاني -->
         <div class="signature-box">
           <h4 class="signature-party">الطرف الثاني (المضارب)</h4>
@@ -815,10 +702,8 @@ const MudarabahContract = () => {
         </div>
       </div>
     </section>
-    
   </div>
 </div>
 `;
 };
-
 export default MudarabahContract;

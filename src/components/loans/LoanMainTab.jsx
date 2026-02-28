@@ -1,5 +1,4 @@
 import React from "react";
-
 const LoanMainTab = ({
   loansNeedingContracts,
   subTab,
@@ -9,7 +8,7 @@ const LoanMainTab = ({
 }) => {
   return (
     <div className="flex w-full flex-col">
-      {/* Alert for loans needing contracts */}
+      {}
       {loansNeedingContracts && loansNeedingContracts.length > 0 && (
         <div className="mb-6 flex flex-col gap-4 rounded-xl border-2 border-amber-500 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-900/20">
           <p className="text-sm font-bold text-amber-900 dark:text-amber-100">
@@ -39,8 +38,7 @@ const LoanMainTab = ({
           </div>
         </div>
       )}
-
-      {/* Sub-tabs for loan status filtering */}
+      {}
       <div className="mb-8">
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">
           تصفية حسب الحالة
@@ -69,5 +67,4 @@ const LoanMainTab = ({
     </div>
   );
 };
-
-export default LoanMainTab;
+export default LoanMainTab;

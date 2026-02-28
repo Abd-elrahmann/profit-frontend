@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dashboard as DashboardIcon,
@@ -33,7 +32,6 @@ import {
   Savings as SavingsIcon,
   Receipt as ReceiptIcon,
 } from '@mui/icons-material';
-
 export const parentOrder = [
   'الموظفين والصلاحيات',
   'العملاء والتحصيلات',
@@ -45,7 +43,6 @@ export const parentOrder = [
   'الزكاة والادخار',
   'القوالب والرسائل'
 ];
-
 export const parentIcons = {
   'الموظفين والصلاحيات': EngineeringIcon,
   'العملاء والتحصيلات': People,
@@ -57,7 +54,6 @@ export const parentIcons = {
   'الزكاة والادخار': ZakatIcon,
   'القوالب والرسائل': ArticleIcon,
 };
-
 export const parentColors = {
   'الموظفين والصلاحيات': '#D84315', 
   'العملاء والتحصيلات': '#00897B', 
@@ -69,7 +65,6 @@ export const parentColors = {
   'الزكاة والادخار': '#6A1B9A', 
   'القوالب والرسائل': '#424242', 
 };
-  
 export const sidebarItems = [
   {
     path: '/dashboard',
@@ -275,11 +270,9 @@ export const sidebarItems = [
     parent: 'القوالب والرسائل'
   }
 ];
-
 export const getSidebarMenuItems = () => {
   const groupedItems = {};
   const singleItems = [];
-
   sidebarItems.forEach(item => {
     if (item.parent) {
       if (!groupedItems[item.parent]) {
@@ -295,24 +288,19 @@ export const getSidebarMenuItems = () => {
       singleItems.push(item);
     }
   });
-
   const result = [];
-
   singleItems.forEach(item => {
     result.push(item);
   });
-
   parentOrder.forEach(parentLabel => {
     if (groupedItems[parentLabel]) {
       result.push(groupedItems[parentLabel]);
     }
   });
-
   Object.keys(groupedItems).forEach(parentLabel => {
     if (!parentOrder.includes(parentLabel)) {
       result.push(groupedItems[parentLabel]);
     }
   });
-
   return result;
-};
+};

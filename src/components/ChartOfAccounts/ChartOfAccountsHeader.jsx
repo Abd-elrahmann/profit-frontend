@@ -1,6 +1,5 @@
 import React from 'react';
 import { Add, Download, ExpandMore, PictureAsPdf, TableChart } from '@mui/icons-material';
-
 const ChartOfAccountsHeader = ({ onAddClick, onExportPDF, onExportExcel, canAdd, isSmallScreen }) => (
   <header className={`bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 ${isSmallScreen ? 'px-4 py-3 flex flex-col gap-3' : 'px-6 md:px-8 py-4 flex items-center justify-between'}`}>
     <h2 className={`font-bold text-slate-900 dark:text-slate-100 ${isSmallScreen ? 'text-lg' : 'text-xl'}`}>شجرة الحسابات</h2>
@@ -48,5 +47,4 @@ const ChartOfAccountsHeader = ({ onAddClick, onExportPDF, onExportExcel, canAdd,
     </div>
   </header>
 );
-
 export default React.memo(ChartOfAccountsHeader);

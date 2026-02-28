@@ -12,13 +12,12 @@ import WithdrawZakah from '../../components/modals/WithdrawZakah';
 import {
   ZakahStatsCards,
   ZakahTabs,
-  ZakahPartnersTable,
+  ZakahPartnersSection,
   ZakahPartnerDetails,
   ZakahAccountTab,
   ZakahPartnerSidebar,
   ZakahAccountSidebar,
 } from '../../components/Zakah';
-
 const Zakah = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedPartner, setSelectedPartner] = useState(null);
@@ -33,13 +32,10 @@ const Zakah = () => {
     new Date().getFullYear()
   );
   const [isExporting, setIsExporting] = useState(false);
-
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
-
   const [debouncedMonth, setDebouncedMonth] = useState(selectedFilterMonth);
   const [debouncedYear, setDebouncedYear] = useState(selectedFilterYear);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedMonth(selectedFilterMonth);
@@ -47,17 +43,14 @@ const Zakah = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [selectedFilterMonth, selectedFilterYear]);
-
   const isMobile = useMediaQuery('(max-width: 480px)');
   const isTablet = useMediaQuery('(max-width: 768px)');
   const isSmallScreen = isMobile || isTablet;
-
   const { data: partnerZakahData, isLoading: isPartnerLoading } = useQuery({
     queryKey: ['partner-zakah', selectedPartner],
     queryFn: () => getPartnerZakah(selectedPartner),
     enabled: !!selectedPartner && activeTab === 1,
   });
-
   const {
     data: accountReport,
     isLoading: isAccountLoading,
@@ -75,19 +68,16 @@ const Zakah = () => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
-
   const handleViewDetails = useCallback((partnerId, year) => {
     setSelectedPartner(partnerId);
     setSelectedYear(year);
     setActiveTab(1);
   }, []);
-
   const handleBackToList = useCallback(() => {
     setActiveTab(0);
     setSelectedPartner(null);
     setSelectedYear(null);
   }, []);
-
   const handleTabChange = useCallback((newTab) => {
     setActiveTab(newTab);
     if (newTab === 0) {
@@ -95,7 +85,6 @@ const Zakah = () => {
       setSelectedYear(null);
     }
   }, []);
-
   const handleWithdraw = useCallback(
     async (amount) => {
       try {
@@ -111,7 +100,6 @@ const Zakah = () => {
     },
     [queryClient]
   );
-
   const handleExportPDF = useCallback(async () => {
     let exportData, filters;
     if (activeTab === 2 && accountReport) {
@@ -124,7 +112,6 @@ const Zakah = () => {
       exportData = partnerZakahData;
       filters = { partner: selectedPartner, year: selectedYear };
     } else return;
-
     setIsExporting(true);
     try {
       await exportZakahToPDF(exportData, filters);
@@ -144,7 +131,6 @@ const Zakah = () => {
     selectedPartner,
     selectedYear,
   ]);
-
   const handleExportExcel = useCallback(async () => {
     let exportData, filters;
     if (activeTab === 2 && accountReport) {
@@ -157,7 +143,6 @@ const Zakah = () => {
       exportData = partnerZakahData;
       filters = { partner: selectedPartner, year: selectedYear };
     } else return;
-
     setIsExporting(true);
     try {
       await exportZakahToExcel(exportData, filters);
@@ -177,21 +162,17 @@ const Zakah = () => {
     selectedPartner,
     selectedYear,
   ]);
-
   const handleTotalsChange = useCallback((totals) => {
     setStatsTotals(totals);
   }, []);
-
   const hasAccountExportData =
     accountReport?.journalsByMonth &&
     Object.values(accountReport.journalsByMonth).some(
       (month) => Array.isArray(month.entries) && month.entries.length > 0
     );
-
   const hasPartnerExportData =
     (Array.isArray(partnerZakahData) && partnerZakahData.length > 0) ||
     (partnerZakahData && typeof partnerZakahData === 'object');
-
   return (
     <div
       dir="rtl"
@@ -201,7 +182,6 @@ const Zakah = () => {
         <title>الزكاة</title>
         <meta name="description" content="إدارة الزكاة" />
       </Helmet>
-
       <div
         className={`flex ${isSmallScreen ? 'flex-col' : 'flex-row-reverse'} flex-1 w-full`}
       >
@@ -212,7 +192,6 @@ const Zakah = () => {
             onYearChange={setSelectedYear}
           />
         )}
-
         {!isSmallScreen && activeTab === 2 && accountReport && (
           <ZakahAccountSidebar
             accountReport={accountReport}
@@ -220,7 +199,6 @@ const Zakah = () => {
             permissions={permissions}
           />
         )}
-
         <div className="flex-1 p-4 md:p-8 overflow-y-auto w-full">
           <div className="max-w-7xl mx-auto w-full space-y-8">
             {isSmallScreen && activeTab === 1 && (
@@ -233,7 +211,6 @@ const Zakah = () => {
                 </Typography>
               </div>
             )}
-
             <ZakahTabs
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -241,38 +218,22 @@ const Zakah = () => {
               isCompact={isSmallScreen}
               isMobile={isMobile}
             />
-
             {activeTab === 0 && (
               <>
                 {statsTotals && (
                   <ZakahStatsCards totals={statsTotals} />
                 )}
-                <div className="bg-white dark:bg-background-dark rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                        تفاصيل زكاة الشركاء
-                      </h3>
-                      <p className="text-sm text-slate-500 mt-1">
-                        عرض حالة دفع الزكاة لجميع الشركاء المسجلين
-                      </p>
-                    </div>
-                  </div>
-                  <div className="p-4 sm:p-6">
-                    <ZakahPartnersTable
-                      onViewDetails={handleViewDetails}
-                      isMobile={isMobile}
-                      isTablet={isTablet}
-                      isSmallScreen={isSmallScreen}
-                      selectedYear={tableYear}
-                      onYearChange={setTableYear}
-                      onTotalsChange={handleTotalsChange}
-                    />
-                  </div>
-                </div>
+                <ZakahPartnersSection
+                  onViewDetails={handleViewDetails}
+                  isMobile={isMobile}
+                  isTablet={isTablet}
+                  isSmallScreen={isSmallScreen}
+                  tableYear={tableYear}
+                  onYearChange={setTableYear}
+                  onTotalsChange={handleTotalsChange}
+                />
               </>
             )}
-
             {activeTab === 1 && (
               <>
                 {!selectedPartner ? (
@@ -304,7 +265,6 @@ const Zakah = () => {
                 )}
               </>
             )}
-
             {activeTab === 2 && (
               <ZakahAccountTab
                 accountReport={accountReport}
@@ -327,7 +287,6 @@ const Zakah = () => {
           </div>
         </div>
       </div>
-
       <WithdrawZakah
         open={withdrawDialogOpen}
         onClose={() => setWithdrawDialogOpen(false)}
@@ -337,5 +296,4 @@ const Zakah = () => {
     </div>
   );
 };
-
 export default Zakah;

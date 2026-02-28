@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-
 export const formatArabicDate = (date) => {
   return (
     dayjs(date).locale('ar').format('D [من] MMMM [الساعة] h:mm') +
@@ -8,10 +7,8 @@ export const formatArabicDate = (date) => {
     (dayjs(date).hour() < 12 ? 'صباحًا' : 'مساءً')
   );
 };
-
 export const groupExpensesByJournal = (expenses) => {
   if (!expenses) return [];
-
   const grouped = {};
   expenses.forEach((expense) => {
     const journalId = expense.journal;
@@ -30,7 +27,6 @@ export const groupExpensesByJournal = (expenses) => {
     grouped[journalId].totalAmount += expense.amount;
     grouped[journalId].types.add(expense.type);
   });
-
   return Object.values(grouped)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .map((group, index) => ({
@@ -38,4 +34,4 @@ export const groupExpensesByJournal = (expenses) => {
       id: index + 1,
       types: Array.from(group.types),
     }));
-};
+};

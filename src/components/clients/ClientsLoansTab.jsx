@@ -24,7 +24,6 @@ import {
   StyledTableRow,
 } from "../layouts/tableLayout";
 import { getStatusColor, getStatusText, getTypeText, getSourceText } from "./clientsUtils";
-
 export default function ClientsLoansTab({
   clientLoans,
   loansPage,
@@ -38,14 +37,12 @@ export default function ClientsLoansTab({
   const hasLoans = loans.length > 0;
   const totalPages = clientLoans?.totalPages || 1;
   const total = clientLoans?.total || 0;
-
   const renderTable = () => (
     <Box>
         <Paper sx={{ p: { xs: 2, md: 3 }, overflow: "auto" }}>
         <Typography variant="h6" mb={3}>
           سلفات العميل
         </Typography>
-
         {hasLoans ? (
           <Box>
             <ScrollableTableContainer>
@@ -244,7 +241,6 @@ export default function ClientsLoansTab({
                 </TableBody>
               </Table>
             </ScrollableTableContainer>
-
             {totalPages > 1 && (
               <Box
                 sx={{
@@ -320,7 +316,6 @@ export default function ClientsLoansTab({
       </Paper>
     </Box>
   );
-
   const renderCards = () => (
     <Box>
       <Typography variant="h6" mb={3}>
@@ -430,6 +425,5 @@ export default function ClientsLoansTab({
       )}
     </Box>
   );
-
   return isMobile ? renderCards() : renderTable();
-}
+}

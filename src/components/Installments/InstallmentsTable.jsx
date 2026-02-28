@@ -22,7 +22,6 @@ import {
   getStatusText,
   hasPendingDocuments,
 } from './installmentsUtils';
-
 export default function InstallmentsTable({
   installments,
   selectedInstallments,
@@ -42,7 +41,6 @@ export default function InstallmentsTable({
   const totalPaid = installments.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
   const totalRemaining = installments.reduce((sum, inst) => sum + (inst.remaining || 0), 0);
   const showCheckbox = permissions.includes('repayments_Post') && !isSettlementCompleted();
-
   return (
     <ScrollableTableContainer>
       <Table stickyHeader size="small">
@@ -261,7 +259,7 @@ export default function InstallmentsTable({
               </StyledTableCell>
             </StyledTableRow>
           ))}
-          {/* صف الإجمالي */}
+          {}
           <StyledTableRow
             sx={{
               backgroundColor: 'background.paper',
@@ -344,4 +342,4 @@ export default function InstallmentsTable({
       </Table>
     </ScrollableTableContainer>
   );
-}
+}

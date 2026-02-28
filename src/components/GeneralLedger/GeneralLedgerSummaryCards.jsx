@@ -1,14 +1,11 @@
 import { Grid, Card, CardContent, Typography } from '@mui/material';
 import React from 'react';
-
-// Card configuration
 const CARD_CONFIG = [
   { key: 'debit', valueKey: 'totalDebit', label: 'إجمالي مدين', color: 'primary', bgColor: 'white' },
   { key: 'credit', valueKey: 'totalCredit', label: 'إجمالي دائن', color: 'error', bgColor: 'white' },
   { key: 'journals', valueKey: 'totalJournals', label: 'عدد القيود', color: 'primary', bgColor: 'white' },
   { key: 'balance', valueKey: 'closingBalance', label: 'الرصيد الحالي', color: 'primary', bgColor: 'transparent' },
 ];
-
 const GeneralLedgerSummaryCards = ({ 
   totalDebit = 0, 
   totalCredit = 0, 
@@ -22,14 +19,12 @@ const GeneralLedgerSummaryCards = ({
     totalJournals,
     closingBalance,
   };
-
   return (
     <Grid container spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 3 }}>
       {CARD_CONFIG.map(({ key, valueKey, label, color, bgColor }) => {
         const value = values[valueKey];
         const isBalance = key === 'balance';
         const balanceColor = closingBalance >= 0 ? 'primary.main' : 'error.main';
-
         return (
           <Grid item xs={6} md={3} key={key} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <Card
@@ -63,5 +58,4 @@ const GeneralLedgerSummaryCards = ({
     </Grid>
   );
 };
-
 export default React.memo(GeneralLedgerSummaryCards);

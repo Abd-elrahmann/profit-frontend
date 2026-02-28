@@ -1,6 +1,5 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
 import {
@@ -8,17 +7,16 @@ import {
   drawReportHeader,
   drawSeparatorLine,
   drawReportFooter,
-  getCenteredTableMargins,
+  drawReportSummary,
+  PAGE_MARGIN,
+  getFullWidthColumnStyles,
 } from './pdfReportUtils';
 import dayjs from 'dayjs';
-
 export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams) => {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new jsPDF();
-      
+      const doc = new jsPDF('landscape');
       registerArabicFonts(doc);
-      
       doc.setProperties({
         title: `دفتر الأستاذ - ${account.name}`,
         subject: 'دفتر الأستاذ العام',
@@ -26,7 +24,6 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         keywords: 'دفتر, أستاذ, محاسبة, سلف',
         creator: 'نظام إدارة السلف'
       });
-
       const reportTitle = `دفتر الأستاذ - ${account.name} (${account.code})`;
       const headerEndY = drawReportHeader(doc, {
         reportTitle,
@@ -35,33 +32,22 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
           time: dayjs().format('hh:mm A'),
         },
       });
-
       const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
-
       const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
         return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
       }, 0) || 0;
-      
       const totalCredit = ledgerData.journals?.reduce((sum, journal) => {
         return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
       }, 0) || 0;
-      
       const closingBalance = ledgerData.account?.balance || 0;
-      
-      const pageWidth = doc.internal.pageSize.width;
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
-      const summaryY = separatorEndY + 6;
+      let periodInfo = '';
       if (searchParams.fromDate || searchParams.toDate) {
         const fromDate = searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'بداية';
         const toDate = searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'نهاية';
-        doc.text(`الفترة: من ${fromDate} إلى ${toDate}`, pageWidth / 2, summaryY, { align: 'center' });
+        periodInfo = `الفترة: من ${fromDate} إلى ${toDate} | `;
       }
-      const summaryText = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')}  |  إجمالي الدائن: ${totalCredit.toLocaleString('en-US')}  |  الرصيد الختامي: ${closingBalance.toLocaleString('en-US')}  |  عدد القيود: ${ledgerData.totalJournals || 0}`;
-      doc.text(summaryText, pageWidth / 2, summaryY + 8, { align: 'center' });
-      
-      let yPosition = summaryY + 18;
-      
+      const summaryText = `${periodInfo}إجمالي المدين: ${totalDebit.toLocaleString('en-US')} | إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} | الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} | عدد القيود: ${ledgerData.totalJournals || 0} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      let yPosition = drawReportSummary(doc, separatorEndY, summaryText);
       const tableData = [];
       ledgerData.journals?.forEach(journal => {
         journal.lines.forEach(line => {
@@ -75,23 +61,16 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
           ]);
         });
       });
-      
       const headers = [
         ['الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
       ];
-
-      const columnWidths = {
-        1: 26, 
-        2: 22, 
-        3: 22, 
-        4: 45, 
-        5: 22, 
-        6: 26  
-      };
-      
-      const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
-      
+      const baseWidths = [26, 22, 22, 45, 22, 26];
+      const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
+      Object.keys(columnStyles).forEach((k) => {
+        columnStyles[k] = { ...columnStyles[k], fontSize: 9 };
+      });
+      columnStyles[3].halign = 'right';
+      columnStyles[3].overflow = 'linebreak';
       autoTable(doc, {
         startY: yPosition,
         head: headers,
@@ -99,16 +78,9 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         ...pdfTableBaseStyles,
         styles: { ...pdfTableBaseStyles.styles, fontSize: 9 },
         bodyStyles: { ...pdfTableBaseStyles.bodyStyles, cellPadding: 4 },
-        columnStyles: {
-          1: { cellWidth: columnWidths[1], fontSize: 9 }, 
-          2: { cellWidth: columnWidths[2], fontSize: 9 }, 
-          3: { cellWidth: columnWidths[3], fontSize: 9 }, 
-          4: { cellWidth: columnWidths[4], fontSize: 9, halign: 'right', overflow: 'linebreak' }, 
-          5: { cellWidth: columnWidths[5], fontSize: 9 }, 
-          6: { cellWidth: columnWidths[6], fontSize: 9 }  
-        },
-        margin: { top: yPosition, bottom: 25, left: tableMargins.left, right: tableMargins.right },
-        tableWidth: totalColumnWidth,
+        columnStyles,
+        margin: { top: yPosition, bottom: 25, left: PAGE_MARGIN, right: PAGE_MARGIN },
+        tableWidth: 'auto',
         horizontalPageBreak: false, 
         pageBreak: 'auto',
         showHead: 'everyPage',
@@ -122,12 +94,10 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
         },
         didDrawTable: createDidDrawTable(doc)
       });
-      
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         drawReportFooter(doc, i, pageCount);
       }
-      
       const fileName = `دفتر_الأستاذ_${account.name}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
       resolve();
@@ -137,23 +107,17 @@ export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams
     }
   });
 };
-
 export const exportGeneralLedgerToExcel = async (ledgerData, account, searchParams) => {
   try {
       const XLSX = await import('xlsx');
-
     const workbook = XLSX.utils.book_new();
-    
     const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
       return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
     }, 0) || 0;
-    
     const totalCredit = ledgerData.journals?.reduce((sum, journal) => {
       return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
     }, 0) || 0;
-    
     const closingBalance = ledgerData.account?.balance || 0;
-
     const summaryData = [
       ['دفتر الأستاذ العام'],
       [`الحساب: ${account.name}`],
@@ -166,13 +130,11 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
       ['عدد القيود', ledgerData.totalJournals || 0],
       ['']
     ];
-    
     if (searchParams.fromDate || searchParams.toDate) {
       const fromDate = searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'بداية';
       const toDate = searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'نهاية';
       summaryData.splice(4, 0, [`الفترة: من ${fromDate} إلى ${toDate}`]);
     }
-    
     const journalsData = [];
     ledgerData.journals?.forEach(journal => {
       journal.lines.forEach(line => {
@@ -187,11 +149,8 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
         });
       });
     });
-    
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    
     const journalsSheet = XLSX.utils.json_to_sheet(journalsData);
-    
     const wscols = [
       { wch: 20 }, 
       { wch: 15 }, 
@@ -202,29 +161,23 @@ export const exportGeneralLedgerToExcel = async (ledgerData, account, searchPara
       { wch: 15 }  
     ];
     journalsSheet['!cols'] = wscols;
-    
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص');
     XLSX.utils.book_append_sheet(workbook, journalsSheet, 'القيود');
-      
     const excelBuffer = XLSX.write(workbook, { 
       bookType: 'xlsx', 
       type: 'array',
       bookSST: false 
     });
-    
     const blob = new Blob([excelBuffer], { 
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
     });
-    
     const fileName = `دفتر_الأستاذ_${account.name}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
-    
   } catch (error) {
     console.error('Excel export error:', error.message);
     throw error;
   }
 };
-
 const getAccountTypeArabic = (type) => {
   const typeMap = {
     'ASSET': 'أصول',
@@ -234,5 +187,4 @@ const getAccountTypeArabic = (type) => {
     'EXPENSE': 'مصروفات'
   };
   return typeMap[type] || type;
-};
-
+};

@@ -1,5 +1,4 @@
 import React from "react";
-
 const InstallmentPaymentReceipt = () => {
 return `
 <style>
@@ -14,7 +13,6 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .contract-container {
     max-width: 900px;
     margin: auto;
@@ -23,7 +21,6 @@ return `
     border-radius: 12px;
     padding: 30px;
   }
-
   .header {
     display: flex;
     justify-content: space-between;
@@ -50,14 +47,12 @@ return `
     font-size: 10px;
     white-space: nowrap;
   }
-
   .grid-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 15px;
   }
-
   .details-box {
     background: rgba(46, 139, 69, 0.05);
     padding: 15px;
@@ -85,13 +80,11 @@ return `
     word-spacing: normal;
     letter-spacing: normal;
   }
-
   .content-box {
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
-
   .amount-box {
     text-align: center;
     border: 1px solid rgba(46, 139, 69, 0.2);
@@ -120,7 +113,6 @@ return `
     font-weight: bold;
     text-align: center;
   }
-
   .section-title {
     font-size: 18px;
     font-weight: bold;
@@ -130,13 +122,11 @@ return `
     padding: 8px 12px;
     border-radius: 6px;
   }
-
   .info-box {
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
   }
-
   .text-box {
     background: rgba(46, 139, 69, 0.03);
     padding: 12px 15px;
@@ -151,12 +141,10 @@ return `
     letter-spacing: normal;
     text-align: justify;
   }
-
   .strong {
     font-weight: bold;
     margin-top: 6px;
   }
-
   .signatures {
     display: flex;
     justify-content: center;
@@ -171,19 +159,16 @@ return `
     margin: auto;
     border-bottom: 2px solid #666;
   }
-
   @media (max-width: 768px) {
     .grid-wrapper {
       grid-template-columns: 1fr;
     }
   }
-
   @media print {
     @page {
       size: A4;
       margin: 10mm;
     }
-
     .contract-wrapper,
     .contract-container {
       height: auto !important;
@@ -196,7 +181,6 @@ return `
       box-shadow: none !important;
       border: none !important;
     }
-
     .grid-wrapper,
     .details-box,
     .content-box,
@@ -205,12 +189,10 @@ return `
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
-
     * {
       max-height: none !important;
       overflow: visible !important;
     }
-
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -218,10 +200,8 @@ return `
     }
   }
 </style>
-
 <div class="contract-wrapper">
   <div class="contract-container">
-
     <div class="header">
       <div class="header-left">
         <span class="icon">✔</span>
@@ -229,16 +209,13 @@ return `
       </div>
       <p class="sub-text">رقم الإيصال: {{رقم_الايصال}}</p>
     </div>
-
     <div class="grid-wrapper">
-
       <div class="details-box">
         <h2>معلومات العميل</h2>
         <div class="row"><p>اسم العميل:</p> <span>{{اسم_العميل}}</span></div>
         <div class="row"><p>رقم الهوية:</p> <span>{{رقم_هوية_العميل}}</span></div>
         <div class="row"><p>تاريخ السداد:</p> <span>{{التاريخ_الهجري}} هـ الموافق {{التاريخ_الميلادي}}.</span></div>
       </div>
-
       <div class="content-box">
         <div class="amount-box">
           <h3>المبلغ المدفوع</h3>
@@ -246,14 +223,11 @@ return `
           <p>{{المبلغ_كتابة}}</p>
         </div>
       </div>
-
     </div>
-
     <div id="installments-table-container" style="{{عرض_جدول_الدفعات}}">
       <div class="section-title">تفاصيل الدفعات المعتمدة</div>
       {{جدول_الدفعات}}
     </div>
-
     <div class="section-title">تفاصيل السداد</div>
     <div class="text-box">
       <p style="{{عرض_نص_فردي}}">
@@ -265,7 +239,6 @@ return `
         كدفعات سداد من العميل المذكور أعلاه للدفعات الموضحة في الجدول أعلاه.
       </p>
     </div>
-
     <div class="signatures">
       <div>
         <p class="strong">توقيع الموظف المختص</p>
@@ -273,10 +246,8 @@ return `
         <p>{{اسم_الموظف}}</p>
       </div>
     </div>
-
   </div>
 </div>
 `;
 };
-
-export default InstallmentPaymentReceipt;
+export default InstallmentPaymentReceipt;

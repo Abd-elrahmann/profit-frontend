@@ -6,17 +6,14 @@ import { useQuery } from '@tanstack/react-query';
 import EditKafeelDocumentsForm from '../../components/forms/EditKafeelDocumentsForm';
 import { Helmet } from 'react-helmet-async';
 import { getClientDetails } from '../../components/clients';
-
 const EditKafeelDocumentsPage = () => {
   const navigate = useNavigate();
   const { clientId, kafeelId } = useParams();
-
   const { data: clientDetails, isLoading } = useQuery({
     queryKey: ['client-details', clientId],
     queryFn: () => getClientDetails(clientId),
     enabled: !!clientId,
   });
-
   const kafeel = React.useMemo(() => {
     if (!clientDetails) return null;
     if (clientDetails.kafeels?.length) {
@@ -27,7 +24,6 @@ const EditKafeelDocumentsPage = () => {
     }
     return null;
   }, [clientDetails, kafeelId]);
-
   useEffect(() => {
     if (!clientId || !kafeelId) {
       navigate('/clients');
@@ -35,14 +31,11 @@ const EditKafeelDocumentsPage = () => {
       navigate('/clients');
     }
   }, [clientId, kafeelId, isLoading, kafeel, navigate]);
-
   const handleSuccess = () => navigate('/clients');
   const handleCancel = () => navigate('/clients');
-
   if (!clientId || !kafeelId) {
     return null;
   }
-
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
@@ -50,7 +43,6 @@ const EditKafeelDocumentsPage = () => {
       </Box>
     );
   }
-
   if (!kafeel) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
@@ -58,13 +50,11 @@ const EditKafeelDocumentsPage = () => {
       </Box>
     );
   }
-
   return (
     <Box sx={{ p: 3 }} dir="rtl">
       <Helmet>
         <title>تعديل مرفقات الكفيل - النظام المالي</title>
       </Helmet>
-
       <Breadcrumbs separator={<NavigateNext fontSize="small" />} sx={{ mb: 3 }} aria-label="breadcrumb">
         <Link underline="hover" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
           <Home sx={{ fontSize: 18 }} />
@@ -79,7 +69,6 @@ const EditKafeelDocumentsPage = () => {
           تعديل مرفقات الكفيل - {kafeel.name}
         </Typography>
       </Breadcrumbs>
-
       <Paper sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: 1 }}>
         <EditKafeelDocumentsForm
           kafeelId={kafeelId}
@@ -91,5 +80,4 @@ const EditKafeelDocumentsPage = () => {
     </Box>
   );
 };
-
-export default EditKafeelDocumentsPage;
+export default EditKafeelDocumentsPage;

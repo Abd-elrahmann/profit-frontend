@@ -24,9 +24,7 @@ import {
   getJournalTypeText,
   getJournalStatusText,
 } from "./periodClosingUtils.jsx";
-
 const PAGE_SIZE = 5;
-
 export default function PeriodClosingDetails({
   periodData,
   theme,
@@ -49,38 +47,31 @@ export default function PeriodClosingDetails({
   const totalDebit = periodData?.totalDebit ?? calculatedTotals.totalDebit;
   const totalCredit = periodData?.totalCredit ?? calculatedTotals.totalCredit;
   const totalBalance = periodData?.totalBalance ?? calculatedTotals.totalBalance;
-
   const [journalPage, setJournalPage] = useState(0);
   const totalJournalPages = Math.ceil(journals.length / PAGE_SIZE) || 1;
   const paginatedJournals = journals.slice(
     journalPage * PAGE_SIZE,
     journalPage * PAGE_SIZE + PAGE_SIZE
   );
-
   const formatAmount = (amount) => {
     const abs = Math.abs(amount);
     const formatted = abs.toLocaleString("en-US");
     return amount >= 0 ? formatted : `-${formatted}`;
   };
-
   const fmt = (n) => (n ?? 0).toLocaleString("en-US");
-
   const companyProfitBreakdown = [
     { label: "أرباح الشركة", amount: periodData?.grossProfit?.companyTotal || 0 },
   ];
-
   const hasExpenses = (periodData?.expenseDistribution?.totalExpenses ?? 0) > 0;
   const partnerProfits = periodData?.partnerProfits || [];
-
   const formatDateDisplay = (dateStr, hijriStr) => {
     if (!dateStr) return "-";
     const g = new Date(dateStr).toISOString().slice(0, 10).replace(/-/g, "/");
     return hijriStr ? `${g} (${hijriStr})` : g;
   };
-
   return (
     <div className="flex flex-col gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto w-full px-2 sm:px-4">
-      {/* Title & Export & Actions */}
+      {}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
@@ -144,8 +135,7 @@ export default function PeriodClosingDetails({
           )}
         </div>
       </div>
-
-      {/* Closed Period Alert - at top */}
+      {}
       {periodData?.isClosed && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Alert
@@ -181,8 +171,7 @@ export default function PeriodClosingDetails({
           </Button>
         </div>
       )}
-
-      {/* Draft Alert */}
+      {}
       {showDraftAlert && !periodData?.isClosed && (
         <Alert
           severity="warning"
@@ -201,8 +190,7 @@ export default function PeriodClosingDetails({
           برجاء اعتمادها أولاً.
         </Alert>
       )}
-
-      {/* 1. Summary Cards */}
+      {}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white dark:bg-background-dark/50 p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start mb-2">
@@ -259,8 +247,7 @@ export default function PeriodClosingDetails({
           </p>
         </div>
       </div>
-
-      {/* 2. Profit Breakdown Section */}
+      {}
       <section className="space-y-4">
         <div className="flex items-center gap-2 pb-2">
           <AnalyticsIcon className="text-primary" sx={{ fontSize: 28 }} />
@@ -273,7 +260,7 @@ export default function PeriodClosingDetails({
             hasExpenses ? "lg:grid-cols-[1fr_auto_1fr] items-center" : "w-full"
           }`}
         >
-          {/* Gross Profit Card */}
+          {}
           <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-hidden shadow-sm">
             <div className="bg-primary/5 p-4 border-b border-primary/10">
               <h3 className="font-bold text-primary flex items-center gap-2">
@@ -319,8 +306,7 @@ export default function PeriodClosingDetails({
               </div>
             </div>
           </div>
-
-          {/* Divider with Deductions - only when has expenses */}
+          {}
           {hasExpenses && (
             <>
               <div className="flex flex-col items-center justify-center gap-2">
@@ -331,8 +317,7 @@ export default function PeriodClosingDetails({
                 </div>
                 <div className="h-12 w-px bg-slate-200 hidden lg:block" />
               </div>
-
-              {/* Net Profit Card */}
+              {}
               <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-hidden shadow-sm">
                 <div className="bg-primary p-4 border-b border-primary/10">
                   <h3 className="font-bold text-white flex items-center gap-2">
@@ -384,10 +369,9 @@ export default function PeriodClosingDetails({
           )}
         </div>
       </section>
-
-      {/* 3. Detail Tables */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Partner Profits Table - when closed and has partner profits */}
+        {}
         {partnerProfits.length > 0 && (
           <div className="lg:col-span-3 space-y-4">
             <div className="flex items-center gap-2">
@@ -442,8 +426,7 @@ export default function PeriodClosingDetails({
             </div>
           </div>
         )}
-
-        {/* Table 1: Company Profits Breakdown */}
+        {}
         <div className="lg:col-span-1 space-y-4">
           <div className="flex items-center gap-2">
             <BusinessIcon className="text-primary" sx={{ fontSize: 24 }} />
@@ -487,8 +470,7 @@ export default function PeriodClosingDetails({
             </table>
           </div>
         </div>
-
-        {/* Table 2: Period Entries (Vouchers) */}
+        {}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2">
             <HistoryEduIcon className="text-primary" sx={{ fontSize: 24 }} />
@@ -497,7 +479,7 @@ export default function PeriodClosingDetails({
             </h2>
           </div>
           <div className="bg-white dark:bg-background-dark/50 rounded-xl border border-primary/10 overflow-x-auto shadow-sm">
-            {/* Mobile: Cards */}
+            {}
             <div className="md:hidden divide-y divide-primary/5">
               {paginatedJournals.length === 0 ? (
                 <div className="px-4 py-8 text-center text-slate-500">
@@ -565,8 +547,7 @@ export default function PeriodClosingDetails({
                 })
               )}
             </div>
-
-            {/* Desktop: Table */}
+            {}
             <div className="hidden md:block">
               <table className="w-full text-center text-sm">
                 <thead className="bg-primary/5 text-primary border-b border-primary/10">
@@ -674,7 +655,6 @@ export default function PeriodClosingDetails({
                 )}
               </table>
             </div>
-
             {journals.length > 0 && (
               <div className="p-4 bg-slate-50 dark:bg-background-dark/80 flex justify-between items-center text-xs text-slate-500">
                 <p>
@@ -716,4 +696,4 @@ export default function PeriodClosingDetails({
       </div>
     </div>
   );
-}
+}

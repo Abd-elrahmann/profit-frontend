@@ -2,9 +2,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, getCenteredTableMargins, PRIMARY_COLOR } from './pdfReportUtils';
+import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
-
 // eslint-disable-next-line no-unused-vars
 const loadPDFFromURL = async (url) => {
   try {
@@ -12,7 +11,6 @@ const loadPDFFromURL = async (url) => {
     if (!response.ok) {
       throw new Error(`فشل تحميل الملف: ${response.status}`);
     }
-
     const arrayBuffer = await response.arrayBuffer();
     return new Uint8Array(arrayBuffer);
   } catch (error) {
@@ -20,7 +18,6 @@ const loadPDFFromURL = async (url) => {
     throw error;
   }
 };
-
 const getArabicMonth = (month) => {
   const months = {
     1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل',
@@ -29,19 +26,15 @@ const getArabicMonth = (month) => {
   };
   return months[month] || month;
 };
-
 const formatAmount = (amount) => {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount || 0);
 };
-
 const getCapitalData = (incomeData) => {
   if (!incomeData) return [];
-
   const data = [];
-
   data.push({
     id: 0,
     name: "إجمالي رأس المال المدفوع",
@@ -51,7 +44,6 @@ const getCapitalData = (incomeData) => {
     level: 0,
     hasDetails: incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0
   });
-
   if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
     incomeData.capitalByPartner.forEach((partner, index) => {
       data.push({
@@ -62,7 +54,6 @@ const getCapitalData = (incomeData) => {
         level: 1,
         isCapitalAmount: true
       });
-
       if (partner.newCapitalAmount && partner.newCapitalAmount > 0) {
         data.push({
           id: `capital-${index}-new-capital`,
@@ -73,7 +64,6 @@ const getCapitalData = (incomeData) => {
           isNewCapitalAmount: true
         });
       }
-
       data.push({
         id: `capital-${index}-profit`,
         name: `${partner.partnerName} - الأرباح`,
@@ -84,15 +74,11 @@ const getCapitalData = (incomeData) => {
       });
     });
   }
-
   return data;
 };
-
 const getRevenueData = (incomeData) => {
   if (!incomeData) return [];
-
   const data = [];
-
   data.push({
     id: 1,
     name: "قسم الإيرادات",
@@ -100,8 +86,6 @@ const getRevenueData = (incomeData) => {
     level: 0,
     hasDetails: (incomeData.revenueLineItems?.length > 0) || (incomeData.revenueByClient?.length > 0)
   });
-
-  // revenueLineItems من الباك إند (فوائد السلف المحصلة، إيرادات أخرى، إلخ)
   if (incomeData.revenueLineItems && incomeData.revenueLineItems.length > 0) {
     incomeData.revenueLineItems.forEach((item, idx) => {
       data.push({
@@ -121,8 +105,6 @@ const getRevenueData = (incomeData) => {
       level: 1
     });
   }
-
-  // تفصيل حسب العميل (اختياري)
   if (incomeData.revenueByClient && incomeData.revenueByClient.length > 0) {
     incomeData.revenueByClient.forEach((client, clientIndex) => {
       data.push({
@@ -135,22 +117,17 @@ const getRevenueData = (incomeData) => {
       });
     });
   }
-
   data.push({
     id: 2.5,
     name: "إجمالي الإيرادات التشغيلية",
     amount: incomeData.revenues?.total || 0,
     type: "revenue-total"
   });
-
   return data;
 };
-
 const getExpenseData = (incomeData) => {
   if (!incomeData) return [];
-
   const data = [];
-
   data.push({
     id: 3,
     name: "قسم المصروفات",
@@ -158,8 +135,6 @@ const getExpenseData = (incomeData) => {
     level: 0,
     hasDetails: (incomeData.expenseByType?.length > 0) || (incomeData.detailedExpenses?.length > 0)
   });
-
-  // expenseByType من الباك إند (مصروف بنزين، مصروفات انترنت، إلخ)
   if (incomeData.expenseByType && incomeData.expenseByType.length > 0) {
     incomeData.expenseByType.forEach((item, index) => {
       data.push({
@@ -186,20 +161,16 @@ const getExpenseData = (incomeData) => {
       });
     });
   }
-
   data.push({
     id: 100,
     name: "إجمالي المصروفات التشغيلية",
     amount: -(incomeData.totalExpenses || 0),
     type: "expense-total"
   });
-
   return data;
 };
-
 const getFinalResultData = (incomeData) => {
   if (!incomeData) return [];
-
   return [{
     id: "final-profit",
     name: "صافي الربح",
@@ -210,49 +181,35 @@ const getFinalResultData = (incomeData) => {
     isFinal: true
   }];
 };
-
 const getAllData = (incomeData) => {
   const allData = [];
-
   const capitalData = getCapitalData(incomeData);
   allData.push(...capitalData);
-
   allData.push({ id: 'spacer-1', type: "spacer" });
-
   const revenueData = getRevenueData(incomeData);
   allData.push(...revenueData);
-
   allData.push({ id: 'spacer-2', type: "spacer" });
-
   const expenseData = getExpenseData(incomeData);
   allData.push(...expenseData);
-
   allData.push({ id: 'spacer-3', type: "spacer" });
-
   const finalData = getFinalResultData(incomeData);
   allData.push(...finalData);
-
   return allData;
 };
-
 const getRowStyle = (row) => {
   if (row.isClientName) {
     return { textColor: [46, 139, 69] };
   }
-
   if (row.type === "revenue-header" || row.type === "expense-header") {
     return { textColor: [46, 139, 69] };
   }
-
   return {};
 };
-
 const getPeriodInfo = (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
   let periodText = "";
   let from = null;
   let to = null;
   let source = periodType?.toUpperCase() || "UNKNOWN";
-
   if (periodType === "custom") {
     periodText = `من ${fromDate.format('DD/MM/YYYY')} إلى ${toDate.format('DD/MM/YYYY')}`;
     from = fromDate.format('YYYY-MM-DD');
@@ -286,7 +243,6 @@ const getPeriodInfo = (incomeData, periodType, selectedMonth, selectedYear, from
       periodText = "فترة غير محددة";
     }
   }
-
   return {
     text: periodText,
     from: from,
@@ -294,11 +250,8 @@ const getPeriodInfo = (incomeData, periodType, selectedMonth, selectedYear, from
     source: source
   };
 };
-
-
 const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
   if (!sectionData || sectionData.length === 0) return startY;
-
   let tableStartY = startY;
   if (sectionTitle && sectionTitle.trim()) {
     doc.setFontSize(12);
@@ -308,7 +261,6 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
     doc.text(sectionTitle, doc.internal.pageSize.width / 2, titleY, { align: 'center' });
     tableStartY = titleY + 8;
   }
-
   const tableRows = [];
   sectionData.forEach(row => {
     if (row.type === "spacer") {
@@ -318,9 +270,7 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
       if (row.level === 1) name = `   ${name}`;
       if (row.level === 2) name = `      ${name}`;
       if (row.subIndent) name = `         ${name}`;
-
       const amount = row.amount !== null && row.amount !== undefined ? formatAmount(row.amount) : '';
-
       let details = '';
       if (row.type === "revenue-detail" || row.type === "expense") {
         details = row.date ? dayjs(row.date).format('DD/MM/YYYY') : '';
@@ -328,13 +278,15 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
         if (row.expenseType) details += ` | ${row.expenseType}`;
       }
       if (row.profitPercentage) details = `نسبة الربح: ${row.profitPercentage}%`;
-
       tableRows.push([amount, name, details]);
     }
   });
-
-    const sectionTableWidth = 190;
-    const sectionTableMargins = getCenteredTableMargins(doc, sectionTableWidth);
+    const sectionBaseWidths = [45, 95, 50];
+    const sectionColumnStyles = getFullWidthColumnStyles(doc, sectionBaseWidths);
+    Object.keys(sectionColumnStyles).forEach((k) => {
+      sectionColumnStyles[k] = { ...sectionColumnStyles[k], halign: 'center', fontStyle: 'bold' };
+    });
+    sectionColumnStyles[2].fontSize = 9;
     autoTable(doc, {
       head: [['المبلغ', 'البند والتفاصيل', 'ملاحظات إضافية']],
       body: tableRows,
@@ -343,42 +295,22 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
       styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
       headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
       bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
-      columnStyles: {
-        0: {
-          cellWidth: 45,
-          halign: 'center',
-          fontStyle: 'bold'
-        },
-        1: {
-          cellWidth: 95,
-          halign: 'center',
-          fontStyle: 'bold'
-        },
-        2: {
-          cellWidth: 50,
-          halign: 'center',
-          fontSize: 9,
-          fontStyle: 'bold'
-        }
-      },
-        margin: { left: sectionTableMargins.left, right: sectionTableMargins.right, bottom: 25 },
-        tableWidth: sectionTableWidth,
+      columnStyles: sectionColumnStyles,
+      margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
+      tableWidth: 'auto',
         pageBreak: 'auto',
         rowPageBreak: 'auto',
       didParseCell: function(data) {
         const rowIndex = data.row.index;
         const row = sectionData[rowIndex];
-
         if (row) {
           const style = getRowStyle(row);
           if (style.textColor) {
             data.cell.styles.textColor = style.textColor;
           }
-
           if (row.isFinal) {
             data.cell.styles.textColor = row.amount >= 0 ? [46, 139, 69] : [220, 38, 38];
           }
-
           if (row.isHeader || row.isTotal || row.isFinal || row.level === 0 ||
               row.type === "client-revenue" || row.isCapitalAmount || row.isProfit) {
             data.cell.styles.fontStyle = 'bold';
@@ -386,7 +318,6 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
               data.cell.styles.fontSize = 11;
             }
           }
-
           if (row.amount < 0 && !row.isHeader) {
             data.cell.styles.textColor = [220, 38, 38];
           }
@@ -394,10 +325,8 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
       },
       didDrawTable: createDidDrawTable(doc)
     });
-
   return doc.lastAutoTable.finalY;
 };
-
 export const exportIncomeStatementToPDF = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
@@ -405,51 +334,35 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
       if (!incomeData) {
         throw new Error('لا توجد بيانات للتصدير');
       }
-
-      const doc = new jsPDF('portrait');
-
+      const doc = new jsPDF('landscape');
       registerArabicFonts(doc);
-
       const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
-
       let yPosition = drawReportHeader(doc, {
         reportTitle: 'قائمة الدخل',
         metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
       });
       yPosition = drawSeparatorLine(doc, yPosition);
-
-      doc.setFontSize(14);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
-      yPosition += 8;
-
-      if (periodInfo) {
-        doc.setFontSize(12);
-        doc.setFont('Amiri', 'bold');
-        doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
-        yPosition += 8;
-      }
-
+      const summaryText = `قائمة الدخل${periodInfo ? ` | الفترة: ${periodInfo.text}` : ''} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      yPosition = drawReportSummary(doc, yPosition, summaryText);
       const summaryData = [
         ['المبلغ', 'البيان'],
         [formatAmount(incomeData.totalCapital || 0), 'رأس المال المدفوع'],
         [formatAmount(incomeData.revenues?.total || 0), 'إجمالي الإيرادات']
       ];
-
       if (incomeData.revenues && incomeData.revenues.generalLoans > 0) {
         summaryData.push([formatAmount(incomeData.revenues.generalLoans), 'سلف عامة']);
       }
       if (incomeData.revenues && incomeData.revenues.newCapitalLoans > 0) {
         summaryData.push([formatAmount(incomeData.revenues.newCapitalLoans), 'سلف رأس مال جديد']);
       }
-
       summaryData.push(
         [formatAmount(incomeData.totalExpenses || 0), 'المصروفات التشغيلية'],
         [formatAmount(Math.abs(incomeData.netProfit || 0)), incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة']
       );
-
-      const summaryTableWidth = 180;
-      const summaryTableMargins = getCenteredTableMargins(doc, summaryTableWidth);
+      const summaryColumnStyles = getFullWidthColumnStyles(doc, [60, 120]);
+      Object.keys(summaryColumnStyles).forEach((k) => {
+        summaryColumnStyles[k].halign = 'center';
+      });
       autoTable(doc, {
         head: [['المبلغ', 'البيان']],
         body: summaryData.slice(1),
@@ -458,38 +371,24 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
         styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
         headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
         bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
-        columnStyles: {
-          0: {
-            cellWidth: 60,
-            halign: 'center'
-          },
-          1: {
-            cellWidth: 120,
-            halign: 'center'
-          }
-        },
-        margin: { left: summaryTableMargins.left, right: summaryTableMargins.right, bottom: 25 },
-        tableWidth: summaryTableWidth,
+        columnStyles: summaryColumnStyles,
+        margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
+        tableWidth: 'auto',
         pageBreak: 'avoid',
         didDrawTable: createDidDrawTable(doc),
         rowPageBreak: 'avoid'
       });
-
       const allData = getAllData(incomeData);
       let currentY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 15 : 80;
-
       if (allData.length > 0) {
         addSectionTable(doc, allData, 'البيان التفصيلي الكامل', currentY);
       }
-
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         drawReportFooter(doc, i, pageCount);
       }
-
       const fileName = `قائمة_الدخل_${periodInfo ? periodInfo.text.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') : 'تقرير'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
-
       resolve();
     } catch (error) {
       console.error('PDF export error:', error.message);
@@ -497,20 +396,15 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
     }
   });
 };
-
 export const exportIncomeStatementToExcel = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
   try {
     if (!incomeData) {
       throw new Error('لا توجد بيانات للتصدير');
     }
-
     const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
     const tableData = getAllData(incomeData);
-
     const XLSX = await import('xlsx');
-
     const workbook = XLSX.utils.book_new();
-
     const fullDetailedData = [
       ['قائمة الدخل - البيان التفصيلي الكامل'],
       [''],
@@ -519,7 +413,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       [''],
       ['المبلغ', 'البند', 'الرمز المرجعي', 'النوع', 'التاريخ', 'ملاحظات']
     ];
-
     tableData.forEach(row => {
       if (row.type === "spacer") {
         fullDetailedData.push(['', '', '', '', '', '']);
@@ -527,12 +420,10 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
         let name = row.name || '';
         if (row.level === 1) name = `  ${name}`;
         if (row.level === 2) name = `    ${name}`;
-        
         let notes = '';
         if (row.employee) notes += `موظف: ${row.employee} `;
         if (row.expenseType) notes += `نوع: ${row.expenseType} `;
         if (row.profitPercentage) notes += `نسبة ربح: ${row.profitPercentage}% `;
-        
         fullDetailedData.push([
           row.amount || 0,
           name,
@@ -543,15 +434,12 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
         ]);
       }
     });
-
     const fullDetailedSheet = XLSX.utils.aoa_to_sheet(fullDetailedData);
-    
     const range = XLSX.utils.decode_range(fullDetailedSheet['!ref']);
     for (let R = 0; R <= range.e.r; R++) {
       for (let C = 0; C <= range.e.c; C++) {
         const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
         const cell = fullDetailedSheet[cellAddress];
-        
         if (cell) {
           if (R === 5) {
             cell.s = {
@@ -560,25 +448,21 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
               alignment: { horizontal: "center" }
             };
           }
-          
           const dataRowIndex = R - 6;
           if (dataRowIndex >= 0 && dataRowIndex < tableData.length) {
             const rowData = tableData[dataRowIndex];
-            
             if (rowData.isHeader) {
               cell.s = {
                 font: { color: { rgb: "2E8B45" }, bold: true },
                 alignment: { horizontal: "center" }
               };
             }
-            
             else if (rowData.type === "revenue-header" || rowData.type === "expense-header") {
               cell.s = {
                 font: { color: { rgb: "2E8B45" }, bold: true },
                 alignment: { horizontal: "center" }
               };
             }
-
             else if (rowData.isTotal) {
               cell.s = {
                 fill: { fgColor: { rgb: "F5F5F5" } },
@@ -586,7 +470,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
                 alignment: { horizontal: "center" }
               };
             }
-            
             else if (rowData.isFinal) {
               const textColor = rowData.amount >= 0 ? "2E8B45" : "DC2626";
               cell.s = {
@@ -594,7 +477,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
                 alignment: { horizontal: "center" }
               };
             }
-
             else if (rowData.amount < 0) {
               if (!cell.s) cell.s = {};
               cell.s.font = cell.s.font || {};
@@ -604,7 +486,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
         }
       }
     }
-    
     fullDetailedSheet['!cols'] = [
       { wch: 15 },
       { wch: 40 },
@@ -613,9 +494,7 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       { wch: 15 },
       { wch: 30 }
     ];
-    
     XLSX.utils.book_append_sheet(workbook, fullDetailedSheet, 'البيان التفصيلي الكامل');
-
     const summaryData = [
       ['قائمة الدخل - الملخص'],
       [''],
@@ -624,21 +503,16 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       [''],
       ['المبلغ', 'البيان', 'الرمز']
     ];
-
     summaryData.push([incomeData.totalCapital || 0, 'رأس المال الفعلي', 'CAP-001']);
-
     summaryData.push([incomeData.revenues?.total || 0, 'إجمالي الإيرادات', 'REV-TOTAL']);
-
     if (incomeData.revenues && incomeData.revenues.generalLoans > 0) {
       summaryData.push([incomeData.revenues.generalLoans, 'سلف عامة', 'REV-GEN']);
     }
     if (incomeData.revenues && incomeData.revenues.newCapitalLoans > 0) {
       summaryData.push([incomeData.revenues.newCapitalLoans, 'سلف رأس مال جديد', 'REV-NEW-CAP']);
     }
-
     summaryData.push([incomeData.totalExpenses || 0, 'المصروفات التشغيلية', 'EXP-TOTAL']);
     summaryData.push([incomeData.netProfit || 0, incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة', 'NET-PROFIT']);
-
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     summarySheet['!cols'] = [
       { wch: 15 },
@@ -646,7 +520,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       { wch: 15 }
     ];
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص');
-
     const capitalDetails = [
       ['تفاصيل رأس المال والمستثمرين'],
       [''],
@@ -655,17 +528,14 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       [''],
       ['المبلغ', 'اسم المستثمر', 'التفاصيل', 'نوع رأس المال', 'نسبة الربح']
     ];
-
     capitalDetails.push([
       incomeData.totalCapital || 0,
       'إجمالي رأس المال المدفوع',
       'CAP-001',
       ''
     ]);
-
     if (incomeData.capitalByPartner && incomeData.capitalByPartner.length > 0) {
       capitalDetails.push(['', '', '', '']);
-
       incomeData.capitalByPartner.forEach(partner => {
         capitalDetails.push([
           partner.totalAmount || 0,
@@ -699,7 +569,6 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
         ]);
       });
     }
-
     const capitalSheet = XLSX.utils.aoa_to_sheet(capitalDetails);
     capitalSheet['!cols'] = [
       { wch: 15 },
@@ -709,72 +578,56 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
       { wch: 15 }
     ];
     XLSX.utils.book_append_sheet(workbook, capitalSheet, 'رأس المال');
-
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array',
       bookSST: false
     });
-
     const blob = new Blob([excelBuffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-
     const fileName = `قائمة_الدخل_${periodInfo ? periodInfo.text.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') : 'تقرير'}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
-
   } catch (error) {
     console.error('Excel export error:', error.message);
     throw error;
   }
 };
-
 export const printIncomeStatement = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
   return new Promise((resolve, reject) => {
     try {
       if (!incomeData) {
         throw new Error('لا توجد بيانات للطباعة');
       }
-
-      const doc = new jsPDF('portrait');
-
+      const doc = new jsPDF('landscape');
       registerArabicFonts(doc);
-
       const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
-
       let printYPosition = drawReportHeader(doc, {
         reportTitle: 'قائمة الدخل',
         metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
       });
       printYPosition = drawSeparatorLine(doc, printYPosition);
-
       doc.setFontSize(14);
       doc.setFont('Amiri', 'bold');
       doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, printYPosition, { align: 'center' });
       printYPosition += 8;
-
       if (periodInfo) {
         doc.setFontSize(12);
         doc.setFont('Amiri', 'bold');
         doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, printYPosition, { align: 'center' });
         printYPosition += 8;
       }
-
       const allData = getAllData(incomeData);
-
       if (allData.length > 0) {
         addSectionTable(doc, allData, '', printYPosition);
       }
-
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         drawReportFooter(doc, i, pageCount);
       }
-
       const pdfBlob = doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const printWindow = window.open(pdfUrl);
-
       if (printWindow) {
         printWindow.onload = function() {
           printWindow.print();
@@ -786,11 +639,9 @@ export const printIncomeStatement = async (incomeData, periodType, selectedMonth
       } else {
         reject(new Error('فشل في فتح نافذة الطباعة'));
       }
-
     } catch (error) {
       console.error('Print error:', error.message);
       reject(error);
     }
   });
 };
-

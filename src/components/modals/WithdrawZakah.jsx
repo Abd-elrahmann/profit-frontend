@@ -12,26 +12,21 @@ import {
   Box,
 } from '@mui/material';
 import { VolunteerActivism as ZakatIcon } from '@mui/icons-material';
-
 const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const handleSubmit = async () => {
     if (!amount || amount <= 0) {
       setError('يرجى إدخال مبلغ صحيح');
       return;
     }
-
     if (parseFloat(amount) > accountBalance) {
       setError('المبلغ المدخل أكبر من رصيد حساب الزكاة');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       await onWithdraw(parseFloat(amount));
       setAmount('');
@@ -42,13 +37,11 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
       setLoading(false);
     }
   };
-
   const handleClose = () => {
     setAmount('');
     setError('');
     onClose();
   };
-
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
@@ -59,12 +52,10 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
           </Typography>
         </Box>
       </DialogTitle>
-      
       <DialogContent>
         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
           الرصيد المتاح: {accountBalance?.toLocaleString() || 0}
         </Typography>
-
         <TextField
           fullWidth
           label="المبلغ المطلوب سحبه"
@@ -75,15 +66,12 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
           sx={{ mb: 2 }}
           inputProps={{ min: 0, step: 0.01 }}
         />
-
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-
       </DialogContent>
-
       <DialogActions sx={{ p: 2.5, gap: 1, flexDirection: 'row-reverse' }}>
         <Button onClick={handleClose} disabled={loading}>
           إلغاء
@@ -101,5 +89,4 @@ const WithdrawZakah = ({ open, onClose, onWithdraw, accountBalance }) => {
     </Dialog>
   );
 };
-
 export default WithdrawZakah;

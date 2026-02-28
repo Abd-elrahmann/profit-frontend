@@ -1,4 +1,10 @@
 export { default as ProfitSummaryCards } from './ProfitSummaryCards';
 export { default as CompanyProfitSourcesTable } from './CompanyProfitSourcesTable';
+export { default as CompanyProfitSourcesTableTailwind } from './CompanyProfitSourcesTableTailwind';
 export { default as WithdrawalHistoryTable } from './WithdrawalHistoryTable';
 export { default as CompanyProfitToolbar } from './CompanyProfitToolbar';
+export { default as CompanyProfitKPICards } from './CompanyProfitKPICards';
+export { default as CompanyProfitBalanceChart } from './CompanyProfitBalanceChart';
+export { default as CompanyProfitSummarySection } from './CompanyProfitSummarySection';
+export { default as CompanyProfitWithdrawalsTable } from './CompanyProfitWithdrawalsTable';
+export { formatNum } from './companyProfitUtils';

@@ -14,7 +14,6 @@ import {
   PictureAsPdf as PDFIcon,
   TableChart as ExcelIcon,
 } from "@mui/icons-material";
-
 export default function JournalsActions({
   totals,
   isAddMode,
@@ -43,7 +42,6 @@ export default function JournalsActions({
   const balanced = totals
     ? isJournalBalanced(totals.totalDebit, totals.totalCredit)
     : false;
-
   return (
     <Paper
       sx={{
@@ -81,7 +79,6 @@ export default function JournalsActions({
             </Button>
           </>
         )}
-
         {isAddMode ? (
           <>
             <Button
@@ -177,4 +174,4 @@ export default function JournalsActions({
       </Stack>
     </Paper>
   );
-}
+}

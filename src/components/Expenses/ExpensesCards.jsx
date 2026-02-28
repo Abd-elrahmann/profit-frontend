@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import { formatArabicDate } from './expensesUtils';
-
 const ExpenseTypeChip = ({ type }) => (
   <Chip
     label={type}
@@ -21,7 +20,6 @@ const ExpenseTypeChip = ({ type }) => (
     variant="outlined"
   />
 );
-
 const ExpensesCards = ({
   groupedExpenses,
   isLoading,
@@ -43,7 +41,6 @@ const ExpensesCards = ({
       </Box>
     );
   }
-
   if (groupedExpenses.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
@@ -51,7 +48,6 @@ const ExpensesCards = ({
       </Typography>
     );
   }
-
   return (
     <Box sx={{ p: isSmallScreen ? 1 : 2, width: '100%' }}>
       <Stack spacing={1.5} sx={{ width: '100%' }}>
@@ -85,7 +81,6 @@ const ExpensesCards = ({
                     </Box>
                   </Box>
                   <Divider />
-
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">
                       عدد المصروفات
@@ -93,7 +88,6 @@ const ExpensesCards = ({
                     <Typography variant="body1">{group.expenses.length}</Typography>
                   </Box>
                   <Divider />
-
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">
                       إجمالي المبلغ
@@ -103,7 +97,6 @@ const ExpensesCards = ({
                     </Typography>
                   </Box>
                   <Divider />
-
                   <Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                       الأنواع:
@@ -115,14 +108,12 @@ const ExpensesCards = ({
                     </Stack>
                   </Box>
                   <Divider />
-
                   <Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                       مضافة بواسطة:
                     </Typography>
                     <Typography variant="body2">{group.addedBy?.name || '-'}</Typography>
                   </Box>
-
                   <Typography
                     variant="body2"
                     sx={{ mb: 0.5, cursor: 'pointer', color: 'primary.main' }}
@@ -130,7 +121,6 @@ const ExpensesCards = ({
                   >
                     {expandedRows.includes(group.journalId) ? 'إخفاء التفاصيل ▲' : 'عرض التفاصيل ▼'}
                   </Typography>
-
                   <Collapse in={expandedRows.includes(group.journalId)}>
                     <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
                       <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
@@ -180,7 +170,6 @@ const ExpensesCards = ({
                       ))}
                     </Box>
                   </Collapse>
-
                   {(canUpdate || canDelete) && (
                     <>
                       <Divider />
@@ -219,5 +208,4 @@ const ExpensesCards = ({
     </Box>
   );
 };
-
 export default React.memo(ExpensesCards);

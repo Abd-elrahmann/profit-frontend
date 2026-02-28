@@ -1,9 +1,7 @@
 import React from 'react';
-import { Download } from 'lucide-react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useDashboardFilter } from '../DashboardFilterContext';
-
-const DashboardHeader = ({ onExport, showExport = true }) => {
+const DashboardHeader = () => {
   const {
     filter,
     setFilter,
@@ -16,7 +14,6 @@ const DashboardHeader = ({ onExport, showExport = true }) => {
     FILTER_OPTIONS,
     isCustom,
   } = useDashboardFilter();
-
   return (
     <header className="bg-transparent py-3 sm:py-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -31,7 +28,7 @@ const DashboardHeader = ({ onExport, showExport = true }) => {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
-          {/* Filters - Dropdown */}
+          {}
           <FormControl size="small" sx={{ minWidth: 120, flex: { xs: '1 1 100%', sm: '0 0 auto' } }}>
             <InputLabel>الفترة</InputLabel>
             <Select
@@ -77,20 +74,9 @@ const DashboardHeader = ({ onExport, showExport = true }) => {
               </div>
             </div>
           )}
-          {showExport && (
-            <button
-              type="button"
-              onClick={onExport}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors"
-            >
-              <Download className="size-4" />
-              تصدير
-            </button>
-          )}
         </div>
       </div>
     </header>
   );
 };
-
-export default DashboardHeader;
+export default DashboardHeader;

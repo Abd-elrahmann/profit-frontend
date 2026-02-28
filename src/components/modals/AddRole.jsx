@@ -27,7 +27,6 @@ import { getAvailableModules } from '../../routes';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '../Contexts/PermissionsContext';
 import { useTheme } from '../../theme/ThemeContext';
-
 const PERMISSION_FIELDS = [
   { field: 'canView', label: 'عرض' },
   { field: 'canAdd', label: 'إضافة' },
@@ -36,7 +35,6 @@ const PERMISSION_FIELDS = [
   { field: 'canPost', label: 'اعتماد' },
   { field: 'canExport', label: 'تصدير' },
 ];
-
 const validationSchema = Yup.object().shape({
   permissions: Yup.array().of(
     Yup.object().shape({
@@ -50,28 +48,22 @@ const validationSchema = Yup.object().shape({
     })
   )
 });
-
 const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, isMobile = false }) => {
   const queryClient = useQueryClient();
   const { refreshPermissions } = usePermissions();
   const { isDarkMode } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const availableModules = useMemo(() => getAvailableModules(), []);
-
   const initialValues = useMemo(() => {
     if (mode === 'edit' && editData) {
       const formattedPermissions = availableModules.map(module => {
         const existingPermission = editData.permissions?.find(p => p.module === module.value);
-
         const permissionObj = { module: module.value };
         PERMISSION_FIELDS.forEach(({ field }) => {
           permissionObj[field] = existingPermission?.[field] || false;
         });
-
         return permissionObj;
       });
-
       return {
         name: editData.name || '',
         description: editData.description || '',
@@ -85,7 +77,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         });
         return permissionObj;
       });
-
       return {
         name: '',
         description: '',
@@ -93,7 +84,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       };
     }
   }, [mode, editData, availableModules]);
-
   const handleSubmit = async (values, { resetForm }) => {
     setIsSubmitting(true);
     try {
@@ -102,7 +92,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         description: values.description,
         permissions: values.permissions
       };
-
       if (mode === 'add') {
         await Api.post('/api/roles', payload);
         notifySuccess('تم إضافة الدور بنجاح');
@@ -114,9 +103,7 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
         queryClient.invalidateQueries({ queryKey: ['roles'] });
         queryClient.invalidateQueries({ queryKey: ['employees'] });
       }
-      
       await refreshPermissions();
-      
       resetForm();
       refetchRoles();
       onClose();
@@ -126,7 +113,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       setIsSubmitting(false);
     }
   };
-
   const handlePermissionChange = (values, setFieldValue, moduleIndex, field, value) => {
     const updatedPermissions = [...values.permissions];
     updatedPermissions[moduleIndex] = {
@@ -135,7 +121,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
     };
     setFieldValue('permissions', updatedPermissions);
   };
-
   const handleSelectAll = (values, setFieldValue, field, value) => {
     const updatedPermissions = values.permissions.map(permission => ({
       ...permission,
@@ -143,7 +128,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
     }));
     setFieldValue('permissions', updatedPermissions);
   };
-
   const handleSelectAllPermissions = (values, setFieldValue, checked) => {
     const updatedPermissions = values.permissions.map(permission => {
       const updatedPermission = { ...permission };
@@ -152,32 +136,26 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       });
       return updatedPermission;
     });
-    
     setFieldValue('permissions', updatedPermissions);
   };
-
   const isAllSelected = (values, field) => {
     if (!values.permissions || values.permissions.length === 0) return false;
     return values.permissions.every(permission => Boolean(permission[field]) === true);
   };
-
   const isAnySelected = (values, field) => {
     if (!values.permissions || values.permissions.length === 0) return false;
     return values.permissions.some(permission => Boolean(permission[field]) === true);
   };
-
   const isAllPermissionsSelected = (values) => {
     if (!values.permissions || values.permissions.length === 0) return false;
     return PERMISSION_FIELDS.every(({ field }) =>
       values.permissions.every(permission => Boolean(permission[field]) === true)
     );
   };
-
   const getModuleLabel = (moduleValue) => {
     const module = availableModules.find(m => m.value === moduleValue);
     return module?.label || moduleValue;
   };
-
   const renderDesktopPermissions = (values, setFieldValue) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -198,7 +176,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           {isAllPermissionsSelected(values) ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
         </Button>
       </Box>
-      
       <Box sx={{ 
         display: 'grid', 
         gridTemplateColumns: '1fr repeat(6, auto)',
@@ -241,7 +218,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           );
         })}
       </Box>
-
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 400, overflow: 'auto' }}>
         {values.permissions?.map((permission, index) => (
           <Box
@@ -262,7 +238,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
             <Typography variant="body2" sx={{ fontWeight: '600' }}>
               {getModuleLabel(permission.module)}
             </Typography>
-            
             {PERMISSION_FIELDS.map(({ field }) => (
               <Box key={field} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Checkbox
@@ -289,7 +264,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       </Box>
     </Box>
   );
-
   const renderMobilePermissions = (values, setFieldValue) => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -310,7 +284,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           {isAllPermissionsSelected(values) ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
         </Button>
       </Box>
-      
       <Stack spacing={2}>
         {values.permissions?.map((permission, index) => (
           <Accordion key={`${permission.module}-${index}`} sx={{ boxShadow: 1 }}>
@@ -352,7 +325,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
       </Stack>
     </Box>
   );
-
   return (
     <Dialog 
       open={open} 
@@ -384,7 +356,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -416,7 +387,6 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                       },
                     }}
                   />
-                  
                   <TextField
                     name="description"
                     label="وصف الدور"
@@ -438,13 +408,10 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
                     }}
                   />
                 </Box>
-                
                 <Divider />
-
                 {isMobile ? renderMobilePermissions(values, setFieldValue) : renderDesktopPermissions(values, setFieldValue)}
               </Stack>
             </DialogContent>
-
             <DialogActions sx={{ 
               px: 3, 
               py: 2, 
@@ -492,5 +459,4 @@ const AddRole = ({ open, onClose, refetchRoles, mode = 'add', editData = null, i
     </Dialog>
   );
 };
-
 export default AddRole;

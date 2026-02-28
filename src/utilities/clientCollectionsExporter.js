@@ -1,6 +1,5 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
 import { saveAs } from 'file-saver';
 import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
 import {
@@ -8,15 +7,14 @@ import {
   drawReportHeader,
   drawSeparatorLine,
   drawReportFooter,
-  getCenteredTableMargins,
+  drawReportSummary,
+  PAGE_MARGIN,
   PRIMARY_COLOR,
 } from './pdfReportUtils';
 import dayjs from 'dayjs';
-
 const formatCurrency = (amount) => {
   return amount?.toLocaleString('en-US') || '0';
 };
-
 const getExportColumnValue = (client, columnId, index) => {
   switch(columnId) {
     case 'id':
@@ -49,26 +47,22 @@ const getExportColumnValue = (client, columnId, index) => {
       return '';
   }
 };
-
 const getFormattedColumnValue = (client, columnId, index) => {
   if (columnId === 'client') {
     return getExportColumnValue(client, columnId, index);
   }
-
   const value = getExportColumnValue(client, columnId, index);
   if (['totalDebit', 'totalPaid', 'totalInterest', 'totalDiscounts', 'remaining', 'monthlyInstallment'].includes(columnId)) {
     return formatCurrency(value);
   }
   return value;
 };
-
 export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE', visibleColumns = []) => {
   return new Promise((resolve, reject) => {
     try {
       if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
         throw new Error('لا توجد بيانات للتصدير');
       }
-
       const columnsToExport = visibleColumns.length > 0 ? visibleColumns : [
         { id: 'id', label: 'م' },
         { id: 'client', label: 'العميل' },
@@ -84,13 +78,10 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         { id: 'remaining', label: 'المتبقي' },
         { id: 'note', label: 'ملاحظات' },
       ];
-
       const doc = new jsPDF('landscape'); 
       registerArabicFonts(doc);
-      
       const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
       const documentTitle = `كشف تحصيل ${statusTitle}`;
-      
       doc.setProperties({
         title: documentTitle,
         subject: 'تقرير تحصيل العملاء',
@@ -98,57 +89,40 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         keywords: 'تحصيل, عملاء, تقرير',
         creator: 'نظام إدارة السلف'
       });
-
       const headerEndY = drawReportHeader(doc, {
         reportTitle: documentTitle,
-        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') },
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') },
       });
-      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
-
-      const pageWidth = doc.internal.pageSize.width;
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
-      const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, pageWidth / 2, separatorEndY + 6, { align: 'center' });
-
+      let yPosition = drawSeparatorLine(doc, headerEndY + 4);
       const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
       const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
       const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
-      const financialSummary = `إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | إجمالي المتبقي: ${formatCurrency(totalRemaining)}`;
-      doc.text(financialSummary, pageWidth / 2, separatorEndY + 14, { align: 'center' });
-
-      let yPosition = separatorEndY + 24;
-
+      const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | المتبقي: ${formatCurrency(totalRemaining)} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      yPosition = drawReportSummary(doc, yPosition, summaryText);
       const tableData = clientsData.data.map((client, index) => 
         columnsToExport.map(column => getFormattedColumnValue(client, column.id, index))
       );
-
       const headers = [columnsToExport.map(col => col.label).reverse()];
-
+      const pageWidth = doc.internal.pageSize.width;
       const columnCount = columnsToExport.length;
-      const availableWidth = pageWidth - 16; 
-      
+      const availableWidth = pageWidth - 2 * PAGE_MARGIN;
       const baseWidths = {};
       columnsToExport.forEach((col) => {
-        if (col.id === 'id') baseWidths[col.id] = 10;
-        else if (col.id === 'client') baseWidths[col.id] = 32;
-        else if (col.id === 'address') baseWidths[col.id] = 28;
-        else if (col.id === 'note') baseWidths[col.id] = 55;
-        else baseWidths[col.id] = 22; // زيادة من 16 إلى 22 لمنع تقسيم النص
+        if (col.id === 'id') baseWidths[col.id] = 8;
+        else if (col.id === 'client') baseWidths[col.id] = 28;
+        else if (col.id === 'address') baseWidths[col.id] = 24;
+        else if (col.id === 'note') baseWidths[col.id] = 38;
+        else baseWidths[col.id] = 18;
       });
-      
       const usedWidth = columnsToExport.reduce((sum, col) => sum + baseWidths[col.id], 0);
       const remainingWidth = availableWidth - usedWidth;
-      
       const columnWidths = {};
       const noteExists = columnsToExport.some(col => col.id === 'note');
       const clientExists = columnsToExport.some(col => col.id === 'client');
       const addressExists = columnsToExport.some(col => col.id === 'address');
-      
       let extraForNote = 0;
       let extraForClient = 0;
       let extraForAddress = 0;
-      
       if (remainingWidth > 0) {
         if (noteExists) {
           extraForNote = remainingWidth * 0.6;
@@ -172,7 +146,6 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           extraForAddress = remainingWidth;
         }
       }
-      
       columnsToExport.forEach((col, index) => {
         let width = baseWidths[col.id];
         if (col.id === 'note') width += extraForNote;
@@ -180,10 +153,13 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
         else if (col.id === 'address') width += extraForAddress;
         columnWidths[columnCount - 1 - index] = width; 
       });
-
-      const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
-
+      let totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+      if (totalColumnWidth > availableWidth) {
+        const scale = availableWidth / totalColumnWidth;
+        Object.keys(columnWidths).forEach((k) => {
+          columnWidths[k] = Math.round(columnWidths[k] * scale);
+        });
+      }
       autoTable(doc, {
         startY: yPosition,
         head: headers,
@@ -194,19 +170,17 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
           bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3, fontSize: 8 }
         }),
         columnStyles: columnWidths,
-        margin: { left: tableMargins.left, right: tableMargins.right, top: yPosition, bottom: 25 },
-        tableWidth: totalColumnWidth,
-        horizontalPageBreak: false,
+        margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, top: yPosition, bottom: 25 },
+        tableWidth: 'auto',
+        horizontalPageBreak: true,
         pageBreak: 'auto',
         showHead: 'everyPage',
         didDrawTable: createDidDrawTable(doc)
       });
-      
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         drawReportFooter(doc, i, pageCount);
       }
-      
       const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
       const fileName = `كشف_تحصيل_العملاء_${statusSuffix}_${dayjs().format('YYYY-MM-DD')}.pdf`;
       doc.save(fileName);
@@ -217,13 +191,11 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     }
   });
 };
-
 export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTIVE', visibleColumns = []) => {
   try {
     if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
       throw new Error('لا توجد بيانات للتصدير');
     }
-
     const columnsToExport = visibleColumns.length > 0 ? visibleColumns : [
       { id: 'id', label: 'م' },
       { id: 'client', label: 'العميل' },
@@ -238,13 +210,9 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       { id: 'remaining', label: 'المتبقي' },
       { id: 'note', label: 'ملاحظات' },
     ];
-
     const XLSX = await import('xlsx');
-
     const workbook = XLSX.utils.book_new();
-    
     const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
-    
     const summaryData = [
       [`كشف تحصيل ${statusTitle}`],
       [`تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`],
@@ -262,30 +230,22 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       ['تفاصيل العملاء'],
       ['']
     ];
-    
     const headersRow = columnsToExport.map(col => col.label);
-    
     const clientsTableData = [headersRow];
-    
     clientsData.data.forEach((client, index) => {
       const rowData = columnsToExport.map(column => getExportColumnValue(client, column.id, index));
       clientsTableData.push(rowData);
     });
-    
     const allData = [...summaryData, ...clientsTableData];
-    
     const sheet = XLSX.utils.aoa_to_sheet(allData);
-    
     const columnWidths = columnsToExport.map(col => {
       if (col.id === 'id') return { wch: 6 };
-      if (col.id === 'client') return { wch: 25 }; 
-      if (col.id === 'address') return { wch: 20 }; 
-      if (col.id === 'note') return { wch: 30 }; 
-      return { wch: 12 }; 
+      if (col.id === 'client') return { wch: 28 };
+      if (col.id === 'address') return { wch: 25 };
+      if (col.id === 'note') return { wch: 35 };
+      return { wch: 16 };
     });
-    
     sheet['!cols'] = columnWidths;
-    
     const headerRowIndex = summaryData.length;
     if (!sheet['!rows']) sheet['!rows'] = [];
     for (let col = 0; col < headersRow.length; col++) {
@@ -296,36 +256,29 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       sheet[cellAddress].s.fill = { fgColor: { rgb: "0D40A5" } };
       sheet[cellAddress].s.alignment = { horizontal: "center", vertical: "center" };
     }
-    
     XLSX.utils.book_append_sheet(workbook, sheet, 'كشف التحصيل');
-    
     const excelBuffer = XLSX.write(workbook, { 
       bookType: 'xlsx', 
       type: 'array',
       bookSST: false 
     });
-    
     const blob = new Blob([excelBuffer], { 
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
     });
-    
     const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
     const fileName = `كشف_تحصيل_العملاء_${statusSuffix}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
-    
   } catch (error) {
     console.error('Excel export error:', error.message);
     throw error;
   }
 };
-
 export const printClientCollections = async (clientsData, status = 'ACTIVE', visibleColumns = []) => {
   return new Promise((resolve, reject) => {
     try {
       if (!clientsData || !clientsData.data || !Array.isArray(clientsData.data) || clientsData.data.length === 0) {
         throw new Error('لا توجد بيانات للطباعة');
       }
-
       const columnsToExport = visibleColumns.length > 0 ? visibleColumns : [
         { id: 'id', label: 'م' },
         { id: 'client', label: 'العميل' },
@@ -341,63 +294,44 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         { id: 'remaining', label: 'المتبقي' },
         { id: 'note', label: 'ملاحظات' },
       ];
-
       const doc = new jsPDF('landscape');
       registerArabicFonts(doc);
-      
       const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
       const documentTitle = `كشف تحصيل ${statusTitle}`;
-      
       const headerEndY = drawReportHeader(doc, {
         reportTitle: documentTitle,
-        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') },
+        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') },
       });
-      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
-
-      const pageWidth = doc.internal.pageSize.width;
-      doc.setFontSize(11);
-      doc.setFont('Amiri', 'bold');
-      const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | تاريخ الطباعة: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      doc.text(summaryText, pageWidth / 2, separatorEndY + 6, { align: 'center' });
-
+      let yPosition = drawSeparatorLine(doc, headerEndY + 4);
       const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
       const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
       const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
-      const financialSummary = `إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | إجمالي المتبقي: ${formatCurrency(totalRemaining)}`;
-      doc.text(financialSummary, pageWidth / 2, separatorEndY + 14, { align: 'center' });
-      
-      let yPosition = separatorEndY + 24;
-
+      const summaryText = `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | المتبقي: ${formatCurrency(totalRemaining)} | تاريخ الطباعة: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+      yPosition = drawReportSummary(doc, yPosition, summaryText);
       const tableData = clientsData.data.map((client, index) => 
         columnsToExport.map(column => getFormattedColumnValue(client, column.id, index))
       );
-
       const headers = [columnsToExport.map(col => col.label).reverse()];
-
+      const pageWidth = doc.internal.pageSize.width;
       const columnCount = columnsToExport.length;
-      const availableWidth = pageWidth - 16; 
-      
+      const availableWidth = pageWidth - 2 * PAGE_MARGIN;
       const baseWidths = {};
       columnsToExport.forEach((col) => {
-        if (col.id === 'id') baseWidths[col.id] = 10;
-        else if (col.id === 'client') baseWidths[col.id] = 32;
-        else if (col.id === 'address') baseWidths[col.id] = 28;
-        else if (col.id === 'note') baseWidths[col.id] = 55;
-        else baseWidths[col.id] = 22; // زيادة من 16 إلى 22 لمنع تقسيم النص
+        if (col.id === 'id') baseWidths[col.id] = 8;
+        else if (col.id === 'client') baseWidths[col.id] = 28;
+        else if (col.id === 'address') baseWidths[col.id] = 24;
+        else if (col.id === 'note') baseWidths[col.id] = 38;
+        else baseWidths[col.id] = 18;
       });
-      
       const usedWidth = columnsToExport.reduce((sum, col) => sum + baseWidths[col.id], 0);
       const remainingWidth = availableWidth - usedWidth;
-      
       const columnWidths = {};
       const noteExists = columnsToExport.some(col => col.id === 'note');
       const clientExists = columnsToExport.some(col => col.id === 'client');
       const addressExists = columnsToExport.some(col => col.id === 'address');
-      
       let extraForNote = 0;
       let extraForClient = 0;
       let extraForAddress = 0;
-      
       if (remainingWidth > 0) {
         if (noteExists) {
           extraForNote = remainingWidth * 0.6;
@@ -421,7 +355,6 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           extraForAddress = remainingWidth;
         }
       }
-      
       columnsToExport.forEach((col, index) => {
         let width = baseWidths[col.id];
         if (col.id === 'note') width += extraForNote;
@@ -429,10 +362,13 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
         else if (col.id === 'address') width += extraForAddress;
         columnWidths[columnCount - 1 - index] = width; 
       });
-
-      const totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
-      const tableMargins = getCenteredTableMargins(doc, totalColumnWidth);
-
+      let totalColumnWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+      if (totalColumnWidth > availableWidth) {
+        const scale = availableWidth / totalColumnWidth;
+        Object.keys(columnWidths).forEach((k) => {
+          columnWidths[k] = Math.round(columnWidths[k] * scale);
+        });
+      }
       autoTable(doc, {
         startY: yPosition,
         head: headers,
@@ -443,22 +379,20 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           bodyStyles: { halign: 'right', fontStyle: 'bold', cellPadding: 3, fontSize: 8 }
         }),
         columnStyles: columnWidths,
-        margin: { left: tableMargins.left, right: tableMargins.right, top: yPosition, bottom: 25 },
-        tableWidth: totalColumnWidth,
+        margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, top: yPosition, bottom: 25 },
+        tableWidth: 'auto',
+        horizontalPageBreak: true,
         pageBreak: 'auto',
         showHead: 'everyPage',
         didDrawTable: createDidDrawTable(doc)
       });
-      
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         drawReportFooter(doc, i, pageCount);
       }
-      
       const pdfBlob = doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const printWindow = window.open(pdfUrl);
-      
       if (printWindow) {
         printWindow.onload = function() {
           printWindow.print();
@@ -467,12 +401,10 @@ export const printClientCollections = async (clientsData, status = 'ACTIVE', vis
           }, 1000);
         };
       }
-      
       resolve();
     } catch (error) {
       console.error('Print error:', error.message);
       reject(error);
     }
   });
-};
-
+};

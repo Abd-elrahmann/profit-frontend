@@ -19,4 +19,4 @@ export {
   sortInstallments,
   filterInstallmentsByStatus,
 } from './installmentsUtils';
-export { REVIEW_STEPS, DEFAULT_EMPLOYEE_NAME, STATUS_FILTER_OPTIONS } from './constants';
+export { REVIEW_STEPS, DEFAULT_EMPLOYEE_NAME, STATUS_FILTER_OPTIONS } from './constants';

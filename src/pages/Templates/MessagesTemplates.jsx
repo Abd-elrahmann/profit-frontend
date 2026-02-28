@@ -1,11 +1,3 @@
-/**
- * MessagesTemplates
- *
- * Administrative interface for managing message templates.
- * Uses static CSS styles for editor theming - no dynamic content injection.
- * Templates are edited by authorized users through ReactQuill interface.
- */
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -19,12 +11,11 @@ import {
 import SaveIcon from "@mui/icons-material/Save";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
-import ReactQuillWrapper from "../../components/ReactQuillWrapper";
+import ReactQuillWrapper from "../../components/editors/ReactQuillWrapper";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api, { handleApiError } from "../../config/Api";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
-
 const messageEditorStyles = `
   .message-editor .ql-editor {
     font-family: "Noto Sans Arabic", "Cairo", "Segoe UI", sans-serif !important;
@@ -42,15 +33,10 @@ const messageEditorStyles = `
     direction: rtl !important;
   }
 `;
-
 const DefaultRepaymentDue = () => `  <p>عزيزي/عزيزتي {{اسم_العميل}}،</p>  <p>نود تذكيركم بأن دفعتكم البالغ {{مبلغ_الدفعة}} ريال سيكون مستحق الدفع في {{تاريخ_الاستحقاق}}.</p>  <p>يرجى اتخاذ الإجراءات اللازمة لضمان السداد في الوقت المحدد.</p>  <p>شكراً لتعاونكم،</p>  <p>{{اسم_الشركة}}</p>`;
-
 const DefaultRepaymentLate = () => `  <p>عزيزي/عزيزتي {{اسم_العميل}}،</p>  <p>نود إعلامكم بأن دفعتكم البالغ {{مبلغ_الدفعة}} ريال والمستحق في {{تاريخ_الاستحقاق}} أصبح متأخراً.</p>  <p>الرجاء السداد في أقرب وقت ممكن لتجنب أي رسوم إضافية.</p>  <p>للاستفسار، يرجى التواصل معنا على {{رقم_الاتصال}}.</p>  <p>شكراً،</p>  <p>{{اسم_الشركة}}</p>`;
-
 const DefaultPaymentApproved = () => `  <p>عزيزي/عزيزتي {{اسم_العميل}}،</p>  <p>نود إعلامكم بأن دفعتكم البالغة {{مبلغ_الدفعة}} ريال قد تمت الموافقة عليها بنجاح.</p>  <p>رقم المرجع: {{رقم_المرجع}}</p>  <p>تاريخ المعاملة: {{تاريخ_المعاملة}}</p>  <p>شكراً لتعاونكم،</p>  <p>{{اسم_الشركة}}</p>`;
-
 const DefaultPaymentRejected = () => `  <p>عزيزي/عزيزتي {{اسم_العميل}}،</p>  <p>نأسف لإعلامكم بأن دفعتكم البالغة {{مبلغ_الدفعة}} ريال قد تم رفضها.</p>  <p>السبب: {{سبب_الرفض}}</p>  <p>يرجى التواصل معنا على {{رقم_الاتصال}} لمزيد من المعلومات.</p>  <p>شكراً،</p>  <p>{{اسم_الشركة}}</p>`;
-
 export default function MessagesTemplates() {
   const [activeTab, setActiveTab] = useState("repayment-due");
   const [templates, setTemplates] = useState({
@@ -64,14 +50,12 @@ export default function MessagesTemplates() {
   const [viewMode, setViewMode] = useState("preview");
   const { permissions } = usePermissions();
   const theme = useTheme();
-
   const templateNameMap = React.useMemo(() => ({
     "repayment-due": "REPAYMENT_DUE",
     "repayment-late": "REPAYMENT_LATE", 
     "payment-approved": "PAYMENT_APPROVED",
     "payment-rejected": "PAYMENT_REJECTED",
   }), []);
-
   const getDefaultTemplate = React.useCallback((templateName) => {
     switch (templateName) {
       case "REPAYMENT_DUE":
@@ -86,30 +70,21 @@ export default function MessagesTemplates() {
         return "";
     }
   }, []);
-
-
-
   const getStateKey = (tab) => {
     return tab === "repayment-due" ? "repaymentDue" :
            tab === "repayment-late" ? "repaymentLate" :
            tab === "payment-approved" ? "paymentApproved" :
            tab === "payment-rejected" ? "paymentRejected" : tab;
   };
-
-
-
   const loadTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
       const newTemplates = {};
-
       Object.keys(templateNameMap).forEach((key) => {
         const templateName = templateNameMap[key];
         const stateKey = getStateKey(key);
-
         newTemplates[stateKey] = getDefaultTemplate(templateName);
       });
-
       setTemplates(newTemplates);
     } catch (error) {
       notifyError("خطأ في تحميل القوالب");
@@ -118,15 +93,9 @@ export default function MessagesTemplates() {
       setLoading(false);
     }
   }, [templateNameMap, getDefaultTemplate]);
-
-
-
-
-
   const renderMessagePreview = (templateKey) => {
     const content = templates[templateKey];
     const processedContent = content.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').replace(/<br\s*\/?>/g, '\n');
-
     return (
       <Paper sx={{
         p: 4,
@@ -154,11 +123,9 @@ export default function MessagesTemplates() {
       </Paper>
     );
   };
-
   useEffect(() => {
     loadTemplates();
   }, [loadTemplates]);
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -166,13 +133,11 @@ export default function MessagesTemplates() {
       const templateName = templateNameMap[currentTemplateKey];
       const stateKey = getStateKey(currentTemplateKey);
       const templateContent = templates[stateKey];
-
       await Api.post("/api/templates", {
         name: templateName,
         description: `Template for ${templateName} messages`,
         content: templateContent,
       });
-
       notifySuccess("تم حفظ القالب بنجاح");
     } catch (error) {
       notifyError("خطأ في حفظ القالب");
@@ -181,15 +146,12 @@ export default function MessagesTemplates() {
       setSaving(false);
     }
   };
-
   const handleTemplateChange = (templateKey, value) => {
     setTemplates(prev => ({
       ...prev,
       [templateKey]: value
     }));
   };
-
-
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: messageEditorStyles }} />
@@ -239,7 +201,6 @@ export default function MessagesTemplates() {
                       {activeTab === "payment-approved" && "موافقة على دفعة"}
                       {activeTab === "payment-rejected" && "رفض دفعة"}
                     </Typography>
-
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                       <Button
                         variant={viewMode === "preview" ? "contained" : "outlined"}
@@ -270,8 +231,6 @@ export default function MessagesTemplates() {
                       )}
                     </Box>
                   </Box>
-
-
                   {activeTab === "repayment-due" && (
                     viewMode === "preview"
                       ? renderMessagePreview("repaymentDue")

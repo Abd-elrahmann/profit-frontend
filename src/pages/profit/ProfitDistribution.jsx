@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Typography,
   Paper,
-  Button,
   Alert,
   CircularProgress,
   useMediaQuery,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   useTheme,
 } from "@mui/material";
-import { Check as CheckIcon } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -32,9 +25,9 @@ import {
   ProfitDistributionTable,
   ProfitDistributionCards,
   ProfitDistributionDetails,
+  ProfitDistributionConfirmDialog,
 } from "../../components/ProfitDistribution";
 import { formatNumber, calculateProfitAfterSaving } from "../../components/ProfitDistribution/profitDistributionUtils";
-
 const ProfitDistribution = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,25 +51,20 @@ const ProfitDistribution = () => {
   const [enableSaving, setEnableSaving] = useState(false);
   const [savingPercentage, setSavingPercentage] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
-
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
   const isSmallScreen = isMobile || isTablet;
-
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
-
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const periodIdParam = searchParams.get('periodId');
     const fromParam = searchParams.get('from');
-    
     if (periodIdParam) {
       const periodId = parseInt(periodIdParam, 10);
       if (!isNaN(periodId)) {
         setSelectedPeriod(periodId);
         setActiveTab(1);
-        
         if (fromParam === 'period-closing') {
           setCameFromPeriodClosing(true);
           setCameFromSaving(false);
@@ -87,42 +75,34 @@ const ProfitDistribution = () => {
       }
     }
   }, [location.search]);
-
   const handleBackToSaving = () => {
     navigate('/saving');
   };
-
   const handleBackToPeriodClosing = () => {
     navigate('/period-closing');
   };
-
   const { data: closedPeriods, isLoading: isPeriodsLoading } = useQuery({
     queryKey: ["closed-periods"],
     queryFn: () => getClosedPeriods(),
   });
-
   const { data: periodDetailsData, isLoading: isPeriodLoading } = useQuery({
     queryKey: ["closed-periods", selectedPeriod],
     queryFn: () => getClosedPeriods(selectedPeriod),
     enabled: !!selectedPeriod && activeTab === 1,
   });
-
   const periodData = periodDetailsData && periodDetailsData.length > 0 
     ? periodDetailsData[0] 
     : null;
-
   const handleViewDetails = (periodId) => {
     setSelectedPeriod(periodId);
     setActiveTab(1);
   };
-
   const handleBackToList = () => {
     setActiveTab(0);
     setSelectedPeriod(null);
     setEnableSaving(false);
     setSavingPercentage(0);
   };
-
   const handleOpenDistributionDialog = (periodId, periodName, action) => {
     setDistributionDialog({
       open: true,
@@ -131,7 +111,6 @@ const ProfitDistribution = () => {
       action,
     });
   };
-
   const handleCloseDistributionDialog = () => {
     setDistributionDialog({
       open: false,
@@ -140,29 +119,24 @@ const ProfitDistribution = () => {
       action: "",
     });
   };
-
   const handleOpenSavingDialog = () => {
     setSavingDialog({
       open: true,
       periodId: selectedPeriod,
     });
   };
-
   const handleCloseSavingDialog = () => {
     setSavingDialog({
       open: false,
       periodId: null,
     });
   };
-
   const handleApplySavingPercentage = (percentage) => {
     setSavingPercentage(percentage);
     setEnableSaving(true);
   };
-
   const handleConfirmDistribution = async () => {
     const { periodId, action } = distributionDialog;
-
     try {
       setIsDistributing(true);
       if (action === "post") {
@@ -171,10 +145,8 @@ const ProfitDistribution = () => {
         await postDistribution(periodId, savingAmount);
         notifySuccess(`تم توزيع الأرباح بنجاح ${enableSaving ? `مع ادخار ${formatNumber(savingAmount)}` : ''}`);
       }
-
       queryClient.invalidateQueries(["closed-periods"]);
       handleCloseDistributionDialog();
-      
       setEnableSaving(false);
       setSavingPercentage(0);
     } catch (error) {
@@ -183,15 +155,12 @@ const ProfitDistribution = () => {
       setIsDistributing(false);
     }
   };
-
   const handleConfirmUnpost = async () => {
     const { periodId } = distributionDialog;
-
     try {
       setIsDistributing(true);
       await unpostDistribution(periodId);
       notifySuccess("تم إلغاء توزيع الأرباح بنجاح");
-
       queryClient.invalidateQueries(["closed-periods"]);
       handleCloseDistributionDialog();
     } catch (error) {
@@ -200,7 +169,6 @@ const ProfitDistribution = () => {
       setIsDistributing(false);
     }
   };
-
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
@@ -212,7 +180,6 @@ const ProfitDistribution = () => {
       setIsExporting(false);
     }
   };
-
   const handleExportExcel = async () => {
     try {
       setIsExporting(true);
@@ -224,7 +191,6 @@ const ProfitDistribution = () => {
       setIsExporting(false);
     }
   };
-
   const handleViewJournal = (journalId) => {
     navigate('/journal-entries', {
       state: {
@@ -234,13 +200,11 @@ const ProfitDistribution = () => {
       }
     });
   };
-
   const profitAfterSaving = calculateProfitAfterSaving(
     periodData,
     enableSaving,
     savingPercentage
   );
-
   const renderClosedPeriodsTable = () => (
     <ProfitDistributionTable
       closedPeriods={closedPeriods}
@@ -249,7 +213,6 @@ const ProfitDistribution = () => {
       onViewDetails={handleViewDetails}
     />
   );
-
   const renderClosedPeriodsCards = () => (
     <ProfitDistributionCards
       closedPeriods={closedPeriods}
@@ -260,7 +223,6 @@ const ProfitDistribution = () => {
       onOpenDistributionDialog={handleOpenDistributionDialog}
     />
   );
-
   const renderPeriodDetails = () => (
     <ProfitDistributionDetails
       periodData={periodData}
@@ -280,67 +242,6 @@ const ProfitDistribution = () => {
       onBackToList={handleBackToList}
     />
   );
-
-  const renderConfirmationDialog = () =>
-    distributionDialog.action === "post" && (
-      <Dialog
-        open={distributionDialog.open}
-        onClose={handleCloseDistributionDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            توزيع الأرباح
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography>
-            هل أنت متأكد من توزيع أرباح الفترة "{distributionDialog.periodName}"؟
-          </Typography>
-          
-          {enableSaving && savingPercentage > 0 && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                <strong>ملاحظة:</strong> سيتم ادخار {savingPercentage.toFixed(2)}% من الأرباح قبل التوزيع
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                المبلغ المدخر: {formatNumber(profitAfterSaving.savedAmount)} ({savingPercentage.toFixed(2)}%)
-              </Typography>
-            </Alert>
-          )}
-          
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            سيتم إنشاء قيد محاسبي لتوزيع الأرباح على الشركاء
-          </Alert>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, gap: 1, flexDirection: 'row-reverse' }}>
-          <Button
-            onClick={handleCloseDistributionDialog}
-            disabled={isDistributing}
-          >
-            إلغاء
-          </Button>
-          <Button
-            onClick={handleConfirmDistribution}
-            variant="contained"
-            color="success"
-            startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
-            disabled={isDistributing}
-          >
-            تأكيد التوزيع
-            {isDistributing && (
-              <CircularProgress
-                size={16}
-                color="inherit"
-                style={{ marginLeft: 8 }}
-              />
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-
   const renderUnpostModal = () =>
     distributionDialog.action === "unpost" && (
       <DeleteModal
@@ -353,7 +254,6 @@ const ProfitDistribution = () => {
         ButtonText="إلغاء التوزيع"
       />
     );
-
   return (
     <Box
       sx={{
@@ -367,7 +267,6 @@ const ProfitDistribution = () => {
         <title>توزيع الأرباح</title>
         <meta name="description" content="توزيع الأرباح على الشركاء" />
       </Helmet>
-
       <Box
         sx={{
           display: "flex",
@@ -408,7 +307,6 @@ const ProfitDistribution = () => {
               onExportExcel={handleExportExcel}
               isExporting={isExporting}
             />
-
             {activeTab === 0 || (isSmallScreen && !selectedPeriod) ? (
               <Paper
                 sx={{
@@ -450,7 +348,6 @@ const ProfitDistribution = () => {
           </Box>
         </Box>
       </Box>
-
       <SavingPercentage
         open={savingDialog.open}
         onClose={handleCloseSavingDialog}
@@ -458,11 +355,20 @@ const ProfitDistribution = () => {
         currentPercentage={savingPercentage}
         totalProfit={periodData?.partners?.reduce((sum, p) => sum + (p.finalProfit || p.totalProfit || 0), 0) || 0}
       />
-
-      {renderConfirmationDialog()}
+      {distributionDialog.action === "post" && (
+        <ProfitDistributionConfirmDialog
+          open={distributionDialog.open}
+          onClose={handleCloseDistributionDialog}
+          onConfirm={handleConfirmDistribution}
+          periodName={distributionDialog.periodName}
+          enableSaving={enableSaving}
+          savingPercentage={savingPercentage}
+          savedAmount={profitAfterSaving.savedAmount}
+          isDistributing={isDistributing}
+        />
+      )}
       {renderUnpostModal()}
     </Box>
   );
 };
-
 export default ProfitDistribution;

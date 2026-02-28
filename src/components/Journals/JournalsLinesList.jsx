@@ -3,7 +3,6 @@ import { Paper, Typography, Alert } from "@mui/material";
 import JournalsLinesTable from "./JournalsLinesTable";
 import JournalsLinesCards from "./JournalsLinesCards";
 import { isJournalBalanced } from "./journalsUtils";
-
 export default function JournalsLinesList({
   journalLines,
   totalsForTable,
@@ -18,7 +17,6 @@ export default function JournalsLinesList({
     totalsForTable.totalDebit,
     totalsForTable.totalCredit
   );
-
   return (
     <Paper
       sx={{
@@ -36,7 +34,6 @@ export default function JournalsLinesList({
       >
         بنود القيد
       </Typography>
-
       {journalLines.length === 0 ? (
         <Alert severity="info">لا توجد بنود مضافة</Alert>
       ) : (
@@ -77,4 +74,4 @@ export default function JournalsLinesList({
       )}
     </Paper>
   );
-}
+}

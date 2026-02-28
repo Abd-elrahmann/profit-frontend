@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Button, CircularProgress } from '@mui/material';
 import { PictureAsPdf as PDFIcon, TableChart as ExcelIcon } from '@mui/icons-material';
-
 export default function InstallmentsToolbar({
   onExportPDF,
   onExportExcel,
@@ -15,8 +14,6 @@ export default function InstallmentsToolbar({
 }) {
   const showEarlyPayment =
     !isSettlementCompleted && hasPendingInstallments && hasEarlyPaymentPermission;
-
-  // موبايل: أزرار أصغر | تابلت/ديسكتوب: أزرار أعلى
   const btnSx = {
     height: isMobile ? '32px' : '38px',
     fontSize: isMobile ? '13px' : '14px',
@@ -25,7 +22,6 @@ export default function InstallmentsToolbar({
     borderRadius: 2,
     px: isMobile ? 1.5 : 2,
   };
-
   return (
     <Box
       sx={{
@@ -90,4 +86,4 @@ export default function InstallmentsToolbar({
       )}
     </Box>
   );
-}
+}

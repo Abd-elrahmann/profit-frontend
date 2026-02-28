@@ -8,7 +8,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Box, Typography, CircularProgress, TablePagination } from '@mui/material';
-
 export const ScrollableTableContainer = ({ children, maxHeight = 650 }) => (
   <Box sx={{
     overflowX: 'auto',
@@ -38,7 +37,6 @@ export const ScrollableTableContainer = ({ children, maxHeight = 650 }) => (
     {children}
   </Box>
 );
-
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.primary.main,
@@ -58,7 +56,6 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
     fontFamily: theme.typography.fontFamily
   },
 }));
-
 export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(even)': {
     backgroundColor: theme.palette.mode === 'dark'
@@ -76,7 +73,6 @@ export const StyledTableRow = styled(TableRow)(({ theme }) => ({
     border: 0,
   },
 }));
-
 const TableLayout = ({
   columns = [], 
   data = [], 
@@ -90,16 +86,13 @@ const TableLayout = ({
   maxHeight = 650
 }) => {
   const isRTL = true;
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
-
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -107,7 +100,6 @@ const TableLayout = ({
       </Box>
     );
   }
-
   return (
     <Paper 
       elevation={0} 
@@ -236,5 +228,4 @@ const TableLayout = ({
     </Paper>
   );
 };
-
-export default TableLayout;
+export default TableLayout;

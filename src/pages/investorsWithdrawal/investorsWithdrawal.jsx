@@ -2,25 +2,27 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
   Paper,
   CircularProgress,
   Alert,
   Button,
   useMediaQuery,
-  FormControl,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Api, { handleApiError } from "../../config/Api";
-import InvestorsWithdrawalTable from "../../components/modals/investorsWithdrawalTable";
+import {
+  InvestorsWithdrawalTable,
+  WithdrawalTabs,
+  getStatusColor,
+  getStatusText,
+  getWithdrawingStatusColor,
+  getWithdrawingStatusText,
+} from "../../components/investorsWithdrawal";
 import DeleteModal from "../../components/modals/DeleteModal";
 import PartialPayWithdraw from "../../components/modals/PartialPayWithdraw";
-import WithdrawReceiptGenerator from "../../components/WithdrawReceiptGenerator";
-import WithdrawReceiptPreview from "../../components/WithdrawReceiptPreview";
+import WithdrawReceiptGenerator from "../../components/receipts/WithdrawReceiptGenerator";
+import WithdrawReceiptPreview from "../../components/receipts/WithdrawReceiptPreview";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -64,7 +66,6 @@ import {
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { exportWithdrawalDetailsToPDF, exportWithdrawalDetailsToExcel } from "../../utilities/InvestorsWithdrawalExporter";
-
 export default function InvestorsWithdrawal() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,14 +85,12 @@ export default function InvestorsWithdrawal() {
   const [hasAutoOpenedPreview, setHasAutoOpenedPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [partialPaymentAlerts, setPartialPaymentAlerts] = useState([]);
-
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
   const withdrawReceiptGeneratorRef = useRef(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
-
   useEffect(() => {
     if (location.state) {
       const { investorId: stateInvestorId, activeTab: targetTab } = location.state;
@@ -101,19 +100,16 @@ export default function InvestorsWithdrawal() {
       }
     }
   }, [location.state]);
-
   const { data: withdrawingInvestorsData, isLoading: isWithdrawingLoading } = useQuery({
     queryKey: ["withdrawing-investors", currentPage],
     queryFn: () => getWithdrawingInvestors(currentPage),
     enabled: activeTab === 0,
   });
-
   const { data: withdrawalDetails, isLoading: isDetailsLoading, refetch: refetchDetails } = useQuery({
     queryKey: ["withdrawal-details", selectedInvestorId],
     queryFn: () => getWithdrawalDetails(selectedInvestorId),
     enabled: !!selectedInvestorId && activeTab === 1,
   });
-
   const fetchWithdrawReceiptTemplate = async () => {
     try {
       const response = await Api.get("/api/templates/WITHDRAWAL_RECEIPT");
@@ -123,27 +119,22 @@ export default function InvestorsWithdrawal() {
       handleApiError(error);
     }
   };
-
   const handleOpenPreview = useCallback(async () => {
     if (!withdrawalDetails) {
       notifyError("لا توجد بيانات للعرض");
       return;
     }
-
     if (!withdrawReceiptTemplate) {
       notifyError("لم يتم تحميل قالب المخالصة بعد، يرجى الانتظار");
       return;
     }
-
     if (!withdrawReceiptGeneratorRef.current) {
       notifyError("مولد المخالصة غير جاهز، يرجى المحاولة مرة أخرى");
       return;
     }
-
     try {
       const { data: countData } = await Api.get('/api/partner-withdraw/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const receiptHtml = await withdrawReceiptGeneratorRef.current.generateContract(
         false,
         withdrawalDetails,
@@ -157,7 +148,6 @@ export default function InvestorsWithdrawal() {
       handleApiError(error);
     }
   }, [withdrawalDetails, withdrawReceiptTemplate]);
-
   useEffect(() => {
     if (withdrawalDetails?.schedule) {
       const allPaid = withdrawalDetails.schedule.every(s => s.status === "PAID");
@@ -167,7 +157,6 @@ export default function InvestorsWithdrawal() {
       }
     }
   }, [withdrawalDetails]);
-
   useEffect(() => {
     if (
       allSchedulesPaid &&
@@ -187,37 +176,30 @@ export default function InvestorsWithdrawal() {
       return () => clearTimeout(timer);
     }
   }, [allSchedulesPaid, withdrawalDetails, isPreviewOpen, hasAutoOpenedPreview, withdrawReceiptTemplate, handleOpenPreview]);
-
   useEffect(() => {
     fetchWithdrawReceiptTemplate();
   }, []);
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     if (newValue === 0) {
       setSelectedInvestorId(null);
     }
   };
-
   const handleViewDetails = (investorId) => {
     setSelectedInvestorId(investorId);
     setActiveTab(1);
     setHasAutoOpenedPreview(false);
   };
-
   const handleApprove = async (scheduleId) => {
     if (!permissions.includes("partners-withdraw_Post")) {
       notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
       return;
     }
-
     try {
       setIsProcessing(true);
       await approveWithdrawal(scheduleId);
-      
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === scheduleId);
       const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
-      
       notifySuccess(`تم الموافقة على دفعة شهر ${monthName} بنجاح`);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
@@ -230,7 +212,6 @@ export default function InvestorsWithdrawal() {
       setIsProcessing(false);
     }
   };
-
   const handleOpenRejectModal = (scheduleId) => {
     if (!permissions.includes("partners-withdraw_Post")) {
       notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
@@ -239,15 +220,12 @@ export default function InvestorsWithdrawal() {
     setSelectedScheduleId(scheduleId);
     setIsDeleteModalOpen(true);
   };
-
   const handleConfirmReject = async () => {
     try {
       setIsProcessing(true);
       await rejectWithdrawal(selectedScheduleId);
-      
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
       const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
-      
       notifySuccess(`تم رفض دفعة شهر ${monthName} بنجاح`);
       setIsDeleteModalOpen(false);
       setSelectedScheduleId(null);
@@ -262,41 +240,32 @@ export default function InvestorsWithdrawal() {
       setIsProcessing(false);
     }
   };
-
   const handleCloseRejectModal = () => {
     setIsDeleteModalOpen(false);
     setSelectedScheduleId(null);
   };
-
   const handleOpenPartialPayDialog = (scheduleId) => {
     setSelectedScheduleId(scheduleId);
     setPartialAmount("");
     setPartialPayDialogOpen(true);
   };
-
   const handlePartialPay = async () => {
     if (!permissions.includes("partners-withdraw_Post")) {
       notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
       return;
     }
-
     if (!partialAmount || parseFloat(partialAmount) <= 0) {
       notifyError("يرجى إدخال مبلغ صحيح");
       return;
     }
-
     try {
       setIsProcessing(true);
       await partialPayWithdrawal(selectedScheduleId, parseFloat(partialAmount));
-      
       const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
       const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
-      
-      // إضافة alert للدفع الجزئي
       const paidAmount = parseFloat(partialAmount);
       const totalDue = (schedule?.amount || 0) + (schedule?.carryAmount || 0);
       const remainingAmount = totalDue - paidAmount;
-      
       if (remainingAmount > 0) {
         const alertId = Date.now();
         const newAlert = {
@@ -307,10 +276,8 @@ export default function InvestorsWithdrawal() {
           carriedAmount: remainingAmount,
           timestamp: new Date().toLocaleString('ar-SA')
         };
-        
         setPartialPaymentAlerts(prev => [newAlert, ...prev]);
       }
-      
       notifySuccess(`تم تسجيل السداد الجزئي لدفعة شهر ${monthName} بنجاح`);
       setPartialPayDialogOpen(false);
       setPartialAmount("");
@@ -326,40 +293,31 @@ export default function InvestorsWithdrawal() {
       setIsProcessing(false);
     }
   };
-
   const handleSaveReceipt = async () => {
     if (!withdrawalDetails?.partner?.id) {
       notifyError("لا يوجد معرف للمساهم");
       return;
     }
-
     try {
       setIsSavingReceipt(true);
-      
       const { data: countData } = await Api.get('/api/partner-withdraw/next-count');
       const receiptNumber = countData?.toString() || 'غير محدد';
-
       const receiptHtml = await withdrawReceiptGeneratorRef.current.generateContract(
         false,
         withdrawalDetails,
         receiptNumber
       );
       const pdfBlob = await withdrawReceiptGeneratorRef.current.generatePDF(receiptHtml);
-      
       const formData = new FormData();
       const filename = `مخالصة_${withdrawalDetails.partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_')}_${Date.now()}.pdf`;
       formData.append("file", pdfBlob, filename);
-      
       await uploadWithdrawalReceipt(withdrawalDetails.partner.id, formData);
-
       notifySuccess("تم حفظ المخالصة بنجاح");
-
       queryClient.invalidateQueries({ queryKey: ['investor-details', withdrawalDetails.partner.id] });
       queryClient.invalidateQueries({ queryKey: ['investors'] });
       queryClient.invalidateQueries({ queryKey: ['withdrawal-details', selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
       await refetchDetails();
-
       setIsPreviewOpen(false);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء حفظ المخالصة");
@@ -368,46 +326,11 @@ export default function InvestorsWithdrawal() {
       setIsSavingReceipt(false);
     }
   };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "PAID":
-        return "success";
-      case "PENDING":
-        return "default";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "PAID":
-        return "مدفوع";
-      case "PENDING":
-        return "قيد الانتظار";
-      default:
-        return status;
-    }
-  };
-
-  const getWithdrawingStatusColor = (status) => {
-    switch (status) {
-      case "WITHDRAWING":
-        return "warning";
-      case "WITHDRAWN":
-        return "success";
-      default:
-        return "default";
-    }
-  };
-
   const handleExportPDF = async () => {
     if (!withdrawalDetails) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
-    
     try {
       setIsExporting(true);
       await exportWithdrawalDetailsToPDF(withdrawalDetails);
@@ -419,13 +342,11 @@ export default function InvestorsWithdrawal() {
       setIsExporting(false);
     }
   };
-
   const handleExportExcel = async () => {
     if (!withdrawalDetails) {
       notifyError("لا توجد بيانات للتصدير");
       return;
     }
-    
     try {
       setIsExporting(true);
       await exportWithdrawalDetailsToExcel(withdrawalDetails);
@@ -437,64 +358,25 @@ export default function InvestorsWithdrawal() {
       setIsExporting(false);
     }
   };
-
   const handleCloseAlert = (alertId) => {
     setPartialPaymentAlerts(prev => prev.filter(alert => alert.id !== alertId));
   };
-
-  const getWithdrawingStatusText = (status) => {
-    switch (status) {
-      case "WITHDRAWING":
-        return "قيد السحب";
-      case "WITHDRAWN":
-        return "تم السحب";
-      default:
-        return status;
-    }
-  };
-
   return (
     <Box sx={{ bgcolor: 'background.paper', minHeight: "100vh" }}>
       <Helmet>
         <title>انسحابات المستثمرين</title>
         <meta name="description" content="انسحابات المستثمرين" />
       </Helmet>
-      {/* Tabs */}
+      {}
       <Box sx={{ bgcolor: "background.default", borderBottom: "1px solid #ddd", p: 1 }}>
-        {isSmallScreen ? (
-          <Box sx={{ display: "flex", justifyContent: "center", px: 2 }}>
-            <FormControl sx={{ minWidth: 200, maxWidth: 320, width: "100%" }} size="small">
-              <Select
-                value={activeTab}
-                onChange={(e) => handleTabChange(null, e.target.value)}
-                sx={{ "& .MuiSelect-select": { textAlign: "center", py: 1.25 } }}
-              >
-                <MenuItem value={0}>جدول السحب</MenuItem>
-                <MenuItem value={1} disabled={!selectedInvestorId}>التفاصيل</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        ) : (
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{
-              px: 2,
-              "& .MuiTab-root": {
-                color: "text.primary",
-                "&.Mui-selected": { color: "primary.main" },
-              },
-            }}
-          >
-            <Tab label="جدول السحب" />
-            <Tab label="التفاصيل" disabled={!selectedInvestorId} />
-          </Tabs>
-        )}
+        <WithdrawalTabs
+          value={activeTab}
+          onChange={handleTabChange}
+          isSmallScreen={isSmallScreen}
+          selectedInvestorId={selectedInvestorId}
+        />
       </Box>
-
-      {/* Content */}
+      {}
       <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: 'background.paper' }}>
         {activeTab === 0 && (
           <InvestorsWithdrawalTable
@@ -506,10 +388,9 @@ export default function InvestorsWithdrawal() {
             isMobile={isSmallScreen}
           />
         )}
-
         {activeTab === 1 && (
           <Box sx={{ bgcolor: 'background.paper', minHeight: '100%' }}>
-            {/* Success notification when withdrawal receipt exists */}
+            {}
             {withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
               <Box
                 sx={{
@@ -548,7 +429,6 @@ export default function InvestorsWithdrawal() {
                 </Button>
               </Box>
             )}
-
             {isDetailsLoading ? (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
                 <CircularProgress />
@@ -557,7 +437,7 @@ export default function InvestorsWithdrawal() {
               <Alert severity="info">يرجى اختيار مستثمر لعرض التفاصيل</Alert>
             ) : (
               <Box>
-                {/* Export Buttons */}
+                {}
                 {permissions.includes("partners-withdraw_Export") && (
                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
                   <Button
@@ -592,8 +472,7 @@ export default function InvestorsWithdrawal() {
                   </Button>
                 </Box>
                 )}
-
-                {/* Partner Info */}
+                {}
                 <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, bgcolor: 'background.paper' }}>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                     معلومات المستثمر
@@ -679,8 +558,7 @@ export default function InvestorsWithdrawal() {
                     </Grid>
                   </Grid>
                 </Paper>
-
-                {/* Withdrawal Request Info */}
+                {}
                 {withdrawalDetails.withdrawal && (
                   <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, bgcolor: 'background.paper' }}>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
@@ -790,7 +668,6 @@ export default function InvestorsWithdrawal() {
                     </Grid>
                   </Paper>
                 )}
-
                 {withdrawalDetails.schedule && withdrawalDetails.schedule.length > 0 && (
                   <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, bgcolor: 'background.paper' }}>
                     <Box
@@ -822,8 +699,7 @@ export default function InvestorsWithdrawal() {
                         </Button>
                       )}
                     </Box>
-
-                    {/* Partial Payment Alerts */}
+                    {}
                     {partialPaymentAlerts.length > 0 && (
                       <Box sx={{ mb: 2 }}>
                         {partialPaymentAlerts.map((alert) => (
@@ -1149,7 +1025,6 @@ export default function InvestorsWithdrawal() {
                     )}
                   </Paper>
                 )}
-
                 {withdrawalDetails.journals && withdrawalDetails.journals.length > 0 && (
                   <Paper sx={{ p: { xs: 2, md: 3 } }}>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
@@ -1281,7 +1156,6 @@ export default function InvestorsWithdrawal() {
           </Box>
         )}
       </Box>
-
       <PartialPayWithdraw
         open={partialPayDialogOpen}
         onClose={() => {
@@ -1296,7 +1170,6 @@ export default function InvestorsWithdrawal() {
         onConfirm={handlePartialPay}
         isProcessing={isProcessing}
       />
-
       <DeleteModal
         open={isDeleteModalOpen}
         onClose={handleCloseRejectModal}
@@ -1306,7 +1179,6 @@ export default function InvestorsWithdrawal() {
         isLoading={isProcessing}
         ButtonText="رفض"
       />
-
       {withdrawReceiptTemplate && (
         <WithdrawReceiptGenerator
           ref={withdrawReceiptGeneratorRef}
@@ -1314,7 +1186,6 @@ export default function InvestorsWithdrawal() {
           templateContent={withdrawReceiptTemplate}
         />
       )}
-
       <WithdrawReceiptPreview
         open={isPreviewOpen}
         onClose={() => {

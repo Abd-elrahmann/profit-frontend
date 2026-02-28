@@ -1,3 +1,4 @@
+export { default as JournalTable } from "./JournalTable";
 export { default as JournalsHeader } from "./JournalsHeader";
 export { default as JournalsSidebar } from "./JournalsSidebar";
 export { default as JournalsActions } from "./JournalsActions";
@@ -10,4 +11,4 @@ export { default as JournalsLinesCards } from "./JournalsLinesCards";
 export { default as JournalsLinesList } from "./JournalsLinesList";
 export { default as JournalsJournalDetails } from "./JournalsJournalDetails";
 export * from "./journalsUtils";
-export * from "./constants";
+export * from "./constants";

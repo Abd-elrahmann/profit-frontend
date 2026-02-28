@@ -5,24 +5,19 @@ import { getRepaymentsByMonth } from '../../pages/dashboard/dashboardApi';
 import { useCountUp } from '../../hooks/useCountUp';
 import { Link } from 'react-router-dom';
 import ResponsiveTable from './ResponsiveTable';
-
 const MONTH_NAMES = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
 ];
 const DAY_ABBR = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
-
 const UpcomingRepayments = React.memo(() => {
   const [viewDate, setViewDate] = useState(() => new Date());
-
   const selectedYear = viewDate.getFullYear();
-  const selectedMonth = viewDate.getMonth() + 1; // 1-indexed for API
-
+  const selectedMonth = viewDate.getMonth() + 1;
   const { data, isLoading } = useQuery({
     queryKey: ['repayments-by-month', selectedYear, selectedMonth],
     queryFn: () => getRepaymentsByMonth(selectedYear, selectedMonth),
   });
-
   const repayments = data?.repayments ?? [];
   const totalExpected = data?.totalExpected ?? 0;
   const totalPaid = data?.totalPaid ?? 0;
@@ -30,14 +25,12 @@ const UpcomingRepayments = React.memo(() => {
   const animatedTotal = useCountUp(totalExpected, 600, !isLoading);
   const animatedPaid = useCountUp(totalPaid, 600, !isLoading);
   const animatedRemaining = useCountUp(totalRemaining, 600, !isLoading);
-
   const formatAmount = (n) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
   const formatDueDate = (d) => {
     if (!d) return '—';
     const date = new Date(d);
     return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
   };
-
   const calendarDays = useMemo(() => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -49,14 +42,12 @@ const UpcomingRepayments = React.memo(() => {
     for (let d = 1; d <= last.getDate(); d++) days.push(d);
     return days;
   }, [viewDate]);
-
   const today = new Date();
   const isToday = (d) =>
     d &&
     viewDate.getMonth() === today.getMonth() &&
     viewDate.getFullYear() === today.getFullYear() &&
     d === today.getDate();
-
   const hasRepaymentOnDay = (d) => {
     if (!d) return false;
     const y = viewDate.getFullYear();
@@ -66,7 +57,6 @@ const UpcomingRepayments = React.memo(() => {
       return due.getFullYear() === y && due.getMonth() === m && due.getDate() === d;
     });
   };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -74,10 +64,9 @@ const UpcomingRepayments = React.memo(() => {
       </div>
     );
   }
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Hero Section */}
+      {}
       <section className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div>
@@ -117,8 +106,7 @@ const UpcomingRepayments = React.memo(() => {
             </div>
           )}
         </div>
-
-        {/* Mini Calendar */}
+        {}
         <div className="w-full md:w-80 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-4 px-2">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -166,8 +154,7 @@ const UpcomingRepayments = React.memo(() => {
           </div>
         </div>
       </section>
-
-      {/* Payments Table */}
+      {}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-4 border-b border-slate-100 dark:border-slate-800">
           <h3 className="font-bold text-slate-900 dark:text-slate-100">
@@ -217,7 +204,5 @@ const UpcomingRepayments = React.memo(() => {
     </div>
   );
 });
-
 UpcomingRepayments.displayName = 'UpcomingRepayments';
-
-export default UpcomingRepayments;
+export default UpcomingRepayments;

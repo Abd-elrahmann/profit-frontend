@@ -1,5 +1,4 @@
 import React from 'react';
-
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Employees = React.lazy(() => import('./pages/Employees/Employees'));
@@ -295,10 +294,8 @@ const routes = [
     requiresPermissions: true
   }
 ];
-
 export { getSidebarMenuItems } from './sidebar.config.js';
 import { sidebarItems } from './sidebar.config.js';
-
 export const getAvailableModules = () => {
   return sidebarItems
     .filter(item => item.requiresPermissions && item.module)
@@ -307,5 +304,4 @@ export const getAvailableModules = () => {
       label: item.label
     }));
 };
-
 export default routes;

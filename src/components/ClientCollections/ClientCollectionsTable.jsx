@@ -18,23 +18,18 @@ import {
   StyledTableRow,
   ScrollableTableContainer,
 } from '../layouts/tableLayout';
-
 const formatCurrency = (amount) => amount?.toLocaleString() || '0';
-
 const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmallScreen: isSmallScreenProp }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const showCards = isSmallScreenProp ?? (isMobile || isTablet);
-
   const handleChangePage = (event, newPage) => setPage(newPage);
-
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const totals = useMemo(() => {
     if (!clientsData?.data?.length) {
       return {
@@ -56,7 +51,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
       ),
     };
   }, [clientsData]);
-
   const getColumnValue = (client, columnId, index) => {
     switch (columnId) {
       case 'id':
@@ -89,7 +83,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
         return '';
     }
   };
-
   const renderLoansCountWithChips = (client) => (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
       <Chip
@@ -107,7 +100,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
       </Box>
     </Box>
   );
-
   const paginationProps = {
     rowsPerPageOptions: [5, 10, 20],
     component: 'div',
@@ -119,7 +111,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
     labelRowsPerPage: 'عدد الصفوف:',
     labelDisplayedRows: ({ from, to, count }) => `${from}-${to} من ${count}`,
   };
-
   const renderTotalCellContent = (col) => {
       if (col.id === 'id') return <Typography variant="body2" fontWeight="bold">الإجمالي</Typography>;
       if (col.id === 'monthlyInstallment') return <Typography variant="body2" fontWeight="bold" color="secondary.main">{formatCurrency(totals.averageMonthlyInstallment)}</Typography>;
@@ -129,7 +120,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
       if (col.id === 'remaining') return <Typography variant="body2" fontWeight="bold" color="warning.main">{formatCurrency(totals.remaining)}</Typography>;
     return <Typography variant="body2">-</Typography>;
   };
-
   const renderDesktopTable = () => (
       <>
         <ScrollableTableContainer maxHeight={650}>
@@ -195,7 +185,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
         {clientsData?.data?.length > 0 && <TablePagination {...paginationProps} />}
       </>
   );
-
   const renderMobileCards = () => (
     <Box sx={{ p: 1 }}>
       {isLoading ? (
@@ -274,8 +263,6 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
       )}
     </Box>
   );
-
   return showCards ? renderMobileCards() : renderDesktopTable();
 };
-
-export default ClientCollectionsTable;
+export default ClientCollectionsTable;
