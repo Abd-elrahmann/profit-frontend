@@ -1,0 +1,1 @@
+const r={bgcolor:"transparent","& fieldset":{border:"none"},"& .MuiOutlinedInput-root":{bgcolor:"transparent","&:hover":{bgcolor:"transparent"},"&.Mui-focused":{bgcolor:"transparent"}}},t={bgcolor:"transparent","&:hover":{bgcolor:"transparent"},"&.Mui-focused":{bgcolor:"transparent"}};export{t as a,r as t};

@@ -1,10 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import process from "node:process";
+
+function closePlugin() {
+  return {
+    name: "ClosePlugin",
+    buildEnd(error) {
+      if (error) {
+        console.error("Error bundling", error);
+        process.exit(1);
+      }
+    },
+    closeBundle() {
+      process.exit(0);
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [
-    react(),
-  ],
+  plugins: [react(), closePlugin()],
 
   server: {
     port: 3001,
@@ -14,8 +28,9 @@ export default defineConfig({
   base: "/",
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: false,
     minify: "esbuild",
+    reportCompressedSize: false,
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: { 
