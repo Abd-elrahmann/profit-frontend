@@ -92,6 +92,7 @@ const Installments = () => {
   const [bulkPaymentProofModalOpen, setBulkPaymentProofModalOpen] = useState(false);
   const [bulkPaymentProofHtml, setBulkPaymentProofHtml] = useState("");
   const [isGeneratingBulkProof, setIsGeneratingBulkProof] = useState(false);
+  const [totalDiscountsAllPages, setTotalDiscountsAllPages] = useState(0);
   const handleChangePage = (event, value) => {
     setPage(value);
     setSelectedInstallments([]);
@@ -257,12 +258,31 @@ const Installments = () => {
     if (installmentWithDocuments && !activeInstallmentId) {
       handleRowClick(installmentWithDocuments);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedInstallments]);
   useEffect(() => {
     setSettlementJustSaved(false);
     setOverdueAlertDismissed(false);
   }, [loanId]);
+
+  useEffect(() => {
+    const calculateTotalDiscounts = async () => {
+      try {
+        const { repayments: allRepayments } = await fetchAllRepayments();
+        const total = allRepayments.reduce(
+          (sum, inst) => sum + (Number(inst.discount) || 0),
+          0
+        );
+        setTotalDiscountsAllPages(total);
+      } catch (error) {
+        console.error("Error calculating total discounts:", error);
+        setTotalDiscountsAllPages(0);
+      }
+    };
+
+    if (loanId && loanData) {
+      calculateTotalDiscounts();
+    }
+  }, [loanData?.pagination?.totalRepayments, loanId]);
   useEffect(() => {
     if (
       sortedInstallments.length > 0 &&
@@ -935,7 +955,7 @@ const Installments = () => {
             totalAmount={loanData?.totalAmount}
             totalPaidAmount={loanData?.pagination?.totalPaidAmount}
             totalRemainingAmount={loanData?.pagination?.totalRemainingAmount}
-            totalDiscounts={sortedInstallments.reduce((sum, inst) => sum + (inst.discount || 0), 0)}
+            totalDiscounts={totalDiscountsAllPages}
             paidRepayments={loanData?.pagination?.paidRepayments}
             totalRepayments={loanData?.pagination?.totalRepayments}
           />
@@ -1263,4 +1283,4 @@ const Installments = () => {
     </Box>
   );
 };
-export default Installments;
+export default Installments;
