@@ -109,11 +109,19 @@ export default function Investors() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
-  const { data: investorsData, isLoading: isInvestorsLoading, refetch } = useQuery({
+  const {
+    data: investorsData,
+    isLoading: isInvestorsLoading,
+    isFetching: isInvestorsFetching,
+    refetch,
+  } = useQuery({
     queryKey: [QUERY_KEYS.INVESTORS, currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus],
     queryFn: () => getInvestors(currentPage, search, selectedStatus, showWithdrawnOnly, selectedActiveStatus),
     retry: 1,
   });
+  const showInvestorsLoading =
+    isInvestorsLoading ||
+    (isInvestorsFetching && !investorsData?.partners?.length);
   const { data: investorDetails } = useQuery({
     queryKey: [QUERY_KEYS.INVESTOR_DETAILS, selectedInvestor?.id],
     queryFn: () => selectedInvestor ? getInvestorDetails(selectedInvestor.id) : null,
@@ -661,7 +669,7 @@ export default function Investors() {
         {(!isMobile || !selectedInvestor) && (
         <InvestorsList
           investorsData={investorsData}
-          isLoading={isInvestorsLoading}
+          isLoading={showInvestorsLoading}
           selectedInvestor={selectedInvestor}
           showWithdrawnOnly={showWithdrawnOnly}
           search={search}
@@ -800,9 +808,13 @@ export default function Investors() {
           ) : (
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", gap: 2 }}>
             <Typography variant="h6" color="text.secondary">
-              {selectedInvestor ? 'جاري تحميل البيانات...' : 'اختر مستثمراً لعرض التفاصيل'}
+              {showInvestorsLoading && !selectedInvestor
+                ? 'جاري تحميل قائمة المستثمرين...'
+                : selectedInvestor
+                  ? 'جاري تحميل البيانات...'
+                  : 'اختر مستثمراً لعرض التفاصيل'}
             </Typography>
-            {selectedInvestor && (
+            {(selectedInvestor || (showInvestorsLoading && !selectedInvestor)) && (
               <Box sx={{ width: '100%', p: 2 }}>
                 <Skeleton variant="rectangular" height={200} sx={{ mb: 2, borderRadius: 1 }} />
                 <Skeleton variant="text" width="80%" height={32} sx={{ mb: 1 }} />
@@ -905,4 +917,4 @@ export default function Investors() {
       />
     </Box>
   );
-}
+}

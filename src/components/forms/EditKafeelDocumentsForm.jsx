@@ -190,9 +190,7 @@ export default function EditKafeelDocumentsForm({ kafeelId, kafeel, onSuccess, o
       const formData = new FormData();
       Object.keys(uploadedFiles).forEach((key) => formData.append(key, uploadedFiles[key]));
       deleteFields.forEach((fieldName) => formData.append(fieldName, ''));
-      await Api.patch(`/api/clients/kafeel/${kafeelId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await Api.patch(`/api/clients/kafeel/${kafeelId}`, formData);
       notifySuccess('تم تحديث مستندات الكفيل بنجاح');
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['client-details'] });

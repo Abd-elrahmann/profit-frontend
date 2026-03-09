@@ -1,92 +1,101 @@
 # Profit Frontend - Islamic Banking & Financial Management System
 
-A comprehensive React-based frontend application for Islamic banking and financial management. This system provides complete financial operations management including loans, investments, accounting, treasury, and compliance with Islamic finance principles.
+A comprehensive React-based frontend application for Islamic banking and financial management. This system provides complete financial operations management including loans (Salf), investments, accounting, treasury, zakah, and compliance with Islamic finance principles.
 
 ## 🚀 Features
 
 ### Core Financial Modules
-- **Loan Management** - Islamic financing products and loan lifecycle management
-- **Client Management** - Comprehensive client portfolio and relationship management
-- **Investor Management** - Partner/investor accounts and profit distribution
-- **Bank Account Management** - Multi-bank account handling with limits and status tracking
-- **Treasury Management** - Cash flow and liquidity management
-- **Accounting System** - Complete double-entry accounting with journals and general ledger
+- **Dashboard** - Overview with key metrics, charts, and quick actions
+- **Loan Management (السلف)** - Islamic financing products and full loan lifecycle management
+- **Client Management** - Clients with Kafeel (sponsor) support, documents, and statements
+- **Investor Management (المستثمرين)** - Partner/investor accounts and profit distribution
+- **Investors Withdrawal (الانسحابات)** - Partner withdrawal requests and processing
+- **Bank Accounts** - Multi-bank account handling with limits and status tracking
+- **Treasury (الصندوق)** - Cash flow and liquidity management
+- **Installments (الدفعات)** - Loan repayment tracking and settlement
 - **Chart of Accounts** - Hierarchical account structure management
+- **Journal Entries** - Double-entry accounting with journals
+- **General Ledger** - Full ledger view and reports
+- **Period Closing** - Financial period management and closing procedures
 - **Profit Distribution** - Islamic-compliant profit sharing calculations
-- **Zakah Management** - Islamic charity calculations and distributions
+- **Company Profit** - Company-level profit tracking
+- **Zakah** - Islamic charity calculations and partner distributions
 - **Saving Accounts** - Islamic saving products management
 
-### Advanced Features
-- **Collections Management** - Client payment collection tracking
-- **Expense Management** - Operational expense tracking and categorization
-- **Period Closing** - Financial period management and closing procedures
-- **Income Statements** - Comprehensive financial reporting
+### Operational Modules
+- **Client Collections** - Payment collection tracking and reports
+- **Expenses** - Operational expense tracking and categorization
+- **Income Statement** - Comprehensive financial reporting
+
+### Templates & Communications
 - **Contract Templates** - Dynamic contract generation and management
 - **Message Templates** - Automated communication templates
-- **Audit Logs** - Complete system activity tracking
-- **Advanced Search** - Powerful filtering and search capabilities across all modules
 
-### Security & Compliance
-- **Role-Based Access Control** - Granular permissions system
-- **JWT Authentication** - Secure token-based authentication
-- **Multi-Language Support** - Arabic and English interfaces
-- **RTL Support** - Right-to-left layout for Arabic users
-- **Offline Detection** - Network status monitoring and handling
+### Administration & User
+- **Employees** - User management
+- **Roles & Permissions** - Granular role-based access control
+- **Settings** - System configuration
+- **Audit Logs (السجلات)** - Complete system activity tracking
+- **Profile** - User profile with photo upload/delete, password change with visibility toggle
+
+### Security & UX
+- **JWT Authentication** - Secure token-based auth with refresh
+- **Role-Based Permissions** - Module-level permission checking
+- **RTL Support** - Right-to-left layout for Arabic
+- **Arabic & English** - i18next internationalization
+- **Dark Mode** - Theme toggle in profile
+- **Toast Notifications** - react-toastify for feedback
 
 ### Technical Features
-- **Real-time Notifications** - Toast notifications and alerts
-- **Export Capabilities** - PDF and Excel export functionality
-- **Template Management** - Rich text and code template editors
-- **Data Visualization** - Interactive charts and dashboards
-- **File Upload** - Document and image upload with drag-and-drop
+- **Export** - PDF and Excel export
+- **File Upload** - Drag-and-drop with React Dropzone
+- **Data Visualization** - Chart.js, Recharts
+- **Rich Text** - React Quill for templates
+- **Code Editor** - CodeMirror for template editing
+- **Prefetching** - Proactive data loading via React Query
 
 ## 🛠️ Technology Stack
 
-### Frontend Framework
-- **React 19.1.1** - Latest React with concurrent features
-- **Vite** - Fast build tool and development server
-- **React Router DOM** - Client-side routing
+### Core
+- **React 19** - With concurrent features
+- **Vite 7** - Build tool and dev server
+- **React Router DOM 7** - Client-side routing
 
-### UI & Design
-- **Material-UI (MUI)** - Comprehensive component library
-- **Tailwind CSS** - Utility-first CSS framework
-- **Framer Motion** - Animation library
-- **React Icons & Lucide** - Icon libraries
+### UI
+- **Material-UI (MUI) 7** - Component library
+- **Tailwind CSS** - Utility-first styling
+- **Framer Motion** - Animations
+- **React Icons & Lucide** - Icons
 
-### State Management & Data
-- **React Query (TanStack)** - Server state management
+### Data & Forms
+- **TanStack React Query** - Server state, caching, prefetching
 - **Axios** - HTTP client with interceptors
-- **React Hook Form** - Form state management
-- **Formik & Yup** - Advanced form handling and validation
+- **Formik & Yup** - Form handling and validation
+- **React Hook Form** - Form state
 
-### Internationalization & Styling
-- **i18next** - Internationalization framework
-- **Stylis & RTL Plugin** - Right-to-left styling support
+### i18n & Styling
+- **i18next** - Arabic/English
+- **Stylis RTL Plugin** - RTL support
 
-### Data Visualization & Export
-- **Chart.js & React-ChartJS-2** - Interactive charts
-- **Recharts** - Declarative charting library
+### Export & Charts
+- **Chart.js & React-ChartJS-2** - Charts
+- **Recharts** - Declarative charts
 - **jsPDF & pdf-lib** - PDF generation
-- **xlsx** - Excel file handling
-- **html2pdf.js** - HTML to PDF conversion
+- **xlsx** - Excel export
+- **html2pdf.js** - HTML to PDF
 
-### Rich Text & Code Editing
-- **React Quill** - Rich text editor
-- **CodeMirror** - Code editor component
-- **@uiw/react-codemirror** - Enhanced CodeMirror wrapper
-
-### Utilities
-- **date-fns & dayjs** - Date manipulation
-- **crypto-js** - Encryption utilities
-- **lodash** - Utility functions
-- **React Dropzone** - File upload component
-- **React Helmet Async** - Document head management
+### Editors & Utils
+- **React Quill** - Rich text
+- **@uiw/react-codemirror** - Code editor
+- **date-fns & dayjs** - Date handling
+- **React Dropzone** - File upload
+- **React Helmet Async** - Document head
 
 ## 📋 Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn package manager
-- Backend API server running on the configured endpoint
+- Node.js v16+
+- npm or yarn
+- Backend API at configured URL
 
 ## 🚀 Installation & Setup
 
@@ -101,134 +110,158 @@ A comprehensive React-based frontend application for Islamic banking and financi
    npm install
    ```
 
-3. **Environment Configuration**
-   - Update API base URL in `src/config/Api.js` if needed
-   - Default backend URL: `http://72.61.101.53:3003`
+3. **Environment**
+   - API base URL is set in `src/config/Api.js`
+   - Default: `https://api.solfweb.com`
 
-4. **Development Server**
+4. **Development**
    ```bash
    npm run dev
    ```
-   The application will be available at `http://localhost:5173`
+   App runs at `http://localhost:3001`
 
-5. **Build for Production**
+5. **Production build**
    ```bash
    npm run build
    ```
+   Output in `dist/`
 
-6. **Preview Production Build**
+6. **Preview build**
    ```bash
    npm run preview
    ```
 
-## 🔧 Available Scripts
+## 🔧 Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (port 3001) |
+| `npm run build` | Production build |
+| `npm run build:prod` | Build with production mode |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
 
 ## 🏗️ Project Structure
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── layouts/        # Layout components (Navbar, Sidebar, etc.)
-│   ├── modals/         # Modal dialogs
-│   ├── dashboardSections/  # Dashboard widgets
-│   ├── loans/          # Loan-specific components
-│   ├── Contracts/      # Contract management
-│   └── ...
-├── pages/              # Page components
-│   ├── auth/           # Authentication pages
-│   ├── dashboard/      # Dashboard page
-│   ├── Loans/          # Loan management
-│   ├── Clients/        # Client management
-│   └── ...
-├── config/             # Configuration files
-│   ├── Api.js          # API configuration
-│   └── translationConfig.js  # i18n setup
-├── hooks/              # Custom React hooks
-├── utilities/          # Utility functions and helpers
-├── theme/              # Theme configuration
-├── Translations/       # Language files (ar.json, en.json)
+├── components/           # Reusable components
+│   ├── layouts/         # Navbar, Sidebar, Layout
+│   ├── Profile/         # Profile header, modals, password change
+│   ├── Contexts/       # Auth, Permissions, Notifications
+│   ├── modals/         # AddEmployee, PaymentReceipt, etc.
+│   ├── forms/          # AddClientForm, AddKafeelForm, EditDocuments, etc.
+│   ├── clients/        # Client-related components
+│   ├── loans/          # Loan components
+│   ├── Treasury/       # Treasury components
+│   ├── Zakah/          # Zakah components
+│   ├── ProfitDistribution/
+│   ├── Saving/
+│   ├── roles/
+│   ├── receipts/       # PDF/preview generators
+│   ├── editors/       # RichTextEditor
+│   ├── contractGenerators/
+│   └── ui/             # PageLoader, FileUploadDropzone, etc.
+├── pages/              # Route pages
+│   ├── auth/           # Login, ForgotPassword, ResetPassword
+│   ├── dashboard/      # Dashboard with tabs
+│   ├── Clients/        # Clients, AddClient, AddKafeel, EditDocuments
+│   ├── Investors/      # Investors, AddInvestor
+│   ├── investorsWithdrawal/
+│   ├── Loans/          # Loans
+│   ├── Installments/   # Installments
+│   ├── Banks/          # Banks
+│   ├── treasury/       # Treasury
+│   ├── chartOfAccounts/
+│   ├── Journals/       # Journal entries
+│   ├── generalLedger/
+│   ├── periodClosing/
+│   ├── profit/         # Profit distribution
+│   ├── companyProfit/
+│   ├── clientCollections/
+│   ├── Zakah/          # Zakah
+│   ├── Saving/        # Saving
+│   ├── Templates/     # Contract & message templates
+│   ├── Expenses/      # Expenses
+│   ├── incomeStatement/
+│   ├── Employees/      # Employees
+│   ├── Roles/          # Roles
+│   ├── logs/           # Audit logs
+│   ├── Settings/       # Settings
+│   └── Profile.jsx     # User profile
+├── config/
+│   ├── Api.js          # Axios instance, interceptors, token refresh
+│   └── translationConfig.js
+├── hooks/              # usePrefetch, etc.
+├── utilities/          # Helpers, toastify
+├── theme/              # ThemeContext
+├── Translations/       # ar.json, en.json
 ├── routes.js           # Route definitions
-└── sidebar.config.js   # Sidebar menu configuration
+├── sidebar.config.js   # Sidebar menu
+└── main.jsx
 ```
 
 ## 🌐 Internationalization
 
-The application supports Arabic and English languages with full RTL support:
+- **Arabic (ar)** - Primary, RTL
+- **English (en)** - Secondary, LTR
+- Translations in `src/Translations/`
 
-- **Arabic (ar)** - Primary language with RTL layout
-- **English (en)** - Secondary language with LTR layout
+## 🔐 Authentication
 
-Language files are located in `src/Translations/`.
-
-## 🔐 Authentication & Security
-
-- JWT token-based authentication
-- Automatic token refresh and validation
-- Secure API communication with Axios interceptors
-- Role-based permissions system
-- Protected routes with permission checking
+- JWT with access + refresh tokens
+- Automatic refresh via Axios interceptors
+- 401 handling and redirect to login
+- Protected routes with permission checks
 
 ## 📊 API Integration
 
-The frontend connects to a backend API with the following key endpoints:
-- Authentication (`/api/auth/*`)
-- Loans management (`/api/loans/*`)
-- Clients (`/api/clients/*`)
-- Accounting (`/api/accounting/*`)
-- And many more...
+The frontend calls a NestJS backend. Main areas:
 
-## 🎨 Themes & Styling
+- `/api/auth/*` - Login, profile, update-profile, upload-profile-image, profile-image (DELETE), update-password
+- `/api/clients/*` - Clients, kafeels, documents
+- `/api/partners/*` - Investors
+- `/api/loans/*` - Loans
+- `/api/repayments/*` - Installments
+- `/api/accounting/*` - Journals, ledger, accounts
+- `/api/treasury/*` - Treasury
+- Plus many more modules
 
-- **Material-UI Theme Provider** - Consistent theming
-- **Tailwind CSS** - Utility classes
-- **Custom Theme Context** - Dynamic theme switching
-- **RTL Plugin** - Automatic RTL styling for Arabic
+## 🎨 Themes
 
-## 📈 Performance Features
+- MUI theme provider
+- Tailwind utilities
+- ThemeContext for dark/light toggle
+- RTL styling for Arabic
 
-- **Lazy Loading** - Code splitting for pages and components
-- **React Query** - Efficient server state management and caching
-- **Prefetching** - Proactive data loading for better UX
-- **Debounced Search** - Optimized search performance
-- **Virtual Scrolling** - For large data tables
+## 📈 Performance
 
-## 🧪 Development Guidelines
-
-### Code Quality
-- ESLint configuration for code consistency
-- Component composition over inheritance
-- Custom hooks for reusable logic
-- Proper error handling and loading states
-
-### Security Best Practices
-- Input validation with Yup schemas
-- Secure API communication
-- XSS prevention in rich text content
-- Secure file upload handling
-
-### Maintainability
-- Modular component architecture
-- Clear separation of concerns
-- Comprehensive error boundaries
-- Type-safe development (consider TypeScript migration)
+- Lazy-loaded routes
+- React Query caching and prefetching
+- Code splitting (manualChunks for react, mui, lodash)
+- Debounced search where used
 
 ## 🤝 Contributing
 
-1. Follow the established code style and structure
-2. Use meaningful commit messages
-3. Test components thoroughly
-4. Update documentation as needed
-5. Follow Islamic finance principles in financial logic
+1. Follow existing code style
+2. Use meaningful commits
+3. Test changes
+4. Update docs when needed
 
 ## 📄 License
 
-This project is proprietary software for Islamic banking operations.
+Proprietary – Islamic banking operations.
+
+## 👨‍💻 Contact Developer
+
+**Abdelrahman Mohamed**  
+Frontend Developer  
+
+- 📧 abd.elrahmann.mohamed1103@gmail.com  
+- 📱 01276045715  
+- 📍 Alexandria, Egypt  
+- 🔗 [github.com/Abd-elrahmann](https://github.com/Abd-elrahmann)
 
 ## 🆘 Support
 
-For technical support or questions, please contact the development team.
+For technical support, contact the developer using the details above.

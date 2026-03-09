@@ -105,9 +105,7 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
       Object.keys(uploadedFiles).forEach((key) => {
         formData.append(key, uploadedFiles[key]);
       });
-      await Api.post(`/api/clients/${clientId}/kafeels`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await Api.post(`/api/clients/${clientId}/kafeels`, formData);
       notifySuccess('تم إضافة الكفيل بنجاح');
       queryClient.invalidateQueries({ queryKey: ['client-details', clientId] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });

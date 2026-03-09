@@ -14,6 +14,7 @@ import {
   exportStatementToExcel,
 } from "../../utilities/statementExporter";
 import DeleteModal from "../../components/modals/DeleteModal";
+import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import {
   ClientsSidebar,
   ClientsHeader,
@@ -38,6 +39,7 @@ export default function Clients() {
   const [clientToDelete, setClientToDelete] = useState(null);
   const [isDeleteKafeelModalOpen, setIsDeleteKafeelModalOpen] = useState(false);
   const [kafeelToDelete, setKafeelToDelete] = useState(null);
+  const [isAddKafeelModalOpen, setIsAddKafeelModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statementPage, setStatementPage] = useState(1);
@@ -57,11 +59,19 @@ export default function Clients() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
-  const { data: clientsData, isLoading: isClientsLoading, refetch } = useQuery({
+  const {
+    data: clientsData,
+    isLoading: isClientsLoading,
+    isFetching: isClientsFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["clients", currentPage, search, selectedStatus],
     queryFn: () => getClients(currentPage, search, selectedStatus),
     retry: 1,
   });
+  const showClientsLoading =
+    isClientsLoading ||
+    (isClientsFetching && !clientsData?.clients?.length);
   const { data: clientDetails, refetch: refetchClientDetails } = useQuery({
     queryKey: ["client-details", selectedClient?.id],
     queryFn: () =>
@@ -419,7 +429,14 @@ export default function Clients() {
             permissions={permissions}
             isDarkMode={isDarkMode}
             isMobile={isMobile}
-            onAddKafeel={() => navigate(`/clients/${selectedClient?.id}/add-kafeel`)}
+            onAddKafeel={() => {
+              const hasKafeels = clientDetails?.kafeels?.length > 0 || clientDetails?.kafeel;
+              if (hasKafeels && selectedClient?.id) {
+                setIsAddKafeelModalOpen(true);
+              } else {
+                navigate(`/clients/${selectedClient?.id}/add-kafeel`);
+              }
+            }}
             onEditKafeel={handleEditKafeel}
             onCancelEdit={handleCancelKafeelEdit}
             onSaveKafeel={handleSaveChanges}
@@ -497,7 +514,7 @@ export default function Clients() {
             permissions={permissions}
             isDarkMode={isDarkMode}
             clientsData={clientsData}
-            isClientsLoading={isClientsLoading}
+            isClientsLoading={showClientsLoading}
             search={search}
             selectedStatus={selectedStatus}
             currentPage={currentPage}
@@ -550,11 +567,15 @@ export default function Clients() {
               }}
             >
               <Typography variant="h6" color="text.secondary">
-                {selectedClient
-                  ? "جاري تحميل البيانات..."
-                  : "اختر عميلاً لعرض التفاصيل"}
+                {showClientsLoading && !selectedClient
+                  ? "جاري تحميل قائمة العملاء..."
+                  : selectedClient
+                    ? "جاري تحميل البيانات..."
+                    : "اختر عميلاً لعرض التفاصيل"}
               </Typography>
-              {selectedClient && <CircularProgress size={40} />}
+              {(selectedClient || (showClientsLoading && !selectedClient)) && (
+                <CircularProgress size={40} />
+              )}
             </Box>
           )
         )}
@@ -580,6 +601,12 @@ export default function Clients() {
         title="حذف الكفيل"
         message={`هل أنت متأكد من حذف الكفيل ${kafeelToDelete?.name}؟`}
         ButtonText="حذف"
+      />
+      <AddAdditionalKafeel
+        key={isAddKafeelModalOpen ? "open" : "closed"}
+        open={isAddKafeelModalOpen}
+        onClose={() => setIsAddKafeelModalOpen(false)}
+        clientId={selectedClient?.id}
       />
     </Box>
   );

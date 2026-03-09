@@ -204,7 +204,7 @@ const AddClientForm = ({ onSuccess }) => {
           if (uploadedFiles[kafeelWorkCardKey]) formData.append('kafeelWorkCard', uploadedFiles[kafeelWorkCardKey]);
         });
       }
-      await Api.post('/api/clients', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await Api.post('/api/clients', formData);
       notifySuccess('تم إضافة العميل بنجاح');
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       onSuccess?.();
