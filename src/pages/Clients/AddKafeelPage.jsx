@@ -9,14 +9,16 @@ const AddKafeelPage = () => {
   const { clientId } = useParams();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('returnTo');
+  const returnTab = searchParams.get('tab') ?? '2';
+  const returnPath = returnTo === 'loans' ? '/loans' : (clientId ? `/clients?clientId=${clientId}&tab=${returnTab}` : '/clients');
   const handleSuccess = () => {
-    navigate(returnTo === 'loans' ? '/loans' : '/clients');
+    navigate(returnPath);
   };
   const handleCancel = () => {
-    navigate(returnTo === 'loans' ? '/loans' : '/clients');
+    navigate(returnPath);
   };
   if (!clientId) {
-    navigate(returnTo === 'loans' ? '/loans' : '/clients');
+    navigate(returnTo === 'loans' ? '/loans' : '/clients', { replace: true });
     return null;
   }
   return (

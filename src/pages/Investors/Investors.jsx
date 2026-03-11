@@ -20,7 +20,7 @@ import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
 import { INVESTOR_TABS, INVESTOR_TAB_LABELS } from "../../components/investors/investorsUtils";
 import { useTheme } from "../../theme/ThemeContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import InvestorsList from "../../components/investors/InvestorsList";
 import InvestorHeader from "../../components/investors/InvestorHeader";
 import InvestorTabs from "../../components/investors/InvestorTabs";
@@ -56,6 +56,7 @@ import {
 } from "../../components/investors/investorsApi";
 export default function Investors() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDarkMode } = useTheme();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
@@ -159,6 +160,21 @@ export default function Investors() {
     setEditMode(false);
     setTransactionsPage(1);
   };
+  const appliedReturnStateRef = useRef(false);
+  useEffect(() => {
+    const state = location.state;
+    if (state?.returnTab !== undefined && !appliedReturnStateRef.current && investorsData?.partners) {
+      appliedReturnStateRef.current = true;
+      const investorId = state.returnInvestorId;
+      if (investorId) {
+        const investor = investorsData.partners.find((p) => p.id === investorId);
+        if (investor) setSelectedInvestor(investor);
+        else setSelectedInvestor(investorsData.partners[0] || null);
+      }
+      setTab(state.returnTab);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, investorsData?.partners, navigate]);
   const contentScrollRef = React.useRef(null);
   const listScrollRef = React.useRef(null);
   useEffect(() => {
@@ -313,7 +329,7 @@ export default function Investors() {
     setContractInvestorData(null);
   };
   const handleAddInvestor = () => {
-    navigate('/investors/add');
+    navigate('/investors/add', { state: { returnTab: tab, returnInvestorId: selectedInvestor?.id } });
   };
   const handleDeleteInvestor = async (investorId) => {
     try {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Box, Breadcrumbs, Link, Typography, Paper, CircularProgress } from '@mui/material';
 import { NavigateNext, Home, People, CloudUpload } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
@@ -9,15 +9,17 @@ import { getClientDetails } from '../../components/clients';
 const EditDocumentsPage = () => {
   const navigate = useNavigate();
   const { clientId } = useParams();
+  const [searchParams] = useSearchParams();
+  const returnTab = searchParams.get('tab') ?? '3';
   const { data: clientDetails, isLoading } = useQuery({
     queryKey: ['client-details', clientId],
     queryFn: () => getClientDetails(clientId),
     enabled: !!clientId,
   });
-  const handleSuccess = () => navigate('/clients');
-  const handleCancel = () => navigate('/clients');
+  const handleSuccess = () => navigate(`/clients?clientId=${clientId}&tab=${returnTab}`);
+  const handleCancel = () => navigate(`/clients?clientId=${clientId}&tab=${returnTab}`);
   if (!clientId) {
-    navigate('/clients');
+    navigate('/clients', { replace: true });
     return null;
   }
   if (isLoading) {
@@ -60,4 +62,4 @@ const EditDocumentsPage = () => {
     </Box>
   );
 };
-export default EditDocumentsPage;
+export default EditDocumentsPage;

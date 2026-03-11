@@ -3,7 +3,7 @@ import { Box, Typography, CircularProgress, useMediaQuery } from "@mui/material"
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { debounce } from "../../utilities/debounce";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
@@ -56,6 +56,8 @@ export default function Clients() {
   const listScrollRef = useRef(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { permissions, canViewFiles } = usePermissions();
   const { isDarkMode } = useTheme();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -106,6 +108,23 @@ export default function Clients() {
     enabled: !!selectedClient && tab === 5,
     retry: 1,
   });
+  useEffect(() => {
+    const clientId = searchParams.get("clientId");
+    const tabParam = searchParams.get("tab");
+    if (clientId) {
+      const client = clientsData?.clients?.find((c) => String(c.id) === clientId);
+      setSelectedClient(client || { id: parseInt(clientId, 10) });
+      if (tabParam !== null && tabParam !== "") {
+        const t = parseInt(tabParam, 10);
+        if (!isNaN(t) && t >= 0) setTab(t);
+      }
+    } else if (location.state?.clientId != null && location.state?.tab !== undefined) {
+      const client = clientsData?.clients?.find((c) => c.id === location.state.clientId);
+      setSelectedClient(client || { id: location.state.clientId });
+      setTab(location.state.tab);
+    }
+  }, [searchParams, location.state, clientsData?.clients]);
+
   const debouncedSearch = debounce((value) => {
     setSearch(value);
     setCurrentPage(1);
@@ -125,7 +144,12 @@ export default function Clients() {
     else if (field === "to") setToDate(value);
     setStatementPage(1);
   };
-  const handleTabChange = (e, newValue) => setTab(newValue);
+  const handleTabChange = (e, newValue) => {
+    setTab(newValue);
+    if (selectedClient) {
+      setSearchParams({ clientId: selectedClient.id, tab: String(newValue) }, { replace: true });
+    }
+  };
   const handleClientSelect = (client) => {
     setSelectedClient(client);
     setEditMode(false);
@@ -133,6 +157,11 @@ export default function Clients() {
     setStatementPage(1);
     setFromDate("");
     setToDate("");
+    if (client) {
+      setSearchParams({ clientId: client.id, tab: String(tab) }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
   };
   useEffect(() => {
     if (selectedClient) {
@@ -203,7 +232,10 @@ export default function Clients() {
       await Api.delete(`/api/clients/${clientId}`);
       notifySuccess("تم حذف العميل بنجاح");
       refetch();
-      if (selectedClient?.id === clientId) setSelectedClient(null);
+      if (selectedClient?.id === clientId) {
+        setSelectedClient(null);
+        setSearchParams({}, { replace: true });
+      }
       setIsDeleteModalOpen(false);
       setClientToDelete(null);
     } catch (error) {
@@ -437,7 +469,7 @@ export default function Clients() {
               if (hasKafeels && selectedClient?.id) {
                 setIsAddKafeelModalOpen(true);
               } else {
-                navigate(`/clients/${selectedClient?.id}/add-kafeel`);
+                navigate(`/clients/${selectedClient?.id}/add-kafeel?tab=${tab}`);
               }
             }}
             onEditKafeel={handleEditKafeel}
@@ -456,9 +488,9 @@ export default function Clients() {
             isDarkMode={isDarkMode}
             isMobile={isMobile}
             onDocumentsTabChange={setDocumentsTab}
-            onEditDocuments={() => navigate(`/clients/${selectedClient?.id}/edit-documents`)}
+            onEditDocuments={() => navigate(`/clients/${selectedClient?.id}/edit-documents?tab=${tab}`)}
             onEditKafeelDocuments={(kafeel) =>
-              navigate(`/clients/${selectedClient?.id}/kafeels/${kafeel?.id}/edit-documents`)
+              navigate(`/clients/${selectedClient?.id}/kafeels/${kafeel?.id}/edit-documents?tab=${tab}`)
             }
             onDownloadFile={handleDownloadFile}
             onShareFile={handleShareFile}
@@ -554,7 +586,10 @@ export default function Clients() {
                 onTabChange={handleTabChange}
                 onEditModeToggle={() => setEditMode(!editMode)}
                 onSaveChanges={() => handleSaveChanges()}
-                onBackToList={() => setSelectedClient(null)}
+                onBackToList={() => {
+                setSelectedClient(null);
+                setSearchParams({}, { replace: true });
+              }}
                 availableTabs={availableTabs}
               />
               {renderTabContent()}

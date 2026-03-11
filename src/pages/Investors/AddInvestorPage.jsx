@@ -1,16 +1,18 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Breadcrumbs, Link, Typography, Paper } from '@mui/material';
 import { NavigateNext, Home, AccountBalanceWallet, PersonAdd } from '@mui/icons-material';
 import AddInvestorForm from '../../components/forms/AddInvestorForm';
 import { Helmet } from 'react-helmet-async';
 const AddInvestorPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnState = location.state;
   const handleSuccess = () => {
-    navigate('/investors');
+    navigate('/investors', { state: returnState });
   };
   const handleCancel = () => {
-    navigate('/investors');
+    navigate('/investors', { state: returnState });
   };
   return (
     <Box sx={{ p: 3 }} dir="rtl">
@@ -37,4 +39,4 @@ const AddInvestorPage = () => {
     </Box>
   );
 };
-export default AddInvestorPage;
+export default AddInvestorPage;

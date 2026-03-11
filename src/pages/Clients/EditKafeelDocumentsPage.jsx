@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Box, Breadcrumbs, Link, Typography, Paper, CircularProgress } from '@mui/material';
 import { NavigateNext, Home, People, CloudUpload } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +9,8 @@ import { getClientDetails } from '../../components/clients';
 const EditKafeelDocumentsPage = () => {
   const navigate = useNavigate();
   const { clientId, kafeelId } = useParams();
+  const [searchParams] = useSearchParams();
+  const returnTab = searchParams.get('tab') ?? '3';
   const { data: clientDetails, isLoading } = useQuery({
     queryKey: ['client-details', clientId],
     queryFn: () => getClientDetails(clientId),
@@ -26,13 +28,13 @@ const EditKafeelDocumentsPage = () => {
   }, [clientDetails, kafeelId]);
   useEffect(() => {
     if (!clientId || !kafeelId) {
-      navigate('/clients');
+      navigate('/clients', { replace: true });
     } else if (!isLoading && !kafeel) {
-      navigate('/clients');
+      navigate(`/clients?clientId=${clientId}&tab=${returnTab}`, { replace: true });
     }
-  }, [clientId, kafeelId, isLoading, kafeel, navigate]);
-  const handleSuccess = () => navigate('/clients');
-  const handleCancel = () => navigate('/clients');
+  }, [clientId, kafeelId, isLoading, kafeel, navigate, returnTab]);
+  const handleSuccess = () => navigate(`/clients?clientId=${clientId}&tab=${returnTab}`);
+  const handleCancel = () => navigate(`/clients?clientId=${clientId}&tab=${returnTab}`);
   if (!clientId || !kafeelId) {
     return null;
   }
@@ -80,4 +82,4 @@ const EditKafeelDocumentsPage = () => {
     </Box>
   );
 };
-export default EditKafeelDocumentsPage;
+export default EditKafeelDocumentsPage;
