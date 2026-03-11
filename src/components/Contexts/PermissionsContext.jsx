@@ -1,10 +1,22 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Api from "../../config/Api";
+
+const FILE_MODULES_MAP = {
+  clients: 'files-clients',
+  partners: 'files-partners',
+  loans: 'files-loans',
+  repayments: 'files-repayments',
+  expenses: 'files-expenses',
+  'partners-withdraw': 'files-partners-withdraw',
+  zakat: 'files-zakat',
+};
+
 const defaultPermissionValue = {
   permissions: [],
   loading: false,
   fetchPermissions: () => {},
   refreshPermissions: async () => {},
+  canViewFiles: () => false,
 };
 const PermissionContext = createContext(defaultPermissionValue);
 export const PermissionProvider = ({ children }) => {
@@ -41,6 +53,13 @@ export const PermissionProvider = ({ children }) => {
     localStorage.removeItem('cached_permissions_timestamp');
     await fetchPermissions();
   };
+
+  const canViewFiles = useCallback((module) => {
+    const fileModule = FILE_MODULES_MAP[module];
+    if (!fileModule) return true;
+    const permKey = `${fileModule}_View`;
+    return permissions.includes(permKey);
+  }, [permissions]);
   useEffect(() => {
     const handleAuthFailed = () => {
       setPermissions([]);
@@ -62,7 +81,7 @@ export const PermissionProvider = ({ children }) => {
     };
   }, [fetchPermissions]);
   return (
-    <PermissionContext.Provider value={{ permissions, loading, fetchPermissions, refreshPermissions }}>
+    <PermissionContext.Provider value={{ permissions, loading, fetchPermissions, refreshPermissions, canViewFiles }}>
       {children}
     </PermissionContext.Provider>
   );

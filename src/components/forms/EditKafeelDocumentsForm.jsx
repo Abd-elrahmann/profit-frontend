@@ -15,6 +15,7 @@ import {
 import { saveAs } from 'file-saver';
 import { useQueryClient } from '@tanstack/react-query';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { secureFetchFile } from '../../utilities/fileUtils';
 const DocumentDropzone = ({
   fieldName,
   label,
@@ -37,15 +38,24 @@ const DocumentDropzone = ({
   const [imgLoadFailed, setImgLoadFailed] = useState(false);
   const handleDownloadFile = async (fileUrl, fileName) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const blob = await secureFetchFile(fileUrl);
       saveAs(blob, fileName);
     } catch {
       notifyError('حدث خطأ أثناء تحميل الملف');
     }
   };
-  const handlePrintFile = (fileUrl) => {
-    window.open(fileUrl, '_blank')?.print();
+  const handlePrintFile = async (fileUrl) => {
+    try {
+      const blob = await secureFetchFile(fileUrl);
+      const blobUrl = URL.createObjectURL(blob);
+      const printWindow = window.open(blobUrl, '_blank');
+      printWindow?.addEventListener('load', () => {
+        printWindow.print();
+        printWindow.addEventListener('afterprint', () => URL.revokeObjectURL(blobUrl), { once: true });
+      }, { once: true });
+    } catch {
+      notifyError('حدث خطأ أثناء الطباعة');
+    }
   };
   const getFilePreview = (f) => {
     if (f?.type?.startsWith('image/')) return URL.createObjectURL(f);

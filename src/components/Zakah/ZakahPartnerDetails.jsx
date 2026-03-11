@@ -7,6 +7,8 @@ import {
   TableBody,
   TableContainer,
   TableHead,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Payments,
@@ -16,8 +18,11 @@ import {
   ChevronLeft,
   PictureAsPdf,
   TableChart,
+  Visibility,
 } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
+import { secureOpenFile } from '../../utilities/fileUtils';
+import { notifyError } from '../../utilities/toastify';
 const formatCurrency = (amount) => amount?.toLocaleString() ?? '0';
 const MONTH_NAMES = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -41,11 +46,12 @@ const getStatusBadge = (status) => {
     </span>
   );
 };
-const SummaryCard = ({ icon: Icon, label, value, variant = 'default' }) => (
+// eslint-disable-next-line no-unused-vars
+const SummaryCard = ({ icon: IconComponent, label, value, variant = 'default' }) => (
   <div className="flex flex-col gap-2 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800 border border-primary/10 shadow-sm">
     <div className="flex items-center justify-between text-primary/60">
       <p className="text-sm font-bold">{label}</p>
-      <Icon sx={{ fontSize: 24 }} />
+      <IconComponent sx={{ fontSize: 24 }} />
     </div>
     <p
       className={`text-xl sm:text-2xl font-bold break-words ${
@@ -63,6 +69,7 @@ const SummaryCard = ({ icon: Icon, label, value, variant = 'default' }) => (
 const ZakahPartnerDetails = ({
   partnerZakahData,
   selectedYear,
+  // eslint-disable-next-line no-unused-vars
   isSmallScreen,
   isMobile = false,
   isPartnerLoading,
@@ -72,7 +79,15 @@ const ZakahPartnerDetails = ({
   onExportExcel,
   onBackToRoot,
   permissions,
+  canViewFiles = true,
 }) => {
+  const handleViewVoucher = async (voucherUrl) => {
+    try {
+      await secureOpenFile(voucherUrl);
+    } catch {
+      notifyError('لا يوجد صلاحية لعرض الملف');
+    }
+  };
   const currentYearData = Array.isArray(partnerZakahData)
     ? partnerZakahData.find((item) => item.year === selectedYear)
     : partnerZakahData;
@@ -191,9 +206,19 @@ const ZakahPartnerDetails = ({
                     </span>
                     {getStatusBadge(row.status)}
                   </div>
-                  <div className="flex flex-wrap gap-3 text-sm">
+                  <div className="flex flex-wrap gap-3 text-sm items-center">
                     <span>الزكاة المستحقة: <strong>{formatCurrency(row.amount)}</strong></span>
-                    <span>المدفوع: <strong>{row.status === 'PAID' ? formatCurrency(row.amount) : '0'}</strong></span>
+                    <span>المدفوع: <strong>{row.status === 'PAID' ? formatCurrency(row.paidAmount || row.amount) : '0'}</strong></span>
+                    {canViewFiles && row.paymentVoucher && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Visibility sx={{ marginLeft: '5px' }} />}
+                        onClick={() => handleViewVoucher(row.paymentVoucher)}
+                      >
+                        السند
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -207,6 +232,7 @@ const ZakahPartnerDetails = ({
                 <StyledTableCell align="center">الزكاة المستحقة</StyledTableCell>
                 <StyledTableCell align="center">المبلغ المدفوع</StyledTableCell>
                 <StyledTableCell align="center">الحالة</StyledTableCell>
+                {canViewFiles && <StyledTableCell align="center">السند</StyledTableCell>}
               </StyledTableRow>
             </TableHead>
             <TableBody>
@@ -220,16 +246,33 @@ const ZakahPartnerDetails = ({
                       {formatCurrency(row.amount)}
                     </StyledTableCell>
                     <StyledTableCell align="center">
-                      {row.status === 'PAID' ? formatCurrency(row.amount) : '0'}
+                      {row.status === 'PAID' ? formatCurrency(row.paidAmount || row.amount) : '0'}
                     </StyledTableCell>
                     <StyledTableCell align="center">
                       {getStatusBadge(row.status)}
                     </StyledTableCell>
+                    {canViewFiles && (
+                      <StyledTableCell align="center">
+                        {row.paymentVoucher ? (
+                          <Tooltip title="عرض السند">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleViewVoucher(row.paymentVoucher)}
+                            >
+                              <Visibility />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </StyledTableCell>
+                    )}
                   </StyledTableRow>
                 ))
               ) : (
                 <StyledTableRow>
-                  <StyledTableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <StyledTableCell colSpan={canViewFiles ? 5 : 4} align="center" sx={{ py: 4 }}>
                     لا توجد دفعات شهرية مسجلة
                   </StyledTableCell>
                 </StyledTableRow>
@@ -246,4 +289,4 @@ const ZakahPartnerDetails = ({
     </div>
   );
 };
-export default ZakahPartnerDetails;
+export default ZakahPartnerDetails;

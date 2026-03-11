@@ -11,6 +11,8 @@ import {
   Receipt,
 } from "@mui/icons-material";
 import FileThumbnail from "../ui/FileThumbnail";
+import { secureOpenFile } from "../../utilities/fileUtils";
+import { notifyError } from "../../utilities/toastify";
 
 const getMonthName = (month) => {
   const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -81,7 +83,13 @@ const DocumentsTab = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => window.open(investorDetails.mudarabahFileUrl, "_blank")}
+                  onClick={async () => {
+                    try {
+                      await secureOpenFile(investorDetails.mudarabahFileUrl);
+                    } catch {
+                      notifyError("لا يوجد صلاحية لعرض الملف");
+                    }
+                  }}
                   className="px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1.5"
                 >
                   <Visibility sx={{ fontSize: 20 }} />
@@ -123,7 +131,13 @@ const DocumentsTab = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => window.open(investorDetails.withdrawalReceipt, "_blank")}
+                  onClick={async () => {
+                    try {
+                      await secureOpenFile(investorDetails.withdrawalReceipt);
+                    } catch {
+                      notifyError("لا يوجد صلاحية لعرض الملف");
+                    }
+                  }}
                   className="px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1.5"
                 >
                   <Visibility sx={{ fontSize: 20 }} />
@@ -177,7 +191,13 @@ const DocumentsTab = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => window.open(voucher.voucherUrl, "_blank")}
+                    onClick={async () => {
+                      try {
+                        await secureOpenFile(voucher.voucherUrl);
+                      } catch {
+                        notifyError("لا يوجد صلاحية لعرض الملف");
+                      }
+                    }}
                     className="px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors flex items-center gap-1.5"
                   >
                     <Visibility sx={{ fontSize: 20 }} />

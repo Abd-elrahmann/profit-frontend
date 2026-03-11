@@ -1,25 +1,24 @@
 import React from "react";
 import { Tabs, Tab, Box, FormControl, Select, MenuItem } from "@mui/material";
-const TAB_LABELS = [
-  "التفاصيل الشخصية",
-  "المعلومات المالية",
-  "العمليات المالية",
-  "المستندات",
-];
-const InvestorTabs = ({ value, onChange, isSmallScreen }) => {
+import { INVESTOR_TAB_LABELS } from "./investorsUtils";
+
+const InvestorTabs = ({ value, onChange, isSmallScreen, availableTabs = null }) => {
+  const tabs = availableTabs || INVESTOR_TAB_LABELS.map((label, idx) => ({ label, value: idx }));
+  const currentValue = tabs.find(t => t.value === value)?.value ?? tabs[0]?.value ?? 0;
+
   if (isSmallScreen) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
         <FormControl sx={{ minWidth: 200, maxWidth: 320, width: "100%" }}>
           <Select
-            value={value}
+            value={currentValue}
             onChange={(e) => onChange(null, e.target.value)}
             size="small"
             sx={{ "& .MuiSelect-select": { textAlign: "center", py: 1.25 } }}
           >
-            {TAB_LABELS.map((label, idx) => (
-              <MenuItem key={idx} value={idx}>
-                {label}
+            {tabs.map((t) => (
+              <MenuItem key={t.value} value={t.value}>
+                {t.label}
               </MenuItem>
             ))}
           </Select>
@@ -29,7 +28,7 @@ const InvestorTabs = ({ value, onChange, isSmallScreen }) => {
   }
   return (
     <Tabs
-      value={value}
+      value={currentValue}
       onChange={onChange}
       textColor="primary"
       indicatorColor="primary"
@@ -44,10 +43,10 @@ const InvestorTabs = ({ value, onChange, isSmallScreen }) => {
         },
       }}
     >
-      {TAB_LABELS.map((label, idx) => (
-        <Tab key={idx} label={label} />
+      {tabs.map((t) => (
+        <Tab key={t.value} label={t.label} value={t.value} />
       ))}
     </Tabs>
   );
 };
-export default InvestorTabs;
+export default InvestorTabs;

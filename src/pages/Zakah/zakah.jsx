@@ -32,7 +32,8 @@ const Zakah = () => {
     new Date().getFullYear()
   );
   const [isExporting, setIsExporting] = useState(false);
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
+  const canViewZakatFiles = canViewFiles('zakat');
   const queryClient = useQueryClient();
   const [debouncedMonth, setDebouncedMonth] = useState(selectedFilterMonth);
   const [debouncedYear, setDebouncedYear] = useState(selectedFilterYear);
@@ -257,6 +258,7 @@ const Zakah = () => {
                     onExportExcel={handleExportExcel}
                     onBackToRoot={handleBackToList}
                     permissions={permissions}
+                    canViewFiles={canViewZakatFiles}
                   />
                 ) : (
                   <Alert severity="error">

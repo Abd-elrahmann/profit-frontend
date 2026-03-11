@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, IconButton, Box } from '@mui/material';
 import { Close as CloseIcon, Visibility, Share, Download } from '@mui/icons-material';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+import { secureOpenFile, secureFetchFile } from '../../utilities/fileUtils';
 
 const getVoucherLabel = (group) => {
   if (!group.types?.length) return 'سند صرف';
@@ -18,13 +19,17 @@ const ExpenseVouchersModal = ({ open, onClose, groupedExpenses }) => {
   const [copyingId, setCopyingId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
 
-  const handleView = (group) => {
+  const handleView = async (group) => {
     const url = getVoucherUrl(group);
     if (!url) {
       notifyError('لا يوجد سند مرفق لهذا المصروف');
       return;
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    try {
+      await secureOpenFile(url);
+    } catch {
+      notifyError('لا يوجد صلاحية لعرض الملف');
+    }
   };
 
   const handleShare = async (group) => {
@@ -68,9 +73,7 @@ const ExpenseVouchersModal = ({ open, onClose, groupedExpenses }) => {
     }
     setDownloadingId(group.journalId);
     try {
-      const response = await fetch(url, { credentials: 'include', mode: 'cors' });
-      if (!response.ok) throw new Error('فشل في تحميل الملف');
-      const blob = await response.blob();
+      const blob = await secureFetchFile(url);
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;

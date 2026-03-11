@@ -1,8 +1,8 @@
 import { notifyError, notifySuccess } from '../../utilities/toastify';
+import { secureFetchFile } from '../../utilities/fileUtils';
 export const downloadFile = async (url, filename) => {
   try {
-    const response = await fetch(url);
-    const blob = await response.blob();
+    const blob = await secureFetchFile(url);
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -22,8 +22,7 @@ export const downloadFile = async (url, filename) => {
 };
 export const handleShareFile = async (fileUrl, filename) => {
   try {
-    const response = await fetch(fileUrl);
-    const blob = await response.blob();
+    const blob = await secureFetchFile(fileUrl);
     const decodedFilename = decodeURIComponent(filename);
     const file = new File([blob], decodedFilename, { type: blob.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -134,4 +133,4 @@ export const filterInstallmentsByStatus = (installments, statusFilter, checkIfOv
     );
   }
   return list.filter((inst) => inst.status === statusFilter);
-};
+};

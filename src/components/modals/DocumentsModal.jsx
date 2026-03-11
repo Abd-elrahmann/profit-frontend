@@ -15,10 +15,11 @@ import {
   Download,
 } from "@mui/icons-material";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import { secureFetchFile, secureOpenFile } from "../../utilities/fileUtils";
+
 const downloadFile = async (url, filename) => {
   try {
-    const response = await fetch(url);
-    const blob = await response.blob();
+    const blob = await secureFetchFile(url);
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -33,8 +34,21 @@ const downloadFile = async (url, filename) => {
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
     console.error('Download error:', error);
-    notifyError('حدث خطأ أثناء تحميل الملف');
+    notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحميل الملف');
   }
+};
+
+const openFile = async (url) => {
+  try {
+    await secureOpenFile(url);
+  } catch (error) {
+    notifyError(error.response?.data?.message || 'لا يوجد صلاحية لعرض الملف');
+  }
+};
+
+const getBlobForAction = async (url) => {
+  const blob = await secureFetchFile(url);
+  return blob;
 };
 const extractFileName = (url) => {
   if (!url) return "ملف غير معروف";
@@ -87,9 +101,7 @@ const DocumentsModal = ({
                       borderRadius: 1,
                       mb: 1,
                     }}
-                    onClick={() => {
-                      window.open(attachment, "_blank");
-                    }}
+                    onClick={() => openFile(attachment)}
                   >
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {extractFileName(attachment)}
@@ -100,8 +112,7 @@ const DocumentsModal = ({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
-                            const response = await fetch(attachment);
-                            const blob = await response.blob();
+                            const blob = await getBlobForAction(attachment);
                             const url = URL.createObjectURL(blob);
                             const iframe = document.createElement('iframe');
                             iframe.style.display = 'none';
@@ -115,8 +126,7 @@ const DocumentsModal = ({
                               }, 1000);
                             };
                           } catch (error) {
-                            console.error('Print error:', error);
-                            notifyError("حدث خطأ في الطباعة");
+                            notifyError(error.response?.data?.message || "حدث خطأ في الطباعة");
                           }
                         }}
                         title="طباعة"
@@ -128,8 +138,7 @@ const DocumentsModal = ({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
-                            const response = await fetch(attachment);
-                            const blob = await response.blob();
+                            const blob = await getBlobForAction(attachment);
                             const file = new File([blob], extractFileName(attachment), { type: blob.type });
                             if (navigator.share && navigator.canShare({ files: [file] })) {
                               await navigator.share({
@@ -157,8 +166,7 @@ const DocumentsModal = ({
                               }
                             }
                           } catch (error) {
-                            console.error('Share error:', error);
-                            notifyError("حدث خطأ في مشاركة الملف");
+                            notifyError(error.response?.data?.message || "حدث خطأ في مشاركة الملف");
                           }
                         }}
                         title="مشاركة"
@@ -196,12 +204,7 @@ const DocumentsModal = ({
                 p: 1,
                 borderRadius: 1,
               }}
-              onClick={() => {
-                window.open(
-                  selectedDocumentsInstallment.PaymentProof,
-                  "_blank"
-                );
-              }}
+              onClick={() => openFile(selectedDocumentsInstallment.PaymentProof)}
             >
               <Typography variant="body2" sx={{ flex: 1 }}>
                 {extractFileName(selectedDocumentsInstallment.PaymentProof)}
@@ -212,8 +215,7 @@ const DocumentsModal = ({
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
-                      const response = await fetch(selectedDocumentsInstallment.PaymentProof);
-                      const blob = await response.blob();
+                      const blob = await getBlobForAction(selectedDocumentsInstallment.PaymentProof);
                       const url = URL.createObjectURL(blob);
                       const iframe = document.createElement('iframe');
                       iframe.style.display = 'none';
@@ -227,8 +229,7 @@ const DocumentsModal = ({
                         }, 1000);
                       };
                     } catch (error) {
-                      console.error('Print error:', error);
-                      notifyError("حدث خطأ في الطباعة");
+                      notifyError(error.response?.data?.message || "حدث خطأ في الطباعة");
                     }
                   }}
                   title="طباعة"
@@ -240,8 +241,7 @@ const DocumentsModal = ({
                   onClick={async (e) => {
                     e.stopPropagation();
                     try {
-                      const response = await fetch(selectedDocumentsInstallment.PaymentProof);
-                      const blob = await response.blob();
+                      const blob = await getBlobForAction(selectedDocumentsInstallment.PaymentProof);
                       const file = new File([blob], extractFileName(selectedDocumentsInstallment.PaymentProof), { type: blob.type });
                       if (navigator.share && navigator.canShare({ files: [file] })) {
                         await navigator.share({
@@ -269,8 +269,7 @@ const DocumentsModal = ({
                         }
                       }
                     } catch (error) {
-                      console.error('Share error:', error);
-                      notifyError("حدث خطأ في مشاركة الملف");
+                      notifyError(error.response?.data?.message || "حدث خطأ في مشاركة الملف");
                     }
                   }}
                   title="مشاركة"

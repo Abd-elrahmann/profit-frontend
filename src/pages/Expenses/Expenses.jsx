@@ -40,9 +40,10 @@ const Expenses = () => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
   const queryClient = useQueryClient();
   const canExport = permissions.includes('expenses_Export');
+  const canViewExpenseFiles = canViewFiles('expenses');
   const searchFilters = {
     types: searchExpenseTypes,
     employeeIds: searchEmployees.map((e) => e.id || e._id).filter(Boolean),
@@ -225,7 +226,7 @@ const Expenses = () => {
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-primary/5 flex flex-row justify-between items-center gap-4 flex-wrap">
             <h4 className="font-bold text-slate-800 dark:text-slate-200">سجل المصروفات</h4>
-            {groupedExpenses.length > 0 && (
+            {groupedExpenses.length > 0 && canViewExpenseFiles && (
               <button
                 type="button"
                 onClick={() => setIsVouchersModalOpen(true)}

@@ -11,7 +11,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { Edit, Save, ArrowBack } from "@mui/icons-material";
-import { TAB_LABELS } from "./constants";
+import { TAB_LABELS, CLIENT_TABS } from "./constants";
 export default function ClientsHeader({
   clientDetails,
   tab,
@@ -23,9 +23,11 @@ export default function ClientsHeader({
   onEditModeToggle,
   onSaveChanges,
   onBackToList,
+  availableTabs = null,
 }) {
-  const showEditButtons =
-    tab !== 1 && tab !== 2 && tab !== 3 && tab !== 4 && tab !== 5;
+  const tabs = availableTabs || TAB_LABELS.map((label, idx) => ({ label, value: idx }));
+  const currentTabValue = tabs.find(t => t.value === tab)?.value ?? tabs[0]?.value ?? 0;
+  const showEditButtons = currentTabValue === CLIENT_TABS.PROFILE;
   return (
     <>
       <Box
@@ -92,7 +94,7 @@ export default function ClientsHeader({
         <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
           <FormControl sx={{ minWidth: 200, maxWidth: 320, width: "100%" }}>
             <Select
-            value={tab}
+            value={currentTabValue}
             onChange={(e) => onTabChange(null, e.target.value)}
             displayEmpty
             size="small"
@@ -103,9 +105,9 @@ export default function ClientsHeader({
               },
             }}
           >
-            {TAB_LABELS.map((label, index) => (
-              <MenuItem key={index} value={index}>
-                {label}
+            {tabs.map((t) => (
+              <MenuItem key={t.value} value={t.value}>
+                {t.label}
               </MenuItem>
             ))}
           </Select>
@@ -113,7 +115,7 @@ export default function ClientsHeader({
         </Box>
       ) : (
         <Tabs
-          value={tab}
+          value={currentTabValue}
           onChange={onTabChange}
           textColor="primary"
           indicatorColor="primary"
@@ -132,11 +134,11 @@ export default function ClientsHeader({
             },
           }}
         >
-          {TAB_LABELS.map((label, index) => (
-            <Tab key={index} label={label} />
+          {tabs.map((t) => (
+            <Tab key={t.value} label={t.label} value={t.value} />
           ))}
         </Tabs>
       )}
     </>
   );
-}
+}

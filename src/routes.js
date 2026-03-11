@@ -297,11 +297,25 @@ const routes = [
 export { getSidebarMenuItems } from './sidebar.config.js';
 import { sidebarItems } from './sidebar.config.js';
 export const getAvailableModules = () => {
-  return sidebarItems
+  const sidebarModules = sidebarItems
     .filter(item => item.requiresPermissions && item.module)
-    .map(item => ({
-      value: item.module,
-      label: item.label
-    }));
+    .map(item => ({ value: item.module, label: item.label }));
+  const seen = new Set();
+  return sidebarModules.filter((m) => {
+    if (seen.has(m.value)) return false;
+    seen.add(m.value);
+    return true;
+  });
 };
+
+/** الصفحات التي تحتوي على ملفات ويمكن التحكم في صلاحية الوصول لملفاتها */
+export const getFileAccessModules = () => [
+  { value: 'files-clients', label: 'العملاء', module: 'clients' },
+  { value: 'files-partners', label: 'المستثمرين', module: 'partners' },
+  { value: 'files-loans', label: 'السلف', module: 'loans' },
+  { value: 'files-repayments', label: 'الدفعات', module: 'repayments' },
+  { value: 'files-expenses', label: 'المصروفات', module: 'expenses' },
+  { value: 'files-partners-withdraw', label: 'الانسحابات', module: 'partners-withdraw' },
+  { value: 'files-zakat', label: 'الزكاة', module: 'zakat' },
+];
 export default routes;

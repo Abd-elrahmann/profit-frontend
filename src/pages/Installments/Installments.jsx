@@ -84,7 +84,8 @@ const Installments = () => {
   const [settlementJustSaved, setSettlementJustSaved] = useState(false);
   const [settlementManuallyClosed, setSettlementManuallyClosed] = useState(false);
   const [settlementTemplate, setSettlementTemplate] = useState("");
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
+  const canViewRepaymentFiles = canViewFiles('repayments');
   const settlementReceiptRef = useRef(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [overdueAlertDismissed, setOverdueAlertDismissed] = useState(false);
@@ -1127,6 +1128,7 @@ const Installments = () => {
         }}
         shouldDisableActions={shouldDisableActions}
         permissions={permissions}
+        canViewFiles={canViewRepaymentFiles}
       />
       {}
       <PartialPaymentModal

@@ -8,11 +8,13 @@ import { saveAs } from "file-saver";
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { CLIENT_TABS, TAB_LABELS } from "../../components/clients/constants";
 import { useTheme } from "../../theme/ThemeContext";
 import {
   exportStatementToPDF,
   exportStatementToExcel,
 } from "../../utilities/statementExporter";
+import { secureFetchFile } from "../../utilities/fileUtils";
 import DeleteModal from "../../components/modals/DeleteModal";
 import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import {
@@ -54,11 +56,14 @@ export default function Clients() {
   const listScrollRef = useRef(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
   const { isDarkMode } = useTheme();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
+  const canViewClientFiles = canViewFiles('clients');
+  const availableTabs = TAB_LABELS.map((label, idx) => ({ label, value: idx }))
+    .filter(t => t.value !== CLIENT_TABS.DOCUMENTS || canViewClientFiles);
   const {
     data: clientsData,
     isLoading: isClientsLoading,
@@ -242,8 +247,7 @@ export default function Clients() {
     clientName
   ) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const blob = await secureFetchFile(fileUrl);
       const extension = fileName.split(".").pop() || "pdf";
       const newFileName = `${documentType}_${clientName}.${extension}`;
       saveAs(blob, newFileName);
@@ -254,8 +258,7 @@ export default function Clients() {
   };
   const handleShareFile = async (fileUrl, fileName, clientName) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const blob = await secureFetchFile(fileUrl);
       const file = new File([blob], fileName + ".pdf", { type: blob.type });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -552,6 +555,7 @@ export default function Clients() {
                 onEditModeToggle={() => setEditMode(!editMode)}
                 onSaveChanges={() => handleSaveChanges()}
                 onBackToList={() => setSelectedClient(null)}
+                availableTabs={availableTabs}
               />
               {renderTabContent()}
             </Box>

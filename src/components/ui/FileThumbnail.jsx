@@ -1,15 +1,77 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { InsertDriveFile } from "@mui/icons-material";
-import { isImageFile } from "../../utilities/fileUtils";
+import { isImageFile, secureOpenFile, secureGetBlobUrl } from "../../utilities/fileUtils";
+import { notifyError } from "../../utilities/toastify";
+
+const isUploadsUrl = (url) => url && typeof url === "string" && url.includes("/uploads/");
+
 export default function FileThumbnail({ fileUrl, label = "", isDarkMode = false, onClick }) {
+  const [secureImgSrc, setSecureImgSrc] = useState(null);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    if (!fileUrl || !isImageFile(fileUrl) || !isUploadsUrl(fileUrl)) return;
+    let revoked = false;
+    let blobUrl = null;
+    secureGetBlobUrl(fileUrl)
+      .then((url) => {
+        blobUrl = url;
+        if (!revoked) setSecureImgSrc(url);
+      })
+      .catch(() => {
+        if (!revoked) setImgError(true);
+      });
+    return () => {
+      revoked = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [fileUrl]);
+
   if (!fileUrl) return null;
-  const handleClick = () => (onClick ? onClick() : window.open(fileUrl, "_blank"));
+
+  const handleClick = async () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    try {
+      if (isUploadsUrl(fileUrl)) {
+        await secureOpenFile(fileUrl);
+      } else {
+        window.open(fileUrl, "_blank");
+      }
+    } catch (err) {
+      notifyError(err.response?.data?.message || "لا يوجد صلاحية لعرض الملف");
+    }
+  };
+
+  const imgSrc = isUploadsUrl(fileUrl) && isImageFile(fileUrl) ? secureImgSrc : fileUrl;
+
   if (isImageFile(fileUrl)) {
+    if (imgError) {
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            height: 180,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "action.hover",
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            لا يمكن عرض الملف
+          </Typography>
+        </Box>
+      );
+    }
     return (
       <Box
         component="img"
-        src={fileUrl}
+        src={imgSrc}
         alt={label}
         sx={{
           width: "100%",
@@ -49,4 +111,4 @@ export default function FileThumbnail({ fileUrl, label = "", isDarkMode = false,
       </Typography>
     </Box>
   );
-}
+}

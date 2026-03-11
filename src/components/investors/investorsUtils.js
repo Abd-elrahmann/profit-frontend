@@ -7,6 +7,20 @@ export const QUERY_KEYS = {
   WITHDRAWAL_DETAILS: 'withdrawal-details',
   OPENING_JOURNALS_CHECK: 'opening-journals-check',
 };
+
+export const INVESTOR_TABS = {
+  PERSONAL: 0,
+  FINANCIAL: 1,
+  TRANSACTIONS: 2,
+  DOCUMENTS: 3,
+};
+
+export const INVESTOR_TAB_LABELS = [
+  "التفاصيل الشخصية",
+  "المعلومات المالية",
+  "العمليات المالية",
+  "المستندات",
+];
 export const invalidateInvestorQueries = (queryClient, investorId) => {
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTOR_DETAILS, investorId] });
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVESTORS] });

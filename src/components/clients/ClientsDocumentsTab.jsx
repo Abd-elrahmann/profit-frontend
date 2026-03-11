@@ -17,6 +17,8 @@ import {
   CheckCircle,
 } from "@mui/icons-material";
 import FileThumbnail from "../ui/FileThumbnail";
+import { secureOpenFile } from "../../utilities/fileUtils";
+import { notifyError } from "../../utilities/toastify";
 import {
   CLIENT_DOCUMENT_TYPES,
   KAFEEL_DOCUMENT_TYPES,
@@ -30,6 +32,7 @@ function DocumentCard({
   permissions,
   onDownload,
   onShare,
+  onView,
 }) {
   return (
     <Grid item xs={12} sm={6} md={4} lg={3} key={`${doc.key}-${doc.index}`}>
@@ -88,7 +91,7 @@ function DocumentCard({
               </IconButton>
               <IconButton
                 size="small"
-                onClick={() => window.open(doc.value, "_blank")}
+                onClick={() => onView(doc.value)}
                 title="عرض"
               >
                 <Visibility fontSize="small" />
@@ -100,6 +103,13 @@ function DocumentCard({
     </Grid>
   );
 }
+const handleViewFile = async (url) => {
+  try {
+    await secureOpenFile(url);
+  } catch {
+    notifyError("لا يوجد صلاحية لعرض الملف");
+  }
+};
 export default function ClientsDocumentsTab({
   clientDetails,
   documentsTab,
@@ -200,6 +210,7 @@ export default function ClientsDocumentsTab({
                         permissions={permissions}
                         onDownload={onDownloadFile}
                         onShare={onShareFile}
+                        onView={handleViewFile}
                       />
                     ))}
                   </Grid>
@@ -237,6 +248,7 @@ export default function ClientsDocumentsTab({
                               permissions={permissions}
                               onDownload={onDownloadFile}
                               onShare={onShareFile}
+                              onView={handleViewFile}
                             />
                           ))}
                         </Grid>
@@ -398,15 +410,19 @@ export default function ClientsDocumentsTab({
                                   >
                                     <Share fontSize="small" />
                                   </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() =>
-                                      window.open(doc.value, "_blank")
-                                    }
-                                    title="عرض"
-                                  >
-                                    <Visibility fontSize="small" />
-                                  </IconButton>
+              <IconButton
+                size="small"
+                onClick={async () => {
+                  try {
+                    await secureOpenFile(doc.value);
+                  } catch {
+                    notifyError("لا يوجد صلاحية لعرض الملف");
+                  }
+                }}
+                title="عرض"
+              >
+                <Visibility fontSize="small" />
+              </IconButton>
                                 </Box>
                               </Box>
                             </Paper>
@@ -543,9 +559,13 @@ export default function ClientsDocumentsTab({
                                   </IconButton>
                                   <IconButton
                                     size="small"
-                                    onClick={() =>
-                                      window.open(value, "_blank")
-                                    }
+                                    onClick={async () => {
+                                      try {
+                                        await secureOpenFile(value);
+                                      } catch {
+                                        notifyError("لا يوجد صلاحية لعرض الملف");
+                                      }
+                                    }}
                                     title="عرض"
                                   >
                                     <Visibility fontSize="small" />
@@ -579,4 +599,4 @@ export default function ClientsDocumentsTab({
       )}
     </Box>
   );
-}
+}

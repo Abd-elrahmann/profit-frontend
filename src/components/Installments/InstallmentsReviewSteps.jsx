@@ -3,6 +3,8 @@ import { Box, Typography, Stepper, Step, StepLabel, Alert, Divider } from '@mui/
 import { Download, Share as ShareIcon } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import { extractFileName, hasFiles } from './installmentsUtils';
+import { secureOpenFile } from '../../utilities/fileUtils';
+import { notifyError } from '../../utilities/toastify';
 export default function InstallmentsReviewSteps({
   activeStep,
   steps,
@@ -73,7 +75,13 @@ export default function InstallmentsReviewSteps({
                         borderRadius: 1,
                         mb: 1,
                       }}
-                      onClick={() => window.open(attachment, '_blank')}
+                      onClick={async () => {
+                        try {
+                          await secureOpenFile(attachment);
+                        } catch {
+                          notifyError('لا يوجد صلاحية لعرض الملف');
+                        }
+                      }}
                     >
                       <Typography variant="body2" sx={{ flex: 1 }}>
                         {extractFileName(attachment)}
@@ -108,7 +116,13 @@ export default function InstallmentsReviewSteps({
                         p: 1,
                         borderRadius: 1,
                       }}
-                      onClick={() => window.open(payment.proofUrl, '_blank')}
+                      onClick={async () => {
+                        try {
+                          await secureOpenFile(payment.proofUrl);
+                        } catch {
+                          notifyError('لا يوجد صلاحية لعرض الملف');
+                        }
+                      }}
                     >
                       <Typography variant="body2" sx={{ flex: 1 }}>
                         {extractFileName(payment.proofUrl)}
@@ -153,4 +167,4 @@ export default function InstallmentsReviewSteps({
       )}
     </Box>
   );
-}
+}

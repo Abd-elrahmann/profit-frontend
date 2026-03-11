@@ -18,6 +18,7 @@ import ContractGenerator from "../../components/contractGenerators/ContractGener
 import { notifyError, notifySuccess } from "../../utilities/toastify";
 import { Helmet } from "react-helmet-async";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { INVESTOR_TABS, INVESTOR_TAB_LABELS } from "../../components/investors/investorsUtils";
 import { useTheme } from "../../theme/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import InvestorsList from "../../components/investors/InvestorsList";
@@ -104,11 +105,14 @@ export default function Investors() {
   };
   // eslint-disable-next-line no-unused-vars
   const [showWithdrawnOnly, setShowWithdrawnOnly] = useState(false);
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
+  const canViewPartnerFiles = canViewFiles('partners');
+  const availableTabs = INVESTOR_TAB_LABELS.map((label, idx) => ({ label, value: idx }))
+    .filter(t => t.value !== INVESTOR_TABS.DOCUMENTS || canViewPartnerFiles);
   const {
     data: investorsData,
     isLoading: isInvestorsLoading,
@@ -630,8 +634,8 @@ export default function Investors() {
 
   const handleDownloadFile = async (fileUrl) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const { secureFetchFile } = await import('../../utilities/fileUtils');
+      const blob = await secureFetchFile(fileUrl);
       const { fileName } = getFileNameAndDescription(fileUrl);
       const fileSaver = await import('file-saver');
       fileSaver.saveAs(blob, fileName);
@@ -642,8 +646,8 @@ export default function Investors() {
   };
   const handleShareFile = async (fileUrl) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const { secureFetchFile } = await import('../../utilities/fileUtils');
+      const blob = await secureFetchFile(fileUrl);
       const { fileName, description } = getFileNameAndDescription(fileUrl);
       const file = new File([blob], fileName, { type: blob.type });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -780,6 +784,7 @@ export default function Investors() {
                 value={tab}
                 onChange={handleTabChange}
                 isSmallScreen={isMobile || isSmallScreen}
+                availableTabs={availableTabs}
               />
               <Divider sx={{ mb: 3 }} />
               {}

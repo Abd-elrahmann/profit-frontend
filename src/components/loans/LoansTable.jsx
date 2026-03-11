@@ -48,6 +48,7 @@ import {
   deactivateLoan,
 } from "../../pages/Loans/loanApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import { secureFetchFile, secureOpenFile } from "../../utilities/fileUtils";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { StyledTableCell, StyledTableRow, ScrollableTableContainer } from "../layouts/tableLayout";
 import dayjs from "dayjs";
@@ -73,7 +74,8 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   const [selectedLoanForMenu, setSelectedLoanForMenu] = useState(null);
   const [isContractsModalOpen, setIsContractsModalOpen] = useState(false);
   const [selectedLoanContracts, setSelectedLoanContracts] = useState(null);
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
+  const canViewLoanFiles = canViewFiles('loans');
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet; 
@@ -160,8 +162,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   };
   const handleDownloadContract = async (fileUrl, contractName) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const blob = await secureFetchFile(fileUrl);
       const decodedName = decodeURIComponent(fileUrl.split('/').pop());
       const newFileName = `${contractName}_${decodedName}`;
       saveAs(blob, newFileName);
@@ -173,8 +174,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   };
   const handlePrintContract = async (fileUrl) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const blob = await secureFetchFile(fileUrl);
       const blobUrl = URL.createObjectURL(blob);
       const printWindow = window.open(blobUrl, '_blank');
       printWindow?.addEventListener('load', () => {
@@ -190,8 +190,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
   };
   const handleShareContract = async (fileUrl, contractName) => {
     try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+      const blob = await secureFetchFile(fileUrl);
       const decodedName = decodeURIComponent(fileUrl.split('/').pop());
       const fileName = `${contractName}_${decodedName}`;
       const file = new File([blob], fileName, { type: blob.type });
@@ -226,11 +225,11 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
       notifyError("تعذرت مشاركة الملف");
     }
   };
-  const handleViewContract = (fileUrl) => {
+  const handleViewContract = async (fileUrl) => {
     try {
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      await secureOpenFile(fileUrl);
     } catch (error) {
-      notifyError("حدث خطأ أثناء فتح الملف");
+      notifyError(error.response?.data?.message || "حدث خطأ أثناء فتح الملف");
       handleApiError(error);
     }
   };
@@ -1058,7 +1057,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
           عرض الدفعات
         </MenuItem>
         {}
-        {(selectedLoanForMenu?.DEBT_ACKNOWLEDGMENT || selectedLoanForMenu?.PROMISSORY_NOTE || selectedLoanForMenu?.SETTLEMENT) && (
+        {canViewLoanFiles && (selectedLoanForMenu?.DEBT_ACKNOWLEDGMENT || selectedLoanForMenu?.PROMISSORY_NOTE || selectedLoanForMenu?.SETTLEMENT) && (
           <MenuItem
             onClick={() => {
               handleViewContracts(selectedLoanForMenu);

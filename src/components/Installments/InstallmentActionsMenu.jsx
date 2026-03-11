@@ -18,6 +18,7 @@ export default function InstallmentActionsMenu({
   onDocuments,
   shouldDisableActions,
   permissions,
+  canViewFiles = true,
 }) {
   const open = Boolean(anchorEl);
   const canApprove =
@@ -35,7 +36,7 @@ export default function InstallmentActionsMenu({
     selectedInstallment?.status !== 'PAID' &&
     !shouldDisableActions() &&
     permissions.includes('repayments_Add');
-  const showDocuments = selectedInstallment?.status === 'PAID';
+  const showDocuments = selectedInstallment?.status === 'PAID' && canViewFiles;
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       {canApprove && (

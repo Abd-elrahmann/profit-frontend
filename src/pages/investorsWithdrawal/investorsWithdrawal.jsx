@@ -106,8 +106,9 @@ export default function InvestorsWithdrawal() {
   const [isPartialPaymentVoucher, setIsPartialPaymentVoucher] = useState(false);
   const [pendingPartialAmount, setPendingPartialAmount] = useState(null);
   const queryClient = useQueryClient();
-  const { permissions } = usePermissions();
+  const { permissions, canViewFiles } = usePermissions();
   const { user } = useAuth();
+  const canViewWithdrawalFiles = canViewFiles('partners-withdraw');
   const withdrawReceiptGeneratorRef = useRef(null);
   const voucherGeneratorRef = useRef(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -324,9 +325,17 @@ export default function InvestorsWithdrawal() {
       : `${window.location.origin}/${schedule.voucherUrl}`;
   };
 
-  const handleViewVoucher = () => {
-    if (voucherMenuSchedule?.voucherUrl) {
-      window.open(voucherMenuSchedule.voucherUrl, '_blank', 'noopener,noreferrer');
+  const handleViewVoucher = async () => {
+    const url = getVoucherUrl(voucherMenuSchedule);
+    if (!url) {
+      handleCloseVoucherMenu();
+      return;
+    }
+    try {
+      const { secureOpenFile } = await import('../../utilities/fileUtils');
+      await secureOpenFile(url);
+    } catch {
+      notifyError('لا يوجد صلاحية لعرض الملف');
     }
     handleCloseVoucherMenu();
   };
@@ -372,9 +381,8 @@ export default function InvestorsWithdrawal() {
     }
     setIsDownloadingVoucher(true);
     try {
-      const response = await fetch(url, { credentials: 'include', mode: 'cors' });
-      if (!response.ok) throw new Error('فشل في تحميل الملف');
-      const blob = await response.blob();
+      const { secureFetchFile } = await import('../../utilities/fileUtils');
+      const blob = await secureFetchFile(url);
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -579,7 +587,7 @@ export default function InvestorsWithdrawal() {
         {activeTab === 1 && (
           <Box sx={{ bgcolor: 'background.paper', minHeight: '100%' }}>
             {}
-            {withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && (
+            {withdrawalDetails?.withdrawal?.WITHDRAWAL_RECEIPT && canViewWithdrawalFiles && (
               <Box
                 sx={{
                   display: "flex",
@@ -605,7 +613,14 @@ export default function InvestorsWithdrawal() {
                   variant="contained"
                   size={isMobile ? "small" : "medium"}
                   startIcon={<Visibility sx={{ marginLeft: "5px" }} />}
-                  onClick={() => window.open(withdrawalDetails.withdrawal.WITHDRAWAL_RECEIPT, "_blank")}
+                  onClick={async () => {
+                    try {
+                      const { secureOpenFile } = await import('../../utilities/fileUtils');
+                      await secureOpenFile(withdrawalDetails.withdrawal.WITHDRAWAL_RECEIPT);
+                    } catch {
+                      notifyError('لا يوجد صلاحية لعرض الملف');
+                    }
+                  }}
                   sx={{
                     bgcolor: "#2e7d32",
                     "&:hover": { bgcolor: "#1b5e20" },
@@ -1021,7 +1036,7 @@ export default function InvestorsWithdrawal() {
                                     )}
                                     {schedule.status === "PAID" && (
                                       <>
-                                        {schedule.voucherUrl && (
+                                        {schedule.voucherUrl && canViewWithdrawalFiles && (
                                           <Button
                                             size="small"
                                             variant="outlined"
@@ -1176,7 +1191,7 @@ export default function InvestorsWithdrawal() {
                                       )}
                                       {schedule.status === "PAID" && (
                                         <>
-                                          {schedule.voucherUrl && (
+                                          {schedule.voucherUrl && canViewWithdrawalFiles && (
                                             <Tooltip title="سند الصرف" arrow>
                                               <IconButton
                                                 size="large"
