@@ -9,9 +9,6 @@ import {
   Delete,
   CloudUpload,
   ContactPage,
-  Group,
-  Autorenew,
-  CheckCircle,
 } from '@mui/icons-material';
 import { saveAs } from 'file-saver';
 import { useQueryClient } from '@tanstack/react-query';
@@ -122,15 +119,28 @@ const DocumentDropzone = ({
   }
   if (isDeleted && !file) {
     return (
-      <div className="border-2 border-red-200 dark:border-red-800 rounded-xl p-6 bg-red-50 dark:bg-red-900/20 flex flex-col gap-3">
-        <p className="text-sm font-bold text-red-600 dark:text-red-400">{label} (سيتم الحذف)</p>
-        <button
-          type="button"
-          onClick={() => onUndoDelete(fieldName)}
-          className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors w-fit"
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <p className="text-sm font-bold text-red-600 dark:text-red-400">{label} (سيتم الحذف)</p>
+          <button
+            type="button"
+            onClick={() => onUndoDelete(fieldName)}
+            className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            تراجع
+          </button>
+        </div>
+        <div
+          {...getRootProps()}
+          className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all group min-h-[140px] ${
+            isDragActive ? 'border-primary bg-primary/5' : 'border-primary/20 bg-primary/5 dark:bg-primary/10 hover:border-primary'
+          }`}
         >
-          تراجع
-        </button>
+          <input {...getInputProps()} />
+          <CloudUpload sx={{ fontSize: 40, color: 'primary.main', mb: 0.5 }} className="group-hover:scale-110 transition-transform" />
+          <p className="text-sm font-bold text-slate-800 dark:text-white">رفع ملف جديد بدلاً منه</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">اسحب وأفلت الملف هنا أو انقر للاختيار</p>
+        </div>
       </div>
     );
   }
@@ -184,6 +194,7 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
   const handleDrop = (acceptedFiles, fieldName) => {
     if (acceptedFiles.length > 0) {
       setUploadedFiles((prev) => ({ ...prev, [fieldName]: acceptedFiles[0] }));
+      setDeleteFields((prev) => prev.filter((f) => f !== fieldName));
     }
   };
   const removeFile = (fieldName) => {
@@ -193,9 +204,17 @@ export default function EditDocumentsForm({ clientId, clientName, documents, has
       return next;
     });
   };
-  const handleDeleteExisting = (fieldName) => setDeleteFields((prev) => [...prev, fieldName]);
+  const handleDeleteExisting = (fieldName) => {
+    setDeleteFields((prev) => [...prev, fieldName]);
+  };
   const handleUndoDelete = (fieldName) => setDeleteFields((prev) => prev.filter((f) => f !== fieldName));
   const handleSubmit = async () => {
+    const willHaveClientIdImage =
+      (documents?.clientIdImage && !deleteFields.includes('clientIdImage')) || uploadedFiles.clientIdImage;
+    if (!willHaveClientIdImage) {
+      notifyError('بطاقة هوية العميل مطلوبة - يرجى رفعها أو التراجع عن الحذف');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const formData = new FormData();

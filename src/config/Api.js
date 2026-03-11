@@ -132,21 +132,29 @@ Api.interceptors.response.use(
 );
 export const handleApiError = (error) => {
   try {
-    const status = error?.response?.status;
     const responseBody = error?.response?.data;
-    if (status === 500) {
-      return toast.error('Unexpected Error Happen');
+    const backendMessage = responseBody?.message;
+
+    if (!error?.response) {
+      toast.error('خطأ في الاتصال، يرجى التحقق من شبكة الإنترنت');
+      return;
     }
+
     if (Array.isArray(responseBody)) {
-      responseBody.map((e) => toast.error(e.message));
-    } else if (Array.isArray(responseBody?.message)) {
-      responseBody?.message?.map((e) => toast.error(e));
+      responseBody.map((e) => toast.error(e?.message || 'حدث خطأ'));
+    } else if (Array.isArray(backendMessage)) {
+      backendMessage.map((e) => toast.error(e));
     } else {
-      const errorMes = responseBody?.message || responseBody?.error || responseBody;
-      toast.error(errorMes);
+      const errorMes =
+        backendMessage ||
+        responseBody?.error ||
+        (typeof responseBody === 'string' ? responseBody : null) ||
+        'حدث خطأ غير متوقع، يرجى المحاولة لاحقاً';
+      toast.error(typeof errorMes === 'string' ? errorMes : 'حدث خطأ غير متوقع');
     }
-  } catch (error) {
-    console.error('Error in handleApiError:', error);
+  } catch (err) {
+    console.error('Error in handleApiError:', err);
+    toast.error('حدث خطأ غير متوقع');
   }
 };
 export default Api;
