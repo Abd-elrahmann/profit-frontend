@@ -117,7 +117,9 @@ export default function ClientsHeader({
           onChange={onTabChange}
           textColor="primary"
           indicatorColor="primary"
-          variant="standard"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile={false}
           sx={{
             mb: 3,
             minHeight: 48,

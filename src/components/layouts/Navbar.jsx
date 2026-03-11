@@ -36,8 +36,8 @@ const Navbar = ({ onMenuToggle }) => {
         <button
           type="button"
           data-sidebar-toggle
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMenuToggle(); }}
-          className="lg:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation cursor-pointer -ml-1"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMenuToggle?.(); }}
+          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation cursor-pointer -ml-1"
           aria-label="فتح/إغلاق القائمة"
           style={{ touchAction: 'manipulation' }}
         >

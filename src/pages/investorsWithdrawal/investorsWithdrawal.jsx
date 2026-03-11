@@ -16,7 +16,6 @@ import {
   WithdrawalTabs,
   getStatusColor,
   getStatusText,
-  getWithdrawingStatusColor,
   getWithdrawingStatusText,
 } from "../../components/investorsWithdrawal";
 import DeleteModal from "../../components/modals/DeleteModal";
@@ -33,7 +32,10 @@ import {
   rejectWithdrawal,
   partialPayWithdrawal,
   uploadWithdrawalReceipt,
+  getNextVoucherNumber,
 } from "./withdrawal";
+import PartnerWithdrawVoucherGenerator from "../../components/receipts/PartnerWithdrawVoucherGenerator";
+import PartnerWithdrawVoucherPreview from "../../components/receipts/PartnerWithdrawVoucherPreview";
 import { getMonthName } from "../../components/investors/investorsUtils";
 import {
   Grid,
@@ -53,6 +55,10 @@ import {
   Tooltip,
   IconButton,
   Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -62,9 +68,13 @@ import {
   Description,
   PictureAsPdf,
   TableChart,
+  Share,
+  Download,
+  MoreVert,
 } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../../components/layouts/tableLayout";
 import { usePermissions } from "../../components/Contexts/PermissionsContext";
+import { useAuth } from "../../components/Contexts/AuthContext";
 import { exportWithdrawalDetailsToPDF, exportWithdrawalDetailsToExcel } from "../../utilities/InvestorsWithdrawalExporter";
 export default function InvestorsWithdrawal() {
   const navigate = useNavigate();
@@ -85,9 +95,21 @@ export default function InvestorsWithdrawal() {
   const [hasAutoOpenedPreview, setHasAutoOpenedPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [partialPaymentAlerts, setPartialPaymentAlerts] = useState([]);
+  const [isVoucherPreviewOpen, setIsVoucherPreviewOpen] = useState(false);
+  const [previewVoucherHtml, setPreviewVoucherHtml] = useState("");
+  const [selectedScheduleForVoucher, setSelectedScheduleForVoucher] = useState(null);
+  const [isSavingVoucher, setIsSavingVoucher] = useState(false);
+  const [pendingApprovalScheduleId, setPendingApprovalScheduleId] = useState(null);
+  const [voucherMenuAnchor, setVoucherMenuAnchor] = useState(null);
+  const [voucherMenuSchedule, setVoucherMenuSchedule] = useState(null);
+  const [isDownloadingVoucher, setIsDownloadingVoucher] = useState(false);
+  const [isPartialPaymentVoucher, setIsPartialPaymentVoucher] = useState(false);
+  const [pendingPartialAmount, setPendingPartialAmount] = useState(null);
   const queryClient = useQueryClient();
   const { permissions } = usePermissions();
+  const { user } = useAuth();
   const withdrawReceiptGeneratorRef = useRef(null);
+  const voucherGeneratorRef = useRef(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isSmallScreen = isMobile || isTablet;
@@ -195,12 +217,75 @@ export default function InvestorsWithdrawal() {
       notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
       return;
     }
+    const schedule = withdrawalDetails?.schedule?.find(s => s.id === scheduleId);
+    if (!schedule) {
+      notifyError("لم يتم العثور على بيانات الدفعة");
+      return;
+    }
+    setSelectedScheduleForVoucher(schedule);
+    setPendingApprovalScheduleId(scheduleId);
     try {
-      setIsProcessing(true);
-      await approveWithdrawal(scheduleId);
-      const schedule = withdrawalDetails?.schedule?.find(s => s.id === scheduleId);
+      const voucherNum = await getNextVoucherNumber();
+      if (voucherGeneratorRef.current) {
+        const html = voucherGeneratorRef.current.generateVoucher(
+          schedule,
+          withdrawalDetails?.partner,
+          withdrawalDetails?.withdrawal,
+          voucherNum,
+          user?.name || ''
+        );
+        setPreviewVoucherHtml(html);
+        setIsVoucherPreviewOpen(true);
+      }
+    } catch (error) {
+      notifyError("حدث خطأ أثناء تحضير سند الصرف");
+      handleApiError(error);
+    }
+  };
+
+  const handleConfirmApproveWithVoucher = async () => {
+    if (!pendingApprovalScheduleId) return;
+    try {
+      setIsSavingVoucher(true);
+      const schedule = withdrawalDetails?.schedule?.find(s => s.id === pendingApprovalScheduleId);
       const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
-      notifySuccess(`تم الموافقة على دفعة شهر ${monthName} بنجاح`);
+      
+      if (isPartialPaymentVoucher && pendingPartialAmount) {
+        await partialPayWithdrawal(pendingApprovalScheduleId, pendingPartialAmount);
+        if (voucherGeneratorRef.current && previewVoucherHtml) {
+          await voucherGeneratorRef.current.generatePDF(pendingApprovalScheduleId);
+        }
+        const totalDue = (schedule?.amount || 0) + (schedule?.carryAmount || 0);
+        const remainingAmount = totalDue - pendingPartialAmount;
+        if (remainingAmount > 0) {
+          const alertId = Date.now();
+          const newAlert = {
+            id: alertId,
+            scheduleId: pendingApprovalScheduleId,
+            month: monthName,
+            paidAmount: pendingPartialAmount,
+            carriedAmount: remainingAmount,
+            timestamp: new Date().toLocaleString('ar-SA')
+          };
+          setPartialPaymentAlerts(prev => [newAlert, ...prev]);
+        }
+        notifySuccess(`تم تسجيل السداد الجزئي لدفعة شهر ${monthName} وحفظ سند الصرف بنجاح`);
+      } else {
+        await approveWithdrawal(pendingApprovalScheduleId);
+        if (voucherGeneratorRef.current && previewVoucherHtml) {
+          await voucherGeneratorRef.current.generatePDF(pendingApprovalScheduleId);
+        }
+        notifySuccess(`تم الموافقة على دفعة شهر ${monthName} وحفظ سند الصرف بنجاح`);
+      }
+      
+      setIsVoucherPreviewOpen(false);
+      setPreviewVoucherHtml("");
+      setSelectedScheduleForVoucher(null);
+      setPendingApprovalScheduleId(null);
+      setIsPartialPaymentVoucher(false);
+      setPendingPartialAmount(null);
+      setPartialAmount("");
+      setSelectedScheduleId(null);
       queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
       queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
       queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
@@ -209,9 +294,111 @@ export default function InvestorsWithdrawal() {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء الموافقة على الدفعة");
       handleApiError(error);
     } finally {
-      setIsProcessing(false);
+      setIsSavingVoucher(false);
     }
   };
+
+  const handleCloseVoucherPreview = () => {
+    setIsVoucherPreviewOpen(false);
+    setPreviewVoucherHtml("");
+    setSelectedScheduleForVoucher(null);
+    setPendingApprovalScheduleId(null);
+    setIsPartialPaymentVoucher(false);
+    setPendingPartialAmount(null);
+  };
+
+  const handleOpenVoucherMenu = (event, schedule) => {
+    setVoucherMenuAnchor(event.currentTarget);
+    setVoucherMenuSchedule(schedule);
+  };
+
+  const handleCloseVoucherMenu = () => {
+    setVoucherMenuAnchor(null);
+    setVoucherMenuSchedule(null);
+  };
+
+  const getVoucherUrl = (schedule) => {
+    if (!schedule?.voucherUrl) return null;
+    return schedule.voucherUrl.startsWith('http') 
+      ? schedule.voucherUrl 
+      : `${window.location.origin}/${schedule.voucherUrl}`;
+  };
+
+  const handleViewVoucher = () => {
+    if (voucherMenuSchedule?.voucherUrl) {
+      window.open(voucherMenuSchedule.voucherUrl, '_blank', 'noopener,noreferrer');
+    }
+    handleCloseVoucherMenu();
+  };
+
+  const handleShareVoucher = async () => {
+    const url = getVoucherUrl(voucherMenuSchedule);
+    if (!url) {
+      notifyError('لا يوجد سند مرفق');
+      handleCloseVoucherMenu();
+      return;
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `سند صرف - ${withdrawalDetails?.partner?.name}`,
+          url,
+          text: `سند صرف دفعة ${getMonthName(voucherMenuSchedule.month)} ${voucherMenuSchedule.year}`,
+        });
+        notifySuccess('تم المشاركة بنجاح');
+      } else {
+        await navigator.clipboard.writeText(url);
+        notifySuccess('تم نسخ الرابط');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(url);
+          notifySuccess('تم نسخ الرابط');
+        } catch {
+          notifyError('فشل في نسخ الرابط');
+        }
+      }
+    }
+    handleCloseVoucherMenu();
+  };
+
+  const handleDownloadVoucher = async () => {
+    const url = getVoucherUrl(voucherMenuSchedule);
+    if (!url) {
+      notifyError('لا يوجد سند مرفق');
+      handleCloseVoucherMenu();
+      return;
+    }
+    setIsDownloadingVoucher(true);
+    try {
+      const response = await fetch(url, { credentials: 'include', mode: 'cors' });
+      if (!response.ok) throw new Error('فشل في تحميل الملف');
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `سند_صرف_${withdrawalDetails?.partner?.name}_${voucherMenuSchedule.month}_${voucherMenuSchedule.year}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      notifySuccess('تم تحميل السند بنجاح');
+    } catch {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `سند_صرف_${withdrawalDetails?.partner?.name}_${voucherMenuSchedule.month}_${voucherMenuSchedule.year}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      notifySuccess('جاري تحميل السند');
+    } finally {
+      setIsDownloadingVoucher(false);
+    }
+    handleCloseVoucherMenu();
+  };
+
   const handleOpenRejectModal = (scheduleId) => {
     if (!permissions.includes("partners-withdraw_Post")) {
       notifyError("ليس لديك صلاحية لتنفيذ هذا الإجراء");
@@ -258,39 +445,40 @@ export default function InvestorsWithdrawal() {
       notifyError("يرجى إدخال مبلغ صحيح");
       return;
     }
+    const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
+    if (!schedule) {
+      notifyError("لم يتم العثور على بيانات الدفعة");
+      return;
+    }
+    const paidAmount = parseFloat(partialAmount);
+    const partialSchedule = {
+      ...schedule,
+      amount: paidAmount,
+      carryAmount: 0,
+    };
+    setSelectedScheduleForVoucher(partialSchedule);
+    setPendingApprovalScheduleId(selectedScheduleId);
+    setPendingPartialAmount(paidAmount);
+    setIsPartialPaymentVoucher(true);
     try {
-      setIsProcessing(true);
-      await partialPayWithdrawal(selectedScheduleId, parseFloat(partialAmount));
-      const schedule = withdrawalDetails?.schedule?.find(s => s.id === selectedScheduleId);
-      const monthName = schedule?.month ? getMonthName(schedule.month) : "الدفعة";
-      const paidAmount = parseFloat(partialAmount);
-      const totalDue = (schedule?.amount || 0) + (schedule?.carryAmount || 0);
-      const remainingAmount = totalDue - paidAmount;
-      if (remainingAmount > 0) {
-        const alertId = Date.now();
-        const newAlert = {
-          id: alertId,
-          scheduleId: selectedScheduleId,
-          month: monthName,
-          paidAmount: paidAmount,
-          carriedAmount: remainingAmount,
-          timestamp: new Date().toLocaleString('ar-SA')
-        };
-        setPartialPaymentAlerts(prev => [newAlert, ...prev]);
+      const voucherNum = await getNextVoucherNumber();
+      if (voucherGeneratorRef.current) {
+        const html = voucherGeneratorRef.current.generateVoucher(
+          partialSchedule,
+          withdrawalDetails?.partner,
+          withdrawalDetails?.withdrawal,
+          voucherNum,
+          user?.name || ''
+        );
+        setPreviewVoucherHtml(html);
+        setPartialPayDialogOpen(false);
+        setIsVoucherPreviewOpen(true);
       }
-      notifySuccess(`تم تسجيل السداد الجزئي لدفعة شهر ${monthName} بنجاح`);
-      setPartialPayDialogOpen(false);
-      setPartialAmount("");
-      setSelectedScheduleId(null);
-      queryClient.invalidateQueries({ queryKey: ["withdrawal-details", selectedInvestorId] });
-      queryClient.invalidateQueries({ queryKey: ["withdrawing-investors"] });
-      queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
-      refetchDetails();
     } catch (error) {
-      notifyError(error.response?.data?.message || "حدث خطأ أثناء تسجيل السداد الجزئي");
+      notifyError("حدث خطأ أثناء تحضير سند الصرف");
       handleApiError(error);
-    } finally {
-      setIsProcessing(false);
+      setIsPartialPaymentVoucher(false);
+      setPendingPartialAmount(null);
     }
   };
   const handleSaveReceipt = async () => {
@@ -477,7 +665,7 @@ export default function InvestorsWithdrawal() {
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                     معلومات المستثمر
                   </Typography>
-                  <Grid container spacing={2}>
+                  <Grid container spacing={15} justifyContent="center">
                     <Grid item xs={12} md={4}>
                       <Typography variant="body2" mb={1} fontWeight={500}>
                         الاسم
@@ -526,34 +714,6 @@ export default function InvestorsWithdrawal() {
                             },
                           }}
                         />
-                        <Chip
-                          label={getWithdrawingStatusText(withdrawalDetails.partner?.withdrawingStatus)}
-                          color={getWithdrawingStatusColor(withdrawalDetails.partner?.withdrawingStatus)}
-                          size="small"
-                        />
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="body2" mb={1} fontWeight={500}>
-                        الحالة
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <TextField
-                          value={withdrawalDetails.partner?.isFrozen ? "مجمّد" : "نشط"}
-                          fullWidth
-                          readOnly
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              backgroundColor: 'background.paper',
-                              borderRadius: "6px",
-                            },
-                          }}
-                        />
-                        <Chip
-                          label={withdrawalDetails.partner?.isFrozen ? "مجمّد" : "نشط"}
-                          color={withdrawalDetails.partner?.isFrozen ? "error" : "success"}
-                          size="small"
-                        />
                       </Box>
                     </Grid>
                   </Grid>
@@ -564,7 +724,7 @@ export default function InvestorsWithdrawal() {
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" ,color: "primary.main",textAlign: "center"}}>
                       معلومات طلب الانسحاب
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} justifyContent="center">
                       <Grid item xs={12} md={4}>
                         <Typography variant="body2" mb={1} fontWeight={500}>
                           رأس المال الإجمالي
@@ -813,7 +973,7 @@ export default function InvestorsWithdrawal() {
                                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                                     <Typography variant="caption" color="text.secondary">المتبقي</Typography>
                                     <Typography variant="body2">
-                                      {(schedule.remaining ?? Math.max(0, (schedule.amount || 0) + (schedule.carryAmount || 0) - (schedule.paidAmount || 0)))?.toLocaleString() || 0}
+                                      {Math.max(0, (schedule.amount || 0) + (schedule.carryAmount || 0) - (schedule.paidAmount || 0))?.toLocaleString() || 0}
                                     </Typography>
                                   </Box>
                                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -860,16 +1020,32 @@ export default function InvestorsWithdrawal() {
                                       </>
                                     )}
                                     {schedule.status === "PAID" && (
-                                      <Button
-                                        size="small"
-                                        variant="outlined"
-                                        color="error"
-                                        startIcon={<Cancel />}
-                                        onClick={() => handleOpenRejectModal(schedule.id)}
-                                        disabled={isProcessing}
-                                      >
-                                        رفض
-                                      </Button>
+                                      <>
+                                        {schedule.voucherUrl && (
+                                          <Button
+                                            size="small"
+                                            variant="outlined"
+                                            startIcon={<Description />}
+                                            onClick={(e) => handleOpenVoucherMenu(e, schedule)}
+                                            sx={{
+                                              borderColor: "#2E8B45",
+                                              color: "#2E8B45",
+                                            }}
+                                          >
+                                            سند الصرف
+                                          </Button>
+                                        )}
+                                        <Button
+                                          size="small"
+                                          variant="outlined"
+                                          color="error"
+                                          startIcon={<Cancel />}
+                                          onClick={() => handleOpenRejectModal(schedule.id)}
+                                          disabled={isProcessing}
+                                        >
+                                          رفض
+                                        </Button>
+                                      </>
                                     )}
                                   </Box>
                                 )}
@@ -937,7 +1113,7 @@ export default function InvestorsWithdrawal() {
                                 {schedule.paidAmount?.toLocaleString() || 0}
                               </StyledTableCell>
                               <StyledTableCell align="center">
-                                {(schedule.remaining ?? (Math.max(0, (schedule.amount || 0) + (schedule.carryAmount || 0) - (schedule.paidAmount || 0))))?.toLocaleString() || 0}
+                                {Math.max(0, (schedule.amount || 0) + (schedule.carryAmount || 0) - (schedule.paidAmount || 0))?.toLocaleString() || 0}
                               </StyledTableCell>
                               <StyledTableCell align="center">
                                 <Chip
@@ -999,19 +1175,34 @@ export default function InvestorsWithdrawal() {
                                         </>
                                       )}
                                       {schedule.status === "PAID" && (
-                                        <Tooltip title="رفض الدفعة" arrow>
-                                          <IconButton
-                                            size="large"
-                                            color="error"
-                                            onClick={() => handleOpenRejectModal(schedule.id)}
-                                            disabled={isProcessing}
-                                            sx={{
-                                              color: "red",
-                                            }}
-                                          >
-                                            <Cancel fontSize="medium" />
-                                          </IconButton>
-                                        </Tooltip>
+                                        <>
+                                          {schedule.voucherUrl && (
+                                            <Tooltip title="سند الصرف" arrow>
+                                              <IconButton
+                                                size="large"
+                                                onClick={(e) => handleOpenVoucherMenu(e, schedule)}
+                                                sx={{
+                                                  color: "#2E8B45",
+                                                }}
+                                              >
+                                                <Description fontSize="medium" />
+                                              </IconButton>
+                                            </Tooltip>
+                                          )}
+                                          <Tooltip title="رفض الدفعة" arrow>
+                                            <IconButton
+                                              size="large"
+                                              color="error"
+                                              onClick={() => handleOpenRejectModal(schedule.id)}
+                                              disabled={isProcessing}
+                                              sx={{
+                                                color: "red",
+                                              }}
+                                            >
+                                              <Cancel fontSize="medium" />
+                                            </IconButton>
+                                          </Tooltip>
+                                        </>
                                       )}
                                     </>
                                 </Box>
@@ -1197,6 +1388,68 @@ export default function InvestorsWithdrawal() {
         investorName={withdrawalDetails?.partner?.name}
         totalAmount={withdrawalDetails?.withdrawal?.totalCapital || 0}
       />
+      {withdrawalDetails && (
+        <PartnerWithdrawVoucherGenerator
+          ref={voucherGeneratorRef}
+          scheduleData={selectedScheduleForVoucher}
+          partnerData={withdrawalDetails?.partner}
+          withdrawalData={withdrawalDetails?.withdrawal}
+          currentUserName=""
+        />
+      )}
+      <PartnerWithdrawVoucherPreview
+        open={isVoucherPreviewOpen}
+        onClose={handleCloseVoucherPreview}
+        voucherHtml={previewVoucherHtml}
+        onSaveVoucher={handleConfirmApproveWithVoucher}
+        loading={isSavingVoucher}
+        partnerName={withdrawalDetails?.partner?.name}
+        amount={(selectedScheduleForVoucher?.amount || 0) + (selectedScheduleForVoucher?.carryAmount || 0)}
+        monthYear={selectedScheduleForVoucher ? `${getMonthName(selectedScheduleForVoucher.month)} ${selectedScheduleForVoucher.year}` : ''}
+      />
+      <Menu
+        anchorEl={voucherMenuAnchor}
+        open={Boolean(voucherMenuAnchor)}
+        onClose={handleCloseVoucherMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: {
+            minWidth: 160,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            borderRadius: 2,
+          }
+        }}
+      >
+        <MenuItem onClick={handleViewVoucher} disabled={!voucherMenuSchedule?.voucherUrl}>
+          <ListItemIcon>
+            <Visibility fontSize="small" sx={{ color: '#2E8B45' }} />
+          </ListItemIcon>
+          <ListItemText>عرض</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleShareVoucher} disabled={!voucherMenuSchedule?.voucherUrl}>
+          <ListItemIcon>
+            <Share fontSize="small" sx={{ color: '#1976d2' }} />
+          </ListItemIcon>
+          <ListItemText>مشاركة</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDownloadVoucher} disabled={!voucherMenuSchedule?.voucherUrl || isDownloadingVoucher}>
+          <ListItemIcon>
+            {isDownloadingVoucher ? (
+              <CircularProgress size={20} />
+            ) : (
+              <Download fontSize="small" sx={{ color: '#ed6c02' }} />
+            )}
+          </ListItemIcon>
+          <ListItemText>حفظ</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

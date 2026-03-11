@@ -15,6 +15,8 @@ export const groupExpensesByJournal = (expenses) => {
     if (!grouped[journalId]) {
       grouped[journalId] = {
         journalId,
+        journalReference: expense.journalReference,
+        voucherUrl: expense.voucherUrl,
         date: expense.createdAt,
         createdAtHijri: expense.createdAtHijri,
         addedBy: expense.addedBy,

@@ -63,3 +63,31 @@ export const uploadWithdrawalReceipt = async (withdrawalId, formData) => {
     throw error;
   }
 };
+
+export const getNextVoucherNumber = async () => {
+  try {
+    const response = await Api.get('/api/partner-withdraw/next-voucher-number');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+export const uploadWithdrawVoucher = async (scheduleId, formData) => {
+  try {
+    const response = await Api.post(
+      `/api/partner-withdraw/upload-voucher/${scheduleId}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

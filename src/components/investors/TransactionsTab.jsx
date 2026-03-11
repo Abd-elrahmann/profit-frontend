@@ -31,13 +31,15 @@ const TransactionsTab = ({
   permissions,
   isDarkMode,
   isMobile = false,
+  investorDetails,
 }) => {
+  const isWithdrawing = investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN';
   const transactions = transactionsData?.transactions || [];
   const hasTransactions = transactions.length > 0;
   const renderTable = () => (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        {permissions.includes("partners_Add") && (
+        {permissions.includes("partners_Add") && !isWithdrawing && (
           <Button
             variant="contained"
             startIcon={<AddIcon sx={{ marginLeft: '10px' }} />}
@@ -152,7 +154,7 @@ const TransactionsTab = ({
   const renderCards = () => (
     <Box>
       <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
-        {permissions.includes("partners_Add") && (
+        {permissions.includes("partners_Add") && !isWithdrawing && (
           <Button
             variant="contained"
             size="small"
@@ -252,4 +254,4 @@ const TransactionsTab = ({
   );
   return isMobile ? renderCards() : renderTable();
 };
-export default TransactionsTab;
+export default TransactionsTab;

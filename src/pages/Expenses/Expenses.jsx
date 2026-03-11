@@ -8,6 +8,8 @@ import AddExpense from '../../components/modals/AddExpense';
 import EditExpense from '../../components/modals/EditExpense';
 import DeleteModal from '../../components/modals/DeleteModal';
 import ExpenseExportFilterModal from '../../components/modals/ExpenseExportFilterModal';
+import ExpensesAdvancedSearchModal from '../../components/modals/ExpensesAdvancedSearchModal';
+import ExpenseVouchersModal from '../../components/modals/ExpenseVouchersModal';
 import {
   ExpensesToolbar,
   ExpensesTable,
@@ -31,15 +33,24 @@ const Expenses = () => {
   const [selectedExpenseTypes, setSelectedExpenseTypes] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [exportFormat, setExportFormat] = useState('');
+  const [isAdvancedSearchModalOpen, setIsAdvancedSearchModalOpen] = useState(false);
+  const [isVouchersModalOpen, setIsVouchersModalOpen] = useState(false);
+  const [searchExpenseTypes, setSearchExpenseTypes] = useState([]);
+  const [searchEmployees, setSearchEmployees] = useState([]);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isSmallScreen = isMobile || isTablet;
   const { permissions } = usePermissions();
   const queryClient = useQueryClient();
   const canExport = permissions.includes('expenses_Export');
+  const searchFilters = {
+    types: searchExpenseTypes,
+    employeeIds: searchEmployees.map((e) => e.id || e._id).filter(Boolean),
+  };
+  const hasActiveSearch = searchExpenseTypes.length > 0 || searchEmployees.length > 0;
   const { data: expensesData, isLoading } = useQuery({
-    queryKey: ['expenses', page],
-    queryFn: () => getExpenses(page),
+    queryKey: ['expenses', page, searchFilters.types, searchFilters.employeeIds],
+    queryFn: () => getExpenses(page, hasActiveSearch ? searchFilters : {}),
     retry: 1,
   });
   const { data: employeesData } = useQuery({
@@ -57,7 +68,7 @@ const Expenses = () => {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء حذف المصروفات');
     },
   });
-  const groupedExpenses = expensesData ? groupExpensesByJournal(expensesData.expenses) : [];
+  const groupedExpenses = expensesData ? groupExpensesByJournal(expensesData.expenses || []) : [];
   const filterAndExport = useCallback(
     (expenseTypes, employeeIds, exportFn) => {
       const rows = expensesData?.expenses || [];
@@ -124,6 +135,19 @@ const Expenses = () => {
     }
     handleCloseExportFilterModal();
   };
+  const handleAdvancedSearchApply = () => {
+    setSearchExpenseTypes(selectedExpenseTypes);
+    setSearchEmployees(selectedEmployees);
+    setPage(1);
+    setExpandedRows([]);
+    setIsAdvancedSearchModalOpen(false);
+  };
+  const handleResetFilters = () => {
+    setSearchExpenseTypes([]);
+    setSearchEmployees([]);
+    setPage(1);
+    setExpandedRows([]);
+  };
   const toggleRowExpansion = (journalId) => {
     setExpandedRows((prev) =>
       prev.includes(journalId) ? prev.filter((id) => id !== journalId) : [...prev, journalId]
@@ -157,9 +181,26 @@ const Expenses = () => {
             hasAddPermission={permissions.includes('expenses_Add')}
             hasExportPermission={canExport}
             hasExpenses={!!groupedExpenses.length}
+            hasActiveSearch={hasActiveSearch}
             onAddClick={() => setIsAddModalOpen(true)}
             onPdfMenuOpen={(e) => setPdfAnchorEl(e.currentTarget)}
             onExcelMenuOpen={(e) => setExcelAnchorEl(e.currentTarget)}
+            onPdfClick={(e) => {
+              if (hasActiveSearch) {
+                const ids = searchEmployees.map((emp) => emp.id || emp._id);
+                handleExportPDF(searchExpenseTypes, ids);
+              } else {
+                setPdfAnchorEl(e.currentTarget);
+              }
+            }}
+            onExcelClick={(e) => {
+              if (hasActiveSearch) {
+                const ids = searchEmployees.map((emp) => emp.id || emp._id);
+                handleExportExcel(searchExpenseTypes, ids);
+              } else {
+                setExcelAnchorEl(e.currentTarget);
+              }
+            }}
             pdfAnchorEl={pdfAnchorEl}
             excelAnchorEl={excelAnchorEl}
             onPdfMenuClose={() => setPdfAnchorEl(null)}
@@ -168,6 +209,12 @@ const Expenses = () => {
             onExportAllExcel={() => handleExportExcel([])}
             onExportFilterPdf={() => handleOpenExportFilterModal('pdf')}
             onExportFilterExcel={() => handleOpenExportFilterModal('excel')}
+            onAdvancedSearchClick={() => {
+              setSelectedExpenseTypes(searchExpenseTypes);
+              setSelectedEmployees(searchEmployees);
+              setIsAdvancedSearchModalOpen(true);
+            }}
+            onResetFilters={handleResetFilters}
           />
         </div>
         {}
@@ -176,8 +223,17 @@ const Expenses = () => {
         )}
         {}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-primary/5">
+          <div className="p-6 border-b border-primary/5 flex flex-row justify-between items-center gap-4 flex-wrap">
             <h4 className="font-bold text-slate-800 dark:text-slate-200">سجل المصروفات</h4>
+            {groupedExpenses.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsVouchersModalOpen(true)}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              >
+                عرض سندات المصروفات
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto">
             {isSmallScreen ? (
@@ -285,6 +341,21 @@ const Expenses = () => {
         onEmployeesChange={setSelectedEmployees}
         employeesOptions={Array.isArray(employeesData) ? employeesData : []}
         onConfirm={handleConfirmExport}
+      />
+      <ExpenseVouchersModal
+        open={isVouchersModalOpen}
+        onClose={() => setIsVouchersModalOpen(false)}
+        groupedExpenses={groupedExpenses}
+      />
+      <ExpensesAdvancedSearchModal
+        open={isAdvancedSearchModalOpen}
+        onClose={() => setIsAdvancedSearchModalOpen(false)}
+        selectedExpenseTypes={selectedExpenseTypes}
+        onExpenseTypesChange={setSelectedExpenseTypes}
+        selectedEmployees={selectedEmployees}
+        onEmployeesChange={setSelectedEmployees}
+        employeesOptions={Array.isArray(employeesData) ? employeesData : []}
+        onApply={handleAdvancedSearchApply}
       />
     </>
   );

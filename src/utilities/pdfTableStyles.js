@@ -1,3 +1,5 @@
+import { getArabicFontName } from './pdfReportUtils';
+
 export const pdfTableBaseStyles = {
   theme: 'striped',
   styles: {
@@ -38,14 +40,17 @@ export const pdfTableBaseStyles = {
     fillColor: [250, 250, 250]
   }
 };
-export const getPdfTableStyles = (overrides = {}) => ({
-  ...pdfTableBaseStyles,
-  ...overrides,
-  styles: { ...pdfTableBaseStyles.styles, ...overrides.styles },
-  headStyles: { ...pdfTableBaseStyles.headStyles, ...overrides.headStyles },
-  bodyStyles: { ...pdfTableBaseStyles.bodyStyles, ...overrides.bodyStyles },
-  alternateRowStyles: { ...pdfTableBaseStyles.alternateRowStyles, ...overrides.alternateRowStyles }
-});
+export const getPdfTableStyles = (overrides = {}) => {
+  const font = getArabicFontName();
+  return {
+    ...pdfTableBaseStyles,
+    ...overrides,
+    styles: { ...pdfTableBaseStyles.styles, font, ...overrides.styles },
+    headStyles: { ...pdfTableBaseStyles.headStyles, ...overrides.headStyles },
+    bodyStyles: { ...pdfTableBaseStyles.bodyStyles, ...overrides.bodyStyles },
+    alternateRowStyles: { ...pdfTableBaseStyles.alternateRowStyles, ...overrides.alternateRowStyles }
+  };
+};
 export const createDidDrawTable = (doc) => (data) => {
   if (data.cursor) {
     doc.setDrawColor(200, 200, 200);
@@ -60,4 +65,4 @@ export const createDidDrawTable = (doc) => (data) => {
       doc.rect(tableX, tableY, tableWidth, tableHeight, 'S');
     }
   }
-};
+};

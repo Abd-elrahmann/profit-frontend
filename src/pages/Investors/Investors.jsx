@@ -422,11 +422,12 @@ export default function Investors() {
       notifyError("يرجى اختيار مستثمر");
       return;
     }
-    if (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN') {
+    if (!isEditMode && (investorDetails?.WithdrawingStatus === 'WITHDRAWING' || investorDetails?.WithdrawingStatus === 'WITHDRAWN')) {
       setIsCancelWithdrawModalOpen(true);
       return;
     }
     setWithdrawAmount("");
+    setFirstPaymentDate("");
     setWithdrawPreviewData(null);
     setIsWithdrawEditMode(false);
     if (isEditMode) {
@@ -437,8 +438,13 @@ export default function Investors() {
     try {
       const response = await getWithdrawalPreview(selectedInvestor.id);
       setWithdrawPreviewData(response);
-      if (isEditMode && response?.monthlyAmount) {
-        setWithdrawAmount(response.monthlyAmount.toString());
+      if (isEditMode) {
+        if (response?.monthlyAmount) {
+          setWithdrawAmount(response.monthlyAmount.toString());
+        }
+        if (response?.firstPaymentDate) {
+          setFirstPaymentDate(response.firstPaymentDate);
+        }
       }
     } catch (error) {
       console.error('Error fetching preview data:', error);
@@ -580,15 +586,55 @@ export default function Investors() {
     setTransactionToDelete(transaction);
     setIsDeleteTransactionModalOpen(true);
   };
+  const getFileNameAndDescription = (fileUrl) => {
+    const originalName = decodeURIComponent(fileUrl.split('/').pop());
+    const extension = originalName.split('.').pop();
+    const partnerName = investorDetails?.name || 'مستثمر';
+    
+    if (fileUrl === investorDetails?.mudarabahFileUrl) {
+      return {
+        fileName: `عقد_المضاربة_${partnerName}.${extension}`,
+        description: `عقد المضاربة للمستثمر: ${partnerName}`,
+        type: 'عقد المضاربة'
+      };
+    } else if (fileUrl === investorDetails?.withdrawalReceipt) {
+      return {
+        fileName: `مخالصة_مالية_${partnerName}.${extension}`,
+        description: `مخالصة مالية نهائية للمستثمر: ${partnerName}`,
+        type: 'مخالصة مالية'
+      };
+    } else if (fileUrl.includes('withdraw_voucher') || fileUrl.includes('سند_صرف')) {
+      const voucher = investorDetails?.withdrawalVouchers?.find(v => v.voucherUrl === fileUrl);
+      if (voucher) {
+        const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        const monthName = months[voucher.month - 1] || '';
+        const totalAmount = (voucher.amount || 0) + (voucher.carryAmount || 0);
+        return {
+          fileName: `سند_صرف_${partnerName}_${monthName}_${voucher.year}.${extension}`,
+          description: `سند صرف انسحاب للمستثمر: ${partnerName} - ${monthName} ${voucher.year} - ${totalAmount.toLocaleString()} ريال`,
+          type: 'سند صرف'
+        };
+      }
+      return {
+        fileName: `سند_صرف_${partnerName}.${extension}`,
+        description: `سند صرف للمستثمر: ${partnerName}`,
+        type: 'سند صرف'
+      };
+    }
+    return {
+      fileName: `مستند_${partnerName}.${extension}`,
+      description: `مستند للمستثمر: ${partnerName}`,
+      type: 'مستند'
+    };
+  };
+
   const handleDownloadFile = async (fileUrl) => {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-      const originalName = decodeURIComponent(investorDetails.mudarabahFileUrl.split('/').pop());
-      const extension = originalName.split('.').pop();
-      const newFileName = `mudarabah_${investorDetails.name}.${extension}`;
+      const { fileName } = getFileNameAndDescription(fileUrl);
       const fileSaver = await import('file-saver');
-      fileSaver.saveAs(blob, newFileName);
+      fileSaver.saveAs(blob, fileName);
     } catch (error) {
       notifyError(error.response?.data?.message || 'حدث خطأ أثناء تحميل الملف');
       handleApiError(error);
@@ -598,14 +644,12 @@ export default function Investors() {
     try {
       const response = await fetch(fileUrl);
       const blob = await response.blob();
-      const originalName = decodeURIComponent(fileUrl.split('/').pop());
-      const ext = originalName.split('.').pop();
-      const fileName = `mudarabah_${investorDetails.name}.${ext}`;
+      const { fileName, description } = getFileNameAndDescription(fileUrl);
       const file = new File([blob], fileName, { type: blob.type });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: fileName,
-          text: `مشاركة عقد المضاربة للعميل: ${investorDetails.name}`,
+          text: description,
           files: [file],
         });
         return;
@@ -791,6 +835,7 @@ export default function Investors() {
                   permissions={permissions}
                   isDarkMode={isDarkMode}
                   isMobile={isSmallScreen}
+                  investorDetails={investorDetails}
                 />
               )}
               {tab === 3 && (

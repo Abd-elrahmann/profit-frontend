@@ -33,6 +33,9 @@ const InvestorTabs = ({ value, onChange, isSmallScreen }) => {
       onChange={onChange}
       textColor="primary"
       indicatorColor="primary"
+      variant="scrollable"
+      scrollButtons="auto"
+      allowScrollButtonsMobile={false}
       sx={{
         mb: 3,
         "& .MuiTab-root": {

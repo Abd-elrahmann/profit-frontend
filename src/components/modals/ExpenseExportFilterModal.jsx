@@ -11,7 +11,23 @@ import {
   Chip,
 } from '@mui/material';
 import { EXPENSE_TYPES } from '../../utilities/expenseConstants';
-import { transparentSearchTextFieldSx } from '../../utilities/searchInputStyles';
+
+const modalInputSx = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: 'divider',
+      borderWidth: '1px',
+    },
+    '&:hover fieldset': {
+      borderColor: 'primary.main',
+      borderWidth: '1.5px',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'primary.main',
+      borderWidth: '2px',
+    },
+  },
+};
 const ExpenseExportFilterModal = ({
   open,
   onClose,
@@ -40,7 +56,7 @@ const ExpenseExportFilterModal = ({
             value={selectedExpenseTypes}
             onChange={handleExpenseTypesChange}
             renderInput={(params) => (
-              <TextField {...params} label="اختر أنواع المصروفات" placeholder="ابحث عن نوع..." sx={transparentSearchTextFieldSx} />
+              <TextField {...params} label="اختر أنواع المصروفات" placeholder="ابحث عن نوع..." sx={modalInputSx} />
             )}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => {
@@ -57,7 +73,7 @@ const ExpenseExportFilterModal = ({
               value={selectedEmployees}
               onChange={(event, newValue) => onEmployeesChange(newValue)}
               renderInput={(params) => (
-                <TextField {...params} label="اختر الموظفين (اختياري)" placeholder="ابحث عن موظف..." sx={transparentSearchTextFieldSx} />
+                <TextField {...params} label="اختر الموظفين (اختياري)" placeholder="ابحث عن موظف..." sx={modalInputSx} />
               )}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => {
@@ -80,4 +96,4 @@ const ExpenseExportFilterModal = ({
     </Dialog>
   );
 };
-export default ExpenseExportFilterModal;
+export default ExpenseExportFilterModal;

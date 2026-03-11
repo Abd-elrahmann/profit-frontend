@@ -1,0 +1,1 @@
+import{p as s}from"./mui-DpPc3WeP.js";import{L as e,k as i}from"./index-DCfZd5_X.js";import{e as a}from"./AuthFormTitle-CBJcfAQI.js";const l=({to:r,children:t})=>s.jsxs(e,{to:r,style:{...a,display:"inline-flex",alignItems:"center"},children:[s.jsx(i,{style:{marginLeft:4}}),t]});export{l as A};

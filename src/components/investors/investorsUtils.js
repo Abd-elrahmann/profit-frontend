@@ -111,7 +111,9 @@ export const calculateWithdrawalPreview = (
   let partnerDefaultShare = withdrawPreviewData?.partnerDefaultShare || 0;
   if (partnerDefaultShare < 0) partnerDefaultShare = 0;
   partnerDefaultShare = normalizeDecimal(partnerDefaultShare);
-  const totalAmount = investorDetails.totalAmount + (investorDetails.totalProfit || 0);
+  const originalCapital = investorDetails.total || investorDetails.totalAmount || 0;
+  const totalProfit = investorDetails.totalProfit || 0;
+  const totalAmount = originalCapital + totalProfit;
   const remainingCapital = normalizeDecimal(totalAmount - partnerDefaultShare);
   const savingsAmount = investorDetails.totalSaving || 0;
   const monthlyPayment = normalizeDecimal(monthlyAmount);
@@ -133,8 +135,8 @@ export const calculateWithdrawalPreview = (
     monthIndex++;
   }
   return {
-    originalCapital: investorDetails.totalAmount,
-    totalProfit: investorDetails.totalProfit || 0,
+    originalCapital: originalCapital,
+    totalProfit: totalProfit,
     totalAmount: totalAmount,
     estimatedDefaultShare: partnerDefaultShare,
     remainingCapital: remainingCapital,

@@ -283,9 +283,10 @@ const WithdrawReceiptGenerator = React.forwardRef(
           const { gregorianDate, hijriDate, fullDate } = getCurrentDates();
           const receiptNum = receiptNumberToUse || 'غير محدد';
           const totalCapital = withdrawalDataToUse.withdrawal?.totalCapital || 0;
+          const totalProfit = withdrawalDataToUse.partner?.totalProfit || 0;
           const defaultShare = withdrawalDataToUse.withdrawal?.defaultShare || 0;
           const savingsAmount = withdrawalDataToUse.partner?.savings || withdrawalDataToUse.withdrawal?.savingAmount || 0;
-          const netAmountDue = totalCapital + savingsAmount - defaultShare;
+          const netAmountDue = totalCapital + totalProfit - defaultShare;
           const numberOfInstallments = withdrawalDataToUse.schedule?.length || 9;
           const totalCapitalWords = `${numberToArabicWords(totalCapital)} ريال`;
           const netAmountDueWords = `${numberToArabicWords(netAmountDue)} ريال`;
@@ -304,6 +305,7 @@ const WithdrawReceiptGenerator = React.forwardRef(
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)
             .replace(/{{تاريخ_الإنشاء}}/g, gregorianDate)
             .replace(/{{رأس_مال_المساهم}}/g, totalCapital?.toLocaleString("en-US") || "0")
+            .replace(/{{إجمالي_أرباح_المساهم}}/g, totalProfit?.toLocaleString("en-US") || "0")
             .replace(/{{خصم_نصيب_المساهم_من_الخسائر}}/g, defaultShare?.toLocaleString("en-US") || "0")
             .replace(/{{المدخرات_المستحقة_للمساهم}}/g, savingsAmount?.toLocaleString("en-US") || "0")
             .replace(/{{صافي_المبلغ_المستحق_بعد_الخصم}}/g, netAmountDue?.toLocaleString("en-US") || "0")

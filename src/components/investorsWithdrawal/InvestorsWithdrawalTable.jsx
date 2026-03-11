@@ -96,15 +96,7 @@ const InvestorsWithdrawalTable = ({
                       {investor.remainingToPay != null ? Number(investor.remainingToPay).toLocaleString() : "-"}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography variant="caption" color="text.secondary">الحالة</Typography>
-                    <Chip
-                      label={investor.isFrozen ? "مجمّد" : "نشط"}
-                      color={investor.isFrozen ? "error" : "success"}
-                      size="small"
-                    />
                   </Box>
-                </Box>
                 <Button
                   variant="outlined"
                   size="small"
@@ -146,7 +138,6 @@ const InvestorsWithdrawalTable = ({
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>المتبقي</StyledTableCell>
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الادخار</StyledTableCell>
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>حالة السحب</StyledTableCell>
-                <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الحالة</StyledTableCell>
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>تاريخ الطلب</StyledTableCell>
                 <StyledTableCell align="center" sx={{ fontWeight: "bold" }}>الإجراءات</StyledTableCell>
               </StyledTableRow>
@@ -174,13 +165,6 @@ const InvestorsWithdrawalTable = ({
                     <Chip
                       label={getWithdrawingStatusText(investor.withdrawingStatus)}
                       color={getWithdrawingStatusColor(investor.withdrawingStatus)}
-                      size="small"
-                    />
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Chip
-                      label={investor.isFrozen ? "مجمّد" : "نشط"}
-                      color={investor.isFrozen ? "error" : "success"}
                       size="small"
                     />
                   </StyledTableCell>
@@ -230,4 +214,4 @@ const InvestorsWithdrawalTable = ({
   );
   return isMobile ? renderCards() : renderTable();
 };
-export default InvestorsWithdrawalTable;
+export default InvestorsWithdrawalTable;

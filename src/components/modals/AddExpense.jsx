@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -19,9 +19,12 @@ import {
   Autocomplete,
 } from "@mui/material";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { createExpense } from "../../pages/Expenses/expensesApi";
+import { useAuth } from "../Contexts/AuthContext";
+import { createExpense, getNextExpenseVoucherNumber } from "../../pages/Expenses/expensesApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api from "../../config/Api";
+import ExpenseVoucherGenerator from "../receipts/ExpenseVoucherGenerator";
+import ExpenseVoucherPreview from "../receipts/ExpenseVoucherPreview";
 const EXPENSE_TYPES = [
   "مصروف رواتب",
   "مصروف بنزين",
@@ -32,6 +35,7 @@ const EXPENSE_TYPES = [
   "مصروفات اخرى"
 ];
 const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen }) => {
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState([
     { type: "", amount: "", description: "", userId: null }
   ]);
@@ -39,6 +43,11 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
   const [errors, setErrors] = useState([]);
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [voucherPreviewOpen, setVoucherPreviewOpen] = useState(false);
+  const [voucherHtml, setVoucherHtml] = useState("");
+  const [formattedExpensesForSubmit, setFormattedExpensesForSubmit] = useState(null);
+  const [voucherReference, setVoucherReference] = useState(null);
+  const voucherGeneratorRef = useRef(null);
   useEffect(() => {
     if (open) {
       setExpenses([{ type: "", amount: "", description: "", userId: null }]);
@@ -119,30 +128,59 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
     setErrors(newErrors);
     return isValid;
   };
-  const handleSubmit = async () => {
-    if (!validateForm()) {
+  const handleShowVoucher = async () => {
+    if (!validateForm()) return;
+    const formatted = expenses.map((expenseItem) => ({
+      type: expenseItem.type.trim(),
+      amount: parseFloat(expenseItem.amount),
+      description: expenseItem.description?.trim() || "",
+      ...(expenseItem.userId && { userId: expenseItem.userId }),
+    }));
+    const expenseData = { expenses: formatted };
+    setFormattedExpensesForSubmit(formatted);
+    try {
+      const nextNum = await getNextExpenseVoucherNumber();
+      const ref = `EXP-${nextNum}`;
+      setVoucherReference(ref);
+      const html = voucherGeneratorRef.current?.generateVoucher(expenseData, nextNum);
+      if (html) {
+        setVoucherHtml(html);
+        setVoucherPreviewOpen(true);
+      }
+    } catch (error) {
+      notifyError("فشل في جلب رقم السند");
+    }
+  };
+
+  const handleSaveVoucherAndExpense = async () => {
+    if (!formattedExpensesForSubmit?.length) {
+      notifyError("لا توجد بيانات مصروفات");
       return;
     }
     setLoading(true);
     try {
-      const formattedExpenses = expenses.map(expenseItem => ({
-        type: expenseItem.type.trim(),
-        amount: parseFloat(expenseItem.amount),
-        description: expenseItem.description.trim(),
-        ...(expenseItem.userId && { userId: expenseItem.userId })
-      }));
-      await createExpense({ expenses: formattedExpenses });
-      notifySuccess("تم إضافة المصروفات بنجاح");
+      const voucherUrl = await voucherGeneratorRef.current?.generatePDF();
+      await createExpense({ expenses: formattedExpensesForSubmit }, voucherUrl, voucherReference);
+      notifySuccess("تم حفظ السند وإضافة المصروفات بنجاح");
       onSuccess();
+      setVoucherPreviewOpen(false);
+      setVoucherHtml("");
+      setFormattedExpensesForSubmit(null);
+      setVoucherReference(null);
       onClose();
     } catch (error) {
       notifyError(
-        error.response?.data?.message || "حدث خطأ أثناء إضافة المصروفات"
+        error.response?.data?.message || "حدث خطأ أثناء حفظ السند وإضافة المصروفات"
       );
     } finally {
       setLoading(false);
     }
   };
+
+  const totalAmount = formattedExpensesForSubmit?.reduce((sum, e) => sum + (e.amount || 0), 0) ?? 0;
+  const expenseTypeLabel = formattedExpensesForSubmit?.length === 1
+    ? formattedExpensesForSubmit[0].type
+    : formattedExpensesForSubmit?.map((e) => e.type).join("، ");
   return (
     <Dialog
       open={open}
@@ -292,14 +330,34 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
           إلغاء
         </Button>
         <Button
-          onClick={handleSubmit}
+          onClick={handleShowVoucher}
           variant="contained"
           disabled={loading}
           sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
         >
-          {loading ? <CircularProgress size={20} /> : "حفظ المصروفات"}
+          عرض السند وحفظ
         </Button>
       </DialogActions>
+      <ExpenseVoucherGenerator
+        ref={voucherGeneratorRef}
+        expenseData={formattedExpensesForSubmit ? { expenses: formattedExpensesForSubmit } : null}
+        employeesList={users}
+        currentUserName={user?.name || ''}
+      />
+      <ExpenseVoucherPreview
+        open={voucherPreviewOpen}
+        onClose={() => {
+          setVoucherPreviewOpen(false);
+          setVoucherHtml("");
+          setFormattedExpensesForSubmit(null);
+          setVoucherReference(null);
+        }}
+        voucherHtml={voucherHtml}
+        onSaveVoucher={handleSaveVoucherAndExpense}
+        loading={loading}
+        totalAmount={totalAmount}
+        expenseType={expenseTypeLabel}
+      />
     </Dialog>
   );
 };

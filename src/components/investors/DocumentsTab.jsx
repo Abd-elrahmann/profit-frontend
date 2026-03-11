@@ -8,8 +8,14 @@ import {
   Share,
   Visibility,
   PictureAsPdf,
+  Receipt,
 } from "@mui/icons-material";
 import FileThumbnail from "../ui/FileThumbnail";
+
+const getMonthName = (month) => {
+  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  return months[month - 1] || '';
+};
 const DocumentsTab = ({
   investorDetails,
   onDownloadFile,
@@ -127,7 +133,62 @@ const DocumentsTab = ({
             )}
           </div>
         )}
-        {!investorDetails.mudarabahFileUrl && !investorDetails.withdrawalReceipt && (
+        {/* سندات صرف الانسحاب */}
+        {investorDetails.withdrawalVouchers && investorDetails.withdrawalVouchers.length > 0 && (
+          investorDetails.withdrawalVouchers.map((voucher) => {
+            const totalAmount = (voucher.amount || 0) + (voucher.carryAmount || 0);
+            const hasCarry = voucher.carryAmount > 0;
+            return (
+            <div key={voucher.id} className="border-2 border-amber-200 dark:border-amber-700 rounded-xl p-6 bg-amber-50 dark:bg-amber-900/20 flex flex-col gap-3">
+              <FileThumbnail
+                fileUrl={voucher.voucherUrl}
+                label={`سند صرف - ${getMonthName(voucher.month)} ${voucher.year}`}
+                isDarkMode={isDarkMode}
+              />
+              <div className="flex items-center gap-2">
+                <Receipt sx={{ fontSize: 20, color: '#f59e0b' }} />
+                <p className="text-sm font-bold text-slate-800 dark:text-white">سند صرف انسحاب</p>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {getMonthName(voucher.month)} {voucher.year} - {totalAmount?.toLocaleString()} ريال
+                {hasCarry && (
+                  <span className="block text-xs mt-1">
+                    ({voucher.amount?.toLocaleString()} أصلي + {voucher.carryAmount?.toLocaleString()} مُرحّل)
+                  </span>
+                )}
+              </p>
+              {permissions.includes("partners_Export") && (
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => onDownloadFile(voucher.voucherUrl)}
+                    className="px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <Download sx={{ fontSize: 20 }} />
+                    تحميل
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onShareFile(voucher.voucherUrl)}
+                    className="px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <Share sx={{ fontSize: 20 }} />
+                    مشاركة
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.open(voucher.voucherUrl, "_blank")}
+                    className="px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <Visibility sx={{ fontSize: 20 }} />
+                    عرض
+                  </button>
+                </div>
+              )}
+            </div>
+          );})
+        )}
+        {!investorDetails.mudarabahFileUrl && !investorDetails.withdrawalReceipt && (!investorDetails.withdrawalVouchers || investorDetails.withdrawalVouchers.length === 0) && (
           <div className="col-span-full border-2 border-primary/20 rounded-xl p-8 bg-primary/5 dark:bg-primary/10 text-center">
             <p className="text-slate-600 dark:text-slate-400">لا توجد مستندات مرفوعة</p>
           </div>
@@ -136,4 +197,4 @@ const DocumentsTab = ({
     </div>
   );
 };
-export default DocumentsTab;
+export default DocumentsTab;

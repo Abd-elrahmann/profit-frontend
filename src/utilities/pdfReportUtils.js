@@ -1,14 +1,31 @@
 import dayjs from 'dayjs';
 import logo from '/assets/images/logo.webp';
+
 export const PRIMARY_COLOR = [46, 139, 69];
+
+let _arabicFontName = 'helvetica';
+let _arabicFontStyle = 'normal';
+
 export const registerArabicFonts = (doc) => {
   try {
-    doc.addFont('/assets/fonts/Amiri-Regular.ttf', 'Amiri', 'normal');
-    doc.addFont('/assets/fonts/Amiri-Bold.ttf', 'Amiri', 'bold');
+    const regularPath = '/assets/fonts/Amiri-Regular.ttf';
+    const boldPath = '/assets/fonts/Amiri-Bold.ttf';
+    doc.addFont(regularPath, 'Amiri', 'normal');
+    doc.addFont(boldPath, 'Amiri', 'bold');
+    _arabicFontName = 'Amiri';
+    _arabicFontStyle = 'normal';
   } catch (error) {
     console.warn('Arabic fonts not found, using default fonts', error);
+    _arabicFontName = 'helvetica';
+    _arabicFontStyle = 'normal';
   }
 };
+
+const _font = (doc, style = 'normal') => {
+  doc.setFont(_arabicFontName, style === 'bold' ? 'bold' : _arabicFontStyle);
+};
+
+export const getArabicFontName = () => _arabicFontName;
 export const drawReportHeader = (doc, options = {}) => {
   const {
     reportTitle = 'تقرير',
@@ -18,7 +35,7 @@ export const drawReportHeader = (doc, options = {}) => {
   } = options;
   const pageWidth = doc.internal.pageSize.width;
   const margin = 10;
-  doc.setFont('Amiri', 'bold');
+  _font(doc, 'bold');
   const logoWidth = 12;
   const logoHeight = 12;
   const logoX = pageWidth - logoWidth - margin;
@@ -45,7 +62,7 @@ export const drawReportHeader = (doc, options = {}) => {
     doc.setTextColor(0, 0, 0);
   }
   doc.setFontSize(10);
-  doc.setFont('Amiri', 'normal');
+  _font(doc, 'normal');
   let metaY = startY + 4;
   if (metadata.date !== undefined) {
     doc.text(`تاريخ التقرير: ${metadata.date}`, margin, metaY, { align: 'left' });
@@ -78,7 +95,7 @@ export const drawReportFooter = (doc, pageNum, totalPages, options = {}) => {
   doc.setLineWidth(0.5);
   doc.line(footerMargin, pageHeight - 15, pageWidth - footerMargin, pageHeight - 15);
   doc.setFontSize(9);
-  doc.setFont('Amiri', 'bold');
+  _font(doc, 'bold');
   doc.setTextColor(100, 100, 100);
   doc.text(`صفحة ${pageNum} من ${totalPages}`, pageWidth / 2, footerY, { align: 'center' });
   doc.text(`تم الإنشاء في: ${dayjs().format('DD/MM/YYYY HH:mm')}`, pageWidth - footerMargin, footerY, { align: 'right' });
@@ -100,7 +117,7 @@ export const getCenteredTableMargins = (doc, tableWidth) => {
 export const PAGE_MARGIN = 10;
 export const drawReportSummary = (doc, yPosition, summaryText) => {
   doc.setFontSize(11);
-  doc.setFont('Amiri', 'bold');
+  _font(doc, 'bold');
   doc.setTextColor(0, 0, 0);
   const pageWidth = doc.internal.pageSize.width;
   doc.text(summaryText, pageWidth / 2, yPosition, { align: 'center' });
@@ -121,4 +138,4 @@ export const getFullWidthColumnStyles = (doc, baseWidths) => {
     result[i] = { cellWidth: Math.round(w * scale) };
   });
   return result;
-};
+};
