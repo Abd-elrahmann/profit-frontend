@@ -74,11 +74,23 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
     };
+    const handleProfileUpdated = async () => {
+      try {
+        const response = await Api.get('/api/auth/profile');
+        if (response.data) {
+          setUser((prev) => ({ ...prev, ...response.data }));
+        }
+      } catch {
+        // ignore - profile fetch failed
+      }
+    };
     window.addEventListener('tokenRefreshed', handleTokenRefresh);
     window.addEventListener('authFailed', handleAuthFailed);
+    window.addEventListener('profileUpdated', handleProfileUpdated);
     return () => {
       window.removeEventListener('tokenRefreshed', handleTokenRefresh);
       window.removeEventListener('authFailed', handleAuthFailed);
+      window.removeEventListener('profileUpdated', handleProfileUpdated);
     };
   }, []);
   const login = useCallback(async (userData) => {

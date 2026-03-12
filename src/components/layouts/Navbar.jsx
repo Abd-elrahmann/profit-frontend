@@ -17,6 +17,13 @@ const Navbar = ({ onMenuToggle }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [imgError, setImgError] = useState(false);
   const prevCountRef = useRef(count);
+  const prevProfileImageRef = useRef(user?.profileImage);
+  useEffect(() => {
+    if (user?.profileImage !== prevProfileImageRef.current) {
+      prevProfileImageRef.current = user?.profileImage;
+      setImgError(false);
+    }
+  }, [user?.profileImage]);
   const showAvatar = user?.profileImage && !imgError;
   const userRole = user?.role?.name || "بدون دور";
   useEffect(() => {
