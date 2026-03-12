@@ -1,27 +1,53 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
 import { InsertDriveFile } from "@mui/icons-material";
 import { isImageFile, secureOpenFile, secureGetBlobUrl } from "../../utilities/fileUtils";
 import { notifyError } from "../../utilities/toastify";
 
 const isUploadsUrl = (url) => url && typeof url === "string" && url.includes("/uploads/");
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 800;
+
 export default function FileThumbnail({ fileUrl, label = "", isDarkMode = false, onClick }) {
   const [secureImgSrc, setSecureImgSrc] = useState(null);
   const [imgError, setImgError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!fileUrl || !isImageFile(fileUrl) || !isUploadsUrl(fileUrl)) return;
+    if (!fileUrl || !isImageFile(fileUrl) || !isUploadsUrl(fileUrl)) {
+      setIsLoading(false);
+      return;
+    }
     let revoked = false;
     let blobUrl = null;
-    secureGetBlobUrl(fileUrl)
-      .then((url) => {
-        blobUrl = url;
-        if (!revoked) setSecureImgSrc(url);
-      })
-      .catch(() => {
-        if (!revoked) setImgError(true);
-      });
+    setIsLoading(true);
+    setImgError(false);
+    setSecureImgSrc(null);
+
+    const attemptLoad = (retryCount = 0) => {
+      secureGetBlobUrl(fileUrl)
+        .then((url) => {
+          blobUrl = url;
+          if (!revoked) {
+            setSecureImgSrc(url);
+            setImgError(false);
+            setIsLoading(false);
+          }
+        })
+        .catch(() => {
+          if (revoked) return;
+          if (retryCount < MAX_RETRIES) {
+            setTimeout(() => attemptLoad(retryCount + 1), RETRY_DELAY_MS);
+          } else {
+            setImgError(true);
+            setIsLoading(false);
+          }
+        });
+    };
+
+    attemptLoad();
+
     return () => {
       revoked = true;
       if (blobUrl) URL.revokeObjectURL(blobUrl);
@@ -47,8 +73,31 @@ export default function FileThumbnail({ fileUrl, label = "", isDarkMode = false,
   };
 
   const imgSrc = isUploadsUrl(fileUrl) && isImageFile(fileUrl) ? secureImgSrc : fileUrl;
+  const needsSecureLoad = isUploadsUrl(fileUrl) && isImageFile(fileUrl);
 
   if (isImageFile(fileUrl)) {
+    if (needsSecureLoad && isLoading) {
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            height: 180,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "action.hover",
+            borderRadius: 1,
+            gap: 1,
+          }}
+        >
+          <CircularProgress size={36} />
+          <Typography variant="caption" color="text.secondary">
+            جاري تحميل المعاينة...
+          </Typography>
+        </Box>
+      );
+    }
     if (imgError) {
       return (
         <Box
