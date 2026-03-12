@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Person as PersonIcon, Edit as EditIcon, PhotoCamera as PhotoCameraIcon, CalendarMonth as CalendarMonthIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { formatProfileDate } from './profileUtils';
+import { secureGetBlobUrl } from '../../utilities/fileUtils';
+
+const isUploadsUrl = (url) => url && typeof url === 'string' && url.includes('/uploads/');
+
 const ProfileHeader = ({
   userData,
   userRole,
@@ -11,6 +15,45 @@ const ProfileHeader = ({
   onEditClick,
   onDeleteImage,
 }) => {
+  const [profileImgSrc, setProfileImgSrc] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    if (!userData?.profileImage) {
+      setProfileImgSrc(null);
+      setLoadError(false);
+      return;
+    }
+    if (!isUploadsUrl(userData.profileImage)) {
+      setProfileImgSrc(userData.profileImage);
+      setLoadError(false);
+      return;
+    }
+    setLoadError(false);
+    let revoked = false;
+    let blobUrl = null;
+    secureGetBlobUrl(userData.profileImage)
+      .then((url) => {
+        blobUrl = url;
+        if (!revoked) {
+          setProfileImgSrc(url);
+          setLoadError(false);
+        }
+      })
+      .catch(() => {
+        if (!revoked) {
+          setProfileImgSrc(null);
+          setLoadError(true);
+        }
+      });
+    return () => {
+      revoked = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [userData?.profileImage]);
+
+  const displayImgSrc = userData?.profileImage && isUploadsUrl(userData.profileImage) ? profileImgSrc : userData?.profileImage;
+
   return (
     <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
       <div className="flex flex-col md:flex-row items-center gap-6">
@@ -18,7 +61,17 @@ const ProfileHeader = ({
           <input {...getInputProps()} />
           <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 p-1 bg-slate-100 dark:bg-slate-800 cursor-pointer">
             {userData?.profileImage ? (
-              <img src={userData.profileImage} alt={userData?.name} className="w-full h-full object-cover" />
+              loadError ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <PersonIcon className="w-16 h-16 text-primary" />
+                </div>
+              ) : displayImgSrc ? (
+                <img src={displayImgSrc} alt={userData?.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              )
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <PersonIcon className="w-16 h-16 text-primary" />
