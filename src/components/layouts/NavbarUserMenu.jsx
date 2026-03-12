@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { secureGetBlobUrl } from '../../utilities/fileUtils';
+
+const isUploadsUrl = (url) => url && typeof url === 'string' && url.includes('/uploads/');
+
 const NavbarUserMenu = ({
   user,
   userRole,
@@ -10,10 +14,45 @@ const NavbarUserMenu = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
+  const [profileImgSrc, setProfileImgSrc] = useState(null);
+
+  useEffect(() => {
+    if (!user?.profileImage) {
+      setProfileImgSrc(null);
+      return;
+    }
+    if (!isUploadsUrl(user.profileImage)) {
+      setProfileImgSrc(user.profileImage);
+      return;
+    }
+    let revoked = false;
+    let blobUrl = null;
+    secureGetBlobUrl(user.profileImage)
+      .then((url) => {
+        blobUrl = url;
+        if (!revoked) {
+          setProfileImgSrc(url);
+        } else if (blobUrl) {
+          URL.revokeObjectURL(blobUrl);
+        }
+      })
+      .catch(() => {
+        if (!revoked) setProfileImgSrc(null);
+      });
+    return () => {
+      revoked = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [user?.profileImage]);
+
+  const displayImgSrc = user?.profileImage && isUploadsUrl(user.profileImage) ? profileImgSrc : user?.profileImage;
+  const showImg = displayImgSrc;
+
   const handleProfileClick = () => {
     setShowUserMenu(false);
     navigate('/profile');
   };
+
   return (
     <div className="relative flex items-center gap-3 border-r border-slate-200 dark:border-slate-700 pr-4 md:pr-6">
       <div
@@ -28,12 +67,12 @@ const NavbarUserMenu = ({
           <p className="text-[10px] text-slate-500 mt-1">{userRole}</p>
         </div>
         <div className="relative size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center shrink-0">
-          {showAvatar ? (
+          {showImg ? (
             <img
-              src={user.profileImage}
+              src={displayImgSrc}
               alt={user?.name ? `صورة ${user.name}` : 'صورة المستخدم'}
               className="absolute inset-0 w-full h-full object-cover"
-              onError={() => setImgError(true)}
+              onError={() => setImgError?.(true)}
             />
           ) : (
             <span className="text-primary font-bold text-sm">{user?.name ? user.name.charAt(0).toUpperCase() : '?'}</span>
@@ -61,4 +100,4 @@ const NavbarUserMenu = ({
     </div>
   );
 };
-export default NavbarUserMenu;
+export default NavbarUserMenu;
