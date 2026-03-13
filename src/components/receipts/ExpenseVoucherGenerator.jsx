@@ -165,15 +165,44 @@ const ExpenseVoucherGenerator = React.forwardRef(
           ? `<div class="row"><p>رقم الهاتف:</p> <span>${recipientPhone}</span></div>`
           : '';
 
-        let band = firstExpense.type || 'مصروفات';
-        if (expenses.length > 1) {
-          band = 'صرف مصروفات متعددة: ' + expenses.map((e) => e.type).join('، ');
-        }
+        const formatExpenseItem = (e) => {
+          const type = e.type || 'مصروفات';
+          const desc = (e.description || '').trim();
+          return desc ? `${type} - ${desc}` : type;
+        };
+        let band =
+          expenses.length === 1
+            ? formatExpenseItem(firstExpense)
+            : 'صرف مصروفات متعددة: ' + expenses.map(formatExpenseItem).join('، ');
+
+        const getVoucherDescriptionText = () => {
+          const amountStr = totalAmount?.toLocaleString('en-US') || '0';
+          const amountWords = amountInWords;
+          const recipient = isSalary ? (firstEmployee?.name || 'المستلم المذكور أعلاه') : 'المستلم المذكور أعلاه';
+          const typeTexts = {
+            'مصروف رواتب': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كراتب للموظف ${recipient}.`,
+            'مصروف بنزين': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كمصروف بنزين.`,
+            'مصروفات انترنت': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كمصروفات انترنت.`,
+            'مصروفات ورقية': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كمصروفات ورقية.`,
+            'مصروفات كهرباء': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كمصروفات كهرباء.`,
+            'مصروفات تشغيلية': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كمصروفات تشغيلية.`,
+            'مصروفات اخرى': `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، كمصروفات أخرى.`,
+          };
+          if (expenses.length === 1) {
+            const text = typeTexts[firstExpense.type] || `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، ${firstExpense.type || 'كمصروفات'}.`;
+            const desc = (firstExpense.description || '').trim();
+            return desc ? `${text} (${desc})` : text;
+          }
+          const typesList = expenses.map((e) => e.type).join(' و');
+          return `تم صرف مبلغ وقدره ${amountStr} ريال فقط ${amountWords} لا غير، ويشمل: ${typesList}. لصالح ${recipient}.`;
+        };
+        const voucherDescriptionText = getVoucherDescriptionText();
 
         const template = ExpenseVoucher();
         const filledTemplate = template
           .replace(/{{رقم_السند}}/g, receiptNum)
           .replace(/{{البند}}/g, band)
+          .replace(/{{نص_السند}}/g, voucherDescriptionText)
           .replace(/{{التاريخ_الهجري}}/g, hijriDate)
           .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
           .replace(/{{المبلغ_رقما}}/g, totalAmount?.toLocaleString('en-US') || '0')

@@ -132,6 +132,21 @@ const ExpenseVoucher = () => {
     border-radius: 8px;
     margin-bottom: 15px;
   }
+  .text-box {
+    background: rgba(46, 139, 69, 0.03);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(46, 139, 69, 0.1);
+    margin-bottom: 15px;
+  }
+  .text-box p {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.6;
+    word-spacing: normal;
+    letter-spacing: normal;
+    text-align: justify;
+  }
   .signatures {
     display: flex;
     justify-content: center;
@@ -200,6 +215,7 @@ const ExpenseVoucher = () => {
     }
     .grid-wrapper,
     .info-box,
+    .text-box,
     .signatures {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
@@ -239,6 +255,10 @@ const ExpenseVoucher = () => {
     <div class="info-box">
       <div class="row"><p>اسم المستلم:</p> <span>{{اسم_المستلم}}</span></div>
       {{صف_رقم_الهاتف}}
+    </div>
+    <div class="section-title">تفاصيل الصرف</div>
+    <div class="text-box">
+      <p>{{نص_السند}}</p>
     </div>
     <div class="signatures">
       <div class="sign-block">
