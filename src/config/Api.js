@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import i18next from 'i18next';
 const getBaseURL = () => {
-  // return "http://localhost:3000";
+   //return "http://localhost:3000";
    return "https://api.solfweb.com";
 };
 const Api = axios.create({

@@ -11,7 +11,9 @@ const formatNumberWithCommas = (value) => {
   if (!value) return '';
   const numValue = value.toString().replace(/,/g, '');
   if (isNaN(numValue) || numValue === '') return value;
-  return Number(numValue).toLocaleString('en-US');
+  const parts = numValue.split('.');
+  parts[0] = Number(parts[0]).toLocaleString('en-US');
+  return parts.join('.');
 };
 const validationSchema = Yup.object().shape({
   name: Yup.string().required('الاسم مطلوب'),
@@ -71,8 +73,8 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
           return;
         }
       }
-      const capitalClean = String(values.capitalAmount || '').replace(/,/g, '').replace(/[^0-9]/g, '');
-      const capitalAmount = parseInt(capitalClean) || 0;
+      const capitalClean = String(values.capitalAmount || '').replace(/,/g, '').replace(/[^0-9.]/g, '');
+      const capitalAmount = parseFloat(capitalClean) || 0;
       const orgProfitPercent = parseInt(values.orgProfitPercent) || 0;
       const formDataForCreate = {
         name: values.name,
@@ -287,7 +289,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
                       type="text"
                       value={formatNumberWithCommas(values.capitalAmount)}
                       onChange={(e) => {
-                        const clean = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+                        const clean = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
                         setFieldValue('capitalAmount', clean);
                       }}
                       onBlur={handleBlur}
@@ -345,4 +347,4 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
     </div>
   );
 };
-export default AddInvestorForm;
+export default AddInvestorForm;

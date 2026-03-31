@@ -12,91 +12,106 @@ const numberToArabicWords = (num) => {
   const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
   const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
   const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
-  if (num === 0) return 'صفر';
-  if (num < 0) return 'سالب ' + numberToArabicWords(-num);
+  
+  // Handle decimal amounts
+  let integerPart = Math.floor(num);
+  let decimalPart = Math.round((num - integerPart) * 100);
+  
   let result = '';
-  let hasThousands = false;
-  if (num >= 1000000) {
-    const millionsPart = Math.floor(num / 1000000);
-    if (millionsPart === 1) {
-      result += 'مليون ';
-    } else if (millionsPart === 2) {
-      result += 'مليونان ';
-    } else if (millionsPart < 11) {
-      result += ones[millionsPart] + ' ملايين ';
-    } else {
-      result += numberToArabicWords(millionsPart) + ' مليون ';
-    }
-    num %= 1000000;
-  }
-  if (num >= 1000) {
-    const thousandsPart = Math.floor(num / 1000);
-    if (thousandsPart === 1) {
-      result += 'ألف ';
-    } else if (thousandsPart === 2) {
-      result += 'ألفان ';
-    } else if (thousandsPart >= 3 && thousandsPart <= 9) {
-      result += ones[thousandsPart] + ' آلاف ';
-    } else if (thousandsPart === 10) {
-      result += 'عشرة آلاف ';
-    } else if (thousandsPart >= 11 && thousandsPart <= 999) {
-      result += numberToArabicWords(thousandsPart) + ' ألف ';
-    } else {
-      result += numberToArabicWords(thousandsPart) + ' ألف ';
-    }
-    num %= 1000;
-    hasThousands = true;
-  }
-if (num >= 100) {
-  const hundredsPart = Math.floor(num / 100);
-  if (hundredsPart > 0) {
-    if (hasThousands) {
-      result += "و" + hundreds[hundredsPart];
-    } else {
-      result += hundreds[hundredsPart];
-    }
-  }
-  num %= 100;
-  if (num > 0 && hundredsPart > 0) result += " ";
-}
-  if (num >= 20) {
-    const tensPart = Math.floor(num / 10);
-    const onesPart = num % 10;
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith('و')) {
-        result += ' و';
+  if (integerPart === 0) result = 'صفر';
+  else if (integerPart < 0) result = 'سالب ' + numberToArabicWords(-integerPart);
+  else {
+    let hasThousands = false;
+    let workingNum = integerPart;
+    if (workingNum >= 1000000) {
+      const millionsPart = Math.floor(workingNum / 1000000);
+      if (millionsPart === 1) {
+        result += 'مليون ';
+      } else if (millionsPart === 2) {
+        result += 'مليونان ';
+      } else if (millionsPart < 11) {
+        result += ones[millionsPart] + ' ملايين ';
+      } else {
+        result += numberToArabicWords(millionsPart) + ' مليون ';
       }
-      result += ' ';
+      workingNum %= 1000000;
     }
-    if (onesPart > 0) {
-      result += ones[onesPart] + ' و' + tens[tensPart];
-    } else {
-      result += tens[tensPart];
-    }
-  } else if (num >= 10) {
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith('و')) {
-        result += ' و';
+    if (workingNum >= 1000) {
+      const thousandsPart = Math.floor(workingNum / 1000);
+      if (thousandsPart === 1) {
+        result += 'ألف ';
+      } else if (thousandsPart === 2) {
+        result += 'ألفان ';
+      } else if (thousandsPart >= 3 && thousandsPart <= 9) {
+        result += ones[thousandsPart] + ' آلاف ';
+      } else if (thousandsPart === 10) {
+        result += 'عشرة آلاف ';
+      } else if (thousandsPart >= 11 && thousandsPart <= 999) {
+        result += numberToArabicWords(thousandsPart) + ' ألف ';
+      } else {
+        result += numberToArabicWords(thousandsPart) + ' ألف ';
       }
-      result += ' ';
+      workingNum %= 1000;
+      hasThousands = true;
     }
-    result += teens[num - 10];
-  } else if (num > 0) {
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith('و')) {
-        result += ' و';
+    if (workingNum >= 100) {
+      const hundredsPart = Math.floor(workingNum / 100);
+      if (hundredsPart > 0) {
+        if (hasThousands) {
+          result += "و" + hundreds[hundredsPart];
+        } else {
+          result += hundreds[hundredsPart];
+        }
       }
-      result += ' ';
+      workingNum %= 100;
+      if (workingNum > 0 && hundredsPart > 0) result += " ";
     }
-    result += ones[num];
+    if (workingNum >= 20) {
+      const tensPart = Math.floor(workingNum / 10);
+      const onesPart = workingNum % 10;
+      const hasHigherUnits = result.length > 0;
+      if (hasHigherUnits) {
+        result = result.trim();
+        if (!result.endsWith('و')) {
+          result += ' و';
+        }
+        result += ' ';
+      }
+      if (onesPart > 0) {
+        result += ones[onesPart] + ' و' + tens[tensPart];
+      } else {
+        result += tens[tensPart];
+      }
+    } else if (workingNum >= 10) {
+      const hasHigherUnits = result.length > 0;
+      if (hasHigherUnits) {
+        result = result.trim();
+        if (!result.endsWith('و')) {
+          result += ' و';
+        }
+        result += ' ';
+      }
+      result += teens[workingNum - 10];
+    } else if (workingNum > 0) {
+      const hasHigherUnits = result.length > 0;
+      if (hasHigherUnits) {
+        result = result.trim();
+        if (!result.endsWith('و')) {
+          result += ' و';
+        }
+        result += ' ';
+      }
+      result += ones[workingNum];
+    }
+    result = result.trim();
   }
-  return result.trim();
+  
+  // Add decimal part (fils/cents) if present
+  if (decimalPart > 0) {
+    result += ' و' + numberToArabicWords(decimalPart) + ' فلس';
+  }
+  
+  return result;
 };
 const getCurrentDates = () => {
   const now = new Date();
@@ -156,6 +171,12 @@ const ContractGenerator = React.forwardRef(({
       const formattedOrgProfitDivided = orgProfitDivided % 1 === 0 ? 
         orgProfitDivided.toString() : 
         orgProfitDivided.toFixed(1);
+      
+      // Format capital amount - handle both integer and decimal values
+      const capitalFormatted = Number.isInteger(capitalAmount) 
+        ? capitalAmount.toLocaleString('en-US')
+        : capitalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
       let filledTemplate = templateContent
         .replace(/{{اسم_رب_المال}}/g, investorData.name || '')
         .replace(/{{اسم_رب_المال_النسبة}}/g, investorData.name || '')
@@ -166,8 +187,8 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{عنوان_العميل}}/g, investorData.address || '')
         .replace(/{{هاتف_العميل}}/g, investorData.phone || '')
         .replace(/{{بريد_العميل}}/g, investorData.email || '')
-        .replace(/{{رأس_المال}}/g, capitalAmount.toLocaleString('en-US') || '0')
-        .replace(/{{المبلغ_رقما}}/g, capitalAmount.toLocaleString('en-US') || '0')
+        .replace(/{{رأس_المال}}/g, capitalFormatted || '0')
+        .replace(/{{المبلغ_رقما}}/g, capitalFormatted || '0')
         .replace(/{{رأس_المال_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
         .replace(/{{المبلغ_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'))
         .replace(/{{نسبة_أرباح_المنشأة}}/g, String(orgProfitPercent || '0'))
@@ -193,7 +214,7 @@ const ContractGenerator = React.forwardRef(({
         .replace(/{{مدينة_الاصدار}}/g, 'الرياض')
         .replace(/{{مدينة_الوفاء}}/g, 'الرياض')
         .replace(/{{سبب_انشاء_السند}}/g, 'استثمار في المضاربة')
-        .replace(/{{قيمة_السند_رقما}}/g, capitalAmount.toLocaleString('en-US') || '0')
+        .replace(/{{قيمة_السند_رقما}}/g, capitalFormatted || '0')
         .replace(/{{قيمة_السند_كتابة}}/g, capitalInWords.replace(/مائة/gi, 'مئة'));
       if (forPDF) {
         return filledTemplate;
