@@ -545,4 +545,4 @@ const FinancialInfoTab = ({
     </Paper>
   );
 };
-export default FinancialInfoTab;
+export default FinancialInfoTab;

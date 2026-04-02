@@ -48,7 +48,7 @@ const kafeelValidationSchema = Yup.object().shape({
   city: Yup.string().required('المدينة مطلوبة'),
   district: Yup.string().required('الحي مطلوب'),
 });
-const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
+const AddKafeelForm = ({ clientId, clientName, onSuccess, onCancel }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
@@ -118,6 +118,8 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
   };
   const inputBase =
     'w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100';
+  const phoneRowControl =
+    'box-border h-10 min-h-[2.5rem] py-2 leading-normal';
   const labelBase = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
   const fieldError = 'text-xs text-red-500 mt-0.5';
   const DocumentDropzone = ({ fieldName, label, acceptedTypes }) => {
@@ -165,7 +167,9 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
   return (
     <div dir="rtl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة كفيل جديد</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          {clientName ? `إضافة كفيل للعميل ${clientName}` : 'إضافة كفيل جديد'}
+        </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">يرجى إكمال خطوات إضافة بيانات الكفيل ومرفقاته</p>
       </div>
       <div className="flex items-center justify-between max-w-3xl mb-8">
@@ -207,7 +211,7 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
           const handleSubmitClick = () => submitForm();
           return (
           <Form>
-            <div className="overflow-y-auto">
+            <div className="min-w-0">
               {activeStep === 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mb-2">
@@ -221,13 +225,18 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
                       {touched[field] && errors[field] && <span className={fieldError}>{errors[field]}</span>}
                     </div>
                   ))}
-                  <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>رقم جوال الكفيل</label>
-                    <div className="flex gap-3">
-                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} w-36 min-w-[7rem] shrink-0`}>
-                        {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
-                      </select>
-                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} flex-1 min-w-0 text-left`} dir="ltr" />
+                  <div className="flex flex-col gap-1.5 min-w-0 md:col-span-3">
+                    <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_minmax(12rem,1fr)] sm:gap-6">
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <label className={labelBase}>رمز الدولة</label>
+                        <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${phoneRowControl} w-full text-left`} dir="ltr">
+                          {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <label className={labelBase}>رقم الهاتف</label>
+                        <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} ${phoneRowControl} w-full min-w-0 text-left`} dir="ltr" />
+                      </div>
                     </div>
                     {touched.phone && errors.phone && <span className={fieldError}>{errors.phone}</span>}
                   </div>
@@ -282,10 +291,16 @@ const AddKafeelForm = ({ clientId, onSuccess, onCancel }) => {
                 </div>
               )}
             </div>
-            <div className="flex justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-              <button type="button" onClick={handleBack} className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
-                رجوع
-              </button>
+            <div
+              className={`flex mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 ${
+                activeStep === 0 ? 'justify-end' : 'justify-between'
+              }`}
+            >
+              {activeStep > 0 && (
+                <button type="button" onClick={handleBack} className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                  رجوع
+                </button>
+              )}
               {activeStep < 1 ? (
                 <button type="button" onClick={handleNextClick} className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white">
                   التالي

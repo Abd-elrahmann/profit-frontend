@@ -10,6 +10,8 @@ const AddKafeelPage = () => {
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('returnTo');
   const returnTab = searchParams.get('tab') ?? '2';
+  const rawClientName = searchParams.get('clientName');
+  const clientNameForTitle = rawClientName ? decodeURIComponent(rawClientName) : '';
   const returnPath = returnTo === 'loans' ? '/loans' : (clientId ? `/clients?clientId=${clientId}&tab=${returnTab}` : '/clients');
   const handleSuccess = () => {
     navigate(returnPath);
@@ -24,7 +26,11 @@ const AddKafeelPage = () => {
   return (
     <Box sx={{ p: 3 }} dir="rtl">
       <Helmet>
-        <title>إضافة كفيل جديد - النظام المالي</title>
+        <title>
+          {clientNameForTitle
+            ? `إضافة كفيل للعميل ${clientNameForTitle} - النظام المالي`
+            : 'إضافة كفيل جديد - النظام المالي'}
+        </title>
       </Helmet>
       <Breadcrumbs separator={<NavigateNext fontSize="small" />} sx={{ mb: 3 }} aria-label="breadcrumb">
         <Link underline="hover" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
@@ -37,11 +43,11 @@ const AddKafeelPage = () => {
         </Link>
         <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }} color="text.primary">
           <PersonAdd sx={{ fontSize: 18 }} />
-          إضافة كفيل
+          {clientNameForTitle ? `إضافة كفيل للعميل ${clientNameForTitle}` : 'إضافة كفيل جديد'}
         </Typography>
       </Breadcrumbs>
       <Paper sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: 1 }}>
-        <AddKafeelForm clientId={clientId} onSuccess={handleSuccess} onCancel={handleCancel} />
+        <AddKafeelForm clientId={clientId} clientName={clientNameForTitle} onSuccess={handleSuccess} onCancel={handleCancel} />
       </Paper>
     </Box>
   );

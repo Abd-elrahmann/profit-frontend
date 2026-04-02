@@ -216,4 +216,4 @@ const PersonalDetailsTab = ({
     </div>
   );
 };
-export default PersonalDetailsTab;
+export default PersonalDetailsTab;

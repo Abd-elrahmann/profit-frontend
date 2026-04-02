@@ -16,7 +16,6 @@ import {
 } from "../../utilities/statementExporter";
 import { secureFetchFile } from "../../utilities/fileUtils";
 import DeleteModal from "../../components/modals/DeleteModal";
-import AddAdditionalKafeel from "../../components/modals/AddAdditionalKafeel";
 import {
   ClientsSidebar,
   ClientsHeader,
@@ -41,7 +40,6 @@ export default function Clients() {
   const [clientToDelete, setClientToDelete] = useState(null);
   const [isDeleteKafeelModalOpen, setIsDeleteKafeelModalOpen] = useState(false);
   const [kafeelToDelete, setKafeelToDelete] = useState(null);
-  const [isAddKafeelModalOpen, setIsAddKafeelModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statementPage, setStatementPage] = useState(1);
@@ -465,12 +463,12 @@ export default function Clients() {
             isDarkMode={isDarkMode}
             isMobile={isMobile}
             onAddKafeel={() => {
-              const hasKafeels = clientDetails?.kafeels?.length > 0 || clientDetails?.kafeel;
-              if (hasKafeels && selectedClient?.id) {
-                setIsAddKafeelModalOpen(true);
-              } else {
-                navigate(`/clients/${selectedClient?.id}/add-kafeel?tab=${tab}`);
-              }
+              if (!selectedClient?.id) return;
+              const clientName = clientDetails?.name || selectedClient?.name || "";
+              const params = new URLSearchParams();
+              params.set("tab", String(tab));
+              if (clientName) params.set("clientName", clientName);
+              navigate(`/clients/${selectedClient.id}/add-kafeel?${params.toString()}`);
             }}
             onEditKafeel={handleEditKafeel}
             onCancelEdit={handleCancelKafeelEdit}
@@ -640,12 +638,6 @@ export default function Clients() {
         title="حذف الكفيل"
         message={`هل أنت متأكد من حذف الكفيل ${kafeelToDelete?.name}؟`}
         ButtonText="حذف"
-      />
-      <AddAdditionalKafeel
-        key={isAddKafeelModalOpen ? "open" : "closed"}
-        open={isAddKafeelModalOpen}
-        onClose={() => setIsAddKafeelModalOpen(false)}
-        clientId={selectedClient?.id}
       />
     </Box>
   );

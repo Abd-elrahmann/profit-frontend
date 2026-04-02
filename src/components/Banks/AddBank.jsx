@@ -13,6 +13,7 @@ import {
 import { createBank, updateBank } from "../../pages/Banks/bankApis";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import { useTheme } from "../../theme/ThemeContext";
+const MAX_ACCOUNT_DIGITS = 15;
 const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile = false, isSmallScreen }) => {
   const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
     if (bank && isEditMode) {
       setFormData({
         name: bank.name || "",
-        accountNumber: bank.accountNumber || "",
+        accountNumber: String(bank.accountNumber || "").replace(/\D/g, "").slice(0, MAX_ACCOUNT_DIGITS),
         IBAN: bank.IBAN || "",
         limit: parseInt(bank.limit) || "",
         owner: bank.owner || "",
@@ -51,6 +52,13 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
+  const handleAccountNumberChange = (event) => {
+    const digitsOnly = event.target.value.replace(/\D/g, "").slice(0, MAX_ACCOUNT_DIGITS);
+    setFormData((prev) => ({ ...prev, accountNumber: digitsOnly }));
+    if (errors.accountNumber) {
+      setErrors((prev) => ({ ...prev, accountNumber: "" }));
+    }
+  };
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "اسم الحساب مطلوب";
@@ -58,8 +66,8 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
       newErrors.accountNumber = "رقم الحساب مطلوب";
     } else if (!/^\d+$/.test(formData.accountNumber)) {
       newErrors.accountNumber = "رقم الحساب يجب أن يحتوي على أرقام فقط";
-    } else if (formData.accountNumber.length < 10 || formData.accountNumber.length > 14) {
-      newErrors.accountNumber = "رقم الحساب يجب أن يكون بين 10 و 14 رقم";
+    } else if (formData.accountNumber.length < 10 || formData.accountNumber.length > MAX_ACCOUNT_DIGITS) {
+      newErrors.accountNumber = `رقم الحساب يجب أن يكون من 10 إلى ${MAX_ACCOUNT_DIGITS} رقمًا`;
     }
     if (!formData.IBAN.trim()) {
       newErrors.IBAN = "IBAN مطلوب";
@@ -124,7 +132,7 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
         <Stack spacing={2} sx={{ mt: 3 }}>
           <TextField label="اسم الحساب" value={formData.name} onChange={handleChange("name")} fullWidth error={!!errors.name} helperText={errors.name} required size={useFullScreen ? "small" : "medium"} />
           <TextField label="اسم المالك" value={formData.owner} onChange={handleChange("owner")} fullWidth error={!!errors.owner} helperText={errors.owner} required size={useFullScreen ? "small" : "medium"} />
-          <TextField label="رقم الحساب" value={formData.accountNumber} onChange={handleChange("accountNumber")} fullWidth error={!!errors.accountNumber} helperText={errors.accountNumber} required size={useFullScreen ? "small" : "medium"} inputProps={{ inputMode: "text", maxLength: 14, min: 0, max: 14 }} onKeyDown={(e) => { if (e.key === "-" || e.key === "+") e.preventDefault(); }} />
+          <TextField label="رقم الحساب" value={formData.accountNumber} onChange={handleAccountNumberChange} fullWidth error={!!errors.accountNumber} helperText={errors.accountNumber || `من 10 إلى ${MAX_ACCOUNT_DIGITS} رقمًا شاملاً`} required size={useFullScreen ? "small" : "medium"} inputProps={{ inputMode: "numeric", maxLength: MAX_ACCOUNT_DIGITS, pattern: "[0-9]*" }} onKeyDown={(e) => { if (e.key === "-" || e.key === "+") e.preventDefault(); }} />
           <TextField label="رقم الايبان" value={formData.IBAN} onChange={handleChange("IBAN")} fullWidth error={!!errors.IBAN} helperText={errors.IBAN} required size={useFullScreen ? "small" : "medium"} inputProps={{ inputMode: "text", maxLength: 24, min: 0, max: 24 }} onKeyDown={(e) => { if (e.key === "-" || e.key === "+") e.preventDefault(); }} />
           <TextField label="السلف المسموح بها للحساب البنكي" type="number" value={formData.limit} onChange={handleChange("limit")} fullWidth error={!!errors.limit} helperText={errors.limit} required size={useFullScreen ? "small" : "medium"} inputProps={{ inputMode: "numeric", min: 0 }} onKeyDown={(e) => { if (e.key === "-" || e.key === "+") e.preventDefault(); }} />
         </Stack>
@@ -140,4 +148,4 @@ const AddBank = ({ open, onClose, onSuccess, bank, isEditMode = false, isMobile 
     </Dialog>
   );
 };
-export default AddBank;
+export default AddBank;

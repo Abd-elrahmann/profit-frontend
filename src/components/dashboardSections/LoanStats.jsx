@@ -6,6 +6,7 @@ import {
   Clock,
   CheckCircle,
   Eye,
+  AlertTriangle,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -42,6 +43,32 @@ const LoanStats = React.memo(() => {
   const animatedPending = useCountUp(stats?.loans?.byStatus?.PENDING || 0, 600, !isLoading);
   const animatedActive = useCountUp(stats?.loans?.byStatus?.ACTIVE || 0, 600, !isLoading);
   const animatedCompleted = useCountUp(stats?.loans?.byStatus?.COMPLETED || 0, 600, !isLoading);
+  const delinquentCount =
+    (stats?.loans?.byStatus?.OVERDUE || 0) + (stats?.loans?.byStatus?.DEFAULTED || 0);
+  const animatedDelinquent = useCountUp(delinquentCount, 600, !isLoading);
+  const delinquentSubtitle = (() => {
+    const d = stats?.loans?.delinquentDetail;
+    if (!d) return delinquentCount > 0 ? '—' : 'لا يوجد تعثر حالياً';
+    const overdueRepaymentsCount = d.overdueRepaymentsCount ?? 0;
+    const defaultedLoansCount = d.defaultedLoansCount ?? 0;
+    const parts = [];
+    if (defaultedLoansCount > 0) {
+      parts.push(
+        defaultedLoansCount === 1
+          ? 'سلفة بتعثر رسمي'
+          : `${defaultedLoansCount} سلفة بتعثر رسمي`,
+      );
+    }
+    if (overdueRepaymentsCount > 0) {
+      if (overdueRepaymentsCount === 1) parts.push('دفعة متأخرة');
+      else if (overdueRepaymentsCount === 2) parts.push('دفعتان متأخرتان');
+      else parts.push(`${overdueRepaymentsCount} دفعات متأخرة`);
+    }
+    if (parts.length === 0) {
+      return delinquentCount > 0 ? '—' : 'لا يوجد تعثر حالياً';
+    }
+    return parts.join(' · ');
+  })();
   const formatAmount = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     return Number(n).toLocaleString('en-US');
@@ -71,7 +98,7 @@ const LoanStats = React.memo(() => {
   return (
     <div className="space-y-6">
       {}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110" />
           <div className="flex items-center justify-between">
@@ -153,6 +180,24 @@ const LoanStats = React.memo(() => {
             </p>
             <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
               إجمالي السلف المكتملة
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm border-r-4 border-r-red-500">
+          <div className="flex items-center justify-between">
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+              سلف متعثرة
+            </p>
+            <div className="bg-red-500/10 text-red-600 dark:text-red-400 p-2 rounded-lg">
+              <AlertTriangle className="size-5" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-black">
+              {animatedDelinquent}
+            </p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium leading-relaxed">
+              {delinquentSubtitle}
             </p>
           </div>
         </div>
@@ -373,4 +418,4 @@ const LoanStats = React.memo(() => {
   );
 });
 LoanStats.displayName = 'LoanStats';
-export default LoanStats;
+export default LoanStats;

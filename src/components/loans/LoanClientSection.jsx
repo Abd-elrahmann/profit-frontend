@@ -53,6 +53,7 @@ const LoanClientSection = ({
         <Grid item xs={12} sm={10} md={8}>
           <Autocomplete
             options={clientsData?.clients || []}
+            filterOptions={(options) => options}
             getOptionLabel={(option) =>
               `${option.client.name} - ${option.client.nationalId}`
             }

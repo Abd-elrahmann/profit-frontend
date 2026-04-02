@@ -478,6 +478,7 @@ const LoanDetailsSection = ({
         <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
             options={partnersData?.partners || []}
+            filterOptions={(options) => options}
             getOptionLabel={(option) =>
               option.name + " - " + (option.isActive ? "نشط" : "غير نشط")
             }

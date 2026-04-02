@@ -1,8 +1,18 @@
 import Api, { handleApiError } from '../../config/Api';
 export const getClients = async (page = 1, search = '') => {
   try {
-    const url = search 
-      ? `/api/clients/all/${page}?search=${encodeURIComponent(search)}`
+    const q = search?.trim() || '';
+    const params = new URLSearchParams();
+    if (q) {
+      if (/^\d+$/.test(q)) {
+        params.append('nationalId', q);
+      } else {
+        params.append('name', q);
+      }
+    }
+    const query = params.toString();
+    const url = query
+      ? `/api/clients/all/${page}?${query}`
       : `/api/clients/all/${page}`;
     const response = await Api.get(url);
     return response.data;
@@ -13,8 +23,18 @@ export const getClients = async (page = 1, search = '') => {
 };
 export const getPartners = async (page = 1, search = '') => {
   try {
-    const url = search
-      ? `/api/partners/all/${page}?search=${encodeURIComponent(search)}`
+    const q = search?.trim() || '';
+    const params = new URLSearchParams();
+    if (q) {
+      if (/^\d+$/.test(q)) {
+        params.append('nationalId', q);
+      } else {
+        params.append('name', q);
+      }
+    }
+    const query = params.toString();
+    const url = query
+      ? `/api/partners/all/${page}?${query}`
       : `/api/partners/all/${page}`;
     const response = await Api.get(url);
     return response.data;

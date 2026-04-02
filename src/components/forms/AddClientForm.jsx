@@ -100,7 +100,6 @@ const AddClientForm = ({ onSuccess }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState({});
-  const [addAnotherKafeel, setAddAnotherKafeel] = useState(false);
   const [hasKafeel, setHasKafeel] = useState(false);
   const queryClient = useQueryClient();
   const steps = hasKafeel
@@ -216,6 +215,8 @@ const AddClientForm = ({ onSuccess }) => {
   };
   const inputBase =
     'w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all px-3 py-2 text-slate-900 dark:text-slate-100';
+  const phoneRowControl =
+    'box-border h-10 min-h-[2.5rem] py-2 leading-normal';
   const inputError = '!border-red-500 dark:!border-red-500 focus:!ring-red-500/50';
   const labelBase = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
   const labelRequired = 'text-red-500 me-0.5';
@@ -348,7 +349,7 @@ const AddClientForm = ({ onSuccess }) => {
           };
           return (
           <Form>
-            <div className="overflow-y-auto">
+            <div className="min-w-0">
               {activeStep === 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-3 flex items-center gap-2 pb-2 border-b border-primary/10 mb-2">
@@ -375,13 +376,18 @@ const AddClientForm = ({ onSuccess }) => {
                     <input name="email" type="email" value={values.email} onChange={handleChange} onBlur={handleBlur} placeholder="example@mail.com" className={`${inputBase} ${errors.email ? inputError : ''}`} />
                     {errors.email && <span className={fieldError}>{errors.email}</span>}
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className={labelBase}>رقم الجوال <span className={labelRequired}>*</span></label>
-                    <div className="flex gap-3">
-                      <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors.phoneCode || errors.phone ? inputError : ''}`} style={{ width: '110px', minWidth: '110px', flexShrink: 0 }}>
-                        {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
-                      </select>
-                      <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} ${errors.phone ? inputError : ''} flex-1 min-w-[140px]`} style={{ textAlign: 'left' }} dir="ltr" />
+                  <div className="flex flex-col gap-1.5 min-w-0 md:col-span-3">
+                    <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_minmax(12rem,1fr)] sm:gap-6">
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <label className={labelBase}>رمز الدولة <span className={labelRequired}>*</span></label>
+                        <select name="phoneCode" value={values.phoneCode} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${phoneRowControl} ${errors.phoneCode || errors.phone ? inputError : ''} w-full text-left`} dir="ltr">
+                          {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <label className={labelBase}>رقم الهاتف <span className={labelRequired}>*</span></label>
+                        <input name="phone" value={values.phone} onChange={handleChange} onBlur={handleBlur} placeholder="05XXXXXXXX" className={`${inputBase} ${phoneRowControl} ${errors.phone ? inputError : ''} w-full min-w-0 text-left`} dir="ltr" />
+                      </div>
                     </div>
                     {(errors.phone || errors.phoneCode) && <span className={fieldError}>{errors.phone || errors.phoneCode}</span>}
                   </div>
@@ -524,13 +530,18 @@ const AddClientForm = ({ onSuccess }) => {
                             </div>
                           );
                         })}
-                        <div className="flex flex-col gap-1.5">
-                          <label className={labelBase}>رقم جوال الكفيل <span className={labelRequired}>*</span></label>
-                          <div className="flex gap-3">
-                            <select name={`kafeels[${index}][phoneCode]`} value={kafeel.phoneCode || '+966'} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors[`kafeels.${index}.phoneCode`] || errors[`kafeels.${index}.phone`] ? inputError : ''}`} style={{ width: '110px', minWidth: '110px', flexShrink: 0 }}>
-                              {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
-                            </select>
-                            <input name={`kafeels[${index}][phone]`} value={kafeel.phone || ''} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${errors[`kafeels.${index}.phone`] ? inputError : ''} flex-1 min-w-[140px]`} style={{ textAlign: 'left' }} dir="ltr" />
+                        <div className="flex flex-col gap-1.5 min-w-0 md:col-span-3">
+                          <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_minmax(12rem,1fr)] sm:gap-6">
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                              <label className={labelBase}>رمز الدولة <span className={labelRequired}>*</span></label>
+                              <select name={`kafeels[${index}][phoneCode]`} value={kafeel.phoneCode || '+966'} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${phoneRowControl} ${errors[`kafeels.${index}.phoneCode`] || errors[`kafeels.${index}.phone`] ? inputError : ''} w-full text-left`} dir="ltr">
+                                {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+                              </select>
+                            </div>
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                              <label className={labelBase}>رقم الهاتف <span className={labelRequired}>*</span></label>
+                              <input name={`kafeels[${index}][phone]`} value={kafeel.phone || ''} onChange={handleChange} onBlur={handleBlur} className={`${inputBase} ${phoneRowControl} ${errors[`kafeels.${index}.phone`] ? inputError : ''} w-full min-w-0 text-left`} dir="ltr" />
+                            </div>
                           </div>
                           {(errors[`kafeels.${index}.phone`] || errors[`kafeels.${index}.phoneCode`]) && <span className={fieldError}>{errors[`kafeels.${index}.phone`] || errors[`kafeels.${index}.phoneCode`]}</span>}
                         </div>
@@ -549,12 +560,15 @@ const AddClientForm = ({ onSuccess }) => {
                       {index < values.kafeels.length - 1 && <div className="border-t border-slate-200 dark:border-slate-700 my-6" />}
                     </div>
                   ))}
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
                     <p className="font-bold text-slate-900 dark:text-white">إضافة كفيل آخر</p>
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={addAnotherKafeel} onChange={(e) => { if (e.target.checked) { setFieldValue('kafeels', [...(values.kafeels || []), getInitialKafeelValues()]); setTimeout(() => setAddAnotherKafeel(false), 100); } else setAddAnotherKafeel(false); }} className="sr-only peer" />
-                      <div className="relative w-14 h-7 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all rtl:peer-checked:after:-translate-x-full peer-checked:after:translate-x-full" />
-                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setFieldValue('kafeels', [...(values.kafeels || []), getInitialKafeelValues()])}
+                      className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90"
+                    >
+                      إضافة كفيل
+                    </button>
                   </div>
                 </div>
               )}
@@ -571,10 +585,16 @@ const AddClientForm = ({ onSuccess }) => {
                 </div>
               ) : null}
             </div>
-            <div className="flex justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-              <button type="button" onClick={handleBack} className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
-                رجوع
-              </button>
+            <div
+              className={`flex mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 ${
+                activeStep === 0 ? 'justify-end' : 'justify-between'
+              }`}
+            >
+              {activeStep > 0 && (
+                <button type="button" onClick={handleBack} className="px-6 py-2.5 rounded-lg font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                  رجوع
+                </button>
+              )}
               {activeStep < (hasKafeel ? 2 : 1) ? (
                 <button type="button" onClick={handleNextWithValidation} className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white">
                   التالي

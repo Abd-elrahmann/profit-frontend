@@ -77,9 +77,9 @@ export default function Treasury() {
   const currentMonthPaidUntilNow = currentData?.currentMonth?.paidUntilNow || 0;
   const currentMonthRemainingRepayment = currentData?.currentMonth?.remaining || 0;
   const currentMonthDiscount = currentData?.currentMonth?.discount || 0;
-  const currentTotalPaid = currentMonthPaidUntilNow + totalDiscount;
+  const currentTotalPaid = currentMonthPaidUntilNow + currentMonthDiscount;
   const currentMonthProgress = currentMonthTotalAmount > 0
-    ? Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100)
+    ? Math.min(100, Math.max(0, (currentTotalPaid / currentMonthTotalAmount) * 100))
     : 0;
   const animatedAvailableBalance = useCountUp(availableBalance, 600, !isLoading);
   const animatedTotalDebit = useCountUp(totalDebit, 600, !isLoading);
