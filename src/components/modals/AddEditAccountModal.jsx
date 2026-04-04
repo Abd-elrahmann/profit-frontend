@@ -87,7 +87,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
           parentId: parentAccount.id,
           type: parentAccount.type,
           nature: parentAccount.nature,
-          accountBasicType: '',
+          accountBasicType: 'OTHER',
           level: (parentAccount.level ?? 1) + 1,
           isActive: true,
         });
@@ -131,7 +131,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
               size="small"
               disabled={isEdit}
             />
-            <FormControl fullWidth size="small" disabled={!!parentAccount}>
+            <FormControl fullWidth size="small">
               <InputLabel>نوع الحساب</InputLabel>
               <Select
                 name="type"
@@ -225,4 +225,4 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
     </Dialog>
   );
 };
-export default AddEditAccountModal;
+export default AddEditAccountModal;
