@@ -50,11 +50,15 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
       accountBasicType: '',
       level: 1,
       isActive: true,
+      amount: '',
     },
     onSubmit: async (values) => {
       try {
         if (isEdit) {
-          await updateAccount(account.id, values);
+          await updateAccount(account.id, {
+            name: values.name,
+            amount: values.amount,
+          });
           notifySuccess('تم تحديث الحساب بنجاح');
         } else {
           await createAccount(values);
@@ -79,6 +83,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
           accountBasicType: account.accountBasicType || '',
           level: account.level ?? 1,
           isActive: account.isActive !== false,
+          amount: account.amount || '',
         });
       } else if (parentAccount) {
         formik.setValues({
@@ -90,6 +95,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
           accountBasicType: 'OTHER',
           level: (parentAccount.level ?? 1) + 1,
           isActive: true,
+          amount: '',
         });
       } else {
         formik.setValues({
@@ -101,6 +107,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
           accountBasicType: '',
           level: 1,
           isActive: true,
+          amount: '',
         });
       }
     }
@@ -131,7 +138,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
               size="small"
               disabled={isEdit}
             />
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" disabled={isEdit}>
               <InputLabel>نوع الحساب</InputLabel>
               <Select
                 name="type"
@@ -147,7 +154,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
                 ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth size="small" disabled={!!parentAccount}>
+            <FormControl fullWidth size="small" disabled={isEdit || !!parentAccount}>
               <InputLabel>طبيعة الحساب</InputLabel>
               <Select
                 name="nature"
@@ -163,7 +170,7 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
                 ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth size="small" disabled={!!parentAccount}>
+            <FormControl fullWidth size="small" disabled={isEdit || !!parentAccount}>
               <InputLabel>النوع الأساسي</InputLabel>
               <Select
                 name="accountBasicType"
@@ -190,10 +197,20 @@ const AddEditAccountModal = ({ open, onClose, account, parentAccount, onSuccess,
               onChange={formik.handleChange}
               required
               size="small"
-              disabled={!!parentAccount}
+              disabled={isEdit || !!parentAccount}
               inputProps={{ min: 1 }}
             />
-            <FormControl fullWidth size="small" disabled={!!parentAccount}>
+            <TextField
+              fullWidth
+              type="number"
+              label="المبلغ"
+              name="amount"
+              value={formik.values.amount}
+              onChange={formik.handleChange}
+              size="small"
+              inputProps={{ step: '0.01', min: '0' }}
+            />
+            <FormControl fullWidth size="small" disabled={isEdit || !!parentAccount}>
               <InputLabel>الحالة</InputLabel>
               <Select
                 name="isActive"
