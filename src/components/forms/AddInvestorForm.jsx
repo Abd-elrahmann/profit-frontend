@@ -30,7 +30,7 @@ const validationSchema = Yup.object().shape({
     .max(100, 'النسبة يجب أن تكون بين 0 و 100'),
   capitalAmount: Yup.number()
     .required('رأس المال مطلوب')
-    .min(1, 'رأس المال يجب أن يكون أكبر من صفر'),
+    .min(0, 'رأس المال يجب أن يكون موجبًا'),
 });
 const AddInvestorForm = ({ onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
