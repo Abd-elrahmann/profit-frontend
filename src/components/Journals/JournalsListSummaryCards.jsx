@@ -6,7 +6,7 @@ export default function JournalsListSummaryCards({
   draft = 0,
 }) {
   const cardClass =
-    "bg-white dark:bg-background-dark/50 p-6 rounded-xl border border-primary/10 shadow-sm flex items-center gap-4";
+    "w-full bg-white dark:bg-background-dark/50 p-6 rounded-xl border border-primary/10 shadow-sm flex items-center gap-4";
   return (
     <>
       <div className={cardClass}>
@@ -53,4 +53,4 @@ export default function JournalsListSummaryCards({
       </div>
     </>
   );
-}
+}

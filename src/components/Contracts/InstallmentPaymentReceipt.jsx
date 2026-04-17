@@ -238,6 +238,9 @@ return `
         أقرّ أنا {{اسم_رب_المال}} باستلام مبلغ وقدره {{المبلغ_رقما}}،
         كدفعات سداد من العميل المذكور أعلاه للدفعات الموضحة في الجدول أعلاه.
       </p>
+      <p>
+        المبلغ المتبقي من السلفة بعد السداد: <span>{{المتبقي_من_السلفة}}</span>
+      </p>
     </div>
     <div class="signatures">
       <div>
@@ -250,4 +253,4 @@ return `
 </div>
 `;
 };
-export default InstallmentPaymentReceipt;
+export default InstallmentPaymentReceipt;

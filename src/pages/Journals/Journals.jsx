@@ -21,7 +21,6 @@ import { exportJournalToPDF, exportJournalToExcel } from "../../utilities/journa
 import {
   JournalTable,
   JournalsHeader,
-  JournalsSidebar,
   JournalsJournalDetails,
   flattenAccountsTree,
   isJournalBalanced,
@@ -29,6 +28,9 @@ import {
   calculateTotals,
   calculateTotalsForTable,
 } from "../../components/Journals";
+
+const JOURNALS_VIEW_STATE_KEY = "journals-view-state";
+
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -105,8 +107,44 @@ const Journals = () => {
       setActiveTab(targetTab || 1);
       setIsEditMode(false);
       setIsAddMode(false);
+      return;
+    }
+
+    try {
+      const savedState = sessionStorage.getItem(JOURNALS_VIEW_STATE_KEY);
+      if (!savedState) return;
+      const parsedState = JSON.parse(savedState);
+      if (parsedState?.activeTab !== 1) return;
+
+      setActiveTab(1);
+      setIsEditMode(false);
+
+      if (parsedState?.isAddMode) {
+        setIsAddMode(true);
+        setSelectedJournal(null);
+      } else if (parsedState?.selectedJournal) {
+        setIsAddMode(false);
+        setSelectedJournal(parsedState.selectedJournal);
+      }
+    } catch (error) {
+      console.error("Error restoring journals view state:", error);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        JOURNALS_VIEW_STATE_KEY,
+        JSON.stringify({
+          activeTab,
+          isAddMode,
+          selectedJournal: isAddMode ? null : selectedJournal || null,
+        })
+      );
+    } catch (error) {
+      console.error("Error saving journals view state:", error);
+    }
+  }, [activeTab, isAddMode, selectedJournal]);
   const handleTabChange = (newValue) => {
     setActiveTab(newValue);
     if (newValue === 0) {
@@ -153,7 +191,19 @@ const Journals = () => {
   const handleBackToProfitDistribution = () => navigate("/profit-distribution");
   const handleBackToInvestorsWithdrawal = () =>
     navigate("/investors-withdraw", { state: { investorId, activeTab: 1 } });
-  const handleEditClick = () => setIsEditMode(true);
+  const handleEditClick = () => {
+    setIsEditMode(true);
+    if (journalLines.length > 0) {
+      const firstLine = journalLines[0];
+      setCurrentLine({
+        accountId: firstLine.accountId || "",
+        debit: firstLine.debit ?? "",
+        credit: firstLine.credit ?? "",
+        description: firstLine.description || "",
+      });
+      setEditingLineIndex(0);
+    }
+  };
   const handleCancelEdit = () => {
     setIsEditMode(false);
     if (journalData) {
@@ -181,17 +231,21 @@ const Journals = () => {
       notifyError("يجب اختيار حساب");
       return;
     }
+    const debitValue = parseFloat(currentLine.debit || 0);
+    const creditValue = parseFloat(currentLine.credit || 0);
     const selectedAccount = chartAccounts.find(
       (acc) => acc.id === currentLine.accountId
     );
     const newLine = {
       ...currentLine,
+      debit: debitValue,
+      credit: creditValue,
       id:
         editingLineIndex !== null
           ? journalLines[editingLineIndex]?.id
           : Date.now(),
       account: selectedAccount,
-      balance: (currentLine.debit || 0) - (currentLine.credit || 0),
+      balance: debitValue - creditValue,
     };
     if (editingLineIndex !== null) {
       const updatedLines = [...journalLines];
@@ -219,6 +273,10 @@ const Journals = () => {
       setEditingLineIndex(null);
       setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
     }
+  };
+  const handleCancelLineEdit = () => {
+    setEditingLineIndex(null);
+    setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
   };
   const handleLineInputChange = (field, value) => {
     setCurrentLine((prev) => ({ ...prev, [field]: value }));
@@ -415,32 +473,6 @@ const Journals = () => {
           width: "100%",
         }}
       >
-        {!isSmallScreen &&
-          activeTab === 1 &&
-          showJournalDetails &&
-          (
-            <JournalsSidebar
-              totals={totals}
-              isAddMode={isAddMode}
-              journalData={journalData}
-              isEditMode={isEditMode}
-              permissions={permissions}
-              isJournalBalanced={isJournalBalanced}
-              onExportPDF={handleExportPDF}
-              onExportExcel={handleExportExcel}
-              onCreateJournal={handleCreateJournal}
-              onCancelAdd={handleCancelAdd}
-              onEditClick={handleEditClick}
-              onPostJournal={handlePostJournal}
-              onDeleteClick={() => {
-                setJournalToDelete(selectedJournal);
-                setIsDeleteModalOpen(true);
-              }}
-              onUpdateJournal={handleUpdateJournal}
-              onCancelEdit={handleCancelEdit}
-              onUnpostJournal={handleUnpostJournal}
-            />
-          )}
         <Box
           sx={{
             flex: 1,
@@ -479,6 +511,10 @@ const Journals = () => {
             (isSmallScreen && !selectedJournal && !isAddMode) ? (
               <JournalTable
                 onViewDetails={handleViewDetails}
+                onDeleteJournal={(journalId) => {
+                  setJournalToDelete(journalId);
+                  setIsDeleteModalOpen(true);
+                }}
                 isMobile={isSmallScreen}
                 searchFilters={searchFiltersForTable}
               />
@@ -521,6 +557,7 @@ const Journals = () => {
                     onAddLine={handleAddLine}
                     onEditLine={handleEditLine}
                     onDeleteLine={handleDeleteLine}
+                    onCancelLineEdit={handleCancelLineEdit}
                     onExportPDF={handleExportPDF}
                     onExportExcel={handleExportExcel}
                     onCreateJournal={handleCreateJournal}

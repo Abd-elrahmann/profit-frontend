@@ -18,7 +18,6 @@ import {
 export default function ProfitDistributionDetails({
   periodData,
   theme,
-  isSmallScreen,
   enableSaving,
   savingPercentage,
   permissions,
@@ -30,7 +29,6 @@ export default function ProfitDistributionDetails({
   onOpenSavingDialog,
   onOpenDistributionDialog,
   selectedPeriod,
-  onBackToList,
 }) {
   const profitAfterSaving = calculateProfitAfterSaving(
     periodData,
@@ -115,7 +113,7 @@ export default function ProfitDistributionDetails({
         </Alert>
       )}
       {}
-      {!distributed && permissions?.includes("distribution_Post") && (
+      {permissions?.includes("distribution_Post") && (
         <ProfitDistributionActions
           periodData={periodData}
           theme={theme}
@@ -362,4 +360,4 @@ export default function ProfitDistributionDetails({
       )}
     </div>
   );
-}
+}

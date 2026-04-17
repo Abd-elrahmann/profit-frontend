@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -19,14 +19,13 @@ import {
   Button,
   Alert,
 } from "@mui/material";
-import { Visibility, CheckCircle, Cancel, PictureAsPdf, TableChart } from "@mui/icons-material";
+import { Visibility, Delete, CheckCircle, Cancel } from "@mui/icons-material";
 import JournalsListSummaryCards from "./JournalsListSummaryCards";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getJournals, postMultipleJournals, unpostMultipleJournals } from "../../pages/Journals/journalsApi";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
 import { usePermissions } from "../Contexts/PermissionsContext";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
-import { exportJournalsTableToPDF, exportJournalsTableToExcel } from "../../utilities/journalsExporter";
 import { formatArabicDate } from "../../utilities/dateUtils";
 import {
   getJournalTypeText,
@@ -34,7 +33,12 @@ import {
   getStatusText,
   getStatusColor,
 } from "./journalsUtils";
-const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) => {
+const JournalTable = ({
+  onViewDetails,
+  onDeleteJournal,
+  isMobile = false,
+  searchFilters = {},
+}) => {
   const [page, setPage] = useState(1);
   const [selectedJournals, setSelectedJournals] = useState([]);
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
@@ -44,6 +48,11 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     queryKey: ["journals", page, searchFilters],
     queryFn: () => getJournals(page, searchFilters),
   });
+
+  useEffect(() => {
+    setPage(1);
+    setSelectedJournals([]);
+  }, [searchFilters]);
   const handleChangePage = (event, newPage) => {
     setPage(newPage + 1);
     setSelectedJournals([]);
@@ -120,39 +129,20 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
       setIsBulkOperationLoading(false);
     }
   };
-  const canExport = permissions.includes("journals_Export");
-  const handleExportAllPDF = async () => {
-    const rows = journalsData?.journals || [];
-    if (!rows.length) {
-      notifyError("لا توجد بيانات للتصدير");
-      return;
-    }
-    try {
-      await exportJournalsTableToPDF(rows);
-      notifySuccess("تم تصدير القيود إلى PDF بنجاح");
-    } catch (error) {
-      notifyError("حدث خطأ أثناء تصدير PDF");
-    }
-  };
-  const handleExportAllExcel = async () => {
-    const rows = journalsData?.journals || [];
-    if (!rows.length) {
-      notifyError("لا توجد بيانات للتصدير");
-      return;
-    }
-    try {
-      await exportJournalsTableToExcel(rows);
-      notifySuccess("تم تصدير القيود إلى Excel بنجاح");
-    } catch (error) {
-      notifyError("حدث خطأ أثناء تصدير Excel");
-    }
-  };
+  const hasSelectionColumn =
+    permissions.includes("journals_Post") || permissions.includes("journals_Update");
+  const hasActionsColumn =
+    permissions.includes("journals_Update") ||
+    permissions.includes("journals_Delete") ||
+    permissions.includes("journals_Add");
+  const tableColumnsCount =
+    6 + (hasSelectionColumn ? 1 : 0) + (hasActionsColumn ? 1 : 0);
   const renderTable = () => (
     <TableContainer sx={{ height: "100%", width: "100%" }}>
       <Table stickyHeader sx={{ width: "100%" }}>
         <TableHead>
           <StyledTableRow>
-            {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
+            {hasSelectionColumn && (
               <StyledTableCell align="center" sx={{ whiteSpace: "nowrap", width: "50px" }}>
                 <Checkbox
                   checked={selectedJournals.length === journalsData?.journals?.length && journalsData?.journals?.length > 0}
@@ -163,9 +153,6 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                 />
               </StyledTableCell>
             )}
-            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
-              رقم القيد
-            </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               النوع
             </StyledTableCell>
@@ -184,7 +171,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               تاريخ الإنشاء
             </StyledTableCell>
-            {(permissions.includes("journals_Update") || permissions.includes("journals_Delete") || permissions.includes("journals_Add")) && (
+            {hasActionsColumn && (
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               الإجراءات
             </StyledTableCell>
@@ -194,20 +181,20 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={8} align="center">
+              <StyledTableCell colSpan={tableColumnsCount} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : journalsData?.journals?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={8} align="center">
+              <StyledTableCell colSpan={tableColumnsCount} align="center">
                 <Typography>لا توجد قيود</Typography>
               </StyledTableCell>
             </StyledTableRow>
           ) : (
             journalsData?.journals?.map((journal) => (
               <StyledTableRow key={journal.id}>
-                {(permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
+                {hasSelectionColumn && (
                   <StyledTableCell align="center">
                     <Checkbox
                       checked={selectedJournals.includes(journal.id)}
@@ -220,7 +207,6 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                     />
                   </StyledTableCell>
                 )}
-                <StyledTableCell align="center">{journal.reference}</StyledTableCell>
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {getJournalTypeText(journal.type)}
                 </StyledTableCell>
@@ -250,7 +236,7 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                     </Typography>
                   </Box>
                 </StyledTableCell>
-                {(permissions.includes("journals_Update") || permissions.includes("journals_Delete") || permissions.includes("journals_Add")) && (
+                {hasActionsColumn && (
                 <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Stack direction="row" spacing={1} justifyContent="center">
                     {permissions.includes("journals_Update") && (
@@ -264,6 +250,19 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                       }}
                     >
                       <Visibility fontSize="small" />
+                    </IconButton>
+                    )}
+                    {permissions.includes("journals_Delete") && (
+                    <IconButton
+                      title="حذف القيد"
+                      size="small"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteJournal?.(journal.id);
+                      }}
+                    >
+                      <Delete fontSize="small" />
                     </IconButton>
                     )}
                   </Stack>
@@ -376,19 +375,36 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
                         </Box>
                       </Box>
                     </Box>
-                    {permissions.includes("journals_Update") && (
+                    {(permissions.includes("journals_Update") || permissions.includes("journals_Delete")) && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
-                        <IconButton
-                          title="عرض التفاصيل"
-                          size="small"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewDetails(journal.id);
-                          }}
-                        >
-                          <Visibility fontSize="small" />
-                        </IconButton>
+                        <Stack direction="row" spacing={1}>
+                          {permissions.includes("journals_Update") && (
+                            <IconButton
+                              title="عرض التفاصيل"
+                              size="small"
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onViewDetails(journal.id);
+                              }}
+                            >
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                          )}
+                          {permissions.includes("journals_Delete") && (
+                            <IconButton
+                              title="حذف القيد"
+                              size="small"
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteJournal?.(journal.id);
+                              }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Stack>
                       </Box>
                     )}
                   </Stack>
@@ -404,34 +420,12 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
       {!isLoading && journalsData?.journals && journalsData.journals.length > 0 && (
-        <div className={`grid grid-cols-1 gap-4 mt-4 mb-4 ${isMobile ? 'md:grid-cols-2' : 'md:grid-cols-3 lg:grid-cols-5'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 mb-4 w-full">
           <JournalsListSummaryCards
             total={journalsData.journals.length}
             posted={journalsData.journals.filter((j) => j.status === "POSTED").length}
             draft={journalsData.journals.filter((j) => j.status !== "POSTED").length}
           />
-          {canExport && (
-            <div className={`flex flex-row flex-wrap items-center gap-2 ${isMobile ? '' : 'lg:col-span-2'}`}>
-              <Button
-                variant="outlined"
-                color="error"
-                size="small"
-                startIcon={<PictureAsPdf sx={{ marginLeft: "6px" }} />}
-                onClick={handleExportAllPDF}
-              >
-                تصدير PDF
-              </Button>
-              <Button
-                variant="outlined"
-                color="success"
-                size="small"
-                startIcon={<TableChart sx={{ marginLeft: "6px" }} />}
-                onClick={handleExportAllExcel}
-              >
-                تصدير Excel
-              </Button>
-            </div>
-          )}
         </div>
       )}
       {selectedJournals.length > 0 && (permissions.includes("journals_Post") || permissions.includes("journals_Update")) && (
@@ -505,4 +499,4 @@ const JournalTable = ({ onViewDetails, isMobile = false, searchFilters = {} }) =
     </Box>
   );
 };
-export default JournalTable;
+export default JournalTable;

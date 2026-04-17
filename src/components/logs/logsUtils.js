@@ -39,7 +39,7 @@ export const getScreenText = (screen) => {
     PartnerWithdrawals: 'الانسحابات',
     Expenses: 'المصروفات',
     'Income Statement': 'قائمة الدخل',
-    'Chart of Accounts': 'شجرة الحسابات',
+    'Chart of Accounts': 'دليل الحسابات',
     Journals: 'القيود اليومية',
     'Journal Entries': 'القيود اليومية',
     'General Ledger': 'دفتر الأستاذ العام',
@@ -61,4 +61,4 @@ export const getScreenText = (screen) => {
     Profile: 'الملف الشخصي',
   };
   return screenTranslations[screen] || screen;
-};
+};

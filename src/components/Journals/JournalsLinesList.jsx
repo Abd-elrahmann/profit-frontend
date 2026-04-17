@@ -1,5 +1,5 @@
 import React from "react";
-import { Paper, Typography, Alert } from "@mui/material";
+import { Paper, Alert } from "@mui/material";
 import JournalsLinesTable from "./JournalsLinesTable";
 import JournalsLinesCards from "./JournalsLinesCards";
 import { isJournalBalanced } from "./journalsUtils";
@@ -25,15 +25,6 @@ export default function JournalsLinesList({
         bgcolor: "background.paper",
       }}
     >
-      <Typography
-        variant="h6"
-        fontWeight="bold"
-        mb={3}
-        color="primary.main"
-        textAlign="center"
-      >
-        بنود القيد
-      </Typography>
       {journalLines.length === 0 ? (
         <Alert severity="info">لا توجد بنود مضافة</Alert>
       ) : (
@@ -74,4 +65,4 @@ export default function JournalsLinesList({
       )}
     </Paper>
   );
-}
+}

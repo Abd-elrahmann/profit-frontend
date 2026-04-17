@@ -66,7 +66,7 @@ const LogsToolbar = ({
     { value: "PartnerWithdrawals", label: "الانسحابات" },
     { value: "Expenses", label: "المصروفات" },
     { value: "Income Statement", label: "قائمة الدخل" },
-    { value: "Chart of Accounts", label: "شجرة الحسابات" },
+    { value: "Chart of Accounts", label: "دليل الحسابات" },
     { value: "Journal Entries", label: "القيود اليومية" },
     { value: "General Ledger", label: "دفتر الأستاذ العام" },
     { value: "Period", label: "إقفال الفترات" },

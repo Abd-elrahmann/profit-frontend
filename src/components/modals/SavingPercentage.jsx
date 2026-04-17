@@ -1,26 +1,66 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { AccountBalanceWallet as AccountBalanceWalletIcon, Check as CheckIcon, Close as CloseIcon } from "@mui/icons-material";
+import { Autocomplete, Chip, TextField } from "@mui/material";
 const SavingPercentage = ({
   open,
   onClose,
   onApply,
   currentPercentage = "",
-  totalProfit = 0,
+  partners = [],
+  selectedPartnerIds = [],
 }) => {
   const [savingAmount, setSavingAmount] = useState("");
   const [calculatedPercentage, setCalculatedPercentage] = useState(0);
   const [error, setError] = useState("");
+  const partnerOptions = useMemo(
+    () =>
+      partners.map((partner) => ({
+        id: Number(partner.partnerId),
+        name: partner.partnerName || "شريك",
+        profit: Number(partner.finalProfit || partner.totalProfit || 0),
+      })),
+    [partners]
+  );
+  const [selectedPartners, setSelectedPartners] = useState([]);
+
+  const selectedPartnersProfit = selectedPartners.reduce(
+    (sum, partner) => sum + Number(partner.profit || 0),
+    0
+  );
+
   useEffect(() => {
-    if (open && currentPercentage && totalProfit > 0) {
-      const amount = (currentPercentage / 100) * totalProfit;
+    if (!open) return;
+
+    if (!partnerOptions.length) {
+      setSelectedPartners([]);
+      return;
+    }
+
+    const hasSelection = Array.isArray(selectedPartnerIds) && selectedPartnerIds.length > 0;
+    const initialSelection = hasSelection
+      ? partnerOptions.filter((option) => selectedPartnerIds.includes(option.id))
+      : [];
+
+    setSelectedPartners(initialSelection);
+  }, [open, partnerOptions, selectedPartnerIds]);
+
+  useEffect(() => {
+    if (open && currentPercentage && selectedPartnersProfit > 0) {
+      const amount = (currentPercentage / 100) * selectedPartnersProfit;
       setSavingAmount(amount.toString());
       setCalculatedPercentage(currentPercentage);
     } else if (open) {
       setSavingAmount("");
       setCalculatedPercentage(0);
     }
-  }, [open, currentPercentage, totalProfit]);
+  }, [open, currentPercentage, selectedPartnersProfit]);
+
   const handleSubmit = () => {
+    if (!selectedPartners.length) {
+      setError("من فضلك اختر مساهم واحد على الأقل");
+      return;
+    }
+
     if (savingAmount === "") {
       setError("من فضلك ادخل مبلغ الادخار");
       return;
@@ -30,20 +70,23 @@ const SavingPercentage = ({
       setError("المبلغ يجب أن يكون أكبر من صفر");
       return;
     }
-    if (totalProfit > 0 && numericAmount > totalProfit) {
-      setError("لا يمكن أن يكون مبلغ الادخار أكبر من إجمالي الأرباح");
+    if (selectedPartnersProfit > 0 && numericAmount > selectedPartnersProfit) {
+      setError("لا يمكن أن يكون مبلغ الادخار أكبر من إجمالي أرباح المساهمين المختارين");
       return;
     }
-    const percentage = totalProfit > 0 ? (numericAmount / totalProfit) * 100 : 0;
-    onApply(percentage);
+    const percentage = selectedPartnersProfit > 0 ? (numericAmount / selectedPartnersProfit) * 100 : 0;
+    onApply({
+      percentage,
+      partnerIds: selectedPartners.map((partner) => partner.id),
+    });
     onClose();
   };
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setSavingAmount("");
     setCalculatedPercentage(0);
     setError("");
     onClose();
-  };
+  }, [onClose]);
   const handleAmountChange = (value) => {
     setSavingAmount(value);
     if (value === "") {
@@ -52,14 +95,14 @@ const SavingPercentage = ({
       return;
     }
     const numericAmount = Number(value);
-    if (totalProfit > 0) {
-      const percentage = (numericAmount / totalProfit) * 100;
+    if (selectedPartnersProfit > 0) {
+      const percentage = (numericAmount / selectedPartnersProfit) * 100;
       setCalculatedPercentage(Math.min(100, Math.max(0, percentage)));
     }
     setError("");
   };
   const fmt = (n) => (n ?? 0).toLocaleString("en-US");
-  const remaining = totalProfit - Number(savingAmount || 0);
+  const remaining = selectedPartnersProfit - Number(savingAmount || 0);
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") handleClose();
@@ -72,7 +115,7 @@ const SavingPercentage = ({
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [open, handleClose]);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -81,7 +124,7 @@ const SavingPercentage = ({
         onClick={handleClose}
         aria-hidden="true"
       />
-      <div className="relative bg-white dark:bg-background-dark rounded-xl shadow-xl max-w-md w-full overflow-hidden">
+      <div className="relative bg-white dark:bg-background-dark rounded-xl shadow-xl max-w-md w-full overflow-visible">
         {}
         <div className="flex items-center justify-center gap-2 p-4 border-b border-primary/10 bg-primary/5">
           <AccountBalanceWalletIcon className="text-primary" sx={{ fontSize: 28 }} />
@@ -91,6 +134,47 @@ const SavingPercentage = ({
         </div>
         {}
         <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              المساهمين المراد الادخار لهم
+            </label>
+            <Autocomplete
+              multiple
+              size="small"
+              disablePortal
+              filterSelectedOptions
+              options={partnerOptions}
+              value={selectedPartners}
+              onChange={(_, value) => {
+                setSelectedPartners(value);
+                setError("");
+              }}
+              disableCloseOnSelect
+              getOptionLabel={(option) => option?.name || ""}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    key={option.id}
+                    label={option.name}
+                    size="small"
+                    {...getTagProps({ index })}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="اختر المساهمين"
+                  variant="outlined"
+                />
+              )}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              تم اختيار {selectedPartners.length} من {partnerOptions.length}
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               مبلغ الادخار
@@ -114,7 +198,7 @@ const SavingPercentage = ({
                 </span>
               </p>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                من إجمالي الأرباح: {fmt(totalProfit)}
+                من إجمالي أرباح المختارين: {fmt(selectedPartnersProfit)}
               </p>
               <p className="text-sm">
                 المبلغ المتبقي:{" "}
@@ -160,4 +244,4 @@ const SavingPercentage = ({
     </div>
   );
 };
-export default SavingPercentage;
+export default SavingPercentage;

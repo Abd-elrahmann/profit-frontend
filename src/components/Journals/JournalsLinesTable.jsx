@@ -6,7 +6,6 @@ import {
   TableHead,
   Typography,
   IconButton,
-  Chip,
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
@@ -32,11 +31,10 @@ export default function JournalsLinesTable({
         <TableHead>
           <StyledTableRow>
             <StyledTableCell align="center">الحساب</StyledTableCell>
-            <StyledTableCell align="center">الوصف</StyledTableCell>
-            <StyledTableCell align="center">نوع الحساب</StyledTableCell>
             <StyledTableCell align="center">مدين</StyledTableCell>
             <StyledTableCell align="center">دائن</StyledTableCell>
-            <StyledTableCell align="center">الإجمالي</StyledTableCell>
+            <StyledTableCell align="center">الوصف</StyledTableCell>
+            <StyledTableCell align="center">الفرق</StyledTableCell>
             {canEdit && (
               <StyledTableCell align="center" className="hide-on-print">
                 الإجراءات
@@ -51,21 +49,13 @@ export default function JournalsLinesTable({
                 {line.account?.code} - {line.account?.name}
               </StyledTableCell>
               <StyledTableCell align="center">
-                {line.description || "-"}
-              </StyledTableCell>
-              <StyledTableCell align="center">
-                <Chip
-                  label={(line.debit || 0) > 0 ? "مدين" : "دائن"}
-                  color={(line.debit || 0) > 0 ? "error" : "success"}
-                  size="small"
-                  variant="outlined"
-                />
-              </StyledTableCell>
-              <StyledTableCell align="center">
                 {formatNumber(line.debit)}
               </StyledTableCell>
               <StyledTableCell align="center">
                 {formatNumber(line.credit)}
+              </StyledTableCell>
+              <StyledTableCell align="center">
+                {line.description || "-"}
               </StyledTableCell>
               <StyledTableCell align="center">
                 <Typography
@@ -100,7 +90,7 @@ export default function JournalsLinesTable({
               backgroundColor: isDarkMode ? "background.default" : "#f5f5f5",
             }}
           >
-            <StyledTableCell colSpan={3} align="center">
+            <StyledTableCell colSpan={1} align="center">
               <Typography fontWeight="bold">الإجمالي</Typography>
             </StyledTableCell>
             <StyledTableCell align="center">
@@ -114,6 +104,9 @@ export default function JournalsLinesTable({
               </Typography>
             </StyledTableCell>
             <StyledTableCell align="center">
+              <Typography fontWeight="bold">-</Typography>
+            </StyledTableCell>
+            <StyledTableCell align="center">
               <Typography fontWeight="bold">
                 {formatNumber(totalsForTable.totalBalance)}
               </Typography>
@@ -124,4 +117,4 @@ export default function JournalsLinesTable({
       </Table>
     </TableContainer>
   );
-}
+}

@@ -15,8 +15,8 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon, Search as SearchIcon } from "@mui/icons-material";
 import { debounce } from "../../utilities/debounce";
-import { transparentSearchTextFieldSx } from "../../utilities/searchInputStyles";
 import Api from "../../config/Api";
+import { JOURNAL_SOURCE_TYPE_OPTIONS } from "../Journals/journalsUtils";
 const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
   const [searchFilters, setSearchFilters] = useState({
     reference: "",
@@ -90,21 +90,9 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
     });
     setSelectedUser(null);
   };
-  const sourceTypeOptions = [
-    { value: "LOAN", label: "سلفة" },
-    { value: "REPAYMENT", label: "سداد" },
-    { value: "PARTNER", label: "شريك" },
-    { value: "PARTNER_TRANSACTION_WITHDRAWAL", label: "سحب مالي لشريك" },
-    { value: "PARTNER_TRANSACTION_DEPOSIT", label: "إيداع مالي لشريك" },
-    { value: "PERIOD_CLOSING", label: "إقفال فترة" },
-    { value: "COMPANY_PROFIT_WITHDRAWAL", label: "سحب ربح شركة" },
-    { value: "EXPENSES", label: "مصروف" },
-    { value: "OTHER", label: "أخرى" },
-  ];
   const statusOptions = [
-    { value: "DRAFT", label: "مسودة" },
+    { value: "DRAFT", label: "غير معتمد" },
     { value: "POSTED", label: "معتمد" },
-    { value: "CANCELLED", label: "ملغي" },
   ];
   const typeOptions = [
     { value: "GENERAL", label: "عام" },
@@ -133,7 +121,8 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <TextField
-              sx={{ width: "250px", ...transparentSearchTextFieldSx }}
+              sx={{ width: "250px" }}
+              variant="outlined"
               label="رقم القيد"
               value={searchFilters.reference}
               onChange={(e) => handleFilterChange("reference", e.target.value)}
@@ -142,7 +131,8 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
           </Grid>
           <Grid item xs={12} md={6}>
             <TextField
-              sx={{ width: "250px", ...transparentSearchTextFieldSx }}
+              sx={{ width: "250px" }}
+              variant="outlined"
               label="الوصف"
               value={searchFilters.description}
               onChange={(e) => handleFilterChange("description", e.target.value)}
@@ -158,7 +148,7 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
               onChange={(e) => handleFilterChange("sourceType", e.target.value)}
             >
               <MenuItem value="">كل أنواع المصادر</MenuItem>
-              {sourceTypeOptions.map((option) => (
+              {JOURNAL_SOURCE_TYPE_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>
@@ -191,7 +181,8 @@ const AdvancedSearchModal = ({ open, onClose, onSearch }) => {
                   {...params}
                   label="اسم المعتمد"
                   placeholder="ابحث باسم المعتمد..."
-                  sx={{ width: "250px", ...transparentSearchTextFieldSx }}
+                  sx={{ width: "250px" }}
+                  variant="outlined"
                 />
               )}
               isOptionEqualToValue={(option, value) => option.id === value.id}

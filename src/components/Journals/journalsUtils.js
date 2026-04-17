@@ -16,33 +16,56 @@ export const isJournalBalanced = (debit, credit) => {
   const difference = Math.abs(debit - credit);
   return difference < 0.01;
 };
+const JOURNAL_SOURCE_TYPE_LABELS = {
+  LOAN: "سلفة",
+  SMALL_LOAN: "سلفة صغيرة",
+  REPAYMENT: "سداد دفعة",
+  LOAN_INTEREST: "فوائد سلفة",
+  LOAN_CONVERSION: "نقل مديونية",
+  PARTNER: "انضمام شريك",
+  PERIOD_CLOSING: "إقفال فترة",
+  PARTNER_TRANSACTION_WITHDRAWAL: "سحب مالي لشريك",
+  COMPANY_PROFIT_WITHDRAWAL: "سحب ربح شركة",
+  PARTNER_TRANSACTION_DEPOSIT: "إيداع مالي لشريك",
+  PARTNER_PROFIT_WITHDRAWAL: "سحب ارباح شريك",
+  PARTNER_SAVING_WITHDRAWAL: "سحب ادخار شريك",
+  EXPENSES: "مصروف",
+  LOSSES: "خسائر",
+  SAVING: "ادخار",
+  PARTNER_WITHDRAWING: "انسحاب مالي لشريك",
+  ZAKAT: "سحب زكاة",
+  OTHER: "أخرى",
+};
+
+/** ترتيب يطابق enum JournalSourceType في Prisma */
+export const JOURNAL_SOURCE_TYPE_OPTIONS = [
+  "LOAN",
+  "REPAYMENT",
+  "PARTNER",
+  "PARTNER_TRANSACTION_WITHDRAWAL",
+  "PARTNER_TRANSACTION_DEPOSIT",
+  "PARTNER_PROFIT_WITHDRAWAL",
+  "PARTNER_SAVING_WITHDRAWAL",
+  "PERIOD_CLOSING",
+  "ZAKAT",
+  "SAVING",
+  "COMPANY_PROFIT_WITHDRAWAL",
+  "EXPENSES",
+  "LOSSES",
+  "PARTNER_WITHDRAWING",
+  "SMALL_LOAN",
+  "LOAN_CONVERSION",
+  "LOAN_INTEREST",
+  "OTHER",
+].map((value) => ({ value, label: JOURNAL_SOURCE_TYPE_LABELS[value] }));
+
 export const getJournalSourceTypeText = (sourceType) => {
-  const sourceTypeMap = {
-    LOAN: "سلفة",
-    SMALL_LOAN: "سلفة صغيرة",
-    REPAYMENT: "سداد دفعة",
-    LOAN_INTEREST: "فوائد سلفة",
-    LOAN_CONVERSION: "نقل مديونية",
-    PARTNER: "انضمام شريك",
-    PERIOD_CLOSING: "إقفال فترة",
-    PARTNER_TRANSACTION_WITHDRAWAL: "سحب مالي لشريك",
-    COMPANY_PROFIT_WITHDRAWAL: "سحب ربح شركة",
-    PARTNER_TRANSACTION_DEPOSIT: "إيداع مالي لشريك",
-    EXPENSES: "مصروف",
-    LOSSES: "خسائر",
-    SAVING: "ادخار",
-    PARTNER_WITHDRAWING: "انسحاب مالي لشريك",
-    ZAKAT: "سحب زكاة",
-    PARTNER_PROFIT_WITHDRAWAL: "سحب ارباح شريك",
-    OTHER: "أخرى",
-  };
-  return sourceTypeMap[sourceType] || sourceType || "-";
+  return JOURNAL_SOURCE_TYPE_LABELS[sourceType] || sourceType || "-";
 };
 export const getStatusText = (status) => {
   const statusMap = {
-    DRAFT: "مسودة",
+    DRAFT: "غير معتمد",
     POSTED: "معتمد",
-    CANCELLED: "ملغي",
   };
   return statusMap[status] || status;
 };
@@ -52,8 +75,6 @@ export const getStatusColor = (status) => {
       return "warning";
     case "POSTED":
       return "success";
-    case "CANCELLED":
-      return "error";
     default:
       return "default";
   }
@@ -135,4 +156,4 @@ export const mapJournalLinesFromApi = (lines) => {
     balance: line.balance || 0,
     description: line.description || "",
   }));
-};
+};

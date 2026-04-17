@@ -315,15 +315,20 @@ const Loans = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source, activeTab]);
   useEffect(() => {
-    if (activeTab === 1 && loanForm.source && previousSourceRef.current !== loanForm.source && previousSourceRef.current !== null) {
+    if (
+      activeTab === 1 &&
+      loanForm.source &&
+      previousSourceRef.current !== loanForm.source &&
+      previousSourceRef.current !== null &&
+      !isEditMode
+    ) {
       setLoanForm((prev) => ({
         ...prev,
         amount: "",
       }));
     }
     previousSourceRef.current = loanForm.source;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loanForm.source]);
+  }, [loanForm.source, activeTab, isEditMode]);
   const handleConversionSuccess = useCallback(() => {
     setIsClientConversion(false);
     setLoanForConversion(null);
@@ -897,35 +902,113 @@ const Loans = () => {
       return;
     }
     try {
-      let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
-      if (totalInterest === 0 && loanForm.interestRate !== "") {
-        const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
-        const interestRate = parseFloat(loanForm.interestRate) || 0;
-        totalInterest = (amount * interestRate) / 100;
-      }
-      const loanData = {
-        amount: parseFloat(loanForm.amount.replace(/,/g, "")),
-        TotalInterest: totalInterest,
-        InterestPercentage: parseFloat(loanForm.interestRate),
-        paymentAmount: parseFloat(loanForm.paymentAmount.replace(/,/g, "")),
-        type: loanForm.type,
-        source: loanForm.source,
-        startDate: loanForm.startDate ? new Date(loanForm.startDate).toISOString() : undefined,
-        repaymentDay: new Date(loanForm.repaymentDay).toISOString(),
-        bankAccountId: selectedBank?.id || null,
-        partnerId: selectedPartner?.id || null,
-        kafeelId: selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null,
-        issuanceCity: loanForm.issuanceCity || null,
-        paymentCity: loanForm.paymentCity || null,
-        promissoryNoteType: loanForm.promissoryNoteType,
-        promissoryNoteDate: loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate
-          ? new Date(loanForm.promissoryNoteDate).toISOString()
-          : null,
+      const normalizeNumber = (value) => {
+        if (value === null || value === undefined || value === "") return null;
+        const parsed = parseFloat(String(value).replace(/,/g, ""));
+        return Number.isNaN(parsed) ? null : parsed;
       };
-      const oldAmount = selectedLoan.amount;
-      const newAmount = loanData.amount;
-      const amountChanged = oldAmount !== newAmount;
-      await updateLoan(selectedLoan.id, loanData);
+      const dateOnly = (value) => (value ? String(value).split("T")[0] : "");
+      const payload = {};
+
+      const amountValue = normalizeNumber(loanForm.amount);
+      if (amountValue !== null && amountValue !== Number(selectedLoan.amount || 0)) {
+        payload.amount = amountValue;
+      }
+
+      const totalInterestValue = normalizeNumber(loanForm.totalInterest);
+      if (
+        totalInterestValue !== null &&
+        totalInterestValue !== Number(selectedLoan.interestAmount || 0)
+      ) {
+        payload.TotalInterest = totalInterestValue;
+      }
+
+      const interestRateValue = normalizeNumber(loanForm.interestRate);
+      if (
+        interestRateValue !== null &&
+        interestRateValue !== Number(selectedLoan.interestRate || 0)
+      ) {
+        payload.InterestPercentage = interestRateValue;
+      }
+
+      const paymentAmountValue = normalizeNumber(loanForm.paymentAmount);
+      if (
+        paymentAmountValue !== null &&
+        paymentAmountValue !== Number(selectedLoan.paymentAmount || 0)
+      ) {
+        payload.paymentAmount = paymentAmountValue;
+      }
+
+      if ((loanForm.type || "") !== (selectedLoan.type || "")) {
+        payload.type = loanForm.type;
+      }
+
+      if ((loanForm.source || "") !== (selectedLoan.source || "")) {
+        payload.source = loanForm.source;
+      }
+
+      const startDateValue = dateOnly(loanForm.startDate);
+      if (startDateValue && startDateValue !== dateOnly(selectedLoan.startDate)) {
+        payload.startDate = new Date(startDateValue).toISOString();
+      }
+
+      const repaymentDayValue = dateOnly(loanForm.repaymentDay);
+      if (repaymentDayValue && repaymentDayValue !== dateOnly(selectedLoan.repaymentDay)) {
+        payload.repaymentDay = new Date(repaymentDayValue).toISOString();
+      }
+
+      const bankAccountId = selectedBank?.id || null;
+      const oldBankAccountId = selectedLoan?.bankAccount?.id || null;
+      if (bankAccountId !== oldBankAccountId) {
+        payload.bankAccountId = bankAccountId;
+      }
+
+      const partnerId = selectedPartner?.id || null;
+      const oldPartnerId = selectedLoan?.partner?.id || null;
+      if (partnerId !== oldPartnerId) {
+        payload.partnerId = partnerId;
+      }
+
+      const kafeelId = selectedKafeel?.id ?? selectedLoan?.kafeel?.id ?? null;
+      const oldKafeelId = selectedLoan?.kafeel?.id ?? null;
+      if (kafeelId !== oldKafeelId) {
+        payload.kafeelId = kafeelId;
+      }
+
+      const issuanceCity = loanForm.issuanceCity || null;
+      if ((issuanceCity || "") !== (selectedLoan.issuanceCity || "")) {
+        payload.issuanceCity = issuanceCity;
+      }
+
+      const paymentCity = loanForm.paymentCity || null;
+      if ((paymentCity || "") !== (selectedLoan.paymentCity || "")) {
+        payload.paymentCity = paymentCity;
+      }
+
+      if ((loanForm.promissoryNoteType || "") !== (selectedLoan.promissoryNoteType || "")) {
+        payload.promissoryNoteType = loanForm.promissoryNoteType;
+      }
+
+      const promissoryNoteDateValue =
+        loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate
+          ? dateOnly(loanForm.promissoryNoteDate)
+          : "";
+      const oldPromissoryNoteDateValue = dateOnly(selectedLoan.promissoryNoteDate);
+      if (
+        (promissoryNoteDateValue || "") !== (oldPromissoryNoteDateValue || "")
+      ) {
+        payload.promissoryNoteDate = promissoryNoteDateValue
+          ? new Date(promissoryNoteDateValue).toISOString()
+          : null;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        notifyWarning("لا توجد تعديلات لحفظها");
+        return;
+      }
+
+      const amountChanged = Object.prototype.hasOwnProperty.call(payload, "amount");
+      await updateLoan(selectedLoan.id, payload);
       notifySuccess("تم تعديل السلفة بنجاح");
       if (amountChanged) {
         const updatedLoan = await getLoanById(selectedLoan.id);
@@ -937,10 +1020,10 @@ const Loans = () => {
         try {
           const previewLoanData = {
             id: updatedLoan.id,
-            amount: newAmount,
-            TotalInterest: loanData.TotalInterest,
-            paymentAmount: loanData.paymentAmount,
-            startDate: loanData.startDate,
+            amount: payload.amount ?? updatedLoan.amount,
+            TotalInterest: payload.TotalInterest ?? updatedLoan.interestAmount,
+            paymentAmount: payload.paymentAmount ?? updatedLoan.paymentAmount,
+            startDate: payload.startDate ?? updatedLoan.startDate,
             client: selectedClient?.client || updatedLoan.client,
           };
           const debtAckHtml =
@@ -1208,6 +1291,14 @@ const Loans = () => {
   };
   const simulationSummary = getSimulationSummary();
   const isFormValid = useMemo(() => {
+    if (isEditMode) {
+      return (
+        !!selectedLoan &&
+        !!loanForm.source &&
+        String(loanForm.source).trim() !== ""
+      );
+    }
+
     const isPromissoryNoteValid = 
       loanForm.promissoryNoteType && 
       loanForm.promissoryNoteType.trim() !== "" &&
@@ -1236,6 +1327,8 @@ const Loans = () => {
       isPromissoryNoteValid
     );
   }, [
+    isEditMode,
+    selectedLoan,
     selectedClient,
     selectedPartner,
     selectedBank,

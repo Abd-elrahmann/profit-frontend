@@ -4,12 +4,10 @@ import {
   Tabs,
   Tab,
   Button,
-  InputBase,
   IconButton,
   Typography,
 } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon, ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-import { transparentSearchInputBaseSx } from "../../utilities/searchInputStyles";
 const tabStyles = (isActive) => ({
   fontWeight: "bold",
   borderBottom: isActive ? "3px solid #0d40a5" : "none",
@@ -41,7 +39,7 @@ export default function JournalsHeader({
   isSmallScreen,
   permissions,
 }) {
-  const hasSearch = Object.keys(searchFilters || {}).length > 0 || searchQuery;
+  const hasSearch = Object.keys(searchFilters || {}).length > 0;
   const canAdd = permissions?.includes("journals_Add");
   if (isSmallScreen) {
     return (
@@ -92,32 +90,17 @@ export default function JournalsHeader({
                 </Button>
               )}
             </Box>
-            <Box sx={{ mb: 2 }}>
-              <InputBase
-                placeholder="ابحث برقم القيد أو الوصف..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                sx={{
-                  width: "100%",
-                  borderRadius: "6px",
-                  p: 1,
-                  border: "1px solid #e0e0e0",
-                  ...transparentSearchInputBaseSx,
-                }}
-              />
-              {hasSearch && (
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  onClick={onClearSearch}
-                  size="small"
-                  sx={{ mt: 1 }}
-                  fullWidth
-                >
-                  مسح البحث
-                </Button>
-              )}
-            </Box>
+            {hasSearch && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={onClearSearch}
+                size="small"
+                fullWidth
+              >
+                مسح البحث
+              </Button>
+            )}
           </Box>
         )}
       </Box>
@@ -152,20 +135,6 @@ export default function JournalsHeader({
       </Tabs>
       {activeTab === 0 && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {canAdd && (
-            <InputBase
-              placeholder="ابحث برقم القيد..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              sx={{
-                width: "280px",
-                borderRadius: "6px",
-                p: 1,
-                border: "1px solid #e0e0e0",
-                ...transparentSearchInputBaseSx,
-              }}
-            />
-          )}
           {canAdd && (
             <Button
               variant="outlined"

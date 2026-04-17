@@ -159,7 +159,7 @@ export const sidebarItems = [
   },
   {
     path: '/chart-of-accounts',
-    label: 'شجرة الحسابات',
+    label: 'دليل الحسابات',
     icon: AccountBalance,
     module: 'accounts',
     requiresPermissions: true,
@@ -303,4 +303,4 @@ export const getSidebarMenuItems = () => {
     }
   });
   return result;
-};
+};

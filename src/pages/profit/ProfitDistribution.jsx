@@ -50,6 +50,7 @@ const ProfitDistribution = () => {
   const [isDistributing, setIsDistributing] = useState(false);
   const [enableSaving, setEnableSaving] = useState(false);
   const [savingPercentage, setSavingPercentage] = useState(0);
+  const [selectedSavingPartnerIds, setSelectedSavingPartnerIds] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 480px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
@@ -102,6 +103,7 @@ const ProfitDistribution = () => {
     setSelectedPeriod(null);
     setEnableSaving(false);
     setSavingPercentage(0);
+    setSelectedSavingPartnerIds([]);
   };
   const handleOpenDistributionDialog = (periodId, periodName, action) => {
     setDistributionDialog({
@@ -131,8 +133,18 @@ const ProfitDistribution = () => {
       periodId: null,
     });
   };
-  const handleApplySavingPercentage = (percentage) => {
+  const handleApplySavingPercentage = (savingData) => {
+    if (typeof savingData === "number") {
+      setSavingPercentage(savingData);
+      setSelectedSavingPartnerIds([]);
+      setEnableSaving(true);
+      return;
+    }
+
+    const percentage = Number(savingData?.percentage || 0);
+    const partnerIds = Array.isArray(savingData?.partnerIds) ? savingData.partnerIds : [];
     setSavingPercentage(percentage);
+    setSelectedSavingPartnerIds(partnerIds);
     setEnableSaving(true);
   };
   const handleConfirmDistribution = async () => {
@@ -140,15 +152,27 @@ const ProfitDistribution = () => {
     try {
       setIsDistributing(true);
       if (action === "post") {
-        const totalPartnerProfit = periodData.partners?.reduce((sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0), 0) || 0;
+        const sourcePartners = periodData?.partners || [];
+        const targetPartners = selectedSavingPartnerIds.length
+          ? sourcePartners.filter((partner) => selectedSavingPartnerIds.includes(partner.partnerId))
+          : sourcePartners;
+        const totalPartnerProfit = targetPartners.reduce(
+          (sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0),
+          0
+        );
         const savingAmount = enableSaving ? totalPartnerProfit * (savingPercentage / 100) : 0;
-        await postDistribution(periodId, savingAmount);
+        await postDistribution(
+          periodId,
+          savingAmount,
+          enableSaving ? selectedSavingPartnerIds : undefined
+        );
         notifySuccess(`تم توزيع الأرباح بنجاح ${enableSaving ? `مع ادخار ${formatNumber(savingAmount)}` : ''}`);
       }
       queryClient.invalidateQueries(["closed-periods"]);
       handleCloseDistributionDialog();
       setEnableSaving(false);
       setSavingPercentage(0);
+      setSelectedSavingPartnerIds([]);
     } catch (error) {
       notifyError(error.response?.data?.message || "حدث خطأ أثناء العملية");
     } finally {
@@ -200,11 +224,22 @@ const ProfitDistribution = () => {
       }
     });
   };
+  const partnerList = periodData?.partners || [];
+  const savingTargetPartners = selectedSavingPartnerIds.length
+    ? partnerList.filter((partner) => selectedSavingPartnerIds.includes(partner.partnerId))
+    : partnerList;
+  const selectedPartnersProfit = savingTargetPartners.reduce(
+    (sum, partner) => sum + (partner.finalProfit || partner.totalProfit || 0),
+    0
+  );
   const profitAfterSaving = calculateProfitAfterSaving(
     periodData,
     enableSaving,
     savingPercentage
   );
+  const savedAmountPreview = enableSaving
+    ? selectedPartnersProfit * (savingPercentage / 100)
+    : profitAfterSaving.savedAmount;
   const renderClosedPeriodsTable = () => (
     <ProfitDistributionTable
       closedPeriods={closedPeriods}
@@ -353,7 +388,8 @@ const ProfitDistribution = () => {
         onClose={handleCloseSavingDialog}
         onApply={handleApplySavingPercentage}
         currentPercentage={savingPercentage}
-        totalProfit={periodData?.partners?.reduce((sum, p) => sum + (p.finalProfit || p.totalProfit || 0), 0) || 0}
+        partners={periodData?.partners || []}
+        selectedPartnerIds={selectedSavingPartnerIds}
       />
       {distributionDialog.action === "post" && (
         <ProfitDistributionConfirmDialog
@@ -363,7 +399,7 @@ const ProfitDistribution = () => {
           periodName={distributionDialog.periodName}
           enableSaving={enableSaving}
           savingPercentage={savingPercentage}
-          savedAmount={profitAfterSaving.savedAmount}
+          savedAmount={savedAmountPreview}
           isDistributing={isDistributing}
         />
       )}

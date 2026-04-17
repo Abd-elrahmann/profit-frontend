@@ -2,8 +2,8 @@ import React from "react";
 import {
   Paper,
   Typography,
-  Stack,
   Button,
+  Box,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -42,6 +42,16 @@ export default function JournalsActions({
   const balanced = totals
     ? isJournalBalanced(totals.totalDebit, totals.totalCredit)
     : false;
+
+  const actionButtonSx = {
+    minWidth: 120,
+    px: 2.25,
+    py: 0.85,
+    fontSize: "0.85rem",
+    lineHeight: 1.4,
+    borderRadius: 2,
+    whiteSpace: "nowrap",
+  };
   return (
     <Paper
       sx={{
@@ -51,19 +61,28 @@ export default function JournalsActions({
         bgcolor: "background.paper",
       }}
     >
-      <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
-        الإجراءات
-      </Typography>
-      <Stack spacing={1}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+          flexWrap: "wrap",
+        }}
+      >
+        <Typography variant="subtitle1" color="primary" fontWeight="bold">
+          الإجراءات
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
         {showExportButtons && (
           <>
             <Button
               variant="outlined"
               startIcon={<PDFIcon />}
               onClick={onExportPDF}
-              fullWidth
               size="small"
               color="error"
+              sx={actionButtonSx}
             >
               تصدير PDF
             </Button>
@@ -71,9 +90,9 @@ export default function JournalsActions({
               variant="outlined"
               startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
               onClick={onExportExcel}
-              fullWidth
               size="small"
               color="success"
+              sx={actionButtonSx}
             >
               تصدير Excel
             </Button>
@@ -86,19 +105,10 @@ export default function JournalsActions({
               startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
               onClick={onCreateJournal}
               disabled={!balanced}
-              fullWidth
               size="small"
-              sx={{ bgcolor: "success.main" }}
+              sx={{ ...actionButtonSx, bgcolor: "success.main", py: 1.2 }}
             >
               حفظ القيد
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={onCancelAdd}
-              fullWidth
-              size="small"
-            >
-              إلغاء
             </Button>
           </>
         ) : canEdit ? (
@@ -107,8 +117,8 @@ export default function JournalsActions({
               variant="contained"
               startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
               onClick={onEditClick}
-              fullWidth
               size="small"
+              sx={actionButtonSx}
             >
               تعديل القيد
             </Button>
@@ -117,9 +127,8 @@ export default function JournalsActions({
                 variant="contained"
                 startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
                 onClick={onPostJournal}
-                fullWidth
                 size="small"
-                sx={{ bgcolor: "success.main" }}
+                sx={{ ...actionButtonSx, bgcolor: "success.main" }}
               >
                 اعتماد القيد
               </Button>
@@ -129,9 +138,9 @@ export default function JournalsActions({
                 variant="outlined"
                 startIcon={<DeleteIcon sx={{ marginLeft: "10px" }} />}
                 onClick={onDeleteClick}
-                fullWidth
                 size="small"
                 color="error"
+                sx={actionButtonSx}
               >
                 حذف القيد
               </Button>
@@ -144,17 +153,16 @@ export default function JournalsActions({
               startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
               onClick={onUpdateJournal}
               disabled={!balanced}
-              fullWidth
               size="small"
-              sx={{ bgcolor: "success.main" }}
+              sx={{ ...actionButtonSx, bgcolor: "success.main" }}
             >
               حفظ التعديلات
             </Button>
             <Button
               variant="outlined"
               onClick={onCancelEdit}
-              fullWidth
               size="small"
+              sx={actionButtonSx}
             >
               إلغاء التعديل
             </Button>
@@ -164,14 +172,15 @@ export default function JournalsActions({
             variant="outlined"
             startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
             onClick={onUnpostJournal}
-            fullWidth
             size="small"
             color="error"
+            sx={actionButtonSx}
           >
             إلغاء الاعتماد
           </Button>
         ) : null}
-      </Stack>
+        </Box>
+      </Box>
     </Paper>
   );
-}
+}

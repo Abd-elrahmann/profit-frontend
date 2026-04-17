@@ -232,10 +232,33 @@ const PaymentProofGenerator = React.forwardRef(({
       const { gregorianDate, hijriDate } = getCurrentDates();
       const finalDate = `${hijriDate}\n${gregorianDate}`;
       const receiptNum = dataToUse.receiptNumber || receiptNumber || 'غير محدد';
+      const fallbackRemainingFromInstallments = Array.isArray(dataToUse?.loanData?.repayments)
+        ? dataToUse.loanData.repayments.reduce(
+            (sum, repayment) => sum + Number(repayment?.remaining || 0),
+            0
+          )
+        : 0;
+      const currentLoanRemaining = Number(
+        dataToUse?.loanData?.pagination?.totalRemainingAmount ??
+        dataToUse?.loanData?.remainingAmount ??
+        fallbackRemainingFromInstallments
+      );
       let filledTemplate = templateContent;
       if (isBulkOperation) {
-        const totalAmount = dataToUse.installmentsData.reduce((sum, inst) => sum + (inst.amount || 0), 0);
+        const totalAmount = dataToUse.installmentsData.reduce(
+          (sum, inst) => sum + (inst.amount || 0),
+          0
+        );
+        const totalSettledAmount = dataToUse.installmentsData.reduce((sum, inst) => {
+          const settledForThisInstallment =
+            inst?.status === 'PARTIAL_PAID'
+              ? Number(inst?.remaining || 0)
+              : Number(inst?.amount || 0);
+          return sum + settledForThisInstallment;
+        }, 0);
         const totalAmountInWords = `${numberToArabicWords(totalAmount)} ريال`;
+        const remainingAfterBulkPayment = Math.max(0, currentLoanRemaining - totalSettledAmount);
+        const remainingAfterBulkPaymentText = `${remainingAfterBulkPayment.toLocaleString('en-US')} ريال`;
         const installmentsTable = `
           <table style="width: 100%; border-collapse: collapse; margin: 15px 0; border: 1px solid #ddd;">
             <thead>
@@ -274,6 +297,7 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{جدول_الدفعات}}/g, installmentsTable)
           .replace(/{{المبلغ_رقما}}/g, `${totalAmount?.toLocaleString('en-US') || '0'}`)
           .replace(/{{المبلغ_كتابة}}/g, `${totalAmountInWords}`)
+          .replace(/{{المتبقي_من_السلفة}}/g, remainingAfterBulkPaymentText)
           .replace(/{{التاريخ_الهجري}}/g, hijriDate)
           .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
           .replace(/{{تاريخ_السداد}}/g, finalDate)
@@ -283,6 +307,12 @@ const PaymentProofGenerator = React.forwardRef(({
         const discount = dataToUse.discount || 0;
         const finalAmount = Math.max(0, originalAmount - discount);
         const amountInWords = `${numberToArabicWords(finalAmount)} ريال`;
+        const settledAmountForInstallment =
+          dataToUse?.installmentData?.status === 'PARTIAL_PAID'
+            ? Number(dataToUse?.installmentData?.remaining || 0)
+            : Number(originalAmount || 0);
+        const remainingAfterPayment = Math.max(0, currentLoanRemaining - settledAmountForInstallment);
+        const remainingAfterPaymentText = `${remainingAfterPayment.toLocaleString('en-US')} ريال`;
         const investorName = dataToUse.investorData?.name || 
                              dataToUse.loanData?.partner?.name || 
                              'ربيش سالم ناصر الهمامي';
@@ -299,6 +329,7 @@ const PaymentProofGenerator = React.forwardRef(({
           .replace(/{{رقم_الايصال}}/g, receiptNum)
           .replace(/{{المبلغ_رقما}}/g, `${finalAmount?.toLocaleString('en-US') || '0'} ريال`)
           .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
+          .replace(/{{المتبقي_من_السلفة}}/g, remainingAfterPaymentText)
           .replace(/{{التاريخ_الهجري}}/g, hijriDate)
           .replace(/{{التاريخ_الميلادي}}/g, gregorianDate)
           .replace(/{{تاريخ_السداد}}/g, finalDate)

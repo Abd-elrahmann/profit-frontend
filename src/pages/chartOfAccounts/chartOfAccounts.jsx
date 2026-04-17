@@ -138,7 +138,7 @@ const ChartOfAccount = () => {
   return (
     <>
       <Helmet>
-        <title>شجرة الحسابات - النظام المالي الذكي</title>
+        <title>دليل الحسابات - النظام المالي الذكي</title>
       </Helmet>
       <div className="flex flex-col min-h-screen  dark:bg-background-dark">
         <ChartOfAccountsHeader

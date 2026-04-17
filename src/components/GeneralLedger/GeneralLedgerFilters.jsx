@@ -57,7 +57,7 @@ const GeneralLedgerFilters = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="ابحث عن الحساب في شجرة الحسابات..."
+                placeholder="ابحث عن الحساب في دليل الحسابات..."
                 size="small"
                 slotProps={{
                   input: {

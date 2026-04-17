@@ -57,94 +57,131 @@ export default function JournalsDetailsForm({
         >
           {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
         </Typography>
-        <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
-          {!isAddMode && (
+        {isAddMode ? (
+          <Grid
+            container
+            spacing={2}
+            mb={4}
+            alignItems="center"
+            justifyContent="center"
+            sx={{ width: "100%", m: 0 }}
+          >
+            <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "center" }}>
+              <TextField
+                sx={{ width: 250 }}
+                label="التاريخ"
+                type="date"
+                value={dateValue}
+                onChange={(e) => onInputChange("date", e.target.value)}
+                disabled={!isEditable}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "center" }}>
+              <TextField
+                sx={{ width: 250 }}
+                label="نوع القيد"
+                select
+                value={typeValue}
+                onChange={(e) => onInputChange("type", e.target.value)}
+                disabled={!isEditable}
+                InputLabelProps={{ shrink: true }}
+              >
+                {JOURNAL_TYPES.map(({ value, label }) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "center" }}>
+              <TextField
+                sx={{ width: 250 }}
+                label="الوصف"
+                value={descriptionValue}
+                onChange={(e) => onInputChange("description", e.target.value)}
+                disabled={!isEditable}
+                multiline
+                rows={1}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+          </Grid>
+        ) : (
+          <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
             <Grid item xs={12} md={6}>
               <TextField
-                label="رقم القيد"
-                value={journalData?.reference || ""}
+                label="التاريخ"
+                type="date"
+                value={dateValue}
+                onChange={(e) => onInputChange("date", e.target.value)}
+                disabled={!isEditable}
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: "250px" }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="نوع القيد"
+                select
+                value={typeValue}
+                onChange={(e) => onInputChange("type", e.target.value)}
+                disabled={!isEditable}
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: "250px" }}
+              >
+                {JOURNAL_TYPES.map(({ value, label }) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="نوع المصدر"
+                value={
+                  journalData?.sourceType
+                    ? getJournalSourceTypeText(journalData.sourceType)
+                    : "لا يوجد"
+                }
                 disabled
                 InputLabelProps={{ shrink: true }}
                 sx={{ width: "250px" }}
               />
             </Grid>
-          )}
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="التاريخ"
-              type="date"
-              value={dateValue}
-              onChange={(e) => onInputChange("date", e.target.value)}
-              disabled={!isEditable}
-              InputLabelProps={{ shrink: true }}
-              sx={{ width: "250px" }}
-            />
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="الحالة"
+                value={getStatusText(journalData?.status)}
+                disabled
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: "250px" }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="المعتمد بواسطة"
+                value={journalData?.postedBy?.name || "لم يتم الاعتماد "}
+                disabled
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: "250px" }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="الوصف"
+                value={descriptionValue}
+                onChange={(e) => onInputChange("description", e.target.value)}
+                disabled={!isEditable}
+                multiline
+                rows={1}
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: "450px" }}
+              />
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="نوع القيد"
-              select
-              value={typeValue}
-              onChange={(e) => onInputChange("type", e.target.value)}
-              disabled={!isEditable}
-              InputLabelProps={{ shrink: true }}
-              sx={{ width: "250px" }}
-            >
-              {JOURNAL_TYPES.map(({ value, label }) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          {!isAddMode && (
-            <>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="نوع المصدر"
-                  value={
-                    journalData?.sourceType
-                      ? getJournalSourceTypeText(journalData.sourceType)
-                      : "لا يوجد"
-                  }
-                  disabled
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ width: "250px" }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="الحالة"
-                  value={getStatusText(journalData?.status)}
-                  disabled
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ width: "250px" }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="المعتمد بواسطة"
-                  value={journalData?.postedBy?.name || "لم يتم الاعتماد "}
-                  disabled
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ width: "250px" }}
-                />
-              </Grid>
-            </>
-          )}
-          <Grid item xs={12}>
-            <TextField
-              label="الوصف"
-              value={descriptionValue}
-              onChange={(e) => onInputChange("description", e.target.value)}
-              disabled={!isEditable}
-              multiline
-              rows={1}
-              InputLabelProps={{ shrink: true }}
-              sx={{ width: "450px" }}
-            />
-          </Grid>
-        </Grid>
+        )}
       </>
     );
     if (embed) {
@@ -169,16 +206,6 @@ export default function JournalsDetailsForm({
         معلومات القيد
       </Typography>
       <Stack spacing={2}>
-        {!isAddMode && (
-          <Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              رقم القيد
-            </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {journalData?.reference || "-"}
-            </Typography>
-          </Box>
-        )}
         <Box>
           <Typography variant="body2" color="textSecondary" gutterBottom>
             التاريخ
@@ -280,4 +307,4 @@ export default function JournalsDetailsForm({
       </Stack>
     </Paper>
   );
-}
+}

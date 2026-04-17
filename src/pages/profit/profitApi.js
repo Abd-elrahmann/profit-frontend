@@ -6,9 +6,10 @@ export const getClosedPeriods = async (periodId = null) => {
   const response = await Api.get(url);
   return response.data;
 };
-export const postDistribution = async (periodId, savingAmount = 0) => {
+export const postDistribution = async (periodId, savingAmount = 0, partnerIds) => {
   const response = await Api.post(`/api/distribution/post/${periodId}`, {
-    savingAmount
+    savingAmount,
+    ...(Array.isArray(partnerIds) && partnerIds.length ? { partnerIds } : {}),
   });
   return response.data;
 };

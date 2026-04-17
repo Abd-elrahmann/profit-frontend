@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Grid, Card, CardContent, Typography, Stack } from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import {
   TrendingDown as DebitIcon,
   TrendingUp as CreditIcon,
@@ -112,24 +112,31 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false, isSma
             </CardContent>
           </Card>
   );
-  if (isSmallScreen) {
-    return (
-      <Stack spacing={2} sx={{ mt: 4, mb: 3, maxWidth: 420, mx: "auto", width: "100%" }}>
-        {cards.map((card) => (
-          <Box key={card.label} sx={{ width: "100%" }}>
-            {cardContent(card)}
-          </Box>
-        ))}
-      </Stack>
-    );
-  }
   return (
-    <Grid container spacing={3} sx={{ mt: 4, mb: 3 }}>
+    <Box
+      sx={{
+        mt: isSmallScreen ? 3 : 4,
+        mb: 3,
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "stretch",
+        gap: 2,
+        flexWrap: "nowrap",
+      }}
+    >
       {cards.map((card) => (
-        <Grid item xs={12} md={4} key={card.label}>
+        <Box
+          key={card.label}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            maxWidth: 420,
+          }}
+        >
           {cardContent(card)}
-        </Grid>
+        </Box>
       ))}
-    </Grid>
+    </Box>
   );
 }
