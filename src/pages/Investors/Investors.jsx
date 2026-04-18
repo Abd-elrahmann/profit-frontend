@@ -85,6 +85,7 @@ export default function Investors() {
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
   const contractGeneratorRef = useRef(null);
+  const [regeneratingMudarabahPartnerId, setRegeneratingMudarabahPartnerId] = useState(null);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
@@ -514,41 +515,58 @@ export default function Investors() {
   const handleOpenEditWithdrawModal = () => {
     handleOpenWithdrawModal(true);
   };
+  const openMudarabahContractForPartner = async (partner) => {
+    const freshInvestorResponse = await getInvestorDetails(partner.id);
+    const freshInvestorData = extractInvestorDataFromResponse(freshInvestorResponse);
+    const capitalAmount = extractCapitalAmount(freshInvestorData, partner, freshInvestorData);
+    const orgProfitPercent = Number(freshInvestorData.orgProfitPercent || partner.orgProfitPercent || 0);
+    const templateResponse = await Api.get('/api/templates/mudarabah');
+    setMudarabahTemplate(templateResponse.data.content || '');
+    const investorData = {
+      id: freshInvestorData.id || partner.id,
+      name: freshInvestorData.name || partner.name || '',
+      nationalId: freshInvestorData.nationalId || partner.nationalId || '',
+      address: freshInvestorData.address || partner.address || '',
+      city: freshInvestorData.city || partner.city || '',
+      phone: freshInvestorData.phone || partner.phone || '',
+      email: freshInvestorData.email || partner.email || '',
+      capitalAmount,
+      orgProfitPercent,
+      investorProfitPercent: orgProfitPercent ? (100 - orgProfitPercent) : 0
+    };
+    setContractInvestorData(investorData);
+    setIsContractModalOpen(true);
+    setTimeout(() => {
+      if (contractGeneratorRef.current) {
+        contractGeneratorRef.current.generateContract();
+      }
+    }, 500);
+  };
   const handleOpenContractPreview = async () => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
       return;
     }
     try {
-      const freshInvestorResponse = await getInvestorDetails(selectedInvestor.id);
-      const freshInvestorData = extractInvestorDataFromResponse(freshInvestorResponse);
-      const capitalAmount = extractCapitalAmount(freshInvestorData, selectedInvestor, investorDetails);
-      const orgProfitPercent = Number(freshInvestorData.orgProfitPercent || selectedInvestor.orgProfitPercent || 0);
-      const templateResponse = await Api.get('/api/templates/mudarabah');
-      setMudarabahTemplate(templateResponse.data.content || '');
-      const investorData = {
-        id: freshInvestorData.id || selectedInvestor.id,
-        name: freshInvestorData.name || selectedInvestor.name || '',
-        nationalId: freshInvestorData.nationalId || selectedInvestor.nationalId || '',
-        address: freshInvestorData.address || selectedInvestor.address || '',
-        city: freshInvestorData.city || selectedInvestor.city || '',
-        phone: freshInvestorData.phone || selectedInvestor.phone || '',
-        email: freshInvestorData.email || selectedInvestor.email || '',
-        capitalAmount,
-        orgProfitPercent,
-        investorProfitPercent: orgProfitPercent ? (100 - orgProfitPercent) : 0
-      };
-      setContractInvestorData(investorData);
-      setIsContractModalOpen(true);
-      setTimeout(() => {
-        if (contractGeneratorRef.current) {
-          contractGeneratorRef.current.generateContract();
-        }
-      }, 500);
+      await openMudarabahContractForPartner(selectedInvestor);
     } catch (error) {
       console.error('Error opening contract preview:', error);
       notifyError('حدث خطأ أثناء فتح معاينة العقد');
       handleApiError(error);
+    }
+  };
+  const handleRegenerateMudarabahFromList = async (listPartner) => {
+    if (!listPartner?.id) return;
+    try {
+      setRegeneratingMudarabahPartnerId(listPartner.id);
+      setSelectedInvestor(listPartner);
+      await openMudarabahContractForPartner(listPartner);
+    } catch (error) {
+      console.error('Error preparing mudarabah contract:', error);
+      notifyError('حدث خطأ أثناء تجهيز عقد المضاربة');
+      handleApiError(error);
+    } finally {
+      setRegeneratingMudarabahPartnerId(null);
     }
   };
   const handleAddTransaction = () => {
@@ -775,6 +793,8 @@ export default function Investors() {
               onWithdraw={() => handleOpenWithdrawModal(false)}
               onEdit={handleOpenEditWithdrawModal}
               onDelete={() => openDeleteModal(investorDetails)}
+              onRegenerateMudarabah={() => handleRegenerateMudarabahFromList(selectedInvestor)}
+              isRegeneratingMudarabah={regeneratingMudarabahPartnerId === selectedInvestor?.id}
               permissions={permissions}
             />
             <Box ref={contentScrollRef} sx={{ flex: 1, overflowY: 'auto', p: { xs: 2, sm: 3 } }}>

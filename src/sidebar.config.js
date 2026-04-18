@@ -27,6 +27,7 @@ import {
   AttachMoney as InstallmentsIcon,
   Message as Message,
   Description as JournalIcon,
+  Balance as TrialBalanceIcon,
   Settings as SettingsIcon,
   CalendarMonth as CalendarMonthIcon,
   Savings as SavingsIcon,
@@ -179,6 +180,14 @@ export const sidebarItems = [
     module: 'general-ledger',
     requiresPermissions: true,
     icon: JournalIcon,
+    parent: 'الحسابات والقيود'
+  },
+  {
+    path: '/trial-balance',
+    label: 'ميزان المراجعة',
+    module: 'trial-balance',
+    requiresPermissions: true,
+    icon: TrialBalanceIcon,
     parent: 'الحسابات والقيود'
   },
   {

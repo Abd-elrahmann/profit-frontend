@@ -15,6 +15,7 @@ const MODULE_IMPORTS = {
   accounts: () => import('../pages/chartOfAccounts/chartOfAccounts'),
   journals: () => import('../pages/Journals/Journals'),
   'general-ledger': () => import('../pages/generalLedger/GeneralLedger'),
+  'trial-balance': () => import('../pages/trialBalance/TrialBalance'),
   period: () => import('../pages/periodClosing/periodClosing'),
   loans: () => import('../pages/Loans/Loans'),
   banks: () => import('../pages/Banks/Banks'),

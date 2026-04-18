@@ -34,6 +34,7 @@ const JOURNAL_SOURCE_TYPE_LABELS = {
   SAVING: "ادخار",
   PARTNER_WITHDRAWING: "انسحاب مالي لشريك",
   ZAKAT: "سحب زكاة",
+  CLIENT: "عميل",
   OTHER: "أخرى",
 };
 
@@ -56,6 +57,7 @@ export const JOURNAL_SOURCE_TYPE_OPTIONS = [
   "SMALL_LOAN",
   "LOAN_CONVERSION",
   "LOAN_INTEREST",
+  "CLIENT",
   "OTHER",
 ].map((value) => ({ value, label: JOURNAL_SOURCE_TYPE_LABELS[value] }));
 

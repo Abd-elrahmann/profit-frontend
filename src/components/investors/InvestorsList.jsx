@@ -319,4 +319,4 @@ const InvestorsList = ({
     </Box>
   );
 };
-export default InvestorsList;
+export default InvestorsList;

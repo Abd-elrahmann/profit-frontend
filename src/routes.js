@@ -19,6 +19,7 @@ const Journals = React.lazy(() => import('./pages/Journals/Journals'));
 const Logs = React.lazy(() => import('./pages/logs/logs'));
 const Treasury = React.lazy(() => import('./pages/treasury/treasury'));
 const GeneralLedger = React.lazy(() => import('./pages/generalLedger/GeneralLedger'));
+const TrialBalance = React.lazy(() => import('./pages/trialBalance/TrialBalance'));
 const PeriodClosing = React.lazy(() => import('./pages/periodClosing/periodClosing'));
 const ProfitDistribution = React.lazy(() => import('./pages/profit/ProfitDistribution'));
 const Profile = React.lazy(() => import('./pages/Profile'));
@@ -180,6 +181,14 @@ const routes = [
     protected: true,
     showInSidebar: true,
     module: 'general-ledger',
+    requiresPermissions: true
+  },
+  {
+    path: '/trial-balance',
+    element: TrialBalance,
+    protected: true,
+    showInSidebar: true,
+    module: 'trial-balance',
     requiresPermissions: true
   },
   {

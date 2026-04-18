@@ -6,6 +6,7 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -15,6 +16,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableChartIcon from "@mui/icons-material/TableChart";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 const InvestorHeader = ({
   investorDetails,
   isMobile = false,
@@ -28,6 +30,8 @@ const InvestorHeader = ({
   onWithdraw,
   onEdit,
   onDelete,
+  onRegenerateMudarabah,
+  isRegeneratingMudarabah,
   permissions,
 }) => {
   return (
@@ -154,6 +158,32 @@ const InvestorHeader = ({
           </>
         )}
         {}
+        {(permissions.includes("partners_Export") || permissions.includes("partners_Update")) && onRegenerateMudarabah && (
+          <Button
+            variant="outlined"
+            size={isMobile ? "small" : "medium"}
+            onClick={onRegenerateMudarabah}
+            disabled={isRegeneratingMudarabah}
+            startIcon={
+              isRegeneratingMudarabah ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <AutorenewIcon sx={{ marginLeft: "10px" }} />
+              )
+            }
+            sx={{
+              borderColor: "primary.main",
+              color: "primary.main",
+              "&:hover": { bgcolor: "primary.50", borderColor: "primary.dark" },
+              borderRadius: 2,
+              px: 2,
+              fontWeight: 500,
+            }}
+          >
+            {isRegeneratingMudarabah ? "جاري التجهيز..." : "إعادة توليد ملف المضاربة"}
+          </Button>
+        )}
+        {}
         {permissions.includes("partners_Export") && (
           <>
             <Button
@@ -211,4 +241,4 @@ const InvestorHeader = ({
     </Box>
   );
 };
-export default InvestorHeader;
+export default InvestorHeader;

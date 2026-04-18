@@ -9,8 +9,19 @@ import {
   Chip as MuiChip,
   Grid,
 } from "@mui/material";
+import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import { JOURNAL_TYPES } from "./constants";
-import { getJournalSourceTypeText, getStatusText } from "./journalsUtils";
+import {
+  getJournalSourceTypeText,
+  getStatusText,
+  JOURNAL_SOURCE_TYPE_OPTIONS,
+} from "./journalsUtils";
+
+const filterSourceTypeOptions = createFilterOptions({
+  matchFrom: "any",
+  stringify: (option) => `${option.label} ${option.value}`,
+});
+
 export default function JournalsDetailsForm({
   journalData,
   editForm,
@@ -45,6 +56,11 @@ export default function JournalsDetailsForm({
     : isEditMode
     ? editForm.description
     : journalData?.description || "";
+  const sourceTypeValueForm = isAddMode
+    ? newJournalForm.sourceType
+    : isEditMode
+    ? editForm.sourceType
+    : "";
   if (isDesktop) {
     const desktopContent = (
       <>
@@ -106,6 +122,31 @@ export default function JournalsDetailsForm({
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
+            <Grid item xs={12} sx={{ display: "flex", justifyContent: "center" }}>
+              <Autocomplete
+                sx={{ width: 250 }}
+                disabled={!isEditable}
+                options={JOURNAL_SOURCE_TYPE_OPTIONS}
+                getOptionLabel={(option) => option.label}
+                value={
+                  JOURNAL_SOURCE_TYPE_OPTIONS.find(
+                    (o) => o.value === sourceTypeValueForm
+                  ) ?? null
+                }
+                onChange={(_, newValue) => {
+                  onInputChange("sourceType", newValue?.value ?? "OTHER");
+                }}
+                isOptionEqualToValue={(a, b) => a.value === b.value}
+                filterOptions={filterSourceTypeOptions}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="نوع المصدر"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
+              />
+            </Grid>
           </Grid>
         ) : (
           <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
@@ -138,17 +179,43 @@ export default function JournalsDetailsForm({
               </TextField>
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
-                label="نوع المصدر"
-                value={
-                  journalData?.sourceType
-                    ? getJournalSourceTypeText(journalData.sourceType)
-                    : "لا يوجد"
-                }
-                disabled
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: "250px" }}
-              />
+              {isEditMode ? (
+                <Autocomplete
+                  sx={{ width: "250px" }}
+                  disabled={!isEditable}
+                  options={JOURNAL_SOURCE_TYPE_OPTIONS}
+                  getOptionLabel={(option) => option.label}
+                  value={
+                    JOURNAL_SOURCE_TYPE_OPTIONS.find(
+                      (o) => o.value === sourceTypeValueForm
+                    ) ?? null
+                  }
+                  onChange={(_, newValue) => {
+                    onInputChange("sourceType", newValue?.value ?? "OTHER");
+                  }}
+                  isOptionEqualToValue={(a, b) => a.value === b.value}
+                  filterOptions={filterSourceTypeOptions}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="نوع المصدر"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              ) : (
+                <TextField
+                  label="نوع المصدر"
+                  value={
+                    journalData?.sourceType
+                      ? getJournalSourceTypeText(journalData.sourceType)
+                      : "لا يوجد"
+                  }
+                  disabled
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ width: "250px" }}
+                />
+              )}
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
@@ -249,16 +316,47 @@ export default function JournalsDetailsForm({
             </Typography>
           )}
         </Box>
+        {(isAddMode || isEditMode) && (
+          <Box>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              نوع المصدر
+            </Typography>
+            <Autocomplete
+              sx={{ width: "250px" }}
+              options={JOURNAL_SOURCE_TYPE_OPTIONS}
+              getOptionLabel={(option) => option.label}
+              value={
+                JOURNAL_SOURCE_TYPE_OPTIONS.find(
+                  (o) => o.value === sourceTypeValueForm
+                ) ?? null
+              }
+              onChange={(_, newValue) => {
+                onInputChange("sourceType", newValue?.value ?? "OTHER");
+              }}
+              isOptionEqualToValue={(a, b) => a.value === b.value}
+              filterOptions={filterSourceTypeOptions}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  InputLabelProps={{ shrink: true }}
+                  placeholder="ابحث أو اختر..."
+                />
+              )}
+            />
+          </Box>
+        )}
+        {!isAddMode && !isEditMode && (
+          <Box>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              نوع المصدر
+            </Typography>
+            <Typography variant="body1" fontWeight="bold">
+              {getJournalSourceTypeText(journalData?.sourceType)}
+            </Typography>
+          </Box>
+        )}
         {!isAddMode && (
           <>
-            <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                نوع المصدر
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {getJournalSourceTypeText(journalData?.sourceType)}
-              </Typography>
-            </Box>
             <Box>
               <Typography variant="body2" color="textSecondary" gutterBottom>
                 الحالة

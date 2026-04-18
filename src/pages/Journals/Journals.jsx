@@ -45,11 +45,13 @@ const Journals = () => {
     description: "",
     date: "",
     type: "",
+    sourceType: "OTHER",
   });
   const [newJournalForm, setNewJournalForm] = useState({
     description: "",
     date: new Date().toISOString().split("T")[0],
     type: "GENERAL",
+    sourceType: "OTHER",
   });
   const [journalLines, setJournalLines] = useState([]);
   const [editingLineIndex, setEditingLineIndex] = useState(null);
@@ -83,6 +85,7 @@ const Journals = () => {
         description: journalData.description || "",
         date: journalData.date ? journalData.date.split("T")[0] : "",
         type: journalData.type || "",
+        sourceType: journalData.sourceType || "OTHER",
       });
       setJournalLines(mapJournalLinesFromApi(journalData.lines));
     } else if (!selectedJournal) {
@@ -185,6 +188,7 @@ const Journals = () => {
       description: "",
       date: new Date().toISOString().split("T")[0],
       type: "GENERAL",
+      sourceType: "OTHER",
     });
   };
   const handleBackToPeriodClosing = () => navigate("/period-closing");
@@ -211,6 +215,7 @@ const Journals = () => {
         description: journalData.description || "",
         date: journalData.date ? journalData.date.split("T")[0] : "",
         type: journalData.type || "",
+        sourceType: journalData.sourceType || "OTHER",
       });
       setJournalLines(mapJournalLinesFromApi(journalData.lines));
     }
@@ -224,6 +229,7 @@ const Journals = () => {
       description: "",
       date: new Date().toISOString().split("T")[0],
       type: "GENERAL",
+      sourceType: "OTHER",
     });
   };
   const handleAddLine = () => {
@@ -312,6 +318,7 @@ const Journals = () => {
         description: newJournalForm.description,
         date: newJournalForm.date,
         type: newJournalForm.type,
+        sourceType: newJournalForm.sourceType,
         lines: journalLines.map((line) => ({
           accountId: line.accountId,
           debit: parseFloat(line.debit || 0),
@@ -353,6 +360,7 @@ const Journals = () => {
         description: editForm.description,
         date: editForm.date,
         type: editForm.type,
+        sourceType: editForm.sourceType,
         lines: journalLines.map((line) => ({
           accountId: line.accountId,
           debit: parseFloat(line.debit || 0),
