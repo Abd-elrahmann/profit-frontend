@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,7 +8,14 @@ import {
   TextField,
   Button,
   Alert,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { getBanks } from "../../pages/Banks/bankApis";
+import BankAccountBalanceInline from "../loans/BankAccountBalanceInline";
+import { debounce } from "../../utilities/debounce";
+
 const PartialPaymentModal = ({
   open,
   onClose,
@@ -19,10 +26,32 @@ const PartialPaymentModal = ({
 }) => {
   const [amountError, setAmountError] = useState("");
   const [touched, setTouched] = useState(false);
+  const [bankError, setBankError] = useState("");
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearch, setBanksSearch] = useState("");
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () =>
+      debounce((value) => {
+        setBanksSearch(value);
+        setBanksPage(1);
+      }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", "partial-payment-modal", banksPage, banksSearch],
+    queryFn: () => getBanks(banksPage, banksSearch),
+    enabled: open,
+    retry: 1,
+  });
   useEffect(() => {
     if (open) {
       setAmountError("");
       setTouched(false);
+      setBankError("");
+      setSelectedBank(null);
+      setBanksSearch("");
+      setBanksPage(1);
     }
   }, [open]);
   const validateAmount = (value) => {
@@ -47,7 +76,7 @@ const PartialPaymentModal = ({
   };
   const handleAmountChange = (e) => {
     const value = e.target.value;
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
       onAmountChange(e);
       if (amountError) {
         setAmountError("");
@@ -63,8 +92,13 @@ const PartialPaymentModal = ({
     setTouched(true);
     const error = validateAmount(paidAmount);
     setAmountError(error);
+    if (!selectedBank?.id) {
+      setBankError("يرجى اختيار الحساب البنكي");
+      return;
+    }
+    setBankError("");
     if (!error) {
-      onConfirm();
+      onConfirm(selectedBank.id);
     }
   };
   const remainingAmount = selectedActionInstallment?.remaining || 0;
@@ -88,6 +122,40 @@ const PartialPaymentModal = ({
         <Typography variant="body2" color="text.secondary" mb={2}>
           المبلغ المتبقي بعد الدفع: <strong>{remainingAfterPayment.toFixed(2)}</strong> ريال
         </Typography>
+        <Autocomplete
+          options={banksData?.data || []}
+          getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+          value={selectedBank}
+          onChange={(_, newValue) => {
+            setSelectedBank(newValue);
+            setBankError("");
+          }}
+          onInputChange={(_, value, reason) => {
+            if (reason === "input") debouncedBanksSearch(value);
+          }}
+          loading={isBanksLoading}
+          sx={{ mb: 2 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="الحساب البنكي (استلام السداد)"
+              placeholder="ابحث باسم الحساب أو رقم الحساب"
+              required
+              error={!!bankError}
+              helperText={bankError}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+        <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
         {touched && amountError && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {amountError}

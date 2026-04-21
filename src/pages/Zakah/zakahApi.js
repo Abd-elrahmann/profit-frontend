@@ -12,7 +12,9 @@ export const getZakatAccountReport = async (month = null) => {
   const response = await Api.get(`/api/zakat/account${params}`);
   return response.data;
 };
-export const withdrawZakat = async (amount) => {
-  const response = await Api.post('/api/zakat/withdraw', { amount });
+export const withdrawZakat = async (amount, BankId) => {
+  const body = { amount };
+  if (BankId != null) body.BankId = BankId;
+  const response = await Api.post('/api/zakat/withdraw', body);
   return response.data;
 };

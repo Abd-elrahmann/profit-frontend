@@ -87,9 +87,9 @@ const Zakah = () => {
     }
   }, []);
   const handleWithdraw = useCallback(
-    async (amount) => {
+    async (amount, BankId) => {
       try {
-        await withdrawZakat(amount);
+        await withdrawZakat(amount, BankId);
         notifySuccess(`تم سحب مبلغ ${amount} بنجاح`);
         queryClient.invalidateQueries(['zakat-account']);
       } catch (error) {

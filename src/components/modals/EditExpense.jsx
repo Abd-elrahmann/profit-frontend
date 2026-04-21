@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -22,6 +22,10 @@ import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { updateExpense } from "../../pages/Expenses/expensesApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
 import Api from "../../config/Api";
+import { useQuery } from "@tanstack/react-query";
+import { getBanks } from "../../pages/Banks/bankApis";
+import BankAccountBalanceInline from "../loans/BankAccountBalanceInline";
+import { debounce } from "../../utilities/debounce";
 const EXPENSE_TYPES = [
   "مصروف رواتب",
   "مصروف بنزين",
@@ -39,6 +43,19 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false, isSm
   const [errors, setErrors] = useState([]);
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearchQuery, setBanksSearchQuery] = useState("");
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () => debounce((v) => { setBanksSearchQuery(v); setBanksPage(1); }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", "edit-expense", banksPage, banksSearchQuery],
+    queryFn: () => getBanks(banksPage, banksSearchQuery),
+    enabled: open,
+    retry: 1,
+  });
   useEffect(() => {
     if (open) {
       const fetchUsers = async () => {
@@ -65,6 +82,8 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false, isSm
         userId: expenseItem.employee?.id || null
       }));
       setExpenses(formattedExpenses);
+      const firstBank = expense.expenses[0]?.bankAccount;
+      setSelectedBank(firstBank || null);
       setErrors([]);
     }
   }, [open, expense]);
@@ -133,12 +152,17 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false, isSm
     if (!validateForm()) {
       return;
     }
+    if (!selectedBank?.id) {
+      notifyError("يرجى اختيار الحساب البنكي");
+      return;
+    }
     setLoading(true);
     try {
       const formattedExpenses = expenses.map(expenseItem => ({
         type: expenseItem.type.trim(),
         amount: parseFloat(expenseItem.amount),
         description: expenseItem.description.trim(),
+        BankId: selectedBank.id,
         ...(expenseItem.userId && { userId: expenseItem.userId })
       }));
       await updateExpense(expense.journalId, { expenses: formattedExpenses });
@@ -167,6 +191,34 @@ const EditExpense = ({ open, onClose, onSuccess, expense, isMobile = false, isSm
       </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
+          <Autocomplete
+            options={banksData?.data || []}
+            getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+            value={selectedBank}
+            onChange={(_, v) => setSelectedBank(v)}
+            onInputChange={(_, v, reason) => {
+              if (reason === "input") debouncedBanksSearch(v);
+            }}
+            loading={isBanksLoading}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="الحساب البنكي (صرف المصروفات)"
+                placeholder="ابحث باسم الحساب أو رقم الحساب"
+                required
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+          <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
           {expenses.map((expenseItem, index) => (
             <Box key={index} sx={{ position: "relative" }}>
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: "black" }}>

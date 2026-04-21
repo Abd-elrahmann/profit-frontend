@@ -8,6 +8,15 @@ export const getAccountTypeLabel = (type) => {
   };
   return typeMap[type] || type;
 };
+
+/** طبيعة الحساب (مدين / دائن) — الحقل nature في قاعدة البيانات */
+export const getAccountNatureLabel = (nature) => {
+  const map = {
+    DEBIT: 'مدين',
+    CREDIT: 'دائن',
+  };
+  return map[nature] || nature || '—';
+};
 export const getAccountTypeBadgeClass = (type) => {
   const classes = {
     ASSET: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
@@ -38,4 +47,4 @@ export const generateChildCode = (parent) => {
   const lastChild = parent.children[parent.children.length - 1];
   const lastCode = parseInt(lastChild.code) || 0;
   return String(lastCode + 100).padStart(5, '0');
-};
+};

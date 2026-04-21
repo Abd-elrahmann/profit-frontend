@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -19,6 +19,10 @@ import {
   Autocomplete,
 } from "@mui/material";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
+import { getBanks } from "../../pages/Banks/bankApis";
+import BankAccountBalanceInline from "../loans/BankAccountBalanceInline";
+import { debounce } from "../../utilities/debounce";
 import { useAuth } from "../Contexts/AuthContext";
 import { createExpense, getNextExpenseVoucherNumber } from "../../pages/Expenses/expensesApi";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
@@ -48,9 +52,23 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
   const [formattedExpensesForSubmit, setFormattedExpensesForSubmit] = useState(null);
   const [voucherReference, setVoucherReference] = useState(null);
   const voucherGeneratorRef = useRef(null);
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearchQuery, setBanksSearchQuery] = useState("");
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () => debounce((v) => { setBanksSearchQuery(v); setBanksPage(1); }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", "add-expense", banksPage, banksSearchQuery],
+    queryFn: () => getBanks(banksPage, banksSearchQuery),
+    enabled: open,
+    retry: 1,
+  });
   useEffect(() => {
     if (open) {
       setExpenses([{ type: "", amount: "", description: "", userId: null }]);
+      setSelectedBank(null);
       setErrors([]);
       const fetchUsers = async () => {
         try {
@@ -101,6 +119,10 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
   const validateForm = () => {
     const newErrors = [];
     let isValid = true;
+    if (!selectedBank?.id) {
+      notifyError("يرجى اختيار الحساب البنكي");
+      return false;
+    }
     expenses.forEach((expense, index) => {
       const expenseErrors = {};
       if (!expense.type || expense.type.trim() === "") {
@@ -134,6 +156,7 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
       type: expenseItem.type.trim(),
       amount: parseFloat(expenseItem.amount),
       description: expenseItem.description?.trim() || "",
+      BankId: selectedBank.id,
       ...(expenseItem.userId && { userId: expenseItem.userId }),
     }));
     const expenseData = { expenses: formatted };
@@ -195,6 +218,34 @@ const AddExpense = ({ open, onClose, onSuccess, isMobile = false, isSmallScreen 
       </DialogTitle>
       <DialogContent sx={{ bgcolor: 'background.paper' }}>
         <Stack spacing={3} sx={{ mt: 1 }}>
+          <Autocomplete
+            options={banksData?.data || []}
+            getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+            value={selectedBank}
+            onChange={(_, v) => setSelectedBank(v)}
+            onInputChange={(_, v, reason) => {
+              if (reason === "input") debouncedBanksSearch(v);
+            }}
+            loading={isBanksLoading}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="الحساب البنكي (صرف المصروفات)"
+                placeholder="ابحث باسم الحساب أو رقم الحساب"
+                required
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+          <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
           {expenses.map((expense, index) => (
             <Box key={index} sx={{ position: "relative" }}>
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: "text.primary" }}>

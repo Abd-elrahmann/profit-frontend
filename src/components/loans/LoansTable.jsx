@@ -341,6 +341,16 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                     {loan.paymentAmount?.toLocaleString()}
                   </Typography>
                 </Box>
+                {loan.advancePayment && loan.advancePayment > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      الدفع المقدم
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" color="success.main">
+                      {loan.advancePayment?.toLocaleString()}
+                    </Typography>
+                  </Box>
+                )}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="caption" color="text.secondary">
                     الفائدة
@@ -474,6 +484,9 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               مبلغ الدفعة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+              الدفع المقدم
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
               الفائدة
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ whiteSpace: "nowrap" }}>
@@ -498,13 +511,13 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
         <TableBody>
           {isLoading ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={hasActions ? 14 : 13} align="center">
+              <StyledTableCell colSpan={hasActions ? 15 : 14} align="center">
                 <CircularProgress size={20} />
               </StyledTableCell>
             </StyledTableRow>
           ) : loansData?.data?.length === 0 ? (
             <StyledTableRow>
-              <StyledTableCell colSpan={hasActions ? 14 : 13} align="center">
+              <StyledTableCell colSpan={hasActions ? 15 : 14} align="center">
                 <Typography>لا توجد سلف</Typography>
               </StyledTableCell>
             </StyledTableRow>
@@ -560,6 +573,12 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
                   sx={{ whiteSpace: "nowrap" }}
                 >
                   {loan.paymentAmount?.toLocaleString()}
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  sx={{ whiteSpace: "nowrap", fontWeight: loan.advancePayment > 0 ? "bold" : "normal", color: loan.advancePayment > 0 ? "success.main" : "inherit" }}
+                >
+                  {loan.advancePayment && loan.advancePayment > 0 ? loan.advancePayment?.toLocaleString() : "-"}
                 </StyledTableCell>
                 <StyledTableCell
                   align="center"
@@ -666,7 +685,7 @@ const LoansTable = ({ onViewDetails, onViewInstallments, onCreateAdditionalLoan,
               >
                 {totals.paymentAmount.toLocaleString()}
               </StyledTableCell>
-              <StyledTableCell colSpan={hasActions ? 6 : 5} />
+              <StyledTableCell colSpan={hasActions ? 7 : 6} />
             </StyledTableRow>
           )}
         </TableBody>

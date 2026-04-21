@@ -12,7 +12,8 @@ import {
   transferPartialLoanAmount,
   getLoans,
 } from "./loanApis";
-import { getBanks } from "../Banks/bankApis";
+import { getBanks, getBankAccountBalance } from "../Banks/bankApis";
+import { BANK_ACCOUNT_BALANCE_QUERY_KEY } from "../../components/loans/BankAccountBalanceInline";
 import { notifySuccess, notifyError, notifyWarning } from "../../utilities/toastify";
 import {
   LoansTable,
@@ -26,6 +27,7 @@ import LoanMainTab from "../../components/loans/LoanMainTab";
 import LoanClientSection from "../../components/loans/LoanClientSection";
 import LoanKafeelSection from "../../components/loans/LoanKafeelSection";
 import LoanDetailsSection from "../../components/loans/LoanDetailsSection";
+import BankAccountAutocomplete from "../../components/loans/BankAccountAutocomplete";
 import LoanSimulation from "../../components/loans/LoanSimulation";
 import LoanActions from "../../components/loans/LoanActions";
 import LoanClientConversion from "../../components/loans/LoanClientConversion";
@@ -62,6 +64,8 @@ const Loans = () => {
     paymentCity: "",
     promissoryNoteType: "",
     promissoryNoteDate: "",
+    hasAdvancePayment: "no",
+    advancePayment: "",
   });
   const dateToDay = (dateString) => {
     if (!dateString) return "";
@@ -95,7 +99,6 @@ const Loans = () => {
   const [conversionType, setConversionType] = useState("full");
   const [partialTransferAmount, setPartialTransferAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
-  const [bankBalance, setBankBalance] = useState(null);
   const [mixBalances, setMixBalances] = useState({ general: null, newCapital: null });
   const [_isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
   const [selectedLoanForEdit, setSelectedLoanForEdit] = useState(null);
@@ -109,6 +112,18 @@ const Loans = () => {
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
+  const shouldFetchSingleBankBalance =
+    !!selectedBank?.id && loanForm.source !== "MIX" && activeTab === 1;
+  const { data: bankBalanceRaw } = useQuery({
+    queryKey: [BANK_ACCOUNT_BALANCE_QUERY_KEY, selectedBank?.id],
+    queryFn: () => getBankAccountBalance(selectedBank.id),
+    enabled: shouldFetchSingleBankBalance,
+  });
+  const bankBalance = shouldFetchSingleBankBalance
+    ? bankBalanceRaw != null && bankBalanceRaw !== ""
+      ? Number(bankBalanceRaw)
+      : null
+    : null;
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
@@ -257,7 +272,7 @@ const Loans = () => {
     }
     if (activeTab === 1) {
       calculateInstallments();
-      fetchBankBalance();
+      fetchMixBalances();
       setBanksSearchQuery("");
       setPartnersSearchQuery("");
       setSearchQuery("");
@@ -310,7 +325,7 @@ const Loans = () => {
   ]);
   useEffect(() => {
     if (activeTab === 1 && loanForm.source) {
-      fetchBankBalance();
+      fetchMixBalances();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source, activeTab]);
@@ -526,38 +541,26 @@ const Loans = () => {
     setSelectedBank(newValue);
     setBanksSearchQuery("");
     setBanksPage(1);
-    await fetchBankBalance();
+    if (loanForm.source === "MIX") {
+      await fetchMixBalances();
+    }
   };
-  const fetchBankBalance = async () => {
+  const fetchMixBalances = async () => {
     try {
       setIsLoadingBankBalance(true);
       if (loanForm.source === "MIX") {
         const [generalResponse, newCapitalResponse] = await Promise.all([
           Api.get(`/api/accounts/bank/1?limit=1`),
-          Api.get(`/api/accounts/NewBank/1`)
+          Api.get(`/api/accounts/NewBank/1`),
         ]);
         const generalBalance = generalResponse?.data?.account?.balance || 0;
         const newCapitalBalance = newCapitalResponse?.data?.account?.balance || 0;
         setMixBalances({ general: generalBalance, newCapital: newCapitalBalance });
-        setBankBalance(null);
       } else {
-        let balance = 0;
-        if (loanForm.source === "NEW_CAPITAL") {
-          const response = await Api.get(`/api/accounts/NewBank/1`);
-          balance = response?.data?.account?.balance || 0;
-        } else {
-          const params = new URLSearchParams();
-          params.append('limit', '1');
-          const queryString = params.toString();
-          const response = await Api.get(`/api/accounts/bank/1?${queryString}`);
-          balance = response?.data?.account?.balance || 0;
-        }
-        setBankBalance(balance);
         setMixBalances({ general: null, newCapital: null });
       }
     } catch (error) {
       handleApiError(error);
-      setBankBalance(null);
       setMixBalances({ general: null, newCapital: null });
     } finally {
       setIsLoadingBankBalance(false);
@@ -831,6 +834,9 @@ const Loans = () => {
         promissoryNoteDate: loanForm.promissoryNoteType === "manual" && loanForm.promissoryNoteDate
           ? new Date(loanForm.promissoryNoteDate).toISOString()
           : null,
+        advancePayment: loanForm.hasAdvancePayment === "yes" 
+          ? parseFloat(loanForm.advancePayment.replace(/,/g, "")) || 0
+          : 0,
       };
       const response = await createLoan(loanData);
       const newLoan = response?.data?.loan || response?.loan;
@@ -873,7 +879,6 @@ const Loans = () => {
     setSelectedLoan(null);
     setSelectedBank(null);
     setSelectedPartner(null);
-    setBankBalance(null);
     setLoanForm({
       amount: "",
       totalInterest: "",
@@ -887,6 +892,8 @@ const Loans = () => {
       paymentCity: "",
       promissoryNoteType: "",
       promissoryNoteDate: "",
+      hasAdvancePayment: "no",
+      advancePayment: "",
     });
     setInstallments([]);
     setIsEditMode(false);
@@ -1002,6 +1009,14 @@ const Loans = () => {
           : null;
       }
 
+      const advancePaymentValue = loanForm.hasAdvancePayment === "yes" 
+        ? normalizeNumber(loanForm.advancePayment)
+        : 0;
+      const oldAdvancePaymentValue = Number(selectedLoan.advancePayment || 0);
+      if (advancePaymentValue !== oldAdvancePaymentValue) {
+        payload.advancePayment = advancePaymentValue;
+      }
+
       if (Object.keys(payload).length === 0) {
         notifyWarning("لا توجد تعديلات لحفظها");
         return;
@@ -1087,10 +1102,8 @@ const Loans = () => {
       }
       if (loan.bankAccount) {
         setSelectedBank(loan.bankAccount);
-        await fetchBankBalance();
       } else {
         setSelectedBank(null);
-        setBankBalance(null);
       }
       if (loan.partner) {
         setSelectedPartner(loan.partner);
@@ -1134,6 +1147,8 @@ const Loans = () => {
         paymentCity: loan.paymentCity || "",
         promissoryNoteType: loan.promissoryNoteType || "",
         promissoryNoteDate: loan.promissoryNoteDate ? loan.promissoryNoteDate.split("T")[0] : "",
+        hasAdvancePayment: loan.advancePayment && loan.advancePayment > 0 ? "yes" : "no",
+        advancePayment: loan.advancePayment ? loan.advancePayment.toString() : "",
       });
       setActiveTab(1);
     } catch (error) {
@@ -1200,7 +1215,7 @@ const Loans = () => {
     setIsViewMode(false);
   };
   const handleInputChange = (field, value) => {
-    if (field === "amount" || field === "paymentAmount" || field === "totalInterest") {
+    if (field === "amount" || field === "paymentAmount" || field === "totalInterest" || field === "advancePayment") {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
@@ -1618,6 +1633,18 @@ const Loans = () => {
                     isReadOnlyMode={isReadOnlyMode}
                   />
                 )}
+                {permissions.includes("loans_Add") && !isClientConversion && (
+                  <BankAccountAutocomplete
+                    isSmallScreen={isSmallScreen}
+                    showBalance={false}
+                    selectedBank={selectedBank}
+                    banksData={banksData}
+                    isBanksLoading={isBanksLoading}
+                    handleBankSelect={handleBankSelect}
+                    handleBanksSearchChange={handleBanksSearchChange}
+                    isReadOnlyMode={isReadOnlyMode}
+                  />
+                )}
                 {((!isViewMode && selectedKafeel) ||
                   (isViewMode && selectedLoan?.kafeel)) && (
                   <LoanKafeelSection
@@ -1637,11 +1664,6 @@ const Loans = () => {
                     loanForm={loanForm}
                     handleInputChange={handleInputChange}
                     isReadOnlyMode={isReadOnlyMode}
-                    banksData={banksData}
-                    isBanksLoading={isBanksLoading}
-                    selectedBank={selectedBank}
-                    handleBankSelect={handleBankSelect}
-                    handleBanksSearchChange={handleBanksSearchChange}
                     partnersData={partnersData}
                     isPartnersLoading={isPartnersLoading}
                     selectedPartner={selectedPartner}

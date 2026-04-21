@@ -1,12 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Formik, Form } from 'formik';
 import { AccountCircle, Work, Autorenew, CheckCircle } from '@mui/icons-material';
 import * as Yup from 'yup';
 import Api, { handleApiError } from '../../config/Api';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { notifyError } from '../../utilities/toastify';
 import ContractGenerator from '../contractGenerators/ContractGenerator';
 import { QUERY_KEYS } from '../../components/investors/investorsUtils';
+import { getBanks } from '../../pages/Banks/bankApis';
+import { debounce } from '../../utilities/debounce';
+import BankAccountAutocomplete from '../loans/BankAccountAutocomplete';
 const formatNumberWithCommas = (value) => {
   if (!value) return '';
   const numValue = value.toString().replace(/,/g, '');
@@ -36,7 +39,19 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [savedInvestorData, setSavedInvestorData] = useState(null);
   const [mudarabahTemplate, setMudarabahTemplate] = useState('');
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearchQuery, setBanksSearchQuery] = useState('');
   const contractGeneratorRef = useRef(null);
+  const debouncedBanksSearch = useMemo(
+    () => debounce((v) => { setBanksSearchQuery(v); setBanksPage(1); }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ['banks', 'add-investor', banksPage, banksSearchQuery],
+    queryFn: () => getBanks(banksPage, banksSearchQuery),
+    retry: 1,
+  });
   const queryClient = useQueryClient();
   useEffect(() => {
     fetchMudarabahTemplate();
@@ -62,6 +77,10 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
     isNewPartner: true,
   };
   const handleSubmit = async (values) => {
+    if (!selectedBank?.id) {
+      notifyError('يرجى اختيار الحساب البنكي');
+      return;
+    }
     setLoading(true);
     try {
       const nationalId = String(values.nationalId || '').trim();
@@ -87,6 +106,7 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
         capitalAmount,
         createdAt: values.createdAt || undefined,
         isNewPartner: values.isNewPartner,
+        BankId: selectedBank.id,
       };
       const investorDataForContract = {
         name: values.name,
@@ -311,6 +331,20 @@ const AddInvestorForm = ({ onSuccess, onCancel }) => {
                       className={inputBase}
                     />
                     {touched.orgProfitPercent && errors.orgProfitPercent && <span className="text-xs text-red-500">{errors.orgProfitPercent}</span>}
+                  </div>
+                  <div className="md:col-span-2">
+                    <BankAccountAutocomplete
+                      variant="field"
+                      fullWidth
+                      isSmallScreen={false}
+                      selectedBank={selectedBank}
+                      banksData={banksData}
+                      isBanksLoading={isBanksLoading}
+                      handleBankSelect={(_, v) => setSelectedBank(v)}
+                      handleBanksSearchChange={(_, v) => debouncedBanksSearch(v)}
+                      isReadOnlyMode={false}
+                      sectionTitle=""
+                    />
                   </div>
                 </div>
               </div>

@@ -16,16 +16,13 @@ import {
 } from '@mui/material';
 import { AddCircle, Edit, Delete, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
-import { getAccountTypeLabel } from './chartOfAccountsUtils';
-const getAccountTypeChipColor = (type) => {
+import { getAccountNatureLabel } from './chartOfAccountsUtils';
+const getAccountNatureChipColor = (nature) => {
   const map = {
-    ASSET: 'info',
-    LIABILITY: 'error',
-    EQUITY: 'secondary',
-    REVENUE: 'success',
-    EXPENSE: 'warning',
+    DEBIT: 'error',
+    CREDIT: 'success',
   };
-  return map[type] || 'default';
+  return map[nature] || 'default';
 };
 const ChartOfAccountsTable = ({
   flatAccounts,
@@ -83,8 +80,8 @@ const ChartOfAccountsTable = ({
                       </Typography>
                     </Box>
                     <Chip
-                      label={getAccountTypeLabel(account.type)}
-                      color={getAccountTypeChipColor(account.type)}
+                      label={getAccountNatureLabel(account.nature)}
+                      color={getAccountNatureChipColor(account.nature)}
                       size="small"
                       variant="outlined"
                       sx={{ fontSize: '0.7rem' }}
@@ -223,8 +220,8 @@ const ChartOfAccountsTable = ({
                 </StyledTableCell>
                 <StyledTableCell align="center">
                   <Chip
-                    label={getAccountTypeLabel(account.type)}
-                    color={getAccountTypeChipColor(account.type)}
+                    label={getAccountNatureLabel(account.nature)}
+                    color={getAccountNatureChipColor(account.nature)}
                     size="small"
                     variant="outlined"
                   />

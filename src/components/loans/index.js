@@ -8,4 +8,6 @@ export { default as LoanKafeelSection } from './LoanKafeelSection';
 export { default as LoanDetailsSection } from './LoanDetailsSection';
 export { default as LoanSimulation } from './LoanSimulation';
 export { default as LoanActions } from './LoanActions';
-export { default as LoanClientConversion } from './LoanClientConversion';
+export { default as LoanClientConversion } from './LoanClientConversion';
+export { default as BankAccountAutocomplete } from './BankAccountAutocomplete';
+export { default as BankAccountBalanceInline, BANK_ACCOUNT_BALANCE_QUERY_KEY, formatBankBalanceAmount } from './BankAccountBalanceInline';

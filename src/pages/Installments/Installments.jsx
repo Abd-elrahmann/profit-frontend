@@ -318,9 +318,9 @@ const Installments = () => {
     setDiscountModalOpen(true);
     setAnchorEl(null);
   };
-  const handleDiscountConfirm = async ({ discount, notes }) => {
+  const handleDiscountConfirm = async ({ discount, notes, BankId }) => {
     try {
-      setConfirmedDiscount({ discount, notes });
+      setConfirmedDiscount({ discount, notes, BankId });
       setDiscountModalOpen(false);
       const installmentAmount = discountInstallment.status === 'PARTIAL_PAID'
         ? discountInstallment.remaining
@@ -331,7 +331,8 @@ const Installments = () => {
           discountInstallment.id,
           installmentAmount,
           notes?.trim() || 'اشعار خصم لدفعة',
-          discount
+          discount,
+          BankId
         );
         notifySuccess("تم تطبيق خصم على الدفعة بنجاح");
         queryClient.invalidateQueries(["loan", loanId]);
@@ -390,7 +391,8 @@ const Installments = () => {
         selectedProofInstallment.id,
         selectedProofInstallment.amount,
         confirmedDiscount.notes || "تمت الموافقة على السداد",
-        confirmedDiscount.discount
+        confirmedDiscount.discount,
+        confirmedDiscount.BankId
       );
       setPaymentProofModalOpen(false);
       setSelectedProofInstallment(null);
@@ -472,9 +474,13 @@ const Installments = () => {
       setRejectLoading(false);
     }
   };
-  const handlePartialPayment = async () => {
+  const handlePartialPayment = async (bankId) => {
     if (!selectedActionInstallment || !paidAmount) {
       notifyError("يرجى إدخال المبلغ المدفوع");
+      return;
+    }
+    if (!bankId) {
+      notifyError("يرجى اختيار الحساب البنكي");
       return;
     }
     const paidAmountNum = parseFloat(paidAmount);
@@ -498,7 +504,8 @@ const Installments = () => {
       setPartialPaymentInstallment({
         ...partialInstallmentData,
         paidAmountNum: paidAmountNum,
-        receiptNumber: receiptNumber
+        receiptNumber: receiptNumber,
+        bankId,
       });
       const proofHtml = await paymentProofGeneratorRef.current.generateContract(
         false,
@@ -573,7 +580,8 @@ const Installments = () => {
       });
       await markAsPartialPaid(
         partialPaymentInstallment.id,
-        partialPaymentInstallment.paidAmountNum
+        partialPaymentInstallment.paidAmountNum,
+        partialPaymentInstallment.bankId
       );
       notifySuccess("تم حفظ سند الدفع الجزئي بنجاح");
       setPartialPaymentProofModalOpen(false);
@@ -616,8 +624,12 @@ const Installments = () => {
     }
     setAnchorEl(null);
   };
-  const handleEarlyPayment = async () => {
+  const handleEarlyPayment = async (bankId) => {
     try {
+      if (!bankId) {
+        notifyError("يرجى اختيار الحساب البنكي");
+        return;
+      }
       const discount = parseFloat(discountAmount) || 0;
       if (discount < 0) {
         notifyError("قيمة الخصم لا يمكن أن تكون سالبة");
@@ -632,7 +644,7 @@ const Installments = () => {
         setEarlyPaymentModalOpen(false);
         return;
       }
-      await earlyPayment(loanId, discount);
+      await earlyPayment(loanId, discount, bankId);
       notifySuccess("تم السداد المبكر للدفعات المعلقة بنجاح");
       setEarlyPaymentModalOpen(false);
       setDiscountAmount("0");

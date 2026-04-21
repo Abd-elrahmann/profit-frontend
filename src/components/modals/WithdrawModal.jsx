@@ -1,5 +1,9 @@
-import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, CircularProgress } from "@mui/material";
+import React, { useState, useMemo, useEffect } from "react";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, CircularProgress, Autocomplete, Box } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { getBanks } from "../../pages/Banks/bankApis";
+import BankAccountBalanceInline from "../loans/BankAccountBalanceInline";
+import { debounce } from "../../utilities/debounce";
 import { 
   Info, 
   AlertTriangle, 
@@ -30,6 +34,32 @@ const WithdrawModal = ({
 }) => {
   const [amountError, setAmountError] = useState("");
   const [touched, setTouched] = useState(false);
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearch, setBanksSearch] = useState("");
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [bankError, setBankError] = useState("");
+  const debouncedBanksSearch = useMemo(
+    () => debounce((v) => { setBanksSearch(v); setBanksPage(1); }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", "partner-withdraw-modal", banksPage, banksSearch],
+    queryFn: () => getBanks(banksPage, banksSearch),
+    enabled: isOpen,
+    retry: 1,
+  });
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedBank(null);
+      setBankError("");
+      setBanksSearch("");
+      setBanksPage(1);
+    } else if (investorDetails?.bankAccount) {
+      setSelectedBank(investorDetails.bankAccount);
+    } else {
+      setSelectedBank(null);
+    }
+  }, [isOpen, investorDetails?.bankAccount?.id]);
 
   const validateAmount = (value) => {
     if (!value || value.trim() === "") {
@@ -67,6 +97,8 @@ const WithdrawModal = ({
     onClose();
     setAmountError("");
     setTouched(false);
+    setSelectedBank(null);
+    setBankError("");
   };
 
   const originalCapital = investorDetails?.total || investorDetails?.totalAmount || 0;
@@ -213,6 +245,47 @@ const WithdrawModal = ({
               InputLabelProps={{ shrink: true }}
               helperText="حدد تاريخ بداية أول دفعة للسحب"
             />
+            <Box sx={{ width: "100%", mt: 1 }}>
+              <Autocomplete
+                options={banksData?.data || []}
+                getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+                value={selectedBank}
+                onChange={(_, v) => {
+                  setSelectedBank(v);
+                  setBankError("");
+                }}
+                onInputChange={(_, v, reason) => {
+                  if (reason === "input") debouncedBanksSearch(v);
+                }}
+                loading={isBanksLoading}
+                disabled={
+                  !isEditMode && (
+                    investorDetails?.WithdrawingStatus === 'WITHDRAWING' ||
+                    investorDetails?.WithdrawingStatus === 'WITHDRAWN'
+                  )
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="الحساب البنكي"
+                    placeholder="ابحث باسم الحساب أو رقم الحساب"
+                    required
+                    error={!!bankError}
+                    helperText={bankError}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
+              <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
+            </Box>
           </div>
 
           {/* تحذير عدم وجود تاريخ */}
@@ -416,8 +489,13 @@ const WithdrawModal = ({
               const error = validateAmount(withdrawAmount);
               setAmountError(error);
               setTouched(true);
+              if (!selectedBank?.id) {
+                setBankError("يرجى اختيار الحساب البنكي");
+                return;
+              }
+              setBankError("");
               if (!error && firstPaymentDate) {
-                onWithdraw(firstPaymentDate);
+                onWithdraw(firstPaymentDate, selectedBank.id);
               }
             }}
             variant="contained"

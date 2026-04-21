@@ -18,11 +18,6 @@ const LoanDetailsSection = ({
   loanForm,
   handleInputChange,
   isReadOnlyMode,
-  banksData,
-  isBanksLoading,
-  selectedBank,
-  handleBankSelect,
-  handleBanksSearchChange,
   partnersData,
   isPartnersLoading,
   selectedPartner,
@@ -125,39 +120,93 @@ const LoanDetailsSection = ({
                   {loanForm.source === "MIX" ? (
                     mixBalances.general !== null && mixBalances.newCapital !== null ? (
                       <>
-                        <span style={{ color: "text.primary", fontSize: "14px" }}>
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "14px" }}
+                        >
                           رصيد الصناديق:{" "}
-                        </span>
-                        <span
-                          style={{
-                            fontWeight: "bold",
+                        </Typography>
+                        <Typography
+                          component="span"
+                          dir="ltr"
+                          sx={{
+                            fontWeight: 700,
+                            color: "primary.main",
                             fontSize: "14px",
-                            color: "green",
+                            unicodeBidi: "embed",
                           }}
                         >
-                          {formatAmount(mixBalances.general.toString())} صندوق عام + {formatAmount(mixBalances.newCapital.toString())} رأس مال جديد
-                        </span>
+                          {Number(mixBalances.general).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "14px" }}
+                        >
+                          {" "}صندوق عام +{" "}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          dir="ltr"
+                          sx={{
+                            fontWeight: 700,
+                            color: "primary.main",
+                            fontSize: "14px",
+                            unicodeBidi: "embed",
+                          }}
+                        >
+                          {Number(mixBalances.newCapital).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "14px" }}
+                        >
+                          {" "}رأس مال جديد
+                        </Typography>
                       </>
                     ) : (
                       "جاري تحميل أرصدة الصناديق..."
                     )
                   ) : bankBalance !== null ? (
                     <>
-                      <span style={{ color: "text.primary", fontSize: "16px" }}>
-                        رصيد الصندوق المتاح:{" "}
-                      </span>
-                      <span
-                        style={{
-                          fontWeight: "bold",
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 700,
+                          color: "text.primary",
                           fontSize: "16px",
-                          color: "green",
                         }}
                       >
-                        {formatAmount(bankBalance.toString())}
-                      </span>
+                        رصيد الصندوق المتاح:{" "}
+                      </Typography>
+                      <Typography
+                        component="span"
+                        dir="ltr"
+                        sx={{
+                          fontWeight: 700,
+                          color: "primary.main",
+                          fontSize: "16px",
+                          unicodeBidi: "embed",
+                        }}
+                      >
+                        {Number(bankBalance).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Typography>
                     </>
                   ) : (
-                    "لا يوجد رصيد متاح"
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary", fontSize: "14px" }}
+                    >
+                      لا يوجد رصيد متاح
+                    </Typography>
                   )}
                 </Typography>
                 {loanForm.amount && loanForm.amount.replace(/,/g, "") !== "" && (
@@ -178,11 +227,32 @@ const LoanDetailsSection = ({
                         if (remaining >= 0) {
                           return (
                             <>
-                              سيتبقي{" "}
-                              <span style={{ fontWeight: "bold", color: "green" }}>
-                                {formatAmount(remaining.toFixed(2))}
-                              </span>{" "}
-                              في الرصيد المتاح
+                              <Typography
+                                component="span"
+                                sx={{ fontWeight: 700, color: "text.primary" }}
+                              >
+                                سيتبقي{" "}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                dir="ltr"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: "primary.main",
+                                  unicodeBidi: "embed",
+                                }}
+                              >
+                                {Number(remaining).toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                sx={{ fontWeight: 700, color: "text.primary" }}
+                              >
+                                {" "}في الرصيد المتاح
+                              </Typography>
                             </>
                           );
                         }
@@ -191,11 +261,32 @@ const LoanDetailsSection = ({
                         if (remaining >= 0) {
                           return (
                             <>
-                              سيتبقي{" "}
-                              <span style={{ fontWeight: "bold", color: "green" }}>
-                                {formatAmount(remaining.toFixed(2))}
-                              </span>{" "}
-                              في الرصيد المتاح
+                              <Typography
+                                component="span"
+                                sx={{ fontWeight: 700, color: "text.primary" }}
+                              >
+                                سيتبقي{" "}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                dir="ltr"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: "primary.main",
+                                  unicodeBidi: "embed",
+                                }}
+                              >
+                                {Number(remaining).toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                sx={{ fontWeight: 700, color: "text.primary" }}
+                              >
+                                {" "}في الرصيد المتاح
+                              </Typography>
                             </>
                           );
                         }
@@ -309,6 +400,52 @@ const LoanDetailsSection = ({
             <MenuItem value="MONTHLY">شهري</MenuItem>
           </TextField>
         </Grid>
+        <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            type="text"
+            label="هل يوجد دفع مقدم؟"
+            select
+            value={isViewMode ? (loanForm.hasAdvancePayment || (selectedLoan?.advancePayment && selectedLoan.advancePayment > 0 ? "yes" : "no")) : loanForm.hasAdvancePayment || "no"}
+            onChange={(e) => handleInputChange("hasAdvancePayment", e.target.value)}
+            disabled={isReadOnlyMode}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "56px",
+                width: "300px",
+                backgroundColor: "background.paper",
+              },
+            }}
+          >
+            <MenuItem value="no">لا</MenuItem>
+            <MenuItem value="yes">نعم</MenuItem>
+          </TextField>
+        </Grid>
+        {(loanForm.hasAdvancePayment === "yes" || (isViewMode && selectedLoan?.advancePayment && selectedLoan.advancePayment > 0)) && (
+          <Grid item xs={12} sm={6} md={6}>
+            <TextField
+              fullWidth
+              type="text"
+              label="مبلغ الدفع المقدم"
+              value={formatAmount(isViewMode ? (loanForm.advancePayment || selectedLoan?.advancePayment) : loanForm.advancePayment)}
+              onChange={(e) => handleInputChange("advancePayment", e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              disabled={isReadOnlyMode}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "+") e.preventDefault();
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "56px",
+                  width: "300px",
+                  backgroundColor: "background.paper",
+                },
+              }}
+            />
+          </Grid>
+        )}
         <Grid item xs={12} sm={6} md={6}>
           <TextField
             fullWidth
@@ -439,44 +576,6 @@ const LoanDetailsSection = ({
         )}
         <Grid item xs={12} sm={6} md={6}>
           <Autocomplete
-            options={banksData?.data || []}
-            getOptionLabel={(option) =>
-              `${option.name} - ${option.accountNumber}`
-            }
-            value={selectedBank}
-            onChange={handleBankSelect}
-            onInputChange={handleBanksSearchChange}
-            loading={isBanksLoading}
-            disabled={isReadOnlyMode}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="اختر الحساب البنكي"
-                placeholder="ابحث باسم الحساب أو رقم الحساب"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {isBanksLoading ? (
-                        <CircularProgress color="inherit" size={20} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: "56px",
-                    width: "300px",
-                    backgroundColor: "transparent",
-                  },
-                }}
-              />
-            )}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={6}>
-          <Autocomplete
             options={partnersData?.partners || []}
             filterOptions={(options) => options}
             getOptionLabel={(option) =>
@@ -518,4 +617,4 @@ const LoanDetailsSection = ({
     </Paper>
   );
 };
-export default LoanDetailsSection;
+export default LoanDetailsSection;

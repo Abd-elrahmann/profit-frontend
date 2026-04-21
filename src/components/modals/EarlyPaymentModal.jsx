@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,8 +11,14 @@ import {
   Alert,
   Divider,
   CircularProgress,
+  Autocomplete,
 } from "@mui/material";
 import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
+import { getBanks } from "../../pages/Banks/bankApis";
+import BankAccountBalanceInline from "../loans/BankAccountBalanceInline";
+import { debounce } from "../../utilities/debounce";
+
 const EarlyPaymentModal = ({
   open,
   onClose,
@@ -24,11 +30,33 @@ const EarlyPaymentModal = ({
 }) => {
   const [discountError, setDiscountError] = useState("");
   const [touched, setTouched] = useState(false);
+  const [bankError, setBankError] = useState("");
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearch, setBanksSearch] = useState("");
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () =>
+      debounce((value) => {
+        setBanksSearch(value);
+        setBanksPage(1);
+      }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", "early-payment-modal", banksPage, banksSearch],
+    queryFn: () => getBanks(banksPage, banksSearch),
+    enabled: open,
+    retry: 1,
+  });
   const pendingInstallments = (sortedInstallments || []).filter((inst) => inst.status === "PENDING" || inst.status === "PARTIAL_PAID");
   useEffect(() => {
     if (open) {
       setDiscountError("");
       setTouched(false);
+      setBankError("");
+      setSelectedBank(null);
+      setBanksSearch("");
+      setBanksPage(1);
     }
   }, [open]);
   const validateDiscount = (value) => {
@@ -53,7 +81,7 @@ const EarlyPaymentModal = ({
   };
   const handleDiscountChange = (e) => {
     const value = e.target.value;
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
       onDiscountChange(e);
       if (discountError) {
         setDiscountError("");
@@ -69,8 +97,13 @@ const EarlyPaymentModal = ({
     setTouched(true);
     const error = validateDiscount(discountAmount);
     setDiscountError(error);
+    if (!selectedBank?.id) {
+      setBankError("يرجى اختيار الحساب البنكي");
+      return;
+    }
+    setBankError("");
     if (!error) {
-      onConfirm();
+      onConfirm(selectedBank.id);
     }
   };
   return (
@@ -89,6 +122,40 @@ const EarlyPaymentModal = ({
         <Typography variant="body1" color="text.secondary" mb={2}>
           أنت على وشك إجراء سداد مبكر للدفعات المعلقة فقط
         </Typography>
+        <Autocomplete
+          options={banksData?.data || []}
+          getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+          value={selectedBank}
+          onChange={(_, newValue) => {
+            setSelectedBank(newValue);
+            setBankError("");
+          }}
+          onInputChange={(_, value, reason) => {
+            if (reason === "input") debouncedBanksSearch(value);
+          }}
+          loading={isBanksLoading}
+          sx={{ mb: 2 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="الحساب البنكي (استلام السداد)"
+              placeholder="ابحث باسم الحساب أو رقم الحساب"
+              required
+              error={!!bankError}
+              helperText={bankError}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+        <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
         {isLoadingAllRepayments ? (
           <Box sx={{ mb: 2, p: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
             <CircularProgress size={24} />

@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getAccountTypeLabel } from '../components/ChartOfAccounts';
+import { getAccountNatureLabel } from '../components/ChartOfAccounts';
 import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
 import { createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
@@ -29,7 +29,7 @@ export const exportChartOfAccountsToPDF = async (accountsTree) => {
   const rows = flatAccounts.map((a) => [
     a.code,
     a.name,
-    getAccountTypeLabel(a.type),
+    getAccountNatureLabel(a.nature),
     (a.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 }),
     a.isActive !== false ? 'نشط' : 'غير نشط',
   ]);
@@ -60,7 +60,7 @@ export const exportChartOfAccountsToExcel = async (accountsTree) => {
   const rows = flatAccounts.map((a) => ({
     'كود الحساب': a.code,
     'اسم الحساب': a.name,
-    النوع: getAccountTypeLabel(a.type),
+    النوع: getAccountNatureLabel(a.nature),
     الرصيد: a.balance ?? 0,
     الحالة: a.isActive !== false ? 'نشط' : 'غير نشط',
   }));
@@ -68,4 +68,4 @@ export const exportChartOfAccountsToExcel = async (accountsTree) => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'شجرة الحسابات');
   XLSX.writeFile(wb, 'شجرة-الحسابات.xlsx');
-};
+};

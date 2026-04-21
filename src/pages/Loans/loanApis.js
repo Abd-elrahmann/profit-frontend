@@ -216,3 +216,4 @@ export const transferPartialLoanAmount = async (fromClientId, toClientId, loanId
     throw error;
   }
 };
+export { getBankAccountBalance } from "../Banks/bankApis";

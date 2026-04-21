@@ -1,14 +1,41 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { Autocomplete, TextField, CircularProgress, Box } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { withdrawCompanyProfit } from '../../pages/companyProfit/CompanyProfitApi';
+import { getBanks } from '../../pages/Banks/bankApis';
+import BankAccountBalanceInline from '../loans/BankAccountBalanceInline';
+import { debounce } from '../../utilities/debounce';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
+
 const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess }) => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearch, setBanksSearch] = useState('');
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () => debounce((v) => { setBanksSearch(v); setBanksPage(1); }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ['banks', 'company-withdraw', banksPage, banksSearch],
+    queryFn: () => getBanks(banksPage, banksSearch),
+    enabled: open,
+    retry: 1,
+  });
+  useEffect(() => {
+    if (!open) {
+      setSelectedBank(null);
+      setBanksSearch('');
+      setBanksPage(1);
+    }
+  }, [open]);
   const handleClose = useCallback(() => {
     onClose();
     setWithdrawAmount('');
     setWithdrawError('');
+    setSelectedBank(null);
   }, [onClose]);
   const validateAmount = useCallback(
     (value) => {
@@ -33,13 +60,17 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
       notifyError('يرجى إدخال مبلغ صحيح');
       return;
     }
+    if (!selectedBank?.id) {
+      notifyError('يرجى اختيار الحساب البنكي');
+      return;
+    }
     if (withdrawError) {
       notifyError('يرجى تصحيح الأخطاء قبل المتابعة');
       return;
     }
     setIsWithdrawing(true);
     try {
-      await withdrawCompanyProfit(amount);
+      await withdrawCompanyProfit(amount, selectedBank.id);
       notifySuccess('تم سحب الأرباح بنجاح');
       handleClose();
       onSuccess?.();
@@ -54,7 +85,8 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
     isWithdrawing ||
     !withdrawAmount ||
     parseFloat(withdrawAmount) <= 0 ||
-    !!withdrawError;
+    !!withdrawError ||
+    !selectedBank?.id;
   if (!open) return null;
   return (
     <div
@@ -77,6 +109,36 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
           <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
             الرصيد المتاح: {(availableAmount || 0).toLocaleString('en-US')}
           </p>
+          <Box sx={{ mb: 1 }}>
+            <Autocomplete
+              options={banksData?.data || []}
+              getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+              value={selectedBank}
+              onChange={(_, v) => setSelectedBank(v)}
+              onInputChange={(_, v, reason) => {
+                if (reason === 'input') debouncedBanksSearch(v);
+              }}
+              loading={isBanksLoading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="الحساب البنكي"
+                  placeholder="ابحث باسم الحساب أو رقم الحساب"
+                  required
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+            <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
+          </Box>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               مبلغ السحب
@@ -101,6 +163,7 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
         </div>
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-between gap-3 flex-row-reverse">
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitDisabled}
             className="px-6 py-2.5 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 min-w-[80px]"
@@ -112,6 +175,7 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
             )}
           </button>
           <button
+            type="button"
             onClick={handleClose}
             disabled={isWithdrawing}
             className="px-6 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold transition-all disabled:opacity-50"
@@ -123,4 +187,4 @@ const WithdrawCompanyProfitModal = ({ open, onClose, availableAmount, onSuccess 
     </div>
   );
 };
-export default WithdrawCompanyProfitModal;
+export default WithdrawCompanyProfitModal;

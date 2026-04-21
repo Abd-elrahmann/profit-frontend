@@ -58,13 +58,15 @@ export const uploadPaymentProof = async (installmentId, file) => {
     throw error;
   }
 };
-export const approveRepayment = async (installmentId, amount, reason, discount = 0) => {
+export const approveRepayment = async (installmentId, amount, reason, discount = 0, BankId) => {
   try {
-    const response = await Api.patch(`/api/repayments/approve/${installmentId}`, {
+    const body = {
       paidAmount: amount,
       notes: reason,
       discount: discount
-    });
+    };
+    if (BankId != null) body.BankId = BankId;
+    const response = await Api.patch(`/api/repayments/approve/${installmentId}`, body);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -92,22 +94,24 @@ export const postponeRepayment = async (installmentId, newDueDate, reason) => {
     throw error;
   }
 };
-export const markAsPartialPaid = async (installmentId, paidAmount) => {
+export const markAsPartialPaid = async (installmentId, paidAmount, BankId) => {
   try {
-    const response = await Api.patch(`/api/repayments/partial-paid/${installmentId}`, {
-      paidAmount
-    });
+    const body = { paidAmount };
+    if (BankId != null) body.BankId = BankId;
+    const response = await Api.patch(`/api/repayments/partial-paid/${installmentId}`, body);
     return response.data;
   } catch (error) {
     handleApiError(error);
     throw error;
   }
 };
-export const earlyPayment = async (loanId, discount = 0) => {
+export const earlyPayment = async (loanId, discount = 0, BankId) => {
   try {
-    const response = await Api.patch(`/api/repayments/early-pay/${loanId}`, {
+    const body = {
       discount: parseFloat(discount) || 0
-    });
+    };
+    if (BankId != null) body.BankId = BankId;
+    const response = await Api.patch(`/api/repayments/early-pay/${loanId}`, body);
     return response.data;
   } catch (error) {
     handleApiError(error);

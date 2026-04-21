@@ -29,6 +29,7 @@ const Saving = React.lazy(() => import('./pages/Saving/Saving'));
 const ClientCollections = React.lazy(() => import('./pages/clientCollections/ClientCollections'));
 const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProfit'));
 const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
+const Delinquencies = React.lazy(() => import('./pages/Delinquencies/Delinquencies'));
 const InvestorsWithdrawal = React.lazy(() => import('./pages/investorsWithdrawal/investorsWithdrawal'));
 const IncomeStatement = React.lazy(() => import('./pages/incomeStatement/incomeStatement'));
 const Settings = React.lazy(() => import('./pages/Settings/Settings'));
@@ -149,6 +150,14 @@ const routes = [
     protected: true,
     showInSidebar: true,
     module: 'expenses',
+    requiresPermissions: true
+  },
+  {
+    path: '/delinquencies',
+    element: Delinquencies,
+    protected: true,
+    showInSidebar: true,
+    module: 'loss',
     requiresPermissions: true
   },
   {

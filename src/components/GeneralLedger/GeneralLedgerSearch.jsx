@@ -218,4 +218,4 @@ const GeneralLedgerSearch = ({ open, onClose, onSearch }) => {
     </Modal>
   );
 };
-export default GeneralLedgerSearch;
+export default GeneralLedgerSearch;

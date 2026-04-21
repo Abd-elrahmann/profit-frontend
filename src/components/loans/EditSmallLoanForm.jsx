@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Paper,
@@ -7,13 +7,30 @@ import {
   Grid,
   useMediaQuery,
 } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
 import { updateSmallLoan, createSmallLoan } from "../../pages/Loans/loanApis";
+import { getBanks } from "../../pages/Banks/bankApis";
+import { debounce } from "../../utilities/debounce";
 import { notifySuccess, notifyError } from "../../utilities/toastify";
+import BankAccountAutocomplete from "./BankAccountAutocomplete";
+
 const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
   const [formData, setFormData] = useState({
     Name: "",
     amount: "",
     notes: "",
+  });
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearchQuery, setBanksSearchQuery] = useState("");
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () => debounce((v) => { setBanksSearchQuery(v); setBanksPage(1); }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ["banks", "small-loan-form", banksPage, banksSearchQuery],
+    queryFn: () => getBanks(banksPage, banksSearchQuery),
+    retry: 1,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [lastSelectedLoan, setLastSelectedLoan] = useState(null);
@@ -27,6 +44,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
         amount: "",
         notes: "",
       });
+      setSelectedBank(null);
     }
     if (selectedLoan) {
       const formattedAmount = selectedLoan.amount.toLocaleString();
@@ -35,15 +53,23 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
         amount: formattedAmount,
         notes: selectedLoan.notes || "",
       });
+      setSelectedBank(selectedLoan.bankAccount || null);
     } else if (!lastSelectedLoan) {
       setFormData({
         Name: "",
         amount: "",
         notes: "",
       });
+      setSelectedBank(null);
     }
     setLastSelectedLoan(selectedLoan);
   }, [selectedLoan, lastSelectedLoan]);
+  const handleBanksSearchChange = (event, value) => {
+    debouncedBanksSearch(value);
+  };
+  const handleBankSelect = (event, newValue) => {
+    setSelectedBank(newValue);
+  };
   const handleInputChange = (field, value) => {
     if (field === "amount") {
       const rawValue = value.replace(/,/g, "");
@@ -71,6 +97,10 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
       notifyError("يرجى إدخال مبلغ السلفة");
       return;
     }
+    if (!selectedBank?.id) {
+      notifyError("يرجى اختيار الحساب البنكي");
+      return;
+    }
     try {
       setIsLoading(true);
       const submitData = {
@@ -79,10 +109,10 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
         notes: formData.notes.trim(),
       };
       if (isEditMode) {
-        await updateSmallLoan(selectedLoan.id, submitData);
+        await updateSmallLoan(selectedLoan.id, { ...submitData, bankId: selectedBank.id });
         notifySuccess("تم تعديل السلفة الصغيرة بنجاح");
       } else {
-        await createSmallLoan(submitData);
+        await createSmallLoan({ ...submitData, BankId: selectedBank.id });
         notifySuccess("تم إنشاء السلفة الصغيرة بنجاح");
       }
       setFormData({
@@ -90,6 +120,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
         amount: "",
         notes: "",
       });
+      setSelectedBank(null);
       if (onLoanUpdated) {
         onLoanUpdated();
       }
@@ -100,7 +131,7 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
       setIsLoading(false);
     }
   };
-  const isFormValid = formData.Name.trim() && formData.amount;
+  const isFormValid = formData.Name.trim() && formData.amount && selectedBank?.id;
   return (
     <Box>
       <Paper
@@ -112,6 +143,17 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
           borderColor: "divider",
         }}
       >
+        <BankAccountAutocomplete
+          variant="section"
+          sectionTitle="معلومات البنك"
+          isSmallScreen={isSmallScreen}
+          selectedBank={selectedBank}
+          banksData={banksData}
+          isBanksLoading={isBanksLoading}
+          handleBankSelect={handleBankSelect}
+          handleBanksSearchChange={handleBanksSearchChange}
+          isReadOnlyMode={false}
+        />
         <Grid container spacing={isSmallScreen ? 2 : 3} justifyContent="center">
           <Grid item xs={12} sm={8} md={6}>
             <TextField
@@ -179,20 +221,12 @@ const EditSmallLoanForm = ({ selectedLoan, onLoanUpdated }) => {
             <Button
               fullWidth
               variant="contained"
-              onClick={handleSubmit}
+              color="primary"
               disabled={!isFormValid || isLoading}
-              sx={{
-                fontSize: "16px",
-                fontWeight: "bold",
-                "&:hover": {
-                  bgcolor: "#2E8B45",
-                },
-              }}
+              onClick={handleSubmit}
+              sx={{ height: "56px", maxWidth: 350 }}
             >
-              {selectedLoan
-                ? (isLoading ? "جاري التعديل..." : "تعديل السلفة")
-                : (isLoading ? "جاري الإنشاء..." : "إنشاء السلفة")
-              }
+              {isLoading ? "جاري الحفظ..." : selectedLoan ? "حفظ التعديلات" : "إنشاء السلفة الصغيرة"}
             </Button>
           </Grid>
         </Grid>

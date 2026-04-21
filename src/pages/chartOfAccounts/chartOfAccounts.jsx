@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircularProgress, Alert, useMediaQuery } from '@mui/material';
-import { getAccountsTree, deleteAccount } from './chartApi';
+import { getAccountsTree, searchAccountsTree, deleteAccount } from './chartApi';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import DeleteModal from '../../components/modals/DeleteModal';
@@ -30,17 +30,32 @@ const ChartOfAccount = () => {
   const [parentAccount, setParentAccount] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
-  const hasInitialExpand = useRef(false);
-  const { data: accountsTree = [], isLoading, error } = useQuery({
-    queryKey: ['accountsTree'],
-    queryFn: getAccountsTree,
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+  const trimmedSearch = debouncedSearch.trim();
+  const { data: accountsTree = [], isLoading, error, isFetching } = useQuery({
+    queryKey: ['accountsTree', trimmedSearch],
+    queryFn: () =>
+      trimmedSearch ? searchAccountsTree(trimmedSearch) : getAccountsTree(),
   });
   useEffect(() => {
-    if (accountsTree.length > 0 && !hasInitialExpand.current) {
-      hasInitialExpand.current = true;
+    if (!accountsTree?.length) return;
+    const collectIds = (nodes, acc = []) => {
+      for (const n of nodes) {
+        acc.push(n.id);
+        if (n.children?.length) collectIds(n.children, acc);
+      }
+      return acc;
+    };
+    if (trimmedSearch) {
+      setExpandedIds(new Set(collectIds(accountsTree)));
+    } else {
       setExpandedIds(new Set(accountsTree.map((a) => a.id)));
     }
-  }, [accountsTree]);
+  }, [accountsTree, trimmedSearch]);
   const flatAccounts = useMemo(
     () =>
       viewMode === 'list'
@@ -48,15 +63,6 @@ const ChartOfAccount = () => {
         : flattenAccountsTree(accountsTree, 0, expandedIds),
     [accountsTree, expandedIds, viewMode]
   );
-  const filteredAccounts = useMemo(() => {
-    if (!searchQuery.trim()) return flatAccounts;
-    const q = searchQuery.toLowerCase();
-    return flatAccounts.filter(
-      (a) =>
-        (a.code && a.code.toString().toLowerCase().includes(q)) ||
-        (a.name && a.name.toLowerCase().includes(q))
-    );
-  }, [flatAccounts, searchQuery]);
   const toggleExpand = useCallback((id) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -153,9 +159,14 @@ const ChartOfAccount = () => {
             <ChartOfAccountsSearch value={searchQuery} onChange={setSearchQuery} isSmallScreen={isSmallScreen} />
             <ChartOfAccountsViewToggle view={viewMode} onChange={setViewMode} isSmallScreen={isSmallScreen} />
           </section>
-          <section>
+          <section className="relative">
+            {isFetching && !isLoading && (
+              <div className="absolute left-0 top-0 z-10 pointer-events-none">
+                <span className="text-xs text-slate-500 dark:text-slate-400">جاري البحث...</span>
+              </div>
+            )}
             <ChartOfAccountsTable
-              flatAccounts={filteredAccounts}
+              flatAccounts={flatAccounts}
               expandedIds={expandedIds}
               onToggleExpand={toggleExpand}
               onAddChild={handleAddChild}

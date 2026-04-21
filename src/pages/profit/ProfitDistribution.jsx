@@ -147,11 +147,16 @@ const ProfitDistribution = () => {
     setSelectedSavingPartnerIds(partnerIds);
     setEnableSaving(true);
   };
-  const handleConfirmDistribution = async () => {
+  const handleConfirmDistribution = async (bankId) => {
     const { periodId, action } = distributionDialog;
     try {
       setIsDistributing(true);
       if (action === "post") {
+        if (!bankId) {
+          notifyError("يرجى اختيار الحساب البنكي");
+          setIsDistributing(false);
+          return;
+        }
         const sourcePartners = periodData?.partners || [];
         const targetPartners = selectedSavingPartnerIds.length
           ? sourcePartners.filter((partner) => selectedSavingPartnerIds.includes(partner.partnerId))
@@ -164,7 +169,8 @@ const ProfitDistribution = () => {
         await postDistribution(
           periodId,
           savingAmount,
-          enableSaving ? selectedSavingPartnerIds : undefined
+          enableSaving ? selectedSavingPartnerIds : undefined,
+          bankId
         );
         notifySuccess(`تم توزيع الأرباح بنجاح ${enableSaving ? `مع ادخار ${formatNumber(savingAmount)}` : ''}`);
       }

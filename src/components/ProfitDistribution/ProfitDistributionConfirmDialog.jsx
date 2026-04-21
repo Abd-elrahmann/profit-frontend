@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,9 +8,16 @@ import {
   Button,
   Alert,
   CircularProgress,
+  TextField,
+  Autocomplete,
 } from '@mui/material';
 import { Check as CheckIcon } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import { getBanks } from '../../pages/Banks/bankApis';
+import BankAccountBalanceInline from '../loans/BankAccountBalanceInline';
+import { debounce } from '../../utilities/debounce';
 import { formatNumber } from './profitDistributionUtils';
+
 const ProfitDistributionConfirmDialog = ({
   open,
   onClose,
@@ -21,6 +28,39 @@ const ProfitDistributionConfirmDialog = ({
   savedAmount,
   isDistributing,
 }) => {
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearch, setBanksSearch] = useState('');
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [bankError, setBankError] = useState('');
+  const debouncedBanksSearch = useMemo(
+    () => debounce((value) => {
+      setBanksSearch(value);
+      setBanksPage(1);
+    }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ['banks', 'profit-distribution-confirm', banksPage, banksSearch],
+    queryFn: () => getBanks(banksPage, banksSearch),
+    enabled: open,
+    retry: 1,
+  });
+  useEffect(() => {
+    if (!open) {
+      setSelectedBank(null);
+      setBankError('');
+      setBanksSearch('');
+      setBanksPage(1);
+    }
+  }, [open]);
+  const handleConfirm = () => {
+    if (!selectedBank?.id) {
+      setBankError('يرجى اختيار الحساب البنكي');
+      return;
+    }
+    setBankError('');
+    onConfirm(selectedBank.id);
+  };
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
@@ -32,6 +72,40 @@ const ProfitDistributionConfirmDialog = ({
         <Typography>
           هل أنت متأكد من توزيع أرباح الفترة &quot;{periodName}&quot;؟
         </Typography>
+        <Autocomplete
+          sx={{ mt: 2 }}
+          options={banksData?.data || []}
+          getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+          value={selectedBank}
+          onChange={(_, v) => {
+            setSelectedBank(v);
+            setBankError('');
+          }}
+          onInputChange={(_, value, reason) => {
+            if (reason === 'input') debouncedBanksSearch(value);
+          }}
+          loading={isBanksLoading}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="الحساب البنكي"
+              placeholder="ابحث باسم الحساب أو رقم الحساب"
+              required
+              error={!!bankError}
+              helperText={bankError}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+        <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
         {enableSaving && savingPercentage > 0 && (
           <Alert severity="info" sx={{ mt: 2 }}>
             <Typography variant="body2">
@@ -51,7 +125,7 @@ const ProfitDistributionConfirmDialog = ({
           إلغاء
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={handleConfirm}
           variant="contained"
           color="success"
           startIcon={<CheckIcon sx={{ marginLeft: '10px' }} />}
@@ -66,4 +140,4 @@ const ProfitDistributionConfirmDialog = ({
     </Dialog>
   );
 };
-export default ProfitDistributionConfirmDialog;
+export default ProfitDistributionConfirmDialog;

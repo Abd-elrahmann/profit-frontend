@@ -3,6 +3,19 @@ export const getAccountsTree = async () => {
   const response = await Api.get('/api/accounts/tree');
   return response.data;
 };
+
+/** بحث في الخادم: المطابقون + كل أبنائهم في الشجرة */
+export const searchAccountsTree = async (q) => {
+  try {
+    const response = await Api.get('/api/accounts/search', {
+      params: { q: q.trim() },
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
 export const getAccountById = async (accountId) => {
   try {
     const response = await Api.get(`/api/accounts/${accountId}`);

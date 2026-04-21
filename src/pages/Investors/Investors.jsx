@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -10,7 +10,8 @@ import {
 import WarningIcon from "@mui/icons-material/Warning";
 import Api, { handleApiError } from "../../config/Api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { debounce } from '../../utilities/debounce';
+import { getBanks } from "../../pages/Banks/bankApis";
+import { debounce } from "../../utilities/debounce";
 import DeleteModal from "../../components/modals/DeleteModal";
 import TransactionModal from "../../components/modals/TransactionModal";
 import WithdrawModal from "../../components/modals/WithdrawModal";
@@ -99,6 +100,24 @@ export default function Investors() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingTransaction, setIsSavingTransaction] = useState(false);
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearchQuery, setBanksSearchQuery] = useState("");
+  const debouncedInvestorBanksSearch = useMemo(
+    () => debounce((value) => {
+      setBanksSearchQuery(value);
+      setBanksPage(1);
+    }, 500),
+    []
+  );
+  const { data: investorBanksData, isLoading: isInvestorBanksLoading } = useQuery({
+    queryKey: ["banks", "investor-edit", banksPage, banksSearchQuery],
+    queryFn: () => getBanks(banksPage, banksSearchQuery),
+    enabled: !!selectedInvestor && tab === INVESTOR_TABS.FINANCIAL,
+    retry: 1,
+  });
+  const handleInvestorBanksSearchChange = useCallback((event, value) => {
+    debouncedInvestorBanksSearch(value);
+  }, [debouncedInvestorBanksSearch]);
   const handleExportMenuOpen = (event) => {
     setExportMenuAnchor(event.currentTarget);
   };
@@ -273,6 +292,8 @@ export default function Investors() {
           dataToSend.createdAt = value;
         } else if (field === 'isActive') {
           dataToSend.isActive = value;
+        } else if (field === 'bankAccountId') {
+          dataToSend.BankId = value;
         } else {
           dataToSend[field] = value;
         }
@@ -474,7 +495,7 @@ export default function Investors() {
       setIsLoadingPreview(false);
     }
   };
-  const handleWithdraw = async (firstPaymentDate) => {
+  const handleWithdraw = async (firstPaymentDate, BankId) => {
     if (!selectedInvestor) {
       notifyError("يرجى اختيار مستثمر");
       return;
@@ -487,15 +508,19 @@ export default function Investors() {
       notifyError("يرجى إدخال تاريخ أول دفعة");
       return;
     }
+    if (!BankId) {
+      notifyError("يرجى اختيار الحساب البنكي");
+      return;
+    }
     try {
       setIsWithdrawing(true);
       if (isWithdrawEditMode) {
-        await updatePartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
+        await updatePartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate, BankId);
         invalidateAllInvestorQueries(queryClient, selectedInvestor.id);
         queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
         notifySuccess(`تم تعديل مبلغ الانسحاب للمستثمر ${selectedInvestor.name} بنجاح`);
       } else {
-        await createPartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate);
+        await createPartnerWithdrawal(selectedInvestor.id, withdrawAmount, firstPaymentDate, BankId);
         setWithdrawnInvestors(prev => new Set(prev).add(selectedInvestor.id));
         invalidateInvestorQueries(queryClient, selectedInvestor.id);
         queryClient.invalidateQueries({ queryKey: ['unposted-journals-all'] });
@@ -843,6 +868,9 @@ export default function Investors() {
                   isMobile={isMobile}
                   editMode={editMode}
                   editFormData={editFormData}
+                  banksData={investorBanksData}
+                  isBanksLoading={isInvestorBanksLoading}
+                  onBanksSearchChange={handleInvestorBanksSearchChange}
                   hasDataChanged={hasDataChanged}
                   onEditModeToggle={() => {
                     const newEditMode = !editMode;

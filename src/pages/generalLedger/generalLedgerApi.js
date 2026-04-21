@@ -17,4 +17,4 @@ export const getAccountLedger = async (accountId, fromDate = null, toDate = null
     `/api/accounts/${accountId}/${page}${queryString ? `?${queryString}` : ''}`
   );
   return response.data;
-};
+};

@@ -47,3 +47,14 @@ export const getBankById = async (bankId) => {
       throw error;
     }
   };
+
+/** رصيد الحساب المحاسبي المرتبط بالبنك (نفس مسار القروض). */
+export const getBankAccountBalance = async (bankAccountId) => {
+  try {
+    const response = await Api.get(`/api/loans/balance/${bankAccountId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

@@ -4,7 +4,8 @@ export { default as ChartOfAccountsViewToggle } from './ChartOfAccountsViewToggl
 export { default as ChartOfAccountsTable } from './ChartOfAccountsTable';
 export {
   getAccountTypeLabel,
+  getAccountNatureLabel,
   getAccountTypeBadgeClass,
   flattenAccountsTree,
   generateChildCode,
-} from './chartOfAccountsUtils';
+} from './chartOfAccountsUtils';

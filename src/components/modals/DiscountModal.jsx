@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,8 +9,14 @@ import {
   Typography,
   Box,
   Alert,
+  Autocomplete,
+  CircularProgress,
 } from '@mui/material';
-import { CircularProgress } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import { getBanks } from '../../pages/Banks/bankApis';
+import BankAccountBalanceInline from '../loans/BankAccountBalanceInline';
+import { debounce } from '../../utilities/debounce';
+
 const DiscountModal = ({
   open,
   onClose,
@@ -22,6 +28,22 @@ const DiscountModal = ({
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
+  const [banksPage, setBanksPage] = useState(1);
+  const [banksSearch, setBanksSearch] = useState('');
+  const [selectedBank, setSelectedBank] = useState(null);
+  const debouncedBanksSearch = useMemo(
+    () => debounce((value) => {
+      setBanksSearch(value);
+      setBanksPage(1);
+    }, 400),
+    []
+  );
+  const { data: banksData, isLoading: isBanksLoading } = useQuery({
+    queryKey: ['banks', 'discount-modal', banksPage, banksSearch],
+    queryFn: () => getBanks(banksPage, banksSearch),
+    enabled: open,
+    retry: 1,
+  });
   const handleConfirm = () => {
     const discountValue = parseFloat(discount) || 0;
     if (discountValue < 0) {
@@ -32,18 +54,27 @@ const DiscountModal = ({
       setError(`الخصم لا يمكن أن يتجاوز مبلغ الدفعة (${installmentAmount.toLocaleString()})`);
       return;
     }
+    if (!selectedBank?.id) {
+      setError('يرجى اختيار الحساب البنكي');
+      return;
+    }
     setError('');
     onConfirm({
       discount: discountValue,
-      notes: notes.trim() || (discountValue > 0 ? 'تم تطبيق خصم على الدفعة' : 'تمت الموافقة على الدفعة')
+      notes: notes.trim() || (discountValue > 0 ? 'تم تطبيق خصم على الدفعة' : 'تمت الموافقة على الدفعة'),
+      BankId: selectedBank.id,
     });
     setDiscount('');
     setNotes('');
+    setSelectedBank(null);
   };
   const handleClose = () => {
     setDiscount('');
     setNotes('');
     setError('');
+    setSelectedBank(null);
+    setBanksSearch('');
+    setBanksPage(1);
     onClose();
   };
   const finalAmount = Math.max(0, installmentAmount - (parseFloat(discount) || 0));
@@ -72,6 +103,35 @@ const DiscountModal = ({
             ملاحظة: مبلغ الخصم يجب ألا يتعدى مبلغ الدفعة ({installmentAmount.toLocaleString()})
           </Typography>
         </Alert>
+        <Autocomplete
+          options={banksData?.data || []}
+          getOptionLabel={(option) => `${option.name} - ${option.accountNumber}`}
+          value={selectedBank}
+          onChange={(_, newValue) => setSelectedBank(newValue)}
+          onInputChange={(_, value, reason) => {
+            if (reason === 'input') debouncedBanksSearch(value);
+          }}
+          loading={isBanksLoading}
+          sx={{ mb: 2 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="الحساب البنكي (استلام السداد)"
+              placeholder="ابحث باسم الحساب أو رقم الحساب"
+              required
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {isBanksLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+        <BankAccountBalanceInline bankAccountId={selectedBank?.id} />
         <TextField
           fullWidth
           label="مبلغ الخصم"
@@ -121,10 +181,10 @@ const DiscountModal = ({
           disabled={loading}
         >
           {hasDiscount ? 'تطبيق الخصم' : 'الموافقة علي الدفعة'}
-          {loading && <CircularProgress size={20} />}
+          {loading && <CircularProgress size={20} sx={{ ml: 1 }} />}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-export default DiscountModal;
+export default DiscountModal;

@@ -32,12 +32,13 @@ import {
   CalendarMonth as CalendarMonthIcon,
   Savings as SavingsIcon,
   Receipt as ReceiptIcon,
+  MoneyOff as MoneyOffIcon,
 } from '@mui/icons-material';
 export const parentOrder = [
   'الموظفين والصلاحيات',
   'العملاء والتحصيلات',
   'المستثمرين والانسحابات',
-  'المصروفات',
+  'المصروفات والتعثرات',
   'الحسابات والقيود',
   'السلف والبنوك',
   'القوائم والأرباح',
@@ -48,7 +49,7 @@ export const parentIcons = {
   'الموظفين والصلاحيات': EngineeringIcon,
   'العملاء والتحصيلات': People,
   'المستثمرين والانسحابات': BusinessCenterIcon,
-  'المصروفات': ReceiptLongIcon,
+  'المصروفات والتعثرات': ReceiptLongIcon,
   'الحسابات والقيود': AccountingIcon,
   'السلف والبنوك': FinancialOpsIcon,
   'القوائم والأرباح': AnalyticsIcon,
@@ -59,7 +60,7 @@ export const parentColors = {
   'الموظفين والصلاحيات': '#D84315', 
   'العملاء والتحصيلات': '#00897B', 
   'المستثمرين والانسحابات': '#1565C0', 
-  'المصروفات': '#F57C00', 
+  'المصروفات والتعثرات': '#F57C00', 
   'الحسابات والقيود': '#7B1FA2', 
   'السلف والبنوك': '#C62828', 
   'القوائم والأرباح': '#2E7D32', 
@@ -148,7 +149,15 @@ export const sidebarItems = [
     module: 'expenses',
     requiresPermissions: true,
     icon: ReceiptIcon,
-    parent: 'المصروفات'
+    parent: 'المصروفات والتعثرات'
+  },
+  {
+    path: '/delinquencies',
+    label: 'التعثرات',
+    module: 'loss',
+    requiresPermissions: true,
+    icon: MoneyOffIcon,
+    parent: 'المصروفات والتعثرات'
   },
   {
     path: '/income-statement',

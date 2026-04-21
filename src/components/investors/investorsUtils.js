@@ -278,6 +278,7 @@ export const buildEditFormData = (investorDetails, selectedInvestor) => {
     email: investorDetails.email || '',
     orgProfitPercent: investorDetails.orgProfitPercent || '',
     capitalAmount: capitalAmount || '',
+    bankAccountId: investorDetails.bankAccount?.id ?? null,
     status: getInvestorStatus(investorDetails),
     createdAt: investorDetails.createdAt ? dayjs(investorDetails.createdAt).format('YYYY-MM-DD') : '',
     isActive: investorDetails.isActive !== undefined ? investorDetails.isActive : true,
@@ -302,7 +303,9 @@ export const getOriginalFieldValue = (field, investorDetails, selectedInvestor) 
     case 'city':
     case 'email':
       return investorDetails[field];
+    case 'bankAccountId':
+      return investorDetails.bankAccount?.id ?? null;
     default:
       return investorDetails[field];
   }
-};
+};
