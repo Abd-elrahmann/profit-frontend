@@ -12,6 +12,7 @@ const TreasuryJournalsSection = ({
   isSmallScreen,
   isDarkMode,
   onPageChange,
+  monthFooterTotals = null,
 }) => {
   const hasJournals = currentJournals.length > 0;
   return (
@@ -59,9 +60,17 @@ const TreasuryJournalsSection = ({
       ) : (
         <>
           {isSmallScreen ? (
-            <TreasuryJournalCards journals={currentJournals} isDarkMode={isDarkMode} />
+            <TreasuryJournalCards
+              journals={currentJournals}
+              isDarkMode={isDarkMode}
+              monthFooterTotals={monthFooterTotals}
+            />
           ) : (
-            <TreasuryJournalTable journals={currentJournals} isDarkMode={isDarkMode} />
+            <TreasuryJournalTable
+              journals={currentJournals}
+              isDarkMode={isDarkMode}
+              monthFooterTotals={monthFooterTotals}
+            />
           )}
           {pagination.totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: 3, mb: 2 }}>
@@ -87,4 +96,4 @@ const TreasuryJournalsSection = ({
     </Paper>
   );
 };
-export default TreasuryJournalsSection;
+export default TreasuryJournalsSection;

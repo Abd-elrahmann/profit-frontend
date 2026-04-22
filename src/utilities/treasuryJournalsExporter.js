@@ -1,13 +1,15 @@
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
+import { getJournalsByMonthResolved } from '../components/Treasury/treasuryUtils';
 export const exportJournalsToExcel = async (journalData, accountName) => {
   try {
     if (!journalData) {
       throw new Error('لا توجد بيانات للتصدير');
     }
     const allJournals = [];
-    if (journalData.journalsByMonth) {
-      Object.values(journalData.journalsByMonth).forEach(monthData => {
+    const jbm = getJournalsByMonthResolved(journalData);
+    if (jbm) {
+      Object.values(jbm).forEach(monthData => {
         if (monthData.entries && Array.isArray(monthData.entries)) {
           allJournals.push(...monthData.entries);
         }
@@ -37,6 +39,7 @@ export const exportJournalsToExcel = async (journalData, accountName) => {
     allJournals.forEach(journal => {
       journalsData.push({
         'التاريخ': dayjs(journal.date).format('DD/MM/YYYY hh:mm'),
+        'المرجع': journal.reference || '-',
         'الوصف': journal.description || '-',
         'مدين': journal.debit > 0 ? journal.debit : 0,
         'دائن': journal.credit > 0 ? journal.credit : 0,
@@ -49,6 +52,7 @@ export const exportJournalsToExcel = async (journalData, accountName) => {
     const journalsSheet = XLSX.utils.json_to_sheet(journalsData);
     const wscols = [
       { wch: 20 },
+      { wch: 18 },
       { wch: 40 },
       { wch: 12 },
       { wch: 12 },
@@ -77,6 +81,7 @@ export const exportJournalsToExcel = async (journalData, accountName) => {
 const getJournalTypeArabic = (type) => {
   const typeMap = {
     'GENERAL': 'عام',
+    'OPENING': 'افتتاحي',
     'LOAN_DISBURSEMENT': 'صرف سلفة',
     'REPAYMENT': 'سداد',
     'CAPITAL': 'رأس المال',

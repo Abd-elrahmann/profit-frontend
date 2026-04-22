@@ -3,40 +3,8 @@ import html2pdf from 'html2pdf.js';
 import Api, { handleApiError } from '../../config/Api';
 import { notifyError } from '../../utilities/toastify';
 import { ensureFontsReady } from '../../utilities/fontLoader';
+import { amountToArabicSarInWords } from '../../utilities/arabicAmountWords';
 import ExpenseVoucher from '../Contracts/ExpenseVoucher';
-
-const numberToArabicWords = (num) => {
-  const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-  const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
-  const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
-  const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
-  if (num === 0) return 'صفر';
-  if (num < 0) return 'سالب ' + numberToArabicWords(-num);
-  let result = '';
-  let hasThousands = false;
-  if (num >= 1000) {
-    const thousandsPart = Math.floor(num / 1000);
-    result += thousandsPart === 1 ? 'ألف ' : numberToArabicWords(thousandsPart) + ' ألف ';
-    num %= 1000;
-    hasThousands = true;
-  }
-  if (num >= 100) {
-    const hundredsPart = Math.floor(num / 100);
-    result += (hasThousands ? 'و' : '') + hundreds[hundredsPart];
-    num %= 100;
-    if (num > 0) result += ' و';
-  }
-  if (num >= 20) {
-    const t = Math.floor(num / 10);
-    const o = num % 10;
-    result += o > 0 ? ones[o] + ' و' + tens[t] : tens[t];
-  } else if (num >= 10) {
-    result += teens[num - 10];
-  } else if (num > 0) {
-    result += ones[num];
-  }
-  return result.trim();
-};
 
 const getCurrentDates = () => {
   const now = new Date();
@@ -152,7 +120,7 @@ const ExpenseVoucherGenerator = React.forwardRef(
         const totalAmount = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
         const { gregorianDate, hijriDate } = getCurrentDates();
         const receiptNum = receiptNumOverride != null ? String(receiptNumOverride) : String(Date.now());
-        const amountInWords = `${numberToArabicWords(totalAmount)} ريال`;
+        const amountInWords = amountToArabicSarInWords(totalAmount);
 
         const firstExpense = expenses[0];
         const isSalary = firstExpense.type === 'مصروف رواتب';

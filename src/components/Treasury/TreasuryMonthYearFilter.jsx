@@ -11,6 +11,9 @@ export default function TreasuryMonthYearFilter({
   isSmallScreen,
   showTransactionCount,
   transactionCount,
+  bankAccountOptions = null,
+  selectedBankAccount = null,
+  onBankAccountChange,
 }) {
   const filterLabel =
     selectedYear && selectedMonth
@@ -18,6 +21,14 @@ export default function TreasuryMonthYearFilter({
       : selectedYear
         ? `عرض بيانات سنة ${selectedYear}`
         : 'عرض جميع البيانات';
+  const hasAccountPicker =
+    Array.isArray(bankAccountOptions) &&
+    bankAccountOptions.length > 0 &&
+    typeof onBankAccountChange === 'function';
+  const yearMd = showTransactionCount ? 3 : hasAccountPicker ? 4 : 4;
+  const monthMd = showTransactionCount ? 3 : hasAccountPicker ? 4 : 4;
+  const accountMd = hasAccountPicker ? 4 : 0;
+  const labelMd = showTransactionCount ? 3 : hasAccountPicker ? 12 : 4;
   return (
     <Paper
       sx={{
@@ -29,7 +40,7 @@ export default function TreasuryMonthYearFilter({
       }}
     >
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={showTransactionCount ? 3 : 4}>
+        <Grid item xs={12} md={labelMd}>
           <Typography
             variant="body2"
             color="text.secondary"
@@ -38,7 +49,7 @@ export default function TreasuryMonthYearFilter({
             {filterLabel}
           </Typography>
         </Grid>
-        <Grid item xs={12} md={showTransactionCount ? 4.5 : 4}>
+        <Grid item xs={12} md={yearMd}>
           <Autocomplete
             value={allYears.find((y) => y.value === selectedYear) || null}
             onChange={onYearChange}
@@ -58,7 +69,7 @@ export default function TreasuryMonthYearFilter({
             sx={{ width: '100%', minWidth: '200px' }}
           />
         </Grid>
-        <Grid item xs={12} md={showTransactionCount ? 4.5 : 4}>
+        <Grid item xs={12} md={monthMd}>
           <Autocomplete
             value={ALL_MONTHS.find((m) => m.value === selectedMonth) || null}
             onChange={onMonthChange}
@@ -80,8 +91,36 @@ export default function TreasuryMonthYearFilter({
             sx={{ width: '100%', minWidth: '200px' }}
           />
         </Grid>
+        {hasAccountPicker && (
+          <Grid item xs={12} md={accountMd}>
+            <Autocomplete
+              value={selectedBankAccount}
+              onChange={onBankAccountChange}
+              options={bankAccountOptions}
+              getOptionLabel={(option) =>
+                option?.id == null
+                  ? option.accountName || ''
+                  : `${option.accountCode || ''} — ${option.accountName || ''}`
+              }
+              isOptionEqualToValue={(opt, val) => opt?.id === val?.id}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="اختر الحساب"
+                  size="small"
+                  placeholder="حساب فرعي"
+                  sx={{
+                    '& .MuiInputLabel-root': { color: isDarkMode ? 'text.secondary' : 'inherit' },
+                    '& .MuiOutlinedInput-root input': { color: isDarkMode ? 'text.primary' : 'inherit' },
+                  }}
+                />
+              )}
+              sx={{ width: 300, minWidth: 300, maxWidth: '100%' }}
+            />
+          </Grid>
+        )}
         {showTransactionCount && (
-          <Grid item xs={12} md={1}>
+          <Grid item xs={12} md={3}>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
               {transactionCount} قيد
             </Typography>
@@ -90,4 +129,4 @@ export default function TreasuryMonthYearFilter({
       </Grid>
     </Paper>
   );
-}
+}

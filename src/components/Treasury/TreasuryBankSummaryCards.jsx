@@ -21,6 +21,8 @@ export default function TreasuryBankSummaryCards({
   repaymentsProgress,
   isSmallScreen,
   isDarkMode = false,
+  singleAccountDetailMode = false,
+  selectedAccountTitle = '',
 }) {
   const cardBoxSx = {
     flex: isSmallScreen ? '1 1 100%' : '1 1 200px',
@@ -53,6 +55,65 @@ export default function TreasuryBankSummaryCards({
       </Box>
     </Box>
   );
+  if (singleAccountDetailMode) {
+    return (
+      <Box sx={{ mb: isSmallScreen ? 2 : 4 }}>
+        {selectedAccountTitle ? (
+          <Typography
+            variant="subtitle1"
+            fontWeight="bold"
+            color="primary"
+            sx={{ mb: 2, textAlign: 'center' }}
+          >
+            {selectedAccountTitle}
+          </Typography>
+        ) : null}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: isSmallScreen ? 2 : 3,
+            justifyContent: 'center',
+            alignItems: 'stretch',
+          }}
+        >
+          <Box sx={cardBoxSx}>
+            <TreasuryStatCard
+              icon={TrendingUp}
+              iconColor="#2e7d32"
+              value={animatedTotalDebit}
+              label="إجمالي المدين"
+              chipLabel="مدين"
+              chipColor="success"
+              isSmallScreen={isSmallScreen}
+            />
+          </Box>
+          <Box sx={cardBoxSx}>
+            <TreasuryStatCard
+              icon={TrendingDown}
+              iconColor="#d32f2f"
+              value={animatedTotalCredit}
+              label="إجمالي الدائن"
+              chipLabel="دائن"
+              chipColor="error"
+              isSmallScreen={isSmallScreen}
+            />
+          </Box>
+          <Box sx={cardBoxSx}>
+            <TreasuryStatCard
+              icon={AccountBalance}
+              iconColor="#1976d2"
+              value={animatedAvailableBalance}
+              label="الرصيد"
+              chipLabel="رصيد"
+              chipColor="primary"
+              isSmallScreen={isSmallScreen}
+            />
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
   const repaymentDetails = (paid, remaining, discount, progress, color) => (
     <Stack spacing={1}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -205,4 +266,4 @@ export default function TreasuryBankSummaryCards({
       )}
     </Box>
   );
-}
+}

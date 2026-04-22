@@ -18,7 +18,7 @@ import {
   StyledTableCell,
   StyledTableRow,
 } from "../layouts/tableLayout";
-import { formatDate, numberToArabicWords } from "./clientsUtils";
+import { formatDate, amountToArabicSarInWords } from "./clientsUtils";
 const SYSTEM_GREEN = "#2E8B45";
 const getRepaymentStatusText = (status) => {
   const textMap = {
@@ -174,7 +174,7 @@ export default function ClientsStatementTab({
             {(clientStatement.client?.balance || 0) > 0 && (
               <div className="mt-4 p-4 bg-primary/10 rounded-lg">
                 <p className="text-base font-bold text-primary">
-                  مدين/عليه {numberToArabicWords(clientStatement.client?.balance || 0)} ريال سعودي
+                  مدين/عليه {amountToArabicSarInWords(clientStatement.client?.balance || 0)} سعودي
                 </p>
               </div>
             )}
@@ -388,7 +388,7 @@ export default function ClientsStatementTab({
           {(clientStatement.client?.balance || 0) > 0 && (
             <div className="mt-4 p-3 bg-primary/10 rounded-lg">
               <p className="text-sm font-bold text-primary">
-                مدين/عليه {numberToArabicWords(clientStatement.client?.balance || 0)} ريال سعودي
+                مدين/عليه {amountToArabicSarInWords(clientStatement.client?.balance || 0)} سعودي
               </p>
             </div>
           )}

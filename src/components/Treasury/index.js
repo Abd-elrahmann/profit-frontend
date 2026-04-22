@@ -14,4 +14,9 @@ export { default as TreasuryStatusDistributionChart } from './TreasuryStatusDist
 export { default as TreasuryRepaymentsChart } from './TreasuryRepaymentsChart';
 export { getBankAccountData } from './treasuryApi';
 export { COLORS, ALL_MONTHS, getYears } from './constants';
-export { getMonthName, getCurrentJournals } from './treasuryUtils';
+export {
+  getMonthName,
+  getCurrentJournals,
+  getJournalsByMonthResolved,
+  getLedgerMonthFooterTotals,
+} from './treasuryUtils';

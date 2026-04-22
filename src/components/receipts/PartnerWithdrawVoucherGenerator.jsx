@@ -3,74 +3,8 @@ import html2pdf from 'html2pdf.js';
 import Api, { handleApiError } from '../../config/Api';
 import { notifyError } from '../../utilities/toastify';
 import { ensureFontsReady } from '../../utilities/fontLoader';
+import { amountToArabicSarInWords } from '../../utilities/arabicAmountWords';
 import PartnerWithdrawVoucher from '../Contracts/PartnerWithdrawVoucher';
-
-const numberToArabicWords = (num) => {
-  const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-  const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
-  const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
-  const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
-  
-  if (num === 0) return 'صفر';
-  if (num < 0) return 'سالب ' + numberToArabicWords(-num);
-  
-  let result = '';
-  let hasThousands = false;
-  
-  if (num >= 1000000) {
-    const millionsPart = Math.floor(num / 1000000);
-    if (millionsPart === 1) {
-      result += 'مليون ';
-    } else if (millionsPart === 2) {
-      result += 'مليونان ';
-    } else if (millionsPart < 11) {
-      result += ones[millionsPart] + ' ملايين ';
-    } else {
-      result += numberToArabicWords(millionsPart) + ' مليون ';
-    }
-    num %= 1000000;
-  }
-  
-  if (num >= 1000) {
-    const thousandsPart = Math.floor(num / 1000);
-    if (thousandsPart === 1) {
-      result += 'ألف ';
-    } else if (thousandsPart === 2) {
-      result += 'ألفان ';
-    } else if (thousandsPart >= 3 && thousandsPart <= 9) {
-      result += ones[thousandsPart] + ' آلاف ';
-    } else if (thousandsPart === 10) {
-      result += 'عشرة آلاف ';
-    } else {
-      result += numberToArabicWords(thousandsPart) + ' ألف ';
-    }
-    num %= 1000;
-    hasThousands = true;
-  }
-  
-  if (num >= 100) {
-    const hundredsPart = Math.floor(num / 100);
-    if (hasThousands) {
-      result += 'و' + hundreds[hundredsPart];
-    } else {
-      result += hundreds[hundredsPart];
-    }
-    num %= 100;
-    if (num > 0) result += ' و';
-  }
-  
-  if (num >= 20) {
-    const t = Math.floor(num / 10);
-    const o = num % 10;
-    result += o > 0 ? ones[o] + ' و' + tens[t] : tens[t];
-  } else if (num >= 10) {
-    result += teens[num - 10];
-  } else if (num > 0) {
-    result += ones[num];
-  }
-  
-  return result.trim();
-};
 
 const getCurrentDates = () => {
   const now = new Date();
@@ -207,7 +141,7 @@ const PartnerWithdrawVoucherGenerator = React.forwardRef(
         const totalAmount = originalAmount + carryAmount;
         const { gregorianDate, hijriDate } = getCurrentDates();
         const receiptNum = receiptNumOverride != null ? String(receiptNumOverride) : String(Date.now());
-        const amountInWords = `${numberToArabicWords(Math.round(totalAmount))} ريال`;
+        const amountInWords = amountToArabicSarInWords(totalAmount);
         const monthName = `${getMonthName(schedule.month)} ${schedule.year}`;
         const partnerTotalProfit = partner?.totalProfit || 0;
         const withdrawalCapital = withdrawal?.remainingCapital || withdrawal?.totalCapital || 0;

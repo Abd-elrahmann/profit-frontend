@@ -29,6 +29,8 @@ import {
   getYears,
   getMonthName,
   getCurrentJournals,
+  getJournalsByMonthResolved,
+  getLedgerMonthFooterTotals,
 } from '../../components/Treasury';
 export default function Treasury() {
   const [tab, setTab] = useState(0);
@@ -40,6 +42,7 @@ export default function Treasury() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
+  const [selectedBankChildAccountId, setSelectedBankChildAccountId] = useState(null);
   const { isDarkMode } = useTheme();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
@@ -58,9 +61,68 @@ export default function Treasury() {
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
   }, []);
   const currentData = bankData;
-  const availableBalance = currentData?.account?.balance || 0;
-  const totalDebit = currentData?.account?.debit || 0;
-  const totalCredit = currentData?.account?.credit || 0;
+  const bankAccountFilterOptions = useMemo(() => {
+    if (tab !== 0 || !currentData?.account) return null;
+    const kids = currentData.childAccounts;
+    if (!Array.isArray(kids) || kids.length === 0) return null;
+    const parent = currentData.account;
+    const allOption = {
+      id: null,
+      accountCode: parent.code,
+      accountName: 'كل الحسابات (إجمالي الصندوق)',
+      debit: Number(parent.debit) || 0,
+      credit: Number(parent.credit) || 0,
+      balance: Number(parent.balance) || 0,
+    };
+    return [
+      allOption,
+      ...kids.map((c) => ({
+        id: c.accountId,
+        accountCode: c.accountCode,
+        accountName: c.accountName,
+        debit: Number(c.debit) || 0,
+        credit: Number(c.credit) || 0,
+        balance: Number(c.balance) || 0,
+      })),
+    ];
+  }, [currentData, tab]);
+  const selectedBankAccountOption = useMemo(() => {
+    if (tab !== 0 || !bankAccountFilterOptions?.length) return null;
+    return (
+      bankAccountFilterOptions.find((o) => o.id === selectedBankChildAccountId) ??
+      bankAccountFilterOptions[0]
+    );
+  }, [tab, bankAccountFilterOptions, selectedBankChildAccountId]);
+  const treasuryDisplayStats = useMemo(() => {
+    const acc = currentData?.account;
+    if (!acc) {
+      return { balance: 0, debit: 0, credit: 0 };
+    }
+    if (tab === 0 && selectedBankAccountOption) {
+      return {
+        balance: selectedBankAccountOption.balance,
+        debit: selectedBankAccountOption.debit,
+        credit: selectedBankAccountOption.credit,
+      };
+    }
+    return {
+      balance: Number(acc.balance) || 0,
+      debit: Number(acc.debit) || 0,
+      credit: Number(acc.credit) || 0,
+    };
+  }, [currentData, tab, selectedBankAccountOption]);
+  useEffect(() => {
+    if (selectedBankChildAccountId == null) return;
+    const opts = bankAccountFilterOptions;
+    if (!opts?.some((o) => o.id === selectedBankChildAccountId)) {
+      setSelectedBankChildAccountId(null);
+    }
+  }, [bankAccountFilterOptions, selectedBankChildAccountId]);
+  const singleBankAccountSelected =
+    tab === 0 && selectedBankChildAccountId != null;
+  const availableBalance = treasuryDisplayStats.balance;
+  const totalDebit = treasuryDisplayStats.debit;
+  const totalCredit = treasuryDisplayStats.credit;
   const totalTransactions = currentData?.totalJournalEntries || 0;
   const loansBalance = currentData?.loansBalance || 0;
   const loansInterest = currentData?.loansInterest || 0;
@@ -88,21 +150,31 @@ export default function Treasury() {
   const animatedLoansInterest = useCountUp(loansInterest, 600, !isLoading);
   const animatedTotal = useCountUp(total, 600, !isLoading);
   const animatedCurrentMonthTotal = useCountUp(currentMonthTotalAmount, 600, !isLoading);
-  const monthlyBalanceData = tab === 0 && currentData?.journalsByMonth ?
-    Object.entries(currentData.journalsByMonth)
-      .map(([month, data]) => ({
-        name: getMonthName(month),
-        monthKey: month,
-        الرصيد: data.totalBalance,
-        الوارد: data.totalDebit,
-        الصادر: data.totalCredit,
-      }))
-      .sort((a, b) => a.monthKey.localeCompare(b.monthKey)) : [];
+  const journalsByMonthResolved = useMemo(
+    () => getJournalsByMonthResolved(currentData),
+    [currentData]
+  );
+  const monthlyBalanceData =
+    tab === 0 && journalsByMonthResolved
+      ? Object.entries(journalsByMonthResolved)
+          .map(([month, data]) => ({
+            name: getMonthName(month),
+            monthKey: month,
+            الرصيد: data.totalBalance,
+            الوارد: data.totalDebit,
+            الصادر: data.totalCredit,
+          }))
+          .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+      : [];
   const transactionTypeData = tab === 0 ? [
     { name: 'الوارد', value: totalDebit, color: '#00C49F' },
     { name: 'الصادر', value: totalCredit, color: '#FF8042' },
   ] : [];
   const currentJournals = getCurrentJournals(currentData, monthParam);
+  const ledgerMonthFooterTotals = useMemo(
+    () => (tab === 2 ? getLedgerMonthFooterTotals(currentData, monthParam) : null),
+    [tab, currentData, monthParam]
+  );
   const statusDistribution = tab === 0 && currentJournals.length > 0 ? [
     { name: 'مرحل', value: currentJournals.filter(j => j.status === 'POSTED').length || 0 },
     { name: 'مسودة', value: currentJournals.filter(j => j.status === 'DRAFT').length || 0 },
@@ -121,6 +193,7 @@ export default function Treasury() {
   const allYears = useMemo(() => getYears(), []);
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
+    setSelectedBankChildAccountId(null);
   };
   const handleMonthChange = (event, newValue) => {
     setSelectedMonth(newValue?.value || null);
@@ -228,6 +301,11 @@ export default function Treasury() {
                     onYearChange={handleYearChange}
                     isDarkMode={isDarkMode}
                     isSmallScreen={isSmallScreen}
+                    bankAccountOptions={bankAccountFilterOptions}
+                    selectedBankAccount={selectedBankAccountOption}
+                    onBankAccountChange={(e, option) =>
+                      setSelectedBankChildAccountId(option?.id ?? null)
+                    }
                   />
                   <TreasuryBankSummaryCards
                     animatedAvailableBalance={animatedAvailableBalance}
@@ -248,8 +326,14 @@ export default function Treasury() {
                     repaymentsProgress={repaymentsProgress}
                     isSmallScreen={isSmallScreen}
                     isDarkMode={isDarkMode}
+                    singleAccountDetailMode={singleBankAccountSelected}
+                    selectedAccountTitle={
+                      singleBankAccountSelected && selectedBankAccountOption
+                        ? `${selectedBankAccountOption.accountCode} — ${selectedBankAccountOption.accountName}`
+                        : ''
+                    }
                   />
-                  {totalBalance > 0 && (
+                  {!singleBankAccountSelected && totalBalance > 0 && (
                     <TreasuryBalanceChart
                       availableBalance={availableBalance}
                       totalCredit={totalCredit}
@@ -260,28 +344,28 @@ export default function Treasury() {
                       isDarkMode={isDarkMode}
                     />
                   )}
-                  {monthlyBalanceData.length > 0 && (
+                  {!singleBankAccountSelected && monthlyBalanceData.length > 0 && (
                     <TreasuryMonthlyBalanceChart
                       data={monthlyBalanceData}
                       isSmallScreen={isSmallScreen}
                       isDarkMode={isDarkMode}
                     />
                   )}
-                  {transactionTypeData.length > 0 && (
+                  {!singleBankAccountSelected && transactionTypeData.length > 0 && (
                     <TreasuryTransactionTypeChart
                       data={transactionTypeData}
                       isSmallScreen={isSmallScreen}
                       isDarkMode={isDarkMode}
                     />
                   )}
-                  {statusDistribution.length > 0 && (
+                  {!singleBankAccountSelected && statusDistribution.length > 0 && (
                     <TreasuryStatusDistributionChart
                       data={statusDistribution}
                       isSmallScreen={isSmallScreen}
                       isDarkMode={isDarkMode}
                     />
                   )}
-                  {totalRepaymentsAmount > 0 && (
+                  {!singleBankAccountSelected && totalRepaymentsAmount > 0 && (
                     <TreasuryRepaymentsChart
                       paidRepaymentsUntilNow={paidRepaymentsUntilNow}
                       remainingRepayments={remainingRepayments}
@@ -327,6 +411,7 @@ export default function Treasury() {
                     isSmallScreen={isSmallScreen}
                     isDarkMode={isDarkMode}
                     onPageChange={handlePageChange}
+                    monthFooterTotals={ledgerMonthFooterTotals}
                   />
                 </Box>
               )}

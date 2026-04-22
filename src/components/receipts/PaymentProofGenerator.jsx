@@ -2,86 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Api, { handleApiError } from '../../config/Api';
 import { notifyError } from '../../utilities/toastify';
 import { ensureFontsReady } from '../../utilities/fontLoader';
+import { amountToArabicSarInWords } from '../../utilities/arabicAmountWords';
 import html2pdf from 'html2pdf.js';
-const numberToArabicWords = (num) => {
-  const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
-  const tens = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
-  const teens = ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
-  const hundreds = ["", "مائة", "مئتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"];
-  if (num === 0) return "صفر";
-  if (num < 0) return "سالب " + numberToArabicWords(-num);
-  let result = "";
-  let hasThousands = false;
-  const scale = [
-    { value: 1e9, singular: "مليار", dual: "ملياران", plural: "مليارات" },
-    { value: 1e6, singular: "مليون", dual: "مليونان", plural: "ملايين" },
-    { value: 1e3, singular: "ألف", dual: "ألفان", plural: "آلاف" },
-  ];
-  for (let s of scale) {
-    if (num >= s.value) {
-      const part = Math.floor(num / s.value);
-      if (part === 1) result += s.singular + " ";
-      else if (part === 2) result += s.dual + " ";
-      else if (part >= 3 && part <= 9) result += ones[part] + " " + s.plural + " ";
-      else if (part === 10) result += "عشرة " + s.plural + " ";
-      else {
-        result += numberToArabicWords(part) + " " + s.singular + " ";
-      }
-      num %= s.value;
-      if (s.value === 1e3) hasThousands = true;
-    }
-  }
-if (num >= 100) {
-  const hundredsPart = Math.floor(num / 100);
-  if (hundredsPart > 0) {
-    if (hasThousands) {
-      result += "و" + hundreds[hundredsPart];
-    } else {
-      result += hundreds[hundredsPart];
-    }
-  }
-  num %= 100;
-  if (num > 0 && hundredsPart > 0) result += " ";
-}
-  if (num >= 20) {
-    const t = Math.floor(num / 10);
-    const o = num % 10;
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith("و")) {
-        result += " و";
-      }
-      result += " ";
-    }
-    if (o > 0) {
-      result += ones[o] + " و" + tens[t];
-    } else {
-      result += tens[t];
-    }
-  } else if (num >= 10) {
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith("و")) {
-        result += " و";
-      }
-      result += " ";
-    }
-    result += teens[num - 10];
-  } else if (num > 0) {
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith("و")) {
-        result += " و";
-      }
-      result += " ";
-    }
-    result += ones[num];
-  }
-  return result.trim();
-};
 const getCurrentDates = () => {
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
@@ -256,7 +178,7 @@ const PaymentProofGenerator = React.forwardRef(({
               : Number(inst?.amount || 0);
           return sum + settledForThisInstallment;
         }, 0);
-        const totalAmountInWords = `${numberToArabicWords(totalAmount)} ريال`;
+        const totalAmountInWords = amountToArabicSarInWords(totalAmount);
         const remainingAfterBulkPayment = Math.max(0, currentLoanRemaining - totalSettledAmount);
         const remainingAfterBulkPaymentText = `${remainingAfterBulkPayment.toLocaleString('en-US')} ريال`;
         const installmentsTable = `
@@ -306,7 +228,7 @@ const PaymentProofGenerator = React.forwardRef(({
         const originalAmount = dataToUse.installmentData.amount || 0;
         const discount = dataToUse.discount || 0;
         const finalAmount = Math.max(0, originalAmount - discount);
-        const amountInWords = `${numberToArabicWords(finalAmount)} ريال`;
+        const amountInWords = amountToArabicSarInWords(finalAmount);
         const settledAmountForInstallment =
           dataToUse?.installmentData?.status === 'PARTIAL_PAID'
             ? Number(dataToUse?.installmentData?.remaining || 0)

@@ -24,8 +24,11 @@ const LoanDetailsSection = ({
   handlePartnerSelect,
   handlePartnersSearchChange,
   bankBalance,
-  mixBalances,
+  mixBalances = { general: null, newCapital: null },
   formatAmount,
+  formatLoanPrincipal,
+  loanPrincipalSummaryText,
+  onLoanPrincipalBlur,
   selectedLoan,
 }) => {
   return (
@@ -89,12 +92,24 @@ const LoanDetailsSection = ({
               fullWidth
               type="text"
               label="مبلغ السلفة"
-              value={formatAmount(isViewMode ? (loanForm.amount || selectedLoan?.amount) : loanForm.amount)}
+              value={
+                isReadOnlyMode
+                  ? (formatLoanPrincipal || formatAmount)(
+                      loanForm.amount || selectedLoan?.amount
+                    )
+                  : loanForm.amount ?? ""
+              }
               onChange={(e) => handleInputChange("amount", e.target.value)}
+              onBlur={!isReadOnlyMode && onLoanPrincipalBlur ? onLoanPrincipalBlur : undefined}
               InputLabelProps={{
                 shrink: true,
               }}
               disabled={isReadOnlyMode}
+              helperText={
+                !isReadOnlyMode && loanPrincipalSummaryText
+                  ? loanPrincipalSummaryText
+                  : undefined
+              }
               onKeyDown={(e) => {
                 if (e.key === "-" || e.key === "+") e.preventDefault();
               }}
@@ -112,7 +127,7 @@ const LoanDetailsSection = ({
                   variant="caption"
                   sx={{
                     color: "text.secondary",
-                    fontSize: "16px",
+                    fontSize: "13px",
                     mt: -0.5,
                     ml: 1,
                   }}
@@ -122,7 +137,7 @@ const LoanDetailsSection = ({
                       <>
                         <Typography
                           component="span"
-                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "14px" }}
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                         >
                           رصيد الصناديق:{" "}
                         </Typography>
@@ -132,7 +147,7 @@ const LoanDetailsSection = ({
                           sx={{
                             fontWeight: 700,
                             color: "primary.main",
-                            fontSize: "14px",
+                            fontSize: "12px",
                             unicodeBidi: "embed",
                           }}
                         >
@@ -143,7 +158,7 @@ const LoanDetailsSection = ({
                         </Typography>
                         <Typography
                           component="span"
-                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "14px" }}
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                         >
                           {" "}صندوق عام +{" "}
                         </Typography>
@@ -153,7 +168,7 @@ const LoanDetailsSection = ({
                           sx={{
                             fontWeight: 700,
                             color: "primary.main",
-                            fontSize: "14px",
+                            fontSize: "12px",
                             unicodeBidi: "embed",
                           }}
                         >
@@ -164,7 +179,7 @@ const LoanDetailsSection = ({
                         </Typography>
                         <Typography
                           component="span"
-                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "14px" }}
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                         >
                           {" "}رأس مال جديد
                         </Typography>
@@ -179,7 +194,7 @@ const LoanDetailsSection = ({
                         sx={{
                           fontWeight: 700,
                           color: "text.primary",
-                          fontSize: "16px",
+                          fontSize: "13px",
                         }}
                       >
                         رصيد الصندوق المتاح:{" "}
@@ -190,7 +205,7 @@ const LoanDetailsSection = ({
                         sx={{
                           fontWeight: 700,
                           color: "primary.main",
-                          fontSize: "16px",
+                          fontSize: "13px",
                           unicodeBidi: "embed",
                         }}
                       >
@@ -203,7 +218,7 @@ const LoanDetailsSection = ({
                   ) : (
                     <Typography
                       variant="caption"
-                      sx={{ color: "text.secondary", fontSize: "14px" }}
+                      sx={{ color: "text.secondary", fontSize: "12px" }}
                     >
                       لا يوجد رصيد متاح
                     </Typography>
@@ -214,7 +229,7 @@ const LoanDetailsSection = ({
                     variant="caption"
                     sx={{
                       color: "text.secondary",
-                      fontSize: "14px",
+                      fontSize: "12px",
                       ml: 1,
                     }}
                   >
@@ -229,7 +244,7 @@ const LoanDetailsSection = ({
                             <>
                               <Typography
                                 component="span"
-                                sx={{ fontWeight: 700, color: "text.primary" }}
+                                sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                               >
                                 سيتبقي{" "}
                               </Typography>
@@ -239,6 +254,7 @@ const LoanDetailsSection = ({
                                 sx={{
                                   fontWeight: 700,
                                   color: "primary.main",
+                                  fontSize: "12px",
                                   unicodeBidi: "embed",
                                 }}
                               >
@@ -249,7 +265,7 @@ const LoanDetailsSection = ({
                               </Typography>
                               <Typography
                                 component="span"
-                                sx={{ fontWeight: 700, color: "text.primary" }}
+                                sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                               >
                                 {" "}في الرصيد المتاح
                               </Typography>
@@ -263,7 +279,7 @@ const LoanDetailsSection = ({
                             <>
                               <Typography
                                 component="span"
-                                sx={{ fontWeight: 700, color: "text.primary" }}
+                                sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                               >
                                 سيتبقي{" "}
                               </Typography>
@@ -273,6 +289,7 @@ const LoanDetailsSection = ({
                                 sx={{
                                   fontWeight: 700,
                                   color: "primary.main",
+                                  fontSize: "12px",
                                   unicodeBidi: "embed",
                                 }}
                               >
@@ -283,7 +300,7 @@ const LoanDetailsSection = ({
                               </Typography>
                               <Typography
                                 component="span"
-                                sx={{ fontWeight: 700, color: "text.primary" }}
+                                sx={{ fontWeight: 700, color: "text.primary", fontSize: "12px" }}
                               >
                                 {" "}في الرصيد المتاح
                               </Typography>
@@ -406,7 +423,12 @@ const LoanDetailsSection = ({
             type="text"
             label="هل يوجد دفع مقدم؟"
             select
-            value={isViewMode ? (loanForm.hasAdvancePayment || (selectedLoan?.advancePayment && selectedLoan.advancePayment > 0 ? "yes" : "no")) : loanForm.hasAdvancePayment || "no"}
+            value={
+              isViewMode
+                ? loanForm.hasAdvancePayment ||
+                  (Number(selectedLoan?.advancePayment) > 0 ? "yes" : "no")
+                : loanForm.hasAdvancePayment || "no"
+            }
             onChange={(e) => handleInputChange("hasAdvancePayment", e.target.value)}
             disabled={isReadOnlyMode}
             sx={{
@@ -421,7 +443,8 @@ const LoanDetailsSection = ({
             <MenuItem value="yes">نعم</MenuItem>
           </TextField>
         </Grid>
-        {(loanForm.hasAdvancePayment === "yes" || (isViewMode && selectedLoan?.advancePayment && selectedLoan.advancePayment > 0)) && (
+        {(loanForm.hasAdvancePayment === "yes" ||
+          (isViewMode && Number(selectedLoan?.advancePayment) > 0)) && (
           <Grid item xs={12} sm={6} md={6}>
             <TextField
               fullWidth

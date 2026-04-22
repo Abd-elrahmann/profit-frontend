@@ -3,141 +3,7 @@ import html2pdf from "html2pdf.js";
 import Api, { handleApiError } from "../../config/Api";
 import { notifyError } from "../../utilities/toastify";
 import { ensureFontsReady } from "../../utilities/fontLoader";
-const numberToArabicWords = (num) => {
-  const ones = [
-    "",
-    "واحد",
-    "اثنان",
-    "ثلاثة",
-    "أربعة",
-    "خمسة",
-    "ستة",
-    "سبعة",
-    "ثمانية",
-    "تسعة",
-  ];
-  const tens = [
-    "",
-    "",
-    "عشرون",
-    "ثلاثون",
-    "أربعون",
-    "خمسون",
-    "ستون",
-    "سبعون",
-    "ثمانون",
-    "تسعون",
-  ];
-  const teens = [
-    "عشرة",
-    "أحد عشر",
-    "اثنا عشر",
-    "ثلاثة عشر",
-    "أربعة عشر",
-    "خمسة عشر",
-    "ستة عشر",
-    "سبعة عشر",
-    "ثمانية عشر",
-    "تسعة عشر",
-  ];
-  const hundreds = [
-    "",
-    "مائة",
-    "مئتان",
-    "ثلاثمائة",
-    "أربعمائة",
-    "خمسمائة",
-    "ستمائة",
-    "سبعمائة",
-    "ثمانمائة",
-    "تسعمائة",
-  ];
-  if (num === 0) return "صفر";
-  if (num < 0) return "سالب " + numberToArabicWords(-num);
-  let result = "";
-  let hasThousands = false;
-  if (num >= 1000000) {
-    const millionsPart = Math.floor(num / 1000000);
-    if (millionsPart === 1) {
-      result += "مليون ";
-    } else if (millionsPart === 2) {
-      result += "مليونان ";
-    } else if (millionsPart < 11) {
-      result += ones[millionsPart] + " ملايين ";
-    } else {
-      result += numberToArabicWords(millionsPart) + " مليون ";
-    }
-    num %= 1000000;
-  }
-  if (num >= 1000) {
-    const thousandsPart = Math.floor(num / 1000);
-    if (thousandsPart === 1) {
-      result += "ألف ";
-    } else if (thousandsPart === 2) {
-      result += "ألفان ";
-    } else if (thousandsPart >= 3 && thousandsPart <= 9) {
-      result += ones[thousandsPart] + " آلاف ";
-    } else if (thousandsPart === 10) {
-      result += "عشرة آلاف ";
-    } else if (thousandsPart >= 11 && thousandsPart <= 999) {
-      result += numberToArabicWords(thousandsPart) + " ألف ";
-    } else {
-      result += numberToArabicWords(thousandsPart) + " ألف ";
-    }
-    num %= 1000;
-    hasThousands = true;
-  }
-if (num >= 100) {
-  const hundredsPart = Math.floor(num / 100);
-  if (hundredsPart > 0) {
-    if (hasThousands) {
-      result += "و" + hundreds[hundredsPart];
-    } else {
-      result += hundreds[hundredsPart];
-    }
-  }
-  num %= 100;
-  if (num > 0 && hundredsPart > 0) result += " ";
-}
-  if (num >= 20) {
-    const tensPart = Math.floor(num / 10);
-    const onesPart = num % 10;
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith("و")) {
-        result += " و";
-      }
-      result += " ";
-    }
-    if (onesPart > 0) {
-      result += ones[onesPart] + " و" + tens[tensPart];
-    } else {
-      result += tens[tensPart];
-    }
-  } else if (num >= 10) {
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith("و")) {
-        result += " و";
-      }
-      result += " ";
-    }
-    result += teens[num - 10];
-  } else if (num > 0) {
-    const hasHigherUnits = result.length > 0;
-    if (hasHigherUnits) {
-      result = result.trim();
-      if (!result.endsWith("و")) {
-        result += " و";
-      }
-      result += " ";
-    }
-    result += ones[num];
-  }
-  return result.trim();
-};
+import { amountToArabicSarInWords } from "../../utilities/arabicAmountWords";
 const getCurrentDates = () => {
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
@@ -328,10 +194,17 @@ const LoanContractGenerator = React.forwardRef(
         try {
           const { gregorianDate, hijriDate } = getCurrentDates();
           const finalDate = `${hijriDate}\n${gregorianDate}`;
-          const amount = loanDataToUse.amount || 0;
-          const interestAmount = loanDataToUse.interestAmount || loanDataToUse.TotalInterest || 0;
-          const totalAmount = amount + interestAmount;
-          const amountInWords = `${numberToArabicWords(totalAmount)} ريال`;
+          const grossPrincipal = Number(loanDataToUse.amount) || 0;
+          const advancePayment = Number(loanDataToUse.advancePayment) || 0;
+          const principalNet = Math.max(0, grossPrincipal - advancePayment);
+          const interestAmount =
+            Number(loanDataToUse.interestAmount ?? loanDataToUse.TotalInterest ?? 0) || 0;
+          const totalAmount = principalNet + interestAmount;
+          const totalAmountFormatted = Number(totalAmount).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+          const amountInWords = amountToArabicSarInWords(totalAmount).replace(/مائة/gi, "مئة");
           const clientDataToUse = loanDataToUse.client || clientData;
           let promissoryNoteNumber, debtAcknowledgmentNumber;
           if (loanDataToUse.debtAcknowledgmentNumber && loanDataToUse.promissoryNoteNumber) {
@@ -372,12 +245,12 @@ const LoanContractGenerator = React.forwardRef(
             )
             .replace(
               /{{المبلغ_رقما}}/g,
-              `${totalAmount?.toLocaleString("en-US") || "0"}`
+              totalAmountFormatted || "0.00"
             )
             .replace(/{{المبلغ_كتابة}}/g, `${amountInWords}`)
             .replace(
               /{{قيمة_السند_رقما}}/g,
-              `${totalAmount?.toLocaleString("en-US") || "0"}`
+              totalAmountFormatted || "0.00"
             )
             .replace(/{{قيمة_السند_كتابة}}/g, `${amountInWords}`)
             .replace(/{{التاريخ_الهجري}}/g, hijriDate)

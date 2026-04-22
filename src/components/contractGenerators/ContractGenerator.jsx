@@ -4,115 +4,7 @@ import ContractPreview from './ContractPreview';
 import Api, { handleApiError } from '../../config/Api';
 import { ensureFontsReady } from '../../utilities/fontLoader';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
-const numberToArabicWords = (num) => {
-  if (num === null || num === undefined || isNaN(num)) {
-    return 'صفر';
-  }
-  const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-  const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
-  const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
-  const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
-  
-  // Handle decimal amounts
-  let integerPart = Math.floor(num);
-  let decimalPart = Math.round((num - integerPart) * 100);
-  
-  let result = '';
-  if (integerPart === 0) result = 'صفر';
-  else if (integerPart < 0) result = 'سالب ' + numberToArabicWords(-integerPart);
-  else {
-    let hasThousands = false;
-    let workingNum = integerPart;
-    if (workingNum >= 1000000) {
-      const millionsPart = Math.floor(workingNum / 1000000);
-      if (millionsPart === 1) {
-        result += 'مليون ';
-      } else if (millionsPart === 2) {
-        result += 'مليونان ';
-      } else if (millionsPart < 11) {
-        result += ones[millionsPart] + ' ملايين ';
-      } else {
-        result += numberToArabicWords(millionsPart) + ' مليون ';
-      }
-      workingNum %= 1000000;
-    }
-    if (workingNum >= 1000) {
-      const thousandsPart = Math.floor(workingNum / 1000);
-      if (thousandsPart === 1) {
-        result += 'ألف ';
-      } else if (thousandsPart === 2) {
-        result += 'ألفان ';
-      } else if (thousandsPart >= 3 && thousandsPart <= 9) {
-        result += ones[thousandsPart] + ' آلاف ';
-      } else if (thousandsPart === 10) {
-        result += 'عشرة آلاف ';
-      } else if (thousandsPart >= 11 && thousandsPart <= 999) {
-        result += numberToArabicWords(thousandsPart) + ' ألف ';
-      } else {
-        result += numberToArabicWords(thousandsPart) + ' ألف ';
-      }
-      workingNum %= 1000;
-      hasThousands = true;
-    }
-    if (workingNum >= 100) {
-      const hundredsPart = Math.floor(workingNum / 100);
-      if (hundredsPart > 0) {
-        if (hasThousands) {
-          result += "و" + hundreds[hundredsPart];
-        } else {
-          result += hundreds[hundredsPart];
-        }
-      }
-      workingNum %= 100;
-      if (workingNum > 0 && hundredsPart > 0) result += " ";
-    }
-    if (workingNum >= 20) {
-      const tensPart = Math.floor(workingNum / 10);
-      const onesPart = workingNum % 10;
-      const hasHigherUnits = result.length > 0;
-      if (hasHigherUnits) {
-        result = result.trim();
-        if (!result.endsWith('و')) {
-          result += ' و';
-        }
-        result += ' ';
-      }
-      if (onesPart > 0) {
-        result += ones[onesPart] + ' و' + tens[tensPart];
-      } else {
-        result += tens[tensPart];
-      }
-    } else if (workingNum >= 10) {
-      const hasHigherUnits = result.length > 0;
-      if (hasHigherUnits) {
-        result = result.trim();
-        if (!result.endsWith('و')) {
-          result += ' و';
-        }
-        result += ' ';
-      }
-      result += teens[workingNum - 10];
-    } else if (workingNum > 0) {
-      const hasHigherUnits = result.length > 0;
-      if (hasHigherUnits) {
-        result = result.trim();
-        if (!result.endsWith('و')) {
-          result += ' و';
-        }
-        result += ' ';
-      }
-      result += ones[workingNum];
-    }
-    result = result.trim();
-  }
-  
-  // Add decimal part (fils/cents) if present
-  if (decimalPart > 0) {
-    result += ' و' + numberToArabicWords(decimalPart) + ' فلس';
-  }
-  
-  return result;
-};
+import { amountToArabicSarInWords } from '../../utilities/arabicAmountWords';
 const getCurrentDates = () => {
   const now = new Date();
   const saudiDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
@@ -164,7 +56,7 @@ const ContractGenerator = React.forwardRef(({
           notifyError('تحذير: رأس المال يساوي صفر. يرجى التحقق من بيانات المستثمر.');
         }
       }
-      const capitalInWords = `${numberToArabicWords(capitalAmount)} ريال`;
+      const capitalInWords = amountToArabicSarInWords(capitalAmount);
       const orgProfitPercent = investorData.orgProfitPercent || 0;
       const partnerProfitPercent = 100 - orgProfitPercent;
       const orgProfitDivided = (orgProfitPercent / 2);

@@ -971,6 +971,7 @@ const Installments = () => {
             totalDiscounts={totalDiscountsAllPages}
             paidRepayments={loanData?.pagination?.paidRepayments}
             totalRepayments={loanData?.pagination?.totalRepayments}
+            advancePayment={loanData?.advancePayment}
           />
           <Box sx={{ mb: 2, width: isSmallScreen ? "100%" : "auto" }}>
             <InstallmentsStatusFilter

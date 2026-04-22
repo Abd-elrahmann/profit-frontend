@@ -76,6 +76,55 @@ const LoanSimulation = ({
                   {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
                 </Typography>
               </Box>
+              {simulationSummary.hasAdvanceBreakdown && (
+                <>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: "error.light",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(211, 47, 47, 0.12)"
+                          : "rgba(211, 47, 47, 0.06)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 0.5,
+                      }}
+                    >
+                      <Typography color="error.main" fontWeight={600}>
+                        الدفع المقدم
+                      </Typography>
+                      <Typography color="error.main" fontWeight={700} fontSize="16px">
+                        {formatAmount(simulationSummary.advancePayment.toFixed(2))}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.5 }}>
+                      يُخصم من أصل السلفة المدخل في النموذج فقط، ولا يُخصم من إجمالي الفائدة.
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography color="text.secondary">
+                      أصل السلفة بعد خصم الدفع المقدم
+                    </Typography>
+                    <Typography color="text.primary" fontSize="16px">
+                      {formatAmount(simulationSummary.principalNet.toFixed(2))}
+                    </Typography>
+                  </Box>
+                </>
+              )}
               <Box
                 sx={{
                   display: "flex",
@@ -83,13 +132,18 @@ const LoanSimulation = ({
                   alignItems: "center",
                 }}
               >
-                <Typography color="text.secondary">
+                <Typography color="success.main" fontWeight={600}>
                   المبلغ الإجمالي المستحق
                 </Typography>
-                <Typography color="text.primary" fontSize="16px">
+                <Typography color="success.main" fontSize="16px" fontWeight={700}>
                   {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
                 </Typography>
               </Box>
+              {simulationSummary.hasAdvanceBreakdown && (
+                <Typography variant="caption" color="text.secondary">
+                  (= أصل السلفة بعد الخصم + إجمالي الفائدة)
+                </Typography>
+              )}
               <Divider />
               <Box
                 sx={{
@@ -197,6 +251,55 @@ const LoanSimulation = ({
               {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
             </Typography>
           </Box>
+          {simulationSummary.hasAdvanceBreakdown && (
+            <>
+              <Box
+                sx={{
+                  p: 1.25,
+                  borderRadius: 1,
+                  border: 1,
+                  borderColor: "error.light",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(211, 47, 47, 0.12)"
+                      : "rgba(211, 47, 47, 0.06)",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 0.5,
+                  }}
+                >
+                  <Typography color="error.main" variant="body2" fontWeight={600}>
+                    الدفع المقدم
+                  </Typography>
+                  <Typography color="error.main" fontWeight={700} fontSize="14px">
+                    {formatAmount(simulationSummary.advancePayment.toFixed(2))}
+                  </Typography>
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.45 }}>
+                  يُخصم من أصل السلفة فقط، لا من الفائدة.
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography color="text.secondary" variant="body2">
+                  أصل السلفة بعد الخصم
+                </Typography>
+                <Typography color="text.primary" fontSize="14px">
+                  {formatAmount(simulationSummary.principalNet.toFixed(2))}
+                </Typography>
+              </Box>
+            </>
+          )}
           <Box
             sx={{
               display: "flex",
@@ -204,13 +307,18 @@ const LoanSimulation = ({
               alignItems: "center",
             }}
           >
-            <Typography color="text.secondary" variant="body2">
+            <Typography color="success.main" variant="body2" fontWeight={600}>
               المبلغ الإجمالي المستحق
             </Typography>
-            <Typography color="text.primary" fontSize="14px">
+            <Typography color="success.main" fontSize="14px" fontWeight={700}>
               {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
             </Typography>
           </Box>
+          {simulationSummary.hasAdvanceBreakdown && (
+            <Typography variant="caption" color="text.secondary">
+              (= أصل السلفة بعد الخصم + إجمالي الفائدة)
+            </Typography>
+          )}
           <Divider />
           <Box
             sx={{

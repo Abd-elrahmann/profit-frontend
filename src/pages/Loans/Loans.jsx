@@ -100,6 +100,7 @@ const Loans = () => {
   const [partialTransferAmount, setPartialTransferAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [mixBalances, setMixBalances] = useState({ general: null, newCapital: null });
+  const [loanPrincipalSummaryAr, setLoanPrincipalSummaryAr] = useState("");
   const [_isLoadingBankBalance, setIsLoadingBankBalance] = useState(false);
   const [selectedLoanForEdit, setSelectedLoanForEdit] = useState(null);
   const [_isSmallLoanEditMode, setIsSmallLoanEditMode] = useState(false);
@@ -112,18 +113,44 @@ const Loans = () => {
   const isTablet = useMediaQuery("(max-width: 1024px)");
   const isLargeScreen = useMediaQuery("(min-width: 1200px)");
   const isSmallScreen = isMobile || isTablet;
-  const shouldFetchSingleBankBalance =
-    !!selectedBank?.id && loanForm.source !== "MIX" && activeTab === 1;
-  const { data: bankBalanceRaw } = useQuery({
+  const shouldFetchGeneralBankBalance =
+    !!selectedBank?.id && loanForm.source === "GENERAL" && activeTab === 1;
+  const { data: generalBankBalanceRaw } = useQuery({
     queryKey: [BANK_ACCOUNT_BALANCE_QUERY_KEY, selectedBank?.id],
     queryFn: () => getBankAccountBalance(selectedBank.id),
-    enabled: shouldFetchSingleBankBalance,
+    enabled: shouldFetchGeneralBankBalance,
   });
-  const bankBalance = shouldFetchSingleBankBalance
-    ? bankBalanceRaw != null && bankBalanceRaw !== ""
-      ? Number(bankBalanceRaw)
-      : null
-    : null;
+  const shouldFetchNewCapitalFundBalance =
+    loanForm.source === "NEW_CAPITAL" && activeTab === 1;
+  const { data: newCapitalFundBalanceRaw } = useQuery({
+    queryKey: ["new-capital-fund-balance-loan-form"],
+    queryFn: async () => {
+      const r = await Api.get(`/api/accounts/NewBank/1`);
+      return r?.data?.account?.balance;
+    },
+    enabled: shouldFetchNewCapitalFundBalance,
+    retry: 1,
+  });
+  const fundBalanceForLoanForm = useMemo(() => {
+    if (loanForm.source === "GENERAL") {
+      if (!shouldFetchGeneralBankBalance) return null;
+      return generalBankBalanceRaw != null && generalBankBalanceRaw !== ""
+        ? Number(generalBankBalanceRaw)
+        : null;
+    }
+    if (loanForm.source === "NEW_CAPITAL") {
+      if (!shouldFetchNewCapitalFundBalance) return null;
+      if (newCapitalFundBalanceRaw == null || newCapitalFundBalanceRaw === "") return null;
+      return Number(newCapitalFundBalanceRaw);
+    }
+    return null;
+  }, [
+    loanForm.source,
+    shouldFetchGeneralBankBalance,
+    shouldFetchNewCapitalFundBalance,
+    generalBankBalanceRaw,
+    newCapitalFundBalanceRaw,
+  ]);
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients", clientsPage, searchQuery],
     queryFn: () => getClients(clientsPage, searchQuery),
@@ -309,6 +336,9 @@ const Loans = () => {
     loanForm.amount,
     loanForm.totalInterest,
     loanForm.paymentAmount,
+    loanForm.interestRate,
+    loanForm.hasAdvancePayment,
+    loanForm.advancePayment,
     activeTab,
   ]);
   useEffect(() => {
@@ -320,7 +350,12 @@ const Loans = () => {
     loanForm.amount,
     loanForm.totalInterest,
     loanForm.paymentAmount,
+    loanForm.interestRate,
     loanForm.type,
+    loanForm.hasAdvancePayment,
+    loanForm.advancePayment,
+    loanForm.startDate,
+    loanForm.repaymentDay,
     activeTab,
   ]);
   useEffect(() => {
@@ -330,20 +365,26 @@ const Loans = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanForm.source, activeTab]);
   useEffect(() => {
+    const prevSource = previousSourceRef.current;
+    const isUserSourceChange =
+      prevSource !== null &&
+      prevSource !== "" &&
+      prevSource !== loanForm.source;
     if (
       activeTab === 1 &&
       loanForm.source &&
-      previousSourceRef.current !== loanForm.source &&
-      previousSourceRef.current !== null &&
-      !isEditMode
+      isUserSourceChange &&
+      !isEditMode &&
+      !selectedLoan?.id
     ) {
-      setLoanForm((prev) => ({
-        ...prev,
+      setLoanForm((p) => ({
+        ...p,
         amount: "",
       }));
+      setLoanPrincipalSummaryAr("");
     }
     previousSourceRef.current = loanForm.source;
-  }, [loanForm.source, activeTab, isEditMode]);
+  }, [loanForm.source, activeTab, isEditMode, selectedLoan?.id]);
   const handleConversionSuccess = useCallback(() => {
     setIsClientConversion(false);
     setLoanForConversion(null);
@@ -569,12 +610,65 @@ const Loans = () => {
   const handlePartnerSelect = (event, newValue) => {
     setSelectedPartner(newValue);
   };
+  const sanitizeLoanPrincipalInput = (input) => {
+    let s = String(input).replace(/,/g, "").replace(/[^\d.]/g, "");
+    const firstSep = s.indexOf(".");
+    if (firstSep !== -1) {
+      s = s.slice(0, firstSep + 1) + s.slice(firstSep + 1).replace(/\./g, "");
+    }
+    if (!s) return "";
+    const endsWithDotOnly = /\.$/.test(s) && s.indexOf(".") === s.length - 1;
+    const [intRaw, decRaw] = s.split(".");
+    const intDigits = (intRaw || "").replace(/\D/g, "");
+    const intFormatted = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (decRaw !== undefined) {
+      return `${intFormatted}.${decRaw.slice(0, 2)}`;
+    }
+    if (endsWithDotOnly) {
+      return intFormatted === "" ? "." : `${intFormatted}.`;
+    }
+    return intFormatted;
+  };
+  const formatCurrencySar = (amount) => {
+    if (amount === "" || amount === null || amount === undefined) return "";
+    const numAmount =
+      typeof amount === "string"
+        ? parseFloat(String(amount).replace(/,/g, ""))
+        : Number(amount);
+    if (Number.isNaN(numAmount)) return "";
+    return numAmount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
   const formatAmount = (amount) => {
     if (!amount && amount !== 0) return "";
     const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, "")) : amount;
     if (isNaN(numAmount)) return "";
     const rounded = parseFloat(numAmount.toFixed(2));
     return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+  const handleLoanPrincipalBlur = () => {
+    const raw = String(loanForm.amount || "").replace(/,/g, "");
+    if (!raw || raw === "." || Number.isNaN(parseFloat(raw))) {
+      setLoanPrincipalSummaryAr("");
+      setLoanForm((p) => ({ ...p, amount: "" }));
+      return;
+    }
+    const n = parseFloat(raw);
+    const rounded = Math.round(n * 100) / 100;
+    const totalHalalas = Math.round(rounded * 100);
+    const riyals = Math.floor(totalHalalas / 100);
+    const halalas = totalHalalas % 100;
+    let summary = "";
+    if (riyals !== 0 || halalas !== 0) {
+      summary =
+        halalas === 0
+          ? `لقد أدخلت ${riyals.toLocaleString("en-US")} ريال`
+          : `لقد أدخلت ${riyals.toLocaleString("en-US")} ريال و ${halalas} هللة`;
+    }
+    setLoanPrincipalSummaryAr(summary);
+    setLoanForm((p) => ({ ...p, amount: formatCurrencySar(rounded.toFixed(2)) }));
   };
   const handleSaveContracts = async (contractType) => {
     try {
@@ -662,8 +756,13 @@ const Loans = () => {
     }
   };
   const calculateInstallments = () => {
-    const amount = parseFloat(loanForm.amount.replace(/,/g, "")) || 0;
-    let totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
+    const amountGross = parseFloat(String(loanForm.amount || "").replace(/,/g, "")) || 0;
+    const advancePayment =
+      loanForm.hasAdvancePayment === "yes"
+        ? parseFloat(String(loanForm.advancePayment || "").replace(/,/g, "")) || 0
+        : 0;
+    const amount = Math.max(0, amountGross - advancePayment);
+    let totalInterest = parseFloat(String(loanForm.totalInterest || "").replace(/,/g, "")) || 0;
     const paymentAmount =
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const loanType = loanForm.type;
@@ -739,9 +838,18 @@ const Loans = () => {
   };
   const getSimulationSummary = () => {
     if (installments.length === 0) return null;
-    const totalInterest = parseFloat(loanForm.totalInterest.replace(/,/g, "")) || 0;
-    const totalAmount =
-      (parseFloat(loanForm.amount.replace(/,/g, "")) || 0) + totalInterest;
+    const amountGross = parseFloat(String(loanForm.amount || "").replace(/,/g, "")) || 0;
+    const advancePayment =
+      loanForm.hasAdvancePayment === "yes"
+        ? parseFloat(String(loanForm.advancePayment || "").replace(/,/g, "")) || 0
+        : 0;
+    const principalNet = Math.max(0, amountGross - advancePayment);
+    let totalInterest = parseFloat(String(loanForm.totalInterest || "").replace(/,/g, "")) || 0;
+    if (totalInterest === 0 && loanForm.interestRate !== "" && principalNet > 0) {
+      const interestRate = parseFloat(loanForm.interestRate) || 0;
+      totalInterest = (principalNet * interestRate) / 100;
+    }
+    const totalAmount = principalNet + totalInterest;
     const paymentAmount =
       parseFloat(loanForm.paymentAmount.replace(/,/g, "")) || 0;
     const installmentsCount = installments.length;
@@ -765,6 +873,9 @@ const Loans = () => {
       paymentAmount,
       totalInterest,
       totalAmount,
+      advancePayment,
+      principalNet,
+      hasAdvanceBreakdown: advancePayment > 0,
       numberOfMonths: approximateMonths,
       installmentsCount,
       loanType,
@@ -794,14 +905,14 @@ const Loans = () => {
         );
         return;
       }
-    } else if (bankBalance !== null) {
+    } else if (fundBalanceForLoanForm !== null) {
       const loanAmount = parseFloat(loanForm.amount.replace(/,/g, ""));
-      if (loanAmount > bankBalance) {
+      if (loanAmount > fundBalanceForLoanForm) {
         notifyError(
           `المبلغ المدخل (${formatAmount(
             loanAmount.toFixed(2)
           )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
-            bankBalance.toFixed(2)
+            fundBalanceForLoanForm.toFixed(2)
           )})`
         );
         return;
@@ -902,6 +1013,7 @@ const Loans = () => {
     setSavedLoanData(null);
     setIsCreatingLoan(false);
     setIsAdditionalLoan(false);
+    setLoanPrincipalSummaryAr("");
   };
   const handleUpdateLoan = async () => {
     if (!selectedLoan) {
@@ -1022,42 +1134,20 @@ const Loans = () => {
         return;
       }
 
-      const amountChanged = Object.prototype.hasOwnProperty.call(payload, "amount");
       await updateLoan(selectedLoan.id, payload);
       notifySuccess("تم تعديل السلفة بنجاح");
-      if (amountChanged) {
-        const updatedLoan = await getLoanById(selectedLoan.id);
-        setSavedLoanData({
-          ...updatedLoan,
-          client: selectedClient?.client || updatedLoan.client,
-          kafeel: selectedKafeel || updatedLoan.kafeel || null,
-        });
+
+      const updatedLoan = await getLoanById(selectedLoan.id);
+      const mergedForPreview = {
+        ...updatedLoan,
+        client: selectedClient?.client || updatedLoan.client,
+      };
+      setSelectedLoan(mergedForPreview);
+      setSavedLoanData(mergedForPreview);
+
+      if (generateContracts && debtAckTemplate && promissoryNoteTemplate) {
         try {
-          const previewLoanData = {
-            id: updatedLoan.id,
-            amount: payload.amount ?? updatedLoan.amount,
-            TotalInterest: payload.TotalInterest ?? updatedLoan.interestAmount,
-            paymentAmount: payload.paymentAmount ?? updatedLoan.paymentAmount,
-            startDate: payload.startDate ?? updatedLoan.startDate,
-            client: selectedClient?.client || updatedLoan.client,
-          };
-          const debtAckHtml =
-            await debtAckGeneratorRef.current.generateContract(
-              false,
-              previewLoanData,
-              selectedKafeel
-            );
-          const promissoryNoteHtml =
-            await promissoryNoteGeneratorRef.current.generateContract(
-              false,
-              previewLoanData,
-              selectedKafeel
-            );
-          setPreviewContracts({
-            debtAck: debtAckHtml,
-            promissoryNote: promissoryNoteHtml,
-          });
-          setPreviewOpen(true);
+          await handleOpenPreview(mergedForPreview);
         } catch (error) {
           console.error("Error generating preview contracts:", error);
           notifyError("تم تحديث السلفة لكن حدث خطأ أثناء توليد معاينة العقود");
@@ -1135,7 +1225,7 @@ const Loans = () => {
       const totalInterestAmount = loan.interestAmount || 0;
       const formattedTotalInterest = parseFloat(totalInterestAmount.toFixed(2));
       setLoanForm({
-        amount: (loan.amount ?? 0).toString(),
+        amount: formatCurrencySar(Number(loan.amount ?? 0).toFixed(2)),
         totalInterest: formattedTotalInterest.toString(),
         interestRate: (loan.interestRate ?? 0).toString(),
         paymentAmount: loan.paymentAmount?.toString() || "",
@@ -1147,8 +1237,9 @@ const Loans = () => {
         paymentCity: loan.paymentCity || "",
         promissoryNoteType: loan.promissoryNoteType || "",
         promissoryNoteDate: loan.promissoryNoteDate ? loan.promissoryNoteDate.split("T")[0] : "",
-        hasAdvancePayment: loan.advancePayment && loan.advancePayment > 0 ? "yes" : "no",
-        advancePayment: loan.advancePayment ? loan.advancePayment.toString() : "",
+        hasAdvancePayment: Number(loan.advancePayment) > 0 ? "yes" : "no",
+        advancePayment:
+          Number(loan.advancePayment) > 0 ? String(loan.advancePayment) : "",
       });
       setActiveTab(1);
     } catch (error) {
@@ -1213,39 +1304,58 @@ const Loans = () => {
     }
     setIsEditMode(true);
     setIsViewMode(false);
+    setLoanForm((prev) => {
+      const raw = String(prev.amount || "").replace(/,/g, "").trim();
+      if (!raw && selectedLoan != null) {
+        return {
+          ...prev,
+          amount: formatCurrencySar(Number(selectedLoan.amount ?? 0).toFixed(2)),
+        };
+      }
+      return prev;
+    });
   };
   const handleInputChange = (field, value) => {
-    if (field === "amount" || field === "paymentAmount" || field === "totalInterest" || field === "advancePayment") {
+    if (field === "amount") {
+      setLoanPrincipalSummaryAr("");
+      value = sanitizeLoanPrincipalInput(value);
+      const rawValue = value.replace(/,/g, "");
+      const numericAmount = parseFloat(rawValue);
+      const canValidate =
+        rawValue !== "" &&
+        rawValue !== "." &&
+        !Number.isNaN(numericAmount) &&
+        !rawValue.endsWith(".");
+      if (canValidate) {
+        if (loanForm.source === "MIX") {
+          const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
+          if (numericAmount > totalBalances) {
+            notifyError(
+              `المبلغ المدخل (${formatAmount(
+                numericAmount.toFixed(2)
+              )}) يتجاوز مجموع أرصدة الصناديق المتاحة (${formatAmount(
+                totalBalances.toFixed(2)
+              )})`
+            );
+            return;
+          }
+        } else if (fundBalanceForLoanForm !== null) {
+          if (numericAmount > fundBalanceForLoanForm) {
+            notifyError(
+              `المبلغ المدخل (${formatAmount(
+                numericAmount.toFixed(2)
+              )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
+                fundBalanceForLoanForm.toFixed(2)
+              )})`
+            );
+            return;
+          }
+        }
+      }
+    } else if (field === "paymentAmount" || field === "totalInterest" || field === "advancePayment") {
       const rawValue = value.replace(/,/g, "");
       if (!isNaN(rawValue)) {
         value = formatAmount(rawValue);
-        if (field === "amount") {
-          const numericAmount = parseFloat(rawValue);
-          if (loanForm.source === "MIX") {
-            const totalBalances = (mixBalances.general || 0) + (mixBalances.newCapital || 0);
-            if (numericAmount > totalBalances) {
-              notifyError(
-                `المبلغ المدخل (${formatAmount(
-                  numericAmount.toFixed(2)
-                )}) يتجاوز مجموع أرصدة الصناديق المتاحة (${formatAmount(
-                  totalBalances.toFixed(2)
-                )})`
-              );
-              return;
-            }
-          } else if (bankBalance !== null) {
-            if (numericAmount > bankBalance) {
-              notifyError(
-                `المبلغ المدخل (${formatAmount(
-                  numericAmount.toFixed(2)
-                )}) يتجاوز رصيد الصندوق المتاح (${formatAmount(
-                  bankBalance.toFixed(2)
-                )})`
-              );
-              return;
-            }
-          }
-        }
       }
     }
     setLoanForm((prev) => {
@@ -1397,14 +1507,44 @@ const Loans = () => {
                       {formatAmount(simulationSummary.totalInterest.toFixed(2))}{" "}
                     </span>
                   </div>
+                  {simulationSummary.hasAdvanceBreakdown && (
+                    <>
+                      <div className="flex flex-col gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-950/40">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-red-700 dark:text-red-400">
+                            الدفع المقدم
+                          </span>
+                          <span className="text-base font-semibold text-red-600 dark:text-red-400">
+                            {formatAmount(simulationSummary.advancePayment.toFixed(2))}
+                          </span>
+                        </div>
+                        <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                          يُخصم من أصل السلفة المدخل في النموذج فقط، ولا يُخصم من إجمالي الفائدة.
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                          أصل السلفة بعد خصم الدفع المقدم
+                        </span>
+                        <span className="text-base text-slate-800 dark:text-slate-200">
+                          {formatAmount(simulationSummary.principalNet.toFixed(2))}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
                       المبلغ الإجمالي المستحق
                     </span>
-                    <span className="text-base text-slate-800 dark:text-slate-200">
+                    <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
                       {formatAmount(simulationSummary.totalAmount.toFixed(2))}{" "}
                     </span>
                   </div>
+                  {simulationSummary.hasAdvanceBreakdown && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      (= أصل السلفة بعد الخصم + إجمالي الفائدة)
+                    </p>
+                  )}
                   <hr className="border-slate-200 dark:border-slate-700" />
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500 dark:text-slate-400">حالة السلفة</span>
@@ -1669,9 +1809,12 @@ const Loans = () => {
                     selectedPartner={selectedPartner}
                     handlePartnerSelect={handlePartnerSelect}
                     handlePartnersSearchChange={handlePartnersSearchChange}
-                    bankBalance={bankBalance}
+                    bankBalance={fundBalanceForLoanForm}
                     mixBalances={mixBalances}
                     formatAmount={formatAmount}
+                    formatLoanPrincipal={formatCurrencySar}
+                    loanPrincipalSummaryText={loanPrincipalSummaryAr}
+                    onLoanPrincipalBlur={handleLoanPrincipalBlur}
                     selectedLoan={selectedLoan}
                   />
                 )}

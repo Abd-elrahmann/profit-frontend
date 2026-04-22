@@ -98,56 +98,11 @@ export const KAFEEL_DOCUMENT_TYPES = {
   kafeelIdImage: "صورة هوية الكفيل",
   kafeelWorkCard: "بطاقة عمل الكفيل",
 };
-export const numberToArabicWords = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return "صفر";
-  const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
-  const tens = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
-  const teens = ["عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
-  const hundreds = ["", "مائة", "مئتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"];
-  if (num === 0) return "صفر";
-  if (num < 0) return "سالب " + numberToArabicWords(-num);
-  let result = "";
-  let hasThousands = false;
-  if (num >= 1000000) {
-    const millionsPart = Math.floor(num / 1000000);
-    if (millionsPart === 1) result += "مليون ";
-    else if (millionsPart === 2) result += "مليونان ";
-    else if (millionsPart < 11) result += ones[millionsPart] + " ملايين ";
-    else result += numberToArabicWords(millionsPart) + " مليون ";
-    num %= 1000000;
-  }
-  if (num >= 1000) {
-    const thousandsPart = Math.floor(num / 1000);
-    if (thousandsPart === 1) result += "ألف ";
-    else if (thousandsPart === 2) result += "ألفان ";
-    else if (thousandsPart >= 3 && thousandsPart <= 9) result += ones[thousandsPart] + " آلاف ";
-    else if (thousandsPart === 10) result += "عشرة آلاف ";
-    else result += numberToArabicWords(thousandsPart) + " ألف ";
-    num %= 1000;
-    hasThousands = true;
-  }
-  if (num >= 100) {
-    const hundredsPart = Math.floor(num / 100);
-    if (hundredsPart > 0) {
-      result += hasThousands ? "و" + hundreds[hundredsPart] : hundreds[hundredsPart];
-      if (num % 100 > 0) result += " ";
-    }
-    num %= 100;
-  }
-  if (num >= 20) {
-    const tensPart = Math.floor(num / 10);
-    const onesPart = num % 10;
-    if (result.length > 0) result += result.trim().endsWith("و") ? " " : " و ";
-    result += onesPart > 0 ? ones[onesPart] + " و" + tens[tensPart] : tens[tensPart];
-  } else if (num >= 10) {
-    if (result.length > 0) result += result.trim().endsWith("و") ? " " : " و ";
-    result += teens[num - 10];
-  } else if (num > 0) {
-    if (result.length > 0) result += result.trim().endsWith("و") ? " " : " و ";
-    result += ones[num];
-  }
-  return result.trim();
-};
+export {
+  integerToArabicWords,
+  numberToArabicWords,
+  amountToArabicSarInWords,
+} from "../../utilities/arabicAmountWords";
 export const getOrdinalText = (num) => {
   const ordinals = [
     "الأولى",
