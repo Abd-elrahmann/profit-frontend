@@ -22,6 +22,7 @@ const MODULE_IMPORTS = {
   repayments: () => import('../pages/Installments/Installments'),
   treasury: () => import('../pages/treasury/treasury'),
   company: () => import('../pages/companyProfit/CompanyProfit'),
+  'external-investments': () => import('../pages/externalInvestments/ExternalInvestments'),
   distribution: () => import('../pages/profit/ProfitDistribution'),
   zakat: () => import('../pages/Zakah/zakah'),
   saving: () => import('../pages/Saving/Saving'),

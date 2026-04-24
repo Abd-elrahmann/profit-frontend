@@ -248,6 +248,14 @@ export const sidebarItems = [
     parent: 'القوائم والأرباح'
   },
   {
+    path: '/external-investments',
+    label: 'الأرباح الخارجية',
+    module: 'external-investments',
+    requiresPermissions: true,
+    icon: TrendingUp,
+    parent: 'القوائم والأرباح'
+  },
+  {
     path: '/profit-distribution',
     label: 'توزيع الأرباح',
     module: 'distribution',

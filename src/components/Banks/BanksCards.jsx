@@ -11,7 +11,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
-import { getBankStatusText, getBankStatusColor } from "./banksUtils";
+import { getBankStatusText, getBankStatusColor, formatAccountBalance } from "./banksUtils";
 const BanksCards = ({
   banksData,
   isLoading,
@@ -97,6 +97,12 @@ const BanksCards = ({
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>السلف المسموح بها:</Typography>
                   <Typography variant="body2" sx={{ fontWeight: "medium" }}>{bank.limit}</Typography>
                 </Box>
+                <Box>
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>رصيد الحساب:</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: "bold", color: "primary.main" }}>
+                    {formatAccountBalance(bank.account?.balance)}
+                  </Typography>
+                </Box>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
                 <Chip
@@ -118,4 +124,4 @@ const BanksCards = ({
     </Stack>
   );
 };
-export default BanksCards;
+export default BanksCards;

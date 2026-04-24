@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { StyledTableCell, StyledTableRow } from "../layouts/tableLayout";
-import { getBankStatusText, getBankStatusColor } from "./banksUtils";
+import { getBankStatusText, getBankStatusColor, formatAccountBalance } from "./banksUtils";
 const BanksTable = ({
   banksData,
   isLoading,
@@ -33,6 +33,7 @@ const BanksTable = ({
           <StyledTableCell align="center" sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}>رقم الحساب</StyledTableCell>
           <StyledTableCell align="center" sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}>رقم الايبان</StyledTableCell>
           <StyledTableCell align="center" sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}>السلف المسموح بها</StyledTableCell>
+          <StyledTableCell align="center" sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}>رصيد الحساب</StyledTableCell>
           <StyledTableCell align="center" sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}>الحالة</StyledTableCell>
           {(permissions.includes("banks_Update") || permissions.includes("banks_Delete") || permissions.includes("banks_Add")) && (
             <StyledTableCell align="center" sx={{ fontWeight: "bold", backgroundColor: isDarkMode ? "grey.800" : "grey.100" }}>الإجراءات</StyledTableCell>
@@ -42,13 +43,13 @@ const BanksTable = ({
       <TableBody>
         {isLoading ? (
           <StyledTableRow>
-            <StyledTableCell colSpan={8} align="center">
+            <StyledTableCell colSpan={9} align="center">
               <CircularProgress size={20} />
             </StyledTableCell>
           </StyledTableRow>
         ) : banksData?.length === 0 ? (
           <StyledTableRow>
-            <StyledTableCell colSpan={8} align="center">
+            <StyledTableCell colSpan={9} align="center">
               <Typography>لا توجد حسابات بنكية</Typography>
             </StyledTableCell>
           </StyledTableRow>
@@ -61,6 +62,9 @@ const BanksTable = ({
               <StyledTableCell align="center">{bank.accountNumber}</StyledTableCell>
               <StyledTableCell align="center">{bank.IBAN}</StyledTableCell>
               <StyledTableCell align="center">{bank.limit}</StyledTableCell>
+              <StyledTableCell align="center">
+                {formatAccountBalance(bank.account?.balance)}
+              </StyledTableCell>
               <StyledTableCell align="center">
                 <Chip
                   label={getBankStatusText(bank.status, i18nLanguage)}
@@ -88,4 +92,4 @@ const BanksTable = ({
     </Table>
   </TableContainer>
 );
-export default BanksTable;
+export default BanksTable;

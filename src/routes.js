@@ -28,6 +28,8 @@ const Zakah = React.lazy(() => import('./pages/Zakah/zakah'));
 const Saving = React.lazy(() => import('./pages/Saving/Saving'));
 const ClientCollections = React.lazy(() => import('./pages/clientCollections/ClientCollections'));
 const CompanyProfit = React.lazy(() => import('./pages/companyProfit/CompanyProfit'));
+const ExternalInvestments = React.lazy(() => import('./pages/externalInvestments/ExternalInvestments'));
+const ExternalInvestmentDetails = React.lazy(() => import('./pages/externalInvestments/ExternalInvestmentDetails'));
 const Expenses = React.lazy(() => import('./pages/Expenses/Expenses'));
 const Delinquencies = React.lazy(() => import('./pages/Delinquencies/Delinquencies'));
 const InvestorsWithdrawal = React.lazy(() => import('./pages/investorsWithdrawal/investorsWithdrawal'));
@@ -254,6 +256,22 @@ const routes = [
     protected: true,
     showInSidebar: true,
     module: 'company',
+    requiresPermissions: true
+  },
+  {
+    path: '/external-investments',
+    element: ExternalInvestments,
+    protected: true,
+    showInSidebar: true,
+    module: 'external-investments',
+    requiresPermissions: true
+  },
+  {
+    path: '/external-investments/:id',
+    element: ExternalInvestmentDetails,
+    protected: true,
+    showInSidebar: false,
+    module: 'external-investments',
     requiresPermissions: true
   },
   {

@@ -14,6 +14,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
     subtitle,
     columns: [
       { header: 'الحالة', dataKey: 'statusAr', width: 18 },
+      { header: 'رصيد الحساب', dataKey: 'accountBalance', width: 24, format: 'number0' },
       { header: 'السلف المسموح بها', dataKey: 'limit', width: 28, format: 'number0' },
       { header: 'رقم الايبان', dataKey: 'IBAN', width: 40 },
       { header: 'رقم الحساب', dataKey: 'accountNumber', width: 25 },
@@ -24,6 +25,7 @@ export const exportBanksToPDF = async (banksData, searchQuery = '') => {
     rows: banksData.map((bank) => ({
       ...bank,
       statusAr: getStatusArabic(bank.status),
+      accountBalance: bank.account?.balance != null ? bank.account.balance : '—',
       limit: bank.limit || 0,
       IBAN: bank.IBAN || '-',
       accountNumber: bank.accountNumber || '-',
@@ -59,6 +61,7 @@ export const exportBanksToExcel = async (banksData, searchQuery = '') => {
       'اسم المالك': bank.owner,
       'رقم الحساب': bank.accountNumber,
       'رقم الايبان': bank.IBAN,
+      'رصيد الحساب': bank.account?.balance != null ? bank.account.balance : '—',
       'السلف المسموح بها': bank.limit,
       'الحالة': getStatusArabic(bank.status)
     }));
@@ -69,7 +72,8 @@ export const exportBanksToExcel = async (banksData, searchQuery = '') => {
       { wch: 25 }, 
       { wch: 20 }, 
       { wch: 20 }, 
-      { wch: 30 }, 
+      { wch: 30 },
+      { wch: 16 },
       { wch: 18 }, 
       { wch: 12 }  
     ];
