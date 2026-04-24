@@ -60,6 +60,14 @@ const formatCell = (value, format) => {
 
 const formatDate = (d) => (d ? dayjs(d).format('DD-MM-YYYY') : '');
 
+const wrapCellContent = (doc, rawText, cell) => {
+  const text = rawText == null ? '' : String(rawText);
+  if (!text) return [''];
+  const horizontalPadding = (cell?.padding?.('horizontal') || 0) + 0.5;
+  const availableWidth = Math.max(2, (cell?.width || 0) - horizontalPadding);
+  return doc.splitTextToSize(text, availableWidth);
+};
+
 /**
  * Draw the report header on the current page.
  * Header layout (RTL):
@@ -243,6 +251,7 @@ const buildSummaryRows = (columns, summaryRows) => {
  * @param {Array<{label:string,values:object,separators?:boolean,highlight?:boolean}>} [opts.summaryRows]
  * @param {string} [opts.subtitle]  - Optional text line above the table
  * @param {boolean} [opts.showSignatures=false]
+ * @param {boolean} [opts.save=true]
  * @param {string[]} [opts.signatureLabels]
  * @param {object} [opts.tableStyles] - autoTable style overrides
  * @returns {Promise<jsPDF>}
@@ -262,6 +271,7 @@ export const exportUnifiedReport = async (opts) => {
     summaryRows = [],
     subtitle,
     showSignatures = false,
+    save = true,
     signatureLabels,
     tableStyles = {},
   } = opts;
@@ -350,6 +360,13 @@ export const exportUnifiedReport = async (opts) => {
       ...(tableStyles.alternateRowStyles || {}),
     },
     columnStyles,
+    didParseCell: (hookData) => {
+      if (hookData.section !== 'body' && hookData.section !== 'head') return;
+      const raw = Array.isArray(hookData.cell.raw)
+        ? hookData.cell.raw.join(' ')
+        : hookData.cell.raw;
+      hookData.cell.text = wrapCellContent(doc, raw, hookData.cell);
+    },
     didDrawPage: () => {
       const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
       drawHeader(doc, ctx, pageNumber, '{T}');
@@ -386,7 +403,9 @@ export const exportUnifiedReport = async (opts) => {
 
   const safeTitle = (fileName || reportTitle).replace(/[\\/:*?"<>|]/g, '_');
   const stamp = dayjs().format('YYYY-MM-DD_HH-mm');
-  doc.save(`${safeTitle}_${stamp}.pdf`);
+  if (save) {
+    doc.save(`${safeTitle}_${stamp}.pdf`);
+  }
   return doc;
 };
 

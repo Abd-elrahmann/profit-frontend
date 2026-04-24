@@ -1,110 +1,46 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
-import {
-  registerArabicFonts,
-  drawReportHeader,
-  drawSeparatorLine,
-  drawReportFooter,
-  drawReportSummary,
-  PAGE_MARGIN,
-  getFullWidthColumnStyles,
-} from './pdfReportUtils';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 export const exportGeneralLedgerToPDF = async (ledgerData, account, searchParams) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      doc.setProperties({
-        title: `دفتر الأستاذ - ${account.name}`,
-        subject: 'دفتر الأستاذ العام',
-        author: 'نظام إدارة السلف',
-        keywords: 'دفتر, أستاذ, محاسبة, سلف',
-        creator: 'نظام إدارة السلف'
+  const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
+    return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
+  }, 0) || 0;
+  const totalCredit = ledgerData.journals?.reduce((sum, journal) => {
+    return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
+  }, 0) || 0;
+  const closingBalance = ledgerData.account?.balance || 0;
+  const subtitle = `إجمالي المدين: ${totalDebit.toLocaleString('en-US')} | إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} | الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} | عدد القيود: ${ledgerData.totalJournals || 0}`;
+
+  const rows = [];
+  ledgerData.journals?.forEach((journal) => {
+    journal.lines.forEach((line) => {
+      rows.push({
+        balance: line.balance || 0,
+        credit: line.credit || 0,
+        debit: line.debit || 0,
+        description: line.description || journal.description || '-',
+        reference: journal.reference || '-',
+        dateText: dayjs(journal.date).format('DD/MM/YYYY HH:mm'),
       });
-      const reportTitle = `دفتر الأستاذ - ${account.name} (${account.code})`;
-      const headerEndY = drawReportHeader(doc, {
-        reportTitle,
-        metadata: {
-          date: dayjs().format('YYYY/MM/DD'),
-          time: dayjs().format('hh:mm A'),
-        },
-      });
-      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
-      const totalDebit = ledgerData.journals?.reduce((sum, journal) => {
-        return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0);
-      }, 0) || 0;
-      const totalCredit = ledgerData.journals?.reduce((sum, journal) => {
-        return sum + journal.lines.reduce((lineSum, line) => lineSum + (line.credit || 0), 0);
-      }, 0) || 0;
-      const closingBalance = ledgerData.account?.balance || 0;
-      let periodInfo = '';
-      if (searchParams.fromDate || searchParams.toDate) {
-        const fromDate = searchParams.fromDate ? dayjs(searchParams.fromDate).format('DD/MM/YYYY') : 'بداية';
-        const toDate = searchParams.toDate ? dayjs(searchParams.toDate).format('DD/MM/YYYY') : 'نهاية';
-        periodInfo = `الفترة: من ${fromDate} إلى ${toDate} | `;
-      }
-      const summaryText = `${periodInfo}إجمالي المدين: ${totalDebit.toLocaleString('en-US')} | إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} | الرصيد الختامي: ${closingBalance.toLocaleString('en-US')} | عدد القيود: ${ledgerData.totalJournals || 0} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      let yPosition = drawReportSummary(doc, separatorEndY, summaryText);
-      const tableData = [];
-      ledgerData.journals?.forEach(journal => {
-        journal.lines.forEach(line => {
-          tableData.push([
-            line.balance.toLocaleString('en-US'),
-            line.credit > 0 ? line.credit.toLocaleString('en-US') : '0',
-            line.debit > 0 ? line.debit.toLocaleString('en-US') : '0',
-            line.description || journal.description || '-',
-            journal.reference || '-',
-            dayjs(journal.date).format('DD/MM/YYYY HH:mm')
-          ]);
-        });
-      });
-      const headers = [
-        ['الرصيد', 'دائن', 'مدين', 'الوصف', 'المرجع', 'التاريخ']
-      ];
-      const baseWidths = [26, 22, 22, 45, 22, 26];
-      const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
-      Object.keys(columnStyles).forEach((k) => {
-        columnStyles[k] = { ...columnStyles[k], fontSize: 9 };
-      });
-      columnStyles[3].halign = 'right';
-      columnStyles[3].overflow = 'linebreak';
-      autoTable(doc, {
-        startY: yPosition,
-        head: headers,
-        body: tableData,
-        ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontSize: 9 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, cellPadding: 4 },
-        columnStyles,
-        margin: { top: yPosition, bottom: 25, left: PAGE_MARGIN, right: PAGE_MARGIN },
-        tableWidth: 'auto',
-        horizontalPageBreak: false, 
-        pageBreak: 'auto',
-        showHead: 'everyPage',
-        didParseCell: function (data) {
-          if (data.cell.text && data.cell.text.length > 0) {
-            const maxLength = data.column.index === 4 ? 40 : 20; 
-            if (data.cell.text[0].length > maxLength) {
-              data.cell.text[0] = data.cell.text[0].substring(0, maxLength) + '...';
-            }
-          }
-        },
-        didDrawTable: createDidDrawTable(doc)
-      });
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      const fileName = `دفتر_الأستاذ_${account.name}_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      doc.save(fileName);
-      resolve();
-    } catch (error) {
-      console.error('PDF export error:', error.message);
-      reject(error);
-    }
+    });
+  });
+
+  return exportUnifiedReport({
+    reportTitle: `دفتر الأستاذ - ${account.name} (${account.code})`,
+    fileName: `دفتر_الأستاذ_${account.name}`,
+    orientation: 'landscape',
+    dateFrom: searchParams?.fromDate,
+    dateTo: searchParams?.toDate,
+    subtitle,
+    columns: [
+      { header: 'الرصيد', dataKey: 'balance', width: 26, format: 'number' },
+      { header: 'دائن', dataKey: 'credit', width: 22, format: 'number' },
+      { header: 'مدين', dataKey: 'debit', width: 22, format: 'number' },
+      { header: 'الوصف', dataKey: 'description', width: 45, align: 'right' },
+      { header: 'المرجع', dataKey: 'reference', width: 22, align: 'right' },
+      { header: 'التاريخ', dataKey: 'dateText', width: 26 },
+    ],
+    rows,
   });
 };
 export const exportGeneralLedgerToExcel = async (ledgerData, account, searchParams) => {
@@ -187,4 +123,4 @@ const getAccountTypeArabic = (type) => {
     'EXPENSE': 'مصروفات'
   };
   return typeMap[type] || type;
-};
+};

@@ -1,8 +1,5 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 import dayjs from 'dayjs';
 // eslint-disable-next-line no-unused-vars
 const loadPDFFromURL = async (url) => {
@@ -327,73 +324,31 @@ const addSectionTable = (doc, sectionData, sectionTitle, startY) => {
     });
   return doc.lastAutoTable.finalY;
 };
-export const exportIncomeStatementToPDF = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
-  // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (!incomeData) {
-        throw new Error('لا توجد بيانات للتصدير');
-      }
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
-      let yPosition = drawReportHeader(doc, {
-        reportTitle: 'قائمة الدخل',
-        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
-      });
-      yPosition = drawSeparatorLine(doc, yPosition);
-      const summaryText = `قائمة الدخل${periodInfo ? ` | الفترة: ${periodInfo.text}` : ''} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      yPosition = drawReportSummary(doc, yPosition, summaryText);
-      const summaryData = [
-        ['المبلغ', 'البيان'],
-        [formatAmount(incomeData.totalCapital || 0), 'رأس المال المدفوع'],
-        [formatAmount(incomeData.revenues?.total || 0), 'إجمالي الإيرادات']
-      ];
-      if (incomeData.revenues && incomeData.revenues.generalLoans > 0) {
-        summaryData.push([formatAmount(incomeData.revenues.generalLoans), 'سلف عامة']);
-      }
-      if (incomeData.revenues && incomeData.revenues.newCapitalLoans > 0) {
-        summaryData.push([formatAmount(incomeData.revenues.newCapitalLoans), 'سلف رأس مال جديد']);
-      }
-      summaryData.push(
-        [formatAmount(incomeData.totalExpenses || 0), 'المصروفات التشغيلية'],
-        [formatAmount(Math.abs(incomeData.netProfit || 0)), incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة']
-      );
-      const summaryColumnStyles = getFullWidthColumnStyles(doc, [60, 120]);
-      Object.keys(summaryColumnStyles).forEach((k) => {
-        summaryColumnStyles[k].halign = 'center';
-      });
-      autoTable(doc, {
-        head: [['المبلغ', 'البيان']],
-        body: summaryData.slice(1),
-        startY: yPosition,
-        ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontSize: 9, cellPadding: 4, fontStyle: 'bold' },
-        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
-        columnStyles: summaryColumnStyles,
-        margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
-        tableWidth: 'auto',
-        pageBreak: 'avoid',
-        didDrawTable: createDidDrawTable(doc),
-        rowPageBreak: 'avoid'
-      });
-      const allData = getAllData(incomeData);
-      let currentY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 15 : 80;
-      if (allData.length > 0) {
-        addSectionTable(doc, allData, 'البيان التفصيلي الكامل', currentY);
-      }
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      const fileName = `قائمة_الدخل_${periodInfo ? periodInfo.text.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') : 'تقرير'}_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      doc.save(fileName);
-      resolve();
-    } catch (error) {
-      console.error('PDF export error:', error.message);
-      reject(error);
-    }
+export const exportIncomeStatementToPDF = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate, options = {}) => {
+  if (!incomeData) {
+    throw new Error('لا توجد بيانات للتصدير');
+  }
+  const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
+  const allData = getAllData(incomeData).filter((r) => r.type !== 'spacer');
+
+  return exportUnifiedReport({
+    reportTitle: 'قائمة الدخل',
+    fileName: `قائمة_الدخل_${periodInfo ? periodInfo.text.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') : 'تقرير'}`,
+    orientation: 'landscape',
+    dateFrom: periodInfo?.from,
+    dateTo: periodInfo?.to,
+    subtitle: `الفترة: ${periodInfo?.text || 'غير محدد'} | رأس المال: ${formatAmount(incomeData.totalCapital || 0)} | الإيرادات: ${formatAmount(incomeData.revenues?.total || 0)} | المصروفات: ${formatAmount(incomeData.totalExpenses || 0)} | ${incomeData.netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة'}: ${formatAmount(Math.abs(incomeData.netProfit || 0))}`,
+    columns: [
+      { header: 'المبلغ', dataKey: 'amount', width: 35, format: 'number0' },
+      { header: 'البند', dataKey: 'name', width: 95, align: 'right' },
+      { header: 'التصنيف', dataKey: 'type', width: 35, align: 'right' },
+    ],
+    rows: allData.map((row) => ({
+      amount: row.amount || 0,
+      name: row.name || '-',
+      type: row.type || '-',
+    })),
+    save: options.save ?? true,
   });
 };
 export const exportIncomeStatementToExcel = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
@@ -594,54 +549,25 @@ export const exportIncomeStatementToExcel = async (incomeData, periodType, selec
   }
 };
 export const printIncomeStatement = async (incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate) => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (!incomeData) {
-        throw new Error('لا توجد بيانات للطباعة');
-      }
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      const periodInfo = getPeriodInfo(incomeData, periodType, selectedMonth, selectedYear, fromDate, toDate);
-      let printYPosition = drawReportHeader(doc, {
-        reportTitle: 'قائمة الدخل',
-        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
-      });
-      printYPosition = drawSeparatorLine(doc, printYPosition);
-      doc.setFontSize(14);
-      doc.setFont('Amiri', 'bold');
-      doc.text('تقرير مالي رسمي - أساس لتوزيع الأرباح على المساهمين', doc.internal.pageSize.width / 2, printYPosition, { align: 'center' });
-      printYPosition += 8;
-      if (periodInfo) {
-        doc.setFontSize(12);
-        doc.setFont('Amiri', 'bold');
-        doc.text(`الفترة: ${periodInfo.text}`, doc.internal.pageSize.width / 2, printYPosition, { align: 'center' });
-        printYPosition += 8;
-      }
-      const allData = getAllData(incomeData);
-      if (allData.length > 0) {
-        addSectionTable(doc, allData, '', printYPosition);
-      }
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      const pdfBlob = doc.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const printWindow = window.open(pdfUrl);
-      if (printWindow) {
-        printWindow.onload = function() {
-          printWindow.print();
-          setTimeout(() => {
-            URL.revokeObjectURL(pdfUrl);
-          }, 1000);
-        };
-        resolve();
-      } else {
-        reject(new Error('فشل في فتح نافذة الطباعة'));
-      }
-    } catch (error) {
-      console.error('Print error:', error.message);
-      reject(error);
-    }
-  });
+  const doc = await exportIncomeStatementToPDF(
+    incomeData,
+    periodType,
+    selectedMonth,
+    selectedYear,
+    fromDate,
+    toDate,
+    { save: false }
+  );
+  const pdfBlob = doc.output('blob');
+  const pdfUrl = URL.createObjectURL(pdfBlob);
+  const printWindow = window.open(pdfUrl);
+  if (!printWindow) {
+    throw new Error('فشل في فتح نافذة الطباعة');
+  }
+  printWindow.onload = function () {
+    printWindow.print();
+    setTimeout(() => {
+      URL.revokeObjectURL(pdfUrl);
+    }, 1000);
+  };
 };

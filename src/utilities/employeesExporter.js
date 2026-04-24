@@ -1,81 +1,34 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 export const exportEmployeesToPDF = async (employeesData, searchQuery = '') => {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      doc.setProperties({
-        title: 'الموظفين',
-        subject: 'قائمة الموظفين',
-        author: 'نظام إدارة السلف',
-        keywords: 'موظفين, إدارة, سلف',
-        creator: 'نظام إدارة السلف'
-      });
-      let yPosition = drawReportHeader(doc, {
-        reportTitle: 'قائمة الموظفين',
-        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
-      });
-      yPosition = drawSeparatorLine(doc, yPosition);
-      const activeEmployees = employeesData.filter(emp => emp.isActive).length;
-      const inactiveEmployees = employeesData.filter(emp => !emp.isActive).length;
-      const totalEmployees = employeesData.length;
-      const summaryText = `إجمالي الموظفين: ${totalEmployees} | نشطين: ${activeEmployees} | غير نشطين: ${inactiveEmployees} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      yPosition = drawReportSummary(doc, yPosition, summaryText);
-      if (searchQuery) {
-        doc.setFontSize(10);
-        doc.setFont('Amiri', 'bold');
-        doc.text(`نتائج البحث عن: "${searchQuery}"`, doc.internal.pageSize.width / 2, yPosition, { align: 'center' });
-        yPosition += 8;
-      }
-      const tableData = employeesData.map(employee => [
-        dayjs(employee.createdAt).format('DD/MM/YYYY'),
-        employee.role?.name || 'بدون دور',
-        getStatusArabic(employee.isActive),
-        employee.phone || '-',
-        employee.email,
-        employee.name,
-        employee.id.toString()
-      ]);
-      const headers = [
-        ['تاريخ الإنشاء', 'الدور', 'الحالة', 'رقم الهاتف', 'البريد الإلكتروني', 'الاسم', '#']
-      ];
-      const baseWidths = [26, 25, 18, 25, 45, 35, 12];
-      const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
-      Object.keys(columnStyles).forEach((k) => {
-        columnStyles[k] = { ...columnStyles[k], fontSize: 9, overflow: 'linebreak' };
-      });
-      autoTable(doc, {
-        startY: yPosition,
-        head: headers,
-        body: tableData,
-        ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
-        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
-        columnStyles,
-        margin: { top: yPosition, left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
-        tableWidth: 'auto',
-        horizontalPageBreak: false,
-        pageBreak: 'auto',
-        showHead: 'everyPage',
-        didDrawTable: createDidDrawTable(doc)
-      });
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      const fileName = `الموظفين_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      doc.save(fileName);
-      resolve();
-    } catch (error) {
-      console.error('PDF export error:', error.message);
-      reject(error);
-    }
+  const activeEmployees = employeesData.filter((emp) => emp.isActive).length;
+  const inactiveEmployees = employeesData.filter((emp) => !emp.isActive).length;
+  const totalEmployees = employeesData.length;
+  const subtitle = `إجمالي الموظفين: ${totalEmployees} | نشطين: ${activeEmployees} | غير نشطين: ${inactiveEmployees}${searchQuery ? ` | بحث: ${searchQuery}` : ''}`;
+
+  return exportUnifiedReport({
+    reportTitle: 'قائمة الموظفين',
+    fileName: 'الموظفين',
+    orientation: 'landscape',
+    subtitle,
+    columns: [
+      { header: 'تاريخ الإنشاء', dataKey: 'createdAt', width: 26, format: 'date' },
+      { header: 'الدور', dataKey: 'roleName', width: 25, align: 'right' },
+      { header: 'الحالة', dataKey: 'statusAr', width: 18 },
+      { header: 'رقم الهاتف', dataKey: 'phone', width: 25 },
+      { header: 'البريد الإلكتروني', dataKey: 'email', width: 45, align: 'right' },
+      { header: 'الاسم', dataKey: 'name', width: 35, align: 'right' },
+      { header: '#', dataKey: 'id', width: 12 },
+    ],
+    rows: employeesData.map((employee) => ({
+      ...employee,
+      roleName: employee.role?.name || 'بدون دور',
+      statusAr: getStatusArabic(employee.isActive),
+      phone: employee.phone || '-',
+      email: employee.email || '-',
+      id: String(employee.id ?? ''),
+    })),
   });
 };
 export const exportEmployeesToExcel = async (employeesData, searchQuery = '') => {

@@ -1,18 +1,6 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
-import {
-  registerArabicFonts,
-  drawReportHeader,
-  drawSeparatorLine,
-  drawReportFooter,
-  drawReportSummary,
-  PAGE_MARGIN,
-  getFullWidthColumnStyles,
-  PRIMARY_COLOR,
-} from './pdfReportUtils';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 const formatAmount = (value) => {
   const numeric = Number(value || 0);
   const truncated = Number.isFinite(numeric) ? Math.trunc(numeric) : 0;
@@ -33,90 +21,34 @@ const getRepaymentStatusText = (status) => {
   return textMap[status] || status;
 };
 export const exportStatementToPDF = async (statementData, clientName, fromDate = '', toDate = '') => {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      doc.setProperties({
-        title: `كشف حساب - ${clientName}`,
-        subject: 'كشف حساب العميل',
-        author: 'نظام إدارة السلف',
-        keywords: 'كشف, حساب, عميل, سلف',
-        creator: 'نظام إدارة السلف'
-      });
-      const reportTitle = `كشف حساب - ${clientName}`;
-      const headerEndY = drawReportHeader(doc, {
-        reportTitle,
-        metadata: {
-          date: dayjs().format('YYYY/MM/DD'),
-          time: dayjs().format('hh:mm A'),
-        },
-      });
-      const separatorEndY = drawSeparatorLine(doc, headerEndY + 4);
-      const pageWidth = doc.internal.pageSize.width;
-      const line1 = `العميل: ${clientName} | رقم الهوية: ${statementData.client?.nationalId || '—'} | من: ${fromDate || '—'} إلى: ${toDate || '—'} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      const line2 = `مدين: ${formatAmount(statementData.client?.debit)} | دائن: ${formatAmount(statementData.client?.credit)} | رصيد: ${formatAmount(statementData.client?.balance)} | معاملات: ${statementData.totalTransactions || 0} | دفعات: ${statementData.paidRepaymentsCount || 0} | متبقي: ${formatAmount(statementData.totalRemainingAmount)}`;
-      let yPosition = drawReportSummary(doc, separatorEndY, line1);
-      yPosition = drawReportSummary(doc, yPosition, line2);
-      if ((statementData.client?.balance || 0) > 0) {
-        doc.setFontSize(11);
-        doc.setTextColor(...PRIMARY_COLOR);
-        doc.text(`مدين/عليه ${formatAmount(statementData.client?.balance)} ريال سعودي`, pageWidth / 2, yPosition, { align: 'center' });
-        doc.setTextColor(0, 0, 0);
-        yPosition += 10;
-      }
-      yPosition += 4;
-      const repayments = statementData.repayments || [];
-      if (repayments.length > 0) {
-        const tableData = repayments.map((r) => [
-          formatAmount(r.remaining),
-          formatAmount(r.paidAmount),
-          formatAmount(r.amount),
-          getRepaymentStatusText(r.status),
-          r.paymentDate ? dayjs(r.paymentDate).format('DD/MM/YYYY') : '—',
-          r.dueDate ? dayjs(r.dueDate).format('DD/MM/YYYY') : '—',
-          r.loanCode || r.loanId || '—',
-          r.count || '—'
-        ]);
-        const headers = [['المتبقي', 'المدفوع', 'المبلغ', 'الحالة', 'تاريخ\nالدفع', 'تاريخ\nالاستحقاق', 'رقم\nالسلفة', 'رقم\nالدفعة']];
-        const baseWidths = [22, 24, 22, 22, 24, 32, 24, 24];
-        const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
-        Object.keys(columnStyles).forEach((k) => {
-          columnStyles[k] = { ...columnStyles[k], fontSize: 9, overflow: [4, 5, 6, 7].includes(Number(k)) ? 'linebreak' : 'hidden' };
-        });
-        autoTable(doc, {
-          startY: yPosition,
-          head: headers,
-          body: tableData,
-          ...pdfTableBaseStyles,
-          headStyles: {
-            ...pdfTableBaseStyles.headStyles,
-            fillColor: PRIMARY_COLOR,
-            textColor: [255, 255, 255],
-            minCellHeight: 14,
-          },
-          styles: { ...pdfTableBaseStyles.styles, fontSize: 9 },
-          bodyStyles: { ...pdfTableBaseStyles.bodyStyles, cellPadding: 4 },
-          columnStyles,
-          margin: { top: yPosition, bottom: 25, left: PAGE_MARGIN, right: PAGE_MARGIN },
-          tableWidth: 'auto',
-          horizontalPageBreak: false,
-          pageBreak: 'auto',
-          showHead: 'everyPage',
-          didDrawTable: createDidDrawTable(doc)
-        });
-      }
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      const fileName = `كشف_حساب_${clientName}_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      doc.save(fileName);
-      resolve();
-    } catch (error) {
-      console.error('PDF export error:', error.message);
-      reject(error);
-    }
+  const repayments = statementData.repayments || [];
+  return exportUnifiedReport({
+    reportTitle: `كشف حساب - ${clientName}`,
+    fileName: `كشف_حساب_${clientName}`,
+    orientation: 'landscape',
+    dateFrom: fromDate || undefined,
+    dateTo: toDate || undefined,
+    subtitle: `رقم الهوية: ${statementData.client?.nationalId || '—'} | مدين: ${formatAmount(statementData.client?.debit)} | دائن: ${formatAmount(statementData.client?.credit)} | رصيد: ${formatAmount(statementData.client?.balance)} | معاملات: ${statementData.totalTransactions || 0}`,
+    columns: [
+      { header: 'المتبقي', dataKey: 'remaining', width: 22, format: 'number0' },
+      { header: 'المدفوع', dataKey: 'paidAmount', width: 24, format: 'number0' },
+      { header: 'المبلغ', dataKey: 'amount', width: 22, format: 'number0' },
+      { header: 'الحالة', dataKey: 'statusText', width: 22, align: 'right' },
+      { header: 'تاريخ الدفع', dataKey: 'paymentDateText', width: 24 },
+      { header: 'تاريخ الاستحقاق', dataKey: 'dueDateText', width: 32 },
+      { header: 'رقم السلفة', dataKey: 'loanCode', width: 24 },
+      { header: 'رقم الدفعة', dataKey: 'count', width: 24 },
+    ],
+    rows: repayments.map((r) => ({
+      remaining: Number(r.remaining || 0),
+      paidAmount: Number(r.paidAmount || 0),
+      amount: Number(r.amount || 0),
+      statusText: getRepaymentStatusText(r.status),
+      paymentDateText: r.paymentDate ? dayjs(r.paymentDate).format('DD/MM/YYYY') : '—',
+      dueDateText: r.dueDate ? dayjs(r.dueDate).format('DD/MM/YYYY') : '—',
+      loanCode: r.loanCode || r.loanId || '—',
+      count: r.count || '—',
+    })),
   });
 };
 export const exportStatementToExcel = async (statementData, clientName, fromDate = '', toDate = '') => {

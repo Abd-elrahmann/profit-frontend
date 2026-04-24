@@ -1,9 +1,6 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { getAccountNatureLabel } from '../components/ChartOfAccounts';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
-import { createDidDrawTable } from './pdfTableStyles';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 const flattenAll = (accounts, depth = 0) => {
   const result = [];
   for (const account of accounts || []) {
@@ -17,41 +14,27 @@ const flattenAll = (accounts, depth = 0) => {
 export const exportChartOfAccountsToPDF = async (accountsTree) => {
   const flatAccounts = flattenAll(accountsTree);
   if (!flatAccounts.length) throw new Error('لا توجد بيانات للتصدير');
-  const doc = new jsPDF('landscape');
-  registerArabicFonts(doc);
-  let yPosition = drawReportHeader(doc, {
+  const subtitle = `إجمالي الحسابات: ${flatAccounts.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
+
+  return exportUnifiedReport({
     reportTitle: 'شجرة الحسابات',
-    metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+    fileName: 'شجرة-الحسابات',
+    orientation: 'landscape',
+    subtitle,
+    columns: [
+      { header: 'كود الحساب', dataKey: 'code', width: 25 },
+      { header: 'اسم الحساب', dataKey: 'name', width: 50, align: 'right' },
+      { header: 'النوع', dataKey: 'natureLabel', width: 25, align: 'right' },
+      { header: 'الرصيد', dataKey: 'balance', width: 35, format: 'number' },
+      { header: 'الحالة', dataKey: 'statusAr', width: 20 },
+    ],
+    rows: flatAccounts.map((a) => ({
+      ...a,
+      natureLabel: getAccountNatureLabel(a.nature),
+      balance: a.balance ?? 0,
+      statusAr: a.isActive !== false ? 'نشط' : 'غير نشط',
+    })),
   });
-  yPosition = drawSeparatorLine(doc, yPosition);
-  const summaryText = `إجمالي الحسابات: ${flatAccounts.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-  yPosition = drawReportSummary(doc, yPosition, summaryText);
-  const rows = flatAccounts.map((a) => [
-    a.code,
-    a.name,
-    getAccountNatureLabel(a.nature),
-    (a.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 }),
-    a.isActive !== false ? 'نشط' : 'غير نشط',
-  ]);
-  const baseWidths = [25, 50, 25, 35, 20];
-  const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
-  autoTable(doc, {
-    head: [['كود الحساب', 'اسم الحساب', 'النوع', 'الرصيد', 'الحالة']],
-    body: rows,
-    startY: yPosition,
-    styles: { font: 'Amiri', fontSize: 9, cellPadding: 4 },
-    headStyles: { fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
-    bodyStyles: { fontSize: 9, cellPadding: 4 },
-    columnStyles,
-    margin: { top: yPosition, left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
-    tableWidth: 'auto',
-    didDrawTable: createDidDrawTable(doc)
-  });
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    drawReportFooter(doc, i, pageCount);
-  }
-  doc.save('شجرة-الحسابات.pdf');
 };
 export const exportChartOfAccountsToExcel = async (accountsTree) => {
   const flatAccounts = flattenAll(accountsTree);

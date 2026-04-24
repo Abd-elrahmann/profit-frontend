@@ -1,9 +1,6 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { createDidDrawTable } from './pdfTableStyles';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 const loadPDFFromURL = async (url) => {
   try {
     const response = await fetch(url);
@@ -81,167 +78,33 @@ export const exportWithdrawalDetailsToPDF = async (withdrawalDetails) => {
           console.warn('لا يمكن تحميل عقد المخالصة:', error);
         }
       }
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      doc.setProperties({
-        title: 'تقرير انسحاب المستثمر',
-        subject: 'بيانات انسحاب المستثمر',
-        author: 'نظام إدارة السلف',
-        keywords: 'انسحاب, مستثمر, تقرير',
-        creator: 'نظام إدارة السلف'
-      });
-      const pageWidth = doc.internal.pageSize.width;
-      const pageHeight = doc.internal.pageSize.height;
-      let yPosition = drawReportHeader(doc, {
+      const rows = (schedule || []).map((item) => ({
+        paidAt: item.paidAt ? dayjs(item.paidAt).format('DD/MM/YYYY') : '-',
+        status: getScheduleStatusText(item.status),
+        paidAmount: item.paidAmount || 0,
+        totalAmount: (item.amount || 0) + (item.carryAmount || 0),
+        carryAmount: item.carryAmount || 0,
+        amount: item.amount || 0,
+        month: getArabicMonth(item.month) || item.month,
+        year: item.year || '-',
+      }));
+      const doc = await exportUnifiedReport({
         reportTitle: 'تقرير انسحاب المستثمر',
-        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
+        fileName: `تقرير_انسحاب_${partner?.name?.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_') || 'مستثمر'}`,
+        orientation: 'landscape',
+        subtitle: `المستثمر: ${partner?.name || '-'} | رقم الهوية: ${partner?.nationalId || '-'} | حالة السحب: ${getWithdrawingStatusText(partner?.withdrawingStatus)} | رأس المال المتبقي: ${(withdrawal?.remainingCapital || 0).toLocaleString('en-US')}`,
+        columns: [
+          { header: 'تاريخ الدفع', dataKey: 'paidAt', width: 22 },
+          { header: 'الحالة', dataKey: 'status', width: 22, align: 'right' },
+          { header: 'المدفوع', dataKey: 'paidAmount', width: 22, format: 'number0' },
+          { header: 'إجمالي المبلغ', dataKey: 'totalAmount', width: 25, format: 'number0' },
+          { header: 'المرحل', dataKey: 'carryAmount', width: 22, format: 'number0' },
+          { header: 'المبلغ', dataKey: 'amount', width: 22, format: 'number0' },
+          { header: 'الشهر', dataKey: 'month', width: 22, align: 'right' },
+          { header: 'السنة', dataKey: 'year', width: 22 },
+        ],
+        rows,
       });
-      yPosition = drawSeparatorLine(doc, yPosition);
-      const summaryText = `المستثمر: ${partner?.name || '-'} | رقم الهوية: ${partner?.nationalId || '-'} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      yPosition = drawReportSummary(doc, yPosition, summaryText);
-      doc.setFontSize(14);
-      doc.setFont('Amiri', 'bold');
-      doc.setTextColor(13, 64, 165);
-      doc.text('معلومات المستثمر', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 10;
-      const investorHeaders = [['القيمة', 'البيان']];
-      const investorData = [
-        [partner?.name || '-', 'الاسم'],
-        [partner?.nationalId || '-', 'رقم الهوية الوطنية'],
-        [getWithdrawingStatusText(partner?.withdrawingStatus), 'حالة السحب'],
-        [partner?.isFrozen ? 'مجمّد' : 'نشط', 'الحالة'],
-      ];
-      autoTable(doc, {
-        startY: yPosition,
-        head: investorHeaders,
-        body: investorData,
-        theme: 'striped',
-        styles: {
-          font: 'Amiri',
-          fontStyle: 'bold',
-          fontSize: 10,
-          cellPadding: { top: 5, bottom: 5, left: 6, right: 6 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.2,
-          halign: 'right',
-          valign: 'middle',
-          direction: 'rtl'
-        },
-        headStyles: {
-          fillColor: PRIMARY_COLOR,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 11,
-          halign: 'right',
-          cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-        },
-        columnStyles: getFullWidthColumnStyles(doc, [80, 60]),
-        margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
-        tableWidth: 'auto',
-        didDrawTable: createDidDrawTable(doc)
-      });
-      yPosition = doc.lastAutoTable.finalY + 15;
-      if (withdrawal) {
-        doc.setFontSize(14);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(13, 64, 165);
-        doc.text('معلومات طلب الانسحاب', pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 10;
-        const withdrawalHeaders = [['القيمة', 'البيان']];
-        const withdrawalData = [
-          [withdrawal.totalCapital?.toLocaleString('en-US') || '0', 'رأس المال الإجمالي'],
-          [withdrawal.defaultShare?.toLocaleString('en-US') || '0', 'مبلغ التعثرات'],
-          [withdrawal.remainingCapital?.toLocaleString('en-US') || '0', 'رأس المال المتبقي'],
-          [withdrawal.savingAmount?.toLocaleString('en-US') || '0', 'مبلغ الادخار'],
-          [withdrawal.monthlyAmount?.toLocaleString('en-US') || '0', 'المبلغ الشهري'],
-          [withdrawal.createdAt ? dayjs(withdrawal.createdAt).format('DD/MM/YYYY') : '-', 'تاريخ الطلب'],
-        ];
-        autoTable(doc, {
-          startY: yPosition,
-          head: withdrawalHeaders,
-          body: withdrawalData,
-          theme: 'striped',
-          styles: {
-            font: 'Amiri',
-            fontStyle: 'bold',
-            fontSize: 10,
-            cellPadding: { top: 5, bottom: 5, left: 6, right: 6 },
-            lineColor: [220, 220, 220],
-            lineWidth: 0.2,
-            halign: 'right',
-            valign: 'middle',
-            direction: 'rtl'
-          },
-          headStyles: {
-            fillColor: PRIMARY_COLOR,
-            textColor: [255, 255, 255],
-            fontStyle: 'bold',
-            fontSize: 11,
-            halign: 'right',
-            cellPadding: { top: 6, bottom: 6, left: 6, right: 6 },
-          },
-          columnStyles: getFullWidthColumnStyles(doc, [80, 60]),
-          margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
-          tableWidth: 'auto',
-          didDrawTable: createDidDrawTable(doc)
-        });
-        yPosition = doc.lastAutoTable.finalY + 15;
-      }
-      if (schedule && schedule.length > 0) {
-        if (yPosition > pageHeight - 80) {
-          doc.addPage();
-          yPosition = 25;
-        }
-        doc.setFontSize(14);
-        doc.setFont('Amiri', 'bold');
-        doc.setTextColor(13, 64, 165);
-        doc.text('جدول السحب', pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 10;
-        const scheduleHeaders = [['تاريخ الدفع', 'الحالة', 'المدفوع', 'إجمالي المبلغ', 'المرحل', 'المبلغ', 'الشهر', 'السنة']];
-        const scheduleData = schedule.map(item => [
-          item.paidAt ? dayjs(item.paidAt).format('DD/MM/YYYY') : '-',
-          getScheduleStatusText(item.status),
-          item.paidAmount?.toLocaleString('en-US') || '0',
-          ((item.amount || 0) + (item.carryAmount || 0)).toLocaleString('en-US'),
-          item.carryAmount?.toLocaleString('en-US') || '0',
-          item.amount?.toLocaleString('en-US') || '0',
-          getArabicMonth(item.month) || item.month,
-          item.year || '-',
-        ]);
-        autoTable(doc, {
-          startY: yPosition,
-          head: scheduleHeaders,
-          body: scheduleData,
-          theme: 'striped',
-          styles: {
-            font: 'Amiri',
-            fontStyle: 'bold',
-            fontSize: 9,
-            cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
-            lineColor: [220, 220, 220],
-            lineWidth: 0.2,
-            halign: 'center',
-            valign: 'middle'
-          },
-          headStyles: {
-            fillColor: PRIMARY_COLOR,
-            textColor: [255, 255, 255],
-            fontStyle: 'bold',
-            fontSize: 9,
-            halign: 'center',
-            cellPadding: { top: 5, bottom: 5, left: 3, right: 3 },
-          },
-          columnStyles: getFullWidthColumnStyles(doc, [22, 22, 22, 25, 22, 22, 22, 22]),
-          margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
-          pageBreak: 'auto',
-          showHead: 'everyPage',
-          didDrawTable: createDidDrawTable(doc)
-        });
-      }
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
       if (hasReceipt && receiptPDF) {
         try {
           const mainPDF = doc.output('arraybuffer');
@@ -361,4 +224,4 @@ export const exportWithdrawalDetailsToExcel = async (withdrawalDetails) => {
     console.error('Excel export error:', error.message);
     throw error;
   }
-};
+};

@@ -1,80 +1,39 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { pdfTableBaseStyles, createDidDrawTable } from './pdfTableStyles';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 export const exportLogsToPDF = async (logsData, filters = {}) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      doc.setProperties({
-        title: 'سجلات النشاطات',
-        subject: 'سجل الأنشطة والنظام',
-        author: 'نظام إدارة السلف',
-        keywords: 'سجلات, أنشطة, نظام, تدقيق',
-        creator: 'نظام إدارة السلف'
-      });
-      const headerEndY = drawReportHeader(doc, {
-        reportTitle: 'سجلات النشاطات',
-        metadata: { date: dayjs().format('YYYY/MM/DD'), time: dayjs().format('hh:mm A') }
-      });
-      let yPosition = drawSeparatorLine(doc, headerEndY + 4);
-      const totalLogs = logsData.length;
-      const dateRange = getDateRangeText(logsData);
-      let filtersInfo = '';
-      if (filters.search) filtersInfo += `بحث: "${filters.search}" `;
-      if (filters.screen) filtersInfo += `شاشة: ${getScreenText(filters.screen)} `;
-      if (filters.action) filtersInfo += `إجراء: ${getActionText(filters.action)} `;
-      if (filters.userName) filtersInfo += `مستخدم: ${filters.userName} `;
-      if (filters.from) filtersInfo += `من: ${filters.from} `;
-      if (filters.to) filtersInfo += `إلى: ${filters.to} `;
-      const summaryText = `إجمالي السجلات: ${totalLogs} | ${dateRange}${filtersInfo ? ` | ${filtersInfo}` : ''} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      yPosition = drawReportSummary(doc, yPosition, summaryText);
-      const tableData = logsData.map(log => [
-        dayjs(log.createdAt).format('DD/MM/YYYY HH:mm'),
-        log.description || '-',
-        getActionText(log.action),
-        getScreenText(log.screen),
-        log.user.name
-      ]);
-      const headers = [
-        ['التاريخ والوقت', 'الوصف', 'الإجراء', 'الشاشة', 'المستخدم']
-      ];
-      const baseWidths = [25, 65, 20, 30, 30];
-      const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
-      Object.keys(columnStyles).forEach((k) => {
-        columnStyles[k] = { ...columnStyles[k], fontSize: 9 };
-      });
-      columnStyles[1].halign = 'right';
-      autoTable(doc, {
-        startY: yPosition,
-        head: headers,
-        body: tableData,
-        ...pdfTableBaseStyles,
-        styles: { ...pdfTableBaseStyles.styles, fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
-        headStyles: { ...pdfTableBaseStyles.headStyles, fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
-        bodyStyles: { ...pdfTableBaseStyles.bodyStyles, fontStyle: 'bold', cellPadding: 4 },
-        columnStyles,
-        margin: { top: yPosition, left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
-        tableWidth: 'auto',
-        horizontalPageBreak: false,
-        pageBreak: 'auto',
-        showHead: 'everyPage',
-        didDrawTable: createDidDrawTable(doc)
-      });
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      const fileName = `سجلات_النشاطات_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      doc.save(fileName);
-      resolve();
-    } catch (error) {
-      console.error('PDF export error:', error.message);
-      reject(error);
-    }
+  const totalLogs = logsData.length;
+  const dateRange = getDateRangeText(logsData);
+  let filtersInfo = '';
+  if (filters.search) filtersInfo += `بحث: "${filters.search}" `;
+  if (filters.screen) filtersInfo += `شاشة: ${getScreenText(filters.screen)} `;
+  if (filters.action) filtersInfo += `إجراء: ${getActionText(filters.action)} `;
+  if (filters.userName) filtersInfo += `مستخدم: ${filters.userName} `;
+  if (filters.from) filtersInfo += `من: ${filters.from} `;
+  if (filters.to) filtersInfo += `إلى: ${filters.to} `;
+
+  const subtitle = `إجمالي السجلات: ${totalLogs} | ${dateRange}${filtersInfo ? ` | ${filtersInfo.trim()}` : ''}`;
+
+  return exportUnifiedReport({
+    reportTitle: 'سجلات النشاطات',
+    fileName: 'سجلات_النشاطات',
+    orientation: 'landscape',
+    subtitle,
+    columns: [
+      { header: 'التاريخ والوقت', dataKey: 'createdAtText', width: 25 },
+      { header: 'الوصف', dataKey: 'description', width: 65, align: 'right' },
+      { header: 'الإجراء', dataKey: 'actionText', width: 20 },
+      { header: 'الشاشة', dataKey: 'screenText', width: 30, align: 'right' },
+      { header: 'المستخدم', dataKey: 'userName', width: 30, align: 'right' },
+    ],
+    rows: logsData.map((log) => ({
+      ...log,
+      createdAtText: dayjs(log.createdAt).format('DD/MM/YYYY HH:mm'),
+      description: log.description || '-',
+      actionText: getActionText(log.action),
+      screenText: getScreenText(log.screen),
+      userName: log.user?.name || '-',
+    })),
   });
 };
 export const exportLogsToExcel = async (logsData, filters = {}) => {
@@ -187,4 +146,4 @@ const getDateRangeText = (logsData) => {
   } else {
     return `من ${dayjs(minDate).format('DD/MM/YYYY')} إلى ${dayjs(maxDate).format('DD/MM/YYYY')}`;
   }
-};
+};

@@ -1,9 +1,6 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { getPdfTableStyles, createDidDrawTable } from './pdfTableStyles';
-import { registerArabicFonts, drawReportHeader, drawSeparatorLine, drawReportFooter, drawReportSummary, PAGE_MARGIN, getFullWidthColumnStyles, PRIMARY_COLOR } from './pdfReportUtils';
 import dayjs from 'dayjs';
+import { exportUnifiedReport } from './unifiedReportTemplate';
 const generateExcelRows = (expenses) => {
   const rows = [];
   expenses.forEach((expense) => {
@@ -18,80 +15,39 @@ const generateExcelRows = (expenses) => {
   return rows;
 };
 export const exportExpensesToPDF = async (expenses, expenseType = "", employeeNames = "") => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (!Array.isArray(expenses) || expenses.length === 0) {
-        throw new Error('لا توجد بيانات للتصدير');
-      }
-      const doc = new jsPDF('landscape');
-      registerArabicFonts(doc);
-      let reportTitle = 'تقرير المصروفات';
-      if (employeeNames) {
-        reportTitle = `تقرير مصروفات رواتب للموظف ${employeeNames}`;
-      } else if (expenseType) {
-        reportTitle = `تقرير المصروفات - ${expenseType}`;
-      }
-      doc.setProperties({
-        title: reportTitle,
-        subject: 'بيانات المصروفات',
-        author: 'نظام إدارة السلف',
-        keywords: 'مصروفات, تقرير',
-        creator: 'نظام إدارة السلف',
-      });
-      let yPosition = drawReportHeader(doc, {
-        reportTitle,
-        metadata: { date: dayjs().format('DD/MM/YYYY'), time: dayjs().format('HH:mm') }
-      });
-      yPosition = drawSeparatorLine(doc, yPosition);
-      const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-      const summaryText = `إجمالي المصروفات: ${expenses.length} مصروف | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
-      yPosition = drawReportSummary(doc, yPosition, summaryText);
-      const headers = [['التاريخ', 'الموظف', 'الوصف', 'المبلغ', 'النوع']];
-      const body = expenses.map((expense) => {
-        return [
-          dayjs(expense.createdAt).format('DD/MM/YYYY'),
-          expense.employee?.name || '-',
-          expense.description || '-',
-          (expense.amount || 0).toLocaleString('en-US'),
-          expense.type || '-',
-        ];
-      });
-      const baseWidths = [25, 30, 80, 35, 25];
-      const columnStyles = getFullWidthColumnStyles(doc, baseWidths);
-      Object.assign(columnStyles[2], { minCellWidth: 40 });
-      autoTable(doc, {
-        startY: yPosition,
-        head: headers,
-        body,
-        ...getPdfTableStyles({
-          styles: { halign: 'right', valign: 'top', fontStyle: 'bold', fontSize: 9, cellPadding: 4 },
-          headStyles: { halign: 'right', fillColor: PRIMARY_COLOR, textColor: [255, 255, 255], fontSize: 9, cellPadding: 4 },
-          bodyStyles: { halign: 'right', valign: 'top', fontStyle: 'bold', cellPadding: 4 }
-        }),
-        columnStyles,
-        margin: { top: yPosition, left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: 25 },
-        tableWidth: 'auto',
-        horizontalPageBreak: false,
-        pageBreak: 'auto',
-        showHead: 'everyPage',
-        didDrawTable: createDidDrawTable(doc)
-      });
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        drawReportFooter(doc, i, pageCount);
-      }
-      let fileName = `تقرير_المصروفات_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      if (employeeNames) {
-        fileName = `تقرير_مصروفات_رواتب_${employeeNames.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      } else if (expenseType) {
-        fileName = `تقرير_المصروفات_${expenseType.replace(/\s+/g, '_')}_${dayjs().format('YYYY-MM-DD')}.pdf`;
-      }
-      doc.save(fileName);
-      resolve();
-    } catch (error) {
-      console.error('PDF export error:', error.message);
-      reject(error);
-    }
+  if (!Array.isArray(expenses) || expenses.length === 0) {
+    throw new Error('لا توجد بيانات للتصدير');
+  }
+
+  let reportTitle = 'تقرير المصروفات';
+  if (employeeNames) {
+    reportTitle = `تقرير مصروفات رواتب للموظف ${employeeNames}`;
+  } else if (expenseType) {
+    reportTitle = `تقرير المصروفات - ${expenseType}`;
+  }
+
+  const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+  const subtitle = `إجمالي المصروفات: ${expenses.length} | إجمالي المبلغ: ${totalAmount.toLocaleString('en-US')}`;
+
+  return exportUnifiedReport({
+    reportTitle,
+    fileName: reportTitle.replace(/\s+/g, '_'),
+    orientation: 'landscape',
+    subtitle,
+    columns: [
+      { header: 'التاريخ', dataKey: 'createdAt', width: 25, format: 'date' },
+      { header: 'الموظف', dataKey: 'employeeName', width: 30, align: 'right' },
+      { header: 'الوصف', dataKey: 'description', width: 80, align: 'right' },
+      { header: 'المبلغ', dataKey: 'amount', width: 35, format: 'number0' },
+      { header: 'النوع', dataKey: 'type', width: 25, align: 'right' },
+    ],
+    rows: expenses.map((expense) => ({
+      ...expense,
+      employeeName: expense.employee?.name || '-',
+      description: expense.description || '-',
+      amount: expense.amount || 0,
+      type: expense.type || '-',
+    })),
   });
 };
 export const exportExpensesToExcel = async (expenses, expenseType = "", employeeNames = "") => {
@@ -178,4 +134,4 @@ export const exportExpensesToExcel = async (expenses, expenseType = "", employee
     console.error('Excel export error:', error.message);
     throw error;
   }
-};
+};

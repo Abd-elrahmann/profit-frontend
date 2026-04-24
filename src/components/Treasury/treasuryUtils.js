@@ -30,7 +30,18 @@ const mergeChildAccountsJournalsByMonth = (childAccounts) => {
       }
       const entries = monthData?.entries;
       if (Array.isArray(entries)) {
-        merged[monthKey].entries.push(...entries);
+        merged[monthKey].entries.push(
+          ...entries.map((entry) => ({
+            ...entry,
+            accountId: child.accountId ?? entry.accountId ?? null,
+            accountCode: child.accountCode || entry.accountCode || '',
+            accountName: child.accountName || entry.accountName || '',
+            accountDisplay:
+              child.accountCode && child.accountName
+                ? `${child.accountCode}-${child.accountName}`
+                : entry.accountDisplay || '',
+          }))
+        );
       }
     }
   }

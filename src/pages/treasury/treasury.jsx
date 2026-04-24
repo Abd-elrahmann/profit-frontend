@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { exportJournalsToExcel, exportStatisticsToExcel } from '../../utilities/treasuryJournalsExporter';
+import { exportJournalsToExcel, exportJournalsToPDF, exportStatisticsToExcel } from '../../utilities/treasuryJournalsExporter';
 import { notifySuccess, notifyError } from '../../utilities/toastify';
 import { usePermissions } from '../../components/Contexts/PermissionsContext';
 import { useCountUp } from '../../hooks/useCountUp';
@@ -43,6 +43,7 @@ export default function Treasury() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [selectedBankChildAccountId, setSelectedBankChildAccountId] = useState(null);
+  const [selectedLedgerChildAccountId, setSelectedLedgerChildAccountId] = useState(null);
   const { isDarkMode } = useTheme();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
@@ -51,11 +52,26 @@ export default function Treasury() {
   const monthParam = selectedYear && selectedMonth
     ? `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`
     : null;
+  const selectedAccountIdForRequest = tab === 2 ? selectedLedgerChildAccountId : null;
   const { data: bankData, isLoading, error } = useQuery({
-    queryKey: ["bank-account", tab, monthParam, selectedYear, page, limit],
-    queryFn: () => getBankAccountData(tab === 1 ? 'capital' : 'bank', monthParam, selectedYear, page, limit),
+    queryKey: ["bank-account", tab, monthParam, selectedYear, page, limit, selectedAccountIdForRequest],
+    queryFn: () =>
+      getBankAccountData(
+        tab === 1 ? 'capital' : 'bank',
+        monthParam,
+        selectedYear,
+        page,
+        limit,
+        selectedAccountIdForRequest
+      ),
     retry: 1,
     enabled: tab === 0 || tab === 1 || tab === 2,
+  });
+  const { data: ledgerFilterData } = useQuery({
+    queryKey: ["ledger-filter-options", monthParam, selectedYear],
+    queryFn: () => getBankAccountData('bank', monthParam, selectedYear, 1, limit, null),
+    retry: 1,
+    enabled: tab === 2,
   });
   useEffect(() => {
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -86,6 +102,25 @@ export default function Treasury() {
       })),
     ];
   }, [currentData, tab]);
+  const ledgerAccountFilterOptions = useMemo(() => {
+    const sourceData = tab === 2 ? (ledgerFilterData || currentData) : currentData;
+    if (tab !== 2 || !sourceData?.account) return null;
+    const kids = sourceData.childAccounts;
+    if (!Array.isArray(kids) || kids.length === 0) return null;
+    const allOption = {
+      id: null,
+      accountCode: sourceData.account.code,
+      accountName: 'الصندوق الرئيسي',
+    };
+    return [
+      allOption,
+      ...kids.map((c) => ({
+        id: c.accountId,
+        accountCode: c.accountCode,
+        accountName: c.accountName,
+      })),
+    ];
+  }, [currentData, ledgerFilterData, tab]);
   const selectedBankAccountOption = useMemo(() => {
     if (tab !== 0 || !bankAccountFilterOptions?.length) return null;
     return (
@@ -93,6 +128,13 @@ export default function Treasury() {
       bankAccountFilterOptions[0]
     );
   }, [tab, bankAccountFilterOptions, selectedBankChildAccountId]);
+  const selectedLedgerAccountOption = useMemo(() => {
+    if (tab !== 2 || !ledgerAccountFilterOptions?.length) return null;
+    return (
+      ledgerAccountFilterOptions.find((o) => o.id === selectedLedgerChildAccountId) ??
+      ledgerAccountFilterOptions[0]
+    );
+  }, [tab, ledgerAccountFilterOptions, selectedLedgerChildAccountId]);
   const treasuryDisplayStats = useMemo(() => {
     const acc = currentData?.account;
     if (!acc) {
@@ -118,6 +160,13 @@ export default function Treasury() {
       setSelectedBankChildAccountId(null);
     }
   }, [bankAccountFilterOptions, selectedBankChildAccountId]);
+  useEffect(() => {
+    if (selectedLedgerChildAccountId == null) return;
+    const opts = ledgerAccountFilterOptions;
+    if (!opts?.some((o) => o.id === selectedLedgerChildAccountId)) {
+      setSelectedLedgerChildAccountId(null);
+    }
+  }, [ledgerAccountFilterOptions, selectedLedgerChildAccountId]);
   const singleBankAccountSelected =
     tab === 0 && selectedBankChildAccountId != null;
   const availableBalance = treasuryDisplayStats.balance;
@@ -171,10 +220,10 @@ export default function Treasury() {
     { name: 'الصادر', value: totalCredit, color: '#FF8042' },
   ] : [];
   const currentJournals = getCurrentJournals(currentData, monthParam);
-  const ledgerMonthFooterTotals = useMemo(
-    () => (tab === 2 ? getLedgerMonthFooterTotals(currentData, monthParam) : null),
-    [tab, currentData, monthParam]
-  );
+  const ledgerMonthFooterTotals = useMemo(() => {
+    if (tab !== 2 || selectedLedgerChildAccountId != null) return null;
+    return getLedgerMonthFooterTotals(currentData, monthParam);
+  }, [tab, currentData, monthParam, selectedLedgerChildAccountId]);
   const statusDistribution = tab === 0 && currentJournals.length > 0 ? [
     { name: 'مرحل', value: currentJournals.filter(j => j.status === 'POSTED').length || 0 },
     { name: 'مسودة', value: currentJournals.filter(j => j.status === 'DRAFT').length || 0 },
@@ -185,7 +234,8 @@ export default function Treasury() {
     totalJournals: totalTransactions,
     totalPages: 1,
   };
-  const currentTotalTransactions = pagination.totalJournals || totalTransactions;
+  const currentTotalTransactions =
+    tab === 2 ? currentJournals.length : pagination.totalJournals || totalTransactions;
   const totalBalance = availableBalance + totalCredit;
   const balancePercentage = totalBalance > 0 ? (availableBalance / totalBalance) * 100 : 0;
   const circumference = 2 * Math.PI * 45;
@@ -194,6 +244,7 @@ export default function Treasury() {
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
     setSelectedBankChildAccountId(null);
+    setSelectedLedgerChildAccountId(null);
   };
   const handleMonthChange = (event, newValue) => {
     setSelectedMonth(newValue?.value || null);
@@ -210,11 +261,32 @@ export default function Treasury() {
     if (!bankData) return;
     setIsExporting(true);
     try {
-      await exportJournalsToExcel(bankData, 'النقد في الصندوق');
+      const selectedAccountName =
+        selectedLedgerAccountOption?.id == null
+          ? 'الصندوق الرئيسي'
+          : `${selectedLedgerAccountOption?.accountCode || ''}-${selectedLedgerAccountOption?.accountName || ''}`;
+      await exportJournalsToExcel(bankData, selectedAccountName, selectedLedgerAccountOption?.id ?? null);
       notifySuccess('تم تصدير Excel بنجاح');
     } catch (error) {
       console.error('Excel Export Error:', error);
       notifyError('حدث خطأ أثناء تصدير Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  const handleExportPdf = async () => {
+    if (!bankData) return;
+    setIsExporting(true);
+    try {
+      const selectedAccountName =
+        selectedLedgerAccountOption?.id == null
+          ? 'الصندوق الرئيسي'
+          : `${selectedLedgerAccountOption?.accountCode || ''}-${selectedLedgerAccountOption?.accountName || ''}`;
+      await exportJournalsToPDF(bankData, selectedAccountName, selectedLedgerAccountOption?.id ?? null);
+      notifySuccess('تم تصدير PDF بنجاح');
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      notifyError('حدث خطأ أثناء تصدير PDF');
     } finally {
       setIsExporting(false);
     }
@@ -279,6 +351,7 @@ export default function Treasury() {
                 hasJournals={currentJournals.length > 0}
                 onExportStatisticsExcel={handleExportStatisticsExcel}
                 onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
                 isSmallScreen={isSmallScreen}
               />
             </Box>
@@ -303,9 +376,10 @@ export default function Treasury() {
                     isSmallScreen={isSmallScreen}
                     bankAccountOptions={bankAccountFilterOptions}
                     selectedBankAccount={selectedBankAccountOption}
-                    onBankAccountChange={(e, option) =>
-                      setSelectedBankChildAccountId(option?.id ?? null)
-                    }
+                    onBankAccountChange={(e, option) => {
+                      setSelectedBankChildAccountId(option?.id ?? null);
+                      setPage(1);
+                    }}
                   />
                   <TreasuryBankSummaryCards
                     animatedAvailableBalance={animatedAvailableBalance}
@@ -402,6 +476,12 @@ export default function Treasury() {
                     isSmallScreen={isSmallScreen}
                     showTransactionCount
                     transactionCount={currentTotalTransactions}
+                    bankAccountOptions={ledgerAccountFilterOptions}
+                    selectedBankAccount={selectedLedgerAccountOption}
+                    onBankAccountChange={(e, option) => {
+                      setSelectedLedgerChildAccountId(option?.id ?? null);
+                      setPage(1);
+                    }}
                   />
                   <TreasuryJournalsSection
                     currentJournals={currentJournals}

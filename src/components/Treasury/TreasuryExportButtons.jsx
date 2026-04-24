@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Button, CircularProgress } from '@mui/material';
 import { TableChart } from '@mui/icons-material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 export default function TreasuryExportButtons({
   tab,
   isExporting,
@@ -8,6 +9,7 @@ export default function TreasuryExportButtons({
   hasJournals,
   onExportStatisticsExcel,
   onExportExcel,
+  onExportPdf,
   isSmallScreen,
 }) {
   if (tab === 0 || tab === 1) {
@@ -33,6 +35,16 @@ export default function TreasuryExportButtons({
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}>
         <Button
           variant="outlined"
+          startIcon={isExporting ? <CircularProgress size={16} /> : <PictureAsPdfIcon sx={{ marginLeft: '5px' }} />}
+          onClick={onExportPdf}
+          disabled={isExporting || !hasJournals}
+          size={isSmallScreen ? 'small' : 'medium'}
+          sx={{ color: 'error.main', borderColor: 'error.main' }}
+        >
+          {isSmallScreen ? 'PDF' : 'تصدير PDF'}
+        </Button>
+        <Button
+          variant="outlined"
           startIcon={
             isExporting ? <CircularProgress size={16} /> : <TableChart sx={{ marginLeft: '5px' }} />
           }
@@ -47,4 +59,4 @@ export default function TreasuryExportButtons({
     );
   }
   return null;
-}
+}

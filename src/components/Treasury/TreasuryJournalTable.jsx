@@ -10,6 +10,18 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
+const getJournalTypeArabic = (type) => {
+  const typeMap = {
+    GENERAL: 'عام',
+    OPENING: 'افتتاحي',
+    LOAN_DISBURSEMENT: 'صرف سلفة',
+    REPAYMENT: 'سداد',
+    CAPITAL: 'رأس المال',
+    WITHDRAWAL: 'سحب',
+    DEPOSIT: 'إيداع',
+  };
+  return typeMap[type] || type || '-';
+};
 export default function TreasuryJournalTable({
   journals,
   isDarkMode,
@@ -47,7 +59,10 @@ export default function TreasuryJournalTable({
               التاريخ
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '200px' }}>
-              المرجع
+              الحساب
+            </StyledTableCell>
+            <StyledTableCell align="center" sx={{ fontWeight: 'bold', width: '200px' }}>
+              النوع
             </StyledTableCell>
             <StyledTableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>
               الوصف
@@ -75,8 +90,13 @@ export default function TreasuryJournalTable({
                 </Typography>
               </StyledTableCell>
               <StyledTableCell align="center" sx={{ width: '200px' }}>
-                <Typography variant="body2" fontWeight="500" color="primary">
-                  {journal.reference}
+                <Typography variant="body2" color="text.primary">
+                  {journal.accountDisplay || `${journal.accountCode || ''}${journal.accountName ? `-${journal.accountName}` : ''}` || '-'}
+                </Typography>
+              </StyledTableCell>
+              <StyledTableCell align="center" sx={{ width: '200px' }}>
+                <Typography variant="body2" color="text.primary">
+                  {getJournalTypeArabic(journal.type)}
                 </Typography>
               </StyledTableCell>
               <StyledTableCell align="center">
@@ -134,7 +154,7 @@ export default function TreasuryJournalTable({
         </TableBody>
         <TableFooter>
           <StyledTableRow sx={{ bgcolor: footerBg }}>
-            <StyledTableCell colSpan={3} align="center" sx={{ fontWeight: 'bold' }}>
+            <StyledTableCell colSpan={4} align="center" sx={{ fontWeight: 'bold' }}>
               <Typography variant="body2" fontWeight="bold">
                 الإجمالي
               </Typography>

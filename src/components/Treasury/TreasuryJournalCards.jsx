@@ -1,6 +1,18 @@
 import React, { useMemo } from 'react';
 import { Box, Card, CardContent, Typography, Chip, Stack } from '@mui/material';
 import dayjs from 'dayjs';
+const getJournalTypeArabic = (type) => {
+  const typeMap = {
+    GENERAL: 'عام',
+    OPENING: 'افتتاحي',
+    LOAN_DISBURSEMENT: 'صرف سلفة',
+    REPAYMENT: 'سداد',
+    CAPITAL: 'رأس المال',
+    WITHDRAWAL: 'سحب',
+    DEPOSIT: 'إيداع',
+  };
+  return typeMap[type] || type || '-';
+};
 export default function TreasuryJournalCards({
   journals,
   isDarkMode,
@@ -49,7 +61,7 @@ export default function TreasuryJournalCards({
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
                   <Typography variant="subtitle2" fontWeight="bold" color="primary">
-                    {journal.reference}
+                    {getJournalTypeArabic(journal.type)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
                     {dayjs(journal.date).format('DD/MM/YYYY')}
