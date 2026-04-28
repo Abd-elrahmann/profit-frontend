@@ -68,8 +68,9 @@ const Journals = () => {
   const { permissions } = usePermissions();
   const { isDarkMode } = useTheme();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const isTablet = useMediaQuery("(max-width: 1024px)");
-  const isSmallScreen = isMobile || isTablet;
+  // Keep tablet layout aligned with desktop and only switch
+  // to compact mobile UI on phone sizes.
+  const isSmallScreen = isMobile;
   const fromPeriod = location.state?.fromPeriod;
   const fromProfitDistribution = location.state?.fromProfitDistribution;
   const fromInvestorsWithdrawal = location.state?.fromInvestorsWithdrawal;

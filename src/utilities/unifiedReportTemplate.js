@@ -60,14 +60,6 @@ const formatCell = (value, format) => {
 
 const formatDate = (d) => (d ? dayjs(d).format('DD-MM-YYYY') : '');
 
-const wrapCellContent = (doc, rawText, cell) => {
-  const text = rawText == null ? '' : String(rawText);
-  if (!text) return [''];
-  const horizontalPadding = (cell?.padding?.('horizontal') || 0) + 0.5;
-  const availableWidth = Math.max(2, (cell?.width || 0) - horizontalPadding);
-  return doc.splitTextToSize(text, availableWidth);
-};
-
 /**
  * Draw the report header on the current page.
  * Header layout (RTL):
@@ -88,7 +80,7 @@ const drawHeader = (doc, ctx, pageNumber, totalPages) => {
   const logoY = startY;
   try {
     doc.addImage(logo, 'PNG', logoX, logoY, logoSize, logoSize);
-  } catch (e) {
+  } catch {
     // ignore missing logo
   }
 
@@ -365,7 +357,7 @@ export const exportUnifiedReport = async (opts) => {
       const raw = Array.isArray(hookData.cell.raw)
         ? hookData.cell.raw.join(' ')
         : hookData.cell.raw;
-      hookData.cell.text = wrapCellContent(doc, raw, hookData.cell);
+      hookData.cell.text = [raw == null ? '' : String(raw)];
     },
     didDrawPage: () => {
       const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;

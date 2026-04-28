@@ -14,6 +14,7 @@ import {
   Tooltip,
   Stack,
   Button,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -35,6 +36,22 @@ export default function JournalsLinesForm({
   onDeleteLine,
   onCancelLineEdit,
 }) {
+  const isTabletOrSmaller = useMediaQuery("(max-width:1009px)");
+  const isCompactLayout = isSmallScreen || isTabletOrSmaller;
+  const tableCellAlign = isCompactLayout ? "right" : "center";
+  const cellSpacingSx = {
+    px: isCompactLayout ? 1 : 2,
+    py: isCompactLayout ? 0.75 : 1.25,
+  };
+  const accountCellSx = {
+    ...cellSpacingSx,
+    pl: isCompactLayout ? 1.75 : 2.5,
+  };
+  const debitCellSx = {
+    ...cellSpacingSx,
+    pr: isCompactLayout ? 1.75 : 2.5,
+  };
+
   const addRefs = useRef({
     account: null,
     debit: null,
@@ -135,24 +152,68 @@ export default function JournalsLinesForm({
           ? "تعديل البند"
           : "إضافة بند جديد"}
       </Typography>
-      <TableContainer>
-        <Table size={isSmallScreen ? "small" : "medium"}>
+      <TableContainer
+        sx={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          scrollbarGutter: "stable",
+          "&::-webkit-scrollbar": {
+            height: 10,
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "rgba(0,0,0,0.08)",
+            borderRadius: 8,
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "rgba(13,64,165,0.45)",
+            borderRadius: 8,
+          },
+        }}
+      >
+        <Table
+          size={isCompactLayout ? "small" : "medium"}
+          sx={{
+            width: "100%",
+            minWidth: isCompactLayout ? 980 : "100%",
+            tableLayout: isCompactLayout ? "fixed" : "auto",
+          }}
+        >
           <TableHead>
             <TableRow>
-              <TableCell align="center" sx={{ fontWeight: "bold", width: "32%" }}>
+              <TableCell
+                align={tableCellAlign}
+                sx={{
+                  fontWeight: "bold",
+                  width: isCompactLayout ? "30%" : "32%",
+                  minWidth: isCompactLayout ? 200 : 320,
+                  ...accountCellSx,
+                }}
+              >
                 الحساب
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+              <TableCell
+                align={tableCellAlign}
+                sx={{ fontWeight: "bold", minWidth: isCompactLayout ? 95 : 130, ...debitCellSx }}
+              >
                 مدين
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+              <TableCell
+                align={tableCellAlign}
+                sx={{ fontWeight: "bold", minWidth: isCompactLayout ? 95 : 130, ...cellSpacingSx }}
+              >
                 دائن
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+              <TableCell
+                align={tableCellAlign}
+                sx={{ fontWeight: "bold", minWidth: isCompactLayout ? 120 : 180, ...cellSpacingSx }}
+              >
                 الوصف
               </TableCell>
               {!isReadOnly && (
-                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                <TableCell
+                  align={tableCellAlign}
+                  sx={{ fontWeight: "bold", minWidth: isCompactLayout ? 90 : 140, ...cellSpacingSx }}
+                >
                   الإجراءات
                 </TableCell>
               )}
@@ -161,7 +222,7 @@ export default function JournalsLinesForm({
           <TableBody>
             {journalLines.length === 0 && (
               <TableRow>
-                <TableCell align="center" colSpan={isReadOnly ? 4 : 5}>
+                <TableCell align={tableCellAlign} colSpan={isReadOnly ? 4 : 5}>
                   لا توجد بنود مضافة
                 </TableCell>
               </TableRow>
@@ -170,9 +231,15 @@ export default function JournalsLinesForm({
               <TableRow key={line.id || index}>
                 {editingLineIndex === index && !isReadOnly ? (
                   <>
-                    <TableCell sx={{ width: "32%" }}>
+                    <TableCell
+                      sx={{
+                        width: isCompactLayout ? "30%" : "32%",
+                        minWidth: isCompactLayout ? 200 : 320,
+                        ...accountCellSx,
+                      }}
+                    >
                       <Autocomplete
-                        sx={{ minWidth: 320 }}
+                        sx={{ width: "100%", minWidth: isCompactLayout ? 200 : 320 }}
                         options={chartAccounts}
                         getOptionLabel={(option) => `${option.code} - ${option.name}`}
                         value={
@@ -195,7 +262,7 @@ export default function JournalsLinesForm({
                         isOptionEqualToValue={(option, value) => option.id === value.id}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ minWidth: isCompactLayout ? 95 : 130, ...debitCellSx }}>
                       <TextField
                         fullWidth
                         label="مدين"
@@ -207,7 +274,7 @@ export default function JournalsLinesForm({
                         inputProps={{ min: 0 }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ minWidth: isCompactLayout ? 95 : 130, ...cellSpacingSx }}>
                       <TextField
                         fullWidth
                         label="دائن"
@@ -219,7 +286,7 @@ export default function JournalsLinesForm({
                         inputProps={{ min: 0 }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ minWidth: isCompactLayout ? 120 : 180, ...cellSpacingSx }}>
                       <TextField
                         fullWidth
                         label="الوصف"
@@ -229,16 +296,16 @@ export default function JournalsLinesForm({
                         inputRef={setEditRef("description")}
                       />
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ minWidth: isCompactLayout ? 90 : 140, ...cellSpacingSx }}>
                       <Stack direction="row" spacing={1} justifyContent="center">
                         <Button
                           sx={{ fontWeight: "bold" }}
                           variant="contained"
                           startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
                           onClick={handleSubmitLine}
-                          size="small"
+                          size={isCompactLayout ? "medium" : "small"}
                         >
-                          تحديث
+                          {isCompactLayout ? "حفظ" : "تحديث"}
                         </Button>
                         <IconButton size="small" color="default" onClick={onCancelLineEdit}>
                           <CloseIcon fontSize="small" />
@@ -248,14 +315,30 @@ export default function JournalsLinesForm({
                   </>
                 ) : (
                   <>
-                    <TableCell align="center" sx={{ width: "32%" }}>
+                    <TableCell
+                      align={tableCellAlign}
+                      sx={{
+                        width: isCompactLayout ? "30%" : "32%",
+                        minWidth: isCompactLayout ? 200 : 320,
+                        ...accountCellSx,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {line.account?.code} - {line.account?.name}
                     </TableCell>
-                    <TableCell align="center">{formatNumber(line.debit)}</TableCell>
-                    <TableCell align="center">{formatNumber(line.credit)}</TableCell>
-                    <TableCell align="center">{line.description || "-"}</TableCell>
+                    <TableCell align={tableCellAlign} sx={{ minWidth: isCompactLayout ? 95 : 130, ...debitCellSx }}>
+                      {formatNumber(line.debit)}
+                    </TableCell>
+                    <TableCell align={tableCellAlign} sx={{ minWidth: isCompactLayout ? 95 : 130, ...cellSpacingSx }}>
+                      {formatNumber(line.credit)}
+                    </TableCell>
+                    <TableCell align={tableCellAlign} sx={{ minWidth: isCompactLayout ? 120 : 180, ...cellSpacingSx }}>
+                      {line.description || "-"}
+                    </TableCell>
                     {!isReadOnly && (
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ minWidth: isCompactLayout ? 90 : 140, ...cellSpacingSx }}>
                         <Stack direction="row" spacing={1} justifyContent="center">
                           <Tooltip title="تعديل">
                             <IconButton size="small" color="primary" onClick={() => onEditLine(index)}>
@@ -276,9 +359,15 @@ export default function JournalsLinesForm({
             ))}
             {!isReadOnly && editingLineIndex === null && (
             <TableRow>
-              <TableCell sx={{ width: "32%" }}>
+              <TableCell
+                sx={{
+                  width: isCompactLayout ? "30%" : "32%",
+                  minWidth: isCompactLayout ? 200 : 320,
+                  ...accountCellSx,
+                }}
+              >
                 <Autocomplete
-                  sx={{ minWidth: 320 }}
+                  sx={{ width: "100%", minWidth: isCompactLayout ? 200 : 320 }}
                   options={chartAccounts}
                   getOptionLabel={(option) => `${option.code} - ${option.name}`}
                   value={
@@ -301,7 +390,7 @@ export default function JournalsLinesForm({
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ minWidth: isCompactLayout ? 95 : 130, ...debitCellSx }}>
                 <TextField
                   fullWidth
                   label="مدين"
@@ -313,7 +402,7 @@ export default function JournalsLinesForm({
                   inputProps={{ min: 0 }}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ minWidth: isCompactLayout ? 95 : 130, ...cellSpacingSx }}>
                 <TextField
                   fullWidth
                   label="دائن"
@@ -325,7 +414,7 @@ export default function JournalsLinesForm({
                   inputProps={{ min: 0 }}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ minWidth: isCompactLayout ? 120 : 180, ...cellSpacingSx }}>
                 <TextField
                   fullWidth
                   label="الوصف"
@@ -335,22 +424,24 @@ export default function JournalsLinesForm({
                   inputRef={setAddRef("description")}
                 />
               </TableCell>
-              <TableCell align="center">
-                <Button
-                  sx={{ fontWeight: "bold" }}
-                  variant="contained"
-                  startIcon={
-                    editingLineIndex !== null ? (
-                      <SaveIcon sx={{ marginLeft: "10px" }} />
-                    ) : (
-                      <AddIcon sx={{ marginLeft: "10px" }} />
-                    )
-                  }
-                  onClick={handleSubmitLine}
-                  size="small"
-                >
-                  {editingLineIndex !== null ? "تحديث" : "إضافة"}
-                </Button>
+              <TableCell align="center" sx={{ minWidth: isCompactLayout ? 90 : 140, ...cellSpacingSx }}>
+                {!isCompactLayout && (
+                  <Button
+                    sx={{ fontWeight: "bold" }}
+                    variant="contained"
+                    startIcon={
+                      editingLineIndex !== null ? (
+                        <SaveIcon sx={{ marginLeft: "10px" }} />
+                      ) : (
+                        <AddIcon sx={{ marginLeft: "10px" }} />
+                      )
+                    }
+                    onClick={handleSubmitLine}
+                    size="small"
+                  >
+                    {editingLineIndex !== null ? "تحديث" : "إضافة"}
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
             )}

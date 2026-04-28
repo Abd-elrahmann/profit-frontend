@@ -8,6 +8,7 @@ import {
   MenuItem,
   Chip as MuiChip,
   Grid,
+  useMediaQuery,
 } from "@mui/material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import { JOURNAL_TYPES } from "./constants";
@@ -35,6 +36,7 @@ export default function JournalsDetailsForm({
   const form = isAddMode ? newJournalForm : editForm;
   const isEditable = isEditMode || isAddMode;
   const isDesktop = variant === "desktop";
+  const isTabletLayout = useMediaQuery("(max-width:1009px)");
   const getTypeLabel = (type) => {
     const found = JOURNAL_TYPES.find((t) => t.value === type);
     return found?.label || "-";
@@ -76,15 +78,20 @@ export default function JournalsDetailsForm({
         {isAddMode ? (
           <Grid
             container
-            spacing={2}
+            columnSpacing={{ xs: 1.5, sm: 2, md: 2 }}
+            rowSpacing={{ xs: 1.5, sm: 2 }}
             mb={4}
             alignItems="center"
             justifyContent="center"
             sx={{ width: "100%", m: 0 }}
           >
-            <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "center" }}>
+            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
               <TextField
-                sx={{ width: 250 }}
+                sx={{
+                  width: isTabletLayout ? "100%" : 250,
+                  minWidth: 0,
+                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
+                }}
                 label="التاريخ"
                 type="date"
                 value={dateValue}
@@ -93,9 +100,13 @@ export default function JournalsDetailsForm({
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "center" }}>
+            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
               <TextField
-                sx={{ width: 250 }}
+                sx={{
+                  width: isTabletLayout ? "100%" : 250,
+                  minWidth: 0,
+                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
+                }}
                 label="نوع القيد"
                 select
                 value={typeValue}
@@ -110,9 +121,13 @@ export default function JournalsDetailsForm({
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "center" }}>
+            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
               <TextField
-                sx={{ width: 250 }}
+                sx={{
+                  width: isTabletLayout ? "100%" : 250,
+                  minWidth: 0,
+                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
+                }}
                 label="الوصف"
                 value={descriptionValue}
                 onChange={(e) => onInputChange("description", e.target.value)}
@@ -122,9 +137,13 @@ export default function JournalsDetailsForm({
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sx={{ display: "flex", justifyContent: "center" }}>
+            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
               <Autocomplete
-                sx={{ width: 250 }}
+                sx={{
+                  width: isTabletLayout ? "100%" : 250,
+                  minWidth: 0,
+                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
+                }}
                 disabled={!isEditable}
                 options={JOURNAL_SOURCE_TYPE_OPTIONS}
                 getOptionLabel={(option) => option.label}
