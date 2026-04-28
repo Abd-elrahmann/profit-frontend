@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, Table, TableBody, TableContainer } from '@mui/material';
+import { Box, Card, Typography, Stack, Table, TableBody, TableContainer, TableHead } from '@mui/material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { formatCurrency, formatArabicDate } from './savingUtils';
 const SavingAccountJournals = ({ accountReport, isMobile }) => {
@@ -72,4 +72,4 @@ const SavingAccountJournals = ({ accountReport, isMobile }) => {
     </Card>
   );
 };
-export default SavingAccountJournals;
+export default SavingAccountJournals;

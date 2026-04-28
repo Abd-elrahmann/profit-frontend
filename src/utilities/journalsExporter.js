@@ -91,13 +91,13 @@ export const exportJournalToExcel = async (journalData) => {
     linesSheet['!cols'] = linesCols;
     XLSX.utils.book_append_sheet(workbook, headerSheet, 'معلومات القيد');
     XLSX.utils.book_append_sheet(workbook, linesSheet, 'بنود القيد');
-    const excelBuffer = XLSX.write(workbook, { 
-      bookType: 'xlsx', 
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
       type: 'array',
-      bookSST: false 
+      bookSST: false
     });
-    const blob = new Blob([excelBuffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
     const fileName = `قيد_${journalData.reference || journalData.id}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
     saveAs(blob, fileName);
@@ -148,12 +148,16 @@ const getJournalSourceTypeText = (sourceType) => {
       return "مصروف";
     case "PARTNER_WITHDRAWING":
       return "انسحاب مالي لشريك";
-    case "ZAKAT": 
+    case "ZAKAT":
       return "سحب زكاة";
     case "SAVING":
       return "ادخار";
     case "PARTNER_PROFIT_WITHDRAWAL":
       return "سحب ارباح شريك";
+    case "CLIENT":
+      return "عميل";
+    case "EXTERNAL_PROFIT":
+      return "ربح خارجي";
     case "OTHER":
       return "أخرى";
     default:
