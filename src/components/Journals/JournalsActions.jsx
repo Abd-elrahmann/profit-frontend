@@ -1,19 +1,4 @@
 import React from "react";
-import {
-  Paper,
-  Typography,
-  Button,
-  Box,
-} from "@mui/material";
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Check as CheckIcon,
-  Cancel as CancelIcon,
-  Save as SaveIcon,
-  PictureAsPdf as PDFIcon,
-  TableChart as ExcelIcon,
-} from "@mui/icons-material";
 export default function JournalsActions({
   totals,
   isAddMode,
@@ -43,144 +28,104 @@ export default function JournalsActions({
     ? isJournalBalanced(totals.totalDebit, totals.totalCredit)
     : false;
 
-  const actionButtonSx = {
-    minWidth: 120,
-    px: 2.25,
-    py: 0.85,
-    fontSize: "0.85rem",
-    lineHeight: 1.4,
-    borderRadius: 2,
-    whiteSpace: "nowrap",
-  };
   return (
-    <Paper
-      sx={{
-        p: 2,
-        mb: 2,
-        borderRadius: 2,
-        bgcolor: "background.paper",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 1.5,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography variant="subtitle1" color="primary" fontWeight="bold">
-          الإجراءات
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+    <header className=" shadow-sm sticky top-0 z-50">
+      <div className="max-w-[1440px] mx-auto px-container-margin py-a flex items-center justify-between  h-10">
+        <div className="flex items-center gap-gutter">
+          <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high transition-colors">
+            ←
+          </button>
+          <div className="flex flex-col">
+            <h1 className="font-display-md text-display-md text-on-surface">
+              {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-gutter">
         {showExportButtons && (
           <>
-            <Button
-              variant="outlined"
-              startIcon={<PDFIcon />}
+            <button
+              className="text-error font-label-md text-label-md px-4 py-2 hover:bg-error-container/20 rounded-lg transition-all"
               onClick={onExportPDF}
-              size="small"
-              color="error"
-              sx={actionButtonSx}
             >
               تصدير PDF
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<ExcelIcon sx={{ marginLeft: "10px" }} />}
+            </button>
+            <button
+              className="text-primary font-label-md text-label-md border border-primary px-4 py-2 rounded-lg hover:bg-primary/5 transition-all"
               onClick={onExportExcel}
-              size="small"
-              color="success"
-              sx={actionButtonSx}
             >
               تصدير Excel
-            </Button>
+            </button>
           </>
         )}
         {isAddMode ? (
           <>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
+            <button
+              className="text-error font-label-md text-label-md px-4 py-2 hover:bg-error-container/20 rounded-lg transition-all"
+              onClick={onCancelAdd}
+            >
+              إلغاء
+            </button>
+            <button
+              className="bg-primary-container text-white font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
               onClick={onCreateJournal}
               disabled={!balanced}
-              size="small"
-              sx={{ ...actionButtonSx, bgcolor: "success.main", py: 1.2 }}
             >
-              حفظ القيد
-            </Button>
+              إنشاء القيد
+            </button>
           </>
         ) : canEdit ? (
           <>
-            <Button
-              variant="contained"
-              startIcon={<EditIcon sx={{ marginLeft: "10px" }} />}
+            <button
+              className="bg-primary-container text-on-primary-container font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
               onClick={onEditClick}
-              size="small"
-              sx={actionButtonSx}
             >
               تعديل القيد
-            </Button>
+            </button>
             {permissions.includes("journals_Post") && (
-              <Button
-                variant="contained"
-                startIcon={<CheckIcon sx={{ marginLeft: "10px" }} />}
+              <button
+                className="bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
                 onClick={onPostJournal}
-                size="small"
-                sx={{ ...actionButtonSx, bgcolor: "success.main" }}
               >
                 اعتماد القيد
-              </Button>
+              </button>
             )}
             {permissions.includes("journals_Delete") && (
-              <Button
-                variant="outlined"
-                startIcon={<DeleteIcon sx={{ marginLeft: "10px" }} />}
+              <button
+                className="text-error font-label-md text-label-md border border-error px-4 py-2 rounded-lg hover:bg-error-container/20 transition-all"
                 onClick={onDeleteClick}
-                size="small"
-                color="error"
-                sx={actionButtonSx}
               >
                 حذف القيد
-              </Button>
+              </button>
             )}
           </>
         ) : canSaveEdit ? (
           <>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon sx={{ marginLeft: "10px" }} />}
+            <button
+              className="bg-primary-container text-on-primary-container font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
               onClick={onUpdateJournal}
               disabled={!balanced}
-              size="small"
-              sx={{ ...actionButtonSx, bgcolor: "success.main" }}
             >
               حفظ التعديلات
-            </Button>
-            <Button
-              variant="outlined"
+            </button>
+            <button
+              className="text-error font-label-md text-label-md px-4 py-2 hover:bg-error-container/20 rounded-lg transition-all"
               onClick={onCancelEdit}
-              size="small"
-              sx={actionButtonSx}
             >
               إلغاء التعديل
-            </Button>
+            </button>
           </>
         ) : isPosted && permissions.includes("journals_Post") ? (
-          <Button
-            variant="outlined"
-            startIcon={<CancelIcon sx={{ marginLeft: "10px" }} />}
+          <button
+            className="text-error font-label-md text-label-md border border-error px-4 py-2 rounded-lg hover:bg-error-container/20 transition-all"
             onClick={onUnpostJournal}
-            size="small"
-            color="error"
-            sx={actionButtonSx}
           >
             إلغاء الاعتماد
-          </Button>
+          </button>
         ) : null}
-        </Box>
-      </Box>
-    </Paper>
+        </div>
+      </div>
+    </header>
   );
 }

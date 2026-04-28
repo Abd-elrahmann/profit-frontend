@@ -30,6 +30,7 @@ import {
 } from "../../components/Journals";
 
 const JOURNALS_VIEW_STATE_KEY = "journals-view-state";
+const JOURNALS_ADD_DRAFT_KEY = "journals-add-draft";
 
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -62,6 +63,7 @@ const Journals = () => {
     description: "",
   });
   const [chartAccounts, setChartAccounts] = useState([]);
+  const [isAddDraftHydrated, setIsAddDraftHydrated] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -149,6 +151,64 @@ const Journals = () => {
       console.error("Error saving journals view state:", error);
     }
   }, [activeTab, isAddMode, selectedJournal]);
+
+  useEffect(() => {
+    if (!isAddMode || isAddDraftHydrated) return;
+
+    try {
+      const savedDraft = sessionStorage.getItem(JOURNALS_ADD_DRAFT_KEY);
+      if (!savedDraft) {
+        setIsAddDraftHydrated(true);
+        return;
+      }
+
+      const parsedDraft = JSON.parse(savedDraft);
+      if (parsedDraft?.newJournalForm) {
+        setNewJournalForm((prev) => ({ ...prev, ...parsedDraft.newJournalForm }));
+      }
+      if (Array.isArray(parsedDraft?.journalLines)) {
+        setJournalLines(parsedDraft.journalLines);
+      }
+      if (parsedDraft?.currentLine) {
+        setCurrentLine(parsedDraft.currentLine);
+      }
+      if (
+        parsedDraft?.editingLineIndex === null ||
+        typeof parsedDraft?.editingLineIndex === "number"
+      ) {
+        setEditingLineIndex(parsedDraft.editingLineIndex);
+      }
+    } catch (error) {
+      console.error("Error restoring add journal draft:", error);
+    } finally {
+      setIsAddDraftHydrated(true);
+    }
+  }, [isAddMode, isAddDraftHydrated]);
+
+  useEffect(() => {
+    if (!isAddMode || !isAddDraftHydrated) return;
+
+    try {
+      sessionStorage.setItem(
+        JOURNALS_ADD_DRAFT_KEY,
+        JSON.stringify({
+          newJournalForm,
+          journalLines,
+          currentLine,
+          editingLineIndex,
+        })
+      );
+    } catch (error) {
+      console.error("Error saving add journal draft:", error);
+    }
+  }, [
+    isAddMode,
+    isAddDraftHydrated,
+    newJournalForm,
+    journalLines,
+    currentLine,
+    editingLineIndex,
+  ]);
   const handleTabChange = (newValue) => {
     setActiveTab(newValue);
     if (newValue === 0) {
@@ -176,6 +236,7 @@ const Journals = () => {
     setJournalLines([]);
     setEditingLineIndex(null);
     setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
+    setIsAddDraftHydrated(false);
   };
   const handleAddNewClick = () => {
     setIsAddMode(true);
@@ -185,6 +246,7 @@ const Journals = () => {
     setJournalLines([]);
     setEditingLineIndex(null);
     setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
+    setIsAddDraftHydrated(false);
     setNewJournalForm({
       description: "",
       date: new Date().toISOString().split("T")[0],
@@ -223,9 +285,13 @@ const Journals = () => {
   };
   const handleCancelAdd = () => {
     setIsAddMode(false);
+    setActiveTab(0);
+    setSelectedJournal(null);
     setJournalLines([]);
     setEditingLineIndex(null);
     setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
+    setIsAddDraftHydrated(false);
+    sessionStorage.removeItem(JOURNALS_ADD_DRAFT_KEY);
     setNewJournalForm({
       description: "",
       date: new Date().toISOString().split("T")[0],
@@ -330,7 +396,9 @@ const Journals = () => {
       notifySuccess("تم إنشاء القيد بنجاح");
       setIsAddMode(false);
       setJournalLines([]);
+      setIsAddDraftHydrated(false);
       setActiveTab(0);
+      sessionStorage.removeItem(JOURNALS_ADD_DRAFT_KEY);
       queryClient.invalidateQueries(["journals"]);
       queryClient.invalidateQueries(["unposted-journals-all"]);
     } catch (error) {

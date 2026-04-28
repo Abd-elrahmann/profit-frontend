@@ -1,27 +1,11 @@
 import React from "react";
-import {
-  Paper,
-  Typography,
-  Stack,
-  Box,
-  TextField,
-  MenuItem,
-  Chip as MuiChip,
-  Grid,
-  useMediaQuery,
-} from "@mui/material";
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import { JOURNAL_TYPES } from "./constants";
 import {
   getJournalSourceTypeText,
   getStatusText,
   JOURNAL_SOURCE_TYPE_OPTIONS,
 } from "./journalsUtils";
-
-const filterSourceTypeOptions = createFilterOptions({
-  matchFrom: "any",
-  stringify: (option) => `${option.label} ${option.value}`,
-});
+import StyledDropdown from "./StyledDropdown";
 
 export default function JournalsDetailsForm({
   journalData,
@@ -30,17 +14,9 @@ export default function JournalsDetailsForm({
   isAddMode,
   isEditMode,
   onInputChange,
-  variant = "mobile",
-  embed = false,
 }) {
-  const form = isAddMode ? newJournalForm : editForm;
   const isEditable = isEditMode || isAddMode;
-  const isDesktop = variant === "desktop";
-  const isTabletLayout = useMediaQuery("(max-width:1009px)");
-  const getTypeLabel = (type) => {
-    const found = JOURNAL_TYPES.find((t) => t.value === type);
-    return found?.label || "-";
-  };
+
   const dateValue = isAddMode
     ? newJournalForm.date
     : isEditMode
@@ -63,365 +39,85 @@ export default function JournalsDetailsForm({
     : isEditMode
     ? editForm.sourceType
     : "";
-  if (isDesktop) {
-    const desktopContent = (
-      <>
-        <Typography
-          variant="h6"
-          color="primary"
-          fontWeight="bold"
-          mb={3}
-          textAlign="center"
-        >
-          {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
-        </Typography>
-        {isAddMode ? (
-          <Grid
-            container
-            columnSpacing={{ xs: 1.5, sm: 2, md: 2 }}
-            rowSpacing={{ xs: 1.5, sm: 2 }}
-            mb={4}
-            alignItems="center"
-            justifyContent="center"
-            sx={{ width: "100%", m: 0 }}
-          >
-            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
-              <TextField
-                sx={{
-                  width: isTabletLayout ? "100%" : 250,
-                  minWidth: 0,
-                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
-                }}
-                label="التاريخ"
-                type="date"
-                value={dateValue}
-                onChange={(e) => onInputChange("date", e.target.value)}
-                disabled={!isEditable}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
-              <TextField
-                sx={{
-                  width: isTabletLayout ? "100%" : 250,
-                  minWidth: 0,
-                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
-                }}
-                label="نوع القيد"
-                select
-                value={typeValue}
-                onChange={(e) => onInputChange("type", e.target.value)}
-                disabled={!isEditable}
-                InputLabelProps={{ shrink: true }}
-              >
-                {JOURNAL_TYPES.map(({ value, label }) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
-              <TextField
-                sx={{
-                  width: isTabletLayout ? "100%" : 250,
-                  minWidth: 0,
-                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
-                }}
-                label="الوصف"
-                value={descriptionValue}
-                onChange={(e) => onInputChange("description", e.target.value)}
-                disabled={!isEditable}
-                multiline
-                rows={1}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3} md={3} sx={{ display: "flex", justifyContent: "center" }}>
-              <Autocomplete
-                sx={{
-                  width: isTabletLayout ? "100%" : 250,
-                  minWidth: 0,
-                  maxWidth: isTabletLayout ? { xs: "100%", sm: 170, md: 170 } : 250,
-                }}
-                disabled={!isEditable}
-                options={JOURNAL_SOURCE_TYPE_OPTIONS}
-                getOptionLabel={(option) => option.label}
-                value={
-                  JOURNAL_SOURCE_TYPE_OPTIONS.find(
-                    (o) => o.value === sourceTypeValueForm
-                  ) ?? null
-                }
-                onChange={(_, newValue) => {
-                  onInputChange("sourceType", newValue?.value ?? "OTHER");
-                }}
-                isOptionEqualToValue={(a, b) => a.value === b.value}
-                filterOptions={filterSourceTypeOptions}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="نوع المصدر"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                )}
-              />
-            </Grid>
-          </Grid>
-        ) : (
-          <Grid container spacing={3} mb={4} justifyContent="center" alignItems="center">
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="التاريخ"
-                type="date"
-                value={dateValue}
-                onChange={(e) => onInputChange("date", e.target.value)}
-                disabled={!isEditable}
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: "250px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="نوع القيد"
-                select
-                value={typeValue}
-                onChange={(e) => onInputChange("type", e.target.value)}
-                disabled={!isEditable}
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: "250px" }}
-              >
-                {JOURNAL_TYPES.map(({ value, label }) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              {isEditMode ? (
-                <Autocomplete
-                  sx={{ width: "250px" }}
-                  disabled={!isEditable}
-                  options={JOURNAL_SOURCE_TYPE_OPTIONS}
-                  getOptionLabel={(option) => option.label}
-                  value={
-                    JOURNAL_SOURCE_TYPE_OPTIONS.find(
-                      (o) => o.value === sourceTypeValueForm
-                    ) ?? null
-                  }
-                  onChange={(_, newValue) => {
-                    onInputChange("sourceType", newValue?.value ?? "OTHER");
-                  }}
-                  isOptionEqualToValue={(a, b) => a.value === b.value}
-                  filterOptions={filterSourceTypeOptions}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="نوع المصدر"
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              ) : (
-                <TextField
-                  label="نوع المصدر"
-                  value={
-                    journalData?.sourceType
-                      ? getJournalSourceTypeText(journalData.sourceType)
-                      : "لا يوجد"
-                  }
-                  disabled
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ width: "250px" }}
-                />
-              )}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="الحالة"
-                value={getStatusText(journalData?.status)}
-                disabled
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: "250px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="المعتمد بواسطة"
-                value={journalData?.postedBy?.name || "لم يتم الاعتماد "}
-                disabled
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: "250px" }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="الوصف"
-                value={descriptionValue}
-                onChange={(e) => onInputChange("description", e.target.value)}
-                disabled={!isEditable}
-                multiline
-                rows={1}
-                InputLabelProps={{ shrink: true }}
-                sx={{ width: "450px" }}
-              />
-            </Grid>
-          </Grid>
-        )}
-      </>
-    );
-    if (embed) {
-      return desktopContent;
-    }
-    return (
-      <Paper sx={{ p: 4, borderRadius: 2, bgcolor: "background.paper" }}>
-        {desktopContent}
-      </Paper>
-    );
-  }
+
+  const readOnlySource = journalData?.sourceType
+    ? getJournalSourceTypeText(journalData.sourceType)
+    : "لا يوجد";
+
   return (
-    <Paper
-      sx={{
-        p: 3,
-        borderRadius: 2,
-        mb: 2,
-        bgcolor: "background.paper",
-      }}
-    >
-      <Typography variant="h6" fontWeight="bold" mb={3} textAlign="center">
-        معلومات القيد
-      </Typography>
-      <Stack spacing={2}>
-        <Box>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
-            التاريخ
-          </Typography>
+    <section className="rounded-xl p-card-padding border border-outline-variant shadow-[0px_2px_4px_rgba(0,0,0,0.05)] bg-[#f0f7ff]">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-gutter">
+        <div className="flex flex-col gap-unit">
+          <label className="font-label-md text-label-md text-on-surface-variant">التاريخ</label>
+          <input
+            className="w-full h-11 border border-outline-variant rounded-lg bg-surface px-4 focus:ring-2 focus:ring-primary focus:border-primary font-body-md text-body-md outline-none"
+            type="date"
+            value={dateValue}
+            onChange={(e) => onInputChange("date", e.target.value)}
+            disabled={!isEditable}
+          />
+        </div>
+
+        <div className="flex flex-col gap-unit">
+          <label className="font-label-md text-label-md text-on-surface-variant">نوع القيد</label>
+          <StyledDropdown
+            value={typeValue}
+            disabled={!isEditable}
+            onChange={(nextValue) => onInputChange("type", nextValue)}
+            options={JOURNAL_TYPES.map(({ value, label }) => ({ value, label }))}
+          />
+        </div>
+
+        <div className="flex flex-col gap-unit">
+          <label className="font-label-md text-label-md text-on-surface-variant">المصدر</label>
           {isEditable ? (
-            <TextField
-              type="date"
-              value={form.date}
-              onChange={(e) => onInputChange("date", e.target.value)}
-              sx={{ width: "250px" }}
-            />
-          ) : (
-            <Typography variant="body1" fontWeight="bold">
-              {journalData?.date
-                ? new Date(journalData.date).toLocaleDateString("ar-EG")
-                : "-"}
-            </Typography>
-          )}
-        </Box>
-        <Box>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
-            نوع القيد
-          </Typography>
-          {isEditable ? (
-            <TextField
-              select
-              value={form.type}
-              onChange={(e) => onInputChange("type", e.target.value)}
-              sx={{ width: "250px" }}
-              InputLabelProps={{ shrink: true }}
-            >
-              {JOURNAL_TYPES.map(({ value, label }) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </TextField>
-          ) : (
-            <Typography variant="body1" fontWeight="bold">
-              {getTypeLabel(journalData?.type)}
-            </Typography>
-          )}
-        </Box>
-        {(isAddMode || isEditMode) && (
-          <Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              نوع المصدر
-            </Typography>
-            <Autocomplete
-              sx={{ width: "250px" }}
+            <StyledDropdown
+              value={sourceTypeValueForm || "OTHER"}
+              onChange={(nextValue) => onInputChange("sourceType", nextValue)}
               options={JOURNAL_SOURCE_TYPE_OPTIONS}
-              getOptionLabel={(option) => option.label}
-              value={
-                JOURNAL_SOURCE_TYPE_OPTIONS.find(
-                  (o) => o.value === sourceTypeValueForm
-                ) ?? null
-              }
-              onChange={(_, newValue) => {
-                onInputChange("sourceType", newValue?.value ?? "OTHER");
-              }}
-              isOptionEqualToValue={(a, b) => a.value === b.value}
-              filterOptions={filterSourceTypeOptions}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  InputLabelProps={{ shrink: true }}
-                  placeholder="ابحث أو اختر..."
-                />
-              )}
-            />
-          </Box>
-        )}
-        {!isAddMode && !isEditMode && (
-          <Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              نوع المصدر
-            </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {getJournalSourceTypeText(journalData?.sourceType)}
-            </Typography>
-          </Box>
-        )}
-        {!isAddMode && (
-          <>
-            <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                الحالة
-              </Typography>
-              <MuiChip
-                label={getStatusText(journalData?.status)}
-                color={
-                  journalData?.status === "POSTED"
-                    ? "success"
-                    : journalData?.status === "DRAFT"
-                    ? "warning"
-                    : "error"
-                }
-                size="small"
-              />
-            </Box>
-            <Box>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                المعتمد بواسطة
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {journalData?.postedBy?.name || "لم يتم الاعتماد"}
-              </Typography>
-            </Box>
-          </>
-        )}
-        <Box>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
-            الوصف
-          </Typography>
-          {isEditable ? (
-            <TextField
-              value={form.description}
-              onChange={(e) => onInputChange("description", e.target.value)}
-              multiline
-              rows={2}
-              sx={{ width: "250px" }}
-              InputLabelProps={{ shrink: true }}
             />
           ) : (
-            <Typography variant="body1" fontWeight="medium">
-              {journalData?.description || "-"}
-            </Typography>
+            <input
+              className="w-full h-11 border border-outline-variant rounded-lg bg-surface px-4 font-body-md text-body-md outline-none"
+              value={readOnlySource}
+              disabled
+            />
           )}
-        </Box>
-      </Stack>
-    </Paper>
+        </div>
+
+        <div className="flex flex-col gap-unit">
+          <label className="font-label-md text-label-md text-on-surface-variant">الوصف</label>
+          <input
+            className="w-full h-11 border border-outline-variant rounded-lg bg-surface px-4 focus:ring-2 focus:ring-primary focus:border-primary font-body-md text-body-md outline-none"
+            type="text"
+            placeholder="وصف موجز للعملية..."
+            value={descriptionValue}
+            onChange={(e) => onInputChange("description", e.target.value)}
+            disabled={!isEditable}
+          />
+        </div>
+      </div>
+
+      {!isAddMode && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter mt-gutter">
+          <div className="flex flex-col gap-unit">
+            <label className="font-label-md text-label-md text-on-surface-variant">الحالة</label>
+            <input
+              className="w-full h-11 border border-outline-variant rounded-lg bg-surface px-4 font-body-md text-body-md outline-none"
+              value={getStatusText(journalData?.status)}
+              disabled
+            />
+          </div>
+          <div className="flex flex-col gap-unit">
+            <label className="font-label-md text-label-md text-on-surface-variant">المعتمد بواسطة</label>
+            <input
+              className="w-full h-11 border border-outline-variant rounded-lg bg-surface px-4 font-body-md text-body-md outline-none"
+              value={journalData?.postedBy?.name || "لم يتم الاعتماد"}
+              disabled
+            />
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

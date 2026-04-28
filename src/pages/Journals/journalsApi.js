@@ -104,6 +104,17 @@ export const getChartOfAccounts = async () => {
     throw error;
   }
 };
+
+export const lookupAccounts = async (query, limit = 50) => {
+  try {
+    const q = (query || "").trim();
+    const response = await Api.get(`/api/accounts/lookup?q=${encodeURIComponent(q)}&limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
 export const checkUnpostedOpeningJournals = async () => {
   try {
     const response = await Api.get('/api/journals/check-opening-journals');

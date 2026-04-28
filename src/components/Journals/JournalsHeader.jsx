@@ -1,18 +1,11 @@
 import React from "react";
 import {
   Box,
-  Tabs,
-  Tab,
   Button,
   IconButton,
   Typography,
 } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon, ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-const tabStyles = (isActive) => ({
-  fontWeight: "bold",
-  borderBottom: isActive ? "3px solid #0d40a5" : "none",
-  color: isActive ? "#0d40a5" : "text.primary",
-});
 const buttonStyles = {
   borderColor: "#0d40a5",
   color: "#0d40a5",
@@ -20,11 +13,7 @@ const buttonStyles = {
 };
 export default function JournalsHeader({
   activeTab,
-  onTabChange,
-  selectedJournal,
   isAddMode,
-  searchQuery,
-  onSearchChange,
   searchFilters,
   onOpenAdvancedSearch,
   onClearSearch,
@@ -41,6 +30,7 @@ export default function JournalsHeader({
 }) {
   const hasSearch = Object.keys(searchFilters || {}).length > 0;
   const canAdd = permissions?.includes("journals_Add");
+  const isAddFormView = activeTab === 1 && isAddMode;
   if (isSmallScreen) {
     return (
       <Box sx={{ mb: 3 }}>
@@ -109,42 +99,30 @@ export default function JournalsHeader({
   return (
     <Box
       sx={{
-        borderBottom: 1,
+        borderBottom: isAddFormView ? 0 : 1,
         borderColor: "divider",
-        mb: 4,
+        mb: isAddFormView ? 0 : 4,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
       }}
     >
-      <Tabs
-        value={activeTab}
-        onChange={(e, newValue) => onTabChange(newValue)}
-      >
-        <Tab label="عرض جميع القيود" sx={tabStyles(activeTab === 0)} />
-        <Tab
-          label={
-            selectedJournal || isAddMode
-              ? isAddMode
-                ? "إضافة قيد جديد"
-                : "تفاصيل القيد"
-              : "قيد محدد"
-          }
-          sx={tabStyles(activeTab === 1)}
-        />
-      </Tabs>
-      {activeTab === 0 && (
+      {!isAddFormView && (
+        <Typography variant="h6" fontWeight="bold">
+          {activeTab === 0 ? "القيود المحاسبية" : "تفاصيل القيد"}
+        </Typography>
+      )}
+
+      {activeTab === 0 ? (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {canAdd && (
-            <Button
-              variant="outlined"
-              startIcon={<SearchIcon sx={{ marginLeft: "10px" }} />}
-              onClick={onOpenAdvancedSearch}
-              sx={buttonStyles}
-            >
-              بحث متقدم
-            </Button>
-          )}
+          <Button
+            variant="outlined"
+            startIcon={<SearchIcon sx={{ marginLeft: "10px" }} />}
+            onClick={onOpenAdvancedSearch}
+            sx={buttonStyles}
+          >
+            بحث متقدم
+          </Button>
           {hasSearch && (
             <Button
               variant="outlined"
@@ -166,7 +144,8 @@ export default function JournalsHeader({
             </Button>
           )}
         </Box>
-      )}
+      ) : null}
+
       {activeTab === 1 && fromPeriod && (
         <Button
           variant="outlined"
