@@ -1,5 +1,9 @@
 import React from "react";
-export default function JournalsSummaryCards({ totals, isDarkMode = false, isSmallScreen = false }) {
+export default function JournalsSummaryCards({
+  totals,
+  isPosted = false,
+  isDarkMode = false,
+}) {
   const totalDebit = Number(totals?.totalDebit || 0);
   const totalCredit = Number(totals?.totalCredit || 0);
   const totalBalance = totalDebit - totalCredit;
@@ -42,13 +46,15 @@ export default function JournalsSummaryCards({ totals, isDarkMode = false, isSma
             </div>
           ))}
 
-          <div
-            className="md:col-span-3 rounded-lg p-2 flex items-center justify-center gap-2 mt-4 bg-[#f0fff4] text-[#00174b]"
-          >
-            <span className="text-xs font-semibold leading-4 tracking-[0.05em] uppercase">
-              {totalBalance === 0 ? "القيد متوازن - جاهز للترحيل" : "القيد غير متوازن"}
-            </span>
-          </div>
+          {!isPosted && (
+            <div
+              className="md:col-span-3 rounded-lg p-2 flex items-center justify-center gap-2 mt-4 bg-[#f0fff4] text-[#00174b]"
+            >
+              <span className="text-xs font-semibold leading-4 tracking-[0.05em] uppercase">
+                {totalBalance === 0 ? "القيد متوازن - جاهز للترحيل" : "القيد غير متوازن"}
+              </span>
+            </div>
+          )}
         </div>
     </section>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Alert, CircularProgress, useMediaQuery } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +31,13 @@ import {
 
 const JOURNALS_VIEW_STATE_KEY = "journals-view-state";
 const JOURNALS_ADD_DRAFT_KEY = "journals-add-draft";
+
+const normalizeJournalLine = (line) => ({
+  accountId: String(line?.accountId ?? ""),
+  debit: Number(line?.debit || 0),
+  credit: Number(line?.credit || 0),
+  description: line?.description || "",
+});
 
 const Journals = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -115,26 +122,11 @@ const Journals = () => {
       setIsAddMode(false);
       return;
     }
-
-    try {
-      const savedState = sessionStorage.getItem(JOURNALS_VIEW_STATE_KEY);
-      if (!savedState) return;
-      const parsedState = JSON.parse(savedState);
-      if (parsedState?.activeTab !== 1) return;
-
-      setActiveTab(1);
-      setIsEditMode(false);
-
-      if (parsedState?.isAddMode) {
-        setIsAddMode(true);
-        setSelectedJournal(null);
-      } else if (parsedState?.selectedJournal) {
-        setIsAddMode(false);
-        setSelectedJournal(parsedState.selectedJournal);
-      }
-    } catch (error) {
-      console.error("Error restoring journals view state:", error);
-    }
+    // Default sidebar/open navigation should always land on main journals table.
+    setActiveTab(0);
+    setSelectedJournal(null);
+    setIsEditMode(false);
+    setIsAddMode(false);
   }, [location.state]);
 
   useEffect(() => {
@@ -260,16 +252,8 @@ const Journals = () => {
     navigate("/investors-withdraw", { state: { investorId, activeTab: 1 } });
   const handleEditClick = () => {
     setIsEditMode(true);
-    if (journalLines.length > 0) {
-      const firstLine = journalLines[0];
-      setCurrentLine({
-        accountId: firstLine.accountId || "",
-        debit: firstLine.debit ?? "",
-        credit: firstLine.credit ?? "",
-        description: firstLine.description || "",
-      });
-      setEditingLineIndex(0);
-    }
+    setCurrentLine({ accountId: "", debit: "", credit: "", description: "" });
+    setEditingLineIndex(null);
   };
   const handleCancelEdit = () => {
     setIsEditMode(false);
@@ -523,6 +507,47 @@ const Journals = () => {
     currentLine
   );
   const totalsForTable = calculateTotalsForTable(journalData, journalLines);
+  const hasEditChanges = useMemo(() => {
+    if (!isEditMode || !journalData || isAddMode) return false;
+
+    const originalForm = {
+      description: journalData.description || "",
+      date: journalData.date ? journalData.date.split("T")[0] : "",
+      type: journalData.type || "",
+      sourceType: journalData.sourceType || "OTHER",
+    };
+    const currentForm = {
+      description: editForm.description || "",
+      date: editForm.date || "",
+      type: editForm.type || "",
+      sourceType: editForm.sourceType || "OTHER",
+    };
+
+    const formChanged =
+      originalForm.description !== currentForm.description ||
+      originalForm.date !== currentForm.date ||
+      originalForm.type !== currentForm.type ||
+      originalForm.sourceType !== currentForm.sourceType;
+
+    const originalLines = mapJournalLinesFromApi(journalData.lines || []).map(normalizeJournalLine);
+    const currentLines = (journalLines || []).map(normalizeJournalLine);
+
+    const linesChanged =
+      originalLines.length !== currentLines.length ||
+      originalLines.some((line, index) => {
+        const current = currentLines[index];
+        return (
+          !current ||
+          line.accountId !== current.accountId ||
+          line.debit !== current.debit ||
+          line.credit !== current.credit ||
+          line.description !== current.description
+        );
+      });
+
+    return formChanged || linesChanged;
+  }, [isEditMode, journalData, isAddMode, editForm, journalLines]);
+
   const searchFiltersForTable = searchQuery
     ? { search: searchQuery }
     : searchFilters;
@@ -641,6 +666,7 @@ const Journals = () => {
                     onCancelAdd={handleCancelAdd}
                     onEditClick={handleEditClick}
                     onPostJournal={handlePostJournal}
+                    hasEditChanges={hasEditChanges}
                     onDeleteClick={() => {
                       setJournalToDelete(selectedJournal);
                       setIsDeleteModalOpen(true);

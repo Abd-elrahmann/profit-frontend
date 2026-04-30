@@ -50,9 +50,6 @@ export default function JournalsHeader({
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h6" fontWeight="bold" sx={{ ml: 1 }}>
-              {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
-            </Typography>
           </Box>
         ) : (
           <Box>
@@ -99,7 +96,7 @@ export default function JournalsHeader({
   return (
     <Box
       sx={{
-        borderBottom: isAddFormView ? 0 : 1,
+        borderBottom: activeTab === 0 && !isAddFormView ? 1 : 0,
         borderColor: "divider",
         mb: isAddFormView ? 0 : 4,
         display: "flex",
@@ -107,9 +104,9 @@ export default function JournalsHeader({
         alignItems: "center",
       }}
     >
-      {!isAddFormView && (
+      {activeTab === 0 && !isAddFormView && (
         <Typography variant="h6" fontWeight="bold">
-          {activeTab === 0 ? "القيود المحاسبية" : "تفاصيل القيد"}
+          القيود المحاسبية
         </Typography>
       )}
 

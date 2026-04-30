@@ -31,6 +31,7 @@ export default function JournalsJournalDetails({
   onCancelAdd,
   onEditClick,
   onPostJournal,
+  hasEditChanges,
   onDeleteClick,
   onUpdateJournal,
   onCancelEdit,
@@ -53,6 +54,7 @@ export default function JournalsJournalDetails({
         onCancelAdd={onCancelAdd}
         onEditClick={onEditClick}
         onPostJournal={onPostJournal}
+        hasEditChanges={hasEditChanges}
         onDeleteClick={onDeleteClick}
         onUpdateJournal={onUpdateJournal}
         onCancelEdit={onCancelEdit}
@@ -86,6 +88,7 @@ export default function JournalsJournalDetails({
 
       <JournalsSummaryCards
         totals={totalsForTable}
+        isPosted={journalData?.status === "POSTED"}
         isDarkMode={isDarkMode}
         isSmallScreen={isSmallScreen}
       />

@@ -141,6 +141,11 @@ export default function JournalsLinesForm({
     focusField(addRefs.current.account);
   };
 
+  const handleCancelLineEditClick = () => {
+    setAccountInputValue("");
+    onCancelLineEdit?.();
+  };
+
   const handleEnterKeyDown = (event, field) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -323,7 +328,7 @@ export default function JournalsLinesForm({
             <div className="md:col-span-4">
               <button
                 className="w-full h-10 border border-[#c4c6d5] rounded-lg text-[#434653]"
-                onClick={onCancelLineEdit}
+                onClick={handleCancelLineEditClick}
               >
                 إلغاء
               </button>

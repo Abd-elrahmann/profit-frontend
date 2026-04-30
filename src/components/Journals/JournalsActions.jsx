@@ -12,6 +12,7 @@ export default function JournalsActions({
   onCancelAdd,
   onEditClick,
   onPostJournal,
+  hasEditChanges = false,
   onDeleteClick,
   onUpdateJournal,
   onCancelEdit,
@@ -29,7 +30,7 @@ export default function JournalsActions({
     : false;
 
   return (
-    <header className=" shadow-sm sticky top-0 z-50">
+    <header className="sticky top-0 z-50">
       <div className="max-w-[1440px] mx-auto px-6 py-a flex items-center justify-between  h-10">
         <div className="flex items-center gap-4">
           <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#e6e8ea] transition-colors">
@@ -78,7 +79,7 @@ export default function JournalsActions({
         ) : canEdit ? (
           <>
             <button
-              className="bg-[#0d40a5] text-[#9db4ff] text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
+              className="bg-[#0d40a5] text-white text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
               onClick={onEditClick}
             >
               تعديل القيد
@@ -103,9 +104,9 @@ export default function JournalsActions({
         ) : canSaveEdit ? (
           <>
             <button
-              className="bg-[#0d40a5] text-[#9db4ff] text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
+              className="bg-[#0d40a5] text-white text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
               onClick={onUpdateJournal}
-              disabled={!balanced}
+              disabled={!balanced || !hasEditChanges}
             >
               حفظ التعديلات
             </button>
