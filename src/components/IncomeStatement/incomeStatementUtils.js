@@ -5,6 +5,17 @@ export const formatNumber = (amount) =>
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(Math.abs(amount || 0));
+
+export const formatSignedNumber = (amount) => {
+  const numericAmount = Number(amount || 0);
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.abs(numericAmount));
+
+  if (numericAmount < 0) return `-${formatted}`;
+  return formatted;
+};
 export const formatCapitalNumber = (amount) =>
   new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
@@ -42,4 +53,4 @@ export const getPeriodInfo = (incomeData, selectedMonth, selectedYear) => {
     periodText = `من ${dayjs(period.from).format('DD/MM/YYYY')} إلى ${dayjs(period.to).format('DD/MM/YYYY')}`;
   }
   return { text: periodText, from: period.from, to: period.to, source: period.source };
-};
+};

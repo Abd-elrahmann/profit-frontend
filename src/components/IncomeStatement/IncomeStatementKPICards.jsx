@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, Receipt, Wallet } from 'lucide-react';
-import { formatNumber } from './incomeStatementUtils';
+import { formatNumber, formatSignedNumber } from './incomeStatementUtils';
 const IncomeStatementKPICards = ({ incomeData }) => {
   if (!incomeData) return null;
   const totalRevenues = incomeData.revenues?.total || 0;
@@ -36,12 +36,14 @@ const IncomeStatementKPICards = ({ incomeData }) => {
             <Wallet className="size-5 text-white" />
           </div>
         </div>
-        <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">صافي الربح</h3>
-        <p className="text-3xl font-extrabold text-primary mt-2">
-          {formatNumber(netProfit)} <span className="text-sm font-normal text-slate-400">ر.س</span>
+        <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+          {netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة'}
+        </h3>
+        <p className={`text-3xl font-extrabold mt-2 ${netProfit >= 0 ? 'text-primary' : 'text-red-600 dark:text-red-400'}`}>
+          {formatSignedNumber(netProfit)} <span className="text-sm font-normal text-slate-400">ر.س</span>
         </p>
       </div>
     </div>
   );
 };
-export default IncomeStatementKPICards;
+export default IncomeStatementKPICards;

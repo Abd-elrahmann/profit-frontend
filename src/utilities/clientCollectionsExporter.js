@@ -65,6 +65,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     { id: 'remaining', label: 'المتبقي' },
     { id: 'note', label: 'ملاحظات' },
   ];
+  const exportColumns = [...columnsToExport].reverse();
   const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
   const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
   const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
@@ -99,7 +100,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     fileName: `كشف_تحصيل_العملاء_${status === 'ACTIVE' ? 'المديونين' : 'المسددين'}`,
     orientation: 'landscape',
     subtitle: `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | المتبقي: ${formatCurrency(totalRemaining)}`,
-    columns: columnsToExport.map((col) => ({
+    columns: exportColumns.map((col) => ({
       header: compactHeaderLabel[col.id] || col.label,
       dataKey: col.id,
       width: columnWidthById[col.id] || 14,
@@ -107,7 +108,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     })),
     rows: clientsData.data.map((client, index) => {
       const row = {};
-      columnsToExport.forEach((column) => {
+      exportColumns.forEach((column) => {
         row[column.id] = getFormattedColumnValue(client, column.id, index);
       });
       return row;
@@ -144,6 +145,7 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       { id: 'remaining', label: 'المتبقي' },
       { id: 'note', label: 'ملاحظات' },
     ];
+    const exportColumns = [...columnsToExport].reverse();
     const XLSX = await import('xlsx');
     const workbook = XLSX.utils.book_new();
     const statusTitle = status === 'ACTIVE' ? 'العملاء المديونين' : 'العملاء المسددين';
@@ -164,15 +166,15 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       ['تفاصيل العملاء'],
       ['']
     ];
-    const headersRow = columnsToExport.map(col => col.label);
+    const headersRow = exportColumns.map(col => col.label);
     const clientsTableData = [headersRow];
     clientsData.data.forEach((client, index) => {
-      const rowData = columnsToExport.map(column => getExportColumnValue(client, column.id, index));
+      const rowData = exportColumns.map(column => getExportColumnValue(client, column.id, index));
       clientsTableData.push(rowData);
     });
     const allData = [...summaryData, ...clientsTableData];
     const sheet = XLSX.utils.aoa_to_sheet(allData);
-    const columnWidths = columnsToExport.map(col => {
+    const columnWidths = exportColumns.map(col => {
       if (col.id === 'id') return { wch: 6 };
       if (col.id === 'client') return { wch: 28 };
       if (col.id === 'address') return { wch: 25 };

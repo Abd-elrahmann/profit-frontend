@@ -71,6 +71,7 @@ const drawHeader = (doc, ctx, pageNumber, totalPages) => {
   const pageWidth = doc.internal.pageSize.width;
   const margin = ctx.margin;
   const startY = 8;
+  const metaRowGap = 6;
 
   setFont(doc, 'bold');
   doc.setTextColor(0, 0, 0);
@@ -109,7 +110,7 @@ const drawHeader = (doc, ctx, pageNumber, totalPages) => {
     doc.setFontSize(10);
     doc.setTextColor(...MUTED_TEXT);
     const periodText = `من تاريخ: ${formatDate(ctx.dateFrom) || '—'}     الى تاريخ: ${formatDate(ctx.dateTo) || '—'}`;
-    doc.text(periodText, pageWidth / 2, startY + 16, { align: 'center' });
+    doc.text(periodText, pageWidth / 2, startY + 18, { align: 'center' });
   }
 
   setFont(doc, 'normal');
@@ -117,11 +118,11 @@ const drawHeader = (doc, ctx, pageNumber, totalPages) => {
   doc.setTextColor(...MUTED_TEXT);
 
   const metaX = margin;
-  let metaY = startY + 3;
+  let metaY = startY + 4;
   doc.text(`${ctx.generatedDate}    ${ctx.generatedTime}`, metaX, metaY, { align: 'left' });
-  metaY += 5;
+  metaY += metaRowGap;
   doc.text(`المستخدم: ${ctx.userName || '—'}`, metaX, metaY, { align: 'left' });
-  metaY += 5;
+  metaY += metaRowGap;
   doc.text(`${totalPages} - ${pageNumber}`, metaX, metaY, { align: 'left' });
 
   doc.setDrawColor(...HEADER_BORDER_COLOR);
@@ -288,7 +289,7 @@ export const exportUnifiedReport = async (opts) => {
     generatedDate: dayjs().format('DD-MM-YYYY'),
     generatedTime: dayjs().format('HH:mm'),
     margin: 10,
-    headerBottomY: 32,
+    headerBottomY: 38,
     signatureLabels,
   };
 
@@ -354,9 +355,15 @@ export const exportUnifiedReport = async (opts) => {
     columnStyles,
     didParseCell: (hookData) => {
       if (hookData.section !== 'body' && hookData.section !== 'head') return;
-      const raw = Array.isArray(hookData.cell.raw)
-        ? hookData.cell.raw.join(' ')
-        : hookData.cell.raw;
+      let raw = hookData.cell.raw;
+
+      // autoTable summary cells can be objects like { content, styles }.
+      // Prefer the explicit content to avoid rendering "[object Object]".
+      if (raw && typeof raw === 'object' && !Array.isArray(raw) && Object.prototype.hasOwnProperty.call(raw, 'content')) {
+        raw = raw.content;
+      }
+
+      raw = Array.isArray(raw) ? raw.join(' ') : raw;
       hookData.cell.text = [raw == null ? '' : String(raw)];
     },
     didDrawPage: () => {
@@ -366,7 +373,7 @@ export const exportUnifiedReport = async (opts) => {
         setFont(doc, 'bold');
         doc.setFontSize(10);
         doc.setTextColor(...MUTED_TEXT);
-        doc.text(subtitle, doc.internal.pageSize.width / 2, ctx.headerBottomY - 4, { align: 'center' });
+        doc.text(subtitle, doc.internal.pageSize.width / 2, ctx.headerBottomY - 6, { align: 'center' });
         doc.setTextColor(0, 0, 0);
       }
     },
@@ -378,13 +385,13 @@ export const exportUnifiedReport = async (opts) => {
     doc.setPage(i);
     const pageWidth = doc.internal.pageSize.width;
     doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, ctx.headerBottomY - 2, 'F');
+    doc.rect(0, 0, pageWidth, ctx.headerBottomY - 1, 'F');
     drawHeader(doc, ctx, i, totalPages);
     if (subtitle) {
       setFont(doc, 'bold');
       doc.setFontSize(10);
       doc.setTextColor(...MUTED_TEXT);
-      doc.text(subtitle, pageWidth / 2, ctx.headerBottomY - 4, { align: 'center' });
+      doc.text(subtitle, pageWidth / 2, ctx.headerBottomY - 6, { align: 'center' });
       doc.setTextColor(0, 0, 0);
     }
     drawFooter(doc, i, totalPages, ctx);

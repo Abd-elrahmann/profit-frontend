@@ -24,7 +24,7 @@ const ChartOfAccountsHeader = ({ onAddClick, onExportPDF, onExportExcel, canAdd,
             تصدير
             <ExpandMore sx={{ fontSize: isSmallScreen ? 16 : 18 }} />
           </button>
-          <div className="hidden group-hover:block absolute left-0 top-full mt-1 w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-xl z-20">
+          <div className="hidden group-hover:block group-focus-within:block absolute left-0 top-full mt-0 w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-xl z-20">
             <button
               type="button"
               onClick={onExportPDF}

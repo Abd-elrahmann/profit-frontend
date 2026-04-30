@@ -1,6 +1,6 @@
 import React from 'react';
 import { List } from 'lucide-react';
-import { formatNumber } from './incomeStatementUtils';
+import { formatNumber, formatSignedNumber } from './incomeStatementUtils';
 const IncomeStatementLineItemsTable = ({ incomeData }) => {
   if (!incomeData) return null;
   const revenueLineItems = incomeData.revenueLineItems?.length
@@ -92,9 +92,9 @@ const IncomeStatementLineItemsTable = ({ incomeData }) => {
             </tr>
             {}
             <tr className="bg-primary/5 font-bold">
-              <td className="px-6 py-6 text-lg">صافي الربح</td>
-              <td className="px-6 py-6 text-left text-xl text-primary font-black">
-                {formatNumber(netProfit)}
+              <td className="px-6 py-6 text-lg">{netProfit >= 0 ? 'صافي الربح' : 'صافي الخسارة'}</td>
+              <td className={`px-6 py-6 text-left text-xl font-black ${netProfit >= 0 ? 'text-primary' : 'text-red-600 dark:text-red-400'}`}>
+                {formatSignedNumber(netProfit)}
               </td>
             </tr>
           </tbody>
@@ -103,4 +103,4 @@ const IncomeStatementLineItemsTable = ({ incomeData }) => {
     </div>
   );
 };
-export default IncomeStatementLineItemsTable;
+export default IncomeStatementLineItemsTable;

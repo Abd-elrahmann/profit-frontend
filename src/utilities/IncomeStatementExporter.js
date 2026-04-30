@@ -168,11 +168,12 @@ const getExpenseData = (incomeData) => {
 };
 const getFinalResultData = (incomeData) => {
   if (!incomeData) return [];
+  const netProfit = Number(incomeData.netProfit || 0);
   return [{
     id: "final-profit",
-    name: "صافي الربح",
+    name: netProfit >= 0 ? "صافي الربح" : "صافي الخسارة",
     code: "FIN-FINAL",
-    amount: incomeData.netProfit || 0,
+    amount: netProfit,
     type: "final-profit",
     level: 0,
     isFinal: true
