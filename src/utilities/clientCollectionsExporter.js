@@ -69,6 +69,30 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
   const totalDebit = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalDebit || 0), 0);
   const totalPaid = clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0);
   const totalRemaining = clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0);
+  const compactHeaderLabel = {
+    paidRepayments: 'المدفوعات',
+    remainingRepayments: 'المتبقية',
+    monthlyInstallment: 'قسط شهري',
+    totalDebit: 'المديونية',
+    totalPaid: 'المدفوع',
+    totalInterest: 'الفوائد',
+    totalDiscounts: 'الخصومات',
+  };
+  const columnWidthById = {
+    id: 8,
+    client: 28,
+    address: 20,
+    loansCount: 13,
+    paidRepayments: 16,
+    remainingRepayments: 16,
+    monthlyInstallment: 16,
+    totalDebit: 16,
+    totalPaid: 14,
+    totalInterest: 14,
+    totalDiscounts: 14,
+    remaining: 13,
+    note: 28,
+  };
 
   return exportUnifiedReport({
     reportTitle: `كشف تحصيل ${statusTitle}`,
@@ -76,9 +100,9 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     orientation: 'landscape',
     subtitle: `إجمالي العملاء: ${clientsData.totalClients || clientsData.data.length} | إجمالي المديونية: ${formatCurrency(totalDebit)} | إجمالي المدفوع: ${formatCurrency(totalPaid)} | المتبقي: ${formatCurrency(totalRemaining)}`,
     columns: columnsToExport.map((col) => ({
-      header: col.label,
+      header: compactHeaderLabel[col.id] || col.label,
       dataKey: col.id,
-      width: col.id === 'id' ? 8 : col.id === 'client' ? 30 : col.id === 'address' ? 24 : col.id === 'note' ? 38 : 18,
+      width: columnWidthById[col.id] || 14,
       align: ['client', 'address', 'note'].includes(col.id) ? 'right' : 'center',
     })),
     rows: clientsData.data.map((client, index) => {
@@ -88,6 +112,16 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
       });
       return row;
     }),
+    tableStyles: {
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+    },
     save: options.save ?? true,
   });
 };

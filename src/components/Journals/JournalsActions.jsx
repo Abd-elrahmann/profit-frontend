@@ -30,29 +30,29 @@ export default function JournalsActions({
 
   return (
     <header className=" shadow-sm sticky top-0 z-50">
-      <div className="max-w-[1440px] mx-auto px-container-margin py-a flex items-center justify-between  h-10">
-        <div className="flex items-center gap-gutter">
-          <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high transition-colors">
+      <div className="max-w-[1440px] mx-auto px-6 py-a flex items-center justify-between  h-10">
+        <div className="flex items-center gap-4">
+          <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#e6e8ea] transition-colors">
             ←
           </button>
           <div className="flex flex-col">
-            <h1 className="font-display-md text-display-md text-on-surface">
+            <h1 className="text-2xl leading-8 font-semibold tracking-[-0.01em] text-[#191c1e]">
               {isAddMode ? "إضافة قيد جديد" : "تفاصيل القيد"}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-gutter">
+        <div className="flex items-center gap-4">
         {showExportButtons && (
           <>
             <button
-              className="text-error font-label-md text-label-md px-4 py-2 hover:bg-error-container/20 rounded-lg transition-all"
+              className="text-[#ba1a1a] text-xs font-semibold leading-4 tracking-[0.05em] px-4 py-2 hover:bg-[#ffdad6]/20 rounded-lg transition-all"
               onClick={onExportPDF}
             >
               تصدير PDF
             </button>
             <button
-              className="text-primary font-label-md text-label-md border border-primary px-4 py-2 rounded-lg hover:bg-primary/5 transition-all"
+              className="text-[#002b7a] text-xs font-semibold leading-4 tracking-[0.05em] border border-[#002b7a] px-4 py-2 rounded-lg hover:bg-[#002b7a]/5 transition-all"
               onClick={onExportExcel}
             >
               تصدير Excel
@@ -62,13 +62,13 @@ export default function JournalsActions({
         {isAddMode ? (
           <>
             <button
-              className="text-error font-label-md text-label-md px-4 py-2 hover:bg-error-container/20 rounded-lg transition-all"
+              className="text-[#ba1a1a] text-xs font-semibold leading-4 tracking-[0.05em] px-4 py-2 hover:bg-[#ffdad6]/20 rounded-lg transition-all"
               onClick={onCancelAdd}
             >
               إلغاء
             </button>
             <button
-              className="bg-primary-container text-white font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
+              className="bg-[#0d40a5] text-white text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
               onClick={onCreateJournal}
               disabled={!balanced}
             >
@@ -78,14 +78,14 @@ export default function JournalsActions({
         ) : canEdit ? (
           <>
             <button
-              className="bg-primary-container text-on-primary-container font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
+              className="bg-[#0d40a5] text-[#9db4ff] text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
               onClick={onEditClick}
             >
               تعديل القيد
             </button>
             {permissions.includes("journals_Post") && (
               <button
-                className="bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
+                className="bg-[#78fac3] text-[#002114] text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all"
                 onClick={onPostJournal}
               >
                 اعتماد القيد
@@ -93,7 +93,7 @@ export default function JournalsActions({
             )}
             {permissions.includes("journals_Delete") && (
               <button
-                className="text-error font-label-md text-label-md border border-error px-4 py-2 rounded-lg hover:bg-error-container/20 transition-all"
+                className="text-[#ba1a1a] text-xs font-semibold leading-4 tracking-[0.05em] border border-[#ba1a1a] px-4 py-2 rounded-lg hover:bg-[#ffdad6]/20 transition-all"
                 onClick={onDeleteClick}
               >
                 حذف القيد
@@ -103,14 +103,14 @@ export default function JournalsActions({
         ) : canSaveEdit ? (
           <>
             <button
-              className="bg-primary-container text-on-primary-container font-label-md text-label-md px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
+              className="bg-[#0d40a5] text-[#9db4ff] text-xs font-semibold leading-4 tracking-[0.05em] px-6 py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
               onClick={onUpdateJournal}
               disabled={!balanced}
             >
               حفظ التعديلات
             </button>
             <button
-              className="text-error font-label-md text-label-md px-4 py-2 hover:bg-error-container/20 rounded-lg transition-all"
+              className="text-[#ba1a1a] text-xs font-semibold leading-4 tracking-[0.05em] px-4 py-2 hover:bg-[#ffdad6]/20 rounded-lg transition-all"
               onClick={onCancelEdit}
             >
               إلغاء التعديل
@@ -118,7 +118,7 @@ export default function JournalsActions({
           </>
         ) : isPosted && permissions.includes("journals_Post") ? (
           <button
-            className="text-error font-label-md text-label-md border border-error px-4 py-2 rounded-lg hover:bg-error-container/20 transition-all"
+            className="text-[#ba1a1a] text-xs font-semibold leading-4 tracking-[0.05em] border border-[#ba1a1a] px-4 py-2 rounded-lg hover:bg-[#ffdad6]/20 transition-all"
             onClick={onUnpostJournal}
           >
             إلغاء الاعتماد

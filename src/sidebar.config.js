@@ -169,7 +169,7 @@ export const sidebarItems = [
   },
   {
     path: '/chart-of-accounts',
-    label: 'دليل الحسابات',
+    label: 'الدليل المحاسبي',
     icon: AccountBalance,
     module: 'accounts',
     requiresPermissions: true,

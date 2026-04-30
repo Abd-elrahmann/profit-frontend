@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { lookupAccounts } from "../../pages/Journals/journalsApi";
+import AccountSearchModal from "./AccountSearchModal";
 export default function JournalsLinesForm({
   currentLine,
   chartAccounts,
@@ -15,7 +16,7 @@ export default function JournalsLinesForm({
 }) {
   const addRefs = useRef({});
   const lineInputClassName =
-    "h-10 border border-outline-variant rounded-lg bg-white px-3 focus:ring-2 focus:ring-primary outline-none text-[15px]";
+    "h-10 border border-[#c4c6d5] rounded-lg bg-white px-3 focus:ring-2 focus:ring-[#002b7a] outline-none text-[15px]";
   const [accountInputValue, setAccountInputValue] = useState("");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -132,6 +133,11 @@ export default function JournalsLinesForm({
   const handleSubmitLine = (event) => {
     event?.preventDefault();
     onAddLine();
+    setAccountInputValue("");
+    onLineInputChange("accountId", "");
+    onLineInputChange("debit", "");
+    onLineInputChange("credit", "");
+    onLineInputChange("description", "");
     focusField(addRefs.current.account);
   };
 
@@ -247,15 +253,15 @@ export default function JournalsLinesForm({
 
   return (
     <>
-    <section className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0px_2px_4px_rgba(0,0,0,0.05)] overflow-hidden">
-      <div className="p-card-padding border-b border-outline-variant bg-[#f0fff4]">
-        <h2 className="font-headline-sm text-headline-sm text-[#00174b]">بنود القيد</h2>
+    <section className="bg-white rounded-xl border border-[#c4c6d5] shadow-[0px_2px_4px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div className="p-5 border-b border-[#c4c6d5] bg-[#f0fff4]">
+        <h2 className="text-[20px] leading-7 font-semibold text-[#00174b]">بنود القيد</h2>
       </div>
 
       {!isReadOnly && (
-        <div className="p-card-padding grid grid-cols-1 md:grid-cols-12 gap-gutter items-end bg-[#f8fbff] border-b border-outline-variant">
-          <div className="md:col-span-4 flex flex-col gap-unit">
-            <label className="font-label-md text-label-md text-on-surface-variant">الحساب</label>
+        <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-[#f8fbff] border-b border-[#c4c6d5]">
+          <div className="md:col-span-4 flex flex-col gap-1">
+            <label className="text-xs font-semibold leading-4 tracking-[0.05em] text-[#434653]">الحساب</label>
             <input
               className={`${lineInputClassName} text-[15px] font-medium`}
               type="text"
@@ -272,8 +278,8 @@ export default function JournalsLinesForm({
             />
           </div>
 
-          <div className="md:col-span-2 flex flex-col gap-unit">
-            <label className="font-label-md text-label-md text-on-surface-variant">مدين</label>
+          <div className="md:col-span-2 flex flex-col gap-1">
+            <label className="text-xs font-semibold leading-4 tracking-[0.05em] text-[#434653]">مدين</label>
             <input
               className={`${lineInputClassName} text-left`}
               type="number"
@@ -286,8 +292,8 @@ export default function JournalsLinesForm({
             />
           </div>
 
-          <div className="md:col-span-2 flex flex-col gap-unit">
-            <label className="font-label-md text-label-md text-on-surface-variant">دائن</label>
+          <div className="md:col-span-2 flex flex-col gap-1">
+            <label className="text-xs font-semibold leading-4 tracking-[0.05em] text-[#434653]">دائن</label>
             <input
               className={`${lineInputClassName} text-left`}
               type="number"
@@ -300,8 +306,8 @@ export default function JournalsLinesForm({
             />
           </div>
 
-          <div className="md:col-span-4 flex flex-col gap-unit">
-            <label className="font-label-md text-label-md text-on-surface-variant">وصف البند</label>
+          <div className="md:col-span-4 flex flex-col gap-1">
+            <label className="text-xs font-semibold leading-4 tracking-[0.05em] text-[#434653]">وصف البند</label>
             <input
               className={`${lineInputClassName} text-[15px] font-medium`}
               type="text"
@@ -316,7 +322,7 @@ export default function JournalsLinesForm({
           {editingLineIndex !== null && (
             <div className="md:col-span-4">
               <button
-                className="w-full h-10 border border-outline-variant rounded-lg text-on-surface-variant"
+                className="w-full h-10 border border-[#c4c6d5] rounded-lg text-[#434653]"
                 onClick={onCancelLineEdit}
               >
                 إلغاء
@@ -329,32 +335,32 @@ export default function JournalsLinesForm({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-[#f0fff4] border-b border-outline-variant">
-              <th className="text-center p-4 font-label-md text-label-md text-[#00174b] w-12">#</th>
-              <th className="text-center p-4 font-label-md text-label-md text-[#00174b]">رقم واسم الحساب</th>
-              <th className="text-center p-4 font-label-md text-label-md text-[#00174b]">مدين</th>
-              <th className="text-center p-4 font-label-md text-label-md text-[#00174b]">دائن</th>
-              <th className="text-center p-4 font-label-md text-label-md text-[#00174b]">الوصف</th>
-              {!isReadOnly && <th className="text-center p-4 font-label-md text-label-md text-[#00174b] w-24">إجراءات</th>}
+            <tr className="bg-[#f0fff4] border-b border-[#c4c6d5]">
+              <th className="text-center p-4 text-xs font-semibold leading-4 tracking-[0.05em] text-[#00174b] w-12">#</th>
+              <th className="text-center p-4 text-xs font-semibold leading-4 tracking-[0.05em] text-[#00174b]">رقم واسم الحساب</th>
+              <th className="text-center p-4 text-xs font-semibold leading-4 tracking-[0.05em] text-[#00174b]">مدين</th>
+              <th className="text-center p-4 text-xs font-semibold leading-4 tracking-[0.05em] text-[#00174b]">دائن</th>
+              <th className="text-center p-4 text-xs font-semibold leading-4 tracking-[0.05em] text-[#00174b]">الوصف</th>
+              {!isReadOnly && <th className="text-center p-4 text-xs font-semibold leading-4 tracking-[0.05em] text-[#00174b] w-24">إجراءات</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant">
+          <tbody className="divide-y divide-[#c4c6d5]">
             {journalLines.length === 0 ? (
               <tr>
-                <td className="p-4 font-body-sm text-body-sm text-on-surface-variant text-center" colSpan={isReadOnly ? 5 : 6}>
+                <td className="p-4 text-[13px] leading-[18px] text-[#434653] text-center" colSpan={isReadOnly ? 5 : 6}>
                   لا توجد بنود مضافة
                 </td>
               </tr>
             ) : (
               journalLines.map((line, index) => (
-                <tr key={line.id || index} className="hover:bg-surface-container-lowest transition-colors">
-                  <td className="p-4 font-body-sm text-body-sm text-on-surface-variant text-center">{index + 1}</td>
-                  <td className="p-4 font-body-md text-body-md text-on-surface text-center">
+                <tr key={line.id || index} className="hover:bg-white transition-colors">
+                  <td className="p-4 text-[13px] leading-[18px] text-[#434653] text-center">{index + 1}</td>
+                  <td className="p-4 text-sm leading-5 text-[#191c1e] text-center">
                     {line.account?.code} - {line.account?.name}
                   </td>
-                  <td className="p-4 font-body-md text-body-md text-primary text-center">{formatNumber(line.debit)}</td>
-                  <td className="p-4 font-body-md text-body-md text-error text-center">{formatNumber(line.credit)}</td>
-                  <td className="p-4 font-body-sm text-body-sm text-on-surface-variant text-center">{line.description || "-"}</td>
+                  <td className="p-4 text-sm leading-5 text-[#002b7a] text-center">{formatNumber(line.debit)}</td>
+                  <td className="p-4 text-sm leading-5 text-[#ba1a1a] text-center">{formatNumber(line.credit)}</td>
+                  <td className="p-4 text-[13px] leading-[18px] text-[#434653] text-center">{line.description || "-"}</td>
                   {!isReadOnly && (
                     <td className="p-4 text-center">
                       <div className="flex items-center justify-center gap-1">
@@ -384,131 +390,23 @@ export default function JournalsLinesForm({
         </table>
       </div>
     </section>
-    {isSearchModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
-        <div
-          className="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm"
-          onClick={closeSearchModal}
-        ></div>
-        <div className="relative w-[min(86vw,820px)] bg-surface rounded-xl shadow-[0_32px_64px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col max-h-[78vh]">
-          <div className="px-6 py-4 flex items-center justify-between border-b border-outline-variant/20 bg-surface-bright">
-            <h3 className="text-xl font-black text-on-surface tracking-tight">البحث عن حساب</h3>
-            <button
-              className="text-stone-400 hover:text-error transition-colors"
-              onClick={closeSearchModal}
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="px-6 pt-5 pb-3">
-            <div className="relative group">
-              <input
-                ref={searchInputRef}
-                className="w-full h-14 pr-4 pl-4 bg-surface-container-lowest border border-outline-variant/30 rounded-xl text-base focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
-                placeholder="ابحث برقم الحساب أو الاسم..."
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleSearchNavigationKey}
-              />
-            </div>
-          </div>
-
-          <div
-            ref={resultsContainerRef}
-            className="flex-1 overflow-y-scroll px-6 py-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-surface-container-low [&::-webkit-scrollbar-thumb]:bg-outline-variant [&::-webkit-scrollbar-thumb]:rounded-full"
-          >
-            <div className="border border-outline-variant/20 rounded-lg overflow-hidden">
-              <table className="w-full text-right text-sm">
-                <thead className="sticky top-0 bg-surface-container-low text-on-surface-variant z-10">
-                  <tr>
-                    <th className="py-3 px-6 font-bold text-xs text-center">كود الحساب</th>
-                    <th className="py-3 px-6 font-bold text-xs text-center">اسم الحساب</th>
-                    <th className="py-3 px-6 font-bold text-xs text-center">النوع</th>
-                    <th className="py-3 px-6 font-bold text-xs text-center">الرصيد الحالي</th>
-                    <th className="py-3 px-6 font-bold text-xs text-center">إجراء</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/10">
-                  {isSearching ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 px-6 text-center text-on-surface-variant">
-                        جاري البحث...
-                      </td>
-                    </tr>
-                  ) : searchError ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 px-6 text-center text-error">
-                        {searchError}
-                      </td>
-                    </tr>
-                  ) : accountResults.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 px-6 text-center text-on-surface-variant">
-                        لا توجد نتائج مطابقة
-                      </td>
-                    </tr>
-                  ) : (
-                    accountResults.map((account, index) => (
-                      <tr
-                        key={account.id}
-                        data-index={index}
-                        ref={(node) => {
-                          resultRowRefs.current[index] = node;
-                        }}
-                        className={`group transition-all cursor-pointer ${
-                          highlightedIndex === index
-                            ? "bg-primary text-white"
-                            : "hover:bg-primary"
-                        }`}
-                        onClick={() => handlePickAccount(account)}
-                      >
-                        <td className="py-4 px-6 font-mono font-bold group-hover:text-white text-center">
-                          {account.code}
-                        </td>
-                        <td className="py-4 px-6 font-semibold group-hover:text-white text-center">
-                          {account.name}
-                        </td>
-                        <td className="py-4 px-6 font-semibold group-hover:text-white text-center">
-                          {getAccountTypeLabel(account)}
-                        </td>
-                        <td className="py-4 px-6 font-mono font-bold group-hover:text-white text-center">
-                          {formatNumber(account.balance || 0)}
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <button
-                            className="w-8 h-8 rounded-lg bg-primary-container text-on-primary group-hover:bg-white group-hover:text-primary transition-colors shadow-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePickAccount(account);
-                            }}
-                          >
-                            ↵
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="px-6 py-4 border-t border-outline-variant/20 bg-surface-container-low flex items-center justify-between">
-            <div className="text-xs text-stone-500">
-              اكتب كلمة البحث واضغط Enter لعرض الحسابات المطابقة
-            </div>
-            <button
-              className="px-6 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant text-sm hover:bg-stone-200 transition-colors"
-              onClick={closeSearchModal}
-            >
-              إلغاء
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+    <AccountSearchModal
+      isOpen={isSearchModalOpen}
+      onClose={closeSearchModal}
+      searchInputRef={searchInputRef}
+      searchTerm={searchTerm}
+      onSearchTermChange={setSearchTerm}
+      onSearchNavigationKey={handleSearchNavigationKey}
+      resultsContainerRef={resultsContainerRef}
+      accountResults={accountResults}
+      highlightedIndex={highlightedIndex}
+      resultRowRefs={resultRowRefs}
+      isSearching={isSearching}
+      searchError={searchError}
+      onPickAccount={handlePickAccount}
+      getAccountTypeLabel={getAccountTypeLabel}
+      formatNumber={formatNumber}
+    />
     </>
   );
 }

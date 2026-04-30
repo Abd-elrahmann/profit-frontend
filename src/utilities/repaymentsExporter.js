@@ -1,7 +1,6 @@
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import { exportUnifiedReport } from './unifiedReportTemplate';
-const reverseRow = (row) => [...row].reverse();
 export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
   if (!repaymentsData || !Array.isArray(repaymentsData) || repaymentsData.length === 0) {
     throw new Error('لا توجد بيانات للتصدير');
@@ -14,14 +13,14 @@ export const exportRepaymentsToPDF = async (repaymentsData, loanData) => {
     orientation: 'landscape',
     subtitle: `العميل: ${clientName} | إجمالي الدفعات: ${repaymentsData.length} | إجمالي الخصومات: ${totalDiscounts.toLocaleString('en-US')}`,
     columns: [
-      { header: 'رقم الدفعة', dataKey: 'count', width: 18 },
-      { header: 'تاريخ الاستحقاق', dataKey: 'dueDateText', width: 22 },
-      { header: 'المبلغ الأساسي', dataKey: 'principalAmount', width: 22, format: 'number0' },
-      { header: 'الفائدة', dataKey: 'interestAmount', width: 20, format: 'number0' },
-      { header: 'إجمالي الدفعة', dataKey: 'amount', width: 22, format: 'number0' },
-      { header: 'الحالة', dataKey: 'statusText', width: 20, align: 'right' },
-      { header: 'المبلغ المدفوع', dataKey: 'paidAmount', width: 22, format: 'number0' },
       { header: 'حالة الدفع', dataKey: 'paymentStatusText', width: 24, align: 'right' },
+      { header: 'المبلغ المدفوع', dataKey: 'paidAmount', width: 22, format: 'number0' },
+      { header: 'الحالة', dataKey: 'statusText', width: 20, align: 'right' },
+      { header: 'إجمالي الدفعة', dataKey: 'amount', width: 22, format: 'number0' },
+      { header: 'الفائدة', dataKey: 'interestAmount', width: 20, format: 'number0' },
+      { header: 'المبلغ الأساسي', dataKey: 'principalAmount', width: 22, format: 'number0' },
+      { header: 'تاريخ الاستحقاق', dataKey: 'dueDateText', width: 22 },
+      { header: 'رقم الدفعة', dataKey: 'count', width: 18 },
     ],
     rows: repaymentsData.map((repayment) => ({
       ...repayment,
@@ -68,18 +67,18 @@ export const exportRepaymentsToExcel = async (repaymentsData, loanData) => {
       { wch: 30 }
     ];
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص السلفة');
-    const repaymentsHeaders = ['رقم الدفعة', 'تاريخ الاستحقاق', 'المبلغ الأساسي', 'الفائدة', 'إجمالي الدفعة', 'الحالة', 'المبلغ المدفوع', 'حالة الدفع'];
+    const repaymentsHeaders = ['حالة الدفع', 'المبلغ المدفوع', 'الحالة', 'إجمالي الدفعة', 'الفائدة', 'المبلغ الأساسي', 'تاريخ الاستحقاق', 'رقم الدفعة'];
     const repaymentsTableData = [
-      reverseRow(repaymentsHeaders),
-      ...repaymentsData.map(repayment => reverseRow([
-        repayment.count || repayment.installmentNumber || '-',
-        repayment.dueDate ? dayjs(repayment.dueDate).format('DD/MM/YYYY') : '-',
-        repayment.principalAmount || 0,
-        repayment.interestAmount || 0,
-        repayment.amount || 0,
-        getStatusText(repayment.status),
+      repaymentsHeaders,
+      ...repaymentsData.map(repayment => ([
+        getPaymentStatusText(repayment.status),
         repayment.paidAmount || 0,
-        getPaymentStatusText(repayment.status)
+        getStatusText(repayment.status),
+        repayment.amount || 0,
+        repayment.interestAmount || 0,
+        repayment.principalAmount || 0,
+        repayment.dueDate ? dayjs(repayment.dueDate).format('DD/MM/YYYY') : '-',
+        repayment.count || repayment.installmentNumber || '-',
       ]))
     ];
     const repaymentsSheet = XLSX.utils.aoa_to_sheet(repaymentsTableData);

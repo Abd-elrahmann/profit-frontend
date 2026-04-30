@@ -36,14 +36,14 @@ export const exportJournalsToPDF = async (journalData, accountName, accountId = 
     orientation: 'landscape',
     subtitle: `اسم الحساب: ${accountName} | إجمالي المدين: ${totalDebit.toLocaleString('en-US')} | إجمالي الدائن: ${totalCredit.toLocaleString('en-US')} | الرصيد الحالي: ${currentBalance.toLocaleString('en-US')} | عدد القيود: ${filteredJournals.length}`,
     columns: [
-      { header: 'التاريخ', dataKey: 'dateText', width: 20 },
-      { header: 'الحساب', dataKey: 'accountDisplay', width: 28, align: 'right' },
-      { header: 'النوع', dataKey: 'typeAr', width: 18, align: 'right' },
-      { header: 'الوصف', dataKey: 'description', width: 40, align: 'right' },
-      { header: 'مدين', dataKey: 'debit', width: 12, format: 'number0' },
-      { header: 'دائن', dataKey: 'credit', width: 12, format: 'number0' },
-      { header: 'الرصيد', dataKey: 'balance', width: 15, format: 'number0' },
       { header: 'الحالة', dataKey: 'statusAr', width: 15, align: 'right' },
+      { header: 'الرصيد', dataKey: 'balance', width: 15, format: 'number0' },
+      { header: 'دائن', dataKey: 'credit', width: 12, format: 'number0' },
+      { header: 'مدين', dataKey: 'debit', width: 12, format: 'number0' },
+      { header: 'الوصف', dataKey: 'description', width: 40, align: 'right' },
+      { header: 'النوع', dataKey: 'typeAr', width: 18, align: 'right' },
+      { header: 'الحساب', dataKey: 'accountDisplay', width: 28, align: 'right' },
+      { header: 'التاريخ', dataKey: 'dateText', width: 20 },
     ],
     rows: filteredJournals.map((journal) => ({
       dateText: dayjs(journal.date).format('DD/MM/YYYY HH:mm'),
@@ -101,14 +101,14 @@ export const exportJournalsToExcel = async (journalData, accountName, accountId 
     const journalsData = [];
     filteredJournals.forEach(journal => {
       journalsData.push({
-        'التاريخ': dayjs(journal.date).format('DD/MM/YYYY hh:mm'),
-        'الحساب': journal.accountDisplay || `${journal.accountCode || ''}${journal.accountName ? `-${journal.accountName}` : ''}` || '-',
-        'النوع': getJournalTypeArabic(journal.type),
-        'الوصف': journal.description || '-',
-        'مدين': journal.debit > 0 ? journal.debit : 0,
-        'دائن': journal.credit > 0 ? journal.credit : 0,
+        'الحالة': getJournalStatusArabic(journal.status),
         'الرصيد': journal.balance || 0,
-        'الحالة': getJournalStatusArabic(journal.status)
+        'دائن': journal.credit > 0 ? journal.credit : 0,
+        'مدين': journal.debit > 0 ? journal.debit : 0,
+        'الوصف': journal.description || '-',
+        'النوع': getJournalTypeArabic(journal.type),
+        'الحساب': journal.accountDisplay || `${journal.accountCode || ''}${journal.accountName ? `-${journal.accountName}` : ''}` || '-',
+        'التاريخ': dayjs(journal.date).format('DD/MM/YYYY hh:mm'),
       });
     });
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);

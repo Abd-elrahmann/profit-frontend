@@ -17,16 +17,16 @@ export const exportChartOfAccountsToPDF = async (accountsTree) => {
   const subtitle = `إجمالي الحسابات: ${flatAccounts.length} | تاريخ التصدير: ${dayjs().format('DD/MM/YYYY HH:mm')}`;
 
   return exportUnifiedReport({
-    reportTitle: 'شجرة الحسابات',
-    fileName: 'شجرة-الحسابات',
+    reportTitle: 'الدليل المحاسبي',
+    fileName: 'الدليل-المحاسبي',
     orientation: 'landscape',
     subtitle,
     columns: [
-      { header: 'كود الحساب', dataKey: 'code', width: 25 },
-      { header: 'اسم الحساب', dataKey: 'name', width: 50, align: 'right' },
-      { header: 'النوع', dataKey: 'natureLabel', width: 25, align: 'right' },
-      { header: 'الرصيد', dataKey: 'balance', width: 35, format: 'number' },
       { header: 'الحالة', dataKey: 'statusAr', width: 20 },
+      { header: 'الرصيد', dataKey: 'balance', width: 35, format: 'number' },
+      { header: 'النوع', dataKey: 'natureLabel', width: 25, align: 'right' },
+      { header: 'اسم الحساب', dataKey: 'name', width: 50, align: 'right' },
+      { header: 'كود الحساب', dataKey: 'code', width: 25 },
     ],
     rows: flatAccounts.map((a) => ({
       ...a,
@@ -41,14 +41,14 @@ export const exportChartOfAccountsToExcel = async (accountsTree) => {
   if (!flatAccounts.length) throw new Error('لا توجد بيانات للتصدير');
   const XLSX = await import('xlsx');
   const rows = flatAccounts.map((a) => ({
-    'كود الحساب': a.code,
-    'اسم الحساب': a.name,
-    النوع: getAccountNatureLabel(a.nature),
-    الرصيد: a.balance ?? 0,
     الحالة: a.isActive !== false ? 'نشط' : 'غير نشط',
+    الرصيد: a.balance ?? 0,
+    النوع: getAccountNatureLabel(a.nature),
+    'اسم الحساب': a.name,
+    'كود الحساب': a.code,
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'شجرة الحسابات');
-  XLSX.writeFile(wb, 'شجرة-الحسابات.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, 'الدليل المحاسبي');
+  XLSX.writeFile(wb, 'الدليل-المحاسبي.xlsx');
 };

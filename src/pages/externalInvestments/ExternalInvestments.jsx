@@ -166,9 +166,17 @@ const ExternalInvestments = () => {
 
   const rows = data?.data ?? [];
   const total = data?.count ?? 0;
+  const totals = data?.totals ?? {};
   const totalPages = Math.max(1, Math.ceil(total / rowsPerPage) || 1);
   const fromIdx = total === 0 ? 0 : (page - 1) * rowsPerPage + 1;
   const toIdx = Math.min(page * rowsPerPage, total);
+  const totalCards = [
+    { label: 'إجمالي المسحوب', value: totals.totalWithdrawn },
+    { label: 'إجمالي المسدد', value: totals.totalPaid },
+    { label: 'إجمالي الربح', value: totals.totalProfit },
+    { label: 'ربح الشركاء', value: totals.totalPartnerProfit },
+    { label: 'ربح الشركة', value: totals.totalCompanyProfit },
+  ];
 
   const openConfirm = (type, id, title, body) => {
     setConfirmDialog({ type, id, title, body });
@@ -213,6 +221,18 @@ const ExternalInvestments = () => {
               سحب من الصندوق
             </button>
           )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+          {totalCards.map((card) => (
+            <div
+              key={card.label}
+              className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 shadow-sm p-4"
+            >
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{card.label}</p>
+              <p className="text-lg font-black text-primary tabular-nums">{formatMoney(card.value)}</p>
+            </div>
+          ))}
         </div>
 
         <div className="p-4 sm:p-5 mb-4 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 shadow-sm">

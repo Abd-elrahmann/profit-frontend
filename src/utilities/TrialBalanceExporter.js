@@ -3,9 +3,38 @@ import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
 import { exportUnifiedReport } from './unifiedReportTemplate';
 
+const toNumberSafe = (value) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+  if (value && typeof value === 'object') {
+    if (typeof value.valueOf === 'function') {
+      const primitive = value.valueOf();
+      if (typeof primitive === 'number' && Number.isFinite(primitive)) return primitive;
+      if (typeof primitive === 'string') {
+        const n = Number(primitive);
+        if (Number.isFinite(n)) return n;
+      }
+    }
+    if ('$numberDecimal' in value) {
+      const n = Number(value.$numberDecimal);
+      return Number.isFinite(n) ? n : 0;
+    }
+  }
+  return 0;
+};
+
 export const exportTrialBalanceToPDF = async (data, { from, to, userName } = {}) => {
   const totals = data?.totals || {};
   const accounts = data?.accounts || [];
+  const totalDebit = toNumberSafe(totals.totalDebit);
+  const totalCredit = toNumberSafe(totals.totalCredit);
+  const isBalanced =
+    typeof totals.isBalanced === 'boolean'
+      ? totals.isBalanced
+      : Math.abs(totalDebit - totalCredit) < 0.0001;
 
   const columns = [
     { header: 'الرصيد', dataKey: 'balance', width: 32, format: 'number', align: 'center' },
@@ -20,8 +49,8 @@ export const exportTrialBalanceToPDF = async (data, { from, to, userName } = {})
       highlight: true,
       values: {
         balance: '',
-        credit: totals.totalCredit ?? 0,
-        debit: totals.totalDebit ?? 0,
+        credit: totalCredit,
+        debit: totalDebit,
         name: 'الإجمالي للتقرير',
         code: '---***---',
       },
@@ -32,7 +61,7 @@ export const exportTrialBalanceToPDF = async (data, { from, to, userName } = {})
         balance: '',
         credit: '',
         debit: '',
-        name: `الرصيد المحلي — ${totals.isBalanced ? 'متوازن' : 'غير متوازن'}`,
+        name: `الرصيد المحلي — ${isBalanced ? 'متوازن' : 'غير متوازن'}`,
         code: '',
       },
     },
@@ -53,6 +82,12 @@ export const exportTrialBalanceToPDF = async (data, { from, to, userName } = {})
 
 export const exportTrialBalanceToExcel = (data, { from, to } = {}) => {
   const totals = data?.totals || {};
+  const totalDebit = toNumberSafe(totals.totalDebit);
+  const totalCredit = toNumberSafe(totals.totalCredit);
+  const isBalanced =
+    typeof totals.isBalanced === 'boolean'
+      ? totals.isBalanced
+      : Math.abs(totalDebit - totalCredit) < 0.0001;
   const sheetData = [
     ['ميزان المراجعة'],
     ['الفترة', from && to ? `${from} → ${to}` : 'بدون تصفية'],
@@ -66,8 +101,8 @@ export const exportTrialBalanceToExcel = (data, { from, to } = {}) => {
       Number(a.balance) || 0,
     ]),
     [],
-    ['الإجمالي', '', totals.totalDebit ?? 0, totals.totalCredit ?? 0, ''],
-    ['حالة التوازن', totals.isBalanced ? 'متوازن' : 'غير متوازن'],
+    ['الإجمالي', '', totalDebit, totalCredit, ''],
+    ['حالة التوازن', isBalanced ? 'متوازن' : 'غير متوازن'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
   const wb = XLSX.utils.book_new();

@@ -44,19 +44,19 @@ export default function StyledDropdown({
         ref={triggerRef}
         onKeyDown={onKeyDown}
         onClick={() => !disabled && setOpen((prev) => !prev)}
-        className={`w-full text-right border border-outline-variant rounded-lg bg-white px-3 h-11 flex items-center justify-between gap-2 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all disabled:opacity-60 disabled:cursor-not-allowed ${triggerClassName}`}
+        className={`w-full text-right border border-[#c4c6d5] rounded-lg bg-white px-3 h-11 flex items-center justify-between gap-2 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#002b7a]/30 focus:border-[#002b7a] transition-all disabled:opacity-60 disabled:cursor-not-allowed ${triggerClassName}`}
       >
-        <span className={`truncate ${selected ? "text-on-surface" : "text-on-surface-variant"}`}>
+        <span className={`truncate ${selected ? "text-[#191c1e]" : "text-[#434653]"}`}>
           {selected?.label || placeholder}
         </span>
-        <span className={`text-on-surface-variant transition-transform ${open ? "rotate-180" : ""}`}>
+        <span className={`text-[#434653] transition-transform ${open ? "rotate-180" : ""}`}>
           ▾
         </span>
       </button>
 
       {open && (
         <div
-          className={`absolute z-50 mt-1 w-full rounded-lg border border-outline-variant bg-white shadow-lg max-h-64 overflow-auto ${panelClassName}`}
+          className={`absolute z-50 mt-1 w-full rounded-lg border border-[#c4c6d5] bg-white shadow-lg max-h-64 overflow-auto ${panelClassName}`}
         >
           {options.map((option) => {
             const isSelected = String(option.value) === String(value);
@@ -67,8 +67,8 @@ export default function StyledDropdown({
                 onClick={() => handleSelect(option.value)}
                 className={`w-full text-right px-3 py-2 text-sm transition-colors ${
                   isSelected
-                    ? "bg-primary-fixed text-on-primary-fixed font-semibold"
-                    : "text-on-surface hover:bg-surface-container-low"
+                    ? "bg-[#dbe1ff] text-[#00174b] font-semibold"
+                    : "text-[#191c1e] hover:bg-[#f2f4f6]"
                 } ${optionClassName}`}
               >
                 {option.label}

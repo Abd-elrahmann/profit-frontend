@@ -39,7 +39,7 @@ export default function JournalsJournalDetails({
   const isEditingOrAdding = isEditMode || isAddMode;
 
   return (
-    <div dir="rtl" className="bg-background text-on-background min-h-screen">
+    <div dir="rtl" className="bg-[#f7f9fb] text-[#191c1e] min-h-screen">
       <JournalsActions
         totals={totals}
         isAddMode={isAddMode}
@@ -59,7 +59,7 @@ export default function JournalsJournalDetails({
         onUnpostJournal={onUnpostJournal}
       />
 
-      <main className="max-w-[1440px] mx-auto px-container-margin py-section-gap space-y-section-gap">
+      <main className="max-w-[1440px] mx-auto px-6 py-8 space-y-8">
       {isEditingOrAdding && (
       <JournalsDetailsForm
         journalData={journalData}

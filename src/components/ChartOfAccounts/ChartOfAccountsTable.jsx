@@ -17,6 +17,15 @@ import {
 import { AddCircle, Edit, Delete, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import { StyledTableCell, StyledTableRow } from '../layouts/tableLayout';
 import { getAccountNatureLabel } from './chartOfAccountsUtils';
+
+const CHILD_GROUP_COLORS = ['#e8f3ff', '#e8f8ee', '#fff3e6', '#f2ebff', '#e8f7f7', '#ffeef6'];
+
+const getChildGroupColor = (account) => {
+  const depth = account?._depth ?? 0;
+  if (depth <= 0) return null;
+  return CHILD_GROUP_COLORS[(depth - 1) % CHILD_GROUP_COLORS.length];
+};
+
 const getAccountNatureChipColor = (nature) => {
   const map = {
     DEBIT: 'error',
@@ -45,6 +54,7 @@ const ChartOfAccountsTable = ({
           const hasChildren = account.children && account.children.length > 0;
           const isExpanded = expandedIds.has(account.id);
           const depth = account._depth ?? 0;
+          const childGroupColor = getChildGroupColor(account);
           const isTreeView = viewMode === 'tree';
           return (
             <Card
@@ -55,6 +65,7 @@ const ChartOfAccountsTable = ({
                 borderRadius: 2,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
                 ml: isTreeView ? depth * 2 : 0,
+                bgcolor: isTreeView && childGroupColor ? childGroupColor : 'background.paper',
               }}
               onClick={() => onSelect?.(account)}
             >
@@ -174,6 +185,7 @@ const ChartOfAccountsTable = ({
             const isExpanded = expandedIds.has(account.id);
             const depth = account._depth ?? 0;
             const isRoot = depth === 0;
+            const childGroupColor = getChildGroupColor(account);
             const isTreeView = viewMode === 'tree';
             return (
               <StyledTableRow
@@ -183,6 +195,18 @@ const ChartOfAccountsTable = ({
                 sx={{
                   cursor: 'pointer',
                   ...(isRoot && isTreeView && { fontWeight: 'bold', bgcolor: 'action.hover' }),
+                  ...(!isRoot &&
+                    isTreeView &&
+                    childGroupColor && {
+                      '& > td': {
+                        backgroundColor: childGroupColor,
+                      },
+                      '&:hover': {
+                        '& > td': {
+                          backgroundColor: childGroupColor,
+                        },
+                      },
+                    }),
                 }}
               >
                 <StyledTableCell

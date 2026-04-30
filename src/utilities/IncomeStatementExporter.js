@@ -341,12 +341,10 @@ export const exportIncomeStatementToPDF = async (incomeData, periodType, selecte
     columns: [
       { header: 'المبلغ', dataKey: 'amount', width: 35, format: 'number0' },
       { header: 'البند', dataKey: 'name', width: 95, align: 'right' },
-      { header: 'التصنيف', dataKey: 'type', width: 35, align: 'right' },
     ],
     rows: allData.map((row) => ({
       amount: row.amount || 0,
       name: row.name || '-',
-      type: row.type || '-',
     })),
     save: options.save ?? true,
   });
