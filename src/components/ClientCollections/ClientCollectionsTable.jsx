@@ -45,6 +45,7 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
       totalPaid: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalPaid || 0), 0),
       remaining: clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials?.remaining) || 0), 0),
       totalInterest: clientsData.data.reduce((sum, c) => sum + (c.financials?.totalInterestPaid || 0), 0),
+      dueAmount: clientsData.data.reduce((sum, c) => sum + (c.financials?.dueAmount || 0), 0),
       averageMonthlyInstallment: clientsData.data.reduce(
         (sum, c) => sum + (c.financials?.averageMonthlyInstallment || 0),
         0
@@ -73,6 +74,8 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
         return formatCurrency(client.financials?.totalPaid);
       case 'totalInterest':
         return formatCurrency(client.financials?.totalInterestPaid || 0);
+      case 'dueAmount':
+        return formatCurrency(client.financials?.dueAmount || 0);
       case 'totalDiscounts':
         return formatCurrency(client.financials?.totalDiscounts || 0);
       case 'remaining':
@@ -112,78 +115,79 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
     labelDisplayedRows: ({ from, to, count }) => `${from}-${to} من ${count}`,
   };
   const renderTotalCellContent = (col) => {
-      if (col.id === 'id') return <Typography variant="body2" fontWeight="bold">الإجمالي</Typography>;
-      if (col.id === 'monthlyInstallment') return <Typography variant="body2" fontWeight="bold" color="secondary.main">{formatCurrency(totals.averageMonthlyInstallment)}</Typography>;
-      if (col.id === 'totalDebit') return <Typography variant="body2" fontWeight="bold" color="error.main">{formatCurrency(totals.totalDebit)}</Typography>;
-      if (col.id === 'totalPaid') return <Typography variant="body2" fontWeight="bold" color="success.main">{formatCurrency(totals.totalPaid)}</Typography>;
-      if (col.id === 'totalInterest') return <Typography variant="body2" fontWeight="bold" color="primary.main">{formatCurrency(totals.totalInterest)}</Typography>;
-      if (col.id === 'remaining') return <Typography variant="body2" fontWeight="bold" color="warning.main">{formatCurrency(totals.remaining)}</Typography>;
+    if (col.id === 'id') return <Typography variant="body2" fontWeight="bold">الإجمالي</Typography>;
+    if (col.id === 'monthlyInstallment') return <Typography variant="body2" fontWeight="bold" color="secondary.main">{formatCurrency(totals.averageMonthlyInstallment)}</Typography>;
+    if (col.id === 'totalDebit') return <Typography variant="body2" fontWeight="bold" color="error.main">{formatCurrency(totals.totalDebit)}</Typography>;
+    if (col.id === 'totalPaid') return <Typography variant="body2" fontWeight="bold" color="success.main">{formatCurrency(totals.totalPaid)}</Typography>;
+    if (col.id === 'totalInterest') return <Typography variant="body2" fontWeight="bold" color="primary.main">{formatCurrency(totals.totalInterest)}</Typography>;
+    if (col.id === 'dueAmount') return <Typography variant="body2" fontWeight="bold" color="error.main">{formatCurrency(totals.dueAmount)}</Typography>;
+    if (col.id === 'remaining') return <Typography variant="body2" fontWeight="bold" color="warning.main">{formatCurrency(totals.remaining)}</Typography>;
     return <Typography variant="body2">-</Typography>;
   };
   const renderDesktopTable = () => (
-      <>
-        <ScrollableTableContainer maxHeight={650}>
-          <Table stickyHeader sx={{ minWidth: 2000 }}>
-            <TableHead>
+    <>
+      <ScrollableTableContainer maxHeight={650}>
+        <Table stickyHeader sx={{ minWidth: 2000 }}>
+          <TableHead>
+            <StyledTableRow>
+              {visibleColumns.map((col) => (
+                <StyledTableCell key={col.id} align="center" sx={{ fontWeight: 'bold', minWidth: 100 }}>
+                  {col.label}
+                </StyledTableCell>
+              ))}
+            </StyledTableRow>
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
               <StyledTableRow>
+                <StyledTableCell colSpan={visibleColumns.length} align="center">
+                  <CircularProgress size={30} />
+                  جاري تحميل البيانات...
+                </StyledTableCell>
+              </StyledTableRow>
+            ) : !clientsData?.data?.length ? (
+              <StyledTableRow>
+                <StyledTableCell colSpan={visibleColumns.length} align="center">
+                  لا توجد عملاء
+                </StyledTableCell>
+              </StyledTableRow>
+            ) : (
+              clientsData.data
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((client, index) => (
+                  <StyledTableRow key={client.id}>
+                    {visibleColumns.map((col) => (
+                      <StyledTableCell key={col.id} align="center">
+                        {col.id === 'loansCount' ? (
+                          renderLoansCountWithChips(client)
+                        ) : col.id === 'client' ? (
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                              {getColumnValue(client, col.id, index)}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2">{getColumnValue(client, col.id, index)}</Typography>
+                        )}
+                      </StyledTableCell>
+                    ))}
+                  </StyledTableRow>
+                ))
+            )}
+            {!isLoading && clientsData?.data?.length > 0 && (
+              <StyledTableRow sx={{ backgroundColor: '#e8f5e9' }}>
                 {visibleColumns.map((col) => (
-                  <StyledTableCell key={col.id} align="center" sx={{ fontWeight: 'bold', minWidth: 100 }}>
-                    {col.label}
+                  <StyledTableCell key={`total-${col.id}`} align="center" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                    {renderTotalCellContent(col)}
                   </StyledTableCell>
                 ))}
               </StyledTableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <StyledTableRow>
-                  <StyledTableCell colSpan={visibleColumns.length} align="center">
-                    <CircularProgress size={30} />
-                    جاري تحميل البيانات...
-                  </StyledTableCell>
-                </StyledTableRow>
-              ) : !clientsData?.data?.length ? (
-                <StyledTableRow>
-                  <StyledTableCell colSpan={visibleColumns.length} align="center">
-                    لا توجد عملاء
-                  </StyledTableCell>
-                </StyledTableRow>
-              ) : (
-                clientsData.data
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((client, index) => (
-                    <StyledTableRow key={client.id}>
-                      {visibleColumns.map((col) => (
-                        <StyledTableCell key={col.id} align="center">
-                          {col.id === 'loansCount' ? (
-                            renderLoansCountWithChips(client)
-                          ) : col.id === 'client' ? (
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                                {getColumnValue(client, col.id, index)}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <Typography variant="body2">{getColumnValue(client, col.id, index)}</Typography>
-                          )}
-                        </StyledTableCell>
-                      ))}
-                    </StyledTableRow>
-                  ))
-              )}
-              {!isLoading && clientsData?.data?.length > 0 && (
-                <StyledTableRow sx={{ backgroundColor: '#e8f5e9' }}>
-                  {visibleColumns.map((col) => (
-                    <StyledTableCell key={`total-${col.id}`} align="center" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
-                      {renderTotalCellContent(col)}
-                    </StyledTableCell>
-                  ))}
-                </StyledTableRow>
-              )}
-            </TableBody>
-          </Table>
-        </ScrollableTableContainer>
-        {clientsData?.data?.length > 0 && <TablePagination {...paginationProps} />}
-      </>
+            )}
+          </TableBody>
+        </Table>
+      </ScrollableTableContainer>
+      {clientsData?.data?.length > 0 && <TablePagination {...paginationProps} />}
+    </>
   );
   const renderMobileCards = () => (
     <Box sx={{ p: 1 }}>
@@ -265,4 +269,4 @@ const ClientCollectionsTable = ({ isLoading, clientsData, visibleColumns, isSmal
   );
   return showCards ? renderMobileCards() : renderDesktopTable();
 };
-export default ClientCollectionsTable;
+export default ClientCollectionsTable;

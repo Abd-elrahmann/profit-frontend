@@ -5,7 +5,7 @@ const formatCurrency = (amount) => {
   return amount?.toLocaleString('en-US') || '0';
 };
 const getExportColumnValue = (client, columnId, index) => {
-  switch(columnId) {
+  switch (columnId) {
     case 'id':
       return index + 1;
     case 'client':
@@ -30,8 +30,10 @@ const getExportColumnValue = (client, columnId, index) => {
       return client.financials?.averageMonthlyInstallment || 0;
     case 'remaining':
       return Math.abs(client.financials?.remaining) || 0;
+    case 'dueAmount':
+      return client.financials?.dueAmount || 0;
     case 'note':
-      return '-'; 
+      return '-';
     default:
       return '';
   }
@@ -41,7 +43,7 @@ const getFormattedColumnValue = (client, columnId, index) => {
     return getExportColumnValue(client, columnId, index);
   }
   const value = getExportColumnValue(client, columnId, index);
-  if (['totalDebit', 'totalPaid', 'totalInterest', 'totalDiscounts', 'remaining', 'monthlyInstallment'].includes(columnId)) {
+  if (['totalDebit', 'totalPaid', 'totalInterest', 'totalDiscounts', 'remaining', 'dueAmount', 'monthlyInstallment'].includes(columnId)) {
     return formatCurrency(value);
   }
   return value;
@@ -63,6 +65,7 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     { id: 'totalInterest', label: 'إجمالي الفوائد' },
     { id: 'totalDiscounts', label: 'الخصومات' },
     { id: 'remaining', label: 'المتبقي' },
+    { id: 'dueAmount', label: 'متأخرات سابقة' },
     { id: 'note', label: 'ملاحظات' },
   ];
   const exportColumns = [...columnsToExport].reverse();
@@ -91,7 +94,8 @@ export const exportClientCollectionsToPDF = async (clientsData, status = 'ACTIVE
     totalPaid: 14,
     totalInterest: 14,
     totalDiscounts: 14,
-    remaining: 13,
+    remaining: 16,
+    dueAmount: 16,
     note: 28,
   };
 
@@ -143,6 +147,7 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       { id: 'totalInterest', label: 'إجمالي الفوائد' },
       { id: 'totalDiscounts', label: 'الخصومات' },
       { id: 'remaining', label: 'المتبقي' },
+      { id: 'dueAmount', label: 'متأخرات سابقة' },
       { id: 'note', label: 'ملاحظات' },
     ];
     const exportColumns = [...columnsToExport].reverse();
@@ -162,6 +167,7 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       ['إجمالي الخصومات', clientsData.data.reduce((sum, c) => sum + (c.financials.totalDiscounts || 0), 0)],
       ['إجمالي الدفعات الشهرية', clientsData.data.reduce((sum, c) => sum + (c.financials.averageMonthlyInstallment || 0), 0)],
       ['إجمالي المتبقي', clientsData.data.reduce((sum, c) => sum + (Math.abs(c.financials.remaining) || 0), 0)],
+      ['إجمالي المتأخرات السابقة', clientsData.data.reduce((sum, c) => sum + (c.financials.dueAmount || 0), 0)],
       [''],
       ['تفاصيل العملاء'],
       ['']
@@ -193,13 +199,13 @@ export const exportClientCollectionsToExcel = async (clientsData, status = 'ACTI
       sheet[cellAddress].s.alignment = { horizontal: "center", vertical: "center" };
     }
     XLSX.utils.book_append_sheet(workbook, sheet, 'كشف التحصيل');
-    const excelBuffer = XLSX.write(workbook, { 
-      bookType: 'xlsx', 
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
       type: 'array',
-      bookSST: false 
+      bookSST: false
     });
-    const blob = new Blob([excelBuffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
     const statusSuffix = status === 'ACTIVE' ? 'المديونين' : 'المسددين';
     const fileName = `كشف_تحصيل_العملاء_${statusSuffix}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
